@@ -1,0 +1,181 @@
+/*
+ * Global Inflation Index Derivatives Specifications
+ * =================================================
+ * 
+ * Inflation-Linked Swaps Default Conventions
+ * ------------------------------------------
+ * +----------+-----------------+------------------+---------------+----------------+---------------+------------------+---------------------+-----------------+
+ * | Currency | Inflation Index | Payment          | Inflation Leg | Fixed Leg      | Day Count     | Business Day     | Index Publication   | Interpolation   |
+ * |          |                 | Frequency        | Calculation   | Convention     | Convention    | Convention       | Lag                 | Method          |
+ * +----------+-----------------+------------------+---------------+----------------+---------------+------------------+---------------------+-----------------+
+ * | USD      | US CPI-U        | Annual           | Year-on-Year  | Zero-coupon or | ACT/360       | Modified         | 2-3 months         | Linear          |
+ * |          | (NSA)           |                  | or            | Annual         |               | Following        |                     |                 |
+ * |          |                 |                  | Zero-coupon   |                |               |                  |                     |                 |
+ * +----------+-----------------+------------------+---------------+----------------+---------------+------------------+---------------------+-----------------+
+ * | EUR      | HICP Ex         | Annual           | Year-on-Year  | Zero-coupon or | ACT/360 or    | Modified         | 2-3 months         | Linear          |
+ * |          | Tobacco         |                  | or            | Annual         | 30/360        | Following        |                     |                 |
+ * |          | (NSA)           |                  | Zero-coupon   |                |               |                  |                     |                 |
+ * +----------+-----------------+------------------+---------------+----------------+---------------+------------------+---------------------+-----------------+
+ * | GBP      | UK RPI          | Annual           | Year-on-Year  | Zero-coupon or | ACT/365       | Modified         | 2-3 months         | Linear          |
+ * |          | (NSA)           |                  | or            | Annual         |               | Following        |                     |                 |
+ * |          |                 |                  | Zero-coupon   |                |               |                  |                     |                 |
+ * +----------+-----------------+------------------+---------------+----------------+---------------+------------------+---------------------+-----------------+
+ * | JPY      | Japan CPI       | Annual           | Year-on-Year  | Zero-coupon or | ACT/365       | Modified         | 2-3 months         | Linear          |
+ * |          | (NSA)           |                  | or            | Annual         |               | Following        |                     |                 |
+ * |          |                 |                  | Zero-coupon   |                |               |                  |                     |                 |
+ * +----------+-----------------+------------------+---------------+----------------+---------------+------------------+---------------------+-----------------+
+ * | AUD      | Australia CPI   | Quarterly/Annual | Year-on-Year  | Zero-coupon or | ACT/365       | Modified         | 1-2 months         | Linear          |
+ * |          | (NSA)           |                  | or            | Annual         |               | Following        |                     |                 |
+ * |          |                 |                  | Zero-coupon   |                |               |                  |                     |                 |
+ * +----------+-----------------+------------------+---------------+----------------+---------------+------------------+---------------------+-----------------+
+ * | CAD      | Canada CPI      | Annual           | Year-on-Year  | Zero-coupon or | ACT/365       | Modified         | 2-3 months         | Linear          |
+ * |          | (NSA)           |                  | or            | Annual         |               | Following        |                     |                 |
+ * |          |                 |                  | Zero-coupon   |                |               |                  |                     |                 |
+ * +----------+-----------------+------------------+---------------+----------------+---------------+------------------+---------------------+-----------------+
+ * | SEK      | Sweden CPI      | Annual           | Year-on-Year  | Zero-coupon or | 30/360        | Modified         | 2-3 months         | Linear          |
+ * |          | (NSA)           |                  | or            | Annual         |               | Following        |                     |                 |
+ * |          |                 |                  | Zero-coupon   |                |               |                  |                     |                 |
+ * +----------+-----------------+------------------+---------------+----------------+---------------+------------------+---------------------+-----------------+
+ * | CHF      | Switzerland CPI | Annual           | Year-on-Year  | Zero-coupon or | 30/360        | Modified         | 2-3 months         | Linear          |
+ * |          | (NSA)           |                  | or            | Annual         |               | Following        |                     |                 |
+ * |          |                 |                  | Zero-coupon   |                |               |                  |                     |                 |
+ * +----------+-----------------+------------------+---------------+----------------+---------------+------------------+---------------------+-----------------+
+ * 
+ * Inflation-Linked Futures Specifications
+ * --------------------------------------
+ * +----------+-----------------+------------------+----------------+----------------+---------------+------------------+---------------+--------------------+
+ * | Currency | Exchange        | Underlying       | Contract Size  | Tick Size      | Tick Value    | Contract Months  | Last Trading  | Settlement         |
+ * |          |                 | Index            |                |                |               |                  | Day           | Method             |
+ * +----------+-----------------+------------------+----------------+----------------+---------------+------------------+---------------+--------------------+
+ * | USD      | CME             | US CPI-U         | $100 × Index   | 0.01 index     | $1.00         | Quarterly:       | Business day  | Cash settlement    |
+ * |          |                 | Futures          | (approx $30K)  | points         |               | H, M, U, Z       | before CPI    | based on final     |
+ * |          |                 |                  |                |                |               |                  | release       | index value        |
+ * +----------+-----------------+------------------+----------------+----------------+---------------+------------------+---------------+--------------------+
+ * | EUR      | Eurex           | HICP Ex Tobacco  | €1,000 × Index | 0.01 index     | €10.00        | Quarterly:       | Two business  | Cash settlement    |
+ * |          |                 | Futures          | (approx €120K) | points         |               | H, M, U, Z       | days before   | based on final     |
+ * |          |                 |                  |                |                |               |                  | HICP release  | index value        |
+ * +----------+-----------------+------------------+----------------+----------------+---------------+------------------+---------------+--------------------+
+ * | GBP      | ICE             | UK RPI Futures   | £1,000 × Index | 0.01 index     | £10.00        | Monthly          | Two business  | Cash settlement    |
+ * |          |                 |                  | (approx £300K) | points         |               |                  | days before   | based on final     |
+ * |          |                 |                  |                |                |               |                  | RPI release   | index value        |
+ * +----------+-----------------+------------------+----------------+----------------+---------------+------------------+---------------+--------------------+
+ * 
+ * Inflation-Linked Bonds Key Specifications
+ * ----------------------------------------
+ * +----------+------------------------+---------------------+------------------+------------------------+--------------------+
+ * | Currency | Bond Type              | Principal           | Coupon           | Indexation Lag         | Index Used         |
+ * |          |                        | Indexation          | Treatment        |                        |                    |
+ * +----------+------------------------+---------------------+------------------+------------------------+--------------------+
+ * | USD      | TIPS                   | Fully indexed       | Real yield,      | 3 months               | US CPI-U (NSA)     |
+ * |          | (Treasury Inflation-   | to CPI              | paid on          | (Reference CPI =       |                    |
+ * |          | Protected Securities)  |                     | indexed principal| interpolated value)    |                    |
+ * +----------+------------------------+---------------------+------------------+------------------------+--------------------+
+ * | EUR      | HICP-linked OATs,      | Fully indexed       | Real yield,      | 3 months (France, IT)  | HICP Ex Tobacco    |
+ * |          | BTPs, Bonos, etc.      | to HICP             | paid on          | 2-3 months (Germany)   | (NSA)              |
+ * |          |                        |                     | indexed principal|                        |                    |
+ * +----------+------------------------+---------------------+------------------+------------------------+--------------------+
+ * | GBP      | Index-linked Gilts     | Fully indexed       | Real yield,      | 8 months (older gilts) | UK RPI (NSA)       |
+ * |          |                        | to RPI              | paid on          | 3 months (newer gilts) |                    |
+ * |          |                        |                     | indexed principal|                        |                    |
+ * +----------+------------------------+---------------------+------------------+------------------------+--------------------+
+ * | JPY      | JGBi                   | Fully indexed       | Real yield,      | 3 months               | Japan CPI (NSA)    |
+ * |          | (Inflation-Indexed     | to CPI              | paid on          | (Reference CPI =       | excluding fresh    |
+ * |          | Japanese Govt Bonds)   |                     | indexed principal| interpolated value)    | food               |
+ * +----------+------------------------+---------------------+------------------+------------------------+--------------------+
+ * | AUD      | Treasury Indexed       | Fully indexed       | Real yield,      | Quarterly update       | Australia CPI      |
+ * |          | Bonds                  | to CPI              | paid on          |                        | (NSA)              |
+ * |          |                        |                     | indexed principal|                        |                    |
+ * +----------+------------------------+---------------------+------------------+------------------------+--------------------+
+ * | CAD      | Real Return Bonds      | Fully indexed       | Real yield,      | 3 months               | Canada CPI (NSA)   |
+ * |          |                        | to CPI              | paid on          | (Reference CPI =       |                    |
+ * |          |                        |                     | indexed principal| interpolated value)    |                    |
+ * +----------+------------------------+---------------------+------------------+------------------------+--------------------+
+ * | SEK      | Inflation-linked       | Fully indexed       | Real yield,      | 3 months               | Sweden CPI (NSA)   |
+ * |          | Government Bonds       | to CPI              | paid on          |                        |                    |
+ * |          |                        |                     | indexed principal|                        |                    |
+ * +----------+------------------------+---------------------+------------------+------------------------+--------------------+
+ * 
+ * Inflation Options Market Conventions
+ * ----------------------------------
+ * +----------+-------------------+------------------+-----------------+---------------+-------------------+----------------+
+ * | Currency | Option Type       | Underlying       | Strike          | Premium       | Exercise          | Settlement     |
+ * |          |                   |                  | Convention      | Payment       | Type              | Method         |
+ * +----------+-------------------+------------------+-----------------+---------------+-------------------+----------------+
+ * | USD      | Year-on-Year      | Zero-coupon or   | Rate terms      | Upfront or    | European          | Cash           |
+ * |          | Inflation Caps    | Year-on-Year     | (e.g., 2.5%)    | Annuity       |                   | settlement     |
+ * |          | and Floors        | Inflation Swaps  |                 |               |                   |                |
+ * +----------+-------------------+------------------+-----------------+---------------+-------------------+----------------+
+ * | EUR      | Year-on-Year      | Zero-coupon or   | Rate terms      | Upfront or    | European          | Cash           |
+ * |          | Inflation Caps    | Year-on-Year     | (e.g., 2.0%)    | Annuity       |                   | settlement     |
+ * |          | and Floors        | Inflation Swaps  |                 |               |                   |                |
+ * +----------+-------------------+------------------+-----------------+---------------+-------------------+----------------+
+ * | GBP      | Year-on-Year      | Zero-coupon or   | Rate terms      | Upfront or    | European          | Cash           |
+ * |          | Inflation Caps    | Year-on-Year     | (e.g., 3.0%)    | Annuity       |                   | settlement     |
+ * |          | and Floors        | Inflation Swaps  |                 |               |                   |                |
+ * +----------+-------------------+------------------+-----------------+---------------+-------------------+----------------+
+ * 
+ * Notes:
+ * - NSA: Not Seasonally Adjusted index used for most inflation derivatives
+ * - Year-on-Year (YoY) Swaps: Pays the annual inflation rate each period
+ * - Zero-coupon Inflation Swaps: Pays the cumulative inflation rate at maturity
+ * - Indexation Lag: The delay between the inflation index publication and its use in calculations
+ * - Interpolation Method: Used to calculate reference inflation index between monthly publications
+ * - TIPS: Treasury Inflation-Protected Securities (US)
+ * - Breakeven Inflation Rate: Difference between nominal bond yield and inflation-linked bond real yield
+ * - Principal Protection: Most inflation-linked bonds have a principal guarantee at par (floor at 100)
+ * - Index Publication Frequency: Monthly for most countries, quarterly for Australia
+ * - Cash Settlement: Most inflation derivatives settle in cash based on the official index value
+ * - Inflation Caps/Floors: Option structures that provide protection against high/low inflation
+ * - Standard Maturities: 1Y, 2Y, 3Y, 5Y, 7Y, 10Y, 15Y, 20Y, 30Y
+ * - Reference Indices:
+ *   - US CPI-U: US Consumer Price Index for All Urban Consumers
+ *   - HICP: Harmonized Index of Consumer Prices (Euro area)
+ *   - RPI: Retail Price Index (UK)
+ *   - JCG CPI: Japan Consumer Price Index
+ *   - AU CPI: Australian Consumer Price Index
+ *   - CA CPI: Canada Consumer Price Index
+ *   - SE CPI: Sweden Consumer Price Index
+ *   - CH CPI: Switzerland Consumer Price Index
+ */
+ 
+ /**
+ * Standard Market Conventions for Inflation Swaps
+ * 
+ * +-----------+---------------------------+---------------+------------------------+------------------------+------------------+
+ * | Currency  | Primary Index            | Indexation   | Day Count Convention   | Business Day          | Payment          |
+ * |           |                          | Lag (months) | Fixed / Inflation      | Convention            | Frequency        |
+ * +-----------+---------------------------+---------------+------------------------+------------------------+------------------+
+ * | USD       | US CPI-U                 | 3            | 30/360 / ACT/360       | Modified Following    | Semi-annual      |
+ * | EUR       | HICP ex-Tobacco          | 3            | 30/360 / ACT/365       | Modified Following    | Annual           |
+ * | GBP       | RPI (or CPI, CPIH)       | 3            | ACT/365 / ACT/365      | Modified Following    | Semi-annual      |
+ * | JPY       | Japan CPI (ex fresh food)| 3            | ACT/365 / ACT/365      | Modified Following    | Semi-annual      |
+ * | CAD       | Canada CPI               | 3            | ACT/365 / ACT/365      | Modified Following    | Annual           |
+ * | AUD       | Australia CPI            | 3            | ACT/365 / ACT/365      | Modified Following    | Quarterly        |
+ * | SEK       | Sweden CPI               | 3            | 30/360 / 30/360        | Modified Following    | Annual           |
+ * | CHF       | Switzerland CPI          | 3            | 30/360 / ACT/360       | Modified Following    | Annual           |
+ * +-----------+---------------------------+---------------+------------------------+------------------------+------------------+
+ * 
+ * Special Cases and Additional Notes:
+ * 
+ * 1. Interpolation: Linear interpolation is standard for non-publication dates across all currencies
+ * 
+ * 2. Seasonality: 
+ *    - EUR and USD: Seasonal adjustments often applied
+ *    - GBP: Typically no seasonal adjustments
+ * 
+ * 3. Structure Types:
+ *    - Zero-coupon: Most common globally, single payment at maturity
+ *    - Year-on-year: Common in EUR markets
+ *    - LPI (Limited Price Indexation): Common in GBP markets (with caps/floors)
+ * 
+ * 4. Publication Schedule:
+ *    - All indices typically published monthly
+ *    - Publication delays vary slightly by country (2-3 weeks after month end)
+ *    - Indexation lag accounts for publication delays
+ *
+ * 5. Holiday Calendars:
+ *    - USD: US Federal holidays
+ *    - EUR: TARGET calendar
+ *    - GBP: London banking days
+ *    - JPY: Tokyo banking days
+ */
