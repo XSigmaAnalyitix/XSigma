@@ -1,0 +1,89 @@
+/*
+ * ===================================================================
+ * Interest Rate Swap Market Conventions by Currency
+ * ===================================================================
+ *
+ * G20 and Major Market Currencies
+ * -------------------------------
+ * +----------+----------------+-------------------+---------------------+------------+----------------+--------------------+-------------------+------------------------+-------------+---------------+------------------+
+ * | Currency | Country/Region | Fixed Leg         | Fixed Leg           | Floating   | Floating       | Floating           | Floating          | Business Day           | Fixing      | Effective     | Calendar         |
+ * |          |                | Frequency         | Day Count           | Leg        | Index          | Frequency          | Day Count         | Convention             | Date        | Date          |                  |
+ * +----------+----------------+-------------------+---------------------+------------+----------------+--------------------+-------------------+------------------------+-------------+---------------+------------------+
+ * | USD      | United States  | Semi-annual       | 30/360              | SOFR       | RFR            | Quarterly          | ACT/360           | Modified Following     | T-2         | T+2           | NYSE             |
+ * | EUR      | Eurozone       | Annual            | 30/360              | EURIBOR    | IBOR           | Semi-annual        | ACT/360           | Modified Following     | T-2         | T+2           | EUR              |
+ * | EUR      | Eurozone       | Annual            | 30/360              | ESTR       | RFR            | Quarterly          | ACT/360           | Modified Following     | T-2         | T+2           | EUR              |
+ * | GBP      | United Kingdom | Semi-annual       | ACT/365             | SONIA      | RFR            | Semi-annual        | ACT/365           | Modified Following     | T-0         | T+0           | LDN              |
+ * | JPY      | Japan          | Semi-annual       | ACT/365             | TONA       | RFR            | Semi-annual        | ACT/360           | Modified Following     | T-2         | T+2           | TOK              |
+ * | AUD      | Australia      | Semi-annual       | ACT/365             | AONIA      | RFR            | Quarterly          | ACT/365           | Modified Following     | T-0         | T+1           | AUSY             |
+ * | CAD      | Canada         | Semi-annual       | ACT/365             | CORRA      | RFR            | Quarterly          | ACT/365           | Modified Following     | T-0         | T+1           | TSE              |
+ * | CHF      | Switzerland    | Annual            | 30/360              | SARON      | RFR            | Quarterly          | ACT/360           | Modified Following     | T-2         | T+2           | ZUR              |
+ * | CNY      | China          | Quarterly         | ACT/365             | LPR        | IBOR           | Quarterly          | ACT/365           | Modified Following     | T-1         | T+1           | CNBE             |
+ * | INR      | India          | Annual            | ACT/365             | MIBOR      | IBOR           | Quarterly          | ACT/365           | Modified Following     | T-1         | T+1           | INMU             |
+ * | BRL      | Brazil         | Annual            | 30/360              | CDI        | IBOR           | Semi-annual        | ACT/252           | Following              | T+0         | T+1           | BRSP             |
+ * | RUB      | Russia         | Quarterly         | ACT/365             | RUONIA     | RFR            | Quarterly          | ACT/365           | Following              | T+0         | T+1           | RUMO             |
+ * | MXN      | Mexico         | Annual            | ACT/360             | TIIE       | IBOR           | Quarterly          | ACT/360           | Following              | T+0         | T+1           | MXMC             |
+ * | ZAR      | South Africa   | Quarterly         | ACT/365             | ZARONIA    | RFR            | Quarterly          | ACT/365           | Modified Following     | T+0         | T+1           | ZAJO             |
+ * | TRY      | Turkey         | Annual            | ACT/360             | TLREF      | RFR            | Quarterly          | ACT/360           | Modified Following     | T+0         | T+1           | TRIS             |
+ * | KRW      | South Korea    | Quarterly         | ACT/365             | KORIBOR    | IBOR           | Quarterly          | ACT/365           | Modified Following     | T-1         | T+1           | KRSE             |
+ * | IDR      | Indonesia      | Quarterly         | ACT/360             | INDONIA    | RFR            | Quarterly          | ACT/360           | Modified Following     | T+0         | T+1           | IDJA             |
+ * | SAR      | Saudi Arabia   | Semi-annual       | 30/360              | SAIBOR     | IBOR           | Quarterly          | ACT/360           | Modified Following     | T-2         | T+2           | SARI             |
+ * | SEK      | Sweden         | Annual            | 30/360              | SWESTR     | RFR            | Quarterly          | ACT/360           | Modified Following     | T-2         | T+2           | SEST             |
+ * | NOK      | Norway         | Annual            | 30/360              | NOWA       | RFR            | Quarterly          | ACT/360           | Modified Following     | T-2         | T+2           | NOOS             |
+ * | DKK      | Denmark        | Annual            | 30/360              | DESTR      | RFR            | Quarterly          | ACT/360           | Modified Following     | T-2         | T+2           | DKCO             |
+ * | NZD      | New Zealand    | Semi-annual       | ACT/365             | NZIONA     | RFR            | Quarterly          | ACT/365           | Modified Following     | T-1         | T+2           | NZWE             |
+ * | SGD      | Singapore      | Semi-annual       | ACT/365             | SORA       | RFR            | Quarterly          | ACT/365           | Modified Following     | T-0         | T+2           | SGSI             |
+ * | HKD      | Hong Kong      | Quarterly         | ACT/365             | HONIA      | RFR            | Quarterly          | ACT/365           | Modified Following     | T-0         | T+2           | HKHK             |
+ *
+ *
+ * Legend
+ * ------
+ * - Fixed Leg Frequency: How often fixed payments are made (Annual, Semi-annual, Quarterly)
+ * - Fixed Leg Day Count: Convention for calculating interest accrual on fixed leg
+ *   - 30/360: 30 days per month, 360 days per year
+ *   - ACT/365: Actual number of days divided by 365
+ *   - ACT/360: Actual number of days divided by 360
+ *   - ACT/252: Actual number of days divided by 252 (Brazilian convention)
+ * - Floating Index:
+ *   - RFR: Risk-Free Rate (nearly risk-free overnight rates)
+ *   - IBOR: Interbank Offered Rates
+ * - Floating Frequency: How often floating payments are made
+ * - Business Day Convention: How to adjust payment dates that fall on holidays
+ *   - Modified Following: Next business day unless it moves to next month, then previous business day
+ *   - Following: Next business day
+ * - Fixing Date: When the floating rate is determined relative to period start
+ *   - T-2: Two business days before period start
+ *   - T-1: One business day before period start
+ *   - T-0: Same day as period start
+ * - Effective Date: When the swap begins after trade date
+ *   - T+2: Two business days after trade date
+ *   - T+1: One business day after trade date
+ *   - T+0: Same day as trade date
+ *
+ *
+ * Rate Index Descriptions
+ * ----------------------
+ * - USD/SOFR  : Secured Overnight Financing Rate - secured overnight rate based on Treasury repos
+ * - EUR/EURIBOR: Euro Interbank Offered Rate - unsecured rate at which Eurozone banks lend to each other
+ * - EUR/ESTR  : Euro Short-Term Rate - unsecured overnight borrowing costs for Eurozone banks
+ * - GBP/SONIA : Sterling Overnight Index Average - weighted average of overnight unsecured transactions
+ * - JPY/TONA  : Tokyo Overnight Average Rate - weighted average of uncollateralized overnight call rate
+ * - AUD/AONIA : Australian Overnight Index Average - weighted average of overnight unsecured loans
+ * - CAD/CORRA : Canadian Overnight Repo Rate Average - weighted average of overnight general collateral repo rates
+ * - CHF/SARON : Swiss Average Rate Overnight - secured rate based on Swiss repo market
+ * - CNY/LPR   : Loan Prime Rate - based on quotes from panel banks to their best customers
+ * - INR/MIBOR : Mumbai Interbank Offered Rate - based on rates offered in Indian interbank market
+ * - BRL/CDI   : Certificate of Interbank Deposit - Brazilian interbank deposit rate
+ * - RUB/RUONIA: Russian Overnight Index Average - weighted average of overnight interbank rates
+ * - MXN/TIIE  : Tasa de Interés Interbancaria de Equilibrio - Mexican interbank equilibrium interest rate
+ * - SEK/SWESTR: Swedish Krona Short Term Rate - transaction-based reference rate for Swedish krona
+ * - NOK/NOWA  : Norwegian Overnight Weighted Average - weighted average of overnight unsecured loans
+ * - DKK/DESTR : Denmark Short-Term Rate - unsecured overnight rate for Danish krone
+ * - NZD/NZIONA: New Zealand Interbank Overnight Average - weighted average of unsecured overnight cash transactions
+ * - SGD/SORA  : Singapore Overnight Rate Average - volume-weighted average rate of unsecured overnight SGD transactions
+ * - HKD/HONIA : Hong Kong Dollar Overnight Index Average - volume-weighted average of overnight interbank loans
+ * - ZAR/ZARONIA: South African Rand Overnight Index Average - based on overnight interbank lending
+ * - TRY/TLREF : Turkish Lira Reference Rate - secured money market rate
+ * - KRW/KORIBOR: Korea Interbank Offered Rate - based on rates offered in Korean interbank market
+ * - IDR/INDONIA: Indonesia Overnight Index Average - weighted average rate of unsecured overnight IDR transactions
+ * - SAR/SAIBOR: Saudi Arabian Interbank Offered Rate - reference rate for SAR interbank transactions
+ */
