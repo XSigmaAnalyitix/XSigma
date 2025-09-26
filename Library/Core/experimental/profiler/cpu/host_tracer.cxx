@@ -1,0 +1,160 @@
+/*
+ * XSigma: High-Performance Quantitative Library
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later OR Commercial
+ *
+ * This file is part of XSigma and is licensed under a dual-license model:
+ *
+ *   - Open-source License (GPLv3):
+ *       Free for personal, academic, and research use under the terms of
+ *       the GNU General Public License v3.0 or later.
+ *
+ *   - Commercial License:
+ *       A commercial license is required for proprietary, closed-source,
+ *       or SaaS usage. Contact us to obtain a commercial agreement.
+ *
+ * Contact: licensing@xsigma.co.uk
+ * Website: https://www.xsigma.co.uk
+ */
+
+/* Copyright 2018 The OpenXLA Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+#include "experimental/profiler/cpu/host_tracer.h"
+
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+//#include "absl/log/log.h"
+//#include "absl/status/status.h"
+//#include "experimental/profiler/cpu/host_tracer_utils.h"
+//#include "xla/tsl/profiler/backends/cpu/threadpool_listener.h"
+#include "experimental/profiler/traceme_recorder.h"
+//#include "experimental/profiler/time_utils.h"
+#include "experimental/profiler/xplane/xplane_schema.h"
+#include "experimental/profiler/xplane/xplane_utils.h"
+//#include "tsl/platform/errors.h"
+#include "experimental/profiler/profiler_collection.h"
+#include "experimental/profiler/profiler_interface.h"
+#include "experimental/profiler/traceme.h"
+#include "experimental/profiler/xplane/xplane.h"
+#include "util/logger.h"
+
+namespace xsigma::profiler
+{
+namespace
+{
+
+// Controls trace_me_recorder and converts trace_me_recorder::Events into xevents.
+//
+// Thread-safety: This class is go/thread-compatible.
+class host_tracer : public profiler_interface
+{
+public:
+    explicit host_tracer(int host_trace_level);
+    ~host_tracer() override;
+
+    bool start() override;  // XSIGMA_STATUS_OK
+
+    bool stop() override;  // XSIGMA_STATUS_OK
+
+    bool collect_data(x_space* space) override;
+
+private:
+    // Level of host tracing.
+    const int host_trace_level_;
+
+    // True if currently recording.
+    bool recording_ = false;
+
+    // Timestamp at the start of tracing.
+    uint64_t start_timestamp_ns_ = 0;
+
+    // Container of all traced events.
+    trace_me_recorder::Events events_;
+};
+
+host_tracer::host_tracer(int host_trace_level) : host_trace_level_(host_trace_level) {}
+
+host_tracer::~host_tracer()
+{
+    stop();
+}  // NOLINT
+
+bool host_tracer::start()
+{  // XSIGMA_STATUS_OK
+    if (recording_)
+    {
+        XSIGMA_LOG_ERROR("TraceMeRecorder already started");
+        return false;
+    }
+
+    // All trace_me captured should have a timestamp greater or equal to
+    // start_timestamp_ns_ to prevent timestamp underflow in xplane.
+    // Therefore this have to be done before trace_me_recorder::start.
+    start_timestamp_ns_ = get_current_time_nanos();
+    recording_          = trace_me_recorder::start(host_trace_level_);
+    if (!recording_)
+    {
+        XSIGMA_LOG_ERROR("Failed to start trace_me_recorder");
+        return false;
+    }
+    return true;
+}
+
+bool host_tracer::stop()
+{  // XSIGMA_STATUS_OK
+    if (!recording_)
+    {
+        XSIGMA_LOG_ERROR("trace_me_recorder not started");
+        return false;
+    }
+    events_    = trace_me_recorder::stop();
+    recording_ = false;
+    return true;
+}
+
+bool host_tracer::collect_data(x_space* space)
+{
+    VLOG(2) << "Collecting data to x_space from host_tracer.";
+    if (recording_)
+    {
+        XSIGMA_LOG_ERROR("trace_me_recorder not stopped");
+        return false;
+    }
+    if (events_.empty())
+    {
+        return true;
+    }
+    xplane* plane = find_or_add_mutable_plane_with_name(space, kHostThreadsPlaneName);
+
+    //convert_complete_events_to_xplane(start_timestamp_ns_, std::exchange(events_, {}), plane);
+
+    return true;
+}
+
+}  // namespace
+
+std::unique_ptr<profiler_interface> create_host_tracer(const host_tracer_options& options)
+{
+    if (options.trace_level == 0)
+        return nullptr;
+    std::vector<std::unique_ptr<profiler_interface>> profilers;
+    profilers.push_back(std::make_unique<host_tracer>(options.trace_level));
+    //profilers.push_back(std::make_unique<threadpool_profiler_interface>());
+    return std::make_unique<profiler_collection>(std::move(profilers));
+}
+}  // namespace xsigma::profiler

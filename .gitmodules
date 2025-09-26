@@ -1,0 +1,15 @@
+[submodule "ThirdParty/fmt"]
+	path = ThirdParty/fmt
+	url = https://github.com/fmtlib/fmt.git
+[submodule "ThirdParty/cpuinfo"]
+	path = ThirdParty/cpuinfo
+	url = https://github.com/pytorch/cpuinfo.git
+[submodule "ThirdParty/magic_enum"]
+	path = ThirdParty/magic_enum
+	url = https://github.com/Neargye/magic_enum.git
+[submodule "ThirdParty/loguru"]
+	path = ThirdParty/loguru
+	url = https://github.com/emilk/loguru.git
+[submodule "ThirdParty/googletest"]
+	path = ThirdParty/googletest
+	url = https://github.com/google/googletest.git
