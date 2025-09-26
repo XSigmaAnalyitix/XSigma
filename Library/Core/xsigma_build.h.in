@@ -1,0 +1,13 @@
+/*
+ * Some parts of this implementation were inspired by code from VTK
+ * (The Visualization Toolkit), distributed under a BSD-style license.
+ * See LICENSE for details.
+ */
+
+#ifndef __xsigma_build_h__
+#define __xsigma_build_h__
+
+/* Whether we are building shared libraries.  */
+#cmakedefine XSIGMA_BUILD_SHARED_LIBS
+
+#endif

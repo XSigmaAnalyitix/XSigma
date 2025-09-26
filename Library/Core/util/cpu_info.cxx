@@ -1,0 +1,155 @@
+#include "util/cpu_info.h"
+
+#include <cpuinfo.h>
+#include <fmt/core.h>
+#include <fmt/ranges.h>
+
+#include "util/logger.h"
+#include "xsigma_features.h"
+namespace xsigma
+{
+void cpu_info::info()
+{
+    cpuinfo_initialize();
+    const struct cpuinfo_package* package = cpuinfo_get_package(0);
+    if (package)
+    {
+        fmt::print("-- Running on {} CPU", package->name);
+    }
+    else
+    {
+        fmt::print("-- Running on unknown CPU");
+    }
+    fmt::print("-- suport f16c:     {}\n", cpuinfo_has_x86_f16c() ? "True" : "False");
+    fmt::print("-- suport sse:      {}\n", cpuinfo_has_x86_sse() ? "True" : "False");
+    fmt::print("-- suport sse2:     {}\n", cpuinfo_has_x86_sse2() ? "True" : "False");
+    fmt::print("-- suport sse3:     {}\n", cpuinfo_has_x86_sse3() ? "True" : "False");
+    fmt::print("-- suport sse4a:    {}\n", cpuinfo_has_x86_sse4a() ? "True" : "False");
+    fmt::print("-- suport sse4_1:   {}\n", cpuinfo_has_x86_sse4_1() ? "True" : "False");
+    fmt::print("-- suport sse4_2:   {}\n", cpuinfo_has_x86_sse4_2() ? "True" : "False");
+    fmt::print("-- suport avx:      {}\n", cpuinfo_has_x86_avx() ? "True" : "False");
+    fmt::print("-- suport avx2:     {}\n", cpuinfo_has_x86_avx2() ? "True" : "False");
+    fmt::print("-- suport axv512:   {}\n", cpuinfo_has_x86_avx512f() ? "True" : "False");
+    fmt::print("-- suport arm neon: {}\n", cpuinfo_has_arm_neon() ? "True" : "False");
+
+    fmt::print("-- size of double {}\n", static_cast<int>(sizeof(double)));
+    fmt::print("-- size of float {}\n", static_cast<int>(sizeof(float)));
+    fmt::print("==================================================\n");
+    fmt::print("                  cache info                      \n");
+    fmt::print("==================================================\n");
+
+    const struct cpuinfo_cache* l1d_cache = cpuinfo_get_l1d_caches();
+    if (l1d_cache)
+    {
+        fmt::print(
+            "-- Cache L1d:\n size={},\n associativity={},\n sets={},\n partitions={},\n  "
+            "line_size={},\n "
+            "flags={}\n, processor_start={},\n processor_count={}.\n",
+            l1d_cache->size,
+            l1d_cache->associativity,
+            l1d_cache->sets,
+            l1d_cache->partitions,
+            l1d_cache->line_size,
+            l1d_cache->flags,
+            l1d_cache->processor_start,
+            l1d_cache->processor_count);
+    }
+    else
+    {
+        fmt::print("-- Cache L1d: not available\n");
+    }
+
+    const struct cpuinfo_cache* l1i_cache = cpuinfo_get_l1i_caches();
+    if (l1i_cache)
+    {
+        fmt::print(
+            "-- Cache L1i:\n size={},\n associativity={},\n sets={},\n partitions={},  "
+            "line_size={},\n "
+            "flags={},\n processor_start={},\n processor_count={}.\n",
+            l1i_cache->size,
+            l1i_cache->associativity,
+            l1i_cache->sets,
+            l1i_cache->partitions,
+            l1i_cache->line_size,
+            l1i_cache->flags,
+            l1i_cache->processor_start,
+            l1i_cache->processor_count);
+    }
+    else
+    {
+        fmt::print("-- Cache L1i: not available\n");
+    }
+
+    const struct cpuinfo_cache* l2_cache = cpuinfo_get_l2_caches();
+    if (l2_cache)
+    {
+        fmt::print(
+            "-- Cache L2:\n size={},\n associativity={},\n sets={},\n partitions={},\n  "
+            "line_size={},\n "
+            "flags={},\n processor_start={},\n processor_count={}.\n",
+            l2_cache->size,
+            l2_cache->associativity,
+            l2_cache->sets,
+            l2_cache->partitions,
+            l2_cache->line_size,
+            l2_cache->flags,
+            l2_cache->processor_start,
+            l2_cache->processor_count);
+    }
+    else
+    {
+        fmt::print("-- Cache L2: not available\n");
+    }
+
+    const struct cpuinfo_cache* l3_cache = cpuinfo_get_l3_caches();
+    if (l3_cache)
+    {
+        fmt::print(
+            "-- Cache L3:\n size={},\n associativity={},\n sets={},\n partitions={},\n  "
+            "line_size={},\n "
+            "flags={},\n processor_start={},\n processor_count={}.\n",
+            l3_cache->size,
+            l3_cache->associativity,
+            l3_cache->sets,
+            l3_cache->partitions,
+            l3_cache->line_size,
+            l3_cache->flags,
+            l3_cache->processor_start,
+            l3_cache->processor_count);
+    }
+    else
+    {
+        fmt::print("-- Cache L3: not available\n");
+    }
+
+    cpuinfo_deinitialize();
+
+    fmt::print("==================================================\n");
+    fmt::print("                     Flags                        \n");
+    fmt::print("==================================================\n");
+
+#ifdef XSIGMA_ENABLE_MKL
+    fmt::print("MKL is enabled!\n");
+#endif  // XSIGMA_ENABLE_MKL
+#ifdef XSIGMA_ENABLE_TBB
+    fmt::print("TBB is enabled!\n");
+#endif  // XSIGMA_ENABLE_MKL
+}
+
+void cpu_info::cpuinfo_cach(
+    std::ptrdiff_t& l1, std::ptrdiff_t& l2, std::ptrdiff_t& l3, std::ptrdiff_t& l3_count)
+{
+    cpuinfo_initialize();
+
+    const struct cpuinfo_cache* l1d_cache = cpuinfo_get_l1d_caches();
+    const struct cpuinfo_cache* l2_cache  = cpuinfo_get_l2_caches();
+    const struct cpuinfo_cache* l3_cache  = cpuinfo_get_l3_caches();
+
+    l1       = l1d_cache ? l1d_cache->size : 0;
+    l2       = l2_cache ? l2_cache->size : 0;
+    l3       = l3_cache ? l3_cache->size : 0;
+    l3_count = l3_cache ? l3_cache->processor_count : 0;
+
+    cpuinfo_deinitialize();
+}
+};  // namespace xsigma

@@ -1,0 +1,89 @@
+/*
+ * XSigma: High-Performance Quantitative Library
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later OR Commercial
+ *
+ * This file is part of XSigma and is licensed under a dual-license model:
+ *
+ *   - Open-source License (GPLv3):
+ *       Free for personal, academic, and research use under the terms of
+ *       the GNU General Public License v3.0 or later.
+ *
+ *   - Commercial License:
+ *       A commercial license is required for proprietary, closed-source,
+ *       or SaaS usage. Contact us to obtain a commercial agreement.
+ *
+ * Contact: licensing@xsigma.co.uk
+ * Website: https://www.xsigma.co.uk
+ */
+
+#include "memory/cpu/allocator_device.h"
+
+#include <cstring>
+#include <stdexcept>
+
+#include "common/configure.h"
+#include "memory/cpu/helper/memory_allocator.h"
+#include "util/logger.h"
+
+#ifdef XSIGMA_ENABLE_CUDA
+#include <cuda_runtime.h>
+#endif
+
+namespace xsigma
+{
+
+std::string allocator_device::Name()
+{
+    return "allocator_device";
+}
+
+void* allocator_device::allocate_raw(size_t alignment, size_t num_bytes)
+{
+    // Delegate to static allocate method for consistency
+    (void)alignment;  // Alignment is handled internally
+    if (num_bytes == 0)
+        return nullptr;
+
+    void* ptr = nullptr;
+
+#ifdef XSIGMA_ENABLE_CUDA
+    cudaError_t result = cudaMallocHost(&ptr, num_bytes);
+    if (result != cudaSuccess)
+    {
+        XSIGMA_LOG_WARNING(
+            "CUDA error in allocator_device::allocate_raw: " << std::to_string(result));
+
+        return nullptr;
+    }
+#else
+    ptr = cpu::memory_allocator::allocate(num_bytes, 64);
+#endif
+
+    return ptr;
+}
+
+void allocator_device::deallocate_raw(void* ptr)
+{
+    if (!ptr)
+    {
+        return;
+    }
+
+#ifdef XSIGMA_ENABLE_CUDA
+    cudaError_t result = cudaFreeHost(ptr);
+    if (result != cudaSuccess)
+    {
+        // Log error but don't throw from free
+        XSIGMA_LOG_ERROR("CUDA error in allocator_device::free: " + std::to_string(result));
+    }
+#else
+    cpu::memory_allocator::free(ptr);
+#endif
+}
+
+allocator_memory_enum allocator_device::GetMemoryType() const noexcept
+{
+    return allocator_memory_enum::HOST_PINNED;
+}
+}  // namespace xsigma
