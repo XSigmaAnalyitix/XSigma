@@ -15,7 +15,7 @@ namespace xsigma
  * @brief Gets the current backend implementation being used
  *
  * Returns the name of the current backend that handles parallel processing
- * (e.g., "Sequential", "TBB", "OpenMP", "STDThread").
+ * (e.g., "STDThread" or "TBB").
  *
  * @return Name of the current backend as a C-string
  */
@@ -30,9 +30,8 @@ const char* tools::GetBackend()
  * @brief Sets the backend implementation to use for parallel processing
  *
  * Attempts to switch the parallel processing backend to the specified
- * implementation. Valid backends include "Sequential", "TBB", "OpenMP",
- * and "STDThread". The availability of backends depends on compile-time
- * configuration.
+ * implementation. Valid backends include "STDThread" and "TBB".
+ * The availability of backends depends on compile-time configuration.
  *
  * @param backend Name of the backend to use
  * @return true if backend was successfully set, false otherwise

@@ -2,7 +2,6 @@
 type: "always_apply"
 ---
 
-
 ## 1. Error Handling
 - **Do not use `try/catch` blocks**.
 - Error handling must follow the project's established patterns without exceptions.

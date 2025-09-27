@@ -34,16 +34,11 @@
 #include <locale>      // For locale-specific operations
 #include <string>      // For std::string
 
-// XSigma system includes
-#include <xsigmasys/Encoding.hxx>           // For character encoding utilities
-#include <xsigmasys/SystemInformation.hxx>  // For system information
-#include <xsigmasys/SystemTools.hxx>        // For system utility functions
-
 // XSigma core includes
 #include "common/macros.h"
-#include "common/pointer.h"      // For pointer utilities
-#include "util/exception.h"      // For XSigma exception handling
-#include "xsigmasys/Encoding.h"  // For encoding functions
+#include "common/pointer.h"  // For pointer utilities
+#include "util/exception.h"  // For XSigma exception handling
+#include "util/logger.h"     // For logging utilities
 
 // =============================================================================
 // PLATFORM-SPECIFIC CONFIGURATION
@@ -735,31 +730,6 @@ std::string center(const std::string s, const int width)
     }
 
     return ss.str();
-}
-
-// =============================================================================
-// PLATFORM-SPECIFIC UTILITY FUNCTIONS
-// =============================================================================
-
-/**
- * @brief Convert wide character string to narrow (UTF-8) string
- * @note Delegates to xsigmasys::Encoding for platform-specific implementation
- * @note Primarily used for Windows Unicode interoperability
- */
-std::string ToNarrow(wchar_t* x)
-{
-    return xsigmasys::Encoding::ToNarrow(x);
-}
-
-/**
- * @brief Create a heap-allocated copy of a C-string
- * @note Delegates to xsigmasys::SystemTools for platform-specific allocation
- * @note Caller must free the returned pointer to avoid memory leaks
- * @warning Always pair with appropriate deallocation (free() or delete[])
- */
-char* DuplicateString(const char* str)
-{
-    return xsigmasys::SystemTools::DuplicateString(str);
 }
 
 // =============================================================================

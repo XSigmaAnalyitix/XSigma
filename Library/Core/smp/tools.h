@@ -8,7 +8,7 @@
  * tools provides a set of utility functions that can
  * be used to parallelize parts of XSIGMA code using multiple threads.
  * There are several back-end implementations of parallel functionality
- * (currently Sequential, TBB, OpenMP and STDThread) that actual execution is
+ * (currently STDThread or TBB when enabled) that actual execution is
  * delegated to.
  *
  * @sa
@@ -358,7 +358,7 @@ public:
     /**
    * /!\ This method is not thread safe.
    * Change the backend in use.
-   * The options can be: "Sequential", "STDThread", "TBB" or "OpenMP"
+   * The options can be: "STDThread" (default) or "TBB" (when XSIGMA_ENABLE_TBB is enabled)
    *
    * XSIGMA_SMP_BACKEND_IN_USE env variable can also be used to set the default SMPTools
    * backend, in that case SetBackend() doesn't need to be called.
@@ -405,10 +405,8 @@ public:
    * /!\ This method is not thread safe.
    * If true enable nested parallelism for underlying backends.
    * When enabled the comportement is different for each backend:
-   *    - TBB support nested parallelism using a single thread pool
-   *    - For OpenMP, set `omp_set_nested` to the value of `isNested`.
-   *    - For STDThread nested parallelism implies creating new threads pools.
-   *    - For Sequential nothing changes.
+   *    - TBB uses a single shared thread pool even for nested regions.
+   *    - STDThread creates nested thread pools when required.
    *
    * Default to false except for TBB.
    */
@@ -496,7 +494,7 @@ public:
    * Usage example:
    * \code
    * tools::LocalScope(
-   *   tools::Config{ 4, "OpenMP", false }, [&]() { tools::For(0, size, worker); });
+   *   tools::Config{ 4, "STDThread", false }, [&]() { tools::For(0, size, worker); });
    * \endcode
    */
     template <typename T>

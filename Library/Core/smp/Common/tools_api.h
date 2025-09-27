@@ -7,15 +7,14 @@
 #include <memory>
 
 // For export macro
+#include "common/macros.h"
 #include "common/pointer.h"
 #include "smp/Common/tools_impl.h"
-#include "xsigma_smp.h"
 
-#if XSIGMA_SMP_ENABLE_STDTHREAD
-#include "smp/STDThread/tools_impl.hxx"
-#endif
-#if XSIGMA_SMP_ENABLE_TBB
+#if defined(XSIGMA_ENABLE_TBB)
 #include "smp/TBB/tools_impl.hxx"
+#else
+#include "smp/STDThread/tools_impl.hxx"
 #endif
 
 namespace xsigma
@@ -24,8 +23,6 @@ namespace detail
 {
 namespace smp
 {
-
-using toolsDefaultImpl = tools_impl<DefaultBackend>;
 
 class XSIGMA_API tools_api
 {
@@ -73,7 +70,6 @@ public:
         const Config oldConfig(*this);
         *this << config;
 
-        // Execute lambda with RAII-style cleanup
         struct ConfigGuard
         {
             tools_api*    api;
@@ -89,30 +85,22 @@ public:
     template <typename FunctorInternal>
     void For(int first, int last, int grain, FunctorInternal& fi)
     {
-        switch (this->ActivatedBackend)
-        {
-        case BackendType::STDThread:
-            this->STDThreadBackend->For(first, last, grain, fi);
-            break;
-        case BackendType::TBB:
-            this->TBBBackend->For(first, last, grain, fi);
-            break;
-        }
+#if defined(XSIGMA_ENABLE_TBB)
+        this->TBBBackend->For(first, last, grain, fi);
+#else
+        this->STDThreadBackend->For(first, last, grain, fi);
+#endif
     }
 
     //--------------------------------------------------------------------------------
     template <typename InputIt, typename OutputIt, typename Functor>
     void Transform(InputIt inBegin, InputIt inEnd, OutputIt outBegin, Functor& transform)
     {
-        switch (this->ActivatedBackend)
-        {
-        case BackendType::STDThread:
-            this->STDThreadBackend->Transform(inBegin, inEnd, outBegin, transform);
-            break;
-        case BackendType::TBB:
-            this->TBBBackend->Transform(inBegin, inEnd, outBegin, transform);
-            break;
-        }
+#if defined(XSIGMA_ENABLE_TBB)
+        this->TBBBackend->Transform(inBegin, inEnd, outBegin, transform);
+#else
+        this->STDThreadBackend->Transform(inBegin, inEnd, outBegin, transform);
+#endif
     }
 
     //--------------------------------------------------------------------------------
@@ -120,60 +108,44 @@ public:
     void Transform(
         InputIt1 inBegin1, InputIt1 inEnd, InputIt2 inBegin2, OutputIt outBegin, Functor& transform)
     {
-        switch (this->ActivatedBackend)
-        {
-        case BackendType::STDThread:
-            this->STDThreadBackend->Transform(inBegin1, inEnd, inBegin2, outBegin, transform);
-            break;
-        case BackendType::TBB:
-            this->TBBBackend->Transform(inBegin1, inEnd, inBegin2, outBegin, transform);
-            break;
-        }
+#if defined(XSIGMA_ENABLE_TBB)
+        this->TBBBackend->Transform(inBegin1, inEnd, inBegin2, outBegin, transform);
+#else
+        this->STDThreadBackend->Transform(inBegin1, inEnd, inBegin2, outBegin, transform);
+#endif
     }
 
     //--------------------------------------------------------------------------------
     template <typename Iterator, typename T>
     void Fill(Iterator begin, Iterator end, const T& value)
     {
-        switch (this->ActivatedBackend)
-        {
-        case BackendType::STDThread:
-            this->STDThreadBackend->Fill(begin, end, value);
-            break;
-        case BackendType::TBB:
-            this->TBBBackend->Fill(begin, end, value);
-            break;
-        }
+#if defined(XSIGMA_ENABLE_TBB)
+        this->TBBBackend->Fill(begin, end, value);
+#else
+        this->STDThreadBackend->Fill(begin, end, value);
+#endif
     }
 
     //--------------------------------------------------------------------------------
     template <typename RandomAccessIterator>
     void Sort(RandomAccessIterator begin, RandomAccessIterator end)
     {
-        switch (this->ActivatedBackend)
-        {
-        case BackendType::STDThread:
-            this->STDThreadBackend->Sort(begin, end);
-            break;
-        case BackendType::TBB:
-            this->TBBBackend->Sort(begin, end);
-            break;
-        }
+#if defined(XSIGMA_ENABLE_TBB)
+        this->TBBBackend->Sort(begin, end);
+#else
+        this->STDThreadBackend->Sort(begin, end);
+#endif
     }
 
     //--------------------------------------------------------------------------------
     template <typename RandomAccessIterator, typename Compare>
     void Sort(RandomAccessIterator begin, RandomAccessIterator end, Compare comp)
     {
-        switch (this->ActivatedBackend)
-        {
-        case BackendType::STDThread:
-            this->STDThreadBackend->Sort(begin, end, comp);
-            break;
-        case BackendType::TBB:
-            this->TBBBackend->Sort(begin, end, comp);
-            break;
-        }
+#if defined(XSIGMA_ENABLE_TBB)
+        this->TBBBackend->Sort(begin, end, comp);
+#else
+        this->STDThreadBackend->Sort(begin, end, comp);
+#endif
     }
 
     // disable copying
@@ -216,12 +188,16 @@ private:
    * Max threads number
    */
     int DesiredNumberOfThread = 0;
-/**
- * TBB backend
- */
-#if define(XSIGMA_ENABLE_TBB)
+
+#if defined(XSIGMA_ENABLE_TBB)
+    /**
+   * TBB backend
+   */
     std::unique_ptr<tools_impl<BackendType::TBB>> TBBBackend;
 #else
+    /**
+   * STDThread backend
+   */
     std::unique_ptr<tools_impl<BackendType::STDThread>> STDThreadBackend;
 #endif
 };

@@ -25,6 +25,8 @@
 
 #cmakedefine XSIGMA_ENABLE_CUDA
 
+#cmakedefine XSIGMA_GOOGLE_TEST
+
 #cmakedefine XSIGMA_USE_EXCEPTION_PTR
 
 #cmakedefine XSIGMA_SSE

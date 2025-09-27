@@ -1530,7 +1530,7 @@ XSIGMATEST_VOID(TypedAllocatorTest, AlignmentRequirements)
 
     for (int i = 0; i < 8; ++i)
     {
-        EXPECT_DOUBLE_EQ(aligned_ptr->data[i], i * 1.5);
+        EXPECT_EQ(aligned_ptr->data[i], i * 1.5);
     }
 
     xsigma::allocator_typed::Deallocate(&underlying_alloc, aligned_ptr, 1);
@@ -1658,7 +1658,7 @@ XSIGMATEST_VOID(TypedAllocatorTest, ConstructorDestructorInvocation)
     for (int i = 0; i < 3; ++i)
     {
         EXPECT_EQ(trivial_array[i].x, i);
-        EXPECT_DOUBLE_EQ(trivial_array[i].y, i * 2.5);
+        EXPECT_EQ(trivial_array[i].y, i * 2.5);
     }
 
     xsigma::allocator_typed::Deallocate(&underlying_alloc, trivial_array, 3);
@@ -1699,7 +1699,7 @@ XSIGMATEST_VOID(TypedAllocatorTest, AllocatorInfrastructureIntegration)
 
     for (int i = 0; i < 100; ++i)
     {
-        EXPECT_DOUBLE_EQ(static_cast<double>(bfc_floats[i]), static_cast<double>(i * 0.5f));
+        EXPECT_EQ(static_cast<double>(bfc_floats[i]), static_cast<double>(i * 0.5f));
     }
 
     xsigma::allocator_typed::Deallocate(&bfc_alloc, bfc_floats, 100);

@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: BSD-3-Clause
 #include "util/logger.h"
 
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
 #include <loguru.hpp>
 #endif
+
 #include <array>
+#include <cstdio>
 #include <cstdlib>
 #include <memory>
 #include <mutex>
@@ -20,7 +22,7 @@ namespace xsigma
 class logger::LogScopeRAII::LSInternals
 {
 public:
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
     std::unique_ptr<loguru::LogScopeRAII> Data;
 #endif
 };
@@ -33,17 +35,19 @@ logger::LogScopeRAII::LogScopeRAII(
     unsigned int          lineno,
     const char*           format,
     ...)
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
     : Internals(new LSInternals())
 #endif
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
     va_list vlist;
     va_start(vlist, format);
-    auto result = loguru::vstrprintf(format, vlist);
+    // Use a simple buffer approach instead of vstrprintf
+    char buffer[1024];
+    vsnprintf(buffer, sizeof(buffer), format, vlist);
     va_end(vlist);
     this->Internals->Data = std::make_unique<loguru::LogScopeRAII>(
-        static_cast<loguru::logger_verbosity_enum>(verbosity), fname, lineno, "%s", result.c_str());
+        static_cast<loguru::Verbosity>(verbosity), fname, lineno, "%s", buffer);
 #else
     (void)verbosity;
     (void)fname;
@@ -59,7 +63,7 @@ logger::LogScopeRAII::~LogScopeRAII()
 //=============================================================================
 namespace detail
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
 using scope_pair = std::pair<std::string, std::shared_ptr<loguru::LogScopeRAII>>;
 static std::mutex                                                   g_mutex;
 static std::unordered_map<std::thread::id, std::vector<scope_pair>> g_vectors;
@@ -116,7 +120,7 @@ logger::~logger() = default;
 //------------------------------------------------------------------------------
 void logger::Init(int& argc, char* argv[], const char* verbosity_flag /*= "-v"*/)
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
     if (argc == 0)
     {  // loguru::init can't handle this case -- call the no-arg overload.
         logger::Init();
@@ -126,7 +130,7 @@ void logger::Init(int& argc, char* argv[], const char* verbosity_flag /*= "-v"*/
     loguru::g_preamble_date = false;
     loguru::g_preamble_time = false;
     loguru::g_internal_verbosity =
-        static_cast<loguru::logger_verbosity_enum>(logger::InternalVerbosityLevel);
+        static_cast<loguru::Verbosity>(logger::InternalVerbosityLevel);
 
     const auto current_stderr_verbosity = loguru::g_stderr_verbosity;
     if (loguru::g_internal_verbosity > loguru::g_stderr_verbosity)
@@ -170,8 +174,8 @@ void logger::Init()
 //------------------------------------------------------------------------------
 void logger::SetStderrVerbosity(logger_verbosity_enum level)
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
-    loguru::g_stderr_verbosity = static_cast<loguru::logger_verbosity_enum>(level);
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+    loguru::g_stderr_verbosity = static_cast<loguru::Verbosity>(level);
 #else
     (void)level;
 #endif
@@ -180,8 +184,8 @@ void logger::SetStderrVerbosity(logger_verbosity_enum level)
 //------------------------------------------------------------------------------
 void logger::SetInternalVerbosityLevel(logger_verbosity_enum level)
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
-    loguru::g_internal_verbosity   = static_cast<loguru::logger_verbosity_enum>(level);
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+    loguru::g_internal_verbosity   = static_cast<loguru::Verbosity>(level);
     logger::InternalVerbosityLevel = level;
 #else
     (void)level;
@@ -191,11 +195,11 @@ void logger::SetInternalVerbosityLevel(logger_verbosity_enum level)
 //------------------------------------------------------------------------------
 void logger::LogToFile(const char* path, logger::FileMode filemode, logger_verbosity_enum verbosity)
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
     loguru::add_file(
         path,
         static_cast<loguru::FileMode>(filemode),
-        static_cast<loguru::logger_verbosity_enum>(verbosity));
+        static_cast<loguru::Verbosity>(verbosity));
 #else
     (void)path;
     (void)filemode;
@@ -206,7 +210,7 @@ void logger::LogToFile(const char* path, logger::FileMode filemode, logger_verbo
 //------------------------------------------------------------------------------
 void logger::EndLogToFile(const char* path)
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
     loguru::remove_callback(path);
 #else
     (void)path;
@@ -216,7 +220,7 @@ void logger::EndLogToFile(const char* path)
 //------------------------------------------------------------------------------
 void logger::SetThreadName(const std::string& name)
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
     loguru::set_thread_name(name.c_str());
     // Save threadname so if this is called before `Init`, we can pass the thread
     // name to loguru::init().
@@ -229,7 +233,7 @@ void logger::SetThreadName(const std::string& name)
 //------------------------------------------------------------------------------
 std::string logger::GetThreadName()
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
     char buffer[128];
     loguru::get_thread_name(buffer, 128, false);
     return {buffer};
@@ -240,7 +244,7 @@ std::string logger::GetThreadName()
 
 namespace
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
 struct CallbackBridgeData
 {
     logger::LogHandlerCallbackT   handler;
@@ -300,13 +304,13 @@ void logger::AddCallback(
     logger::CloseHandlerCallbackT on_close,
     logger::FlushHandlerCallbackT on_flush)
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
     auto* callback_data = new CallbackBridgeData{callback, on_close, on_flush, user_data};
     loguru::add_callback(
         id,
         loguru_callback_bridge_handler,
         callback_data,
-        static_cast<loguru::logger_verbosity_enum>(verbosity),
+        static_cast<loguru::Verbosity>(verbosity),
         loguru_callback_bridge_close,
         loguru_callback_bridge_flush);
 #else
@@ -324,7 +328,7 @@ void logger::AddCallback(
 //------------------------------------------------------------------------------
 bool logger::RemoveCallback(const char* id)
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
     return loguru::remove_callback(id);
 #else
     (void)id;
@@ -335,7 +339,7 @@ bool logger::RemoveCallback(const char* id)
 //------------------------------------------------------------------------------
 bool logger::IsEnabled()
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
     return true;
 #else
     return false;
@@ -345,7 +349,7 @@ bool logger::IsEnabled()
 //------------------------------------------------------------------------------
 logger_verbosity_enum logger::GetCurrentVerbosityCutoff()
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
     return static_cast<logger_verbosity_enum>(loguru::current_verbosity_cutoff());
 #else
     return logger_verbosity_enum::
@@ -360,8 +364,8 @@ void logger::Log(
     XSIGMA_UNUSED unsigned int          lineno,
     XSIGMA_UNUSED const char*           txt)
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
-    loguru::log(static_cast<loguru::logger_verbosity_enum>(verbosity), fname, lineno, "%s", txt);
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+    loguru::log(static_cast<loguru::Verbosity>(verbosity), fname, lineno, "%s", txt);
 #else
     (void)verbosity;
     (void)fname;
@@ -378,12 +382,14 @@ void logger::LogF(
     const char*           format,
     ...)
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
     va_list vlist;
     va_start(vlist, format);
-    auto result = loguru::vstrprintf(format, vlist);
+    // Use a simple buffer approach instead of vstrprintf
+    char buffer[1024];
+    vsnprintf(buffer, sizeof(buffer), format, vlist);
     va_end(vlist);
-    logger::Log(verbosity, fname, lineno, result.c_str());
+    logger::Log(verbosity, fname, lineno, buffer);
 #else
     (void)verbosity;
     (void)fname;
@@ -396,13 +402,13 @@ void logger::LogF(
 void logger::StartScope(
     logger_verbosity_enum verbosity, const char* id, const char* fname, unsigned int lineno)
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
     detail::push_scope(
         id,
         verbosity > logger::GetCurrentVerbosityCutoff()
             ? std::make_shared<loguru::LogScopeRAII>()
             : std::make_shared<loguru::LogScopeRAII>(
-                  static_cast<loguru::logger_verbosity_enum>(verbosity), fname, lineno, "%s", id));
+                  static_cast<loguru::Verbosity>(verbosity), fname, lineno, "%s", id));
 #else
     (void)verbosity;
     (void)id;
@@ -414,7 +420,7 @@ void logger::StartScope(
 //------------------------------------------------------------------------------
 void logger::EndScope(const char* id)
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
     detail::pop_scope(id);
 #else
     (void)id;
@@ -430,7 +436,7 @@ void logger::StartScopeF(
     const char*           format,
     ...)
 {
-#if defined(XSIGMA_ENABLE_LOGURU)
+#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
     if (verbosity > logger::GetCurrentVerbosityCutoff())
     {
         detail::push_scope(id, std::make_shared<loguru::LogScopeRAII>());
@@ -439,17 +445,19 @@ void logger::StartScopeF(
     {
         va_list vlist;
         va_start(vlist, format);
-        auto result = loguru::vstrprintf(format, vlist);
+        // Use a simple buffer approach instead of vstrprintf
+        char buffer[1024];
+        vsnprintf(buffer, sizeof(buffer), format, vlist);
         va_end(vlist);
 
         detail::push_scope(
             id,
             std::make_shared<loguru::LogScopeRAII>(
-                static_cast<loguru::logger_verbosity_enum>(verbosity),
+                static_cast<loguru::Verbosity>(verbosity),
                 fname,
                 lineno,
                 "%s",
-                result.c_str()));
+                buffer));
     }
 #else
     (void)verbosity;

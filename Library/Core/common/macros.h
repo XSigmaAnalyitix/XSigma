@@ -53,25 +53,8 @@ inline constexpr size_t XSIGMA_ALIGNMENT = 64;
 #endif
 
 //------------------------------------------------------------------------
-#if defined(_WIN32)
-#define XSIGMA_IMPORT __declspec(dllimport)
-#define XSIGMA_API __declspec(dllexport)
-#define XSIGMA_HIDDEN
-#elif __GNUC__ >= 4
-#define XSIGMA_IMPORT __attribute__((visibility("default")))
-#define XSIGMA_API __attribute__((visibility("default")))
-#define XSIGMA_HIDDEN __attribute__((visibility("hidden")))
-#else
-#define XSIGMA_IMPORT
-#define XSIGMA_API
-#define XSIGMA_HIDDEN
-#endif
-
-#if defined(_WIN32)
-#define XSIGMA_VISIBILITY
-#elif __GNUC__ >= 4
-#define XSIGMA_VISIBILITY __attribute__((visibility("default")))
-#endif
+// DLL Export/Import macros - include from separate export header
+#include "export.h"
 
 //------------------------------------------------------------------------
 #if defined(_MSC_VER)
@@ -265,7 +248,8 @@ using void_t = std::void_t<>;
 #endif
 
 //------------------------------------------------------------------------
-#if XSIGMA_HAVE_CPP_ATTRIBUTE(likely) && XSIGMA_HAVE_CPP_ATTRIBUTE(unlikely)
+// C++20 [[likely]] and [[unlikely]] attributes are only available in C++20 and later
+#if __cplusplus >= 202002L && XSIGMA_HAVE_CPP_ATTRIBUTE(likely) && XSIGMA_HAVE_CPP_ATTRIBUTE(unlikely)
 #define XSIGMA_LIKELY(expr) (expr) [[likely]]
 #define XSIGMA_UNLIKELY(expr) (expr) [[unlikely]]
 #elif defined(__GNUC__) || defined(__ICL) || defined(__clang__)

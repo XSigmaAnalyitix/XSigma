@@ -59,11 +59,22 @@ function(xsigma_module_gtest_executable test_name)
     add_executable(${test_name} ${XSIGMA_GTEST_UNPARSED_ARGUMENTS})
     
     # Link with Google Test and Core library
-    target_link_libraries(${test_name} PRIVATE 
+    target_link_libraries(${test_name} PRIVATE
         XSigma::Core
-        gtest
-        gtest_main
     )
+
+    # Link with Google Test using XSigma aliases if available
+    if(TARGET XSigma::gtest)
+        target_link_libraries(${test_name} PRIVATE XSigma::gtest)
+    elseif(TARGET gtest)
+        target_link_libraries(${test_name} PRIVATE gtest)
+    endif()
+
+    if(TARGET XSigma::gtest_main)
+        target_link_libraries(${test_name} PRIVATE XSigma::gtest_main)
+    elseif(TARGET gtest_main)
+        target_link_libraries(${test_name} PRIVATE gtest_main)
+    endif()
     
     # Set target properties
     set_target_properties(${test_name} PROPERTIES

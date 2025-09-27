@@ -5,15 +5,10 @@
 #pragma once
 
 #include <atomic>
+#include <cstddef>
+#include <cstdint>
 
 #include "common/macros.h"
-#include "xsigma_smp.h"
-
-#define XSIGMA_SMP_MAX_BACKENDS_NB 4
-
-
-#define XSIGMA_SMP_BACKEND_STDTHREAD 1
-#define XSIGMA_SMP_BACKEND_TBB 2
 
 namespace xsigma
 {
@@ -21,16 +16,19 @@ namespace detail
 {
 namespace smp
 {
-enum class BackendType
+
+enum class BackendType : std::uint8_t
 {
-    STDThread  = XSIGMA_SMP_BACKEND_STDTHREAD,
-    TBB        = XSIGMA_SMP_BACKEND_TBB
+    STDThread = 0,
+    TBB       = 1
 };
 
-#if XSIGMA_SMP_DEFAULT_IMPLEMENTATION_STDTHREAD
-const BackendType DefaultBackend = BackendType::STDThread;
-#elif XSIGMA_SMP_DEFAULT_IMPLEMENTATION_TBB
-const BackendType DefaultBackend = BackendType::TBB;
+inline constexpr std::size_t BackendSlotCount = 2;
+
+#if defined(XSIGMA_ENABLE_TBB)
+inline constexpr BackendType DefaultBackend = BackendType::TBB;
+#else
+inline constexpr BackendType DefaultBackend = BackendType::STDThread;
 #endif
 
 template <BackendType Backend>
@@ -111,3 +109,4 @@ using ExecuteFunctorPtrType = void (*)(void*, int, int, int);
 }  // namespace xsigma
 
 /* XSIGMA-HeaderTest-Exclude: tools_impl.h */
+

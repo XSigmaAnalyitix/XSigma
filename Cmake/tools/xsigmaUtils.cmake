@@ -59,6 +59,11 @@ if(NOT INTERN_BUILD_MOBILE)
   cmake_pop_check_state()
 endif()
 
+# ---[ Apply platform-specific optimization flags after compiler validation
+if(COMMAND xsigma_apply_platform_flags)
+    xsigma_apply_platform_flags()
+endif()
+
 # ---[ Check if std::exception_ptr is supported.
 cmake_push_check_state(RESET)
 set(CMAKE_REQUIRED_FLAGS "-std=c++20")

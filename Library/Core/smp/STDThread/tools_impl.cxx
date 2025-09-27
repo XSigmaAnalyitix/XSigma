@@ -76,4 +76,7 @@ bool tools_impl<BackendType::STDThread>::IsParallelScope()
     return thread_pool::GetInstance().IsParallelScope();
 }
 
+// Explicit template instantiation for shared library builds
+template class tools_impl<BackendType::STDThread>;
+
 }  // namespace xsigma::detail::smp

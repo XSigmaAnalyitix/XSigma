@@ -9,6 +9,7 @@
 #include "common/macros.h"
 #include "util/lazy.h"
 #include "util/string_util.h"
+#include "util/logger.h"
 
 #define XSIGMA_STRINGIZE_IMPL(x) #x
 #define XSIGMA_STRINGIZE(x) XSIGMA_STRINGIZE_IMPL(x)

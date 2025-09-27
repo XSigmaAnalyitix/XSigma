@@ -1,0 +1,39 @@
+// This file contains enough suppressions to result in no cppcheck warnings,
+// at least on macOS with cppcheck 1.90 with the flags below.
+
+// To run:
+// cd /path/to/XSIGMA/
+// cppcheck --platform=unspecified --enable=style -q --library=qt --library=posix --library=gnu --library=bsd --library=windows --suppressions-list=CMake/XSIGMAcppcheckSuppressions.txt --template='{id},{file}:{line},{severity},{message}' -j8 -I Common/Core .
+// or
+// cd /path/to/XSIGMA-bin/
+// cppcheck --project=compile_commands.json --platform=unspecified --enable=style -q --library=qt --library=posix --library=gnu --library=bsd --library=windows --suppressions-list=../XSIGMA/CMake/XSIGMAcppcheckSuppressions.txt --template='{id},{file}:{line},{severity},{message}' -j8
+
+// Suppress everything from ThirdParty.
+*:*ThirdParty/*
+*:*Utilities/*
+*:*Parallel/*
+*:*CMake/*
+*:*Wrapping/*
+*:*Core/*
+// If cppcheck itself crashes, well, that's its problem, ignore that.
+cppcheckError
+
+// due to matrix, vector and tensor
+unreadVariable
+
+// avoid message: using std::fill or std::generate algorithm instead of a raw loop
+useStlAlgorithm
+
+shadowFunction
+
+unknownMacro
+
+noExplicitConstructor:Library/Vectorization/terminals/vector.h 
+noExplicitConstructor:Library/Vectorization/terminals/matrix.h
+noExplicitConstructor:Library/Vectorization/terminals/tensor.h 
+duplicateExpression:Library/Market/Testing/Cxx/TestIDs.cxx
+constParameter:Library/Serialization/common/archiver_wrapper.h
+ignoredReturnValue:Library/Vectorization/common/packet.h
+redundantAssignment:Library/Vectorization/Testing/Cxx/TestVector.cxx
+constParameter:Library/Vectorization/common/packet.h
+unusedFunction:Testing/Util/xsigmaTesting.cxx 

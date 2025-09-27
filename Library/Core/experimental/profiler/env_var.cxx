@@ -42,6 +42,7 @@ limitations under the License.
 //#include "tsl/platform/errors.h"
 #include "util/exception.h"
 #include "util/logging.h"
+#include "util/logger.h"
 #include "util/strcat.h"
 #include "util/string_util.h"
 
@@ -158,7 +159,7 @@ bool read_strings_from_env_var(
     std::string str_val;
     XSIGMA_CHECK(read_string_from_env_var(env_var_name, default_val, str_val));
 
-    value = xsigmasys::SystemTools::SplitString(str_val, ',');
+    value = split_string(str_val, {','});
 
     return true;
 }
