@@ -12,15 +12,9 @@ foreach(_test_sources IN ITEMS ${test_sources})
   endif()
 endforeach()
 
-if(XSIGMA_GOOGLE_TEST AND TARGET XSigma::gtest)
+if(XSIGMA_GOOGLE_TEST)
     include(GoogleTest)
     xsigma_module_gtest_executable(CoreCxxTests ${TestFiles})
-
-    # Link with Google Test only if enabled and available
-    target_link_libraries(CoreCxxTests PRIVATE XSigma::gtest)
-    if(TARGET XSigma::gtest_main)
-        target_link_libraries(CoreCxxTests PRIVATE XSigma::gtest_main)
-    endif()
 
     # Add compile definition to indicate Google Test is available
     target_compile_definitions(CoreCxxTests PRIVATE XSIGMA_HAS_GTEST)
@@ -28,14 +22,12 @@ if(XSIGMA_GOOGLE_TEST AND TARGET XSigma::gtest)
 else()
     set(TestSystemInformation_ARGS ${CMAKE_BINARY_DIR})
     set(TestSMP_ARGS
-        --Sequential=$<BOOL:${XSIGMA_SMP_ENABLE_SEQUENTIAL}>
-        --STDThread=$<BOOL:${XSIGMA_SMP_ENABLE_STDTHREAD}>
-        --TBB=$<OR:$<BOOL:${XSIGMA_SMP_ENABLE_TBB}>,$<STREQUAL:"${XSIGMA_SMP_IMPLEMENTATION_TYPE}","TBB">>
-        --OpenMP=$<OR:$<BOOL:${XSIGMA_SMP_ENABLE_OPENMP}>,$<STREQUAL:"${XSIGMA_SMP_IMPLEMENTATION_TYPE}","OpenMP">>)
+        --STDThread=1
+        --TBB=$<BOOL:${XSIGMA_ENABLE_TBB}>)
   
-    xsigma_add_test_cxx(CoreCxxTests tests 
+    xsigma_add_test_cxx(CoreCxxTests tests
     NO_DATA NO_VALID NO_OUTPUT
-    ${TestFiles})
+    main.cxx ${TestFiles})
     xsigma_test_cxx_executable(CoreCxxTests tests)
 
 	# Special test to check whether disabling loguru signal handling, i.e.,

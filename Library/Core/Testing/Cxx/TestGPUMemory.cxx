@@ -1601,7 +1601,7 @@ void test_cuda_caching_allocator_error_handling()
     cuda_caching_allocator allocator(0, 64 * 1024 * 1024);
 
     // Test zero-size allocation
-    ASSERT_ANY_THROW({ void* ptr = allocator.allocate(0); })
+    ASSERT_ANY_THROW({ void* ptr = allocator.allocate(0); });
 
     // Test single allocation/deallocation (double free test disabled to prevent crash)
     void* ptr = allocator.allocate(1024);
@@ -1615,7 +1615,7 @@ void test_cuda_caching_allocator_error_handling()
 
     // Test deallocating unowned pointer
     void* unowned_ptr = malloc(1024);
-    ASSERT_ANY_THROW({ allocator.deallocate(unowned_ptr, 1024); })
+    ASSERT_ANY_THROW({ allocator.deallocate(unowned_ptr, 1024); });
     free(unowned_ptr);
 
     // Test invalid device construction

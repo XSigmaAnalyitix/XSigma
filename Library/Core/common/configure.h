@@ -8,7 +8,6 @@
 
 #include "xsigma_build.h"
 #include "xsigma_features.h"
-#include "xsigma_smp.h"
 #include "xsigma_threads.h"
 #include "xsigma_version_macros.h"
 

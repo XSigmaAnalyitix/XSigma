@@ -11,11 +11,11 @@
 
 #ifdef XSIGMA_ENABLE_CUDA
 #include <cuda_runtime.h>
-#ifdef _WIN32
-// NVML is available on Windows
-#include <nvml.h>
-#define NVML_AVAILABLE
-#endif
+// #ifdef _WIN32
+// // NVML is available on Windows
+// #include <nvml.h>
+// #define NVML_AVAILABLE
+// #endif
 #endif
 
 namespace xsigma

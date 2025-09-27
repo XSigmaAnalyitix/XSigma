@@ -1,0 +1,883 @@
+import os
+import platform
+import subprocess
+import shutil
+import re
+import sys
+from typing import List, Dict, Optional
+import colorama
+from colorama import Fore, Style
+
+# Initialize colorama for cross-platform colored output
+colorama.init()
+
+DEBUG_FLAG = False
+
+def check_dependencies() -> List[str]:
+    """Check if required dependencies are installed."""
+    missing_deps = []
+    
+    try:
+        import psutil
+    except ImportError:
+        missing_deps.append("psutil")
+    
+    # Check for CMake
+    try:
+        subprocess.run(["cmake", "--version"], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        missing_deps.append("CMake")
+    
+    # Check for compiler
+    if platform.system() == "Windows":
+        try:
+            subprocess.run(["clang", "--version"], capture_output=True, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            try:
+                subprocess.run(["cl"], capture_output=True)
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                missing_deps.append("C++ compiler (MSVC or Clang)")
+    elif platform.system() == "Darwin":
+        # Check for Xcode command line tools
+        try:
+            subprocess.run(["xcode-select", "--print-path"], capture_output=True, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            missing_deps.append("Xcode Command Line Tools (run: xcode-select --install)")
+
+        # Check for clang++ (should be available with Xcode tools)
+        try:
+            subprocess.run(["clang++", "--version"], capture_output=True, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            missing_deps.append("C++ compiler (Clang)")
+    else:
+        try:
+            subprocess.run(["clang++", "--version"], capture_output=True, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            try:
+                subprocess.run(["g++", "--version"], capture_output=True, check=True)
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                missing_deps.append("C++ compiler (GCC or Clang)")
+    
+    return missing_deps
+
+def check_xcode_availability() -> bool:
+    """Check if Xcode is available on macOS."""
+    if platform.system() != "Darwin":
+        return False
+
+    try:
+        # Check if xcodebuild is available
+        result = subprocess.run(["xcodebuild", "-version"],
+                              capture_output=True, check=True, text=True)
+        print_status(f"Found Xcode: {result.stdout.strip().split()[1]}", "INFO")
+        return True
+    except subprocess.CalledProcessError as e:
+        stderr_output = e.stderr if isinstance(e.stderr, str) else e.stderr.decode() if e.stderr else ""
+        if "command line tools instance" in stderr_output:
+            print_status("Xcode Command Line Tools found, but full Xcode is required for Xcode generator", "WARNING")
+            print_status("Install Xcode from the App Store or use 'sudo xcode-select -s /Applications/Xcode.app'", "INFO")
+        else:
+            print_status(f"Xcode check failed: {stderr_output.strip()}", "WARNING")
+        return False
+    except FileNotFoundError:
+        print_status("xcodebuild not found - install Xcode or Xcode Command Line Tools", "WARNING")
+        return False
+
+def check_xcode_installation() -> bool:
+    """Check if Xcode app is installed but not configured."""
+    if platform.system() != "Darwin":
+        return False
+
+    xcode_path = "/Applications/Xcode.app"
+    if os.path.exists(xcode_path):
+        print_status(f"Found Xcode at {xcode_path}", "INFO")
+        print_status("Try running: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer", "INFO")
+
+        # Ask user if they want to configure Xcode automatically
+        try:
+            response = input("Would you like to configure Xcode automatically? (y/N): ").strip().lower()
+            if response in ['y', 'yes']:
+                try:
+                    subprocess.run([
+                        "sudo", "xcode-select", "-s",
+                        "/Applications/Xcode.app/Contents/Developer"
+                    ], check=True)
+                    print_status("Xcode configured successfully", "SUCCESS")
+                    return True
+                except subprocess.CalledProcessError as e:
+                    print_status(f"Failed to configure Xcode: {e}", "ERROR")
+        except (KeyboardInterrupt, EOFError):
+            print_status("\nSkipping Xcode configuration", "INFO")
+
+        return True
+    return False
+
+def print_status(message: str, status: str = "INFO", end: str = "\n") -> None:
+    """Print a formatted status message."""
+    status_colors = {
+        "INFO": Fore.BLUE,
+        "SUCCESS": Fore.GREEN,
+        "ERROR": Fore.RED,
+        "WARNING": Fore.YELLOW
+    }
+    color = status_colors.get(status, Fore.WHITE)
+    print(f"{color}[{status}]{Style.RESET_ALL} {message}", end=end)
+
+def get_logical_processor_count():
+    try:
+        import psutil
+
+        return psutil.cpu_count(logical=True)
+    except ImportError:
+        # Fallback methods if psutil is not available
+        try:
+            # Try using os.cpu_count() (available in Python 3.4+)
+            return os.cpu_count()
+        except AttributeError:
+            # For older Python versions
+            import multiprocessing
+
+            return multiprocessing.cpu_count()
+
+
+def debug_print(message):
+    if DEBUG_FLAG:
+        print(message)
+
+
+class XsigmaFlags:
+    OFF = "OFF"
+    ON = "ON"
+
+    def __init__(self, arg_list):
+        self.__initialize_flags()
+        if arg_list:
+            self.__build_cmake_flag()
+            self.__fill_option_flags(arg_list)
+            self.__validate_flags()  # New validation step
+
+    def __initialize_flags(self):
+        self.__key = [
+            "vectorisation",
+            "smp",
+            "tbbm",
+            "ser",
+            "mkl",
+            "numa",
+            "memkind",
+            "mpi",
+            "cuda",
+            "parallel",
+            "static",
+            "clangtidy",
+            "iwyu",
+            "sanitizer",
+            "sanitizer_enum",
+            "valgrind",
+            "coverage",
+            "doc",
+            "sphinx",
+            "benchmark",
+            "gtest",
+            "test",
+            "wheel",
+            "python",
+            "java",
+            "pythondebug",
+            "nologuru",
+            "nonlopt",
+            "noceres",
+            "aad",
+            "cxxstd",  # Added C++ standard support
+        ]
+        self.__description = [
+            "vectorisation type: sse, avx, avx2 or avx512",
+            "smp type: tbb, openmp, stdthread, sequential",
+            "enable tbb memory allocation",
+            "enable serialization",
+            "enable mkl",
+            "enable numa",
+            "enable memkind",
+            "enable mpi",
+            "enable cuda",
+            "parallel",
+            "build shared or static",
+            "clang-tidy: don't treat warnings as errors",
+            "enable iwyu check",
+            "enable sanitizer memory check",
+            "sanitizer type: address, undefined, thread, memory",
+            "enable valgrind memory check",
+            "enable code coverage",
+            "enable code documentation",
+            "enable sphinx documentation",
+            "enable benchmark",
+            "enable gtest",
+            "disable the testing",
+            "enable python wheel",
+            "enable python wrapping",
+            "enable java wrapping",
+            "enable python debug",
+            "set mkl threading from smp type",
+            "disable LOGURU",
+            "disable NLOPT",
+            "disable CERES-SOLVER",
+            "enable AAD",
+            "C++ standard: cxx11, cxx14, cxx17, cxx20, cxx23",  # Added description
+        ]
+
+    def __build_cmake_flag(self):
+        debug_print("Build cmake flag")
+        self.__name = {
+            "python": "XSIGMA_WRAP_PYTHON",
+            "java": "XSIGMA_WRAP_JAVA",
+            "cuda": "XSIGMA_ENABLE_CUDA",
+            "smp": "XSIGMA_SMP_IMPLEMENTATION_TYPE",
+            "tbbm": "XSIGMA_ENABLE_TBB",
+            "ser": "XSIGMA_WRAP_SERIALIZATION",
+            "mkl": "XSIGMA_ENABLE_MKL",
+            "numa": "XSIGMA_ENABLE_NUMA",
+            "memkind": "XSIGMA_ENABLE_MEMKIND",
+            "mpi": "XSIGMA_ENABLE_MPI",
+            "parallel": "XSIGMA_PARALLEL_PROJECTS_BUILD",
+            "vectorisation": "XSIGMA_VECTORIZATION_TYPE",
+            "static": "BUILD_SHARED_LIBS",
+            "clangtidy": "XSIGMA_ENABLE_CLANGTIDY",
+            "iwyu": "XSIGMA_ENABLE_IWYU",
+            "benchmark": "XSIGMA_ENABLE_BENCHMARK",
+            "gtest": "XSIGMA_GOOGLE_TEST",
+            "sanitizer": "XSIGMA_ENABLE_SANITIZER",
+            "sanitizer_enum": "XSIGMA_SANITIZER_TYPE",
+            "valgrind": "XSIGMA_ENABLE_VALGRIND",
+            "coverage": "XSIGMA_ENABLE_COVERAGE",
+            "doc": "XSIGMA_BUILD_DOCUMENTATION",
+            "sphinx": "XSIGMA_BUILD_SPHINX_DOCUMENTATION",
+            "wheel": "XSIGMA_BUILD_WHEEL",
+            "test": "XSIGMA_BUILD_TESTING",
+            "pythondebug": "XSIGMA_WINDOWS_PYTHON_DEBUGGABLE",
+            "javasourceversion": "XSIGMA_JAVA_SOURCE_VERSION",
+            "javatargetversion": "XSIGMA_JAVA_TARGET_VERSION",
+            "mkl_threading": "MKL_THREADING",
+            "mkl_link": "MKL_LINK",
+            "dist": "XSIGMA_DIST_NAME_SUFFIX",
+            "nologuru": "XSIGMA_ENABLE_LOGGING",
+            "nonlopt": "XSIGMA_ENABLE_NLOPT",
+            "noceres": "XSIGMA_ENABLE_CERES",
+            "aad": "XSIGMA_ENABLE_ENZYME",
+            "cxxstd": "XSIGMA_CXX_STANDARD",  # Added C++ standard CMake flag
+        }
+
+    def __fill_option_flags(self, arg_list):
+        debug_print("Fill option flags")
+        self.__value = {}
+
+        if "all" in arg_list:
+            self.__set_all_flags()
+        else:
+            self.__set_default_flags()
+            self.__process_arg_list(arg_list)
+
+    def __set_all_flags(self):
+        self.__value = dict.fromkeys(self.__key, self.ON)
+        self.__value.update(
+            {
+                "vectorisation": "avx2",
+                "smp": "STDThread",
+                "cuda": self.OFF,
+                "sanitizer": self.OFF,
+                "valgrind": self.OFF,
+                "doc": self.OFF,
+                "wheel": self.OFF,
+                "coreinclude": self.OFF,
+                "clangtidy": self.OFF,
+                "javasourceversion": 1.8,
+                "javatargetversion": 1.8,
+                "ceres": self.OFF,
+                "cxxstd": "",  # Default: let CMake decide
+            }
+        )
+
+    def __set_default_flags(self):
+        self.__value = dict.fromkeys(self.__key, self.OFF)
+        self.__value.update(
+            {
+                "vectorisation": "",
+                "static": self.ON,
+                "clangtidy": self.OFF,
+                "test": self.ON,
+                "javasourceversion": 1.8,
+                "javatargetversion": 1.8,
+                "smp": "STDThread",
+                "cxxstd": "",  # Default: let CMake decide
+            }
+        )
+
+    def __process_arg_list(self, arg_list):
+        sanitizer_list = ["address", "undefined", "thread", "memory", "leak"]
+        vectorisation_list = ["sse", "avx", "avx2", "avx512"]
+        SMP_list = ["TBB", "OpenMP", "STDThread", "Sequential"]
+        cxx_std_list = ["cxx17", "cxx20", "cxx23"]  # Added C++ standard list
+        
+        self.__value["mkl_link"] = "static"
+        self.__value["nologuru"] = self.ON
+        self.__value["nonlopt"] = self.ON
+        self.__value["noceres"] = self.ON
+        self.__value["aad"] = self.OFF
+
+        self.builder_suffix = ""
+        for arg in arg_list:
+            if arg == "wheel":
+                self.__value["wheel"] = self.ON
+                self.__value["python"] = self.ON
+                self.builder_suffix += "_wheel"
+            elif arg == "static":
+                self.__value["static"] = self.OFF
+                self.builder_suffix += "_static"
+            elif arg in sanitizer_list:
+                self.__value["sanitizer"] = self.ON
+                self.__value["sanitizer_enum"] = arg
+                self.builder_suffix += f"_sanitizer_{arg}"
+            elif arg == "pythondebug":
+                self.__value["python"] = self.ON
+                self.__value["pythondebug"] = self.ON
+                self.builder_suffix += "_pythondebug"
+            elif arg in vectorisation_list:
+                self.__value["vectorisation"] = arg
+                self.builder_suffix += f"_{arg}"
+            elif any(arg.lower() == item.lower() for item in SMP_list):
+                self.__value["smp"] = self.find_case_insensitive(arg, SMP_list)
+                self.builder_suffix += f"_{self.__value['smp'].lower()}"
+                if self.__value["smp"] == "TBB":
+                    self.__value["mkl_threading"] = "sequential"
+                elif self.__value["smp"] == "OpenMP":
+                    self.__value["mkl_threading"] = "sequential"
+                else:
+                    self.__value["mkl_threading"] = "sequential"
+            elif any(arg.lower() == item.lower() for item in cxx_std_list):
+                # Extract the numeric part (e.g., "cxx17" -> "17")
+                std_version = arg[3:]  # Remove "cxx" prefix
+                self.__value["cxxstd"] = std_version
+                #self.builder_suffix += f"_{arg.lower()}"
+                print_status(f"Setting C++ standard to C++{std_version}", "INFO")
+            elif arg.isdigit():
+                self.__value["javasourceversion"] = arg
+                self.__value["javatargetversion"] = arg
+                self.builder_suffix += f"_java{arg}"
+            elif arg in self.__key:
+                self.__value[arg] = self.ON
+                if arg == "mkl":
+                    self.__value["dist"] = "mkl"
+                if arg == "nonlopt" or arg == "nologuru" or arg == "noceres":
+                    self.__value[arg] = self.OFF
+                if arg != "test" and arg != "build":
+                    self.builder_suffix += f"_{arg}"
+
+    def __validate_flags(self):
+        """Validate flag combinations and warn about potential issues."""
+        if self.__value.get("python") == self.ON and self.__value.get("java") == self.ON:
+            print_status("Python and Java bindings enabled simultaneously - this may increase build time.", "WARNING")
+        
+        if self.__value.get("sanitizer") == self.ON and self.__value.get("valgrind") == self.ON:
+            print_status("Both sanitizer and valgrind enabled - consider using only one.", "WARNING")
+        
+        if self.__value.get("coverage") == self.ON and self.__value.get("test") != self.ON:
+            print_status("Coverage enabled but testing is disabled - enabling tests automatically.", "WARNING")
+            self.__value["test"] = self.ON
+
+        # Validate C++ standard
+        if self.__value.get("cxxstd"):
+            std_version = self.__value["cxxstd"]
+            try:
+                version_num = int(std_version)
+                if version_num < 11 or version_num > 26:  # Reasonable range check
+                    print_status(f"Warning: C++ standard {std_version} may not be supported by your compiler", "WARNING")
+                elif version_num >= 20:
+                    print_status(f"Using modern C++ standard C++{std_version} - ensure your compiler supports it", "INFO")
+            except ValueError:
+                print_status(f"Invalid C++ standard format: {std_version}", "WARNING")
+
+    @staticmethod
+    def find_case_insensitive(element, lst):
+        element_lower = element.lower()
+        return next((item for item in lst if element_lower == item.lower()), None)
+
+    def create_cmake_flags(self, cmake_cmd_flags, build_enum, system):
+        debug_print("Create cmake flags")
+        # First handle build type
+        if self.__value.get("wheel") == self.ON:
+            cmake_cmd_flags.extend([
+                "-DPython3_FIND_STRATEGY=LOCATION",
+                "-DCMAKE_BUILD_TYPE=Release"
+            ])
+            build_enum = "Release"
+            self.__value["test"] = self.OFF
+        else:
+            cmake_cmd_flags.append(f"-DCMAKE_BUILD_TYPE={build_enum}")
+
+        # Add all other CMake flags
+        for key, value in self.__value.items():
+            if key in self.__name:
+                flag_name = self.__name[key]
+                if isinstance(value, bool):
+                    flag_value = "ON" if value else "OFF"
+                else:
+                    flag_value = str(value)
+                
+                # Only add the flag if it has a meaningful value
+                if flag_value and flag_value not in ["", "OFF"]:
+                    cmake_cmd_flags.append(f"-D{flag_name}={flag_value}")
+
+        # Add C++ standard related flags if specified
+        if self.__value.get("cxxstd"):
+            cmake_cmd_flags.extend([
+                "-DCMAKE_CXX_STANDARD_REQUIRED=ON",
+                "-DCMAKE_CXX_EXTENSIONS=OFF"
+            ])
+
+        # Add compilation database generation flag
+        cmake_cmd_flags.append("-DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
+
+    def helper(self):
+        for key, description in zip(self.__key, self.__description):
+            if key == "smp":
+                key = "mp or tbb"
+            elif key == "vectorisation":
+                key = "sse, avx, avx2 or avx512"
+            elif key == "cxxstd":
+                key = "cxx11, cxx14, cxx17, cxx20, cxx23"
+            print(f"{key:<30}{description}")
+
+    def enable_gtest(self):
+        self.__value["gtest"] = self.ON
+
+    def is_gtest(self):
+        return self.__value["gtest"] == self.ON
+
+    def is_coverage(self):
+        return self.__value["coverage"] == self.ON
+
+    def is_valgrind(self):
+        return self.__value["valgrind"] == self.ON
+
+    def is_doc(self):
+        return self.__value["doc"] == self.ON
+
+
+class XsigmaConfiguration:
+    def __init__(self, args_list):
+        # Check dependencies first
+        missing_deps = check_dependencies()
+        if missing_deps:
+            print_status("Missing required dependencies:", "ERROR")
+            for dep in missing_deps:
+                print_status(f"  - {dep}", "ERROR")
+            print_status("Please install missing dependencies and try again.", "ERROR")
+            sys.exit(1)
+        
+        self.__initialize_values()
+        self.__xsigma_flags = XsigmaFlags(args_list)
+        self.__fill_compilation_flags(args_list)
+
+    def __initialize_values(self):
+        self.__value = {
+            "system": platform.system(),
+            "build_folder": "build",
+            "builder": "make" if platform.system() == "Linux" else "",
+            "config": "",
+            "build": "",
+            "test": "",
+            "build_enum": "Release",
+            "cmake_generator": "CodeBlocks - Unix Makefiles",
+            "cmake_cxx_compiler": "",
+            "cmake_c_compiler": "",
+            "compiler_flags": "--debug-trycompile",
+            "verbosity": "",
+            "arg_cmake_verbose": "--loglevel=NOTICE",
+        }
+        print(f"================= {self.__value['system']} platform =================")
+
+    def __fill_compilation_flags(self, args_list):
+        debug_print("Fill Compilation flags")
+        for arg in args_list:
+            self.__process_arg(arg)
+
+    def __process_arg(self, arg):
+        if arg == "ninja":
+            self.__set_ninja_flags()
+        elif arg == "cninja":
+            self.__set_cninja_flags()
+        elif arg == "eninja":
+            self.__set_eninja_flags()
+        elif arg == "xcode":
+            self.__set_xcode_flags()
+        elif self.__is_clang_compiler(arg):
+            self.__set_clang_compiler(arg)
+        elif arg == "clang-cl":
+            self.__value["cmake_cxx_compiler"] = "-DCMAKE_GENERATOR_TOOLSET=ClangCL"
+        elif self.__is_visual_studio(arg):
+            self.__set_visual_studio(arg)
+        elif arg in ["config", "build", "test"]:
+            self.__value[arg] = arg
+        elif arg in ["release", "debug", "relwithdebinfo"]:
+            self.__value["build_enum"] = arg.capitalize()
+        elif arg in ["vv", "v"]:
+            self.__set_verbose_flags()
+
+        if (
+            self.__xsigma_flags.is_coverage()
+            and "clang" in self.__value["cmake_cxx_compiler"].lower()
+        ):
+            self.__xsigma_flags.enable_gtest()
+
+    def __set_ninja_flags(self):
+        self.__value["cmake_generator"] = (
+            "Ninja" if self.__value["system"] == "Linux" else "Ninja"
+        )
+        self.__value["builder"] = "ninja"
+        self.__value["build_folder"] = (
+            f"build_ninja{self.__xsigma_flags.builder_suffix}"
+        )
+
+    def __set_cninja_flags(self):
+        self.__value["cmake_generator"] = "CodeBlocks - Ninja"
+        self.__value["builder"] = "ninja"
+        self.__value["build_folder"] = (
+            f"build_ninja{self.__xsigma_flags.builder_suffix}"
+        )
+
+    def __set_eninja_flags(self):
+        if self.__value["system"] == "Linux":
+            self.__value["cmake_generator"] = "Eclipse CDT4 - Unix Makefiles"
+            self.__value["build_folder"] = "build_eclipse"
+        else:
+            self.__value["cmake_generator"] = "Eclipse CDT4 - Ninja"
+            self.__value["builder"] = "ninja"
+            self.__value["build_folder"] = "build_eclipse_ninja"
+
+    def __set_xcode_flags(self):
+        if self.__value["system"] == "Darwin":
+            if check_xcode_availability():
+                self.__value["cmake_generator"] = "Xcode"
+                self.__value["builder"] = "xcodebuild"
+                self.__value["build_folder"] = (
+                    f"build_xcode{self.__xsigma_flags.builder_suffix}"
+                )
+                # Set Xcode-specific compiler flags
+                self.__value["compiler_flags"] = ""
+                print_status("Using Xcode generator", "SUCCESS")
+            else:
+                print_status("Xcode not found, falling back to Ninja", "WARNING")
+                # Check if Xcode is installed but not configured
+                if check_xcode_installation():
+                    print_status("Xcode appears to be installed but not configured properly", "INFO")
+                self.__set_ninja_flags()
+        else:
+            print_status("Xcode generator is only available on macOS", "WARNING")
+            # Fall back to default generator for non-macOS systems
+            self.__set_ninja_flags()
+
+    def __is_clang_compiler(self, arg):
+        return "clang" in arg and arg not in ["clang-cl", "clangtidy"]
+
+    def __set_clang_compiler(self, arg):
+        self.__value["cmake_c_compiler"] = f"-DCMAKE_C_COMPILER={arg}"
+        self.__value["cmake_cxx_compiler"] = (
+            f"-DCMAKE_CXX_COMPILER={arg.replace('clang', 'clang++')}"
+        )
+
+    def __is_visual_studio(self, arg):
+        return arg in ["vs17", "vs19", "vs22"] and self.__value["system"] == "Windows"
+
+    def __set_visual_studio(self, arg):
+        vs_versions = {
+            "vs17": ("Visual Studio 15 2017 Win64", "build_vs17"),
+            "vs19": ("Visual Studio 16 2019", "build_vs19"),
+            "vs22": ("Visual Studio 17 2022", "build_vs22"),
+        }
+        self.__value["compiler_flags"] = "-A x64"
+        self.__value["cmake_generator"], base_build_folder = vs_versions[arg]
+        self.__value["builder"] = "cmake"
+        self.__value["build_folder"] = (
+            f"{base_build_folder}{self.__xsigma_flags.builder_suffix}"
+        )
+
+    def __set_verbose_flags(self):
+        self.__value["arg_cmake_verbose"] = "--loglevel=VERBOSE"
+        self.__value["verbosity"] = "-VV"
+
+    def config(self, source_path, build_path):
+        if self.__value["config"] != "config":
+            return 0
+
+        print_status("Configuring build...", "INFO")
+        try:
+            build_folder = f"-B {build_path}"
+            source_folder = f"-S {source_path}"
+
+            cmake_cmd = [
+                "cmake",
+                source_folder,
+                build_folder,
+                "-G",
+                self.__value["cmake_generator"],
+                self.__value["arg_cmake_verbose"],
+            ]
+
+            if self.__value["cmake_cxx_compiler"]:
+                cmake_cmd.append(self.__value["cmake_cxx_compiler"])
+            if self.__value["cmake_c_compiler"]:
+                cmake_cmd.append(self.__value["cmake_c_compiler"])
+
+            self.__xsigma_flags.create_cmake_flags(
+                cmake_cmd, self.__value["build_enum"], self.__value["system"]
+            )
+
+            cmake_command = " ".join(cmake_cmd)
+            print(f"CMake command line: {cmake_command}")
+            print("======================================================")
+
+            subprocess.check_call(
+                cmake_cmd, stderr=subprocess.STDOUT, shell=self.__shell_flag()
+            )
+            print_status("Build configured successfully", "SUCCESS")
+
+            # If using Xcode, offer to open the project
+            if self.__value["cmake_generator"] == "Xcode":
+                self.__handle_xcode_project_opening()
+
+        except subprocess.CalledProcessError as e:
+            print_status(f"Configuration failed: {e}", "ERROR")
+            sys.exit(1)
+
+    def build(self):
+        if self.__value["build"] != "build":
+            return 0
+
+        print_status("Building project...", "INFO")
+        try:
+            if self.__value["system"] == "Linux" or self.__value["builder"] == "ninja":
+                n = get_logical_processor_count()
+                cmake_cmd_build = [self.__value["builder"], "-j", str(n)]
+            elif self.__value["builder"] == "xcodebuild":
+                # Xcode build command
+                n = get_logical_processor_count()
+                cmake_cmd_build = [
+                    "xcodebuild",
+                    "-configuration", self.__value["build_enum"],
+                    "-parallelizeTargets",
+                    "-jobs", str(n)
+                ]
+
+                # Add specific target if needed
+                if hasattr(self, '_xcode_target') and self._xcode_target:
+                    cmake_cmd_build.extend(["-target", self._xcode_target])
+                else:
+                    cmake_cmd_build.append("build")
+            elif self.__value["system"] == "Windows":
+                cmake_cmd_build = [
+                    self.__value["builder"],
+                    "--build",
+                    ".",
+                    "--config",
+                    self.__value["build_enum"],
+                ]
+
+            subprocess.check_call(
+                cmake_cmd_build, stderr=subprocess.STDOUT, shell=self.__shell_flag()
+            )
+            print_status("Build completed successfully", "SUCCESS")
+        except subprocess.CalledProcessError as e:
+            print_status(f"Build failed: {e}", "ERROR")
+            sys.exit(1)
+
+    def build_doc(self):
+        if self.__value["builder"] == "ninja" and self.__xsigma_flags.is_doc():
+            cmake_doc_build = ["ninja", "-v", "DoxygenDoc"]
+            return subprocess.check_call(
+                cmake_doc_build, stderr=subprocess.STDOUT, shell=self.__shell_flag()
+            )
+
+    def test(self, source_path, build_path):
+        if self.__value["test"] != "test" or self.__xsigma_flags.is_coverage():
+            return 0
+
+        if self.__xsigma_flags.is_valgrind():
+            return self.__run_valgrind_test(source_path, build_path)
+
+        return self.__run_ctest()
+
+    def __run_valgrind_test(self, source_path, build_path):
+        script_full_path = f"{source_path}/Scripts/valgrind_ctest.sh"
+        return subprocess.call(
+            [script_full_path, build_path],
+            stdin=subprocess.PIPE,
+            shell=self.__shell_flag(),
+        )
+
+    def __run_ctest(self):
+        ctest_cmd = ["ctest"]
+
+        if self.__value["system"] == "Linux":
+            os.chmod("unix_path.sh", 0o755)
+
+        if self.__value["system"] == "Windows":
+            self.__setup_windows_path()
+            if self.__value["builder"] != "ninja":
+                ctest_cmd.extend(["-C", self.__value["build_enum"]])
+
+        # Handle Xcode configuration
+        if self.__value["builder"] == "xcodebuild":
+            ctest_cmd.extend(["-C", self.__value["build_enum"]])
+
+        ctest_cmd.append(self.__value["verbosity"])
+        return subprocess.check_call(
+            ctest_cmd, stderr=subprocess.STDOUT, shell=self.__shell_flag()
+        )
+
+    def __setup_windows_path(self):
+        if self.__value["builder"] != "ninja":
+            path_bat_file = f"windows_path.{self.__value['build_enum']}.bat"
+            subprocess.check_call(path_bat_file)
+        else:
+            subprocess.check_call("windows_path.bat")
+
+    def coverage(self, source_path, build_path):
+        if self.__value["build"] != "build" or not self.__xsigma_flags.is_coverage():
+            return 0
+
+        script_full_path = f"{source_path}/Scripts/compute_code_coverage_locally.sh"
+        dll_info = self.__get_dll_info()
+        gtest = (
+            "gtest"
+            if "clang" in self.__value["cmake_cxx_compiler"].lower()
+            and self.__xsigma_flags.is_gtest()
+            else ""
+        )
+
+        ctest_cmd = [
+            script_full_path,
+            build_path,
+            dll_info["output_dir"],
+            dll_info["suffix"],
+            dll_info["extension"],
+            dll_info["exe_extension"],
+            gtest,
+        ]
+        return subprocess.check_call(
+            ctest_cmd, stderr=subprocess.STDOUT, shell=self.__shell_flag()
+        )
+
+    def __get_dll_info(self):
+        if self.__value["system"] == "Windows":
+            return {
+                "output_dir": "bin",
+                "suffix": "",
+                "extension": (
+                    "d.dll" if self.__value["build_enum"] == "Debug" else ".dll"
+                ),
+                "exe_extension": ".exe",
+            }
+        else:
+            return {
+                "output_dir": "lib",
+                "suffix": "lib",
+                "extension": ".so",
+                "exe_extension": "",
+            }
+
+    def __handle_xcode_project_opening(self):
+        """Handle opening the Xcode project after generation."""
+        try:
+            # Look for the .xcodeproj file
+            xcodeproj_files = [f for f in os.listdir('.') if f.endswith('.xcodeproj')]
+            if xcodeproj_files:
+                project_file = xcodeproj_files[0]
+                print_status(f"Xcode project generated: {project_file}", "SUCCESS")
+
+                # Ask user if they want to open the project
+                try:
+                    response = input("Would you like to open the Xcode project? (y/N): ").strip().lower()
+                    if response in ['y', 'yes']:
+                        subprocess.run(["open", project_file], check=True)
+                        print_status("Xcode project opened", "SUCCESS")
+                except (KeyboardInterrupt, EOFError):
+                    print_status("\nSkipping Xcode project opening", "INFO")
+            else:
+                print_status("No Xcode project file found", "WARNING")
+        except Exception as e:
+            print_status(f"Error handling Xcode project: {e}", "WARNING")
+
+    def __shell_flag(self):
+        return self.__value["system"] == "Windows"
+
+    def move_to_build_folder(self):
+        os.chdir("../..")
+        build_folder = self.__value["build_folder"]
+
+        if os.path.isdir(build_folder) and self.__value["config"] == "config":
+            shutil.rmtree(build_folder, ignore_errors=True)
+
+        if not os.path.isdir(build_folder):
+            os.mkdir(build_folder)
+
+        os.chdir(build_folder)
+        return os.getcwd()
+
+
+def parse_args(args):
+    return [item for arg in args for item in re.split(r"_|\.|\ ", arg.lower())]
+
+
+def main():
+    if len(sys.argv) == 2 and sys.argv[1] == "--help":
+        print_status("PRETORIAN Build Configuration Helper", "INFO")
+        print("\nUsage examples:")
+        print("  1. Development build with Ninja, Clang, and Python:")
+        print("     setup.py config.build.test.ninja.clang.python")
+        print("  2. Release build with Visual Studio 2022:")
+        print("     setup.py config.build.test.vs22.release.python")
+        print("  3. macOS build with Xcode and Python:")
+        print("     setup.py config.build.test.xcode.python")
+        print("  4. macOS build with Xcode, release mode:")
+        print("     setup.py config.build.test.xcode.release.python")
+        print("\nBuild system generators:")
+        print("  ninja     - Ninja build system (fast, cross-platform)")
+        print("  cninja    - CodeBlocks + Ninja (IDE integration)")
+        print("  eninja    - Eclipse + Ninja (IDE integration)")
+        print("  xcode     - Xcode (macOS only, full IDE integration)")
+        print("  vs17/19/22- Visual Studio (Windows only)")
+        print("\nAvailable options:")
+        XsigmaFlags([]).helper()
+        return
+
+    try:
+        arg_list = parse_args(sys.argv[1:])
+        if not arg_list:
+            print_status("No build configuration specified. Use --help for usage information.", "ERROR")
+            sys.exit(1)
+
+        print_status(f"Starting build configuration for {platform.system()}", "INFO")
+        compilation_calc = XsigmaConfiguration(arg_list)
+
+        source_path = os.path.dirname(os.getcwd())
+        build_path = compilation_calc.move_to_build_folder()
+        
+        print_status(f"Build directory: {build_path}", "INFO")
+        compilation_calc.config(source_path, build_path)
+        compilation_calc.build()
+        compilation_calc.build_doc()
+        compilation_calc.test(source_path, build_path)
+        compilation_calc.coverage(source_path, build_path)
+        
+        print_status("Build process completed successfully!", "SUCCESS")
+        
+    except KeyboardInterrupt:
+        print_status("\nBuild process interrupted by user", "WARNING")
+        sys.exit(1)
+    except Exception as e:
+        print_status(f"An unexpected error occurred: {e}", "ERROR")
+        if DEBUG_FLAG:
+            raise
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,239 @@
+# IWYU Mapping/Exclusion File
+# This file defines rules for Include-What-You-Use to handle special cases,
+# system headers, third-party libraries, and project-specific conventions.
+
+# Format Documentation:
+# - include: Maps one header to another
+# - symbol: Maps specific symbols to headers
+# - ref: References another mapping file
+# - private: Marks headers as private (should not be included directly)
+
+[
+  # ============================================================================
+  # Standard Library Mappings (C++17)
+  # ============================================================================
+  
+  # C++ Standard Library - Prefer C++ headers over C headers
+  { include: ["<assert.h>", "public", "<cassert>", "public"] },
+  { include: ["<ctype.h>", "public", "<cctype>", "public"] },
+  { include: ["<errno.h>", "public", "<cerrno>", "public"] },
+  { include: ["<float.h>", "public", "<cfloat>", "public"] },
+  { include: ["<limits.h>", "public", "<climits>", "public"] },
+  { include: ["<locale.h>", "public", "<clocale>", "public"] },
+  { include: ["<math.h>", "public", "<cmath>", "public"] },
+  { include: ["<setjmp.h>", "public", "<csetjmp>", "public"] },
+  { include: ["<signal.h>", "public", "<csignal>", "public"] },
+  { include: ["<stdarg.h>", "public", "<cstdarg>", "public"] },
+  { include: ["<stddef.h>", "public", "<cstddef>", "public"] },
+  { include: ["<stdio.h>", "public", "<cstdio>", "public"] },
+  { include: ["<stdlib.h>", "public", "<cstdlib>", "public"] },
+  { include: ["<string.h>", "public", "<cstring>", "public"] },
+  { include: ["<time.h>", "public", "<ctime>", "public"] },
+  { include: ["<wchar.h>", "public", "<cwchar>", "public"] },
+  { include: ["<wctype.h>", "public", "<cwctype>", "public"] },
+  
+  # C++11/14/17 headers
+  { include: ["<stdint.h>", "public", "<cstdint>", "public"] },
+  { include: ["<inttypes.h>", "public", "<cinttypes>", "public"] },
+  { include: ["<stdbool.h>", "public", "<cstdbool>", "public"] },
+  
+  # Internal STL headers that should map to public interfaces
+  { include: ["<bits/std_abs.h>", "private", "<cstdlib>", "public"] },
+  { include: ["<bits/allocator.h>", "private", "<memory>", "public"] },
+  { include: ["<bits/shared_ptr.h>", "private", "<memory>", "public"] },
+  { include: ["<bits/unique_ptr.h>", "private", "<memory>", "public"] },
+  { include: ["<bits/weak_ptr.h>", "private", "<memory>", "public"] },
+  { include: ["<bits/stl_pair.h>", "private", "<utility>", "public"] },
+  { include: ["<bits/stl_function.h>", "private", "<functional>", "public"] },
+  { include: ["<bits/stl_algo.h>", "private", "<algorithm>", "public"] },
+  { include: ["<bits/stl_algobase.h>", "private", "<algorithm>", "public"] },
+  { include: ["<bits/stl_tree.h>", "private", "<map>", "public"] },
+  { include: ["<bits/stl_map.h>", "private", "<map>", "public"] },
+  { include: ["<bits/stl_set.h>", "private", "<set>", "public"] },
+  { include: ["<bits/stl_multimap.h>", "private", "<map>", "public"] },
+  { include: ["<bits/stl_multiset.h>", "private", "<set>", "public"] },
+  { include: ["<bits/stl_vector.h>", "private", "<vector>", "public"] },
+  { include: ["<bits/stl_deque.h>", "private", "<deque>", "public"] },
+  { include: ["<bits/stl_list.h>", "private", "<list>", "public"] },
+  { include: ["<bits/stl_queue.h>", "private", "<queue>", "public"] },
+  { include: ["<bits/stl_stack.h>", "private", "<stack>", "public"] },
+  { include: ["<bits/unordered_map.h>", "private", "<unordered_map>", "public"] },
+  { include: ["<bits/unordered_set.h>", "private", "<unordered_set>", "public"] },
+  { include: ["<bits/forward_list.h>", "private", "<forward_list>", "public"] },
+  { include: ["<bits/move.h>", "private", "<utility>", "public"] },
+  { include: ["<bits/stringfwd.h>", "private", "<string>", "public"] },
+  { include: ["<bits/basic_string.h>", "private", "<string>", "public"] },
+  { include: ["<bits/ios_base.h>", "private", "<ios>", "public"] },
+  { include: ["<bits/basic_ios.h>", "private", "<ios>", "public"] },
+  { include: ["<bits/stream_iterator.h>", "private", "<iterator>", "public"] },
+  { include: ["<bits/streambuf_iterator.h>", "private", "<iterator>", "public"] },
+  { include: ["<bits/locale_facets.h>", "private", "<locale>", "public"] },
+  { include: ["<bits/codecvt.h>", "private", "<locale>", "public"] },
+  { include: ["<bits/char_traits.h>", "private", "<string>", "public"] },
+  
+  # Experimental headers
+  { include: ["<experimental/optional>", "public", "<optional>", "public"] },
+  { include: ["<experimental/any>", "public", "<any>", "public"] },
+  { include: ["<experimental/string_view>", "public", "<string_view>", "public"] },
+  { include: ["<experimental/filesystem>", "public", "<filesystem>", "public"] },
+  
+  # ============================================================================
+  # System/Platform Headers
+  # ============================================================================
+  
+  # POSIX/Unix headers
+  { include: ["<sys/types.h>", "public", "<cstddef>", "public"] },
+  { include: ["<sys/stat.h>", "public", "<sys/stat.h>", "public"] },
+  { include: ["<unistd.h>", "public", "<unistd.h>", "public"] },
+  { include: ["<fcntl.h>", "public", "<fcntl.h>", "public"] },
+  { include: ["<pthread.h>", "public", "<thread>", "public"] },
+  
+  # Windows headers (if applicable)
+  { include: ["<windows.h>", "public", "<windows.h>", "public"] },
+  { include: ["<winsock2.h>", "public", "<winsock2.h>", "public"] },
+  
+  # macOS/Darwin specific
+  { include: ["<mach/mach.h>", "public", "<mach/mach.h>", "public"] },
+  { include: ["<dispatch/dispatch.h>", "public", "<dispatch/dispatch.h>", "public"] },
+  { include: ["<CoreFoundation/CoreFoundation.h>", "public", "<CoreFoundation/CoreFoundation.h>", "public"] },
+  
+  # ============================================================================
+  # Common Third-Party Libraries
+  # ============================================================================
+  
+  # Boost libraries (add more as needed)
+  { include: ["<boost/shared_ptr.hpp>", "public", "<memory>", "public"] },
+  { include: ["<boost/scoped_ptr.hpp>", "public", "<memory>", "public"] },
+  { include: ["<boost/weak_ptr.hpp>", "public", "<memory>", "public"] },
+  { include: ["<boost/make_shared.hpp>", "public", "<memory>", "public"] },
+  { include: ["<boost/optional.hpp>", "public", "<optional>", "public"] },
+  { include: ["<boost/variant.hpp>", "public", "<variant>", "public"] },
+  { include: ["<boost/any.hpp>", "public", "<any>", "public"] },
+  { include: ["<boost/filesystem.hpp>", "public", "<filesystem>", "public"] },
+  { include: ["<boost/asio.hpp>", "public", "<boost/asio.hpp>", "public"] },
+  { include: ["<boost/thread.hpp>", "public", "<thread>", "public"] },
+  { include: ["<boost/bind.hpp>", "public", "<functional>", "public"] },
+  { include: ["<boost/function.hpp>", "public", "<functional>", "public"] },
+  { include: ["<boost/signals2.hpp>", "public", "<boost/signals2.hpp>", "public"] },
+  { include: ["<boost/property_tree/ptree.hpp>", "public", "<boost/property_tree/ptree.hpp>", "public"] },
+  { include: ["<boost/property_tree/json_parser.hpp>", "public", "<boost/property_tree/json_parser.hpp>", "public"] },
+  
+  # Google Test/Mock
+  { include: ["<gtest/gtest.h>", "public", "<gtest/gtest.h>", "public"] },
+  { include: ["<gmock/gmock.h>", "public", "<gmock/gmock.h>", "public"] },
+  { include: ["\"gtest/gtest.h\"", "public", "<gtest/gtest.h>", "public"] },
+  { include: ["\"gmock/gmock.h\"", "public", "<gmock/gmock.h>", "public"] },
+  
+  # JSON libraries
+  { include: ["<nlohmann/json.hpp>", "public", "<nlohmann/json.hpp>", "public"] },
+  { include: ["<rapidjson/document.h>", "public", "<rapidjson/document.h>", "public"] },
+  { include: ["<rapidjson/writer.h>", "public", "<rapidjson/writer.h>", "public"] },
+  
+  # Logging libraries
+  { include: ["<spdlog/spdlog.h>", "public", "<spdlog/spdlog.h>", "public"] },
+  { include: ["<spdlog/fmt/fmt.h>", "private", "<spdlog/spdlog.h>", "public"] },
+  { include: ["<glog/logging.h>", "public", "<glog/logging.h>", "public"] },
+  
+  # Qt Framework (if using Qt)
+  { include: ["<QtCore>", "public", "<QtCore>", "public"] },
+  { include: ["<QtGui>", "public", "<QtGui>", "public"] },
+  { include: ["<QtWidgets>", "public", "<QtWidgets>", "public"] },
+  { include: ["<QString>", "public", "<QtCore/QString>", "public"] },
+  { include: ["<QObject>", "public", "<QtCore/QObject>", "public"] },
+  { include: ["<QWidget>", "public", "<QtWidgets/QWidget>", "public"] },
+  
+  # OpenGL
+  { include: ["<GL/gl.h>", "public", "<GL/gl.h>", "public"] },
+  { include: ["<GL/glu.h>", "public", "<GL/glu.h>", "public"] },
+  { include: ["<GL/glut.h>", "public", "<GL/glut.h>", "public"] },
+  { include: ["<GL/glew.h>", "public", "<GL/glew.h>", "public"] },
+  
+  # ============================================================================
+  # Symbol-specific mappings
+  # ============================================================================
+  
+  # Common STL symbols that might be ambiguous
+  { symbol: ["std::size_t", "private", "<cstddef>", "public"] },
+  { symbol: ["std::ptrdiff_t", "private", "<cstddef>", "public"] },
+  { symbol: ["std::nullptr_t", "private", "<cstddef>", "public"] },
+  { symbol: ["std::string", "private", "<string>", "public"] },
+  { symbol: ["std::wstring", "private", "<string>", "public"] },
+  { symbol: ["std::vector", "private", "<vector>", "public"] },
+  { symbol: ["std::map", "private", "<map>", "public"] },
+  { symbol: ["std::set", "private", "<set>", "public"] },
+  { symbol: ["std::unordered_map", "private", "<unordered_map>", "public"] },
+  { symbol: ["std::unordered_set", "private", "<unordered_set>", "public"] },
+  { symbol: ["std::shared_ptr", "private", "<memory>", "public"] },
+  { symbol: ["std::unique_ptr", "private", "<memory>", "public"] },
+  { symbol: ["std::weak_ptr", "private", "<memory>", "public"] },
+  { symbol: ["std::make_shared", "private", "<memory>", "public"] },
+  { symbol: ["std::make_unique", "private", "<memory>", "public"] },
+  { symbol: ["std::move", "private", "<utility>", "public"] },
+  { symbol: ["std::forward", "private", "<utility>", "public"] },
+  { symbol: ["std::pair", "private", "<utility>", "public"] },
+  { symbol: ["std::tuple", "private", "<tuple>", "public"] },
+  { symbol: ["std::optional", "private", "<optional>", "public"] },
+  { symbol: ["std::variant", "private", "<variant>", "public"] },
+  { symbol: ["std::any", "private", "<any>", "public"] },
+  { symbol: ["std::function", "private", "<functional>", "public"] },
+  { symbol: ["std::bind", "private", "<functional>", "public"] },
+  { symbol: ["std::ref", "private", "<functional>", "public"] },
+  { symbol: ["std::cref", "private", "<functional>", "public"] },
+  { symbol: ["std::thread", "private", "<thread>", "public"] },
+  { symbol: ["std::mutex", "private", "<mutex>", "public"] },
+  { symbol: ["std::lock_guard", "private", "<mutex>", "public"] },
+  { symbol: ["std::unique_lock", "private", "<mutex>", "public"] },
+  { symbol: ["std::condition_variable", "private", "<condition_variable>", "public"] },
+  { symbol: ["std::atomic", "private", "<atomic>", "public"] },
+  { symbol: ["std::chrono::duration", "private", "<chrono>", "public"] },
+  { symbol: ["std::chrono::time_point", "private", "<chrono>", "public"] },
+  { symbol: ["std::cout", "private", "<iostream>", "public"] },
+  { symbol: ["std::cin", "private", "<iostream>", "public"] },
+  { symbol: ["std::cerr", "private", "<iostream>", "public"] },
+  { symbol: ["std::endl", "private", "<iostream>", "public"] },
+  
+  # Type traits
+  { symbol: ["std::is_same", "private", "<type_traits>", "public"] },
+  { symbol: ["std::enable_if", "private", "<type_traits>", "public"] },
+  { symbol: ["std::conditional", "private", "<type_traits>", "public"] },
+  { symbol: ["std::decay", "private", "<type_traits>", "public"] },
+  { symbol: ["std::remove_reference", "private", "<type_traits>", "public"] },
+  { symbol: ["std::remove_const", "private", "<type_traits>", "public"] },
+  { symbol: ["std::remove_cv", "private", "<type_traits>", "public"] },
+  
+  # ============================================================================
+  # Project-specific exclusions (customize these for your project)
+  # ============================================================================
+  
+  # Example: Exclude all headers from certain directories
+  # { include: ["\"src/internal/*\"", "private", "\"src/public_api.h\"", "public"] },
+  # { include: ["\"third_party/internal/*\"", "private", "\"third_party/public_api.h\"", "public"] },
+  
+  # Example: Map implementation headers to interface headers
+  # { include: ["\"src/impl/foo_impl.h\"", "private", "\"src/foo.h\"", "public"] },
+  # { include: ["\"src/detail/bar_detail.h\"", "private", "\"src/bar.h\"", "public"] },
+  
+  # Example: Exclude generated files
+  # { include: ["\"generated/*.h\"", "private", "\"src/config.h\"", "public"] },
+  # { include: ["\"*.pb.h\"", "private", "\"src/proto_includes.h\"", "public"] },
+  
+  # ============================================================================
+  # Precompiled headers (if using PCH)
+  # ============================================================================
+  
+  # Map common includes to your precompiled header
+  # { include: ["<vector>", "public", "\"pch.h\"", "public"] },
+  # { include: ["<string>", "public", "\"pch.h\"", "public"] },
+  # { include: ["<memory>", "public", "\"pch.h\"", "public"] },
+  # { include: ["<iostream>", "public", "\"pch.h\"", "public"] },
+  
+  # ============================================================================
+  # Additional rules for PRETORIAN project (customize as needed)
+  # ============================================================================
+  
+  # Add your project-specific mappings here
+  # Example patterns:
+  # { include: ["\"pretorian/internal/*\"", "private", "\"pretorian/pretorian.h\"", "public"] },
+  # { include: ["\"pretorian/detail/*\"", "private", "\"pretorian/pretorian.h\"", "public"] },
+  # { include: ["\"pretorian/impl/*\"", "private", "\"pretorian/pretorian.h\"", "public"] },
+]

@@ -5,6 +5,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <iterator>
 #include <memory>
 
@@ -12,11 +13,9 @@
 #include "smp/Common/tools_api.h"  // For GetBackendType(), DefaultBackend
 #include "common/macros.h"
 
-
-#if define(XSIGMA_ENABLE_TBB)
-#include "smp/TBB/thread_local_impl.h"
-#else
 #include "smp/STDThread/thread_local_impl.h"
+#if defined(XSIGMA_ENABLE_TBB)
+#include "smp/TBB/thread_local_impl.h"
 #endif
 
 namespace xsigma
@@ -29,17 +28,9 @@ namespace smp
 template <typename T>
 class thread_local_api
 {
-#if XSIGMA_SMP_ENABLE_SEQUENTIAL
-    using ThreadLocalSequential = thread_local_impl<BackendType::Sequential, T>;
-#endif
-#if XSIGMA_SMP_ENABLE_STDTHREAD
     using ThreadLocalSTDThread = thread_local_impl<BackendType::STDThread, T>;
-#endif
-#if XSIGMA_SMP_ENABLE_TBB
+#if defined(XSIGMA_ENABLE_TBB)
     using ThreadLocalTBB = thread_local_impl<BackendType::TBB, T>;
-#endif
-#if XSIGMA_SMP_ENABLE_OPENMP
-    using ThreadLocalOpenMP = thread_local_impl<BackendType::OpenMP, T>;
 #endif
 
     using ItImplAbstract = typename thread_local_impl_abstract<T>::ItImpl;
@@ -48,41 +39,22 @@ public:
     //--------------------------------------------------------------------------------
     thread_local_api()
     {
-#if XSIGMA_SMP_ENABLE_SEQUENTIAL
-        this->BackendsImpl[static_cast<int>(BackendType::Sequential)] =
-            std::make_unique<ThreadLocalSequential>();
-#endif
-#if XSIGMA_SMP_ENABLE_STDTHREAD
-        this->BackendsImpl[static_cast<int>(BackendType::STDThread)] =
+        this->BackendsImpl[static_cast<std::size_t>(BackendType::STDThread)] =
             std::make_unique<ThreadLocalSTDThread>();
-#endif
-#if XSIGMA_SMP_ENABLE_TBB
-        this->BackendsImpl[static_cast<int>(BackendType::TBB)] = std::make_unique<ThreadLocalTBB>();
-#endif
-#if XSIGMA_SMP_ENABLE_OPENMP
-        this->BackendsImpl[static_cast<int>(BackendType::OpenMP)] =
-            std::make_unique<ThreadLocalOpenMP>();
+#if defined(XSIGMA_ENABLE_TBB)
+        this->BackendsImpl[static_cast<std::size_t>(BackendType::TBB)] =
+            std::make_unique<ThreadLocalTBB>();
 #endif
     }
 
     //--------------------------------------------------------------------------------
     explicit thread_local_api(const T& exemplar)
     {
-#if XSIGMA_SMP_ENABLE_SEQUENTIAL
-        this->BackendsImpl[static_cast<int>(BackendType::Sequential)] =
-            std::make_unique<ThreadLocalSequential>(exemplar);
-#endif
-#if XSIGMA_SMP_ENABLE_STDTHREAD
-        this->BackendsImpl[static_cast<int>(BackendType::STDThread)] =
+        this->BackendsImpl[static_cast<std::size_t>(BackendType::STDThread)] =
             std::make_unique<ThreadLocalSTDThread>(exemplar);
-#endif
-#if XSIGMA_SMP_ENABLE_TBB
-        this->BackendsImpl[static_cast<int>(BackendType::TBB)] =
+#if defined(XSIGMA_ENABLE_TBB)
+        this->BackendsImpl[static_cast<std::size_t>(BackendType::TBB)] =
             std::make_unique<ThreadLocalTBB>(exemplar);
-#endif
-#if XSIGMA_SMP_ENABLE_OPENMP
-        this->BackendsImpl[static_cast<int>(BackendType::OpenMP)] =
-            std::make_unique<ThreadLocalOpenMP>(exemplar);
 #endif
     }
 
@@ -90,14 +62,14 @@ public:
     T& Local()
     {
         BackendType backendType = this->GetSMPBackendType();
-        return this->BackendsImpl[static_cast<int>(backendType)]->Local();
+        return this->BackendsImpl[static_cast<std::size_t>(backendType)]->Local();
     }
 
     //--------------------------------------------------------------------------------
     size_t size()
     {
         BackendType backendType = this->GetSMPBackendType();
-        return this->BackendsImpl[static_cast<int>(backendType)]->size();
+        return this->BackendsImpl[static_cast<std::size_t>(backendType)]->size();
     }
 
     //--------------------------------------------------------------------------------
@@ -161,7 +133,7 @@ public:
     {
         BackendType backendType = this->GetSMPBackendType();
         iterator    iter;
-        iter.ImplAbstract = this->BackendsImpl[static_cast<int>(backendType)]->begin();
+        iter.ImplAbstract = this->BackendsImpl[static_cast<std::size_t>(backendType)]->begin();
         return iter;
     }
 
@@ -170,7 +142,7 @@ public:
     {
         BackendType backendType = this->GetSMPBackendType();
         iterator    iter;
-        iter.ImplAbstract = this->BackendsImpl[static_cast<int>(backendType)]->end();
+        iter.ImplAbstract = this->BackendsImpl[static_cast<std::size_t>(backendType)]->end();
         return iter;
     }
 
@@ -179,8 +151,7 @@ public:
     thread_local_api& operator=(const thread_local_api&) = delete;
 
 private:
-    std::array<std::unique_ptr<thread_local_impl_abstract<T>>, XSIGMA_SMP_MAX_BACKENDS_NB>
-        BackendsImpl;
+    std::array<std::unique_ptr<thread_local_impl_abstract<T>>, BackendSlotCount> BackendsImpl;
 
     //--------------------------------------------------------------------------------
     BackendType GetSMPBackendType()
@@ -195,3 +166,4 @@ private:
 }  // namespace xsigma
 
 /* XSIGMA-HeaderTest-Exclude: thread_local_api.h */
+

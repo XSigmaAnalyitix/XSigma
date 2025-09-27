@@ -7,6 +7,7 @@
 #include <string>
 
 #include "util/exception.h"
+#include "util/logger.h"
 
 #define XSIGMA_CHECK_EQ(a, b) XSIGMA_CHECK((a) == (b))
 

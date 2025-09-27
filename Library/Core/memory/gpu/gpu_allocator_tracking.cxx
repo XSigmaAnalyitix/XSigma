@@ -712,8 +712,12 @@ std::string gpu_allocator_tracking::GenerateGPUReport(
     if (include_cuda_info && device_type_ == device_enum::CUDA)
     {
         report << "CUDA-Specific Information:\n";
+#ifdef XSIGMA_ENABLE_CUDA
         report << "  CUDA Events Initialized: " << (cuda_events_initialized_ ? "Yes" : "No")
                << "\n";
+#else
+        report << "  CUDA Events Initialized: No (CUDA disabled)\n";
+#endif
         report << "  Enhanced Tracking: " << (enhanced_tracking_enabled_ ? "Enabled" : "Disabled")
                << "\n";
         report << "  Bandwidth Tracking: " << (bandwidth_tracking_enabled_ ? "Enabled" : "Disabled")
