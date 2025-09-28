@@ -59,22 +59,22 @@
  */
 
 // Unsigned integer maximum values
-static const uint8_t  kuint8max  = static_cast<uint8_t>(0xFF);         ///< Max value for uint8_t
-static const uint16_t kuint16max = static_cast<uint16_t>(0xFFFF);      ///< Max value for uint16_t
-static const uint32_t kuint32max = static_cast<uint32_t>(0xFFFFFFFF);  ///< Max value for uint32_t
-static const uint64_t kuint64max =
+XSIGMA_UNUSED static const uint8_t  kuint8max  = static_cast<uint8_t>(0xFF);         ///< Max value for uint8_t
+XSIGMA_UNUSED static const uint16_t kuint16max = static_cast<uint16_t>(0xFFFF);      ///< Max value for uint16_t
+XSIGMA_UNUSED static const uint32_t kuint32max = static_cast<uint32_t>(0xFFFFFFFF);  ///< Max value for uint32_t
+XSIGMA_UNUSED static const uint64_t kuint64max =
     static_cast<uint64_t>(0XFFFFFFFFFFFFFFFFULL);  ///< Max value for uint64_t
 
 // Signed integer minimum and maximum values
-static const int8_t  kint8min  = static_cast<int8_t>(~0x7F);         ///< Min value for int8_t
-static const int8_t  kint8max  = static_cast<int8_t>(0x7F);          ///< Max value for int8_t
-static const int16_t kint16min = static_cast<int16_t>(~0x7FFF);      ///< Min value for int16_t
-static const int16_t kint16max = static_cast<int16_t>(0x7FFF);       ///< Max value for int16_t
-static const int32_t kint32min = static_cast<int32_t>(~0x7FFFFFFF);  ///< Min value for int32_t
-static const int32_t kint32max = static_cast<int32_t>(0x7FFFFFFF);   ///< Max value for int32_t
-static const int64_t kint64min =
+XSIGMA_UNUSED static const int8_t  kint8min  = static_cast<int8_t>(~0x7F);         ///< Min value for int8_t
+XSIGMA_UNUSED static const int8_t  kint8max  = static_cast<int8_t>(0x7F);          ///< Max value for int8_t
+XSIGMA_UNUSED static const int16_t kint16min = static_cast<int16_t>(~0x7FFF);      ///< Min value for int16_t
+XSIGMA_UNUSED static const int16_t kint16max = static_cast<int16_t>(0x7FFF);       ///< Max value for int16_t
+XSIGMA_UNUSED static const int32_t kint32min = static_cast<int32_t>(~0x7FFFFFFF);  ///< Min value for int32_t
+XSIGMA_UNUSED static const int32_t kint32max = static_cast<int32_t>(0x7FFFFFFF);   ///< Max value for int32_t
+XSIGMA_UNUSED static const int64_t kint64min =
     static_cast<int64_t>(~0X7FFFFFFFFFFFFFFFLL);  ///< Min value for int64_t
-static const int64_t kint64max =
+XSIGMA_UNUSED static const int64_t kint64max =
     static_cast<int64_t>(0X7FFFFFFFFFFFFFFFLL);  ///< Max value for int64_t
 
 // =============================================================================
@@ -1258,7 +1258,7 @@ size_t FloatToBuffer(float value, char* buffer)
     // larger than the precision we asked for.
     XSIGMA_CHECK_DEBUG(snprintf_result > 0 && snprintf_result < kFastToBufferSize);
 
-    float parsed_value;
+    float parsed_value = std::strtof(buffer, nullptr);
     if (parsed_value != value)
     {
         snprintf_result = snprintf(buffer, kFastToBufferSize, "%.*g", FLT_DIG + 3, value);

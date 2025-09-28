@@ -10,11 +10,6 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static build for third-party librari
 # Option to use external libraries instead of bundled ones
 option(XSIGMA_ENABLE_EXTERNAL "Use external copies of third party libraries by default" OFF)
 
-# Disable warnings for third-party libraries
-if(XSIGMA_COMPILER_GCC OR XSIGMA_COMPILER_CLANG)
-    set(THIRD_PARTY_CXX_FLAGS "-w")
-endif()
-
 # Configure Visual Studio folder structure to match file system
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -106,20 +101,8 @@ function(add_third_party_library name)
     # Use bundled version
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${name}/CMakeLists.txt")
         message(STATUS "Using bundled ${name}")
-
-        # Save current flags
-        set(SAVED_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-
-        # Apply third-party flags
-        if(DEFINED THIRD_PARTY_CXX_FLAGS)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${THIRD_PARTY_CXX_FLAGS}")
-        endif()
-
         # Add the library
         add_subdirectory(${name} ${CMAKE_CURRENT_BINARY_DIR}/${name}_build)
-
-        # Restore flags
-        set(CMAKE_CXX_FLAGS ${SAVED_CXX_FLAGS})
     else()
         message(WARNING "Third-party library ${name} not found in ${CMAKE_CURRENT_SOURCE_DIR}/${name}")
     endif()
@@ -234,9 +217,6 @@ if(TARGET gtest_main)
 endif()
 if(TARGET gmock)
     set_target_properties(gmock PROPERTIES FOLDER "ThirdParty/googletest")
-endif()
-if(TARGET gmock_main)
-    set_target_properties(gmock_main PROPERTIES FOLDER "ThirdParty/googletest")
 endif()
 if(TARGET gmock_main)
     set_target_properties(gmock_main PROPERTIES FOLDER "ThirdParty/googletest")

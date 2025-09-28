@@ -1,3 +1,7 @@
+if(NOT XSIGMA_ENABLE_NUMA)
+    return()
+endif()
+
 if(UNIX)
   find_package(Numa)
   if(NUMA_FOUND)

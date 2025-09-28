@@ -126,7 +126,7 @@ public:
     static constexpr size_t kNumSlotsPerBlockForTesting = Block::kNumSlots;
 
     blocked_queue_base()
-        : start_block_(new Block{/*start=*/0, /*next=*/nullptr}),
+        : start_block_(new Block{/*start=*/0, /*next=*/nullptr, /*slots=*/{}}),
           start_(start_block_->start),
           end_block_(start_block_),
           end_(end_block_->start)
@@ -152,7 +152,7 @@ public:
         slot.emplace(std::move(element));
         if XSIGMA_LIKELY (end - end_block_->start == Block::kNumSlots)
         {
-            auto* new_block = new Block{/*start=*/end, /*next=*/nullptr};
+            auto* new_block = new Block{/*start=*/end, /*next=*/nullptr, /*slots=*/{}};
             end_block_      = (end_block_->next = new_block);
         }
         set_end(end);  // Write index after contents.

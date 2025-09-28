@@ -120,11 +120,11 @@ public:
     multi_threader();
 
     /**
-     * @brief Destructor
-     * 
+     * @brief Virtual destructor
+     *
      * Cleans up all thread-related resources including mutexes and active flags.
      */
-    ~multi_threader();
+    virtual ~multi_threader();
 
     /**
      * @brief Thread information structure passed to thread functions

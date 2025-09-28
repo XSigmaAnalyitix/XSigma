@@ -139,7 +139,7 @@ bool host_tracer::collect_data(x_space* space)
     {
         return true;
     }
-    xplane* plane = find_or_add_mutable_plane_with_name(space, kHostThreadsPlaneName);
+    XSIGMA_UNUSED xplane* plane = find_or_add_mutable_plane_with_name(space, kHostThreadsPlaneName);
 
     //convert_complete_events_to_xplane(start_timestamp_ns_, std::exchange(events_, {}), plane);
 

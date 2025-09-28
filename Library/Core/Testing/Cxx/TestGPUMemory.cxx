@@ -1123,7 +1123,7 @@ void test_updated_allocator_integration()
             XSIGMA_LOG_INFO("Device type checking successful");
 
             // Test GPU support availability
-            [[maybe_unused]] bool has_gpu = has_gpu_support();
+            XSIGMA_UNUSED bool has_gpu = has_gpu_support();
             XSIGMA_LOG_INFO("GPU support available: " << (has_gpu ? "Yes" : "No"));
         }
 

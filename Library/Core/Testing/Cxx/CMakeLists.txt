@@ -20,6 +20,7 @@ target_compile_definitions(CoreCxxTests PRIVATE XSIGMA_GOOGLE_TEST)
 target_link_libraries(CoreCxxTests PRIVATE gtest gtest_main XSigma::Core ${XSIGMA_CUDA_LIBRARIES})
 target_compile_definitions(CoreCxxTests PRIVATE -DUSE_GTEST)
 target_compile_definitions(CoreCxxTests PRIVATE -D_VARIADIC_MAX=10)
+set_target_properties(CoreCxxTests PROPERTIES FOLDER "Tests")
 
 # Apply XSigma output directory configuration
 if(COMMAND xsigma_set_target_output_directories)

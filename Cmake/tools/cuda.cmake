@@ -1,3 +1,7 @@
+if(NOT XSIGMA_ENABLE_CUDA)
+    return()
+endif()
+
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
     message(STATUS "CUDA: Using Clang as host compiler ${CMAKE_CXX_COMPILER}")
     set(CMAKE_CUDA_HOST_COMPILER "${CMAKE_CXX_COMPILER}")

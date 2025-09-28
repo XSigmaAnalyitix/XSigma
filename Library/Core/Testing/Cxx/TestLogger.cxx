@@ -27,7 +27,7 @@
 
 namespace
 {
-void log_handler(void* user_data, const xsigma::logger::Message& message)
+XSIGMA_UNUSED void log_handler(void* user_data, const xsigma::logger::Message& message)
 {
     auto* lines = reinterpret_cast<std::string*>(user_data);
     (*lines) += "\n";

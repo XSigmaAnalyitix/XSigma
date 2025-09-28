@@ -238,9 +238,6 @@ if(XSIGMA_ENABLE_CUDA)
     target_link_libraries(Core PRIVATE ${XSIGMA_CUDA_LIBRARIES})
 endif()
 
-
-
-
 # Install targets
 install(TARGETS Core
     EXPORT XSigmaTargets

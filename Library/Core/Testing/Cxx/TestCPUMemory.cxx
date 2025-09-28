@@ -437,7 +437,7 @@ XSIGMATEST_VOID(TrackingAllocatorTest, BasicTracking)
         10,
         false,
         std::move(base_allocator),
-        std::move(util::make_ptr_unique_mutable<NoopRounder>()),
+        util::make_ptr_unique_mutable<NoopRounder>(),
         "base_pool");
 
     // Create tracking allocator (use pointer due to protected destructor)
@@ -487,7 +487,7 @@ XSIGMATEST_VOID(TypedAllocatorTest, BasicTypedAllocation)
         10,
         false,
         std::move(base_allocator),
-        std::move(util::make_ptr_unique_mutable<NoopRounder>()),
+        util::make_ptr_unique_mutable<NoopRounder>(),
         "typed_pool");
 
     // Test allocation of simple types
@@ -542,7 +542,7 @@ XSIGMATEST_VOID(TypedAllocatorTest, OverflowProtection)
         10,
         false,
         std::move(base_allocator),
-        std::move(util::make_ptr_unique_mutable<NoopRounder>()),
+        util::make_ptr_unique_mutable<NoopRounder>(),
         "overflow_pool");
 
     // Test allocation that would overflow size_t
@@ -582,7 +582,7 @@ XSIGMATEST_VOID(AllocatorTest, StressTest)
         50,
         false,
         std::move(base_allocator),
-        std::move(util::make_ptr_unique_mutable<NoopRounder>()),
+        util::make_ptr_unique_mutable<NoopRounder>(),
         "stress_pool");
 
     const int    num_threads            = 4;
@@ -647,7 +647,7 @@ XSIGMATEST_VOID(AllocatorTest, ErrorHandling)
         10,
         false,
         std::move(base_allocator),
-        std::move(util::make_ptr_unique_mutable<NoopRounder>()),
+        util::make_ptr_unique_mutable<NoopRounder>(),
         "error_pool");
 
     // Test null pointer deallocation (should not crash)
@@ -689,7 +689,7 @@ XSIGMATEST_VOID(AllocatorTest, MemoryLeakDetection)
         10,
         false,
         std::move(base_allocator),
-        std::move(util::make_ptr_unique_mutable<NoopRounder>()),
+        util::make_ptr_unique_mutable<NoopRounder>(),
         "leak_pool");
     auto allocator_tracking = new xsigma::allocator_tracking(pool, true);
 
@@ -736,7 +736,7 @@ XSIGMATEST_VOID(AllocatorTest, StatisticsAndMonitoring)
         10,
         false,
         std::move(base_allocator),
-        std::move(util::make_ptr_unique_mutable<NoopRounder>()),
+        util::make_ptr_unique_mutable<NoopRounder>(),
         "stats_pool");
     auto allocator_tracking = new xsigma::allocator_tracking(pool, true);
 

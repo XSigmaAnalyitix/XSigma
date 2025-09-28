@@ -632,7 +632,7 @@ uint64_t GetDevicePlaneFingerprint(const xplane& plane)
     if (ordered_module_fps.empty())
         return 0ULL;
     uint64_t output = 0ULL;
-    for (const auto& fp : ordered_module_fps)
+    for (XSIGMA_UNUSED const auto& fp : ordered_module_fps)
     {
         output = 0;
         //FingerprintCat64(output, fp);
@@ -652,12 +652,12 @@ std::optional<xevent_visitor> XEventContextTracker::GetContainingEvent(const tim
             return current_event;
         }
     }
-    for (int i = current_index_ + 1; i < line_->events_size(); ++i)
+    for (int i = current_index_ + 1; i < static_cast<int>(line_->events_size()); ++i)
     {
         xevent_visitor current_event(plane_, line_, &line_->events(i));
-        if (current_event.timestamp_ps() > event.end_ps())
+        if (static_cast<uint64_t>(current_event.timestamp_ps()) > event.end_ps())
             break;
-        if (current_event.end_timestamp_ps() < event.begin_ps())
+        if (static_cast<uint64_t>(current_event.end_timestamp_ps()) < event.begin_ps())
             continue;
         current_index_ = i;
         if (current_event.get_timespan().includes(event))
@@ -681,12 +681,12 @@ std::optional<xevent_visitor> XEventContextTracker::GetOverlappingEvent(const ti
             return current_event;
         }
     }
-    for (int i = current_index_ + 1; i < line_->events_size(); ++i)
+    for (int i = current_index_ + 1; i < static_cast<int>(line_->events_size()); ++i)
     {
         xevent_visitor current_event(plane_, line_, &line_->events(i));
-        if (current_event.timestamp_ps() > event.end_ps())
+        if (static_cast<uint64_t>(current_event.timestamp_ps()) > event.end_ps())
             break;
-        if (current_event.end_timestamp_ps() < event.begin_ps())
+        if (static_cast<uint64_t>(current_event.end_timestamp_ps()) < event.begin_ps())
             continue;
         current_index_ = i;
         if (current_event.get_timespan().overlaps(event))
@@ -739,10 +739,10 @@ void AggregateXPlane(const xplane& full_trace, xplane& aggregated_trace)
                 [&](xevent_visitor event)
                 {
                     timespan timespan = GetEventTimespan(event);
-                    first_op_start_ps = first_op_start_ps <= event.timestamp_ps()
+                    first_op_start_ps = first_op_start_ps <= static_cast<uint64_t>(event.timestamp_ps())
                                             ? first_op_start_ps
                                             : timespan.begin_ps();
-                    last_op_end_ps    = last_op_end_ps >= event.end_timestamp_ps() ? last_op_end_ps
+                    last_op_end_ps    = last_op_end_ps >= static_cast<uint64_t>(event.end_timestamp_ps()) ? last_op_end_ps
                                                                                    : timespan.end_ps();
                     const auto& group_stat = event.get_stat(StatType::kGroupId);
                     int64_t     group_id   = group_stat.has_value()
@@ -796,7 +796,7 @@ void AggregateXPlane(const xplane& full_trace, xplane& aggregated_trace)
                 xevent_builder aggregated_event = aggregated_line.add_event(event_metadata);
                 aggregated_event.SetNumOccurrences(event_stat.stat.count());
                 aggregated_event.SetDurationPs(event_stat.stat.sum());
-                if (group_id != std::numeric_limits<uint64_t>::max())
+                if (static_cast<uint64_t>(group_id) != std::numeric_limits<uint64_t>::max())
                 {
                     aggregated_event.add_stat_value(*kGroupId, group_id);
                 }

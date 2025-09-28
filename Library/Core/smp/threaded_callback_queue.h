@@ -104,10 +104,17 @@ public:
     public:
         /**
          * @brief Default constructor
-         * 
+         *
          * Initializes a future in the CONSTRUCTING state with no dependencies.
          */
         xsigmaSharedFutureBase() : NumberOfPriorSharedFuturesRemaining(0), Status(CONSTRUCTING) {}
+
+        /**
+         * @brief Virtual destructor
+         *
+         * Ensures proper cleanup when derived classes are destroyed through base pointer.
+         */
+        virtual ~xsigmaSharedFutureBase() = default;
 
         /**
      * Blocks current thread until the task associated with this future has terminated.
