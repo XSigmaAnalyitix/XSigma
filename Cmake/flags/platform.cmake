@@ -95,9 +95,16 @@ else()
     message(STATUS "XSigma: Configuring GCC/Clang optimizations...")
 
     # Base optimization flags for GCC/Clang
-    set(XSIGMA_GNU_BASE_FLAGS
-        "-fPIC -fvisibility=hidden -fvisibility-inlines-hidden"
-    )
+    # Note: -fPIC is not supported on Windows even with Clang targeting MSVC
+    if(WIN32)
+        set(XSIGMA_GNU_BASE_FLAGS
+            "-fvisibility=hidden -fvisibility-inlines-hidden"
+        )
+    else()
+        set(XSIGMA_GNU_BASE_FLAGS
+            "-fPIC -fvisibility=hidden -fvisibility-inlines-hidden"
+        )
+    endif()
 
     # Performance optimization flags
     set(XSIGMA_GNU_PERF_FLAGS
@@ -255,8 +262,11 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:__cplusplus /utf-8")
 else()
     # Apply only essential GCC/Clang flags that won't break compiler tests
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+    # Note: -fPIC is not supported on Windows even with Clang targeting MSVC
+    if(NOT WIN32)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+    endif()
 endif()
 
 # Function to apply platform flags after compiler validation
