@@ -1,3 +1,7 @@
+if(NOT XSIGMA_ENABLE_VALGRIND)
+    return()
+endif()
+
 # XSigma Valgrind Configuration
 find_program(CMAKE_MEMORYCHECK_COMMAND valgrind)
 message("--Executing test suite with Valgrind (${CMAKE_MEMORYCHECK_COMMAND})")

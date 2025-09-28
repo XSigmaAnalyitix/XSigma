@@ -1,3 +1,7 @@
+if(NOT XSIGMA_ENABLE_IWYU)
+    return()
+endif()
+
 find_program(iwyu_path NAMES include-what-you-use iwyu)
 if(iwyu_path)
   message("IWYU found: ${iwyu_path}")

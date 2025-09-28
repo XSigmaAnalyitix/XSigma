@@ -107,7 +107,7 @@ void testStringConcatenation()
     auto result2 = to_string(42);
     // Should handle numeric types
 
-    auto result3 = to_string();
+    XSIGMA_UNUSED auto result3 = to_string();
     // Should handle empty case
 }
 

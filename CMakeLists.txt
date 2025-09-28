@@ -68,6 +68,7 @@ set(XSIGMA_SANITIZER_TYPE
         CACHE STRING "The sanitizer to use. Options are address, undefined, thread, memory, leak")
 
 set_property(CACHE XSIGMA_SANITIZER_TYPE PROPERTY STRINGS address undefined thread memory leak)
+option(XSIGMA_ENABLE_CPPCHECK "Enable cppcheck" OFF)
 
 # Vectorization options
 set(XSIGMA_VECTORIZATION_TYPE
@@ -118,18 +119,25 @@ option(XSIGMA_BUILD_SHARED_LIBS "Build shared libraries" ON)
 set(BUILD_SHARED_LIBS ${XSIGMA_BUILD_SHARED_LIBS})
 
 # Include necessary CMake modules
-#include(CheckCXXSourceCompiles)
-#include(CheckCXXSourceRuns)
-#include(CheckSymbolExists)
+include(CheckCXXSourceCompiles)
+include(CheckCXXSourceRuns)
+include(CheckSymbolExists)
 
 include(build_type)
-include(outputDirectories)  # Configure output directories early
 include(checks)
+include(xsigmaUtils)
 include(platform)
-# CUDA Configuration
-if(XSIGMA_ENABLE_CUDA)
+
+# Configure optional features
 include(cuda)
-endif()
+include(mkl)
+include(numa)
+include(iwyu)
+include(clangTidy)
+include(coverage)
+include(xsigmaSanitize)
+include(memcheckValgrind)
+include(cppcheck)
 
 # Create build interface target for common settings
 add_library(xsigmabuild INTERFACE)
@@ -143,38 +151,12 @@ if(DEFINED XSIGMA_LINKER_FLAGS_COMMON)
     target_link_options(xsigmabuild INTERFACE ${XSIGMA_LINKER_FLAGS_COMMON})
 endif()
 
-# Include utility functions and configurations
-# Vectorization is handled by the existing vectorization detection in xsigmaUtils.cmake
-include(xsigmaUtils)
 
-# Configure optional features
-if(XSIGMA_ENABLE_MKL)
-    include(mkl)
-endif()
 
-if(XSIGMA_ENABLE_NUMA)
-    include(numa)
-endif()
 
-if(XSIGMA_ENABLE_IWYU)
-    include(iwyu)
-endif()
-
-if(XSIGMA_ENABLE_CLANGTIDY)
-    include(clangTidy)
-endif()
-
-if(XSIGMA_ENABLE_COVERAGE)
-    include(coverage)
-endif()
-
-if(XSIGMA_ENABLE_SANITIZER)
-    include(xsigmaSanitize)
-endif()
-
-if(XSIGMA_ENABLE_VALGRIND)
-    include(memcheckValgrind)
-endif()
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${XSIGMA_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${XSIGMA_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${XSIGMA_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
 
 # Configure testing
 if(XSIGMA_BUILD_TESTING STREQUAL "ON" OR XSIGMA_BUILD_TESTING STREQUAL "WANT")

@@ -1,3 +1,7 @@
+if(NOT XSIGMA_ENABLE_CPPCHECK)
+    return()
+endif()
+
 find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck)
 
 if(NOT CMAKE_CXX_CPPCHECK)

@@ -1,3 +1,7 @@
+if(NOT XSIGMA_ENABLE_MKL)
+    return()
+endif()
+
 # MKL for Matrix Operations - Must be set BEFORE find_package(Ceres)
 find_package(MKL REQUIRED)
 include_directories("${MKL_ROOT}/include")

@@ -495,7 +495,7 @@ bool test_thread_safety()
         for (int t = 0; t < num_threads; ++t)
         {
             threads.emplace_back(
-                [&session, t, operations_per_thread, &completed_operations]()
+                [t, &completed_operations, operations_per_thread]()
                 {
                     for (int i = 0; i < operations_per_thread; ++i)
                     {

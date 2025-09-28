@@ -1,3 +1,7 @@
+if(NOT XSIGMA_ENABLE_COVERAGE)
+    return()
+endif()
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
                                               "AppleClang")
   set(CMAKE_COMPILER_IS_CLANGXX 1)

@@ -1,3 +1,6 @@
+if(NOT XSIGMA_ENABLE_CLANGTIDY)
+    return()
+endif()
 
 # XSigma ClangTidy Configuration
 find_program(

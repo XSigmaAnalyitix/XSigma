@@ -408,7 +408,7 @@ public:
      * **Future**: May be optimized to use size/alignment hints
      */
     void deallocate_raw(
-        void* ptr, [[maybe_unused]] size_t alignment, [[maybe_unused]] size_t num_bytes) override
+        void* ptr, XSIGMA_UNUSED size_t alignment, XSIGMA_UNUSED size_t num_bytes) override
     {
         // Currently identical to single-parameter version
         // Future optimization could use num_bytes hint to avoid GetAllocatedSize call
@@ -646,7 +646,7 @@ public:
      * **Thread Safety**: Thread-safe creation
      * **Use Cases**: BFC allocator backend, memory pool management
      */
-    sub_allocator* CreateSubAllocator([[maybe_unused]] int numa_node) override
+    sub_allocator* CreateSubAllocator(XSIGMA_UNUSED int numa_node) override
     {
         return new CPUSubAllocator(std::make_unique<CPUAllocator>());
     }
@@ -712,7 +712,7 @@ private:
          * **Profiling**: Integrated with trace system
          * **Size Hint**: num_bytes parameter currently unused
          */
-        void Free(void* ptr, [[maybe_unused]] size_t num_bytes) override
+        void Free(void* ptr, XSIGMA_UNUSED size_t num_bytes) override
         {
             xsigma::trace_me traceme("CPUSubAllocator::Free");
             allocator_cpu_->deallocate_raw(ptr);

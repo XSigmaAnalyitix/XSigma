@@ -74,7 +74,7 @@ public:
     /// this object.
     XSIGMA_API const char* what() const noexcept override;
 
-    // const void* caller() const noexcept { return caller_; }
+    const void* caller() const noexcept { return caller_; }
 
     /// Returns only the error message string, without source location.
     /// The returned pointer is invalidated if you call add_context() on
@@ -351,14 +351,14 @@ namespace details
         return true;                                                                        \
     }()
 #else
-#define _XSIGMA_WARN_ONCE(...)                                           \
-    static const auto XSIGMA_ANONYMOUS_VARIABLE(xsigma_warn_once_) = [&] \
-    {                                                                    \
-        xsigma::Warning::warn(                                           \
-            {__func__, __FILE__, static_cast<int>(__LINE__)},            \
-            xsigma::to_string(__VA_ARGS__),                              \
-            false);                                                      \
-        return true;                                                     \
+#define _XSIGMA_WARN_ONCE(...)                                                     \
+    XSIGMA_UNUSED static const auto XSIGMA_ANONYMOUS_VARIABLE(xsigma_warn_once_) = [&] \
+    {                                                                              \
+        xsigma::Warning::warn(                                                     \
+            {__func__, __FILE__, static_cast<int>(__LINE__)},                      \
+            xsigma::to_string(__VA_ARGS__),                                        \
+            false);                                                                \
+        return true;                                                               \
     }()
 #endif
 

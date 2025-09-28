@@ -1601,7 +1601,7 @@ public:
 
     inline V& at(const K& key) { return this->find(key)->second; }
 
-    const bool contains(const K& key) const { return this->find(key) != this->end(); }
+    bool contains(const K& key) const { return this->find(key) != this->end(); }
 
     using Table::emplace;
     std::pair<typename Table::iterator, bool> emplace()
@@ -1711,7 +1711,7 @@ public:
         return Table::emplace(std::move(arg));
     }
 
-    const bool contains(const key_type& key) const { return this->find(key) != this->end(); }
+    bool contains(const key_type& key) const { return this->find(key) != this->end(); }
 
     friend bool operator==(const flat_hash_set& lhs, const flat_hash_set& rhs)
     {

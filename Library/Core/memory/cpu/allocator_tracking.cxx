@@ -41,7 +41,7 @@ allocator_tracking::allocator_tracking(
     Allocator* allocator, bool track_sizes, bool enable_enhanced_tracking)
     : allocator_(allocator),
       track_sizes_locally_(
-          track_sizes && !allocator_->TracksAllocationSizes() || enable_enhanced_tracking),
+          (track_sizes && !allocator_->TracksAllocationSizes()) || enable_enhanced_tracking),
       next_allocation_id_(0),
       enhanced_tracking_enabled_(enable_enhanced_tracking)
 {
@@ -85,22 +85,23 @@ void* allocator_tracking::allocate_raw(
     auto end_time = std::chrono::steady_clock::now();
     auto duration_us =
         std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+    auto duration_us_unsigned = static_cast<uint64_t>(std::max(0LL, duration_us));
 
     // Update timing statistics
     timing_stats_.total_allocations.fetch_add(1, std::memory_order_relaxed);
-    timing_stats_.total_alloc_time_us.fetch_add(duration_us, std::memory_order_relaxed);
+    timing_stats_.total_alloc_time_us.fetch_add(duration_us_unsigned, std::memory_order_relaxed);
 
     // Update min/max timing
     auto current_min = timing_stats_.min_alloc_time_us.load(std::memory_order_relaxed);
-    while (duration_us < current_min && !timing_stats_.min_alloc_time_us.compare_exchange_weak(
-                                            current_min, duration_us, std::memory_order_relaxed))
+    while (duration_us_unsigned < current_min && !timing_stats_.min_alloc_time_us.compare_exchange_weak(
+                                            current_min, duration_us_unsigned, std::memory_order_relaxed))
     {
         // Retry if another thread updated min_alloc_time_us
     }
 
     auto current_max = timing_stats_.max_alloc_time_us.load(std::memory_order_relaxed);
-    while (duration_us > current_max && !timing_stats_.max_alloc_time_us.compare_exchange_weak(
-                                            current_max, duration_us, std::memory_order_relaxed))
+    while (duration_us_unsigned > current_max && !timing_stats_.max_alloc_time_us.compare_exchange_weak(
+                                            current_max, duration_us_unsigned, std::memory_order_relaxed))
     {
         // Retry if another thread updated max_alloc_time_us
     }
@@ -323,22 +324,23 @@ void allocator_tracking::deallocate_raw(void* ptr)
     auto end_time = std::chrono::steady_clock::now();
     auto duration_us =
         std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+    auto duration_us_unsigned = static_cast<uint64_t>(std::max(0LL, duration_us));
 
     // Update timing statistics
     timing_stats_.total_deallocations.fetch_add(1, std::memory_order_relaxed);
-    timing_stats_.total_dealloc_time_us.fetch_add(duration_us, std::memory_order_relaxed);
+    timing_stats_.total_dealloc_time_us.fetch_add(duration_us_unsigned, std::memory_order_relaxed);
 
     // Update min/max timing
     auto current_min = timing_stats_.min_dealloc_time_us.load(std::memory_order_relaxed);
-    while (duration_us < current_min && !timing_stats_.min_dealloc_time_us.compare_exchange_weak(
-                                            current_min, duration_us, std::memory_order_relaxed))
+    while (duration_us_unsigned < current_min && !timing_stats_.min_dealloc_time_us.compare_exchange_weak(
+                                            current_min, duration_us_unsigned, std::memory_order_relaxed))
     {
         // Retry if another thread updated min_dealloc_time_us
     }
 
     auto current_max = timing_stats_.max_dealloc_time_us.load(std::memory_order_relaxed);
-    while (duration_us > current_max && !timing_stats_.max_dealloc_time_us.compare_exchange_weak(
-                                            current_max, duration_us, std::memory_order_relaxed))
+    while (duration_us_unsigned > current_max && !timing_stats_.max_dealloc_time_us.compare_exchange_weak(
+                                            current_max, duration_us_unsigned, std::memory_order_relaxed))
     {
         // Retry if another thread updated max_dealloc_time_us
     }
