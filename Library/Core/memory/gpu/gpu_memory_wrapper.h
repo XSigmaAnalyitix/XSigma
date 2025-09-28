@@ -545,14 +545,14 @@ public:
 #ifdef XSIGMA_ENABLE_CUDA
             if (device_type == device_enum::CUDA)
             {
-                cudaError_t result = cudaSetDevice(device_index);
-                if (result != cudaSuccess)
+                cudaError_t cuda_result = cudaSetDevice(device_index);
+                if (cuda_result != cudaSuccess)
                 {
                     throw std::runtime_error(
-                        "Failed to set CUDA device: " + std::string(cudaGetErrorString(result)));
+                        "Failed to set CUDA device: " + std::string(cudaGetErrorString(cuda_result)));
                 }
-                result = cudaMalloc(reinterpret_cast<void**>(&ptr), bytes);
-                if (result != cudaSuccess)
+                cuda_result = cudaMalloc(reinterpret_cast<void**>(&ptr), bytes);
+                if (cuda_result != cudaSuccess)
                 {
                     throw std::bad_alloc();
                 }
@@ -568,14 +568,14 @@ public:
 #ifdef XSIGMA_ENABLE_CUDA
             if (device_type == device_enum::CUDA)
             {
-                cudaError_t result = cudaSetDevice(device_index);
-                if (result != cudaSuccess)
+                cudaError_t cuda_result = cudaSetDevice(device_index);
+                if (cuda_result != cudaSuccess)
                 {
                     throw std::runtime_error(
-                        "Failed to set CUDA device: " + std::string(cudaGetErrorString(result)));
+                        "Failed to set CUDA device: " + std::string(cudaGetErrorString(cuda_result)));
                 }
-                result = cudaMalloc(reinterpret_cast<void**>(&ptr), bytes);
-                if (result != cudaSuccess)
+                cuda_result = cudaMalloc(reinterpret_cast<void**>(&ptr), bytes);
+                if (cuda_result != cudaSuccess)
                 {
                     throw std::bad_alloc();
                 }

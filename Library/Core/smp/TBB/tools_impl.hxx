@@ -61,7 +61,7 @@ class FuncCall
 public:
     void operator()(const tbb::blocked_range<int>& r) const { o.Execute(r.begin(), r.end()); }
 
-    FuncCall(T& _o) : o(_o) {}
+    explicit FuncCall(T& _o) : o(_o) {}
 };
 
 //--------------------------------------------------------------------------------
