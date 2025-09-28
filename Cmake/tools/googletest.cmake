@@ -8,7 +8,7 @@ endif()
 set(XSIGMA_GOOGLETEST_INCLUDED TRUE)
 
 # Only proceed if Google Test is enabled
-if(NOT XSIGMA_GOOGLE_TEST AND NOT XSIGMA_ENABLE_BENCHMARK)
+if(NOT XSIGMA_ENABLE_GTEST AND NOT XSIGMA_ENABLE_BENCHMARK)
     return()
 endif()
 
@@ -48,24 +48,40 @@ if(TARGET gtest)
     set_target_properties(gtest PROPERTIES
         COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=0"
     )
+    # Apply XSigma output directory configuration
+    if(COMMAND xsigma_set_target_output_directories)
+        xsigma_set_target_output_directories(gtest)
+    endif()
 endif()
 
 if(TARGET gtest_main)
     set_target_properties(gtest_main PROPERTIES
         COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=0"
     )
+    # Apply XSigma output directory configuration
+    if(COMMAND xsigma_set_target_output_directories)
+        xsigma_set_target_output_directories(gtest_main)
+    endif()
 endif()
 
 if(TARGET gmock)
     set_target_properties(gmock PROPERTIES
         COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=0"
     )
+    # Apply XSigma output directory configuration
+    if(COMMAND xsigma_set_target_output_directories)
+        xsigma_set_target_output_directories(gmock)
+    endif()
 endif()
 
 if(TARGET gmock_main)
     set_target_properties(gmock_main PROPERTIES
         COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=0"
     )
+    # Apply XSigma output directory configuration
+    if(COMMAND xsigma_set_target_output_directories)
+        xsigma_set_target_output_directories(gmock_main)
+    endif()
 endif()
 
 # Create XSigma aliases for Google Test targets

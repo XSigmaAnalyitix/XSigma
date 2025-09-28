@@ -16,9 +16,7 @@
 [submodule "ThirdParty/mimalloc"]
 	path = ThirdParty/mimalloc
 	url = https://github.com/microsoft/mimalloc.git
-[submodule "ThirdParty/tbb"]
-	path = ThirdParty/tbb
-	url = https://github.com/oneapi-src/oneTBB.git
+
 [submodule "ThirdParty/benchmark"]
 	path = ThirdParty/benchmark
 	url = https://github.com/google/benchmark.git

@@ -34,7 +34,7 @@ XSIGMATEST(Core, Exception)
 
     ASSERT_ANY_THROW({ XSIGMA_CHECK(false, "XSIGMA_CHECK: Should throw"); });
 
-#ifdef XSIGMA_GOOGLE_TEST
+#ifdef XSIGMA_ENABLE_GTEST
 
     //fixme: ASSERT_ANY_THROW({ XSIGMA_THROW("XSIGMA_THROW: should throw"); });
 

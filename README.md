@@ -112,7 +112,7 @@ XSigma uses a **conditional compilation pattern** where each library is controll
 
 | Library | Option | Description | Target Alias |
 |---------|--------|-------------|--------------|
-| magic_enum | `XSIGMA_ENABLE_MAGIC_ENUM=ON` | Enum reflection | `XSigma::magic_enum` |
+| magic_enum | `XSIGMA_ENABLE_MAGICENUM=ON` | Enum reflection | `XSigma::magic_enum` |
 | loguru | `XSIGMA_ENABLE_LOGURU=ON` | Lightweight logging | `XSigma::loguru` |
 
 ### Optional Libraries (Disabled by Default)
@@ -121,7 +121,7 @@ XSigma uses a **conditional compilation pattern** where each library is controll
 |---------|--------|-------------|--------------|
 | TBB | `XSIGMA_ENABLE_TBB=OFF` | Threading Building Blocks | `XSigma::tbb` |
 | mimalloc | `XSIGMA_ENABLE_MIMALLOC=OFF` | High-performance allocator | `XSigma::mimalloc` |
-| Google Test | `XSIGMA_GOOGLE_TEST=OFF` | Testing framework | `XSigma::gtest` |
+| Google Test | `XSIGMA_ENABLE_GTEST=OFF` | Testing framework | `XSigma::gtest` |
 | Benchmark | `XSIGMA_ENABLE_BENCHMARK=OFF` | Microbenchmarking | `XSigma::benchmark` |
 
 ### Dependency Management Pattern
