@@ -24,7 +24,7 @@ git submodule add https://github.com/fmtlib/fmt.git ThirdParty/fmt
 # cpuinfo - CPU feature detection library (XSIGMA_ENABLE_CPUINFO=ON)
 git submodule add https://github.com/pytorch/cpuinfo.git ThirdParty/cpuinfo
 
-# magic_enum - Static reflection for enums in C++ (XSIGMA_ENABLE_MAGIC_ENUM=ON)
+# magic_enum - Static reflection for enums in C++ (XSIGMA_ENABLE_MAGICENUM=ON)
 git submodule add https://github.com/Neargye/magic_enum.git ThirdParty/magic_enum
 
 # loguru - Lightweight C++ logging library (XSIGMA_ENABLE_LOGURU=ON)
@@ -43,7 +43,7 @@ git submodule add https://github.com/microsoft/mimalloc.git ThirdParty/mimalloc
 # Google Benchmark - Microbenchmarking library (when XSIGMA_ENABLE_BENCHMARK=ON)
 git submodule add https://github.com/google/benchmark.git ThirdParty/benchmark
 
-# Google Test - C++ testing framework (when XSIGMA_GOOGLE_TEST=ON)
+# Google Test - C++ testing framework (when XSIGMA_ENABLE_GTEST=ON)
 git submodule add https://github.com/google/googletest.git ThirdParty/googletest
 ```
 
@@ -86,7 +86,7 @@ This will attempt to find external versions using `find_package()` before fallin
 ### magic_enum
 - **Purpose**: Static reflection for enums
 - **License**: MIT
-- **CMake Option**: `XSIGMA_ENABLE_MAGIC_ENUM` (default: ON)
+- **CMake Option**: `XSIGMA_ENABLE_MAGICENUM` (default: ON)
 - **CMake Target**: `XSigma::magic_enum`
 - **Compile Definition**: `XSIGMA_HAS_MAGIC_ENUM`
 - **Usage**: Enum to string conversion, reflection
@@ -126,7 +126,7 @@ This will attempt to find external versions using `find_package()` before fallin
 ### Google Test
 - **Purpose**: C++ testing framework
 - **License**: BSD 3-Clause
-- **CMake Option**: `XSIGMA_GOOGLE_TEST` (default: OFF)
+- **CMake Option**: `XSIGMA_ENABLE_GTEST` (default: OFF)
 - **CMake Targets**: `XSigma::gtest`, `XSigma::gtest_main`
 - **Compile Definition**: `XSIGMA_HAS_GTEST`
 - **Usage**: Unit testing
@@ -143,5 +143,5 @@ The third-party libraries are configured to:
 
 - All libraries are optional and can be disabled by not adding their submodules
 - The build system will warn if a required library is missing
-- External libraries take precedence when `XSIGMA_USE_EXTERNAL=ON`
+- External libraries take precedence when `XSIGMA_ENABLE_EXTERNAL=ON`
 - Some libraries may have additional dependencies that need to be satisfied

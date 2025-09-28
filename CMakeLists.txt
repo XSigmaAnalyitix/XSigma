@@ -58,7 +58,7 @@ set(XSIGMA_BUILD_TESTING
     CACHE STRING "Build module testing directories")
 set_property(CACHE XSIGMA_BUILD_TESTING PROPERTY STRINGS "ON;OFF;WANT")
 option(XSIGMA_ENABLE_BENCHMARK "Enable google benchmark" ON)
-option(XSIGMA_GOOGLE_TEST "Enable google test" ON)
+option(XSIGMA_ENABLE_GTEST "Enable google test" ON)
 
 option(XSIGMA_ENABLE_VALGRIND "Execute test suite with Valgrind" OFF)
 option(XSIGMA_ENABLE_COVERAGE "Build XSIGMA with coverage" OFF)
@@ -85,15 +85,15 @@ cmake_dependent_option(XSIGMA_USE_HIP "Support HIP backend accelerator" OFF
 # - cpuinfo: CPU feature detection library
 
 # Optional third-party library options
-option(XSIGMA_USE_EXTERNAL "Use external copies of third party libraries by default" OFF)
-option(XSIGMA_ENABLE_MAGIC_ENUM "Enable magic_enum static reflection for enums." ON)
-mark_as_advanced(XSIGMA_ENABLE_MAGIC_ENUM)
+option(XSIGMA_ENABLE_EXTERNAL "Use external copies of third party libraries by default" OFF)
+option(XSIGMA_ENABLE_MAGICENUM "Enable magic_enum static reflection for enums." ON)
+mark_as_advanced(XSIGMA_ENABLE_MAGICENUM)
 
 option(XSIGMA_ENABLE_LOGURU "Enable loguru lightweight C++ logging library." ON)
 mark_as_advanced(XSIGMA_ENABLE_LOGURU)
 
 # TBB backend temporarily disabled (incomplete implementation)
-option(XSIGMA_ENABLE_TBB "Enable Intel TBB (Threading Building Blocks) support." ON)
+option(XSIGMA_ENABLE_TBB "Enable Intel TBB (Threading Building Blocks) support." OFF)
 mark_as_advanced(XSIGMA_ENABLE_TBB)
 
 option(XSIGMA_ENABLE_MIMALLOC "Enable Microsoft mimalloc high-performance memory allocator support." ON)
@@ -123,6 +123,7 @@ set(BUILD_SHARED_LIBS ${XSIGMA_BUILD_SHARED_LIBS})
 #include(CheckSymbolExists)
 
 include(build_type)
+include(outputDirectories)  # Configure output directories early
 include(checks)
 include(platform)
 # CUDA Configuration
@@ -145,9 +146,6 @@ endif()
 # Include utility functions and configurations
 # Vectorization is handled by the existing vectorization detection in xsigmaUtils.cmake
 include(xsigmaUtils)
-
-# Include testing utilities
-include(xsigmaTestUtils)
 
 # Configure optional features
 if(XSIGMA_ENABLE_MKL)
@@ -184,7 +182,7 @@ if(XSIGMA_BUILD_TESTING STREQUAL "ON" OR XSIGMA_BUILD_TESTING STREQUAL "WANT")
     include(CTest)
 
     # Include Google Test if enabled
-    if(XSIGMA_GOOGLE_TEST OR XSIGMA_ENABLE_BENCHMARK)
+    if(XSIGMA_ENABLE_GTEST OR XSIGMA_ENABLE_BENCHMARK)
         include(googletest)
     endif()
 endif()

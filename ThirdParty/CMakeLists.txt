@@ -1,5 +1,6 @@
 # Third-party dependencies for XSigma
 cmake_minimum_required(VERSION 3.16)
+message(STATUS "DEBUG: Processing ThirdParty/CMakeLists.txt")
 
 # Force static libraries for third-party dependencies (except TBB)
 # Save the current BUILD_SHARED_LIBS setting
@@ -7,7 +8,7 @@ set(_SAVED_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static build for third-party libraries" FORCE)
 
 # Option to use external libraries instead of bundled ones
-option(XSIGMA_USE_EXTERNAL "Use external copies of third party libraries by default" OFF)
+option(XSIGMA_ENABLE_EXTERNAL "Use external copies of third party libraries by default" OFF)
 
 # Disable warnings for third-party libraries
 if(XSIGMA_COMPILER_GCC OR XSIGMA_COMPILER_CLANG)
@@ -46,24 +47,7 @@ set(INSTALL_GTEST OFF CACHE BOOL "Disable Google Test install" FORCE)
 set(gtest_build_samples OFF CACHE BOOL "Disable Google Test samples" FORCE)
 set(gtest_build_tests OFF CACHE BOOL "Disable Google Test tests" FORCE)
 
-# TBB-specific options
-set(TBB_TEST OFF CACHE BOOL "Disable TBB tests" FORCE)
-set(TBB_EXAMPLES OFF CACHE BOOL "Disable TBB examples" FORCE)
-set(TBB_STRICT OFF CACHE BOOL "Disable TBB strict mode" FORCE)
-set(TBB_SANITIZE OFF CACHE BOOL "Disable TBB sanitizers" FORCE)
-# Force TBB to build as shared library regardless of global BUILD_SHARED_LIBS setting
-set(TBB_BUILD_SHARED ON CACHE BOOL "Build TBB as shared library" FORCE)
-set(TBB_BUILD_STATIC OFF CACHE BOOL "Disable TBB static library" FORCE)
-# Configure TBB build type based on current configuration
-# Note: TBB will build in the same configuration as the main project
-# but we can optimize Release builds for better performance
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(TBB_BUILD_TYPE Release CACHE STRING "TBB Release build" FORCE)
-elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(TBB_BUILD_TYPE Debug CACHE STRING "TBB Debug build" FORCE)
-else()
-    set(TBB_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "TBB build type matches project" FORCE)
-endif()
+
 
 # Google Benchmark-specific options
 set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable benchmark tests" FORCE)
@@ -111,7 +95,7 @@ function(add_third_party_library name)
     set_property(GLOBAL PROPERTY XSIGMA_${name}_PROCESSED TRUE)
 
     # Try to find external library first if requested
-    if(XSIGMA_USE_EXTERNAL)
+    if(XSIGMA_ENABLE_EXTERNAL)
         find_package(${TPL_EXTERNAL_NAME} QUIET)
         if(${TPL_EXTERNAL_NAME}_FOUND OR ${name}_FOUND)
             message(STATUS "Using external ${name}")
@@ -131,6 +115,7 @@ function(add_third_party_library name)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${THIRD_PARTY_CXX_FLAGS}")
         endif()
 
+        # Add the library
         add_subdirectory(${name} ${CMAKE_CURRENT_BINARY_DIR}/${name}_build)
 
         # Restore flags
@@ -151,8 +136,8 @@ if(NOT DEFINED XSIGMA_ENABLE_CPUINFO)
     set(XSIGMA_ENABLE_CPUINFO ON CACHE BOOL "Enable cpuinfo library")
 endif()
 
-if(NOT DEFINED XSIGMA_ENABLE_MAGIC_ENUM)
-    set(XSIGMA_ENABLE_MAGIC_ENUM ON CACHE BOOL "Enable magic_enum library")
+if(NOT DEFINED XSIGMA_ENABLE_MAGICENUM)
+    set(XSIGMA_ENABLE_MAGICENUM ON CACHE BOOL "Enable magic_enum library")
 endif()
 
 if(NOT DEFINED XSIGMA_ENABLE_LOGURU)
@@ -179,7 +164,7 @@ endif()
 
 # magic_enum - Static reflection for enums in C++
 add_third_party_library(magic_enum
-    CONDITION XSIGMA_ENABLE_MAGIC_ENUM
+    CONDITION XSIGMA_ENABLE_MAGICENUM
 )
 if(TARGET magic_enum)
     set_target_properties(magic_enum PROPERTIES FOLDER "ThirdParty/magic_enum")
@@ -195,46 +180,26 @@ endif()
 
 # TBB - Intel Threading Building Blocks (conditional) - Force shared library build
 if(XSIGMA_ENABLE_TBB)
-    # Try to find external TBB first if requested
-    if(XSIGMA_USE_EXTERNAL)
-        find_package(TBB QUIET)
-        if(TBB_FOUND)
-            message(STATUS "Using external TBB")
+    # Use our custom FindTBB.cmake
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/Cmake/packages")
+    find_package(TBB REQUIRED)
+    if(TBB_FOUND)
+        message(STATUS "Using external TBB from: ${TBB_INCLUDE_DIR}")
+        message(STATUS "TBB libraries: ${TBB_LIBRARIES}")
+
+        # Ensure TBB targets have proper output directory configuration
+        if(TARGET TBB::tbb AND COMMAND xsigma_set_target_output_directories)
+            xsigma_set_target_output_directories(TBB::tbb)
         endif()
-    endif()
-
-    # Use bundled TBB if external not found or not requested
-    if(NOT TBB_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tbb/CMakeLists.txt")
-        message(STATUS "Using bundled TBB (building as shared library)")
-
-        # Save current settings
-        set(SAVED_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
-        set(SAVED_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-        set(SAVED_BUILD_TYPE ${CMAKE_BUILD_TYPE})
-
-        # Force TBB to build as shared library in current build mode
-        set(BUILD_SHARED_LIBS ON)
-        # TBB will build in the same configuration as the main project
-
-        # Apply third-party flags
-        if(DEFINED THIRD_PARTY_CXX_FLAGS)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${THIRD_PARTY_CXX_FLAGS}")
+        if(TARGET TBB::tbbmalloc AND COMMAND xsigma_set_target_output_directories)
+            xsigma_set_target_output_directories(TBB::tbbmalloc)
         endif()
-
-        add_subdirectory(tbb ${CMAKE_CURRENT_BINARY_DIR}/tbb_build)
-
-        # Restore settings
-        set(BUILD_SHARED_LIBS ${SAVED_BUILD_SHARED_LIBS})
-        set(CMAKE_CXX_FLAGS ${SAVED_CXX_FLAGS})
-        set(CMAKE_BUILD_TYPE ${SAVED_BUILD_TYPE} CACHE STRING "Restore original build type" FORCE)
-
-        if(TARGET tbb)
-            set_target_properties(tbb PROPERTIES FOLDER "ThirdParty/tbb")
-            set_target_properties(tbbmalloc PROPERTIES FOLDER "ThirdParty/tbb")
-            set_target_properties(tbbmalloc_proxy PROPERTIES FOLDER "ThirdParty/tbb")
+        if(TARGET TBB::tbb12 AND COMMAND xsigma_set_target_output_directories)
+            xsigma_set_target_output_directories(TBB::tbb12)
         endif()
-    elseif(NOT TBB_FOUND)
-        message(WARNING "TBB requested but not found in ${CMAKE_CURRENT_SOURCE_DIR}/tbb")
+        if(TARGET TBB::tbbmalloc_proxy AND COMMAND xsigma_set_target_output_directories)
+            xsigma_set_target_output_directories(TBB::tbbmalloc_proxy)
+        endif()
     endif()
 endif()
 
@@ -250,7 +215,7 @@ if(TARGET mimalloc-static)
 endif()
 
 # Google Benchmark and Google Test are handled by Cmake/tools/googletest.cmake
-# which is included from the main CMakeLists.txt when XSIGMA_GOOGLE_TEST or XSIGMA_ENABLE_BENCHMARK is enabled
+# which is included from the main CMakeLists.txt when XSIGMA_ENABLE_GTEST or XSIGMA_ENABLE_BENCHMARK is enabled
 # We only need to set folder properties here if the targets exist
 
 if(TARGET benchmark)
@@ -300,7 +265,7 @@ endif()
 
 # Optional dependencies (only if enabled)
 
-if(XSIGMA_ENABLE_MAGIC_ENUM)
+if(XSIGMA_ENABLE_MAGICENUM)
     if(TARGET magic_enum::magic_enum)
         # magic_enum::magic_enum might be an alias, so we need to get the actual target
         get_target_property(magic_enum_aliased_target magic_enum::magic_enum ALIASED_TARGET)
@@ -332,67 +297,6 @@ if(XSIGMA_ENABLE_LOGURU)
     endif()
 endif()
 
-if(XSIGMA_ENABLE_TBB)
-    if(TARGET TBB::tbb)
-        # TBB::tbb might be an alias, so we need to get the actual target
-        get_target_property(tbb_aliased_target TBB::tbb ALIASED_TARGET)
-        if(tbb_aliased_target)
-            add_library(XSigma::tbb ALIAS ${tbb_aliased_target})
-        else()
-            add_library(XSigma::tbb ALIAS TBB::tbb)
-        endif()
-        message(STATUS "Created XSigma::tbb target alias")
-    elseif(TARGET tbb)
-        add_library(XSigma::tbb ALIAS tbb)
-
-        # Add post-build step to create consistent library names for Debug builds
-        if(WIN32)
-            add_custom_command(TARGET tbb POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "$<TARGET_FILE_DIR:tbb>/tbb12_debug.lib"
-                    "$<TARGET_FILE_DIR:tbb>/tbb12.lib"
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "$<TARGET_FILE_DIR:tbb>/tbb12_debug.dll"
-                    "$<TARGET_FILE_DIR:tbb>/tbb12.dll"
-                COMMENT "Creating consistent TBB library names for Debug configuration"
-                VERBATIM
-            )
-        endif()
-
-        message(STATUS "Created XSigma::tbb target alias with consistent naming")
-    endif()
-
-    # Also create alias for TBB malloc if available
-    if(TARGET TBB::tbbmalloc)
-        # TBB::tbbmalloc might be an alias, so we need to get the actual target
-        get_target_property(tbbmalloc_aliased_target TBB::tbbmalloc ALIASED_TARGET)
-        if(tbbmalloc_aliased_target)
-            add_library(XSigma::tbbmalloc ALIAS ${tbbmalloc_aliased_target})
-        else()
-            add_library(XSigma::tbbmalloc ALIAS TBB::tbbmalloc)
-        endif()
-        message(STATUS "Created XSigma::tbbmalloc target alias")
-    elseif(TARGET tbbmalloc)
-        add_library(XSigma::tbbmalloc ALIAS tbbmalloc)
-
-        # Add post-build step to create consistent library names for Debug builds
-        if(WIN32)
-            add_custom_command(TARGET tbbmalloc POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "$<TARGET_FILE_DIR:tbbmalloc>/tbbmalloc_debug.lib"
-                    "$<TARGET_FILE_DIR:tbbmalloc>/tbbmalloc.lib"
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "$<TARGET_FILE_DIR:tbbmalloc>/tbbmalloc_debug.dll"
-                    "$<TARGET_FILE_DIR:tbbmalloc>/tbbmalloc.dll"
-                COMMENT "Creating consistent TBB malloc library names for Debug configuration"
-                VERBATIM
-            )
-        endif()
-
-        message(STATUS "Created XSigma::tbbmalloc target alias with consistent naming")
-    endif()
-endif()
-
 if(XSIGMA_ENABLE_MIMALLOC)
     if(TARGET mimalloc)
         add_library(XSigma::mimalloc ALIAS mimalloc)
@@ -420,7 +324,7 @@ if(XSIGMA_ENABLE_BENCHMARK)
     endif()
 endif()
 
-if(XSIGMA_GOOGLE_TEST)
+if(XSIGMA_ENABLE_GTEST)
     if(TARGET GTest::gtest)
         # Get the actual targets that GTest aliases point to
         get_target_property(gtest_aliased_target GTest::gtest ALIASED_TARGET)

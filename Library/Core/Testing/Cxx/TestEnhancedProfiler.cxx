@@ -94,72 +94,64 @@ bool test_basic_functionality()
 {
     std::cout << "Testing basic profiler functionality..." << std::endl;
 
-    try
+    auto session = profiler_session_builder()
+                       .with_timing(true)
+                       .with_memory_tracking(true)
+                       .with_hierarchical_profiling(true)
+                       .with_statistical_analysis(true)
+                       .build();
+
+    if (session->is_active())
     {
-        auto session = profiler_session_builder()
-                           .with_timing(true)
-                           .with_memory_tracking(true)
-                           .with_hierarchical_profiling(true)
-                           .with_statistical_analysis(true)
-                           .build();
-
-        if (session->is_active())
-        {
-            std::cout << "ERROR: Session should not be active initially" << std::endl;
-            return false;
-        }
-
-        if (!session->start())
-        {
-            std::cout << "ERROR: Failed to start session" << std::endl;
-            return false;
-        }
-
-        if (!session->is_active())
-        {
-            std::cout << "ERROR: Session should be active after start" << std::endl;
-            return false;
-        }
-
-        // Test basic profiling
-        {
-            XSIGMA_PROFILE_SCOPE("test_basic_scope");
-            simulate_work(10);
-        }
-
-        if (!session->stop())
-        {
-            std::cout << "ERROR: Failed to stop session" << std::endl;
-            return false;
-        }
-
-        if (session->is_active())
-        {
-            std::cout << "ERROR: Session should not be active after stop" << std::endl;
-            return false;
-        }
-
-        // Test that starting/stopping again works
-        if (!session->start())
-        {
-            std::cout << "ERROR: Failed to restart session" << std::endl;
-            return false;
-        }
-
-        if (!session->stop())
-        {
-            std::cout << "ERROR: Failed to stop session again" << std::endl;
-            return false;
-        }
-
-        std::cout << "✓ Basic functionality test passed" << std::endl;
-        return true;
-    }
-    catch (const std::exception& e)
-    {
-        std::cout << "ERROR: Exception in basic functionality test: " << e.what() << std::endl;
+        std::cout << "ERROR: Session should not be active initially" << std::endl;
         return false;
     }
+
+    if (!session->start())
+    {
+        std::cout << "ERROR: Failed to start session" << std::endl;
+        return false;
+    }
+
+    if (!session->is_active())
+    {
+        std::cout << "ERROR: Session should be active after start" << std::endl;
+        return false;
+    }
+
+    // Test basic profiling
+    {
+        XSIGMA_PROFILE_SCOPE("test_basic_scope");
+        simulate_work(10);
+    }
+
+    if (!session->stop())
+    {
+        std::cout << "ERROR: Failed to stop session" << std::endl;
+        return false;
+    }
+
+    if (session->is_active())
+    {
+        std::cout << "ERROR: Session should not be active after stop" << std::endl;
+        return false;
+    }
+
+    // Test that starting/stopping again works
+    if (!session->start())
+    {
+        std::cout << "ERROR: Failed to restart session" << std::endl;
+        return false;
+    }
+
+    if (!session->stop())
+    {
+        std::cout << "ERROR: Failed to stop session again" << std::endl;
+        return false;
+    }
+
+    std::cout << "✓ Basic functionality test passed" << std::endl;
+    return true;
 }
 
 /**
@@ -170,7 +162,6 @@ bool test_hierarchical_profiling()
 {
     std::cout << "Testing hierarchical profiling..." << std::endl;
 
-    try
     {
         auto session =
             profiler_session_builder().with_timing(true).with_hierarchical_profiling(true).build();
@@ -216,11 +207,6 @@ bool test_hierarchical_profiling()
         std::cout << "✓ Hierarchical profiling test passed" << std::endl;
         return true;
     }
-    catch (const std::exception& e)
-    {
-        std::cout << "ERROR: Exception in hierarchical profiling test: " << e.what() << std::endl;
-        return false;
-    }
 }
 
 /**
@@ -231,7 +217,6 @@ bool test_memory_tracking()
 {
     std::cout << "Testing memory tracking..." << std::endl;
 
-    try
     {
         memory_tracker tracker;
 
@@ -353,11 +338,6 @@ bool test_memory_tracking()
         std::cout << "✓ Memory tracking test passed" << std::endl;
         return true;
     }
-    catch (const std::exception& e)
-    {
-        std::cout << "ERROR: Exception in memory tracking test: " << e.what() << std::endl;
-        return false;
-    }
 }
 
 // Test statistical analysis functionality
@@ -365,7 +345,6 @@ bool test_statistical_analysis()
 {
     std::cout << "Testing statistical analysis..." << std::endl;
 
-    try
     {
         statistical_analyzer analyzer;
 
@@ -490,11 +469,6 @@ bool test_statistical_analysis()
         std::cout << "✓ Statistical analysis test passed" << std::endl;
         return true;
     }
-    catch (const std::exception& e)
-    {
-        std::cout << "ERROR: Exception in statistical analysis test: " << e.what() << std::endl;
-        return false;
-    }
 }
 
 // Test thread safety
@@ -502,7 +476,6 @@ bool test_thread_safety()
 {
     std::cout << "Testing thread safety..." << std::endl;
 
-    try
     {
         auto session = profiler_session_builder()
                            .with_timing(true)
@@ -579,11 +552,6 @@ bool test_thread_safety()
         std::cout << "✓ Thread safety test passed" << std::endl;
         return true;
     }
-    catch (const std::exception& e)
-    {
-        std::cout << "ERROR: Exception in thread safety test: " << e.what() << std::endl;
-        return false;
-    }
 }
 
 // Test performance overhead
@@ -591,7 +559,6 @@ bool test_performance_overhead()
 {
     std::cout << "Testing performance overhead..." << std::endl;
 
-    try
     {
         const int num_iterations = 1000;
 
@@ -647,11 +614,6 @@ bool test_performance_overhead()
         std::cout << "✓ Performance overhead test passed" << std::endl;
         return true;
     }
-    catch (const std::exception& e)
-    {
-        std::cout << "ERROR: Exception in performance overhead test: " << e.what() << std::endl;
-        return false;
-    }
 }
 
 // Test report generation
@@ -659,7 +621,6 @@ bool test_report_generation()
 {
     std::cout << "Testing report generation..." << std::endl;
 
-    try
     {
         auto session = profiler_session_builder()
                            .with_timing(true)
@@ -773,11 +734,6 @@ bool test_report_generation()
         std::cout << "✓ Report generation test passed" << std::endl;
         return true;
     }
-    catch (const std::exception& e)
-    {
-        std::cout << "ERROR: Exception in report generation test: " << e.what() << std::endl;
-        return false;
-    }
 }
 
 // Test edge cases and error handling
@@ -785,7 +741,6 @@ bool test_edge_cases()
 {
     std::cout << "Testing edge cases..." << std::endl;
 
-    try
     {
         // Test empty session
         {
@@ -967,11 +922,6 @@ bool test_edge_cases()
         std::cout << "✓ Edge cases test passed" << std::endl;
         return true;
     }
-    catch (const std::exception& e)
-    {
-        std::cout << "ERROR: Exception in edge cases test: " << e.what() << std::endl;
-        return false;
-    }
 }
 
 // Test integration with existing profiler components
@@ -979,7 +929,6 @@ bool test_integration()
 {
     std::cout << "Testing integration with existing components..." << std::endl;
 
-    try
     {
         // Test that enhanced profiler can coexist with other profiling
         auto session =
@@ -1009,11 +958,6 @@ bool test_integration()
         std::cout << "✓ Integration test passed" << std::endl;
         return true;
     }
-    catch (const std::exception& e)
-    {
-        std::cout << "ERROR: Exception in integration test: " << e.what() << std::endl;
-        return false;
-    }
 }
 
 /**
@@ -1024,7 +968,6 @@ bool test_comprehensive_error_handling()
 {
     std::cout << "Testing comprehensive error handling..." << std::endl;
 
-    try
     {
         // Test null pointer handling
         {
@@ -1114,12 +1057,6 @@ bool test_comprehensive_error_handling()
         std::cout << "✓ Comprehensive error handling test passed" << std::endl;
         return true;
     }
-    catch (const std::exception& e)
-    {
-        std::cout << "ERROR: Exception in comprehensive error handling test: " << e.what()
-                  << std::endl;
-        return false;
-    }
 }
 
 /**
@@ -1130,7 +1067,6 @@ bool test_memory_tracking_edge_cases()
 {
     std::cout << "Testing memory tracking edge cases..." << std::endl;
 
-    try
     {
         memory_tracker tracker;
         tracker.start_tracking();
@@ -1181,12 +1117,6 @@ bool test_memory_tracking_edge_cases()
         std::cout << "✓ Memory tracking edge cases test passed" << std::endl;
         return true;
     }
-    catch (const std::exception& e)
-    {
-        std::cout << "ERROR: Exception in memory tracking edge cases test: " << e.what()
-                  << std::endl;
-        return false;
-    }
 }
 
 /**
@@ -1197,7 +1127,6 @@ bool test_high_concurrency()
 {
     std::cout << "Testing high concurrency profiling..." << std::endl;
 
-    try
     {
         auto session = profiler_session_builder()
                            .with_timing(true)
@@ -1256,11 +1185,6 @@ bool test_high_concurrency()
                   << expected_operations << " operations)" << std::endl;
         return true;
     }
-    catch (const std::exception& e)
-    {
-        std::cout << "ERROR: Exception in high concurrency test: " << e.what() << std::endl;
-        return false;
-    }
 }
 }  // namespace
 
@@ -1299,21 +1223,9 @@ XSIGMATEST(Core, EnhancedProfiler)
         total_tests++;
         std::cout << "\n--- Running " << test_case.name << " Test ---" << std::endl;
 
-        try
+        if (test_case.function())
         {
-            if (test_case.function())
-            {
-                passed_tests++;
-            }
-        }
-        catch (const std::exception& e)
-        {
-            std::cout << "ERROR: Unhandled exception in " << test_case.name << ": " << e.what()
-                      << std::endl;
-        }
-        catch (...)
-        {
-            std::cout << "ERROR: Unknown exception in " << test_case.name << std::endl;
+            passed_tests++;
         }
     }
 

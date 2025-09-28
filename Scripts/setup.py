@@ -158,16 +158,13 @@ class XsigmaFlags:
 
     def __initialize_flags(self):
         self.__key = [
+            # Valid CMake options
             "vectorisation",
-            "smp",
-            "tbbm",
-            "ser",
+            "tbb",
             "mkl",
             "numa",
             "memkind",
-            "mpi",
             "cuda",
-            "parallel",
             "static",
             "clangtidy",
             "iwyu",
@@ -175,95 +172,72 @@ class XsigmaFlags:
             "sanitizer_enum",
             "valgrind",
             "coverage",
-            "doc",
-            "sphinx",
             "benchmark",
             "gtest",
             "test",
-            "wheel",
-            "python",
-            "java",
-            "pythondebug",
-            "nologuru",
-            "nonlopt",
-            "noceres",
-            "aad",
-            "cxxstd",  # Added C++ standard support
+            "loguru",
+            "lto",
+            "magic_enum",
+            "mimalloc",
+            "external",
+            "cxxstd",
         ]
         self.__description = [
+            # Valid CMake options
             "vectorisation type: sse, avx, avx2 or avx512",
-            "smp type: tbb, openmp, stdthread, sequential",
-            "enable tbb memory allocation",
-            "enable serialization",
-            "enable mkl",
-            "enable numa",
-            "enable memkind",
-            "enable mpi",
-            "enable cuda",
-            "parallel",
-            "build shared or static",
-            "clang-tidy: don't treat warnings as errors",
-            "enable iwyu check",
+            "enable Intel TBB (Threading Building Blocks) support",
+            "enable MKL",
+            "enable NUMA node support",
+            "enable memkind extended memory support",
+            "enable CUDA compilation",
+            "build shared or static libraries",
+            "enable clang-tidy checks",
+            "enable include-what-you-use (iwyu) checks",
             "enable sanitizer memory check",
-            "sanitizer type: address, undefined, thread, memory",
+            "sanitizer type: address, undefined, thread, memory, leak",
             "enable valgrind memory check",
             "enable code coverage",
-            "enable code documentation",
-            "enable sphinx documentation",
-            "enable benchmark",
-            "enable gtest",
-            "disable the testing",
-            "enable python wheel",
-            "enable python wrapping",
-            "enable java wrapping",
-            "enable python debug",
-            "set mkl threading from smp type",
-            "disable LOGURU",
-            "disable NLOPT",
-            "disable CERES-SOLVER",
-            "enable AAD",
-            "C++ standard: cxx11, cxx14, cxx17, cxx20, cxx23",  # Added description
+            "enable google benchmark",
+            "enable google test",
+            "enable testing",
+            "enable loguru lightweight C++ logging library",
+            "enable Link Time Optimization",
+            "enable magic_enum static reflection for enums",
+            "enable Microsoft mimalloc high-performance memory allocator",
+            "use external copies of third party libraries by default",
+            "C++ standard: cxx17, cxx20, cxx23",
         ]
 
     def __build_cmake_flag(self):
         debug_print("Build cmake flag")
         self.__name = {
-            "python": "XSIGMA_WRAP_PYTHON",
-            "java": "XSIGMA_WRAP_JAVA",
+            # Valid CMake options that exist in CMakeLists.txt
             "cuda": "XSIGMA_ENABLE_CUDA",
-            "smp": "XSIGMA_SMP_IMPLEMENTATION_TYPE",
-            "tbbm": "XSIGMA_ENABLE_TBB",
-            "ser": "XSIGMA_WRAP_SERIALIZATION",
+            "tbb": "XSIGMA_ENABLE_TBB",
             "mkl": "XSIGMA_ENABLE_MKL",
             "numa": "XSIGMA_ENABLE_NUMA",
             "memkind": "XSIGMA_ENABLE_MEMKIND",
-            "mpi": "XSIGMA_ENABLE_MPI",
-            "parallel": "XSIGMA_PARALLEL_PROJECTS_BUILD",
             "vectorisation": "XSIGMA_VECTORIZATION_TYPE",
             "static": "BUILD_SHARED_LIBS",
             "clangtidy": "XSIGMA_ENABLE_CLANGTIDY",
             "iwyu": "XSIGMA_ENABLE_IWYU",
             "benchmark": "XSIGMA_ENABLE_BENCHMARK",
-            "gtest": "XSIGMA_GOOGLE_TEST",
+            "gtest": "XSIGMA_ENABLE_GTEST",
             "sanitizer": "XSIGMA_ENABLE_SANITIZER",
             "sanitizer_enum": "XSIGMA_SANITIZER_TYPE",
             "valgrind": "XSIGMA_ENABLE_VALGRIND",
             "coverage": "XSIGMA_ENABLE_COVERAGE",
-            "doc": "XSIGMA_BUILD_DOCUMENTATION",
-            "sphinx": "XSIGMA_BUILD_SPHINX_DOCUMENTATION",
-            "wheel": "XSIGMA_BUILD_WHEEL",
             "test": "XSIGMA_BUILD_TESTING",
-            "pythondebug": "XSIGMA_WINDOWS_PYTHON_DEBUGGABLE",
-            "javasourceversion": "XSIGMA_JAVA_SOURCE_VERSION",
-            "javatargetversion": "XSIGMA_JAVA_TARGET_VERSION",
+            "loguru": "XSIGMA_ENABLE_LOGURU",
+            "lto": "XSIGMA_ENABLE_LTO",
+            "magic_enum": "XSIGMA_ENABLE_MAGICENUM",
+            "mimalloc": "XSIGMA_ENABLE_MIMALLOC",
+            "external": "XSIGMA_ENABLE_EXTERNAL",
+            "cxxstd": "XSIGMA_CXX_STANDARD",
+
+            # Non-CMake flags (for internal use, not passed to CMake)
             "mkl_threading": "MKL_THREADING",
             "mkl_link": "MKL_LINK",
-            "dist": "XSIGMA_DIST_NAME_SUFFIX",
-            "nologuru": "XSIGMA_ENABLE_LOGGING",
-            "nonlopt": "XSIGMA_ENABLE_NLOPT",
-            "noceres": "XSIGMA_ENABLE_CERES",
-            "aad": "XSIGMA_ENABLE_ENZYME",
-            "cxxstd": "XSIGMA_CXX_STANDARD",  # Added C++ standard CMake flag
         }
 
     def __fill_option_flags(self, arg_list):
@@ -277,51 +251,70 @@ class XsigmaFlags:
             self.__process_arg_list(arg_list)
 
     def __set_all_flags(self):
+        # Enable most flags for "all" mode, but respect some constraints
         self.__value = dict.fromkeys(self.__key, self.ON)
         self.__value.update(
             {
-                "vectorisation": "avx2",
-                "smp": "STDThread",
-                "cuda": self.OFF,
-                "sanitizer": self.OFF,
-                "valgrind": self.OFF,
-                "doc": self.OFF,
-                "wheel": self.OFF,
-                "coreinclude": self.OFF,
-                "clangtidy": self.OFF,
-                "javasourceversion": 1.8,
-                "javatargetversion": 1.8,
-                "ceres": self.OFF,
-                "cxxstd": "",  # Default: let CMake decide
+                "vectorisation": "avx2",  # Special case: string value
+                "smp": "STDThread",  # Special case: string value
+                "javasourceversion": 1.8,  # Special case: numeric value
+                "javatargetversion": 1.8,  # Special case: numeric value
+                "cxxstd": "",  # Special case: let CMake decide
+
+                # Keep some flags OFF even in "all" mode for safety/compatibility
+                "cuda": self.OFF,  # CUDA requires special hardware
+                "sanitizer": self.OFF,  # Can conflict with other tools
+                "valgrind": self.OFF,  # Can conflict with sanitizer
+                "coverage": self.OFF,  # Coverage analysis is optional
             }
         )
 
     def __set_default_flags(self):
+        # Initialize all flags to OFF first
         self.__value = dict.fromkeys(self.__key, self.OFF)
+
+        # Set defaults based on CMake option defaults (inverse logic)
+        # When CMake default is ON, setup.py default should be ON (no arg = ON)
+        # When CMake default is OFF, setup.py default should be OFF (no arg = OFF)
         self.__value.update(
             {
-                "vectorisation": "",
-                "static": self.ON,
-                "clangtidy": self.OFF,
-                "test": self.ON,
-                "javasourceversion": 1.8,
-                "javatargetversion": 1.8,
-                "smp": "STDThread",
-                "cxxstd": "",  # Default: let CMake decide
+                "vectorisation": "",  # Special case: string value
+                "static": self.ON,  # BUILD_SHARED_LIBS default is OFF, so static=ON
+                "test": self.ON,  # XSIGMA_BUILD_TESTING default is ON
+                "javasourceversion": 1.8,  # Special case: numeric value
+                "javatargetversion": 1.8,  # Special case: numeric value
+                "cxxstd": "",  # Special case: let CMake decide
+
+                # CMake options with default ON - keep ON in setup.py
+                "lto": self.ON,  # XSIGMA_ENABLE_LTO default is ON
+                "benchmark": self.ON,  # XSIGMA_ENABLE_BENCHMARK default is ON
+                "gtest": self.ON,  # XSIGMA_ENABLE_GTEST default is ON
+                "magic_enum": self.ON,  # XSIGMA_ENABLE_MAGIC_ENUM default is ON
+                "loguru": self.ON,  # XSIGMA_ENABLE_LOGURU default is ON
+                "mimalloc": self.ON,  # XSIGMA_ENABLE_MIMALLOC default is ON
+
+                # CMake options with default OFF - keep OFF in setup.py
+                # (already set by dict.fromkeys above)
+                # "cuda": self.OFF,  # XSIGMA_ENABLE_CUDA default is OFF
+                # "mkl": self.OFF,  # XSIGMA_ENABLE_MKL default is OFF
+                # "numa": self.OFF,  # XSIGMA_ENABLE_NUMA default is OFF
+                # "memkind": self.OFF,  # XSIGMA_ENABLE_MEMKIND default is OFF
+                # "tbb": self.OFF,  # XSIGMA_ENABLE_TBB default is OFF
+                # "iwyu": self.OFF,  # XSIGMA_ENABLE_IWYU default is OFF
+                # "clangtidy": self.OFF,  # XSIGMA_ENABLE_CLANGTIDY default is OFF
+                # "valgrind": self.OFF,  # XSIGMA_ENABLE_VALGRIND default is OFF
+                # "coverage": self.OFF,  # XSIGMA_ENABLE_COVERAGE default is OFF
+                # "sanitizer": self.OFF,  # XSIGMA_ENABLE_SANITIZER default is OFF
             }
         )
 
     def __process_arg_list(self, arg_list):
         sanitizer_list = ["address", "undefined", "thread", "memory", "leak"]
         vectorisation_list = ["sse", "avx", "avx2", "avx512"]
-        SMP_list = ["TBB", "OpenMP", "STDThread", "Sequential"]
-        cxx_std_list = ["cxx17", "cxx20", "cxx23"]  # Added C++ standard list
-        
+        cxx_std_list = ["cxx17", "cxx20", "cxx23"]
+
+        # Set default values for special flags
         self.__value["mkl_link"] = "static"
-        self.__value["nologuru"] = self.ON
-        self.__value["nonlopt"] = self.ON
-        self.__value["noceres"] = self.ON
-        self.__value["aad"] = self.OFF
 
         self.builder_suffix = ""
         for arg in arg_list:
@@ -343,15 +336,6 @@ class XsigmaFlags:
             elif arg in vectorisation_list:
                 self.__value["vectorisation"] = arg
                 self.builder_suffix += f"_{arg}"
-            elif any(arg.lower() == item.lower() for item in SMP_list):
-                self.__value["smp"] = self.find_case_insensitive(arg, SMP_list)
-                self.builder_suffix += f"_{self.__value['smp'].lower()}"
-                if self.__value["smp"] == "TBB":
-                    self.__value["mkl_threading"] = "sequential"
-                elif self.__value["smp"] == "OpenMP":
-                    self.__value["mkl_threading"] = "sequential"
-                else:
-                    self.__value["mkl_threading"] = "sequential"
             elif any(arg.lower() == item.lower() for item in cxx_std_list):
                 # Extract the numeric part (e.g., "cxx17" -> "17")
                 std_version = arg[3:]  # Remove "cxx" prefix
@@ -363,12 +347,20 @@ class XsigmaFlags:
                 self.__value["javatargetversion"] = arg
                 self.builder_suffix += f"_java{arg}"
             elif arg in self.__key:
-                self.__value[arg] = self.ON
+                # Implement inverse logic based on CMake defaults
+                if arg in ["loguru", "lto", "benchmark", "gtest", "magic_enum", "mimalloc"]:
+                    # These have CMake default ON, so providing the arg turns them OFF
+                    self.__value[arg] = self.OFF
+                else:
+                    # These have CMake default OFF, so providing the arg turns them ON
+                    self.__value[arg] = self.ON
+
+                # Special handling for specific flags
                 if arg == "mkl":
                     self.__value["dist"] = "mkl"
-                if arg == "nonlopt" or arg == "nologuru" or arg == "noceres":
-                    self.__value[arg] = self.OFF
-                if arg != "test" and arg != "build":
+
+                # Add to builder suffix (except for certain flags)
+                if arg not in ["test", "build"]:
                     self.builder_suffix += f"_{arg}"
 
     def __validate_flags(self):
@@ -421,9 +413,10 @@ class XsigmaFlags:
                     flag_value = "ON" if value else "OFF"
                 else:
                     flag_value = str(value)
-                
-                # Only add the flag if it has a meaningful value
-                if flag_value and flag_value not in ["", "OFF"]:
+
+                # Add the flag if it has a meaningful value
+                # Include OFF values for boolean flags to explicitly disable features
+                if flag_value and flag_value != "":
                     cmake_cmd_flags.append(f"-D{flag_name}={flag_value}")
 
         # Add C++ standard related flags if specified
@@ -458,8 +451,7 @@ class XsigmaFlags:
     def is_valgrind(self):
         return self.__value["valgrind"] == self.ON
 
-    def is_doc(self):
-        return self.__value["doc"] == self.ON
+
 
 
 class XsigmaConfiguration:
@@ -689,12 +681,7 @@ class XsigmaConfiguration:
             print_status(f"Build failed: {e}", "ERROR")
             sys.exit(1)
 
-    def build_doc(self):
-        if self.__value["builder"] == "ninja" and self.__xsigma_flags.is_doc():
-            cmake_doc_build = ["ninja", "-v", "DoxygenDoc"]
-            return subprocess.check_call(
-                cmake_doc_build, stderr=subprocess.STDOUT, shell=self.__shell_flag()
-            )
+
 
     def test(self, source_path, build_path):
         if self.__value["test"] != "test" or self.__xsigma_flags.is_coverage():
@@ -734,11 +721,23 @@ class XsigmaConfiguration:
         )
 
     def __setup_windows_path(self):
-        if self.__value["builder"] != "ninja":
-            path_bat_file = f"windows_path.{self.__value['build_enum']}.bat"
-            subprocess.check_call(path_bat_file)
-        else:
-            subprocess.check_call("windows_path.bat")
+        """Setup Windows PATH for testing. Skip if batch files don't exist."""
+        try:
+            if self.__value["builder"] != "ninja":
+                path_bat_file = f"windows_path.{self.__value['build_enum']}.bat"
+                if os.path.exists(path_bat_file):
+                    subprocess.check_call(path_bat_file)
+                else:
+                    print_status(f"Windows PATH setup file {path_bat_file} not found, skipping PATH setup", "WARNING")
+            else:
+                if os.path.exists("windows_path.bat"):
+                    subprocess.check_call("windows_path.bat")
+                else:
+                    print_status("Windows PATH setup file windows_path.bat not found, skipping PATH setup", "WARNING")
+        except subprocess.CalledProcessError as e:
+            print_status(f"Windows PATH setup failed: {e}", "WARNING")
+        except Exception as e:
+            print_status(f"Unexpected error during Windows PATH setup: {e}", "WARNING")
 
     def coverage(self, source_path, build_path):
         if self.__value["build"] != "build" or not self.__xsigma_flags.is_coverage():
@@ -864,7 +863,6 @@ def main():
         print_status(f"Build directory: {build_path}", "INFO")
         compilation_calc.config(source_path, build_path)
         compilation_calc.build()
-        compilation_calc.build_doc()
         compilation_calc.test(source_path, build_path)
         compilation_calc.coverage(source_path, build_path)
         

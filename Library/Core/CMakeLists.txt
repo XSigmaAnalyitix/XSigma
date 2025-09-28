@@ -109,13 +109,9 @@ if(BUILD_SHARED_LIBS)
         PUBLIC XSIGMA_SHARED_DEFINE
         PRIVATE XSIGMA_BUILDING_DLL
     )
-    # Set Windows DLL output properties
-    if(WIN32)
-        set_target_properties(Core PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-            LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-            ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-        )
+    # Set output directories using XSigma's standardized approach
+    if(COMMAND xsigma_set_target_output_directories)
+        xsigma_set_target_output_directories(Core)
     endif()
 else()
     target_compile_definitions(Core PUBLIC XSIGMA_STATIC_DEFINE)
@@ -190,7 +186,7 @@ endif()
 
 # Optional dependencies (based on XSIGMA_ENABLE_XXX options)
 
-if(XSIGMA_ENABLE_MAGIC_ENUM AND TARGET XSigma::magic_enum)
+if(XSIGMA_ENABLE_MAGICENUM AND TARGET XSigma::magic_enum)
     target_link_libraries(Core PUBLIC XSigma::magic_enum)
 endif()
 
@@ -204,26 +200,32 @@ endif()
 
 # Optional dependencies
 if(XSIGMA_ENABLE_TBB)
-    if(TARGET XSigma::tbb)
-        target_link_libraries(Core PUBLIC XSigma::tbb)
+    # Disable TBB's pragma-based auto-linking on Windows to avoid conflicts
+    if(WIN32)
+        target_compile_definitions(Core PRIVATE __TBB_NO_IMPLICIT_LINKAGE)
+    endif()
 
-        # Add TBB library directory to link directories for Debug builds
-        # TBB creates libraries in a custom directory structure
-        if(WIN32)
-            target_link_directories(Core PUBLIC
-                "$<$<CONFIG:Debug>:${CMAKE_BINARY_DIR}/msvc_19.44_cxx17_64_mt_debug>"
-                "$<$<CONFIG:Release>:${CMAKE_BINARY_DIR}/msvc_19.44_cxx17_64_mt_release>"
-                "$<$<CONFIG:RelWithDebInfo>:${CMAKE_BINARY_DIR}/msvc_19.44_cxx17_64_mt_release>"
-                "$<$<CONFIG:MinSizeRel>:${CMAKE_BINARY_DIR}/msvc_19.44_cxx17_64_mt_release>"
-            )
-        endif()
+    # Ensure TBB include directories are available
+    if(TBB_INCLUDE_DIR AND EXISTS "${TBB_INCLUDE_DIR}")
+        target_include_directories(Core PRIVATE "${TBB_INCLUDE_DIR}")
     endif()
-    # Also link with TBB malloc if available
-    if(TARGET XSigma::tbbmalloc)
-        target_link_libraries(Core PUBLIC XSigma::tbbmalloc)
+
+    # Link with TBB libraries using a cross-platform approach
+    # Use imported targets if available, otherwise fall back to manual linking
+    if(TARGET TBB::tbb)
+        target_link_libraries(Core PRIVATE TBB::tbb)
+    elseif(TBB_LIBRARY_RELEASE)
+        target_link_libraries(Core PRIVATE ${TBB_LIBRARY_RELEASE})
     endif()
-else()
-    message(STATUS "Core: TBB backend disabled (using STDThread backend)")
+
+    if(TARGET TBB::tbbmalloc)
+        target_link_libraries(Core PRIVATE TBB::tbbmalloc)
+    elseif(TBB_MALLOC_LIBRARY_RELEASE)
+        target_link_libraries(Core PRIVATE ${TBB_MALLOC_LIBRARY_RELEASE})
+    endif()
+
+    # Note: This approach avoids hardcoded paths and uses CMake's target system
+    # or the specific library variables from FindTBB.cmake
 endif()
 
 if(XSIGMA_ENABLE_MIMALLOC)
@@ -235,6 +237,9 @@ endif()
 if(XSIGMA_ENABLE_CUDA)
     target_link_libraries(Core PRIVATE ${XSIGMA_CUDA_LIBRARIES})
 endif()
+
+
+
 
 # Install targets
 install(TARGETS Core

@@ -12,46 +12,43 @@ foreach(_test_sources IN ITEMS ${test_sources})
   endif()
 endforeach()
 
-if(XSIGMA_GOOGLE_TEST)
-    include(GoogleTest)
-    xsigma_module_gtest_executable(CoreCxxTests ${TestFiles})
 
-    # Add compile definition to indicate Google Test is available
-    target_compile_definitions(CoreCxxTests PRIVATE XSIGMA_HAS_GTEST)
-    message(STATUS "CoreCxxTests: Using Google Test framework")
-else()
-    set(TestSystemInformation_ARGS ${CMAKE_BINARY_DIR})
-    set(TestSMP_ARGS
-        --STDThread=1
-        --TBB=$<BOOL:${XSIGMA_ENABLE_TBB}>)
-  
-    xsigma_add_test_cxx(CoreCxxTests tests
-    NO_DATA NO_VALID NO_OUTPUT
-    main.cxx ${TestFiles})
-    xsigma_test_cxx_executable(CoreCxxTests tests)
+include(GoogleTest)
+add_executable(CoreCxxTests)
+target_sources(CoreCxxTests PRIVATE ${TestFiles})
+target_compile_definitions(CoreCxxTests PRIVATE XSIGMA_GOOGLE_TEST)
+target_link_libraries(CoreCxxTests PRIVATE gtest gtest_main XSigma::Core ${XSIGMA_CUDA_LIBRARIES})
+target_compile_definitions(CoreCxxTests PRIVATE -DUSE_GTEST)
+target_compile_definitions(CoreCxxTests PRIVATE -D_VARIADIC_MAX=10)
 
-	# Special test to check whether disabling loguru signal handling, i.e.,
-	# stack trace printing when it catches a signal, works. We add an
-	# executable where the stack trace is disabled. The actual test is a
-	# CMake script that runs the test executable and analyzes the output to
-	# determine whether a stack trace was printed or not.
-	add_executable(TestLoggerDisableSignalHandlerCxx
-	  TestLoggerDisableSignalHandler.cxx)
-	target_link_libraries(TestLoggerDisableSignalHandlerCxx
-	  PRIVATE XSigma::Core)
-	add_test(NAME TestLoggerDisableSignalHandler
-	  COMMAND ${CMAKE_COMMAND}
-	  -DEXECUTABLE_PATH:FILEPATH=$<TARGET_FILE:TestLoggerDisableSignalHandlerCxx>
-	  -P ${CMAKE_CURRENT_SOURCE_DIR}/TestLoggerDisableSignalHandler.cmake)
-	set_target_properties(TestLoggerDisableSignalHandlerCxx PROPERTIES FOLDER Tests)
+# Apply XSigma output directory configuration
+if(COMMAND xsigma_set_target_output_directories)
+    xsigma_set_target_output_directories(CoreCxxTests)
 endif()
 
-# Add common test dependencies
-xsigma_add_test_dependencies(CoreCxxTests)
+# Add TBB support for tests
+if(XSIGMA_ENABLE_TBB)
+    # Disable TBB's pragma-based auto-linking on Windows to avoid conflicts
+    if(WIN32)
+        target_compile_definitions(CoreCxxTests PRIVATE __TBB_NO_IMPLICIT_LINKAGE)
+    endif()
 
-# Add FMT dependency if available
-if(TARGET fmt)
-    target_include_directories(CoreCxxTests BEFORE
-                               PRIVATE "${FMT_SOURCE_DIR}/include")
-    target_link_libraries(CoreCxxTests PRIVATE fmt)
+    # Ensure TBB include directories are available for tests
+    if(TBB_INCLUDE_DIR AND EXISTS "${TBB_INCLUDE_DIR}")
+        target_include_directories(CoreCxxTests PRIVATE "${TBB_INCLUDE_DIR}")
+    endif()
+
+    # Link with TBB libraries using a cross-platform approach
+    # Use imported targets if available, otherwise fall back to manual linking
+    if(TARGET TBB::tbb)
+        target_link_libraries(CoreCxxTests PRIVATE TBB::tbb)
+    elseif(TBB_LIBRARY_RELEASE)
+        target_link_libraries(CoreCxxTests PRIVATE ${TBB_LIBRARY_RELEASE})
+    endif()
+
+    if(TARGET TBB::tbbmalloc)
+        target_link_libraries(CoreCxxTests PRIVATE TBB::tbbmalloc)
+    elseif(TBB_MALLOC_LIBRARY_RELEASE)
+        target_link_libraries(CoreCxxTests PRIVATE ${TBB_MALLOC_LIBRARY_RELEASE})
+    endif()
 endif()
