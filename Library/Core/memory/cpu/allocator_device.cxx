@@ -19,12 +19,8 @@
 
 #include "memory/cpu/allocator_device.h"
 
-#include <cstring>
-#include <stdexcept>
-
 #include "common/configure.h"
-#include "memory/cpu/helper/memory_allocator.h"
-#include "util/logger.h"
+#include "memory/cpu/helper/memory_allocator.h"  // for allocate, free
 
 #ifdef XSIGMA_ENABLE_CUDA
 #include <cuda_runtime.h>

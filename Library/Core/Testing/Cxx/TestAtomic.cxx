@@ -19,15 +19,16 @@
 
 // SPDX-FileCopyrightText: Copyright (c) T. Bellaj
 // SPDX-License-Identifier: BSD-3-Clause
-#include <atomic>    // for atomic, __atomic_base
-#include <cstdint>   // for int64_t, int32_t
-#include <iostream>  // for std
-#include <vector>
+#include <gtest/gtest.h>  // for Test, EXPECT_EQ, Message, TestPartResult, TestInfo (ptr ...
 
-#include "common/pointer.h"      // for unique_ptr
+#include <atomic>   // for atomic, _Atomic_integral, _Atomic_integral_facade
+#include <cstdint>  // for int32_t, int64_t
+#include <memory>   // for unique_ptr
+
+#include "common/pointer.h"      // for make_ptr_unique_mutable
 #include "smp/multi_threader.h"  // for multi_threader
-#include "xsigmaTest.h"          // for Test, EXPECT_EQ, Message
-#include "xsigma_threads.h"      // for __XSIGMA_THREAD_RETURN_TYPE__
+#include "xsigmaTest.h"          // for END_TEST, XSIGMATEST
+#include "xsigma_threads.h"      // for __XSIGMA_THREAD_RETURN_TYPE__, __XSIGMA_THREAD_RETURN_VA...
 
 using namespace std;
 

@@ -34,6 +34,7 @@
 #include <numeric>
 #include <sstream>
 
+#include "common/configure.h"
 #include "util/exception.h"
 
 namespace xsigma

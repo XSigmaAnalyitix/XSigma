@@ -17,10 +17,13 @@
  * Website: https://www.xsigma.co.uk
  */
 
+#include <gtest/gtest.h>  // for Test, TestInfo (ptr only)
+
 #include <vector>
 
-#include "util/cpu_info.h"
-#include "xsigmaTest.h"
+#include "util/cpu_info.h"  // for cpu_info
+#include "util/logger.h"    // for END_LOG_TO_FILE_NAME, START_LOG_TO_FILE_NAME
+#include "xsigmaTest.h"     // for END_TEST, XSIGMATEST
 
 XSIGMATEST(Core, CPUinfo)
 {

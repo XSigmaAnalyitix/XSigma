@@ -25,8 +25,9 @@
 #include <stdexcept>
 #include <string>
 
-#include "util/logger.h"
+#include "common/configure.h"
 #include "common/macros.h"
+#include "util/logger.h"
 
 // Include Google Test if available
 #ifdef XSIGMA_ENABLE_GTEST

@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include <cstddef>
-#include <string>
+#include <cstddef>  // for size_t
+#include <string>   // for string
 
-#include "memory/cpu/allocator.h"
-#include "memory/device.h"
+#include "common/export.h"         // for XSIGMA_API
+#include "memory/cpu/allocator.h"  // for Allocator, allocator_memory_enum
 
 namespace xsigma
 {

@@ -17,6 +17,7 @@
  * Website: https://www.xsigma.co.uk
  */
 
+#include "common/configure.h"
 #include "common/macros.h"
 #include "xsigmaTest.h"
 

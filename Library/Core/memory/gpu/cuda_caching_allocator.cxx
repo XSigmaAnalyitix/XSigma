@@ -13,6 +13,7 @@
 #include <utility>
 #include <vector>
 
+#include "common/configure.h"
 #include "common/macros.h"
 #include "util/exception.h"
 #include "util/flat_hash.h"

@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-
+#include "common/configure.h"
 #include "common/macros.h"
 #include "memory/device.h"
 
@@ -228,7 +228,8 @@ public:
      * @param device_index Device index
      * @return True if device is available and healthy
      */
-    XSIGMA_API virtual bool is_device_available(device_enum device_type, int device_index) const = 0;
+    XSIGMA_API virtual bool is_device_available(
+        device_enum device_type, int device_index) const = 0;
 
     /**
      * @brief Set the current device context

@@ -33,16 +33,16 @@ limitations under the License.
 ==============================================================================*/
 #pragma once
 
-#include <stdlib.h>
-
-#include <algorithm>
-#include <cmath>
-#include <cstdint>
-#include <limits>
-#include <map>
-#include <sstream>
-#include <string>
-#include <vector>
+#include <algorithm>  // for nth_element
+#include <cmath>      // for pow, sqrt
+#include <cstdint>    // for int64_t
+#include <limits>     // for numeric_limits
+#include <map>        // for map
+#include <new>        // for operator new
+#include <sstream>    // for operator<<, basic_ostream
+#include <string>     // for char_traits, string
+#include <utility>    // for max, min
+#include <vector>     // for vector
 
 #include "experimental/profiler/stat_summarizer_options.h"
 

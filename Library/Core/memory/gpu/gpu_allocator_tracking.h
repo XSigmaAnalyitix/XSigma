@@ -36,7 +36,7 @@
 #include <unordered_map>
 #include <vector>
 
-
+#include "common/configure.h"
 #include "common/macros.h"
 #include "memory/device.h"
 #include "memory/gpu/gpu_device_manager.h"

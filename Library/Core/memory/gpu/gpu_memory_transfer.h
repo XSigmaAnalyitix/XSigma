@@ -25,7 +25,7 @@
 #include <memory>
 #include <vector>
 
-
+#include "common/configure.h"
 #include "common/macros.h"
 #include "memory/device.h"
 

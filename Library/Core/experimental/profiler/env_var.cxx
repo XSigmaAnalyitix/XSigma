@@ -35,16 +35,19 @@ limitations under the License.
 #include "experimental/profiler/env_var.h"
 
 #include <algorithm>
+#include <algorithm>  // for transform
 #include <cctype>
+#include <cctype>  // for tolower
 #include <cstdlib>
-#include <string>
+#include <cstdlib>  // for getenv
+#include <memory>   // for _Simple_types
+#include <ostream>  // for operator<<
+#include <string>   // for char_traits, allocator, operator==, string, basic_string
 
-//#include "tsl/platform/errors.h"
-#include "util/exception.h"
-#include "util/logging.h"
-#include "util/logger.h"
-#include "util/strcat.h"
-#include "util/string_util.h"
+#include "util/exception.h"    // for check_msg_impl, XSIGMA_CHECK
+#include "util/logging.h"      // for LogMessageFatal, LOG, _XSIGMA_LOG_FATAL
+#include "util/strcat.h"       // for StrCat
+#include "util/string_util.h"  // for safe_strto64, safe_strtof, split_string
 
 namespace xsigma
 {

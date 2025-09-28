@@ -9,6 +9,7 @@
 #include <thread>
 #include <unordered_map>
 
+#include "common/configure.h"
 #include "common/macros.h"
 #include "util/exception.h"
 #include "util/logger.h"

@@ -9,10 +9,10 @@
 #include <iterator>
 #include <memory>
 
+#include "common/configure.h"
+#include "common/macros.h"
 #include "smp/Common/thread_local_impl_abstract.h"
 #include "smp/Common/tools_api.h"  // For GetBackendType(), DefaultBackend
-#include "common/macros.h"
-
 #include "smp/STDThread/thread_local_impl.h"
 #if defined(XSIGMA_ENABLE_TBB)
 #include "smp/TBB/thread_local_impl.h"
@@ -166,4 +166,3 @@ private:
 }  // namespace xsigma
 
 /* XSIGMA-HeaderTest-Exclude: thread_local_api.h */
-

@@ -33,11 +33,14 @@ limitations under the License.
 ==============================================================================*/
 #pragma once
 
-#include <memory>
-#include <vector>
+#include <memory>  // for unique_ptr
+#include <vector>  // for vector
 
-#include "experimental/profiler/profiler_interface.h"
-#include "experimental/profiler/xplane/xplane.h"
+#include "experimental/profiler/profiler_interface.h"  // for profiler_interface
+namespace xsigma
+{
+class x_space;
+}
 
 namespace xsigma
 {

@@ -6,6 +6,7 @@
 
 #include <memory>
 
+#include "common/configure.h"
 // For export macro
 #include "common/macros.h"
 #include "common/pointer.h"
