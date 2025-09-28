@@ -536,7 +536,7 @@ XSIGMA_API std::string to_string(const double x, const int decDigits, const int 
  * auto centered = center("Hello", 11); // Returns "   Hello   "
  * @endcode
  */
-XSIGMA_API std::string center(const std::string s, const int width);
+XSIGMA_API std::string center(const std::string& s, const int width);
 
 // =============================================================================
 // PLATFORM-SPECIFIC AND LEGACY UTILITIES

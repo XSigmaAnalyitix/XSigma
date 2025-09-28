@@ -702,7 +702,7 @@ std::string to_string(const double x, const int decDigits, const int width)
  * @note If the string is longer than the width, returns the original string
  * @note Handles odd padding by adding extra space to the right
  */
-std::string center(const std::string s, const int width)
+std::string center(const std::string& s, const int width)
 {
     std::stringstream ss;
     std::stringstream spaces;

@@ -1,39 +1,60 @@
-// This file contains enough suppressions to result in no cppcheck warnings,
-// at least on macOS with cppcheck 1.90 with the flags below.
+# =============================================================================
+# Enhanced Cppcheck Suppressions for XSigma Project
+# =============================================================================
+#
+# This file provides comprehensive suppression rules for the XSigma project,
+# designed to eliminate false positives while maintaining code quality.
+#
+# Usage:
+#   cppcheck --suppressions-list=Scripts/cppcheck_suppressions.txt [other options] .
+#
+# Or with compile_commands.json:
+#   cppcheck --project=build/compile_commands.json --suppressions-list=Scripts/cppcheck_suppressions.txt
+# =============================================================================
 
-// To run:
-// cd /path/to/XSIGMA/
-// cppcheck --platform=unspecified --enable=style -q --library=qt --library=posix --library=gnu --library=bsd --library=windows --suppressions-list=CMake/XSIGMAcppcheckSuppressions.txt --template='{id},{file}:{line},{severity},{message}' -j8 -I Common/Core .
-// or
-// cd /path/to/XSIGMA-bin/
-// cppcheck --project=compile_commands.json --platform=unspecified --enable=style -q --library=qt --library=posix --library=gnu --library=bsd --library=windows --suppressions-list=../XSIGMA/CMake/XSIGMAcppcheckSuppressions.txt --template='{id},{file}:{line},{severity},{message}' -j8
+# =============================================================================
+# Third-Party Library Suppressions
+# =============================================================================
 
-// Suppress everything from ThirdParty.
-*:*ThirdParty/*
-*:*Utilities/*
-*:*Parallel/*
-*:*CMake/*
-*:*Wrapping/*
-*:*Core/*
-// If cppcheck itself crashes, well, that's its problem, ignore that.
-cppcheckError
+# Suppress all warnings from third-party libraries
+*:*/ThirdParty/*
+*:*/third_party/*
+*:*/3rdparty/*
+*:*/external/*
 
-// due to matrix, vector and tensor
-unreadVariable
+# Specific third-party library suppressions
+*:*/fmt/*
+*:*/cpuinfo/*
+*:*/loguru/*
+*:*/mimalloc/*
+*:*/googletest/*
+*:*/benchmark/*
+*:*/magic_enum/*
 
-// avoid message: using std::fill or std::generate algorithm instead of a raw loop
-useStlAlgorithm
+# Additional third-party suppressions for specific files
+*:*gtest-all.cc
+*:*gtest-all.cpp
+*:*gtest*
 
-shadowFunction
+# =============================================================================
+# XSigma Source Code Suppressions
+# =============================================================================
 
-unknownMacro
+# Syntax errors from complex macro combinations
+syntaxError:Library/Core/util/timer_log.h:87
+syntaxError:Library/Core/util/logging.h:155
 
-noExplicitConstructor:Library/Vectorization/terminals/vector.h 
-noExplicitConstructor:Library/Vectorization/terminals/matrix.h
-noExplicitConstructor:Library/Vectorization/terminals/tensor.h 
-duplicateExpression:Library/Market/Testing/Cxx/TestIDs.cxx
-constParameter:Library/Serialization/common/archiver_wrapper.h
-ignoredReturnValue:Library/Vectorization/common/packet.h
-redundantAssignment:Library/Vectorization/Testing/Cxx/TestVector.cxx
-constParameter:Library/Vectorization/common/packet.h
-unusedFunction:Testing/Util/xsigmaTesting.cxx 
+# =============================================================================
+# Compiler-Specific Suppressions
+# =============================================================================
+
+# Compiler-specific suppressions
+*:*MSVC*
+*:*msvc*
+*:*clang*
+*:*gcc*
+
+
+# =============================================================================
+# End of Suppressions
+# =============================================================================
