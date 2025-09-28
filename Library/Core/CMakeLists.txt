@@ -120,6 +120,11 @@ endif()
 # Create alias for consistent naming
 add_library(XSigma::Core ALIAS Core)
 
+# Apply IWYU to the Core target (if available)
+if(COMMAND xsigma_apply_iwyu)
+    xsigma_apply_iwyu(Core)
+endif()
+
 # Configure Visual Studio source groups to preserve directory structure
 # This ensures the Solution Explorer shows the actual filesystem hierarchy
 foreach(source_file ${sources} ${headers} ${templates})

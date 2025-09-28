@@ -34,9 +34,9 @@ limitations under the License.
 #ifndef XSIGMA_TSL_PLATFORM_ENV_TIME_H_
 #define XSIGMA_TSL_PLATFORM_ENV_TIME_H_
 
-#include <cstdint>
-#include "common/macros.h"
+#include <cstdint>  // for uint64_t
 
+#include "common/export.h"  // for XSIGMA_API
 
 namespace xsigma
 {

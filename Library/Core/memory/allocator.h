@@ -22,18 +22,17 @@
 #ifndef __XSIGMA_WRAP__
 
 #include <cstddef>
-#include <cstring>
-#include <memory>
-#include <stdexcept>
-#include <type_traits>
+#include <cstddef>    // for size_t, ptrdiff_t
+#include <cstdint>    // for uintptr_t
+#include <cstring>    // for memcpy
+#include <exception>  // for bad_alloc
+#include <stdexcept>  // for invalid_argument
 
 #include "common/configure.h"
-#include "common/macros.h"
-#include "memory/cpu/helper/memory_allocator.h"
-#include "memory/cpu/helper/process_state.h"
-#include "memory/cpu/allocator_device.h"
-#include "memory/device.h"
-#include "memory/numa.h"
+#include "common/macros.h"                    // for XSIGMA_FORCE_INLINE, XSIGMA_ALIGNMENT, XSIG...
+#include "memory/cpu/allocator.h"             // for Allocator
+#include "memory/cpu/helper/process_state.h"  // for process_state
+#include "memory/device.h"                    // for device_enum
 
 // GPU support includes
 #ifdef XSIGMA_ENABLE_CUDA
@@ -118,13 +117,13 @@ public:
             cudaError_t result = cudaSetDevice(device_index);
             if (result != cudaSuccess)
             {
-                throw std::runtime_error("Failed to set CUDA device: " +
-                                       std::string(cudaGetErrorString(result)));
+                throw std::runtime_error(
+                    "Failed to set CUDA device: " + std::string(cudaGetErrorString(result)));
             }
 
             // Allocate GPU memory
             const size_type bytes = n * scalar_size;
-            result = cudaMalloc(&ptr, bytes);
+            result                = cudaMalloc(&ptr, bytes);
             if (result != cudaSuccess)
             {
                 throw std::bad_alloc();
@@ -244,13 +243,15 @@ public:
             {
                 copy_kind = cudaMemcpyHostToDevice;
             }
-            else if ((from_type == device_enum::CUDA || from_type == device_enum::HIP) &&
-                     to_type == device_enum::CPU)
+            else if (
+                (from_type == device_enum::CUDA || from_type == device_enum::HIP) &&
+                to_type == device_enum::CPU)
             {
                 copy_kind = cudaMemcpyDeviceToHost;
             }
-            else if ((from_type == device_enum::CUDA || from_type == device_enum::HIP) &&
-                     (to_type == device_enum::CUDA || to_type == device_enum::HIP))
+            else if (
+                (from_type == device_enum::CUDA || from_type == device_enum::HIP) &&
+                (to_type == device_enum::CUDA || to_type == device_enum::HIP))
             {
                 copy_kind = cudaMemcpyDeviceToDevice;
             }
@@ -264,7 +265,8 @@ public:
             if (stream)
             {
                 // Asynchronous copy
-                result = cudaMemcpyAsync(to, from, nbytes, copy_kind, static_cast<cudaStream_t>(stream));
+                result =
+                    cudaMemcpyAsync(to, from, nbytes, copy_kind, static_cast<cudaStream_t>(stream));
             }
             else
             {
@@ -275,8 +277,8 @@ public:
             // Check for CUDA errors
             if (result != cudaSuccess)
             {
-                throw std::runtime_error("CUDA memory copy failed: " +
-                                       std::string(cudaGetErrorString(result)));
+                throw std::runtime_error(
+                    "CUDA memory copy failed: " + std::string(cudaGetErrorString(result)));
             }
 
             return;

@@ -9,6 +9,8 @@
 #include <string>     // For std::string
 #include <vector>
 
+#include "common/configure.h"
+
 namespace xsigma::detail::smp
 {
 

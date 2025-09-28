@@ -33,11 +33,11 @@ limitations under the License.
 ==============================================================================*/
 #pragma once
 
-#include <optional>
-#include <string_view>
-#include <utility>
+#include <optional>     // for optional
+#include <string_view>  // for string_view
+#include <utility>      // for exchange
 
-#include "common/macros.h"
+#include "common/export.h"  // for XSIGMA_API
 
 namespace xsigma
 {

@@ -19,6 +19,7 @@
 
 #include <string>
 
+#include "common/configure.h"
 #include "common/macros.h"
 #include "util/exception.h"
 #include "xsigmaTest.h"

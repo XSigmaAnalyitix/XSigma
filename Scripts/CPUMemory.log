@@ -1,0 +1,7 @@
+File verbosity level: 9
+date       time         ( uptime  ) [ thread name/id ]                   file:line     v| 
+2025-09-28 21:55:39.180 (   0.213s) [        6C7D9433]             loguru.cpp:841   INFO| Logging to 'CPUMemory.log', mode: 'w', verbosity: 9
+2025-09-28 21:55:39.181 (   0.213s) [        6C7D9433]      TestCPUMemory.cxx:2236  INFO|  Starting comprehensive CPU Memory Management tests...
+2025-09-28 21:55:39.182 (   0.214s) [        6C7D9433]      TestCPUMemory.cxx:2299  INFO|  All comprehensive CPU Memory Management tests completed successfully!
+2025-09-28 21:55:39.183 (   0.215s) [        6C7D9433]      TestCPUMemory.cxx:2301  INFO|  Tested 35 comprehensive test functions covering all experimental allocator components!
+2025-09-28 21:55:39.184 (   0.216s) [        6C7D9433]      TestCPUMemory.cxx:2302  INFO|  Memory management system is ready for production use!

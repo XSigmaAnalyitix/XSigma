@@ -28,20 +28,19 @@
 
 #pragma once
 
-#include <stdlib.h>
+#include <stdint.h>  // for uint32_t, uint64_t, int64_t, int32_t, uint8_t
+#include <stdlib.h>  // for size_t
 
-#include <cassert>
-#include <functional>
-#include <limits>
-#include <optional>
-#include <string>
-#include <string_view>
+#include <cassert>     // for assert
+#include <functional>  // for function
+#include <optional>    // for optional, nullopt
+#include <string>      // for string
+#include <vector>      // for vector
 
-//#include "memory/cpu/mem.h"
-#include "memory/numa.h"
-#include "memory/unified_memory_stats.h"
-#include "util/exception.h"
-#include "util/logger.h"
+#include "common/export.h"                // for XSIGMA_API
+#include "common/macros.h"                // for XSIGMA_UNUSED
+#include "memory/unified_memory_stats.h"  // for allocator_stats
+#include "util/exception.h"               // for check_msg_impl, XSIGMA_CHECK
 
 namespace xsigma
 {

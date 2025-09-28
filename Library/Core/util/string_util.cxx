@@ -18,27 +18,25 @@
 
 #include "util/string_util.h"
 
-// Standard library includes
-#include <algorithm>   // For std::find_if, std::reverse, etc.
-#include <array>       // For std::array in locale customization
-#include <cctype>      // For character classification functions
-#include <cerrno>      // For errno handling
-#include <cfloat>      // For floating-point constants (DBL_DIG, FLT_DIG)
-#include <cmath>       // For mathematical functions (isnan, signbit)
-#include <cstdarg>     // For va_list and related operations
-#include <cstdio>      // For snprintf and related functions
-#include <cstdlib>     // For strtod, strtol, etc.
-#include <cstring>     // For strlen, memcpy, etc.
-#include <functional>  // For std::function
-#include <iterator>    // For iterator utilities
-#include <locale>      // For locale-specific operations
-#include <string>      // For std::string
+#include <corecrt_math.h>  // for signbit, HUGE_VAL
 
-// XSigma core includes
-#include "common/macros.h"
-#include "common/pointer.h"  // For pointer utilities
-#include "util/exception.h"  // For XSigma exception handling
-#include "util/logger.h"     // For logging utilities
+#include <array>          // for array
+#include <cctype>         // for isdigit, isspace, tolower
+#include <cfloat>         // for DBL_DIG, FLT_DIG, DBL_MAX
+#include <cmath>          // for isnan, signbit, abs
+#include <cstdarg>        // for va_end, va_list, va_copy, va_start
+#include <cstdio>         // for snprintf, vsnprintf
+#include <cstdlib>        // for strtod, strtof, abs, strtol
+#include <cstring>        // for strlen, memcpy
+#include <limits>         // for numeric_limits
+#include <locale>         // for ctype_base::space, locale, ctype, tolower, ctype_base
+#include <memory>         // for _Simple_types
+#include <string>         // for char_traits, string, operator<<, allocator, operator==, oper...
+#include <unordered_map>  // for unordered_map
+#include <utility>        // for reverse, find_if
+
+#include "common/macros.h"   // for XSIGMA_UNUSED, XSIGMA_HAS_CXA_DEMANGLE
+#include "util/exception.h"  // for XSIGMA_CHECK_DEBUG, XSIGMA_CHECK, XSIGMA_CHECK_VALUE
 
 // =============================================================================
 // PLATFORM-SPECIFIC CONFIGURATION
@@ -59,19 +57,26 @@
  */
 
 // Unsigned integer maximum values
-XSIGMA_UNUSED static const uint8_t  kuint8max  = static_cast<uint8_t>(0xFF);         ///< Max value for uint8_t
-XSIGMA_UNUSED static const uint16_t kuint16max = static_cast<uint16_t>(0xFFFF);      ///< Max value for uint16_t
-XSIGMA_UNUSED static const uint32_t kuint32max = static_cast<uint32_t>(0xFFFFFFFF);  ///< Max value for uint32_t
+XSIGMA_UNUSED static const uint8_t kuint8max =
+    static_cast<uint8_t>(0xFF);  ///< Max value for uint8_t
+XSIGMA_UNUSED static const uint16_t kuint16max =
+    static_cast<uint16_t>(0xFFFF);  ///< Max value for uint16_t
+XSIGMA_UNUSED static const uint32_t kuint32max =
+    static_cast<uint32_t>(0xFFFFFFFF);  ///< Max value for uint32_t
 XSIGMA_UNUSED static const uint64_t kuint64max =
     static_cast<uint64_t>(0XFFFFFFFFFFFFFFFFULL);  ///< Max value for uint64_t
 
 // Signed integer minimum and maximum values
-XSIGMA_UNUSED static const int8_t  kint8min  = static_cast<int8_t>(~0x7F);         ///< Min value for int8_t
-XSIGMA_UNUSED static const int8_t  kint8max  = static_cast<int8_t>(0x7F);          ///< Max value for int8_t
-XSIGMA_UNUSED static const int16_t kint16min = static_cast<int16_t>(~0x7FFF);      ///< Min value for int16_t
-XSIGMA_UNUSED static const int16_t kint16max = static_cast<int16_t>(0x7FFF);       ///< Max value for int16_t
-XSIGMA_UNUSED static const int32_t kint32min = static_cast<int32_t>(~0x7FFFFFFF);  ///< Min value for int32_t
-XSIGMA_UNUSED static const int32_t kint32max = static_cast<int32_t>(0x7FFFFFFF);   ///< Max value for int32_t
+XSIGMA_UNUSED static const int8_t  kint8min = static_cast<int8_t>(~0x7F);  ///< Min value for int8_t
+XSIGMA_UNUSED static const int8_t  kint8max = static_cast<int8_t>(0x7F);   ///< Max value for int8_t
+XSIGMA_UNUSED static const int16_t kint16min =
+    static_cast<int16_t>(~0x7FFF);  ///< Min value for int16_t
+XSIGMA_UNUSED static const int16_t kint16max =
+    static_cast<int16_t>(0x7FFF);  ///< Max value for int16_t
+XSIGMA_UNUSED static const int32_t kint32min =
+    static_cast<int32_t>(~0x7FFFFFFF);  ///< Min value for int32_t
+XSIGMA_UNUSED static const int32_t kint32max =
+    static_cast<int32_t>(0x7FFFFFFF);  ///< Max value for int32_t
 XSIGMA_UNUSED static const int64_t kint64min =
     static_cast<int64_t>(~0X7FFFFFFFFFFFFFFFLL);  ///< Min value for int64_t
 XSIGMA_UNUSED static const int64_t kint64max =

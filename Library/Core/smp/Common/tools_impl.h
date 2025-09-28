@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "common/configure.h"
 #include "common/macros.h"
 
 namespace xsigma
@@ -109,4 +110,3 @@ using ExecuteFunctorPtrType = void (*)(void*, int, int, int);
 }  // namespace xsigma
 
 /* XSIGMA-HeaderTest-Exclude: tools_impl.h */
-

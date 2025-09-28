@@ -28,12 +28,11 @@
 
 #include "memory/cpu/allocator.h"
 
-#include <atomic>
+#include <memory>  // for _Simple_types
 
-#include "memory/cpu/allocator_tracking.h"
-#include "memory/cpu/helper/allocator_registry.h"
-#include "util/strcat.h"
-#include "util/string_util.h"
+#include "memory/cpu/allocator_tracking.h"         // for allocator_tracking
+#include "memory/cpu/helper/allocator_registry.h"  // for allocator_factory_registry, process_st...
+#include "util/strcat.h"                           // for StrCat
 
 namespace xsigma
 {

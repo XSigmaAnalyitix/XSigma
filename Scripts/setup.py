@@ -181,6 +181,8 @@ class XsigmaFlags:
             "mimalloc",
             "external",
             "cxxstd",
+            "cppcheck",
+            "cppcheck_autofix",
         ]
         self.__description = [
             # Valid CMake options
@@ -206,6 +208,8 @@ class XsigmaFlags:
             "enable Microsoft mimalloc high-performance memory allocator",
             "use external copies of third party libraries by default",
             "C++ standard: cxx17, cxx20, cxx23",
+            "enable cppcheck static analysis",
+            "enable automatic cppcheck fixes (WARNING: modifies source files)",
         ]
 
     def __build_cmake_flag(self):
@@ -234,6 +238,8 @@ class XsigmaFlags:
             "mimalloc": "XSIGMA_ENABLE_MIMALLOC",
             "external": "XSIGMA_ENABLE_EXTERNAL",
             "cxxstd": "XSIGMA_CXX_STANDARD",
+            "cppcheck": "XSIGMA_ENABLE_CPPCHECK",
+            "cppcheck_autofix": "XSIGMA_ENABLE_AUTOFIX",
 
             # Non-CMake flags (for internal use, not passed to CMake)
             "mkl_threading": "MKL_THREADING",
@@ -266,6 +272,7 @@ class XsigmaFlags:
                 "sanitizer": self.OFF,  # Can conflict with other tools
                 "valgrind": self.OFF,  # Can conflict with sanitizer
                 "coverage": self.OFF,  # Coverage analysis is optional
+                "cppcheck_autofix": self.OFF,  # Modifies source files - requires explicit opt-in
             }
         )
 
@@ -302,6 +309,7 @@ class XsigmaFlags:
                 # "tbb": self.OFF,  # XSIGMA_ENABLE_TBB default is OFF
                 # "iwyu": self.OFF,  # XSIGMA_ENABLE_IWYU default is OFF
                 # "clangtidy": self.OFF,  # XSIGMA_ENABLE_CLANGTIDY default is OFF
+                # "cppcheck": self.OFF,  # XSIGMA_ENABLE_CPPCHECK default is OFF
                 # "valgrind": self.OFF,  # XSIGMA_ENABLE_VALGRIND default is OFF
                 # "coverage": self.OFF,  # XSIGMA_ENABLE_COVERAGE default is OFF
                 # "sanitizer": self.OFF,  # XSIGMA_ENABLE_SANITIZER default is OFF
@@ -374,6 +382,10 @@ class XsigmaFlags:
         if self.__value.get("coverage") == self.ON and self.__value.get("test") != self.ON:
             print_status("Coverage enabled but testing is disabled - enabling tests automatically.", "WARNING")
             self.__value["test"] = self.ON
+
+        if self.__value.get("cppcheck_autofix") == self.ON:
+            print_status("CPPCHECK AUTOFIX ENABLED: Source files will be automatically modified during build!", "WARNING")
+            print_status("Ensure you have committed your changes before building with this option.", "WARNING")
 
         # Validate C++ standard
         if self.__value.get("cxxstd"):
@@ -823,7 +835,18 @@ class XsigmaConfiguration:
 
 
 def parse_args(args):
-    return [item for arg in args for item in re.split(r"_|\.|\ ", arg.lower())]
+    """Parse command line arguments, handling special flags first."""
+    processed_args = []
+
+    for arg in args:
+        # Handle cppcheck autofix flags
+        if arg in ["--enable-cppcheck-autofix", "--cppcheck-autofix"]:
+            processed_args.append("cppcheck_autofix")
+        else:
+            # Apply the original parsing logic
+            processed_args.extend(re.split(r"_|\.|\ ", arg.lower()))
+
+    return processed_args
 
 
 def main():
@@ -844,6 +867,9 @@ def main():
         print("  eninja    - Eclipse + Ninja (IDE integration)")
         print("  xcode     - Xcode (macOS only, full IDE integration)")
         print("  vs17/19/22- Visual Studio (Windows only)")
+        print("\nSpecial flags:")
+        print("  --enable-cppcheck-autofix  Enable automatic cppcheck fixes (WARNING: modifies source files)")
+        print("  --cppcheck-autofix         Alias for --enable-cppcheck-autofix")
         print("\nAvailable options:")
         XsigmaFlags([]).helper()
         return

@@ -25,7 +25,7 @@
 #include <type_traits>
 #include <utility>
 
-
+#include "common/configure.h"
 #include "common/macros.h"
 #include "memory/device.h"
 #include "memory/gpu/gpu_memory_pool.h"
@@ -549,7 +549,8 @@ public:
                 if (cuda_result != cudaSuccess)
                 {
                     throw std::runtime_error(
-                        "Failed to set CUDA device: " + std::string(cudaGetErrorString(cuda_result)));
+                        "Failed to set CUDA device: " +
+                        std::string(cudaGetErrorString(cuda_result)));
                 }
                 cuda_result = cudaMalloc(reinterpret_cast<void**>(&ptr), bytes);
                 if (cuda_result != cudaSuccess)
@@ -572,7 +573,8 @@ public:
                 if (cuda_result != cudaSuccess)
                 {
                     throw std::runtime_error(
-                        "Failed to set CUDA device: " + std::string(cudaGetErrorString(cuda_result)));
+                        "Failed to set CUDA device: " +
+                        std::string(cudaGetErrorString(cuda_result)));
                 }
                 cuda_result = cudaMalloc(reinterpret_cast<void**>(&ptr), bytes);
                 if (cuda_result != cudaSuccess)

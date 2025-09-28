@@ -23,7 +23,8 @@
 #include <string>       // for allocator, string
 #include <type_traits>  // For std:::enable_if
 
-  // For export macro
+#include "common/configure.h"
+// For export macro
 #include "smp/Common/tools_api.h"
 #include "smp/xsigma_thread_local.h"  // For Initialized
 

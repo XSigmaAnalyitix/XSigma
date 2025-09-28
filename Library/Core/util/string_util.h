@@ -15,15 +15,18 @@
 
 #ifndef __XSIGMA_WRAP__
 
+#include <stdarg.h>  // for va_list
+
 #include <cstddef>      // for size_t
 #include <cstdint>      // for int64_t
+#include <cstdint>      // for int64_t, uint64_t, uint32_t, int32_t
 #include <sstream>      // for ostream, ostringstream, stringstream
-#include <string>       // for string, allocator, basic_string
+#include <string>       // for string, allocator, char_traits, stoi, to_string
 #include <string_view>  // for string_view
-#include <typeinfo>     // for type_info
 #include <vector>       // for vector
 
-#include "common/macros.h"
+#include "common/export.h"  // for XSIGMA_API, XSIGMA_VISIBILITY
+#include "common/macros.h"  // for XSIGMA_PRINTF_ATTRIBUTE
 
 // =============================================================================
 // ENUM CONVERSION UTILITIES
@@ -454,7 +457,8 @@ std::ostream& operator<<(std::ostream& out, const SourceLocation& loc);
  * erase_all_sub_string(text, "-"); // text becomes "abcd"
  * @endcode
  */
-XSIGMA_API void erase_all_sub_string(std::string& mainStr, std::string_view const& toErase) noexcept;
+XSIGMA_API void erase_all_sub_string(
+    std::string& mainStr, std::string_view const& toErase) noexcept;
 
 // =============================================================================
 // STRING VALIDATION AND TYPE CHECKING UTILITIES

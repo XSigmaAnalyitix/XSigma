@@ -29,17 +29,19 @@
  * @date 2024
  */
 
-#include <cmath>        // for isnan, isinf
-#include <cstddef>      // for size_t
-#include <fstream>      // for filebuf, ostream
-#include <limits>       // for numeric_limits
-#include <sstream>      // for ostringstream
-#include <string>       // for string, allocator, basic_string
-#include <string_view>  // for string_view
-#include <vector>       // for vector
+#include <gtest/gtest.h>  // for AssertionResult, Message, TestPartResult, EXPECT_EQ, EXPEC...
 
-#include "util/string_util.h"  // for stoi, strip_basename, compile_tim...
-#include "xsigmaTest.h"        // for EXPECT_EQ, EXPECT_TRUE, END_TEST
+#include <cmath>
+#include <cstddef>      // for size_t
+#include <fstream>      // for basic_ostream, filebuf, ostream
+#include <memory>       // for _Simple_types
+#include <string>       // for string, basic_string, char_traits
+#include <string_view>  // for string_view
+#include <vector>       // for vector, _Vector_const_iterator
+
+#include "common/macros.h"     // for XSIGMA_UNUSED
+#include "util/string_util.h"  // for is_float, is_integer, exclude_file_extension, file_extension
+#include "xsigmaTest.h"        // for END_TEST, XSIGMATEST
 
 namespace xsigma
 {
