@@ -174,6 +174,19 @@ git submodule update --init --recursive
 cmake -B build -S . -DXSIGMA_USE_EXTERNAL=ON
 ```
 
+### Build Configuration for Third-Party Libraries
+
+Third-party targets are configured to:
+- Suppress warnings (using -w or /w)
+- Use the same C++ standard as the main project
+- Avoid altering the main project's compiler/linker settings
+- Provide consistent target aliases with the XSigma:: prefix
+
+### Notes
+- When XSIGMA_USE_EXTERNAL=ON, system-installed libraries are preferred over bundled submodules.
+- Some libraries may require additional system packages; consult their upstream documentation if find_package() fails.
+
+
 ## Vectorization Support
 
 XSigma supports multiple vectorization backends including CPU SIMD instructions and CUDA GPU acceleration.
@@ -249,11 +262,22 @@ cmake --build build -j$(sysctl -n hw.ncpu)
 cmake -B build -S . -DCMAKE_CXX_FLAGS_RELEASE="-O3 -march=native -DNDEBUG"
 ```
 
-### Sanitizer Configuration
+
+### CMake Optimization Modules Overview
+
+XSigma ships optimized CMake modules that improve configuration speed and runtime performance. These are included automatically by the top-level CMakeLists.txt and require no manual setup:
+
+- build_type.cmake: Optimized build-type flags (Release, Debug, RelWithDebInfo, MinSizeRel), LTO handling, MSVC runtime selection
+- checks.cmake: Fast, cached platform/compiler validation and C++17 feature checks
+- platform.cmake: Platform-specific optimizations (MSVC/GCC/Clang), vectorization flags, parallel builds, safe flag application
+
+Paths: Cmake/flags/build_type.cmake, Cmake/flags/checks.cmake, Cmake/flags/platform.cmake
+
+## Sanitizers
 
 XSigma provides comprehensive sanitizer support for memory debugging and analysis with all modern sanitizers across multiple compilers.
 
-#### Supported Sanitizers
+### Supported Sanitizers
 
 | Sanitizer | Purpose | GCC | Clang | Apple Clang | MSVC |
 |-----------|---------|-----|-------|-------------|------|
@@ -263,7 +287,7 @@ XSigma provides comprehensive sanitizer support for memory debugging and analysi
 | **MemorySanitizer** | Uninitialized memory reads | ❌ | ✅ | ✅ | ❌ |
 | **LeakSanitizer** | Memory leak detection | ✅ | ✅ | ✅ | ❌ |
 
-#### Command-Line Usage
+### Command-Line Usage
 
 **Python Setup Script (Recommended):**
 ```bash
@@ -304,7 +328,7 @@ cmake -B build -S . \
     -DXSIGMA_SANITIZER_TYPE=thread
 ```
 
-#### Sanitizer Descriptions and Use Cases
+### Sanitizer Descriptions and Use Cases
 
 **AddressSanitizer (ASan)**
 - **Purpose**: Detects buffer overflows, use-after-free, double-free, memory leaks
@@ -339,7 +363,7 @@ cmake -B build -S . \
 - **Platforms**: GCC, Clang (not MSVC)
 - **Note**: Can be used standalone or with AddressSanitizer
 
-#### Customizing Sanitizer Behavior
+### Customizing Sanitizer Behavior
 
 **Sanitizer Ignore File**
 
@@ -393,7 +417,7 @@ export MSAN_OPTIONS="print_stats=1:halt_on_error=1"
 export LSAN_OPTIONS="suppressions=leak_suppressions.txt"
 ```
 
-#### Platform-Specific Considerations
+### Platform-Specific Considerations
 
 **Windows (MSVC)**
 - Only AddressSanitizer is supported
@@ -413,7 +437,7 @@ export LSAN_OPTIONS="suppressions=leak_suppressions.txt"
 - Use `DYLD_INSERT_LIBRARIES` for runtime library preloading
 - Xcode integration available through build schemes
 
-#### Best Practices
+### Best Practices
 
 **Development Workflow**
 1. **Start with AddressSanitizer** - catches most common memory errors
@@ -441,7 +465,7 @@ export LSAN_OPTIONS="suppressions=leak_suppressions.txt"
 - Consider sanitizer overhead when setting test timeouts
 - Use sanitizer-specific optimization flags when needed
 
-#### Troubleshooting Sanitizer Issues
+### Troubleshooting Sanitizer Issues
 
 **Common Problems and Solutions**
 
@@ -496,7 +520,80 @@ export LSAN_OPTIONS="suppressions=leak_suppressions.txt"
 
 ```bash
 # Get detailed stack traces
+
+```
+
+## Include-What-You-Use (IWYU)
+
+IWYU helps reduce unnecessary includes and enforces clean header dependencies across the codebase.
+
+- CMake option: `XSIGMA_ENABLE_IWYU` (default: OFF)
+- Applies to: XSigma targets only (ThirdParty targets are skipped)
+- Logs: `build/iwyu.log` with per-file analysis also recorded under `build/iwyu_logs/`
+- Mapping file (optional): `Scripts/iwyu_exclusion.imp` (used if present)
+
+### Install IWYU
+- Ubuntu/Debian: `sudo apt-get install iwyu`
+- Fedora/CentOS/RHEL: `sudo dnf install iwyu`
+- macOS (Homebrew): `brew install include-what-you-use`
+- Windows: Download from https://include-what-you-use.org/ or build from source
+
+### Enable and Run
+```bash
+# Configure with IWYU enabled
+cmake -B build -S . -DXSIGMA_ENABLE_IWYU=ON
+
+# Build (IWYU runs during compilation and writes logs)
+cmake --build build -j
+
+# Inspect the log for include suggestions
+less build/iwyu.log
+```
+
+Notes:
+- IWYU is crash-resistant and uses conservative flags configured in `Cmake/tools/iwyu.cmake`.
+- If IWYU is not found and the option is ON, configuration fails with a helpful install hint.
+
+## Cppcheck Static Analysis
+
+Cppcheck provides static analysis for C/C++ code quality, style, performance, and portability.
+
+- CMake option: `XSIGMA_ENABLE_CPPCHECK` (default: OFF)
+- Optional: `XSIGMA_ENABLE_AUTOFIX` (WARNING: enables `--fix`, modifies source files!)
+- Suppressions file (optional): `Scripts/cppcheck_suppressions.txt`
+- Output log: `${CMAKE_BINARY_DIR}/cppcheckoutput.log`
+- Third-party code is skipped automatically
+
+### Install Cppcheck
+- Ubuntu/Debian: `sudo apt-get install cppcheck`
+- Fedora/CentOS/RHEL: `sudo dnf install cppcheck`
+- macOS (Homebrew): `brew install cppcheck`
+- Windows: `choco install cppcheck` or `winget install cppcheck`
+
+### Enable and Run
+```bash
+# Configure with Cppcheck enabled
+cmake -B build -S . -DXSIGMA_ENABLE_CPPCHECK=ON
+
+# Optionally enable automatic fixes (use with caution)
+cmake -B build -S . -DXSIGMA_ENABLE_CPPCHECK=ON -DXSIGMA_ENABLE_AUTOFIX=ON
+
+# Build (cppcheck runs as part of compilation and writes the log file)
+cmake --build build -j
+
+# Review analysis results
+less ${CMAKE_BINARY_DIR}/cppcheckoutput.log
+```
+
+Tips:
+- Customize suppressions in `Scripts/cppcheck_suppressions.txt` to silence known safe patterns.
+
+- The analysis is configured in `Cmake/tools/cppcheck.cmake` with platform-appropriate options.
+
+```bash
+
 export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer
+
 export MSAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer
 
 # Save sanitizer output to file
@@ -520,6 +617,15 @@ cmake --build build
 ctest --test-dir build
 
 ## Usage Examples
+
+### Enhanced Profiler (Experimental)
+
+An advanced profiler for the XSigma Core module providing nanosecond-precision timing, memory tracking, hierarchical scopes, thread safety, and multiple output formats (console/JSON/CSV/XML).
+
+- Location: Library/Core/experimental/profiler
+- Quick start: see Library/Core/Testing/Cxx/TestEnhancedProfiler.cxx for end-to-end examples
+- Macros: XSIGMA_PROFILE_SCOPE("name"), XSIGMA_PROFILE_FUNCTION()
+
 
 ### Example 1: Minimal Build (Fastest)
 
@@ -797,7 +903,7 @@ XSigma/
 │       └── Testing/           # Core tests
 ├── ThirdParty/                # Third-party dependencies
 │   ├── CMakeLists.txt         # Dependency configuration
-│   ├── README.md              # Dependency setup guide
+
 │   └── [submodules]           # Git submodules for dependencies
 ├── Cmake/                     # CMake utilities and tools
 │   └── tools/                 # CMake helper modules
