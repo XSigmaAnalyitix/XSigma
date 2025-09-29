@@ -1,4 +1,4 @@
-# XSigma - Modern CMake Build System
+# XSigma - High-performance C++ library with modern CMake build system
 
 XSigma is a high-performance C++ library with a comprehensive CMake build system that provides cross-platform compatibility, advanced optimization, and flexible third-party dependency management.
 
@@ -11,6 +11,10 @@ XSigma is a high-performance C++ library with a comprehensive CMake build system
 - [Vectorization Support](#vectorization-support)
 - [Cross-Platform Building](#cross-platform-building)
 - [Advanced Configuration](#advanced-configuration)
+- [Sanitizers](#sanitizers)
+- [Code Coverage](#code-coverage)
+- [Include-What-You-Use (IWYU)](#include-what-you-use-iwyu)
+- [Cppcheck Static Analysis](#cppcheck-static-analysis)
 - [Usage Examples](#usage-examples)
 - [Migration Guide](#migration-guide)
 - [Troubleshooting](#troubleshooting)
@@ -119,7 +123,6 @@ XSigma uses a **conditional compilation pattern** where each library is controll
 
 | Library | Option | Description | Target Alias |
 |---------|--------|-------------|--------------|
-| TBB | `XSIGMA_ENABLE_TBB=OFF` | Threading Building Blocks | `XSigma::tbb` |
 | mimalloc | `XSIGMA_ENABLE_MIMALLOC=OFF` | High-performance allocator | `XSigma::mimalloc` |
 | Google Test | `XSIGMA_ENABLE_GTEST=OFF` | Testing framework | `XSigma::gtest` |
 | Benchmark | `XSIGMA_ENABLE_BENCHMARK=OFF` | Microbenchmarking | `XSigma::benchmark` |
@@ -158,7 +161,6 @@ git submodule add https://github.com/Neargye/magic_enum.git ThirdParty/magic_enu
 git submodule add https://github.com/emilk/loguru.git ThirdParty/loguru
 
 # Optional libraries
-git submodule add https://github.com/oneapi-src/oneTBB.git ThirdParty/tbb
 git submodule add https://github.com/microsoft/mimalloc.git ThirdParty/mimalloc
 git submodule add https://github.com/google/benchmark.git ThirdParty/benchmark
 git submodule add https://github.com/google/googletest.git ThirdParty/googletest
@@ -523,6 +525,54 @@ export LSAN_OPTIONS="suppressions=leak_suppressions.txt"
 
 ```
 
+## Code Coverage
+
+Generate code coverage reports to measure test effectiveness and identify untested code paths. XSigma uses LLVM coverage tools (llvm-profdata and llvm-cov) for source-based coverage analysis.
+
+### Quick Start
+
+```bash
+cd Scripts
+python setup.py ninja.clang.config.tbb.build.coverage
+```
+
+The HTML coverage report will be generated at `build_ninja_tbb_coverage/coverage_report/html/index.html`
+
+### What Gets Measured
+
+Coverage analysis tracks:
+- **Line coverage**: Which lines of code were executed during tests
+- **Function coverage**: Which functions were called
+- **Region coverage**: Which code branches were taken
+
+Third-party libraries and test files are automatically excluded from coverage reports.
+
+### Manual Coverage Commands
+
+After building with coverage enabled, you can generate reports manually:
+
+```bash
+# Navigate to build directory
+cd build_ninja_tbb_coverage
+
+# Merge raw coverage data
+cmake --build . --target coverage-merge
+
+# Generate text report
+cmake --build . --target coverage-report
+
+# Generate HTML report
+cmake --build . --target coverage-html
+```
+
+### Coverage Requirements
+
+- **Compiler**: Clang with LLVM tools (llvm-profdata, llvm-cov)
+- **Build type**: Coverage builds use Debug configuration with instrumentation flags
+- **Tests**: Google Test framework must be enabled
+
+For detailed coverage configuration and advanced usage, see `Cmake/tools/COVERAGE_USAGE.md`
+
 ## Include-What-You-Use (IWYU)
 
 IWYU helps reduce unnecessary includes and enforces clean header dependencies across the codebase.
@@ -615,7 +665,7 @@ cmake -B build -S . \
 # Run tests
 cmake --build build
 ctest --test-dir build
-
+```
 ## Usage Examples
 
 ### Enhanced Profiler (Experimental)
