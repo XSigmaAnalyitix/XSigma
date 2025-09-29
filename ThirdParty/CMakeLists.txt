@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.16)
 message(STATUS "DEBUG: Processing ThirdParty/CMakeLists.txt")
 
-# Force static libraries for third-party dependencies (except TBB)
+# Force static libraries for third-party dependencies
 # Save the current BUILD_SHARED_LIBS setting
 set(_SAVED_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static build for third-party libraries" FORCE)
@@ -176,31 +176,6 @@ if(TARGET loguru)
             target_link_options(loguru PRIVATE ${XSIGMA_SANITIZER_LINK_FLAGS})
         endif()
         message(STATUS "Applied sanitizer flags to loguru target")
-    endif()
-endif()
-
-# TBB - Intel Threading Building Blocks (conditional) - Force shared library build
-if(XSIGMA_ENABLE_TBB)
-    # Use our custom FindTBB.cmake
-    list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/Cmake/packages")
-    find_package(TBB REQUIRED)
-    if(TBB_FOUND)
-        message(STATUS "Using external TBB from: ${TBB_INCLUDE_DIR}")
-        message(STATUS "TBB libraries: ${TBB_LIBRARIES}")
-
-        # Ensure TBB targets have proper output directory configuration
-        if(TARGET TBB::tbb AND COMMAND xsigma_set_target_output_directories)
-            xsigma_set_target_output_directories(TBB::tbb)
-        endif()
-        if(TARGET TBB::tbbmalloc AND COMMAND xsigma_set_target_output_directories)
-            xsigma_set_target_output_directories(TBB::tbbmalloc)
-        endif()
-        if(TARGET TBB::tbb12 AND COMMAND xsigma_set_target_output_directories)
-            xsigma_set_target_output_directories(TBB::tbb12)
-        endif()
-        if(TARGET TBB::tbbmalloc_proxy AND COMMAND xsigma_set_target_output_directories)
-            xsigma_set_target_output_directories(TBB::tbbmalloc_proxy)
-        endif()
     endif()
 endif()
 

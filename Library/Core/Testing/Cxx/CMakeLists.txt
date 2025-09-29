@@ -63,27 +63,6 @@ endif()
 
 # Add TBB support for tests
 if(XSIGMA_ENABLE_TBB)
-    # Disable TBB's pragma-based auto-linking on Windows to avoid conflicts
-    if(WIN32)
-        target_compile_definitions(CoreCxxTests PRIVATE __TBB_NO_IMPLICIT_LINKAGE)
-    endif()
-
-    # Ensure TBB include directories are available for tests
-    if(TBB_INCLUDE_DIR AND EXISTS "${TBB_INCLUDE_DIR}")
-        target_include_directories(CoreCxxTests PRIVATE "${TBB_INCLUDE_DIR}")
-    endif()
-
-    # Link with TBB libraries using a cross-platform approach
-    # Use imported targets if available, otherwise fall back to manual linking
-    if(TARGET TBB::tbb)
-        target_link_libraries(CoreCxxTests PRIVATE TBB::tbb)
-    elseif(TBB_LIBRARY_RELEASE)
-        target_link_libraries(CoreCxxTests PRIVATE ${TBB_LIBRARY_RELEASE})
-    endif()
-
-    if(TARGET TBB::tbbmalloc)
-        target_link_libraries(CoreCxxTests PRIVATE TBB::tbbmalloc)
-    elseif(TBB_MALLOC_LIBRARY_RELEASE)
-        target_link_libraries(CoreCxxTests PRIVATE ${TBB_MALLOC_LIBRARY_RELEASE})
-    endif()
+    find_package(TBB REQUIRED)
+    target_link_libraries(CoreCxxTests PRIVATE TBB::tbb TBB::tbbmalloc)
 endif()

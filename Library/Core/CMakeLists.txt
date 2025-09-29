@@ -205,32 +205,8 @@ endif()
 
 # Optional dependencies
 if(XSIGMA_ENABLE_TBB)
-    # Disable TBB's pragma-based auto-linking on Windows to avoid conflicts
-    if(WIN32)
-        target_compile_definitions(Core PRIVATE __TBB_NO_IMPLICIT_LINKAGE)
-    endif()
-
-    # Ensure TBB include directories are available
-    if(TBB_INCLUDE_DIR AND EXISTS "${TBB_INCLUDE_DIR}")
-        target_include_directories(Core PRIVATE "${TBB_INCLUDE_DIR}")
-    endif()
-
-    # Link with TBB libraries using a cross-platform approach
-    # Use imported targets if available, otherwise fall back to manual linking
-    if(TARGET TBB::tbb)
-        target_link_libraries(Core PRIVATE TBB::tbb)
-    elseif(TBB_LIBRARY_RELEASE)
-        target_link_libraries(Core PRIVATE ${TBB_LIBRARY_RELEASE})
-    endif()
-
-    if(TARGET TBB::tbbmalloc)
-        target_link_libraries(Core PRIVATE TBB::tbbmalloc)
-    elseif(TBB_MALLOC_LIBRARY_RELEASE)
-        target_link_libraries(Core PRIVATE ${TBB_MALLOC_LIBRARY_RELEASE})
-    endif()
-
-    # Note: This approach avoids hardcoded paths and uses CMake's target system
-    # or the specific library variables from FindTBB.cmake
+    find_package(TBB REQUIRED)
+    target_link_libraries(Core PRIVATE TBB::tbb TBB::tbbmalloc)
 endif()
 
 if(XSIGMA_ENABLE_MIMALLOC)
