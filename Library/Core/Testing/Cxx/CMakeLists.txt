@@ -46,3 +46,20 @@ if(XSIGMA_ENABLE_TBB)
     find_package(TBB REQUIRED)
     target_link_libraries(CoreCxxTests PRIVATE TBB::tbb TBB::tbbmalloc)
 endif()
+
+# Discover and register Google Test cases with CTest
+if(COMMAND gtest_discover_tests)
+    gtest_discover_tests(CoreCxxTests
+        WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+        PROPERTIES
+            ENVIRONMENT "LLVM_PROFILE_FILE=${XSIGMA_COVERAGE_PROFRAW_DIR}/default-%p.profraw"
+    )
+else()
+    # Fallback: Add test manually
+    add_test(NAME CoreCxxTests COMMAND CoreCxxTests)
+    if(XSIGMA_ENABLE_COVERAGE AND DEFINED XSIGMA_COVERAGE_PROFRAW_DIR)
+        set_tests_properties(CoreCxxTests PROPERTIES
+            ENVIRONMENT "LLVM_PROFILE_FILE=${XSIGMA_COVERAGE_PROFRAW_DIR}/default-%p.profraw"
+        )
+    endif()
+endif()

@@ -759,7 +759,14 @@ class XsigmaConfiguration:
         if self.__value["build"] != "build" or not self.__xsigma_flags.is_coverage():
             return 0
 
-        script_full_path = f"{source_path}/Scripts/compute_code_coverage_locally.sh"
+        # Use cross-platform bash script for all platforms
+        script_name = "compute_code_coverage_locally.sh"
+        script_full_path = f"{source_path}/Scripts/{script_name}"
+
+        # Make script executable on Unix-like systems
+        if os.path.exists(script_full_path):
+            os.chmod(script_full_path, 0o755)
+
         dll_info = self.__get_dll_info()
         gtest = (
             "gtest"
@@ -768,8 +775,8 @@ class XsigmaConfiguration:
             else ""
         )
 
-        ctest_cmd = [
-            script_full_path,
+        # Build command arguments
+        coverage_args = [
             build_path,
             dll_info["output_dir"],
             dll_info["suffix"],
@@ -777,6 +784,11 @@ class XsigmaConfiguration:
             dll_info["exe_extension"],
             gtest,
         ]
+
+        # Construct the full command with bash script
+        ctest_cmd = [script_full_path] + coverage_args
+
+        print_status(f"Running coverage script: {script_name}", "INFO")
         return subprocess.check_call(
             ctest_cmd, stderr=subprocess.STDOUT, shell=self.__shell_flag()
         )

@@ -8,12 +8,6 @@ configure_file(
     @ONLY
 )
 
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/xsigma_build.h.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/xsigma_build.h"
-    @ONLY
-)
-
 # Configure threading
 if(WIN32)
     set(XSIGMA_USE_WIN32_THREADS ON)
@@ -40,7 +34,6 @@ set(xsigma_templates)
 
 list(APPEND xsigma_headers
     "${CMAKE_CURRENT_BINARY_DIR}/xsigma_features.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/xsigma_build.h"
     "${CMAKE_CURRENT_BINARY_DIR}/xsigma_version_macros.h"
     "${CMAKE_CURRENT_BINARY_DIR}/xsigma_threads.h"
 )
@@ -208,7 +201,6 @@ install(FILES ${headers}
 # Install configured headers
 install(FILES
     "${CMAKE_CURRENT_BINARY_DIR}/xsigma_features.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/xsigma_build.h"
     "${CMAKE_CURRENT_BINARY_DIR}/xsigma_version_macros.h"
     "${CMAKE_CURRENT_BINARY_DIR}/xsigma_threads.h"
     DESTINATION include/XSigma/Core

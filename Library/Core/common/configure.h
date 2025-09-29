@@ -6,7 +6,6 @@
 #ifndef __xsigma_configure_h__
 #define __xsigma_configure_h__
 
-#include "xsigma_build.h"
 #include "xsigma_features.h"
 #include "xsigma_threads.h"
 #include "xsigma_version_macros.h"
