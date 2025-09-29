@@ -12,12 +12,10 @@ foreach(_test_sources IN ITEMS ${test_sources})
   endif()
 endforeach()
 
-
 include(GoogleTest)
+
 add_executable(CoreCxxTests)
 target_sources(CoreCxxTests PRIVATE ${TestFiles})
-
-# Apply IWYU to the test target (if available)
 if(COMMAND xsigma_apply_iwyu)
     xsigma_apply_iwyu(CoreCxxTests)
 endif()
@@ -27,9 +25,40 @@ target_compile_definitions(CoreCxxTests PRIVATE -DUSE_GTEST)
 target_compile_definitions(CoreCxxTests PRIVATE -D_VARIADIC_MAX=10)
 set_target_properties(CoreCxxTests PROPERTIES FOLDER "Tests")
 
+# Skip sanitizer flags for CoreCxxTests when using MSVC due to third-party library conflicts
+# Third-party libraries (gtest, fmt) are not built with sanitizer support
+if(DEFINED XSIGMA_SANITIZER_COMPILE_FLAGS AND XSIGMA_SANITIZER_COMPILE_FLAGS)
+    target_compile_options(CoreCxxTests PRIVATE ${XSIGMA_SANITIZER_COMPILE_FLAGS})
+endif()
+
+if(DEFINED XSIGMA_SANITIZER_LINK_FLAGS AND XSIGMA_SANITIZER_LINK_FLAGS)
+    target_link_options(CoreCxxTests PRIVATE ${XSIGMA_SANITIZER_LINK_FLAGS})
+endif()
+
 # Apply XSigma output directory configuration
 if(COMMAND xsigma_set_target_output_directories)
     xsigma_set_target_output_directories(CoreCxxTests)
+endif()
+
+# Create dedicated sanitizer test executable when sanitizers are enabled
+if(XSIGMA_ENABLE_SANITIZER)
+    add_executable(SanitizerTests TestSanitizers.cxx)
+    target_link_libraries(SanitizerTests PRIVATE XSigma::Core)
+    set_target_properties(SanitizerTests PROPERTIES FOLDER "Tests")
+
+    # Apply sanitizer flags to SanitizerTests
+    if(DEFINED XSIGMA_SANITIZER_COMPILE_FLAGS AND XSIGMA_SANITIZER_COMPILE_FLAGS)
+        target_compile_options(SanitizerTests PRIVATE ${XSIGMA_SANITIZER_COMPILE_FLAGS})
+    endif()
+
+    if(DEFINED XSIGMA_SANITIZER_LINK_FLAGS AND XSIGMA_SANITIZER_LINK_FLAGS)
+        target_link_options(SanitizerTests PRIVATE ${XSIGMA_SANITIZER_LINK_FLAGS})
+    endif()
+
+    # Apply XSigma output directory configuration
+    if(COMMAND xsigma_set_target_output_directories)
+        xsigma_set_target_output_directories(SanitizerTests)
+    endif()
 endif()
 
 # Add TBB support for tests

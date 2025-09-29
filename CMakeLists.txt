@@ -133,16 +133,18 @@ include(platform)
 include(cuda)
 include(mkl)
 include(numa)
-include(iwyu)
 include(clangTidy)
-include(coverage)
-include(xsigmaSanitize)
-include(memcheckValgrind)
 include(cppcheck)
+include(iwyu)
+include(coverage)
+include(memcheckValgrind)
 
 # Create build interface target for common settings
 add_library(xsigmabuild INTERFACE)
 add_library(XSigma::build ALIAS xsigmabuild)
+
+# Include sanitizer configuration after xsigmabuild target is created
+include(sanitize)
 
 # Set compile features
 target_compile_features(xsigmabuild INTERFACE cxx_std_${XSIGMA_CXX_STANDARD})

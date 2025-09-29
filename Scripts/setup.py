@@ -449,6 +449,10 @@ class XsigmaFlags:
                 key = "sse, avx, avx2 or avx512"
             elif key == "cxxstd":
                 key = "cxx11, cxx14, cxx17, cxx20, cxx23"
+            elif key == "sanitizer":
+                key = "sanitizer (or --sanitizer.TYPE)"
+            elif key == "sanitizer_enum":
+                key = "address, undefined, thread, memory, leak"
             print(f"{key:<30}{description}")
 
     def enable_gtest(self):
@@ -842,6 +846,27 @@ def parse_args(args):
         # Handle cppcheck autofix flags
         if arg in ["--enable-cppcheck-autofix", "--cppcheck-autofix"]:
             processed_args.append("cppcheck_autofix")
+        # Handle sanitizer flags with dot notation (e.g., --sanitizer.undefined)
+        elif arg.startswith("--sanitizer."):
+            sanitizer_type = arg.split(".", 1)[1].lower()
+            valid_sanitizers = ["address", "undefined", "thread", "memory", "leak"]
+            if sanitizer_type in valid_sanitizers:
+                processed_args.extend(["sanitizer", sanitizer_type])
+            else:
+                print_status(f"Invalid sanitizer type: {sanitizer_type}. Valid options: {', '.join(valid_sanitizers)}", "ERROR")
+                sys.exit(1)
+        # Handle individual sanitizer enable flags
+        elif arg in ["--enable-sanitizer", "--sanitizer"]:
+            processed_args.append("sanitizer")
+        # Handle sanitizer type specification
+        elif arg.startswith("--sanitizer-type="):
+            sanitizer_type = arg.split("=", 1)[1].lower()
+            valid_sanitizers = ["address", "undefined", "thread", "memory", "leak"]
+            if sanitizer_type in valid_sanitizers:
+                processed_args.extend(["sanitizer", sanitizer_type])
+            else:
+                print_status(f"Invalid sanitizer type: {sanitizer_type}. Valid options: {', '.join(valid_sanitizers)}", "ERROR")
+                sys.exit(1)
         else:
             # Apply the original parsing logic
             processed_args.extend(re.split(r"_|\.|\ ", arg.lower()))
@@ -870,6 +895,20 @@ def main():
         print("\nSpecial flags:")
         print("  --enable-cppcheck-autofix  Enable automatic cppcheck fixes (WARNING: modifies source files)")
         print("  --cppcheck-autofix         Alias for --enable-cppcheck-autofix")
+        print("\nSanitizer flags:")
+        print("  --sanitizer.address        Enable AddressSanitizer")
+        print("  --sanitizer.undefined      Enable UndefinedBehaviorSanitizer")
+        print("  --sanitizer.thread         Enable ThreadSanitizer")
+        print("  --sanitizer.memory         Enable MemorySanitizer (Clang only)")
+        print("  --sanitizer.leak           Enable LeakSanitizer")
+        print("  --enable-sanitizer         Enable sanitizer (requires type)")
+        print("  --sanitizer-type=TYPE      Specify sanitizer type")
+        print("                             Options: address, undefined,")
+        print("                             thread, memory, leak")
+        print("\nSanitizer examples:")
+        print("  python setup.py vs22.test.build.config --sanitizer.undefined")
+        print("  python setup.py ninja.clang.build.test --sanitizer.address")
+        print("  python setup.py vs22.test.build --sanitizer-type=thread")
         print("\nAvailable options:")
         XsigmaFlags([]).helper()
         return

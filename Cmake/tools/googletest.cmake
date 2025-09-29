@@ -105,4 +105,19 @@ if(TARGET gmock_main)
     message(STATUS "Created XSigma::gmock_main alias for third-party Google Mock")
 endif()
 
+# Apply sanitizer flags to Google Test targets if sanitizers are enabled
+# This ensures consistent annotations between main project and Google Test
+if(XSIGMA_ENABLE_SANITIZER AND DEFINED XSIGMA_SANITIZER_COMPILE_FLAGS)
+    set(GTEST_TARGETS gtest gtest_main gmock gmock_main)
+    foreach(target_name ${GTEST_TARGETS})
+        if(TARGET ${target_name})
+            target_compile_options(${target_name} PRIVATE ${XSIGMA_SANITIZER_COMPILE_FLAGS})
+            if(DEFINED XSIGMA_SANITIZER_LINK_FLAGS AND XSIGMA_SANITIZER_LINK_FLAGS)
+                target_link_options(${target_name} PRIVATE ${XSIGMA_SANITIZER_LINK_FLAGS})
+            endif()
+            message(STATUS "Applied sanitizer flags to Google Test target: ${target_name}")
+        endif()
+    endforeach()
+endif()
+
 message(STATUS "Third-party Google Test integration completed successfully")
