@@ -16,6 +16,7 @@ set(XSIGMA_VERSION_FULL "${XSIGMA_MAJOR_VERSION}.${XSIGMA_MINOR_VERSION}.${XSIGM
 # Add CMake module path
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cmake/tools")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cmake/flags")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cmake/packages")
 
 # Build optimization settings
 option(XSIGMA_ENABLE_LTO "Enable Link Time Optimization" ON)
