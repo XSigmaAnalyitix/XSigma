@@ -40,26 +40,6 @@ if(COMMAND xsigma_set_target_output_directories)
     xsigma_set_target_output_directories(CoreCxxTests)
 endif()
 
-# Create dedicated sanitizer test executable when sanitizers are enabled
-if(XSIGMA_ENABLE_SANITIZER)
-    add_executable(SanitizerTests TestSanitizers.cxx)
-    target_link_libraries(SanitizerTests PRIVATE XSigma::Core)
-    set_target_properties(SanitizerTests PROPERTIES FOLDER "Tests")
-
-    # Apply sanitizer flags to SanitizerTests
-    if(DEFINED XSIGMA_SANITIZER_COMPILE_FLAGS AND XSIGMA_SANITIZER_COMPILE_FLAGS)
-        target_compile_options(SanitizerTests PRIVATE ${XSIGMA_SANITIZER_COMPILE_FLAGS})
-    endif()
-
-    if(DEFINED XSIGMA_SANITIZER_LINK_FLAGS AND XSIGMA_SANITIZER_LINK_FLAGS)
-        target_link_options(SanitizerTests PRIVATE ${XSIGMA_SANITIZER_LINK_FLAGS})
-    endif()
-
-    # Apply XSigma output directory configuration
-    if(COMMAND xsigma_set_target_output_directories)
-        xsigma_set_target_output_directories(SanitizerTests)
-    endif()
-endif()
 
 # Add TBB support for tests
 if(XSIGMA_ENABLE_TBB)

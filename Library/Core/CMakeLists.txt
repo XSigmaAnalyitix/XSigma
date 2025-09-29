@@ -127,36 +127,7 @@ endif()
 
 # Configure Visual Studio source groups to preserve directory structure
 # This ensures the Solution Explorer shows the actual filesystem hierarchy
-foreach(source_file ${sources} ${headers} ${templates})
-    # Check if the path is already relative or absolute
-    if(IS_ABSOLUTE ${source_file})
-        # Get the relative path from the source directory for absolute paths
-        file(RELATIVE_PATH relative_path ${CMAKE_CURRENT_SOURCE_DIR} ${source_file})
-    else()
-        # Use the path as-is for relative paths
-        set(relative_path ${source_file})
-    endif()
-
-    # Get the directory part of the relative path
-    get_filename_component(source_dir ${relative_path} DIRECTORY)
-
-    # Convert forward slashes to backslashes for Windows-style paths in VS
-    string(REPLACE "/" "\\" source_group_path ${source_dir})
-
-    # Create source group with the directory structure
-    if(source_group_path)
-        source_group("${source_group_path}" FILES ${source_file})
-    else()
-        # Files in the root directory go to "Root Files"
-        source_group("Root Files" FILES ${source_file})
-    endif()
-endforeach()
-
-# Also organize the generated header files
-foreach(generated_header ${xsigma_headers})
-    # Generated headers go to a special "Generated Files" group
-    source_group("Generated Files" FILES ${generated_header})
-endforeach()
+xsigma_module_create_filters("${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Set target properties
 set_target_properties(Core PROPERTIES

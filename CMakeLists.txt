@@ -139,6 +139,7 @@ include(cppcheck)
 include(iwyu)
 include(coverage)
 include(memcheckValgrind)
+include(helperMacros)
 
 # Create build interface target for common settings
 add_library(xsigmabuild INTERFACE)
