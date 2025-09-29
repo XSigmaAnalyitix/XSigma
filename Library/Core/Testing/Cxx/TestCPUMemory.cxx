@@ -421,7 +421,7 @@ XSIGMATEST_VOID(PoolAllocatorTest, AlignmentRequirements)
     // Test various alignment requirements
     for (int i = 0; i < 12; ++i)  // Test up to 4KB alignment
     {
-        size_t alignment = 1 << i;
+        size_t alignment = size_t{1} << i;
         void*  ptr       = pool.allocate_raw(alignment, 256);
         EXPECT_NE(nullptr, ptr);
         EXPECT_TRUE(IsAligned(ptr, alignment));
@@ -612,7 +612,7 @@ XSIGMATEST_VOID(AllocatorTest, StressTest)
                 for (int i = 0; i < allocations_per_thread; ++i)
                 {
                     size_t size      = (i % max_alloc_size) + 1;
-                    size_t alignment = 1 << (i % 8);  // 1, 2, 4, 8, 16, 32, 64, 128
+                    size_t alignment = size_t{1} << (i % 8);  // 1, 2, 4, 8, 16, 32, 64, 128
 
                     void* ptr = pool->allocate_raw(alignment, size);
                     if (ptr != nullptr)

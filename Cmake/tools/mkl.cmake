@@ -16,7 +16,6 @@ include_directories("${MKL_ROOT}/include")
 list(APPEND XSIGMA_MKL_INCLUDE_DIRS "${MKL_INCLUDE}")
 list(APPEND XSIGMA_MKL_INCLUDE_LIBS MKL::MKL)
 add_definitions(-DMKL_ILP64)
-#add_definitions(-DMKL_LP64)
 add_definitions(-DEIGEN_USE_MKL_ALL)
 
 # Threading

@@ -131,6 +131,15 @@ endif()
 add_third_party_library(fmt)
 if(TARGET fmt)
     set_target_properties(fmt PROPERTIES FOLDER "ThirdParty/fmt")
+
+    # Apply sanitizer flags to fmt if sanitizers are enabled
+    if(XSIGMA_ENABLE_SANITIZER AND DEFINED XSIGMA_SANITIZER_COMPILE_FLAGS)
+        target_compile_options(fmt PRIVATE ${XSIGMA_SANITIZER_COMPILE_FLAGS})
+        if(DEFINED XSIGMA_SANITIZER_LINK_FLAGS AND XSIGMA_SANITIZER_LINK_FLAGS)
+            target_link_options(fmt PRIVATE ${XSIGMA_SANITIZER_LINK_FLAGS})
+        endif()
+        message(STATUS "Applied sanitizer flags to fmt target")
+    endif()
 endif()
 if(TARGET fmt-header-only)
     set_target_properties(fmt-header-only PROPERTIES FOLDER "ThirdParty/fmt")
@@ -159,6 +168,15 @@ add_third_party_library(loguru
 )
 if(TARGET loguru)
     set_target_properties(loguru PROPERTIES FOLDER "ThirdParty/loguru")
+
+    # Apply sanitizer flags to loguru if sanitizers are enabled
+    if(XSIGMA_ENABLE_SANITIZER AND DEFINED XSIGMA_SANITIZER_COMPILE_FLAGS)
+        target_compile_options(loguru PRIVATE ${XSIGMA_SANITIZER_COMPILE_FLAGS})
+        if(DEFINED XSIGMA_SANITIZER_LINK_FLAGS AND XSIGMA_SANITIZER_LINK_FLAGS)
+            target_link_options(loguru PRIVATE ${XSIGMA_SANITIZER_LINK_FLAGS})
+        endif()
+        message(STATUS "Applied sanitizer flags to loguru target")
+    endif()
 endif()
 
 # TBB - Intel Threading Building Blocks (conditional) - Force shared library build
@@ -332,3 +350,11 @@ if(XSIGMA_ENABLE_GTEST)
     endif()
 endif()
 
+# Apply sanitizer flags to third-party libraries if sanitizers are enabled
+# This ensures consistent annotations between main project and third-party libraries
+if(XSIGMA_ENABLE_SANITIZER AND COMMAND xsigma_apply_sanitizer_to_third_party_targets)
+    xsigma_apply_sanitizer_to_third_party_targets()
+endif()
+
+# Restore the original BUILD_SHARED_LIBS setting
+set(BUILD_SHARED_LIBS ${_SAVED_BUILD_SHARED_LIBS} CACHE BOOL "Build shared libraries" FORCE)
