@@ -493,6 +493,7 @@ class XsigmaConfiguration:
             "config": "",
             "build": "",
             "test": "",
+            "analyze": "",
             "build_enum": "Release",
             "cmake_generator": "CodeBlocks - Unix Makefiles",
             "cmake_cxx_compiler": "",
@@ -523,7 +524,7 @@ class XsigmaConfiguration:
             self.__value["cmake_cxx_compiler"] = "-DCMAKE_GENERATOR_TOOLSET=ClangCL"
         elif self.__is_visual_studio(arg):
             self.__set_visual_studio(arg)
-        elif arg in ["config", "build", "test"]:
+        elif arg in ["config", "build", "test", "analyze"]:
             self.__value[arg] = arg
         elif arg in ["release", "debug", "relwithdebinfo"]:
             self.__value["build_enum"] = arg.capitalize()
@@ -789,9 +790,82 @@ class XsigmaConfiguration:
         ctest_cmd = [script_full_path] + coverage_args
 
         print_status(f"Running coverage script: {script_name}", "INFO")
-        return subprocess.check_call(
+        result = subprocess.check_call(
             ctest_cmd, stderr=subprocess.STDOUT, shell=self.__shell_flag()
         )
+
+        # Automatically run coverage analysis after successful coverage collection
+        if result == 0:
+            print_status("Coverage data collection completed successfully", "SUCCESS")
+            print_status("Running automatic coverage analysis...", "INFO")
+            self.analyze(source_path, build_path)
+
+        return result
+
+    def analyze(self, source_path, build_path):
+        """
+        Run coverage analysis to identify files below coverage threshold.
+
+        This method runs the analyze_coverage.py script which:
+        - Auto-detects LLVM tools (llvm-cov, llvm-profdata)
+        - Finds coverage data in the build directory
+        - Analyzes coverage for Core library files
+        - Reports files below 95% coverage threshold
+
+        Can be used standalone or after coverage collection:
+        - python setup.py analyze (standalone, auto-detects build dir)
+        - python setup.py ninja.clang.coverage.build.analyze (after coverage build)
+        """
+        if self.__value["analyze"] != "analyze":
+            return 0
+
+        print_status("Running coverage analysis...", "INFO")
+
+        # Path to the analyze_coverage.py script
+        analyze_script = os.path.join(source_path, "Scripts", "analyze_coverage.py")
+
+        if not os.path.exists(analyze_script):
+            print_status(f"Coverage analysis script not found: {analyze_script}", "ERROR")
+            return 1
+
+        # Build command to run analyze_coverage.py
+        analyze_cmd = [sys.executable, analyze_script]
+
+        # Add build directory if we're in a build context
+        if build_path and os.path.isdir(build_path):
+            analyze_cmd.extend(["--build-dir", build_path])
+            print_status(f"Analyzing coverage for build: {build_path}", "INFO")
+        else:
+            print_status("Auto-detecting build directory...", "INFO")
+
+        # Add verbose flag if setup.py was run with verbose mode
+        if self.__value.get("verbosity"):
+            analyze_cmd.append("--verbose")
+
+        try:
+            # Run the analysis script
+            result = subprocess.run(
+                analyze_cmd,
+                cwd=source_path,
+                check=False,
+                shell=self.__shell_flag()
+            )
+
+            if result.returncode == 0:
+                print_status("Coverage analysis completed successfully", "SUCCESS")
+                print_status("All files meet or exceed the coverage threshold", "SUCCESS")
+            elif result.returncode == 1:
+                print_status("Coverage analysis completed", "WARNING")
+                print_status("Some files are below the coverage threshold", "WARNING")
+                print_status("Review the output above for details", "INFO")
+            else:
+                print_status(f"Coverage analysis failed with exit code {result.returncode}", "ERROR")
+
+            return result.returncode
+
+        except Exception as e:
+            print_status(f"Error running coverage analysis: {e}", "ERROR")
+            return 1
 
     def __get_dll_info(self):
         if self.__value["system"] == "Windows":
@@ -898,12 +972,22 @@ def main():
         print("     setup.py config.build.test.xcode.python")
         print("  4. macOS build with Xcode, release mode:")
         print("     setup.py config.build.test.xcode.release.python")
+        print("  5. Build with coverage (analysis runs automatically):")
+        print("     setup.py ninja.clang.config.build.test.coverage")
+        print("  6. Re-analyze existing coverage data:")
+        print("     setup.py analyze")
         print("\nBuild system generators:")
         print("  ninja     - Ninja build system (fast, cross-platform)")
         print("  cninja    - CodeBlocks + Ninja (IDE integration)")
         print("  eninja    - Eclipse + Ninja (IDE integration)")
         print("  xcode     - Xcode (macOS only, full IDE integration)")
         print("  vs17/19/22- Visual Studio (Windows only)")
+        print("\nBuild commands:")
+        print("  config    - Configure the build system")
+        print("  build     - Build the project")
+        print("  test      - Run tests")
+        print("  coverage  - Enable coverage (automatically runs analysis)")
+        print("  analyze   - Re-analyze existing coverage data (standalone)")
         print("\nSpecial flags:")
         print("  --enable-cppcheck-autofix  Enable automatic cppcheck fixes (WARNING: modifies source files)")
         print("  --cppcheck-autofix         Alias for --enable-cppcheck-autofix")
@@ -921,6 +1005,18 @@ def main():
         print("  python setup.py vs22.test.build.config --sanitizer.undefined")
         print("  python setup.py ninja.clang.build.test --sanitizer.address")
         print("  python setup.py vs22.test.build --sanitizer-type=thread")
+        print("\nCoverage analysis examples:")
+        print("  # Build with coverage (analysis runs automatically)")
+        print("  python setup.py ninja.clang.config.build.test.coverage")
+        print("")
+        print("  # Re-analyze existing coverage data without rebuilding")
+        print("  python setup.py analyze")
+        print("")
+        print("  # Re-analyze with verbose output")
+        print("  python setup.py analyze.v")
+        print("")
+        print("  # Note: Coverage analysis is automatic when 'coverage' is enabled")
+        print("  #       No need to add '.analyze' to coverage builds")
         print("\nAvailable options:")
         XsigmaFlags([]).helper()
         return
@@ -936,13 +1032,14 @@ def main():
 
         source_path = os.path.dirname(os.getcwd())
         build_path = compilation_calc.move_to_build_folder()
-        
+
         print_status(f"Build directory: {build_path}", "INFO")
         compilation_calc.config(source_path, build_path)
         compilation_calc.build()
         compilation_calc.test(source_path, build_path)
         compilation_calc.coverage(source_path, build_path)
-        
+        compilation_calc.analyze(source_path, build_path)
+
         print_status("Build process completed successfully!", "SUCCESS")
         
     except KeyboardInterrupt:

@@ -529,6 +529,10 @@ export LSAN_OPTIONS="suppressions=leak_suppressions.txt"
 
 Generate code coverage reports to measure test effectiveness and identify untested code paths. XSigma uses LLVM coverage tools (llvm-profdata and llvm-cov) for source-based coverage analysis.
 
+### Automatic Coverage Analysis (setup.py integration)
+
+Coverage analysis is integrated into the Python build helper in `Scripts/setup.py`. Running `python setup.py ninja.clang.config.build.test.coverage` (from the `Scripts` directory) will automatically analyze coverage after data collection—no need to add an extra `.analyze` step. If you want to re-analyze existing coverage data without rebuilding, use the standalone `python setup.py analyze` command. For more details, see the documentation in the `Scripts/` folder (e.g., `Scripts/README_COVERAGE.md`).
+
 ### Quick Start
 
 ```bash
@@ -939,30 +943,7 @@ For slow builds:
    cmake -B build -S . -DXSIGMA_USE_EXTERNAL=ON
    ```
 
-## Project Structure
 
-```
-XSigma/
-├── CMakeLists.txt              # Main CMake configuration
-├── README.md                   # This file
-├── LICENSE                     # Project license
-├── Library/                    # Core library source code
-│   ├── CMakeLists.txt         # Library configuration
-│   └── Core/                  # Core module
-│       ├── CMakeLists.txt     # Core module configuration
-│       └── Testing/           # Core tests
-├── ThirdParty/                # Third-party dependencies
-│   ├── CMakeLists.txt         # Dependency configuration
-
-│   └── [submodules]           # Git submodules for dependencies
-├── Cmake/                     # CMake utilities and tools
-│   └── tools/                 # CMake helper modules
-│       ├── xsigmaUtils.cmake  # Core utilities + vectorization
-│       ├── cuda.cmake         # CUDA configuration
-│       ├── xsigmaTestUtils.cmake # Testing utilities
-│       └── [other tools]      # Additional CMake modules
-└── Data/                      # Project data files
-```
 
 ## Contributing
 
@@ -981,4 +962,3 @@ See [LICENSE](LICENSE) file for details.
 ---
 
 **XSigma** - High-performance C++ library with modern CMake build system
-```
