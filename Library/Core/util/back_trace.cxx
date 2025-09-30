@@ -5,29 +5,32 @@
 
 #include "util/back_trace.h"
 
-#if SUPPORTS_BACKTRACE
-#include <execinfo.h>
-
+#include <string>
+#include <vector>
 #include <cstdlib>
 #include <functional>
 #include <optional>
-#include <sstream>
-#include <string>
-#include <vector>
+
+#include <fmt/format.h>
 
 #include "common/pointer.h"
 #include "util/string_util.h"
 
-#ifdef _MSC_VER
-
-#include <windows.h>
-//
-#include <dbghelp.h>
-//
-#include <iomanip>
-#pragma comment(lib, "Dbghelp.lib")
+// Platform-specific includes
+#ifdef _WIN32
+    #include <windows.h>
+    #include <dbghelp.h>
+    #pragma comment(lib, "Dbghelp.lib")
+    #define SUPPORTS_BACKTRACE 1
+#elif defined(__unix__) || defined(__APPLE__)
+    #include <execinfo.h>
+    #define SUPPORTS_BACKTRACE 1
+#else
+    #define SUPPORTS_BACKTRACE 0
 #endif
 
+#if !defined(_WIN32)
+// Unix/Linux/macOS-specific helper functions
 namespace xsigma
 {
 namespace
@@ -106,7 +109,7 @@ std::optional<FrameInformation> parse_frame_information(const std::string& frame
     input_stream >> skip >> frame.object_file >> skip >> mangled_function_name >> skip >>
         frame.offset_into_function;
 #else
-#warning Unknown standard library, backtraces may have incomplete verbose information
+    // Unknown standard library, backtraces may have incomplete verbose information
     return std::nullopt;
 #endif  // defined(__GLIBCXX__)
 
@@ -124,93 +127,278 @@ std::optional<FrameInformation> parse_frame_information(const std::string& frame
 }
 }  // anonymous namespace
 }  // namespace xsigma
-#endif
+#endif  // !defined(_WIN32)
 
 namespace xsigma
 {
+// ============================================================================
+// Public API Implementation
+// ============================================================================
+
 std::string back_trace::print(
     XSIGMA_UNUSED size_t frames_to_skip,
     XSIGMA_UNUSED size_t maximum_number_of_frames,
     XSIGMA_UNUSED bool   skip_python_frames)
 {
-#if SUPPORTS_BACKTRACE
-    // We always skip this frame (backtrace).
-    frames_to_skip += 1;
+    backtrace_options options;
+    options.frames_to_skip           = frames_to_skip;
+    options.maximum_number_of_frames = maximum_number_of_frames;
+    options.skip_python_frames       = skip_python_frames;
+    return print(options);
+}
 
-    std::vector<void*> callstack(frames_to_skip + maximum_number_of_frames, nullptr);
-    // backtrace() gives us a list of return addresses in the current call stack.
-    // NOTE: As per man (3) backtrace it can never fail
-    // (http://man7.org/linux/man-pages/man3/backtrace.3.html).
+std::string back_trace::print(const backtrace_options& options)
+{
+    auto frames = capture(options);
+    return format(frames, options);
+}
+
+std::vector<stack_frame> back_trace::capture(const backtrace_options& options)
+{
+    std::vector<stack_frame> result;
+
+#if SUPPORTS_BACKTRACE
+    // Skip this frame (capture) plus user-requested frames
+    size_t frames_to_skip = options.frames_to_skip + 1;
+
+#ifdef _WIN32
+    // Windows implementation using CaptureStackBackTrace
+    const size_t max_frames = frames_to_skip + options.maximum_number_of_frames;
+    std::vector<void*> callstack(max_frames, nullptr);
+
+    // Capture stack frames
+    USHORT captured = CaptureStackBackTrace(
+        static_cast<DWORD>(frames_to_skip),
+        static_cast<DWORD>(options.maximum_number_of_frames),
+        callstack.data(),
+        nullptr);
+
+    callstack.resize(captured);
+
+    // Initialize symbol handler (thread-safe)
+    static bool symbol_handler_initialized = false;
+    if (!symbol_handler_initialized)
+    {
+        SymSetOptions(SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS | SYMOPT_LOAD_LINES);
+        SymInitialize(GetCurrentProcess(), nullptr, TRUE);
+        symbol_handler_initialized = true;
+    }
+
+    // Resolve symbols
+    HANDLE process = GetCurrentProcess();
+    const size_t buffer_size = sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR);
+    std::vector<char> buffer(buffer_size);
+    SYMBOL_INFO* symbol = reinterpret_cast<SYMBOL_INFO*>(buffer.data());
+
+    for (size_t i = 0; i < callstack.size(); ++i)
+    {
+        stack_frame frame;
+        frame.frame_number = i;
+        frame.return_address = callstack[i];
+
+        // Get symbol information
+        symbol->MaxNameLen = MAX_SYM_NAME;
+        symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+
+        DWORD64 displacement = 0;
+        if (SymFromAddr(process, reinterpret_cast<DWORD64>(callstack[i]), &displacement, symbol))
+        {
+            frame.function_name = symbol->Name;
+            frame.offset_into_function = fmt::format("0x{:x}", displacement);
+        }
+        else
+        {
+            frame.function_name = fmt::format("<unknown> [0x{:x}]", reinterpret_cast<uintptr_t>(callstack[i]));
+        }
+
+        // Get module information
+        IMAGEHLP_MODULE64 module_info;
+        module_info.SizeOfStruct = sizeof(IMAGEHLP_MODULE64);
+        if (SymGetModuleInfo64(process, reinterpret_cast<DWORD64>(callstack[i]), &module_info))
+        {
+            frame.object_file = module_info.ModuleName;
+        }
+
+        // Get source line information if requested
+        if (options.include_source_info)
+        {
+            IMAGEHLP_LINE64 line_info;
+            line_info.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+            DWORD line_displacement = 0;
+            if (SymGetLineFromAddr64(process, reinterpret_cast<DWORD64>(callstack[i]), &line_displacement, &line_info))
+            {
+                frame.source_file = line_info.FileName;
+                frame.source_line = static_cast<int>(line_info.LineNumber);
+            }
+        }
+
+        result.push_back(frame);
+    }
+
+#else  // Unix/Linux/macOS implementation
+    std::vector<void*> callstack(frames_to_skip + options.maximum_number_of_frames, nullptr);
+
+    // Capture raw stack addresses
     auto number_of_frames = ::backtrace(callstack.data(), static_cast<int>(callstack.size()));
 
-    // Skip as many frames as requested. This is not efficient, but the sizes here
-    // are small and it makes the code nicer and safer.
+    // Skip requested frames
     for (; frames_to_skip > 0 && number_of_frames > 0; --frames_to_skip, --number_of_frames)
     {
         callstack.erase(callstack.begin());
     }
 
-    // `number_of_frames` is strictly less than the current capacity of
-    // `callstack`, so this is just a pointer subtraction and makes the subsequent
-    // code safer.
     callstack.resize(static_cast<size_t>(number_of_frames));
 
-    // `backtrace_symbols` takes the return addresses obtained from `backtrace()`
-    // and fetches string representations of each stack. Unfortunately it doesn't
-    // return a struct of individual pieces of information but a concatenated
-    // string, so we'll have to parse the string after. NOTE: The array returned
-    // by `backtrace_symbols` is malloc'd and must be manually freed, but not the
-    // strings inside the array.
+    // Get symbol information
     std::unique_ptr<char*, std::function<void(char**)>> raw_symbols(
         ::backtrace_symbols(callstack.data(), static_cast<int>(callstack.size())), free);
+
+    if (!raw_symbols)
+    {
+        return result;  // Failed to get symbols
+    }
+
     const std::vector<std::string> symbols(raw_symbols.get(), raw_symbols.get() + callstack.size());
 
-    // The backtrace string goes into here.
-    std::ostringstream stream;
-
-    // Toggles to true after the first skipped python frame.
+    // Parse each frame
     bool has_skipped_python_frames = false;
-
     for (size_t frame_number = 0; frame_number < callstack.size(); ++frame_number)
     {
-        const auto frame = parse_frame_information(symbols[frame_number]);
+        const auto frame_info = parse_frame_information(symbols[frame_number]);
 
-        if (skip_python_frames && frame && is_python_frame(*frame))
+        // Skip Python frames if requested
+        if (options.skip_python_frames && frame_info && is_python_frame(*frame_info))
         {
             if (!has_skipped_python_frames)
             {
-                stream << "<omitting python frames>\n";
+                stack_frame python_marker;
+                python_marker.function_name = "<omitting python frames>";
+                python_marker.frame_number  = frame_number;
+                result.push_back(python_marker);
                 has_skipped_python_frames = true;
             }
             continue;
         }
 
-        // frame #<number>:
-        stream << "frame #" << frame_number << ": ";
+        stack_frame frame;
+        frame.frame_number    = frame_number;
+        frame.return_address  = callstack[frame_number];
 
-        if (frame)
+        if (frame_info)
         {
-            // <function_name> + <offset> (<return-address> in <object-file>)
-            stream << frame->function_name << " + " << frame->offset_into_function << " ("
-                   << callstack[frame_number] << " in " << frame->object_file << ")\n";
+            frame.function_name         = frame_info->function_name;
+            frame.object_file           = frame_info->object_file;
+            frame.offset_into_function  = frame_info->offset_into_function;
         }
         else
         {
-            // In the edge-case where we couldn't parse the frame string, we can
-            // just use it directly (it may have a different format).
-            stream << symbols[frame_number] << "\n";
+            // Fallback: use raw symbol string
+            frame.function_name = symbols[frame_number];
+        }
+
+        result.push_back(frame);
+    }
+#endif  // _WIN32
+
+#endif  // SUPPORTS_BACKTRACE
+
+    return result;
+}
+
+std::string back_trace::format(
+    const std::vector<stack_frame>& frames,
+    const backtrace_options&        options)
+{
+    if (frames.empty())
+    {
+        return "No stack trace available\n";
+    }
+
+    std::string result;
+
+    if (options.compact_format)
+    {
+        // Compact format: "func1 -> func2 -> func3"
+        for (size_t i = 0; i < frames.size(); ++i)
+        {
+            if (i > 0)
+            {
+                result += " -> ";
+            }
+            result += frames[i].function_name;
+        }
+        result += "\n";
+    }
+    else
+    {
+        // Detailed format
+        for (const auto& frame : frames)
+        {
+            std::string line = fmt::format("frame #{}: {}", frame.frame_number, frame.function_name);
+
+            if (options.include_offsets && !frame.offset_into_function.empty())
+            {
+                line += fmt::format(" + {}", frame.offset_into_function);
+            }
+
+            if (options.include_addresses || !frame.object_file.empty())
+            {
+                line += " (";
+                if (options.include_addresses && frame.return_address)
+                {
+                    line += fmt::format("{}", frame.return_address);
+                }
+                if (!frame.object_file.empty())
+                {
+                    if (options.include_addresses && frame.return_address)
+                    {
+                        line += " in ";
+                    }
+                    line += frame.object_file;
+                }
+                line += ")";
+            }
+
+            if (options.include_source_info && frame.source_line >= 0)
+            {
+                line += fmt::format(" at {}:{}", frame.source_file, frame.source_line);
+            }
+
+            result += line + "\n";
         }
     }
 
-    return stream.str();
-#else
-    const std::string error_xsigma("xsigma::Error::Error");
-    return error_xsigma;
-#endif
-    // SUPPORTS_BACKTRACE
+    return result;
 }
 
-void back_trace::set_stack_trace_on_error(int enable) {}
+std::string back_trace::compact(size_t max_frames)
+{
+    backtrace_options options;
+    options.frames_to_skip           = 1;  // Skip compact() itself
+    options.maximum_number_of_frames = max_frames;
+    options.compact_format           = true;
+    options.include_addresses        = false;
+    options.include_offsets          = false;
+
+    return print(options);
+}
+
+bool back_trace::is_supported()
+{
+#if SUPPORTS_BACKTRACE
+    return true;
+#else
+    return false;
+#endif
+}
+
+void back_trace::set_stack_trace_on_error(int enable)
+{
+    // Placeholder for future implementation
+    // Could integrate with signal handlers or exception hooks
+    (void)enable;
+}
+
 }  // namespace xsigma
 #ifdef __clang__
 #pragma clang diagnostic pop

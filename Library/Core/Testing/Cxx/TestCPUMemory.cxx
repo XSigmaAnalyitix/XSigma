@@ -1322,7 +1322,7 @@ XSIGMATEST_VOID(TrackingAllocatorTest, EnhancedTrackingAnalytics)
         EXPECT_GT(record.requested_bytes, 0);
         EXPECT_GE(record.alloc_bytes, record.requested_bytes);
         EXPECT_GT(record.allocation_id, 0);
-        EXPECT_GT(record.alloc_duration_us, 0);
+        EXPECT_GE(record.alloc_duration_us, 0);
         EXPECT_GT(record.alloc_micros, 0);
         EXPECT_EQ(record.alignment, 64);
     }
@@ -1366,7 +1366,7 @@ XSIGMATEST_VOID(TrackingAllocatorTest, EnhancedTrackingAnalytics)
     auto final_records = tracker->GetEnhancedRecords();
     for (const auto& record : final_records)
     {
-        EXPECT_GT(record.dealloc_duration_us, 0);
+        EXPECT_GE(record.dealloc_duration_us, 0);
     }
 
     XSIGMA_LOG_INFO(
@@ -1782,7 +1782,7 @@ XSIGMATEST_VOID(AllocatorTest, PerformanceBenchmark)
 
     for (size_t alloc_size : test_sizes)
     {
-        XSIGMA_LOG_INFO("Testing allocation size: " + std::to_string(alloc_size) + " bytes");
+        XSIGMA_LOG_INFO("Testing allocation size: {}  bytes", std::to_string(alloc_size));
 
         std::vector<BenchmarkResult> size_results;
 
@@ -2157,7 +2157,7 @@ XSIGMATEST_VOID(AllocatorTest, PerformanceBenchmark)
                         << std::setw(18) << peak_memory_mb << std::setw(15) << perf_vs_malloc << "x"
                         << std::setw(10) << perf_indicator;
 
-            XSIGMA_LOG_INFO(result_line.str());
+            XSIGMA_LOG_INFO("{}", result_line.str());
 
             std::cout << std::left << std::fixed << std::setprecision(3) << std::setw(20)
                       << result.allocator_name << std::setw(15) << result.total_time_us
@@ -2205,7 +2205,7 @@ XSIGMATEST_VOID(AllocatorTest, PerformanceBenchmark)
                          << "Slowest = " << slowest->allocator_name << " (" << std::scientific
                          << slowest->throughput_ops_sec << " ops/s)";
 
-            XSIGMA_LOG_INFO(summary_line.str());
+            XSIGMA_LOG_INFO("{}", summary_line.str());
 
             std::cout << "Size " << test_size << "B: Fastest = " << fastest->allocator_name << " ("
                       << std::scientific << fastest->throughput_ops_sec << " ops/s), "

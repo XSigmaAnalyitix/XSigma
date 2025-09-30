@@ -295,10 +295,13 @@ void allocator_pool::EvictOne()
         if (kShouldLog)
         {
             XSIGMA_LOG_INFO(
-                "allocator_pool: After "
-                << alloc_request_count << " get requests, put_count=" << put_count_
-                << " evicted_count=" << evicted_count_ << " eviction_rate=" << eviction_rate
-                << " and unsatisfied allocation rate=" << alloc_rate);
+                "allocator_pool: After {} get requests, put_count={} evicted_count={} "
+                "eviction_rate={} and unsatisfied allocation rate={}",
+                alloc_request_count,
+                put_count_,
+                evicted_count_,
+                eviction_rate,
+                alloc_rate);
         }
         if (auto_resize_ && (eviction_rate > kTolerable) && (alloc_rate > kTolerable))
         {
@@ -308,8 +311,7 @@ void allocator_pool::EvictOne()
             if (kShouldLog)
             {
                 XSIGMA_LOG_INFO(
-                    "Raising pool_size_limit_ from " << pool_size_limit_ << " to "
-                                                     << new_size_limit);
+                    "Raising pool_size_limit_ from {} to {}", pool_size_limit_, new_size_limit);
             }
             pool_size_limit_ = new_size_limit;
             // Reset all the counters so that ratios are relative to new sizes

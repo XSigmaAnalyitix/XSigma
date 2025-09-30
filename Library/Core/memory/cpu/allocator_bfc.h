@@ -1551,10 +1551,10 @@ private:
                 {
                     // Adjacent memory - extend existing region
                     XSIGMA_LOG_INFO(
-                        "Extending region "
-                        << preceding_region->ptr() << " ("
-                        << numbers::HumanReadableNumBytes(preceding_region->memory_size())
-                        << ") by " << numbers::HumanReadableNumBytes(memory_size) << " bytes");
+                        "Extending region {} ({}) by {} bytes",
+                        preceding_region->ptr(),
+                        numbers::HumanReadableNumBytes(preceding_region->memory_size()),
+                        numbers::HumanReadableNumBytes(memory_size));
 
                     preceding_region->extend(memory_size);
                     return &*preceding_region;
@@ -1563,8 +1563,7 @@ private:
 
             // No coalescing possible - insert new region
             XSIGMA_LOG_INFO(
-                "Adding new region " << ptr << " (" << numbers::HumanReadableNumBytes(memory_size)
-                                     << ")");
+                "Adding new region {} ({})", ptr, numbers::HumanReadableNumBytes(memory_size));
 
             regions_.insert(entry, AllocationRegion(ptr, memory_size));
             return nullptr;
@@ -1698,7 +1697,7 @@ private:
                 return &(*entry);
             }
 
-            XSIGMA_LOG_ERROR("Could not find region for pointer " << p);
+            XSIGMA_LOG_ERROR("Could not find region for pointer {}", p);
             return nullptr;
         }
 

@@ -85,8 +85,10 @@ bool read_bool_from_env_var(std::string_view env_var_name, bool default_val, boo
     }
 
     XSIGMA_LOG_ERROR(
-        "Failed to parse the env-var ${" << env_var_name << "} into bool: " << str_value
-                                         << ". Use the default value: " << default_val);
+        "Failed to parse the env-var {} into bool: {}. Use the default value: {}",
+        env_var_name,
+        str_value,
+        default_val);
     return false;
 }
 
@@ -103,8 +105,10 @@ bool read_int64_from_env_var(std::string_view env_var_name, int64_t default_val,
         return true;
     }
     XSIGMA_LOG_ERROR(
-        "InvalidArgument " << "Failed to parse the env-var ${" << env_var_name << "} into int64: "
-                           << tf_env_var_val << ". Use the default value: " << default_val);
+        "InvalidArgument Failed to parse the env-var {} into int64: {}. Use the default value: {}",
+        env_var_name,
+        tf_env_var_val,
+        default_val);
 
     return false;
 }
@@ -122,8 +126,10 @@ bool read_float_from_env_var(std::string_view env_var_name, float default_val, f
         return true;
     }
     XSIGMA_LOG_ERROR(
-        "InvalidArgument " << "Failed to parse the env-var ${" << env_var_name << "} into float: "
-                           << tf_env_var_val << ". Use the default value: " << default_val);
+        "InvalidArgument Failed to parse the env-var {} into float: {}. Use the default value: {}",
+        env_var_name,
+        tf_env_var_val,
+        default_val);
     return false;
 }
 

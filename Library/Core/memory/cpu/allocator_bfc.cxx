@@ -248,12 +248,12 @@ allocator_bfc::allocator_bfc(
     // We create bins to fit all possible ranges that cover the
     // memory_limit_ starting from allocations up to 256 bytes to
     // allocations up to (and including) the memory limit.
-    XSIGMA_LOG_INFO_DEBUG("Creating new allocator_bfc named: " << name);
+    XSIGMA_LOG_INFO_DEBUG("Creating new allocator_bfc named: {}", name);
     for (BinNum b = 0; b < kNumBins; b++)
     {
         size_t bin_size = BinNumToSize(b);
         XSIGMA_LOG_INFO_DEBUG(
-            "Creating bin of max chunk size " << numbers::HumanReadableNumBytes(bin_size));
+            "Creating bin of max chunk size {}", numbers::HumanReadableNumBytes(bin_size));
         new (BinFromIndex(b)) Bin(this, bin_size);
         XSIGMA_CHECK(BinForSize(bin_size) == BinFromIndex(b));
         XSIGMA_CHECK(BinForSize(bin_size + 255) == BinFromIndex(b));
@@ -273,7 +273,7 @@ allocator_bfc::~allocator_bfc()
     std::scoped_lock l(mutex_);
 
     // Return memory back.
-    XSIGMA_LOG_INFO_DEBUG("Number of regions allocated: " << region_manager_.regions().size());
+    XSIGMA_LOG_INFO_DEBUG("Number of regions allocated: {}", region_manager_.regions().size());
     for (const auto& region : region_manager_.regions())
     {
         sub_allocator_->Free(region.ptr(), region.memory_size());
@@ -349,8 +349,9 @@ bool allocator_bfc::Extend(size_t alignment, size_t rounded_bytes)
     }
 
     XSIGMA_LOG_INFO_DEBUG(
-        "Extending allocation by " << numbers::HumanReadableNumBytes(bytes_received)
-                                   << " bytes for " << Name() << ".");
+        "Extending allocation by {} bytes for {}",
+        numbers::HumanReadableNumBytes(bytes_received),
+        Name());
 
     stats_.pool_bytes.fetch_add(bytes_received, std::memory_order_relaxed);
 
@@ -364,13 +365,13 @@ bool allocator_bfc::Extend(size_t alignment, size_t rounded_bytes)
     }
 
     XSIGMA_LOG_INFO_DEBUG(
-        "Total allocated bytes: " << numbers::HumanReadableNumBytes(
-            stats_.pool_bytes.load(std::memory_order_relaxed)));
+        "Total allocated bytes: {}",
+        numbers::HumanReadableNumBytes(stats_.pool_bytes.load(std::memory_order_relaxed)));
 
     XSIGMA_LOG_INFO_DEBUG(
-        "Allocated memory at " << mem_addr << " to "
-                               << static_cast<void*>(
-                                      static_cast<char*>(mem_addr) + bytes_received));
+        "Allocated memory at {} to {}",
+        mem_addr,
+        static_cast<void*>(static_cast<char*>(mem_addr) + bytes_received));
 
     AllocationRegion* maybe_extended_region = nullptr;
     if (coalesce_regions_)
@@ -481,7 +482,7 @@ void* allocator_bfc::AllocateRawInternalWithRetry(
 void* allocator_bfc::allocate_raw(
     size_t unused_alignment, size_t num_bytes, const allocation_attributes& allocation_attr)
 {
-    XSIGMA_LOG_INFO_DEBUG("allocate_raw " << Name() << "  " << num_bytes);
+    XSIGMA_LOG_INFO_DEBUG("allocate_raw {}  {}", Name(), num_bytes);
     void* result = [&]
     {
         if (!opts_.allow_retry_on_failure || !allocation_attr.retry_on_failure)
@@ -516,15 +517,16 @@ void* allocator_bfc::allocate_raw(
                 {
                     log_counter.store(counter_value + 1, std::memory_order_relaxed);
                     XSIGMA_LOG_WARNING(
-                        "Allocator ("
-                        << Name() << ") ran out of memory trying "
-                        << "to allocate " << numbers::HumanReadableNumBytes(num_bytes)
-                        << " with freed_by_count=" << freed_by_count << "."
-                        << (!allocation_attr.retry_on_failure
-                                ? " The caller indicates that this is not a failure, but"
-                                  " this may mean that there could be performance gains "
-                                  "if more memory were available."
-                                : ""));
+                        "Allocator ({}) ran out of memory trying to allocate {} with "
+                        "freed_by_count={}.{}",
+                        Name(),
+                        numbers::HumanReadableNumBytes(num_bytes),
+                        freed_by_count,
+                        (!allocation_attr.retry_on_failure
+                             ? " The caller indicates that this is not a failure, but"
+                               " this may mean that there could be performance gains "
+                               "if more memory were available."
+                             : ""));
                 }
             }
             return res;
@@ -534,11 +536,9 @@ void* allocator_bfc::allocate_raw(
             return AllocateRawInternalWithRetry(unused_alignment, num_bytes, allocation_attr);
         }
     }();
-    XSIGMA_LOG_INFO_DEBUG("allocate_raw " << Name() << "  " << num_bytes << " " << result);
+    XSIGMA_LOG_INFO_DEBUG("allocate_raw {}  {} {}", Name(), num_bytes, result);
     XSIGMA_LOG_INFO_DEBUG(
-        "[mem-verbose] allocate_raw," << Name() << "," << num_bytes << "," << result << ","
-        //<< tsl::CurrentStackTrace()
-    );
+        "[mem-verbose] allocate_raw,{},{},{},{},{}", Name(), num_bytes, result, "", "");
     return result;
 }
 
@@ -580,7 +580,7 @@ bool allocator_bfc::DeallocateFreeRegions(size_t rounded_bytes)
 
         if (!any_use)
         {
-            XSIGMA_LOG_INFO("Found free region with ptr = " << region.ptr());
+            XSIGMA_LOG_INFO("Found free region with ptr = {}", region.ptr());
             free_region_ptrs.insert(region.ptr());
             total_free_bytes += region.memory_size();
         }
@@ -601,14 +601,14 @@ bool allocator_bfc::DeallocateFreeRegions(size_t rounded_bytes)
 
     XSIGMA_LOG_WARNING(
         "Garbage collection: deallocate free memory regions"
-        << " (i.e., allocations) so that we can re-allocate a larger"
-        << " region to avoid OOM due to memory fragmentation. If you"
-        << " see this message frequently, you are running near the"
-        << " threshold of the available device memory and re-allocation"
-        << " may incur great performance overhead. You may try smaller"
-        << " batch sizes to observe the performance impact."
-        << " Set ENABLE_GPU_GARBAGE_COLLECTION=false if you'd like to"
-        << " disable this feature.");
+        " (i.e., allocations) so that we can re-allocate a larger"
+        " region to avoid OOM due to memory fragmentation. If you"
+        " see this message frequently, you are running near the"
+        " threshold of the available device memory and re-allocation"
+        " may incur great performance overhead. You may try smaller"
+        " batch sizes to observe the performance impact."
+        " Set ENABLE_GPU_GARBAGE_COLLECTION=false if you'd like to"
+        " disable this feature.");
 
     // Deallocate free regions.
     DeallocateRegions(free_region_ptrs);
@@ -632,7 +632,7 @@ void allocator_bfc::DeallocateRegions(const flat_hash_set<void*>& region_ptrs)
             continue;
         }
 
-        XSIGMA_LOG_WARNING( "Deallocate region with ptr = " << it->ptr());
+        XSIGMA_LOG_WARNING("Deallocate region with ptr = {}", it->ptr());
         // Remove all chunk registrations from Bins.
         ChunkHandle h = region_manager_.get_handle(it->ptr());
         while (h != kInvalidChunkHandle)
@@ -732,17 +732,17 @@ void* allocator_bfc::AllocateRawInternal(
     if (dump_log_on_failure)
     {
         XSIGMA_LOG_WARNING(
-            "Allocator (" << Name() << ") ran out of memory trying "
-                          << "to allocate " << numbers::HumanReadableNumBytes(num_bytes)
-                          << " (rounded to " << rounded_bytes << ")"
-                          << "requested by op "
-                          << "\nIf the cause is memory fragmentation maybe the environment "
-                          << "variable 'XSIGMA_GPU_ALLOCATOR=cuda_malloc_async' will "
-                          << "improve the situation. \nCurrent allocation summary follows."
-                          << "\nCurrent allocation summary follows.");
+            "Allocator ({}) ran out of memory trying to allocate {} (rounded to {})requested by op "
+            "\nIf the cause is memory fragmentation maybe the environment "
+            "variable 'XSIGMA_GPU_ALLOCATOR=cuda_malloc_async' will "
+            "improve the situation. \nCurrent allocation summary follows."
+            "\nCurrent allocation summary follows.",
+            Name(),
+            numbers::HumanReadableNumBytes(num_bytes),
+            rounded_bytes);
 
         DumpMemoryLog(rounded_bytes);
-        XSIGMA_LOG_WARNING("RenderOccupancy: " << RenderOccupancy());
+        XSIGMA_LOG_WARNING("RenderOccupancy: {}", RenderOccupancy());
     }
     return nullptr;
 }
@@ -867,7 +867,7 @@ void* allocator_bfc::FindChunkPtr(
                 if (current_bytes > peak_bytes)
                 {
                     XSIGMA_LOG_INFO_DEBUG(
-                        "New Peak memory usage of " << current_bytes << " bytes for " << Name());
+                        "New Peak memory usage of {} bytes for {}", current_bytes, Name());
                 }
 
                 // Update peak bytes atomically
@@ -898,9 +898,11 @@ void* allocator_bfc::FindChunkPtr(
                     }
                     else
                     {
-                        XSIGMA_LOG_INFO( "missing pending_op_name for " << Name() << " reading addr "
-                                  << static_cast<const void*>(&annotation.pending_op_name) << "\n"
-                                  << CurrentStackTrace();
+                        XSIGMA_LOG_INFO(
+                            "missing pending_op_name for {} reading addr {}\n{}",
+                            Name(),
+                            static_cast<const void*>(&annotation.pending_op_name),
+                            CurrentStackTrace());
                         chunk->op_name = nullptr;
                     }
                     chunk->action_count = ++action_counter_;
@@ -910,7 +912,7 @@ void* allocator_bfc::FindChunkPtr(
                 }
 #endif
 
-                XSIGMA_LOG_INFO_DEBUG("Returning: " << chunk->ptr << "\nA: " << RenderOccupancy());
+                XSIGMA_LOG_INFO_DEBUG("Returning: {}\nA: {}", chunk->ptr, RenderOccupancy());
                 return chunk->ptr;
             }
         }
@@ -963,10 +965,13 @@ void allocator_bfc::deallocate_raw(void* ptr)
 {
     XSIGMA_LOG_DEBUG(
         INFO,
-        "deallocate_raw " << Name() << " " << (ptr ? RequestedSize(ptr) : 0)
-                          << "[mem-verbose] deallocate_raw," << Name() << ","
-                          << (ptr ? RequestedSize(ptr) : 0) << ","
-                          << ptr /*<< "," << tsl::CurrentStackTrace()*/);
+        "deallocate_raw {} {} [mem-verbose] deallocate_raw, {},{},{}",
+        Name(),
+        (ptr ? RequestedSize(ptr) : 0),
+        Name(),
+        (ptr ? RequestedSize(ptr) : 0),
+        ptr);
+
     DeallocateRawInternal(ptr);
     retry_helper_.NotifyDealloc();
 }
@@ -1006,7 +1011,7 @@ void allocator_bfc::DeallocateRawInternal(void* ptr)
     // correct aggregation stats (bytes_in_use, fragmentation).
     AddTraceMe("MemoryDeallocation", chunk_ptr, req_bytes, alloc_bytes);
 
-    XSIGMA_LOG_DEBUG(INFO, "F: " << RenderOccupancy());
+    XSIGMA_LOG_DEBUG(INFO, "F: {}", RenderOccupancy());
 }
 
 // Merges h1 and h2 when Chunk(h1)->next is h2 and Chunk(h2)->prev is c1.
@@ -1122,7 +1127,7 @@ allocator_bfc::ChunkHandle allocator_bfc::TryToCoalesce(ChunkHandle h, bool igno
         Chunk* n = ChunkFromHandle(c->next);
         if ((n->freed_at_count == 0) || ignore_freed_at)
         {
-            XSIGMA_LOG_INFO_DEBUG("Merging c->next " << n->ptr << " with c " << c->ptr);
+            XSIGMA_LOG_INFO_DEBUG("Merging c->next {} with c {}", n->ptr, c->ptr);
             RemoveFreeChunkFromBin(c->next);
             Merge(h, c->next);
         }
@@ -1134,7 +1139,7 @@ allocator_bfc::ChunkHandle allocator_bfc::TryToCoalesce(ChunkHandle h, bool igno
         Chunk* n = ChunkFromHandle(c->prev);
         if ((n->freed_at_count == 0) || ignore_freed_at)
         {
-            XSIGMA_LOG_INFO_DEBUG("Merging c " << c->ptr << " into c->prev " << n->ptr);
+            XSIGMA_LOG_INFO_DEBUG("Merging c {} into c->prev {}", c->ptr, n->ptr);
             coalesced_chunk = c->prev;
             RemoveFreeChunkFromBin(c->prev);
             Merge(c->prev, h);
@@ -1164,8 +1169,9 @@ void allocator_bfc::SetSafeFrontier(uint64_t count) noexcept
 bool allocator_bfc::MergeTimestampedChunks(size_t required_bytes)
 {
     XSIGMA_LOG_INFO_DEBUG(
-        "MergeTimestampedChunks queue_len=" << timestamped_chunks_.size()
-                                            << " required_bytes=" << required_bytes);
+        "MergeTimestampedChunks queue_len={} required_bytes={}",
+        timestamped_chunks_.size(),
+        required_bytes);
 
     bool satisfied = (required_bytes == 0);
 
@@ -1398,7 +1404,7 @@ void allocator_bfc::DumpMemoryLog(size_t num_bytes)
 {
     const std::array<BinDebugInfo, kNumBins> bin_infos = get_bin_debug_info();
 
-    XSIGMA_LOG_INFO("allocator_bfc dump for " << Name());
+    XSIGMA_LOG_INFO("allocator_bfc dump for {}", Name());
 
     for (BinNum bin_num = 0; bin_num < kNumBins; bin_num++)
     {
@@ -1408,14 +1414,14 @@ void allocator_bfc::DumpMemoryLog(size_t num_bytes)
             b->free_chunks.size() == bin_info.total_chunks_in_bin - bin_info.total_chunks_in_use);
 
         XSIGMA_LOG_INFO(
-            "Bin (" << b->bin_size << "): \tTotal Chunks: " << bin_info.total_chunks_in_bin
-                    << ", Chunks in use: " << bin_info.total_chunks_in_use << ". "
-                    << numbers::HumanReadableNumBytes(bin_info.total_bytes_in_bin)
-                    << " allocated for chunks. "
-                    << numbers::HumanReadableNumBytes(bin_info.total_bytes_in_use)
-                    << " in use in bin. "
-                    << numbers::HumanReadableNumBytes(bin_info.total_requested_bytes_in_use)
-                    << " client-requested in use in bin.");
+            "Bin ({}): \tTotal Chunks: {}, Chunks in use: {}. {} allocated for chunks. {} in use "
+            "in bin. {} client-requested in use in bin.",
+            b->bin_size,
+            bin_info.total_chunks_in_bin,
+            bin_info.total_chunks_in_use,
+            numbers::HumanReadableNumBytes(bin_info.total_bytes_in_bin),
+            numbers::HumanReadableNumBytes(bin_info.total_bytes_in_use),
+            numbers::HumanReadableNumBytes(bin_info.total_requested_bytes_in_use));
     }
 
     // Find the bin that we would have liked to allocate in, so we
@@ -1423,13 +1429,14 @@ void allocator_bfc::DumpMemoryLog(size_t num_bytes)
     Bin* b = BinForSize(num_bytes);
 
     XSIGMA_LOG_INFO(
-        "Bin for " << numbers::HumanReadableNumBytes(num_bytes) << " was "
-                   << numbers::HumanReadableNumBytes(b->bin_size) << ", Chunk State: ");
+        "Bin for {} was {}, Chunk State: ",
+        numbers::HumanReadableNumBytes(num_bytes),
+        numbers::HumanReadableNumBytes(b->bin_size));
 
     for (ChunkHandle h : b->free_chunks)
     {
         Chunk* c = ChunkFromHandle(h);
-        XSIGMA_LOG_INFO(c->debug_string(this, true));
+        XSIGMA_LOG_INFO("{}", c->debug_string(this, true));
     }
 
     // Next show the chunks that are in use, and also summarize their
@@ -1437,7 +1444,7 @@ void allocator_bfc::DumpMemoryLog(size_t num_bytes)
     xsigma_map<size_t, int> in_use_by_size;
     for (const auto& region : region_manager_.regions())
     {
-        XSIGMA_LOG_INFO("Next region of size " << region.memory_size());
+        XSIGMA_LOG_INFO("Next region of size {}", region.memory_size());
         ChunkHandle h = region_manager_.get_handle(region.ptr());
         while (h != kInvalidChunkHandle)
         {
@@ -1470,7 +1477,7 @@ void allocator_bfc::DumpMemoryLog(size_t num_bytes)
             {
                 strings::StrAppend(&buf, " freed_at_count ", c->freed_at_count);
             }
-            XSIGMA_LOG_INFO(buf);
+            XSIGMA_LOG_INFO("{}", buf);
             h = c->next;
         }
     }
@@ -1480,19 +1487,21 @@ void allocator_bfc::DumpMemoryLog(size_t num_bytes)
     for (auto& it : in_use_by_size)
     {
         XSIGMA_LOG_INFO(
-            it.second << " Chunks of size " << it.first << " totalling "
-                      << numbers::HumanReadableNumBytes(it.first * it.second));
+            "{} Chunks of size {} totalling {}",
+            it.second,
+            it.first,
+            numbers::HumanReadableNumBytes(it.first * it.second));
         total_bytes += (it.first * it.second);
     }
-    XSIGMA_LOG_INFO("Sum Total of in-use chunks: " << numbers::HumanReadableNumBytes(total_bytes));
+    XSIGMA_LOG_INFO("Sum Total of in-use chunks: {}", numbers::HumanReadableNumBytes(total_bytes));
     XSIGMA_LOG_INFO(
-        "Total bytes in pool: " << stats_.pool_bytes.load(std::memory_order_relaxed)
-                                << " memory_limit_: " << memory_limit_ << " available bytes: "
-                                << (memory_limit_ -
-                                    stats_.pool_bytes.load(std::memory_order_relaxed))
-                                << " curr_region_allocation_bytes_: "
-                                << curr_region_allocation_bytes_);
-    XSIGMA_LOG_INFO("Stats: \n" << stats_.debug_string());
+        "Total bytes in pool: {} memory_limit_: {} available bytes: {} "
+        "curr_region_allocation_bytes_: {}",
+        stats_.pool_bytes.load(std::memory_order_relaxed),
+        memory_limit_,
+        (memory_limit_ - stats_.pool_bytes.load(std::memory_order_relaxed)),
+        curr_region_allocation_bytes_);
+    XSIGMA_LOG_INFO("Stats: \n{}", stats_.debug_string());
 }
 
 void allocator_bfc::MaybeWriteMemoryMap()
@@ -1507,14 +1516,14 @@ void allocator_bfc::MaybeWriteMemoryMap()
         std::Status status = Env::Default()->NewWritableFile(file_name, &dump_file);
         if (!status.ok())
         {
-            XSIGMA_LOG_ERROR("Failed to open file " << file_name);
+            XSIGMA_LOG_ERROR("Failed to open file {}", file_name);
             return;
         }
         memory_dump md = RecordMemoryMapInternal();
         status        = dump_file->Append(md.SerializeAsstd::string());
         if (!status.ok())
         {
-            XSIGMA_LOG_ERROR("Error on writing to file " << gpu_memory_map_file << ": " << status);
+            XSIGMA_LOG_ERROR("Error on writing to file {}: {}", gpu_memory_map_file, status);
         }
     }
 #endif  // 0

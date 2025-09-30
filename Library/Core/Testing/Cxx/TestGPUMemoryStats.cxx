@@ -155,8 +155,8 @@ public:
                         .count();
                 gpu_stats.total_transfer_time_us.fetch_add(transfer_time_us);
 
-                XSIGMA_LOG_INFO("  GPU allocation time: " << duration_us << " μs");
-                XSIGMA_LOG_INFO("  Memory transfer time: " << transfer_time_us << " μs");
+                XSIGMA_LOG_INFO("  GPU allocation time: {} μs", duration_us);
+                XSIGMA_LOG_INFO("  Memory transfer time: {} μs", transfer_time_us);
             }
 
             // Test CUDA synchronization timing
@@ -181,9 +181,7 @@ public:
         {
             double avg_time = gpu_stats.average_alloc_time_us();
             EXPECT_GT(avg_time, 0.0);
-            XSIGMA_LOG_INFO(
-                "  Average allocation time: " << std::fixed << std::setprecision(2) << avg_time
-                                              << " μs");
+            XSIGMA_LOG_INFO("  Average allocation time: {:.2f} μs", avg_time);
         }
 
         XSIGMA_LOG_INFO("✓ GPU timing statistics test passed");
@@ -260,14 +258,10 @@ public:
         EXPECT_GE(efficiency, 0.0);
         EXPECT_LE(efficiency, 1.0);
 
-        XSIGMA_LOG_INFO("  Total allocated: " << total_allocated << " bytes");
-        XSIGMA_LOG_INFO("  Active allocations: " << gpu_resources.active_allocations.load());
-        XSIGMA_LOG_INFO(
-            "  Average allocation size: " << std::fixed << std::setprecision(1) << avg_size
-                                          << " bytes");
-        XSIGMA_LOG_INFO(
-            "  Memory efficiency: " << std::fixed << std::setprecision(1) << (efficiency * 100.0)
-                                    << "%");
+        XSIGMA_LOG_INFO("  Total allocated: {} bytes", total_allocated);
+        XSIGMA_LOG_INFO("  Active allocations: {}", gpu_resources.active_allocations.load());
+        XSIGMA_LOG_INFO("  Average allocation size: {:.1f} bytes", avg_size);
+        XSIGMA_LOG_INFO("  Memory efficiency: {:.1f}%", (efficiency * 100.0));
 
         // Clean up allocations
         for (void* ptr : gpu_ptrs)
@@ -280,7 +274,7 @@ public:
         // Test debug string
         std::string debug_str = gpu_resources.debug_string();
         EXPECT_FALSE(debug_str.empty());
-        XSIGMA_LOG_INFO("  Debug string: " << debug_str);
+        XSIGMA_LOG_INFO("  Debug string: {}", debug_str);
 
         XSIGMA_LOG_INFO("✓ GPU resource statistics test passed");
     }
@@ -322,13 +316,10 @@ public:
         double expected_reduction = 200.0 / 110.0;  // (150+50) / (60+50)
         EXPECT_NEAR(reduction, expected_reduction, 0.01);
 
-        XSIGMA_LOG_INFO(
-            "  Cache hit rate: " << std::fixed << std::setprecision(1) << (hit_rate * 100.0)
-                                 << "%");
-        XSIGMA_LOG_INFO(
-            "  Driver call reduction: " << std::fixed << std::setprecision(2) << reduction << "x");
-        XSIGMA_LOG_INFO("  Bytes cached: " << (cache_stats.bytes_cached.load() / 1024) << " KB");
-        XSIGMA_LOG_INFO("  Cache blocks: " << cache_stats.cache_blocks.load());
+        XSIGMA_LOG_INFO("  Cache hit rate: {:.1f}%", (hit_rate * 100.0));
+        XSIGMA_LOG_INFO("  Driver call reduction: {:.2f}x", reduction);
+        XSIGMA_LOG_INFO("  Bytes cached: {} KB", (cache_stats.bytes_cached.load() / 1024));
+        XSIGMA_LOG_INFO("  Cache blocks: {}", cache_stats.cache_blocks.load());
 
         // Test reset functionality
         cache_stats.reset();
@@ -387,11 +378,8 @@ public:
         EXPECT_NE(report.find("CUDA Sync Time"), std::string::npos);
         EXPECT_NE(report.find("Cache Performance"), std::string::npos);
 
-        XSIGMA_LOG_INFO(
-            "  Overall efficiency: " << std::fixed << std::setprecision(1) << (efficiency * 100.0)
-                                     << "%");
-        XSIGMA_LOG_INFO(
-            "  GPU operations/sec: " << std::fixed << std::setprecision(0) << ops_per_sec);
+        XSIGMA_LOG_INFO("  Overall efficiency: {}%", (efficiency * 100.0));
+        XSIGMA_LOG_INFO("  GPU operations/sec: {}", ops_per_sec);
 
         // Test that report contains GPU-specific sections
         EXPECT_NE(report.find("Transfer Time"), std::string::npos);
@@ -458,9 +446,8 @@ public:
         EXPECT_EQ(shared_resources.num_deallocs.load(), expected_total);
         EXPECT_EQ(shared_resources.bytes_in_use.load(), 0);  // Should be balanced
 
-        XSIGMA_LOG_INFO("  Concurrent operations completed: " << expected_total);
-        XSIGMA_LOG_INFO(
-            "  Final timing total: " << shared_stats.total_alloc_time_us.load() << " μs");
+        XSIGMA_LOG_INFO("  Concurrent operations completed: {}", expected_total);
+        XSIGMA_LOG_INFO("  Final timing total: {} μs", shared_stats.total_alloc_time_us.load());
 
         XSIGMA_LOG_INFO("✓ GPU statistics thread safety test passed");
     }

@@ -308,7 +308,7 @@ public:
         initialized_ = true;
 
         XSIGMA_LOG_INFO(
-            "GPU device manager initialized with " << available_devices_.size() << " devices");
+            "GPU device manager initialized with {} devices", available_devices_.size());
     }
 
     gpu_runtime_info get_runtime_info() const override

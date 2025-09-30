@@ -283,10 +283,10 @@ public:
                         expected, current_count + 1, std::memory_order_relaxed))
                 {
                     XSIGMA_LOG_WARNING(
-                        "Large allocation of "
-                        << num_bytes << " bytes (" << (100.0 * num_bytes / port::available_ram())
-                        << "% of available RAM) "
-                        << "exceeds " << (100 * kLargeAllocationWarningThreshold) << "% threshold");
+                        "Large allocation of {} bytes ({}% of available RAM) exceeds {}% threshold",
+                        num_bytes,
+                        (100.0 * num_bytes / port::available_ram()),
+                        (100 * kLargeAllocationWarningThreshold));
                 }
             }
         }
@@ -333,12 +333,13 @@ public:
                     total_allocation_warning_count_ < kMaxTotalAllocationWarnings)
                 {
                     ++total_allocation_warning_count_;
+                    size_t bytes_in_use = stats_.bytes_in_use.load(std::memory_order_relaxed);
                     XSIGMA_LOG_WARNING(
-                        "Total allocated memory "
-                        << stats_.bytes_in_use << " bytes ("
-                        << (100.0 * stats_.bytes_in_use / port::available_ram())
-                        << "% of available RAM) "
-                        << "exceeds " << (100 * kTotalAllocationWarningThreshold) << "% threshold");
+                        "Total allocated memory {} bytes ({}% of available RAM) exceeds {}% "
+                        "threshold",
+                        bytes_in_use,
+                        (100.0 * bytes_in_use / port::available_ram()),
+                        (100 * kTotalAllocationWarningThreshold));
                 }
             }
 

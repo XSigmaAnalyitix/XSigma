@@ -42,7 +42,7 @@ void Thread1()
 
     if (xsigma::logger::GetThreadName() != threaName)
     {
-        XSIGMA_LOGF(ERROR, "Name mismatch !");
+        XSIGMA_LOG(ERROR, "Name mismatch !");
     }
 }
 
@@ -58,7 +58,7 @@ void Thread2()
 
     if (xsigma::logger::GetThreadName() != threaName)
     {
-        XSIGMA_LOGF(ERROR, "Name mismatch !");
+        XSIGMA_LOG(ERROR, "Name mismatch !");
     }
 }
 

@@ -75,10 +75,14 @@ void allocator_factory_registry::Register(
     if (existing != nullptr)
     {
         XSIGMA_LOG_ERROR(
-            "New registration for allocator_factory with name="
-            << name << " priority=" << priority << " at location " << source_file << ":"
-            << source_line << " conflicts with previous registration at location "
-            << existing->source_file << ":" << existing->source_line);
+            "New registration for allocator_factory with name={} priority={} at location {}:{} "
+            "conflicts with previous registration at location {}:{}",
+            name,
+            priority,
+            source_file,
+            source_line,
+            existing->source_file,
+            existing->source_line);
     }
     FactoryEntry entry;
     entry.source_file = source_file;

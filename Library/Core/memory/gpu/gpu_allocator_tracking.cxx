@@ -195,9 +195,10 @@ gpu_allocator_tracking::gpu_allocator_tracking(
     if (gpu_log_level_.load(std::memory_order_relaxed) >= gpu_tracking_log_level::INFO)
     {
         XSIGMA_LOG_INFO(
-            "gpu_allocator_tracking initialized: "
-            << "device=" << device_info_.name << ", enhanced=" << enhanced_tracking_enabled_
-            << ", bandwidth=" << bandwidth_tracking_enabled_);
+            "gpu_allocator_tracking initialized: device={}, enhanced={}, bandwidth={}",
+            device_info_.name,
+            enhanced_tracking_enabled_,
+            bandwidth_tracking_enabled_);
     }
 }
 
@@ -206,7 +207,7 @@ gpu_allocator_tracking::~gpu_allocator_tracking()
     // Log destruction if enabled
     if (gpu_log_level_.load(std::memory_order_relaxed) >= gpu_tracking_log_level::INFO)
     {
-        XSIGMA_LOG_INFO("gpu_allocator_tracking destroying: device=" << device_info_.name);
+        XSIGMA_LOG_INFO("gpu_allocator_tracking destroying: device={}", device_info_.name);
     }
 
     // Cleanup CUDA events
@@ -241,7 +242,7 @@ void gpu_allocator_tracking::InitializeCUDAEvents()
         if (!cuda_events_initialized_)
         {
             XSIGMA_LOG_WARNING(
-                "Failed to initialize CUDA events for timing: " << cudaGetErrorString(result));
+                "Failed to initialize CUDA events for timing: {}", cudaGetErrorString(result));
         }
     }
 #endif
@@ -286,9 +287,11 @@ void* gpu_allocator_tracking::allocate_raw(
     if (current_log_level >= gpu_tracking_log_level::TRACE)
     {
         XSIGMA_LOG_INFO_DEBUG(
-            "gpu_allocator_tracking::allocate_raw: " << "bytes=" << bytes << ", alignment="
-                                                     << alignment << ", device=" << device_index_
-                                                     << ", tag=" << tag);
+            "gpu_allocator_tracking::allocate_raw: bytes={}, alignment={}, device={}, tag={}",
+            bytes,
+            alignment,
+            device_index_,
+            tag);
     }
 
 #ifdef XSIGMA_ENABLE_CUDA
@@ -345,8 +348,7 @@ void* gpu_allocator_tracking::allocate_raw(
         if (current_log_level >= gpu_tracking_log_level::ERROR)
         {
             XSIGMA_LOG_ERROR(
-                "GPU allocation failed: " << e.what() << ", bytes=" << bytes
-                                          << ", device=" << device_index_);
+                "GPU allocation failed: {}, bytes={}, device={}", e.what(), bytes, device_index_);
         }
 
         // Update failure statistics
@@ -428,8 +430,10 @@ void* gpu_allocator_tracking::allocate_raw(
     if (current_log_level >= gpu_tracking_log_level::TRACE)
     {
         XSIGMA_LOG_INFO_DEBUG(
-            "gpu_allocator_tracking::allocate_raw success: " << "ptr=" << ptr << ", bytes=" << bytes
-                                                             << ", time=" << duration_us << "μs");
+            "gpu_allocator_tracking::allocate_raw success: ptr={}, bytes={}, time={}μs",
+            ptr,
+            bytes,
+            duration_us);
     }
 
     return ptr;
@@ -451,8 +455,10 @@ void gpu_allocator_tracking::deallocate_raw(void* ptr, size_t bytes, void* strea
     if (current_log_level >= gpu_tracking_log_level::TRACE)
     {
         XSIGMA_LOG_INFO_DEBUG(
-            "gpu_allocator_tracking::deallocate_raw: " << "ptr=" << ptr << ", bytes=" << bytes
-                                                       << ", device=" << device_index_);
+            "gpu_allocator_tracking::deallocate_raw: ptr={}, bytes={}, device={}",
+            ptr,
+            bytes,
+            device_index_);
     }
 
 #ifdef XSIGMA_ENABLE_CUDA
@@ -568,8 +574,7 @@ void gpu_allocator_tracking::deallocate_raw(void* ptr, size_t bytes, void* strea
     if (current_log_level >= gpu_tracking_log_level::TRACE)
     {
         XSIGMA_LOG_INFO_DEBUG(
-            "gpu_allocator_tracking::deallocate_raw success: " << "ptr=" << ptr
-                                                               << ", time=" << duration_us << "μs");
+            "gpu_allocator_tracking::deallocate_raw success: ptr={}, time={}μs", ptr, duration_us);
     }
 }
 
@@ -795,7 +800,7 @@ void gpu_allocator_tracking::LogGPUOperation(
     auto current_log_level = gpu_log_level_.load(std::memory_order_relaxed);
     if (current_log_level >= gpu_tracking_log_level::DEBUG)
     {
-        XSIGMA_LOG_INFO_DEBUG("GPU " << operation << ": " << details);
+        XSIGMA_LOG_INFO_DEBUG("GPU {}: {}", operation, details);
     }
 }
 
