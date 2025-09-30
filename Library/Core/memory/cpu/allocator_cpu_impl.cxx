@@ -35,11 +35,11 @@
 
 #include "experimental/profiler/scoped_memory_debug_annotation.h"
 #include "experimental/profiler/traceme.h"
+#include "logging/logger.h"
 #include "memory/cpu/allocator.h"
 #include "memory/cpu/helper/allocator_registry.h"
 #include "memory/cpu/helper/mem.h"
 #include "memory/cpu/helper/memory_allocator.h"
-#include "util/logger.h"
 #include "util/strcat.h"
 
 namespace xsigma

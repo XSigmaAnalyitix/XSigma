@@ -15,9 +15,9 @@
 
 #include "common/configure.h"
 #include "common/macros.h"
+#include "logging/logger.h"
 #include "util/exception.h"
 #include "util/flat_hash.h"
-#include "util/logger.h"
 
 #ifdef XSIGMA_ENABLE_CUDA
 #include <cuda_runtime.h>

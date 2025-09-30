@@ -51,7 +51,7 @@ limitations under the License.
 #include "experimental/profiler/profiler_interface.h"
 #include "experimental/profiler/traceme.h"
 #include "experimental/profiler/xplane/xplane.h"
-#include "util/logger.h"
+#include "logging/logger.h"
 
 namespace xsigma::profiler
 {
@@ -129,7 +129,7 @@ bool host_tracer::stop()
 
 bool host_tracer::collect_data(x_space* space)
 {
-    VLOG(2) << "Collecting data to x_space from host_tracer.";
+    XSIGMA_LOG_INFO("Collecting data to x_space from host_tracer.");  // NOLINT
     if (recording_)
     {
         XSIGMA_LOG_ERROR("trace_me_recorder not stopped");

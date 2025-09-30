@@ -36,7 +36,7 @@ limitations under the License.
 #include <algorithm>
 #include <string>
 
-#include "util/logging.h"
+#include "logging/logger.h"
 #include "util/strcat.h"
 
 namespace xsigma

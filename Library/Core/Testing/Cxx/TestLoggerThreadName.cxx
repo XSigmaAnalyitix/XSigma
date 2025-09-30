@@ -24,7 +24,7 @@
 #include <string>
 #include <thread>
 
-#include "util/logger.h"
+#include "logging/logger.h"
 #include "xsigmaTest.h"
 
 // Control the order of operations between the threads

@@ -176,6 +176,7 @@ class XsigmaFlags:
             "gtest",
             "test",
             "loguru",
+            "logging_backend",
             "lto",
             "magic_enum",
             "mimalloc",
@@ -203,6 +204,7 @@ class XsigmaFlags:
             "enable google test",
             "enable testing",
             "enable loguru lightweight C++ logging library",
+            "logging backend: NATIVE, LOGURU, or GLOG",
             "enable Link Time Optimization",
             "enable magic_enum static reflection for enums",
             "enable Microsoft mimalloc high-performance memory allocator",
@@ -233,6 +235,7 @@ class XsigmaFlags:
             "coverage": "XSIGMA_ENABLE_COVERAGE",
             "test": "XSIGMA_BUILD_TESTING",
             "loguru": "XSIGMA_ENABLE_LOGURU",
+            "logging_backend": "XSIGMA_LOGGING_BACKEND",
             "lto": "XSIGMA_ENABLE_LTO",
             "magic_enum": "XSIGMA_ENABLE_MAGICENUM",
             "mimalloc": "XSIGMA_ENABLE_MIMALLOC",
@@ -291,6 +294,7 @@ class XsigmaFlags:
                 "javasourceversion": 1.8,  # Special case: numeric value
                 "javatargetversion": 1.8,  # Special case: numeric value
                 "cxxstd": "",  # Special case: let CMake decide
+                "logging_backend": "LOGURU",  # Default logging backend
 
                 # CMake options with default ON - keep ON in setup.py
                 "lto": self.ON,  # XSIGMA_ENABLE_LTO default is ON
@@ -320,6 +324,7 @@ class XsigmaFlags:
         sanitizer_list = ["address", "undefined", "thread", "memory", "leak"]
         vectorisation_list = ["sse", "avx", "avx2", "avx512"]
         cxx_std_list = ["cxx17", "cxx20", "cxx23"]
+        logging_backend_list = ["native", "loguru", "glog"]
 
         # Set default values for special flags
         self.__value["mkl_link"] = "static"
@@ -344,6 +349,11 @@ class XsigmaFlags:
             elif arg in vectorisation_list:
                 self.__value["vectorisation"] = arg
                 self.builder_suffix += f"_{arg}"
+            elif arg in logging_backend_list:
+                # Set logging backend (NATIVE, LOGURU, or GLOG)
+                self.__value["logging_backend"] = arg.upper()
+                self.builder_suffix += f"_logging_{arg}"
+                print_status(f"Setting logging backend to {arg.upper()}", "INFO")
             elif any(arg.lower() == item.lower() for item in cxx_std_list):
                 # Extract the numeric part (e.g., "cxx17" -> "17")
                 std_version = arg[3:]  # Remove "cxx" prefix
@@ -449,6 +459,8 @@ class XsigmaFlags:
                 key = "sse, avx, avx2 or avx512"
             elif key == "cxxstd":
                 key = "cxx11, cxx14, cxx17, cxx20, cxx23"
+            elif key == "logging_backend":
+                key = "NATIVE, LOGURU, or GLOG"
             elif key == "sanitizer":
                 key = "sanitizer (or --sanitizer.TYPE)"
             elif key == "sanitizer_enum":
@@ -932,6 +944,16 @@ def parse_args(args):
         # Handle cppcheck autofix flags
         if arg in ["--enable-cppcheck-autofix", "--cppcheck-autofix"]:
             processed_args.append("cppcheck_autofix")
+        # Handle logging backend flags with dot notation (e.g., --logging.backend=GLOG)
+        elif arg.startswith("--logging.backend=") or arg.startswith("--logging-backend="):
+            backend_type = arg.split("=", 1)[1].upper()
+            valid_backends = ["NATIVE", "LOGURU", "GLOG"]
+            if backend_type in valid_backends:
+                processed_args.append(backend_type.lower())
+                print_status(f"Logging backend set to {backend_type}", "INFO")
+            else:
+                print_status(f"Invalid logging backend: {backend_type}. Valid options: {', '.join(valid_backends)}", "ERROR")
+                sys.exit(1)
         # Handle sanitizer flags with dot notation (e.g., --sanitizer.undefined)
         elif arg.startswith("--sanitizer."):
             sanitizer_type = arg.split(".", 1)[1].lower()
@@ -991,6 +1013,11 @@ def main():
         print("\nSpecial flags:")
         print("  --enable-cppcheck-autofix  Enable automatic cppcheck fixes (WARNING: modifies source files)")
         print("  --cppcheck-autofix         Alias for --enable-cppcheck-autofix")
+        print("\nLogging backend flags:")
+        print("  --logging.backend=BACKEND  Set logging backend")
+        print("  --logging-backend=BACKEND  Alias for --logging.backend")
+        print("                             Options: NATIVE, LOGURU, GLOG")
+        print("                             Default: LOGURU")
         print("\nSanitizer flags:")
         print("  --sanitizer.address        Enable AddressSanitizer")
         print("  --sanitizer.undefined      Enable UndefinedBehaviorSanitizer")
@@ -1001,6 +1028,13 @@ def main():
         print("  --sanitizer-type=TYPE      Specify sanitizer type")
         print("                             Options: address, undefined,")
         print("                             thread, memory, leak")
+        print("\nLogging backend examples:")
+        print("  # Use GLOG backend")
+        print("  python setup.py ninja.clang.config.build.test --logging.backend=GLOG")
+        print("  # Use NATIVE backend")
+        print("  python setup.py ninja.clang.config.build.test --logging-backend=NATIVE")
+        print("  # Use LOGURU backend (default, no flag needed)")
+        print("  python setup.py ninja.clang.config.build.test")
         print("\nSanitizer examples:")
         print("  python setup.py vs22.test.build.config --sanitizer.undefined")
         print("  python setup.py ninja.clang.build.test --sanitizer.address")

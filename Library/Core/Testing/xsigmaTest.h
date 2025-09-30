@@ -27,7 +27,7 @@
 
 #include "common/configure.h"
 #include "common/macros.h"
-#include "util/logger.h"
+#include "logging/logger.h"
 
 // Include Google Test if available
 #ifdef XSIGMA_ENABLE_GTEST

@@ -25,7 +25,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "util/logger.h"
+#include "logging/logger.h"
 
 namespace xsigma
 {

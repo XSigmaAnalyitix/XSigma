@@ -1,12 +1,23 @@
 // SPDX-FileCopyrightText: Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
 // SPDX-License-Identifier: BSD-3-Clause
-#include "util/logger.h"
+#include "logging/logger.h"
 
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+// Include appropriate logging backend headers
+#if defined(XSIGMA_USE_LOGURU)
 #include <loguru.hpp>
+#elif defined(XSIGMA_USE_GLOG)
+#include <glog/logging.h>
+#elif defined(XSIGMA_USE_NATIVE_LOGGING)
+#include <fmt/color.h>
+#include <fmt/format.h>
+
+#include <atomic>
+#include <chrono>
+#include <cstdlib>
 #endif
 
 #include <array>
+#include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
@@ -17,13 +28,120 @@
 #include <vector>
 
 //=============================================================================
+// NATIVE LOGGING BACKEND - Simplified fmt-based Implementation
+//=============================================================================
+#if defined(XSIGMA_USE_NATIVE_LOGGING)
+
+namespace xsigma
+{
+namespace internal
+{
+
+// Helper to convert verbosity enum to string
+static const char* verbosity_to_string(logger_verbosity_enum severity)
+{
+    switch (severity)
+    {
+    case logger_verbosity_enum::VERBOSITY_FATAL:
+        return "FATAL";
+    case logger_verbosity_enum::VERBOSITY_ERROR:
+        return "ERROR";
+    case logger_verbosity_enum::VERBOSITY_WARNING:
+        return "WARNING";
+    case logger_verbosity_enum::VERBOSITY_INFO:
+        return "INFO";
+    default:
+        return "VLOG";
+    }
+}
+
+// Helper to get color for severity level
+static fmt::color get_severity_color(logger_verbosity_enum severity)
+{
+    switch (severity)
+    {
+    case logger_verbosity_enum::VERBOSITY_FATAL:
+        return fmt::color::red;
+    case logger_verbosity_enum::VERBOSITY_ERROR:
+        return fmt::color::red;
+    case logger_verbosity_enum::VERBOSITY_WARNING:
+        return fmt::color::yellow;
+    case logger_verbosity_enum::VERBOSITY_INFO:
+        return fmt::color::green;
+    default:
+        return fmt::color::white;
+    }
+}
+
+// Global verbosity level for VLOG
+static std::atomic<int> g_max_vlog_level{0};
+
+// Implementation functions called by inline classes in logger.h
+void native_log_output(
+    const char* fname, int line, logger_verbosity_enum severity, const std::string& message)
+{
+    if (message.empty())
+    {
+        return;
+    }
+
+    // Extract just the filename from the full path
+    const char* filename = fname;
+    for (const char* p = fname; *p; ++p)
+    {
+        if (*p == '/' || *p == '\\')
+        {
+            filename = p + 1;
+        }
+    }
+
+    // Format and print the log message
+    fmt::print(
+        stderr,
+        fg(get_severity_color(severity)),
+        "[{}] {}:{} {}\n",
+        verbosity_to_string(severity),
+        filename,
+        line,
+        message);
+}
+
+int native_max_vlog_level()
+{
+    return g_max_vlog_level.load(std::memory_order_relaxed);
+}
+
+void native_fatal_exit()
+{
+    std::abort();
+}
+
+std::string native_check_failed(
+    const char* exprtext, const std::string& v1_str, const std::string& v2_str)
+{
+    return fmt::format("Check failed: {} ({} vs. {})", exprtext, v1_str, v2_str);
+}
+
+}  // namespace internal
+}  // namespace xsigma
+
+#endif  // XSIGMA_USE_NATIVE_LOGGING
+
+//=============================================================================
 namespace xsigma
 {
 class logger::LogScopeRAII::LSInternals
 {
 public:
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     std::unique_ptr<loguru::LogScopeRAII> Data;
+#elif defined(XSIGMA_USE_GLOG)
+    // glog doesn't have a direct scope RAII equivalent
+    // We'll track scope manually for consistency
+    std::string scope_message_;
+#elif defined(XSIGMA_USE_NATIVE_LOGGING)
+    // Native logging doesn't have scope support yet
+    // Placeholder for future implementation
 #endif
 };
 
@@ -35,19 +153,34 @@ logger::LogScopeRAII::LogScopeRAII(
     unsigned int          lineno,
     const char*           format,
     ...)
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     : Internals(new LSInternals())
 #endif
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     va_list vlist;
     va_start(vlist, format);
-    // Use a simple buffer approach instead of vstrprintf
     char buffer[1024];
     vsnprintf(buffer, sizeof(buffer), format, vlist);
     va_end(vlist);
     this->Internals->Data = std::make_unique<loguru::LogScopeRAII>(
         static_cast<loguru::Verbosity>(verbosity), fname, lineno, "%s", buffer);
+#elif defined(XSIGMA_USE_GLOG)
+    va_list vlist;
+    va_start(vlist, format);
+    char buffer[1024];
+    vsnprintf(buffer, sizeof(buffer), format, vlist);
+    va_end(vlist);
+    this->Internals                 = new LSInternals();
+    this->Internals->scope_message_ = buffer;
+    // glog doesn't have built-in scope support, so we just log the scope entry
+    VLOG(static_cast<int>(verbosity)) << "[SCOPE] " << buffer;
+#elif defined(XSIGMA_USE_NATIVE_LOGGING)
+    // Native logging doesn't have scope support yet
+    (void)verbosity;
+    (void)fname;
+    (void)lineno;
+    (void)format;
 #else
     (void)verbosity;
     (void)fname;
@@ -63,7 +196,7 @@ logger::LogScopeRAII::~LogScopeRAII()
 //=============================================================================
 namespace detail
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
 using scope_pair = std::pair<std::string, std::shared_ptr<loguru::LogScopeRAII>>;
 static std::mutex                                                   g_mutex;
 static std::unordered_map<std::thread::id, std::vector<scope_pair>> g_vectors;
@@ -97,6 +230,9 @@ static void pop_scope(const char* id)
     }
 }
 static thread_local char ThreadName[128] = {};
+#elif defined(XSIGMA_USE_GLOG) || defined(XSIGMA_USE_NATIVE_LOGGING)
+// For glog and native logging, we maintain a simple thread name storage
+static thread_local char ThreadName[128] = {};
 #endif
 }  // namespace detail
 
@@ -109,7 +245,7 @@ bool                  logger::EnableSigillHandler       = false;
 bool                  logger::EnableSigintHandler       = false;
 bool                  logger::EnableSigsegvHandler      = false;
 bool                  logger::EnableSigtermHandler      = false;
-logger_verbosity_enum logger::InternalVerbosityLevel    = logger_verbosity_enum::VERBOSITY_1;
+logger_verbosity_enum logger::InternalVerbosityLevel    = logger_verbosity_enum::VERBOSITY_INFO;
 
 //------------------------------------------------------------------------------
 logger::logger() = default;
@@ -120,17 +256,16 @@ logger::~logger() = default;
 //------------------------------------------------------------------------------
 void logger::Init(int& argc, char* argv[], const char* verbosity_flag /*= "-v"*/)
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     if (argc == 0)
     {  // loguru::init can't handle this case -- call the no-arg overload.
         logger::Init();
         return;
     }
 
-    loguru::g_preamble_date = false;
-    loguru::g_preamble_time = false;
-    loguru::g_internal_verbosity =
-        static_cast<loguru::Verbosity>(logger::InternalVerbosityLevel);
+    loguru::g_preamble_date      = false;
+    loguru::g_preamble_time      = false;
+    loguru::g_internal_verbosity = static_cast<loguru::Verbosity>(logger::InternalVerbosityLevel);
 
     const auto current_stderr_verbosity = loguru::g_stderr_verbosity;
     if (loguru::g_internal_verbosity > loguru::g_stderr_verbosity)
@@ -155,6 +290,40 @@ void logger::Init(int& argc, char* argv[], const char* verbosity_flag /*= "-v"*/
     }
     loguru::init(argc, argv, options);
     loguru::g_stderr_verbosity = current_stderr_verbosity;
+#elif defined(XSIGMA_USE_GLOG)
+    // Initialize glog
+    if (!google::IsGoogleLoggingInitialized())
+    {
+        google::InitGoogleLogging(argc > 0 ? argv[0] : "xsigma");
+    }
+
+    // Enable colored output to stderr
+    FLAGS_colorlogtostderr = true;
+
+    // Ensure logs go to stderr for colored output
+    FLAGS_logtostderr = true;
+
+    // Disable logging to files by default (can be re-enabled via LogToFile)
+    FLAGS_alsologtostderr = false;
+
+    // Parse verbosity flag if provided
+    for (int i = 1; i < argc; ++i)
+    {
+        if (std::string(argv[i]) == verbosity_flag && i + 1 < argc)
+        {
+            FLAGS_v = std::atoi(argv[i + 1]);
+            break;
+        }
+    }
+
+    // Configure glog based on signal handler settings
+    google::InstallFailureSignalHandler();
+#elif defined(XSIGMA_USE_NATIVE_LOGGING)
+    // Native logging initialization (minimal setup)
+    // Parse verbosity flag if needed
+    (void)argc;
+    (void)argv;
+    (void)verbosity_flag;
 #else
     (void)argc;
     (void)argv;
@@ -174,8 +343,26 @@ void logger::Init()
 //------------------------------------------------------------------------------
 void logger::SetStderrVerbosity(logger_verbosity_enum level)
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     loguru::g_stderr_verbosity = static_cast<loguru::Verbosity>(level);
+#elif defined(XSIGMA_USE_GLOG)
+    // glog uses FLAGS_stderrthreshold to control stderr output
+    // Map verbosity levels to glog severity levels
+    if (level <= logger_verbosity_enum::VERBOSITY_ERROR)
+    {
+        FLAGS_stderrthreshold = google::GLOG_ERROR;
+    }
+    else if (level <= logger_verbosity_enum::VERBOSITY_WARNING)
+    {
+        FLAGS_stderrthreshold = google::GLOG_WARNING;
+    }
+    else
+    {
+        FLAGS_stderrthreshold = google::GLOG_INFO;
+    }
+#elif defined(XSIGMA_USE_NATIVE_LOGGING)
+    // Native logging doesn't have separate stderr verbosity control yet
+    (void)level;
 #else
     (void)level;
 #endif
@@ -184,8 +371,13 @@ void logger::SetStderrVerbosity(logger_verbosity_enum level)
 //------------------------------------------------------------------------------
 void logger::SetInternalVerbosityLevel(logger_verbosity_enum level)
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     loguru::g_internal_verbosity   = static_cast<loguru::Verbosity>(level);
+    logger::InternalVerbosityLevel = level;
+#elif defined(XSIGMA_USE_GLOG)
+    FLAGS_v                        = static_cast<int>(level);
+    logger::InternalVerbosityLevel = level;
+#elif defined(XSIGMA_USE_NATIVE_LOGGING)
     logger::InternalVerbosityLevel = level;
 #else
     (void)level;
@@ -195,11 +387,21 @@ void logger::SetInternalVerbosityLevel(logger_verbosity_enum level)
 //------------------------------------------------------------------------------
 void logger::LogToFile(const char* path, logger::FileMode filemode, logger_verbosity_enum verbosity)
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     loguru::add_file(
-        path,
-        static_cast<loguru::FileMode>(filemode),
-        static_cast<loguru::Verbosity>(verbosity));
+        path, static_cast<loguru::FileMode>(filemode), static_cast<loguru::Verbosity>(verbosity));
+#elif defined(XSIGMA_USE_GLOG)
+    // glog file logging
+    if (filemode == logger::FileMode::TRUNCATE)
+    {
+        FLAGS_log_dir = "";  // Clear log directory to use custom path
+    }
+    google::SetLogDestination(google::GLOG_INFO, path);
+#elif defined(XSIGMA_USE_NATIVE_LOGGING)
+    // Native logging file support not implemented yet
+    (void)path;
+    (void)filemode;
+    (void)verbosity;
 #else
     (void)path;
     (void)filemode;
@@ -210,8 +412,14 @@ void logger::LogToFile(const char* path, logger::FileMode filemode, logger_verbo
 //------------------------------------------------------------------------------
 void logger::EndLogToFile(const char* path)
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     loguru::remove_callback(path);
+#elif defined(XSIGMA_USE_GLOG)
+    // glog doesn't have a direct way to remove a specific log file
+    // We can flush and close all log files
+    google::FlushLogFiles(google::GLOG_INFO);
+#elif defined(XSIGMA_USE_NATIVE_LOGGING)
+    (void)path;
 #else
     (void)path;
 #endif
@@ -220,11 +428,15 @@ void logger::EndLogToFile(const char* path)
 //------------------------------------------------------------------------------
 void logger::SetThreadName(const std::string& name)
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     loguru::set_thread_name(name.c_str());
     // Save threadname so if this is called before `Init`, we can pass the thread
     // name to loguru::init().
     strncpy(detail::ThreadName, name.c_str(), sizeof(detail::ThreadName) - 1);
+#elif defined(XSIGMA_USE_GLOG) || defined(XSIGMA_USE_NATIVE_LOGGING)
+    // Store thread name for potential future use
+    strncpy(detail::ThreadName, name.c_str(), sizeof(detail::ThreadName) - 1);
+    detail::ThreadName[sizeof(detail::ThreadName) - 1] = '\0';
 #else
     (void)name;
 #endif
@@ -233,10 +445,16 @@ void logger::SetThreadName(const std::string& name)
 //------------------------------------------------------------------------------
 std::string logger::GetThreadName()
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     char buffer[128];
     loguru::get_thread_name(buffer, 128, false);
     return {buffer};
+#elif defined(XSIGMA_USE_GLOG) || defined(XSIGMA_USE_NATIVE_LOGGING)
+    if (strlen(detail::ThreadName) > 0)
+    {
+        return {detail::ThreadName};
+    }
+    return {"N/A"};
 #else
     return {"N/A"};
 #endif
@@ -244,7 +462,7 @@ std::string logger::GetThreadName()
 
 namespace
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
 struct CallbackBridgeData
 {
     logger::LogHandlerCallbackT   handler;
@@ -304,7 +522,7 @@ void logger::AddCallback(
     logger::CloseHandlerCallbackT on_close,
     logger::FlushHandlerCallbackT on_flush)
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     auto* callback_data = new CallbackBridgeData{callback, on_close, on_flush, user_data};
     loguru::add_callback(
         id,
@@ -313,9 +531,17 @@ void logger::AddCallback(
         static_cast<loguru::Verbosity>(verbosity),
         loguru_callback_bridge_close,
         loguru_callback_bridge_flush);
-#else
+#elif defined(XSIGMA_USE_GLOG) || defined(XSIGMA_USE_NATIVE_LOGGING)
+    // glog and native logging don't support custom callbacks in the same way
     // FIXME: Should we call the `close` callback with `user_data` to free any
     // resources expected to be passed in here?
+    (void)id;
+    (void)callback;
+    (void)user_data;
+    (void)verbosity;
+    (void)on_close;
+    (void)on_flush;
+#else
     (void)id;
     (void)callback;
     (void)user_data;
@@ -328,8 +554,11 @@ void logger::AddCallback(
 //------------------------------------------------------------------------------
 bool logger::RemoveCallback(const char* id)
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     return loguru::remove_callback(id);
+#elif defined(XSIGMA_USE_GLOG) || defined(XSIGMA_USE_NATIVE_LOGGING)
+    (void)id;
+    return false;
 #else
     (void)id;
     return false;
@@ -339,7 +568,7 @@ bool logger::RemoveCallback(const char* id)
 //------------------------------------------------------------------------------
 bool logger::IsEnabled()
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU) || defined(XSIGMA_USE_GLOG) || defined(XSIGMA_USE_NATIVE_LOGGING)
     return true;
 #else
     return false;
@@ -349,8 +578,12 @@ bool logger::IsEnabled()
 //------------------------------------------------------------------------------
 logger_verbosity_enum logger::GetCurrentVerbosityCutoff()
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     return static_cast<logger_verbosity_enum>(loguru::current_verbosity_cutoff());
+#elif defined(XSIGMA_USE_GLOG)
+    return static_cast<logger_verbosity_enum>(FLAGS_v);
+#elif defined(XSIGMA_USE_NATIVE_LOGGING)
+    return logger::InternalVerbosityLevel;
 #else
     return logger_verbosity_enum::
         VERBOSITY_INVALID;  // return lowest value so no logging macros will be evaluated.
@@ -364,8 +597,15 @@ void logger::Log(
     XSIGMA_UNUSED unsigned int          lineno,
     XSIGMA_UNUSED const char*           txt)
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     loguru::log(static_cast<loguru::Verbosity>(verbosity), fname, lineno, "%s", txt);
+#elif defined(XSIGMA_USE_GLOG)
+    // Map verbosity to glog severity
+    int glog_level = static_cast<int>(verbosity);
+    VLOG(glog_level) << txt;
+#elif defined(XSIGMA_USE_NATIVE_LOGGING)
+    // Use native logging - call the implementation function directly
+    internal::native_log_output(fname, lineno, verbosity, txt);
 #else
     (void)verbosity;
     (void)fname;
@@ -382,10 +622,9 @@ void logger::LogF(
     const char*           format,
     ...)
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU) || defined(XSIGMA_USE_GLOG) || defined(XSIGMA_USE_NATIVE_LOGGING)
     va_list vlist;
     va_start(vlist, format);
-    // Use a simple buffer approach instead of vstrprintf
     char buffer[1024];
     vsnprintf(buffer, sizeof(buffer), format, vlist);
     va_end(vlist);
@@ -402,13 +641,17 @@ void logger::LogF(
 void logger::StartScope(
     logger_verbosity_enum verbosity, const char* id, const char* fname, unsigned int lineno)
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     detail::push_scope(
         id,
         verbosity > logger::GetCurrentVerbosityCutoff()
             ? std::make_shared<loguru::LogScopeRAII>()
             : std::make_shared<loguru::LogScopeRAII>(
                   static_cast<loguru::Verbosity>(verbosity), fname, lineno, "%s", id));
+#elif defined(XSIGMA_USE_GLOG) || defined(XSIGMA_USE_NATIVE_LOGGING)
+    // glog and native logging don't have built-in scope support
+    // Just log the scope entry
+    logger::Log(verbosity, fname, lineno, id);
 #else
     (void)verbosity;
     (void)id;
@@ -420,8 +663,11 @@ void logger::StartScope(
 //------------------------------------------------------------------------------
 void logger::EndScope(const char* id)
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     detail::pop_scope(id);
+#elif defined(XSIGMA_USE_GLOG) || defined(XSIGMA_USE_NATIVE_LOGGING)
+    // No-op for glog and native logging
+    (void)id;
 #else
     (void)id;
 #endif
@@ -436,7 +682,7 @@ void logger::StartScopeF(
     const char*           format,
     ...)
 {
-#if XSIGMA_MODULE_ENABLE_XSIGMA_loguru
+#if defined(XSIGMA_USE_LOGURU)
     if (verbosity > logger::GetCurrentVerbosityCutoff())
     {
         detail::push_scope(id, std::make_shared<loguru::LogScopeRAII>());
@@ -445,7 +691,6 @@ void logger::StartScopeF(
     {
         va_list vlist;
         va_start(vlist, format);
-        // Use a simple buffer approach instead of vstrprintf
         char buffer[1024];
         vsnprintf(buffer, sizeof(buffer), format, vlist);
         va_end(vlist);
@@ -453,12 +698,15 @@ void logger::StartScopeF(
         detail::push_scope(
             id,
             std::make_shared<loguru::LogScopeRAII>(
-                static_cast<loguru::Verbosity>(verbosity),
-                fname,
-                lineno,
-                "%s",
-                buffer));
+                static_cast<loguru::Verbosity>(verbosity), fname, lineno, "%s", buffer));
     }
+#elif defined(XSIGMA_USE_GLOG) || defined(XSIGMA_USE_NATIVE_LOGGING)
+    va_list vlist;
+    va_start(vlist, format);
+    char buffer[1024];
+    vsnprintf(buffer, sizeof(buffer), format, vlist);
+    va_end(vlist);
+    logger::Log(verbosity, fname, lineno, buffer);
 #else
     (void)verbosity;
     (void)id;

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
+// SPDX-FileCopyrightText: Copyright (c) VTK
 // SPDX-License-Identifier: BSD-3-Clause
 /**
  * @class logger
@@ -154,11 +154,14 @@
 
 #pragma once
 
+#include <atomic>
+#include <chrono>
+#include <sstream>
 #include <string>  // needed for std::string
-
 
 #include "common/macros.h"          // needed for macros
 #include "common/wrapping_hints.h"  // for XSIGMA_FILEPATH
+#include "logging/logger_verbosity_enum.h"
 
 #if defined(_MSC_VER)
 #include <sal.h>  // Needed for _In_z_ etc annotations
@@ -179,7 +182,7 @@
 #define XSIGMA_FORMAT_STRING_TYPE const char*
 #endif
 
-#include "util/logger_verbosity_enum.h"
+#include "logging/logger_verbosity_enum.h"
 
 namespace xsigma
 {

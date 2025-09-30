@@ -7,9 +7,9 @@
 #include <vector>     // for vector
 
 #include "common/macros.h"
+#include "logging/logger.h"
 #include "util/lazy.h"
 #include "util/string_util.h"
-#include "util/logger.h"
 
 #define XSIGMA_STRINGIZE_IMPL(x) #x
 #define XSIGMA_STRINGIZE(x) XSIGMA_STRINGIZE_IMPL(x)
@@ -351,14 +351,14 @@ namespace details
         return true;                                                                        \
     }()
 #else
-#define _XSIGMA_WARN_ONCE(...)                                                     \
+#define _XSIGMA_WARN_ONCE(...)                                                         \
     XSIGMA_UNUSED static const auto XSIGMA_ANONYMOUS_VARIABLE(xsigma_warn_once_) = [&] \
-    {                                                                              \
-        xsigma::Warning::warn(                                                     \
-            {__func__, __FILE__, static_cast<int>(__LINE__)},                      \
-            xsigma::to_string(__VA_ARGS__),                                        \
-            false);                                                                \
-        return true;                                                               \
+    {                                                                                  \
+        xsigma::Warning::warn(                                                         \
+            {__func__, __FILE__, static_cast<int>(__LINE__)},                          \
+            xsigma::to_string(__VA_ARGS__),                                            \
+            false);                                                                    \
+        return true;                                                                   \
     }()
 #endif
 

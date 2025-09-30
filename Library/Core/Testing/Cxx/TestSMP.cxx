@@ -29,11 +29,11 @@
 
 #include "common/configure.h"  // IWYU pragma: keep
 #include "common/pointer.h"
+#include "logging/logger.h"
 #include "smp/Common/thread_local_api.h"
 #include "smp/Common/tools_api.h"
 #include "smp/tools.h"
 #include "smp/xsigma_thread_local.h"
-#include "util/logger.h"
 #include "xsigmaTest.h"
 
 XSIGMATEST(Core, SMP)

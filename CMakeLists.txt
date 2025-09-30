@@ -92,8 +92,31 @@ option(XSIGMA_ENABLE_EXTERNAL "Use external copies of third party libraries by d
 option(XSIGMA_ENABLE_MAGICENUM "Enable magic_enum static reflection for enums." ON)
 mark_as_advanced(XSIGMA_ENABLE_MAGICENUM)
 
-option(XSIGMA_ENABLE_LOGURU "Enable loguru lightweight C++ logging library." ON)
-mark_as_advanced(XSIGMA_ENABLE_LOGURU)
+# Logging backend selection (mutually exclusive)
+set(XSIGMA_LOGGING_BACKEND
+    "LOGURU"
+    CACHE STRING
+    "Logging backend to use. Options are NATIVE, LOGURU, or GLOG"
+)
+set_property(CACHE XSIGMA_LOGGING_BACKEND PROPERTY STRINGS NATIVE LOGURU GLOG)
+mark_as_advanced(XSIGMA_LOGGING_BACKEND)
+
+# Validate logging backend selection
+if(NOT XSIGMA_LOGGING_BACKEND MATCHES "^(NATIVE|LOGURU|GLOG)$")
+    message(FATAL_ERROR "XSIGMA_LOGGING_BACKEND must be NATIVE, LOGURU, or GLOG (got: ${XSIGMA_LOGGING_BACKEND})")
+endif()
+
+# Set preprocessor definitions based on selected backend
+if(XSIGMA_LOGGING_BACKEND STREQUAL "NATIVE")
+    message(STATUS "Using NATIVE logging backend")
+    set(XSIGMA_USE_NATIVE_LOGGING ON)
+elseif(XSIGMA_LOGGING_BACKEND STREQUAL "LOGURU")
+    message(STATUS "Using LOGURU logging backend")
+    set(XSIGMA_USE_LOGURU ON)
+elseif(XSIGMA_LOGGING_BACKEND STREQUAL "GLOG")
+    message(STATUS "Using GLOG logging backend")
+    set(XSIGMA_USE_GLOG ON)
+endif()
 
 # TBB backend temporarily disabled (incomplete implementation)
 option(XSIGMA_ENABLE_TBB "Enable Intel TBB (Threading Building Blocks) support." OFF)

@@ -39,6 +39,7 @@ limitations under the License.
 #include <optional>
 #include <string_view>
 
+#include "logging/logger.h"  // For XSIGMA_CHECK_DEBUG macros
 #include "util/flat_hash.h"
 
 namespace xsigma
@@ -232,7 +233,7 @@ const HostEventTypeMap& GetHostEventTypeMap()
         {"tpu::System::TransferFromDevice=>IssueEvent=>Done", kTransferFromDeviceDone},
         {"tpu::System::Execute", kTpuSystemExecute},
     });
-    DCHECK_EQ(host_event_type_map->size(), kNumHostEventTypes);
+    XSIGMA_CHECK_DEBUG(host_event_type_map->size() == kNumHostEventTypes);
     return *host_event_type_map;
 }
 
@@ -381,7 +382,7 @@ const StatTypeMap& GetStatTypeMap()
          {"source_stack", kSourceStack},
          {"device_offset_ps", kDeviceOffsetPs},
          {"device_duration_ps", kDeviceDurationPs}});
-    DCHECK_EQ(stat_type_map->size(), kNumStatTypes);
+    XSIGMA_CHECK_DEBUG(stat_type_map->size() == kNumStatTypes);
     return *stat_type_map;
 }
 
@@ -411,7 +412,7 @@ const MegaScaleStatTypeMap& GetMegaScaleStatTypeMap()
         {"graph_protos", kMegaScaleGraphProtos},
         {"network_transport_latency_us", kMegaScaleNetworkTransportLatency},
     });
-    DCHECK_EQ(stat_type_map->size(), kNumMegaScaleStatTypes);
+    XSIGMA_CHECK_DEBUG(stat_type_map->size() == kNumMegaScaleStatTypes);
     return *stat_type_map;
 }
 
@@ -422,7 +423,7 @@ const LineIdTypeMap& GetLineIdTypeMap()
         {"DcnHostTraffic", kDcnHostTraffic},
         {"DcnCollectiveTraffic", kDcnCollectiveTraffic},
     });
-    DCHECK_EQ(line_id_type_map->size(), kNumLineIdTypes);
+    XSIGMA_CHECK_DEBUG(line_id_type_map->size() == kNumLineIdTypes);
     return *line_id_type_map;
 }
 
@@ -466,7 +467,7 @@ const TaskEnvStatTypeMap& GetTaskEnvStatTypeMap()
         {"profile_start_time", kEnvProfileStartTime},
         {"profile_stop_time", kEnvProfileStopTime},
     });
-    DCHECK_EQ(task_env_stat_type_map->size(), kNumTaskEnvStatTypes);
+    XSIGMA_CHECK_DEBUG(task_env_stat_type_map->size() == kNumTaskEnvStatTypes);
     return *task_env_stat_type_map;
 }
 

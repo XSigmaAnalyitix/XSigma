@@ -128,6 +128,24 @@ inline constexpr int XSIGMA_COMPILE_TIME_MAX_GPUS = 16;
 #endif
 
 //------------------------------------------------------------------------
+#if (defined(__GNUC__) || defined(__APPLE__)) && !defined(SWIG)
+// Compiler supports GCC-style attributes
+#define XSIGMA_NORETURN __attribute__((noreturn))
+#define XSIGMA_NOINLINE __attribute__((noinline))
+#define XSIGMA_COLD __attribute__((cold))
+#elif defined(_MSC_VER)
+// Non-GCC equivalents
+#define XSIGMA_NORETURN __declspec(noreturn)
+#define XSIGMA_NOINLINE
+#define XSIGMA_COLD
+#else
+// Non-GCC equivalents
+#define XSIGMA_NORETURN
+#define XSIGMA_NOINLINE
+#define XSIGMA_COLD
+#endif
+
+//------------------------------------------------------------------------
 #ifdef NDEBUG
 #define XSIGMA_SIMD_RETURN_TYPE XSIGMA_FORCE_INLINE static void XSIGMA_VECTORCALL
 #else
@@ -249,7 +267,8 @@ using void_t = std::void_t<>;
 
 //------------------------------------------------------------------------
 // C++20 [[likely]] and [[unlikely]] attributes are only available in C++20 and later
-#if __cplusplus >= 202002L && XSIGMA_HAVE_CPP_ATTRIBUTE(likely) && XSIGMA_HAVE_CPP_ATTRIBUTE(unlikely)
+#if __cplusplus >= 202002L && XSIGMA_HAVE_CPP_ATTRIBUTE(likely) && \
+    XSIGMA_HAVE_CPP_ATTRIBUTE(unlikely)
 #define XSIGMA_LIKELY(expr) (expr) [[likely]]
 #define XSIGMA_UNLIKELY(expr) (expr) [[unlikely]]
 #elif defined(__GNUC__) || defined(__ICL) || defined(__clang__)
@@ -330,13 +349,13 @@ using void_t = std::void_t<>;
 
 //----------------------------------------------------------------------------
 #if XSIGMA_HAVE_CPP_ATTRIBUTE(clang::lifetimebound)
-#define XSIGMA_ATTRIBUTE_LIFETIME_BOUND [[clang::lifetimebound]]
+#define XSIGMA_LIFETIME_BOUND [[clang::lifetimebound]]
 #elif XSIGMA_HAVE_CPP_ATTRIBUTE(msvc::lifetimebound)
-#define XSIGMA_ATTRIBUTE_LIFETIME_BOUND [[msvc::lifetimebound]]
+#define XSIGMA_LIFETIME_BOUND [[msvc::lifetimebound]]
 #elif XSIGMA_HAVE_ATTRIBUTE(lifetimebound)
-#define XSIGMA_ATTRIBUTE_LIFETIME_BOUND __attribute__((lifetimebound))
+#define XSIGMA_LIFETIME_BOUND __attribute__((lifetimebound))
 #else
-#define XSIGMA_ATTRIBUTE_LIFETIME_BOUND
+#define XSIGMA_LIFETIME_BOUND
 #endif
 
 //----------------------------------------------------------------------------

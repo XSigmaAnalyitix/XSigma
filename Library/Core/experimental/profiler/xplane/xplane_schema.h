@@ -40,7 +40,8 @@ limitations under the License.
 #include <string_view>
 
 #include "common/macros.h"
-#include "util/logging.h"
+#include "logging/logger.h"
+#include "util/exception.h"
 #include "util/strcat.h"
 
 //#include "tsl/experimental/profiler/lib/context_types.h"
@@ -586,7 +587,7 @@ public:
 
     XFlow(uint64_t flow_id, FlowDirection direction, ContextType category = ContextType::kGeneric)
     {
-        DCHECK_NE(direction, kFlowUnspecified);
+        XSIGMA_CHECK_DEBUG(direction != kFlowUnspecified);
         encoded_.parts.direction = direction;
         encoded_.parts.flow_id   = flow_id;
         encoded_.parts.category  = static_cast<uint64_t>(category);

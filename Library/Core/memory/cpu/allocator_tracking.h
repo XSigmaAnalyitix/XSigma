@@ -39,11 +39,10 @@
 #include <unordered_map>
 #include <vector>
 
-
 #include "common/macros.h"
+#include "logging/logger.h"
 #include "memory/cpu/allocator.h"
 #include "memory/unified_memory_stats.h"
-#include "util/logging.h"
 
 namespace xsigma
 {

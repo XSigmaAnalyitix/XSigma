@@ -41,13 +41,8 @@ limitations under the License.
 
 #include "experimental/profiler/no_init.h"
 #include "experimental/profiler/traceme_encode.h"
-#include "util/logging.h"
-
-//#include <string_view>
-
-//#include "util/logging.h"
-//#include "common/macros.h"
 #include "experimental/profiler/traceme_encode.h"  // IWYU pragma: export
+#include "logging/logger.h"
 
 #if !defined(IS_MOBILE_PLATFORM)
 #include "experimental/profiler/traceme_recorder.h"
@@ -125,7 +120,7 @@ public:
     // out their host traces based on verbosity.
     explicit trace_me(std::string_view name, int level = 1)
     {
-        DCHECK_GE(level, 1);
+        XSIGMA_CHECK_DEBUG(level >= 1);
 #if !defined(IS_MOBILE_PLATFORM)
         if XSIGMA_UNLIKELY (trace_me_recorder::active(level))
         {
@@ -174,7 +169,7 @@ public:
         std::enable_if_t<std::is_invocable_v<NameGeneratorT>, bool> = true>
     explicit trace_me(NameGeneratorT&& name_generator, int level = 1)
     {
-        DCHECK_GE(level, 1);
+        XSIGMA_CHECK_DEBUG(level >= 1);
 #if !defined(IS_MOBILE_PLATFORM)
         if XSIGMA_UNLIKELY (trace_me_recorder::active(level))
         {

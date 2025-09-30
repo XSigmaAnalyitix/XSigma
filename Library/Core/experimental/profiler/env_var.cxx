@@ -44,8 +44,8 @@ limitations under the License.
 #include <ostream>  // for operator<<
 #include <string>   // for char_traits, allocator, operator==, string, basic_string
 
+#include "logging/logger.h"    // for XSIGMA_LOG_ERROR, LOG, _XSIGMA_LOG_FATAL
 #include "util/exception.h"    // for check_msg_impl, XSIGMA_CHECK
-#include "util/logging.h"      // for LogMessageFatal, LOG, _XSIGMA_LOG_FATAL
 #include "util/strcat.h"       // for StrCat
 #include "util/string_util.h"  // for safe_strto64, safe_strtof, split_string
 
@@ -84,13 +84,9 @@ bool read_bool_from_env_var(std::string_view env_var_name, bool default_val, boo
         return true;
     }
 
-    LOG(FATAL) << strings::StrCat(
-        "Failed to parse the env-var ${",
-        env_var_name,
-        "} into bool: ",
-        str_value,
-        ". Use the default value: ",
-        default_val);
+    XSIGMA_LOG_ERROR(
+        "Failed to parse the env-var ${" << env_var_name << "} into bool: " << str_value
+                                         << ". Use the default value: " << default_val);
     return false;
 }
 
@@ -106,14 +102,9 @@ bool read_int64_from_env_var(std::string_view env_var_name, int64_t default_val,
     {
         return true;
     }
-    LOG(FATAL) << "InvalidArgument "
-               << strings::StrCat(
-                      "Failed to parse the env-var ${",
-                      env_var_name,
-                      "} into int64: ",
-                      tf_env_var_val,
-                      ". Use the default value: ",
-                      default_val);
+    XSIGMA_LOG_ERROR(
+        "InvalidArgument " << "Failed to parse the env-var ${" << env_var_name << "} into int64: "
+                           << tf_env_var_val << ". Use the default value: " << default_val);
 
     return false;
 }
@@ -130,14 +121,9 @@ bool read_float_from_env_var(std::string_view env_var_name, float default_val, f
     {
         return true;
     }
-    LOG(FATAL) << "InvalidArgument "
-               << strings::StrCat(
-                      "Failed to parse the env-var ${",
-                      env_var_name,
-                      "} into float: ",
-                      tf_env_var_val,
-                      ". Use the default value: ",
-                      default_val);
+    XSIGMA_LOG_ERROR(
+        "InvalidArgument " << "Failed to parse the env-var ${" << env_var_name << "} into float: "
+                           << tf_env_var_val << ". Use the default value: " << default_val);
     return false;
 }
 

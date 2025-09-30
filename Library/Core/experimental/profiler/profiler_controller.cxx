@@ -38,7 +38,7 @@ limitations under the License.
 
 #include "experimental/profiler/profiler_interface.h"
 #include "experimental/profiler/xplane/xplane.h"
-#include "util/logging.h"
+#include "logging/logger.h"
 
 namespace xsigma
 {
@@ -69,12 +69,12 @@ bool profiler_controller::start()
         }
         else
         {
-            LOG(ERROR) << "Previous call returned an error.";
+            XSIGMA_LOG_ERROR("Previous call returned an error.");
         }
     }
     else
     {
-        LOG(ERROR) << "start called in the wrong order";
+        XSIGMA_LOG_ERROR("start called in the wrong order");
     }
     return status;
 }
@@ -91,12 +91,12 @@ bool profiler_controller::stop()
         }
         else
         {
-            LOG(ERROR) << "Previous call returned an error.";
+            XSIGMA_LOG_ERROR("Previous call returned an error.");
         }
     }
     else
     {
-        LOG(ERROR) << "stop called in the wrong order";
+        XSIGMA_LOG_ERROR("stop called in the wrong order");
     }
     return status;
 }
@@ -113,12 +113,12 @@ bool profiler_controller::collect_data(x_space* space)
         }
         else
         {
-            LOG(ERROR) << "Previous call returned an error.";
+            XSIGMA_LOG_ERROR("Previous call returned an error.");
         }
     }
     else
     {
-        LOG(ERROR) << "collect_data called in the wrong order.";
+        XSIGMA_LOG_ERROR("collect_data called in the wrong order.");
     }
     return status;
 }
