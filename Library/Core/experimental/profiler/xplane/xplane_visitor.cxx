@@ -39,8 +39,8 @@ limitations under the License.
 #include <utility>
 
 #include "experimental/profiler/xplane/xplane.h"
+#include "logging/logger.h"
 #include "util/flat_hash.h"
-#include "util/logging.h"
 #include "util/strcat.h"
 
 namespace xsigma
@@ -136,7 +136,7 @@ void xplane_visitor::build_event_type_map(
             if (event_type.has_value())
             {
                 auto result = event_type_by_id_.emplace(metadata_id, *event_type);
-                DCHECK(result.second);  // inserted
+                XSIGMA_CHECK_DEBUG(result.second);  // inserted
                 break;
             }
         }
@@ -175,7 +175,7 @@ void xplane_visitor::build_stat_type_map(
             if (stat_type.has_value())
             {
                 auto result = stat_type_by_id_.emplace(metadata_id, *stat_type);
-                DCHECK(result.second);  // inserted
+                XSIGMA_CHECK_DEBUG(result.second);  // inserted
                 stat_metadata_by_type_.emplace(*stat_type, &metadata);
                 break;
             }

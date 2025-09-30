@@ -40,7 +40,7 @@ limitations under the License.
 //#include "tsl/platform/errors.h"
 #include "experimental/profiler/profiler_interface.h"
 #include "experimental/profiler/xplane/xplane.h"
-#include "util/logging.h"
+#include "logging/logger.h"
 
 namespace xsigma
 {
@@ -82,7 +82,7 @@ bool python_tracer::start()
     {
         return tsl::errors::Internal("PythonTracer already started");
     }
-    VLOG(1) << __FUNCTION__;
+    XSIGMA_LOG_INFO( __FUNCTION__);
     recording_ = true;
     PythonHooks::GetSingleton()->Start(options_);
     return true;
@@ -94,7 +94,7 @@ bool PythonTracer::Stop()
     {
         return tsl::errors::Internal("PythonTracer not started");
     }
-    VLOG(1) << __FUNCTION__;
+    XSIGMA_LOG_INFO( __FUNCTION__);
     context_   = PythonHooks::GetSingleton()->Stop();
     recording_ = false;
     return true;
@@ -103,7 +103,7 @@ bool PythonTracer::Stop()
 bool PythonTracer::CollectData(  // XSIGMA_STATUS_OK
     XSpace* space)
 {
-    VLOG(2) << "Collecting data to XSpace from PythonTracer.";
+    XSIGMA_LOG_INFO( "Collecting data to XSpace from PythonTracer.");
     if (context_)
     {
         context_->Finalize(space);

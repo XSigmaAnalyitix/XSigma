@@ -39,10 +39,10 @@
 #include <utility>
 
 #include "experimental/profiler/traceme.h"
+#include "logging/logger.h"
 #include "memory/cpu/helper/memory_allocator.h"
 #include "memory/numa.h"
 #include "util/exception.h"
-#include "util/logger.h"
 
 namespace xsigma
 {
@@ -111,7 +111,7 @@ void* PrepareChunk(void* chunk, size_t alignment, size_t num_bytes)
         (reinterpret_cast<ChunkPrefix*>(user_ptr) - 1)->chunk_ptr = chunk;
     }
     // Safety check that user_ptr is always past the ChunkPrefix.
-    CHECK_GE(user_ptr, reinterpret_cast<ChunkPrefix*>(chunk) + 1);
+    XSIGMA_CHECK(user_ptr >= reinterpret_cast<ChunkPrefix*>(chunk) + 1);
     return user_ptr;
 }
 
@@ -178,7 +178,7 @@ void allocator_pool::deallocate_raw(void* ptr)
     if (ptr == nullptr)
         return;
     ChunkPrefix* cp = FindPrefix(ptr);
-    CHECK_LE((void*)cp, (void*)ptr);
+    XSIGMA_CHECK((void*)cp <= (void*)ptr);
     if (!has_size_limit_ && !auto_resize_)
     {
         allocator_->Free(cp, cp->num_bytes);
@@ -224,7 +224,7 @@ void allocator_pool::RemoveFromList(PtrRecord* pr)
 {
     if (pr->prev == nullptr)
     {
-        DCHECK_EQ(lru_head_, pr);
+        XSIGMA_CHECK(lru_head_ == pr);
         lru_head_ = nullptr;
     }
     else
@@ -233,7 +233,7 @@ void allocator_pool::RemoveFromList(PtrRecord* pr)
     }
     if (pr->next == nullptr)
     {
-        DCHECK_EQ(lru_tail_, pr);
+        XSIGMA_CHECK(lru_tail_ == pr);
         lru_tail_ = pr->prev;
     }
     else

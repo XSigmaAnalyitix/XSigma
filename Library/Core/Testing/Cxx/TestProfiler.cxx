@@ -36,7 +36,7 @@
 //#include "experimental/profiler/xplane/xplane.h"
 //#include "experimental/profiler/xplane/xplane_builder.h"
 //#include "experimental/profiler/xplane/xplane_schema.h"
-//#include "util/logging.h"
+//#include "logging/logger.h"
 //#include "util/strcat.h"
 #include "xsigmaTest.h"
 //
@@ -265,7 +265,7 @@
 //            auto status = profiler_session::Create(CreateProfileOptions());
 //            if (!status)
 //            {
-//                LOG(ERROR) << "Failed to create profiler session: ";
+//                XSIGMA_LOG_ERROR("Failed to create profiler session: ");
 //                return;
 //            }
 //            std::unique_ptr<profiler_session> session = std::move(status);
@@ -336,10 +336,10 @@
 //            std::ofstream xspace_file(xspace_path, std::ios::out | std::ios::binary);
 //            /* if (!xspace.SerializeToOstream(&xspace_file))
 //            {
-//                LOG(ERROR) << "Failed to write XSpace data to " << xspace_path;
+//                XSIGMA_LOG_ERROR("Failed to write XSpace data to " << xspace_path);
 //                return;
 //            }*/
-//            LOG(INFO) << "Profile data saved to " << xspace_path;
+//            XSIGMA_LOG_INFO("Profile data saved to " << xspace_path);
 //
 //            // Print summary statistics
 //            AnalyzeResults(xspace);

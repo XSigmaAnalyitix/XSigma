@@ -255,12 +255,12 @@ allocator_bfc::allocator_bfc(
         XSIGMA_LOG_INFO_DEBUG(
             "Creating bin of max chunk size " << numbers::HumanReadableNumBytes(bin_size));
         new (BinFromIndex(b)) Bin(this, bin_size);
-        CHECK_EQ(BinForSize(bin_size), BinFromIndex(b));
-        CHECK_EQ(BinForSize(bin_size + 255), BinFromIndex(b));
-        CHECK_EQ(BinForSize(bin_size * 2 - 1), BinFromIndex(b));
+        XSIGMA_CHECK(BinForSize(bin_size) == BinFromIndex(b));
+        XSIGMA_CHECK(BinForSize(bin_size + 255) == BinFromIndex(b));
+        XSIGMA_CHECK(BinForSize(bin_size * 2 - 1) == BinFromIndex(b));
         if (b + 1 < kNumBins)
         {
-            CHECK_NE(BinForSize(bin_size * 2), BinFromIndex(b));
+            XSIGMA_CHECK(BinForSize(bin_size * 2) != BinFromIndex(b));
         }
     }
 }
@@ -287,15 +287,15 @@ allocator_bfc::~allocator_bfc()
 
 allocator_bfc::Chunk* allocator_bfc::ChunkFromHandle(ChunkHandle h)
 {
-    DCHECK_GE(h, 0);
-    DCHECK_LT(h, static_cast<int>(chunks_.size()));
+    XSIGMA_CHECK_DEBUG(h >= 0);
+    XSIGMA_CHECK_DEBUG(h < static_cast<int>(chunks_.size()));
     return &(chunks_[h]);
 }
 
 const allocator_bfc::Chunk* allocator_bfc::ChunkFromHandle(ChunkHandle h) const
 {
-    DCHECK_GE(h, 0);
-    DCHECK_LT(h, static_cast<int>(chunks_.size()));
+    XSIGMA_CHECK_DEBUG(h >= 0);
+    XSIGMA_CHECK_DEBUG(h < static_cast<int>(chunks_.size()));
     return &(chunks_[h]);
 }
 
@@ -547,7 +547,7 @@ size_t allocator_bfc::RoundedBytes(size_t bytes) noexcept
 {
     size_t rounded_bytes =
         (kMinAllocationSize * ((bytes + kMinAllocationSize - 1) / kMinAllocationSize));
-    DCHECK_EQ(size_t{0}, rounded_bytes % kMinAllocationSize);
+    XSIGMA_CHECK_DEBUG(size_t{0} == rounded_bytes % kMinAllocationSize);
     return rounded_bytes;
 }
 
@@ -580,7 +580,7 @@ bool allocator_bfc::DeallocateFreeRegions(size_t rounded_bytes)
 
         if (!any_use)
         {
-            XSIGMA_LOG(4, "Found free region with ptr = " << region.ptr());
+            XSIGMA_LOG_INFO("Found free region with ptr = " << region.ptr());
             free_region_ptrs.insert(region.ptr());
             total_free_bytes += region.memory_size();
         }
@@ -632,7 +632,7 @@ void allocator_bfc::DeallocateRegions(const flat_hash_set<void*>& region_ptrs)
             continue;
         }
 
-        XSIGMA_LOG(2, "Deallocate region with ptr = " << it->ptr());
+        XSIGMA_LOG_WARNING( "Deallocate region with ptr = " << it->ptr());
         // Remove all chunk registrations from Bins.
         ChunkHandle h = region_manager_.get_handle(it->ptr());
         while (h != kInvalidChunkHandle)
@@ -659,7 +659,7 @@ void* allocator_bfc::AllocateRawInternal(
 {
     if (num_bytes == 0)
     {
-        XSIGMA_LOG(2, "tried to allocate 0 bytes");
+        XSIGMA_LOG_WARNING("tried to allocate 0 bytes");
         return nullptr;
     }
     // First, always allocate memory of at least kMinAllocationSize
@@ -763,7 +763,7 @@ double allocator_bfc::GetFragmentation()
 {
     int64_t bytes_available = stats_.pool_bytes.load(std::memory_order_relaxed) -
                               stats_.bytes_in_use.load(std::memory_order_relaxed);
-    DCHECK_GE(bytes_available, 0);
+    XSIGMA_CHECK_DEBUG(bytes_available >= 0);
     return static_cast<double>(bytes_available - LargestFreeChunk()) / bytes_available;
 }
 
@@ -898,7 +898,7 @@ void* allocator_bfc::FindChunkPtr(
                     }
                     else
                     {
-                        LOG(INFO) << "missing pending_op_name for " << Name() << " reading addr "
+                        XSIGMA_LOG_INFO( "missing pending_op_name for " << Name() << " reading addr "
                                   << static_cast<const void*>(&annotation.pending_op_name) << "\n"
                                   << CurrentStackTrace();
                         chunk->op_name = nullptr;
@@ -1175,7 +1175,7 @@ bool allocator_bfc::MergeTimestampedChunks(size_t required_bytes)
     {
         ChunkHandle h = timestamped_chunks_.front();
         timestamped_chunks_.pop_front();
-        DCHECK_NE(h, kInvalidChunkHandle);
+        XSIGMA_CHECK_DEBUG(h != kInvalidChunkHandle);
         Chunk* c = ChunkFromHandle(h);
         // It's possible this chunk has already been merged so refetch and retest
         // the handle.
@@ -1195,7 +1195,7 @@ bool allocator_bfc::MergeTimestampedChunks(size_t required_bytes)
             continue;
         }
         // Chunk should be free and assigned to a bin.
-        DCHECK_NE(c->bin_num, kInvalidBinNum);
+        XSIGMA_CHECK_DEBUG(c->bin_num != kInvalidBinNum);
         if (c->freed_at_count < safe_frontier_)
         {
             c->freed_at_count = 0;
@@ -1228,7 +1228,7 @@ bool allocator_bfc::MergeTimestampedChunks(size_t required_bytes)
         if (required_bytes == 0 || !satisfied)
         {
             Chunk* c = ChunkFromHandle(h);
-            DCHECK_NE(c->bin_num, kInvalidBinNum);
+            XSIGMA_CHECK_DEBUG(c->bin_num != kInvalidBinNum);
             XSIGMA_CHECK_DEBUG(!c->in_use());
             RemoveFreeChunkFromBin(h);
             ChunkHandle new_h = TryToCoalesce(h, (required_bytes > 0));
@@ -1314,12 +1314,12 @@ void RenderRegion(
     const char* ptr_c      = static_cast<const char*>(ptr);
 
     size_t start_location = ((ptr_c - base_ptr_c + offset) * resolution) / total_render_size;
-    CHECK_GE(start_location, 0);
-    CHECK_LT(start_location, resolution);
+    XSIGMA_CHECK_DEBUG(start_location >= 0);
+    XSIGMA_CHECK_DEBUG(start_location < resolution);
     size_t end_location =
         ((ptr_c + size - 1 - base_ptr_c + offset) * resolution) / total_render_size;
-    CHECK_GE(end_location, 0);
-    CHECK_LT(end_location, resolution);
+    XSIGMA_CHECK_DEBUG(end_location >= 0);
+    XSIGMA_CHECK_DEBUG(end_location < resolution);
 
     for (size_t i = start_location; i <= end_location; ++i)
     {
@@ -1404,8 +1404,8 @@ void allocator_bfc::DumpMemoryLog(size_t num_bytes)
     {
         Bin*                b        = BinFromIndex(bin_num);
         const BinDebugInfo& bin_info = bin_infos[bin_num];
-        CHECK_EQ(
-            b->free_chunks.size(), bin_info.total_chunks_in_bin - bin_info.total_chunks_in_use);
+        XSIGMA_CHECK_DEBUG(
+            b->free_chunks.size() == bin_info.total_chunks_in_bin - bin_info.total_chunks_in_use);
 
         XSIGMA_LOG_INFO(
             "Bin (" << b->bin_size << "): \tTotal Chunks: " << bin_info.total_chunks_in_bin
@@ -1507,14 +1507,14 @@ void allocator_bfc::MaybeWriteMemoryMap()
         std::Status status = Env::Default()->NewWritableFile(file_name, &dump_file);
         if (!status.ok())
         {
-            LOG(ERROR) << "Failed to open file " << file_name;
+            XSIGMA_LOG_ERROR("Failed to open file " << file_name);
             return;
         }
         memory_dump md = RecordMemoryMapInternal();
         status        = dump_file->Append(md.SerializeAsstd::string());
         if (!status.ok())
         {
-            LOG(ERROR) << "Error on writing to file " << gpu_memory_map_file << ": " << status;
+            XSIGMA_LOG_ERROR("Error on writing to file " << gpu_memory_map_file << ": " << status);
         }
     }
 #endif  // 0
@@ -1545,8 +1545,8 @@ memory_dump allocator_bfc::RecordMemoryMapInternal()
     {
         Bin*                b        = BinFromIndex(bin_num);
         const BinDebugInfo& bin_info = bin_infos[bin_num];
-        DCHECK_EQ(
-            b->free_chunks.size(), bin_info.total_chunks_in_bin - bin_info.total_chunks_in_use);
+        XSIGMA_CHECK_DEBUG(
+            b->free_chunks.size() == bin_info.total_chunks_in_bin - bin_info.total_chunks_in_use);
         BinSummary* bs = md.add_bin_summary();
         bs->set_bin(bin_num);
         bs->set_total_bytes_in_use(bin_info.total_bytes_in_use);
@@ -1639,8 +1639,8 @@ std::array<allocator_bfc::BinDebugInfo, allocator_bfc::kNumBins> allocator_bfc::
             else
             {
                 Bin* bin = BinFromIndex(bin_num);
-                CHECK_EQ(bin->free_chunks.count(h), 1);
-                CHECK_EQ(c->bin_num, bin_num);
+                XSIGMA_CHECK(bin->free_chunks.count(h) == 1);
+                XSIGMA_CHECK(c->bin_num == bin_num);
             }
             h = c->next;
         }

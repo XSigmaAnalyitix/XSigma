@@ -5,8 +5,8 @@
 
 #include <algorithm>  // for clamp, min
 
+#include "logging/logger.h"
 #include "util/exception.h"  // for XSIGMA_CHECK
-#include "util/logger.h"
 #include "xsigma_threads.h"
 
 // Need to define "xsigmaExternCThreadFunctionType" to avoid warning on some

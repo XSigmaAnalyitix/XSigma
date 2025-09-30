@@ -35,6 +35,7 @@
 #include <vector>
 
 #include "common/pointer.h"
+#include "logging/logger.h"
 #include "memory/allocator.h"
 #include "memory/cpu/allocator_device.h"
 #include "memory/data_ptr.h"
@@ -49,7 +50,6 @@
 #include "memory/gpu/gpu_memory_wrapper.h"
 #include "memory/gpu/gpu_resource_tracker.h"
 #include "memory/unified_memory_stats.h"
-#include "util/logger.h"
 
 using namespace xsigma;
 

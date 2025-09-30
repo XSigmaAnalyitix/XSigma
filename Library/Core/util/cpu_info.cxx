@@ -5,7 +5,7 @@
 #include <fmt/ranges.h>
 
 #include "common/configure.h"
-#include "util/logger.h"
+#include "logging/logger.h"
 #include "xsigma_features.h"
 namespace xsigma
 {

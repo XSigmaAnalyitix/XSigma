@@ -30,8 +30,8 @@
 
 #include <string>
 
+#include "logging/logger.h"
 #include "memory/numa.h"
-#include "util/logger.h"
 
 namespace xsigma
 {
@@ -149,7 +149,7 @@ sub_allocator* allocator_factory_registry::GetSubAllocator(int numa_node)
 #ifdef XSIGMA_NUMA_ENABLED
         if (numa_node != -1)
         {
-            CHECK_LE(numa_node, xsigma::NUMANumNodes());
+            XSIGMA_CHECK_DEBUG(numa_node <= xsigma::NUMANumNodes());  //NOLINT
             index = 1 + numa_node;
         }
 #endif                                                                           // DEBUG

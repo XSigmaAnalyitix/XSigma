@@ -39,6 +39,7 @@
 
 #include "common/configure.h"
 #include "common/pointer.h"                      // for make_ptr_unique_mutable
+#include "logging/logger.h"                      // for XSIGMA_LOG_INFO, END_LOG_TO_FILE_NAME
 #include "memory/cpu/allocator.h"                // for sub_allocator, allocation_attributes
 #include "memory/cpu/allocator_bfc.h"            // for allocator_bfc
 #include "memory/cpu/allocator_device.h"         // for allocator_device
@@ -48,7 +49,6 @@
 #include "memory/cpu/helper/memory_allocator.h"  // for free, allocate
 #include "memory/cpu/helper/process_state.h"     // for process_state
 #include "memory/unified_memory_stats.h"         // for atomic_timing_stats, unified_resource_stats
-#include "util/logger.h"                         // for XSIGMA_LOG_INFO, END_LOG_TO_FILE_NAME
 #include "xsigmaTest.h"                          // for XSIGMATEST_CALL, XSIGMATEST_VOID, END_TEST
 
 using namespace xsigma;

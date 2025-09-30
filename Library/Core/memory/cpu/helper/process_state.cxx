@@ -34,13 +34,13 @@
 #include <vector>
 
 #include "experimental/profiler/env_var.h"
+#include "logging/logger.h"
 #include "memory/cpu/allocator.h"
 #include "memory/cpu/allocator_bfc.h"
 #include "memory/cpu/allocator_pool.h"
 #include "memory/cpu/allocator_tracking.h"
 #include "memory/cpu/helper/allocator_registry.h"
 #include "util/exception.h"
-#include "util/logger.h"
 #include "util/strcat.h"
 
 namespace xsigma

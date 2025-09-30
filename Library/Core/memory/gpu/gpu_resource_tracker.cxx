@@ -7,8 +7,8 @@
 #include <thread>
 
 #include "common/macros.h"
+#include "logging/logger.h"
 #include "util/exception.h"
-#include "util/logger.h"
 
 // Hash specialization for std::pair<device_enum, int>
 namespace std

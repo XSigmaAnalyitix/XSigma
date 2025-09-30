@@ -5,8 +5,8 @@
 #include <sstream>
 #include <utility>
 
+#include "logging/logger.h"
 #include "util/back_trace.h"
-#include "util/logger.h"
 #include "util/string_util.h"
 
 namespace xsigma

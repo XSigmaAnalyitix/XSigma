@@ -21,7 +21,7 @@
 
 #include <cstdlib>  // for abort, EXIT_SUCCESS
 
-#include "util/logger.h"  // for logger, logger::EnableUnsafeSignalHandler
+#include "logging/logger.h"  // for logger, logger::EnableUnsafeSignalHandler
 
 int main(int /*unused*/, char* /*unused*/[])
 {

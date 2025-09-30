@@ -21,8 +21,8 @@
 #include <string>
 #include <utility>
 
+#include "logging/logger.h"
 #include "util/exception.h"
-#include "util/logger.h"
 #include "xsigmaTest.h"
 
 namespace
@@ -37,7 +37,7 @@ XSIGMA_UNUSED void log_handler(void* user_data, const xsigma::logger::Message& m
 
 XSIGMATEST(Core, Logger)
 {
-    /* int arg     = 0;
+    int    arg     = 0;
     char** arg_str = nullptr;
 
     xsigma::logger::Init(arg, arg_str);
@@ -62,7 +62,7 @@ XSIGMATEST(Core, Logger)
         static_cast<int>(xsigma::logger_verbosity_enum::VERBOSITY_TRACE));
 
     xsigma::logger::AddCallback(
-        "sonnet-grabber", log_handler, &lines, xsigma::logger_verbosity_enum::VERBOSITY_2);
+        "sonnet-grabber", log_handler, &lines, xsigma::logger_verbosity_enum::VERBOSITY_INFO);
 
     xsigma::logger::SetStderrVerbosity(xsigma::logger_verbosity_enum::VERBOSITY_TRACE);
 
@@ -70,15 +70,15 @@ XSIGMATEST(Core, Logger)
     {
         XSIGMA_LOG_SCOPEF(TRACE, "Sonnet 18");
         const auto* whom = "thee";
-        XSIGMA_LOG(2, "Shall I compare " << whom << " to a summer's day?");
+        XSIGMA_LOG(TRACE, "Shall I compare " << whom << " to a summer's day?");
 
         const auto* what0 = "lovely";
         const auto* what1 = "temperate";
-        XSIGMA_LOGF(2, "Thou art more %s and more %s:", what0, what1);
+        XSIGMA_LOGF(TRACE, "Thou art more %s and more %s:", what0, what1);
 
         const auto* month = "May";
-        XSIGMA_LOG_IF(2, true, << "Rough winds do shake the darling buds of " << month << ",");
-        XSIGMA_LOG_IFF(2, true, "And %s’s lease hath all too short a date;", "summers");
+        XSIGMA_LOG_IF(TRACE, true, << "Rough winds do shake the darling buds of " << month << ",");
+        XSIGMA_LOG_IFF(TRACE, true, "And %s’s lease hath all too short a date;", "summers");
     }
 
     std::cerr << "--------------------------------------------" << std::endl
@@ -110,6 +110,6 @@ XSIGMATEST(Core, Logger)
     xsigma::logger::LogScopeRAII obj;
 
     xsigma::logger::LogScopeRAII obj1 = std::move(obj);
-    */
+
     END_TEST();
 }

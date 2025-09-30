@@ -63,3 +63,42 @@ else()
         )
     endif()
 endif()
+
+# Add logger benchmark executable if benchmarking is enabled
+if(XSIGMA_ENABLE_BENCHMARK AND TARGET XSigma::benchmark)
+    add_executable(BenchmarkLogger BenchmarkLogger.cxx)
+
+    if(COMMAND xsigma_apply_iwyu)
+        xsigma_apply_iwyu(BenchmarkLogger)
+    endif()
+
+    target_link_libraries(BenchmarkLogger PRIVATE
+        XSigma::benchmark
+        XSigma::Core
+        ${XSIGMA_CUDA_LIBRARIES}
+    )
+
+    set_target_properties(BenchmarkLogger PROPERTIES FOLDER "Benchmarks")
+
+    # Apply sanitizer flags if enabled
+    if(DEFINED XSIGMA_SANITIZER_COMPILE_FLAGS AND XSIGMA_SANITIZER_COMPILE_FLAGS)
+        target_compile_options(BenchmarkLogger PRIVATE ${XSIGMA_SANITIZER_COMPILE_FLAGS})
+    endif()
+
+    if(DEFINED XSIGMA_SANITIZER_LINK_FLAGS AND XSIGMA_SANITIZER_LINK_FLAGS)
+        target_link_options(BenchmarkLogger PRIVATE ${XSIGMA_SANITIZER_LINK_FLAGS})
+    endif()
+
+    # Apply XSigma output directory configuration
+    if(COMMAND xsigma_set_target_output_directories)
+        xsigma_set_target_output_directories(BenchmarkLogger)
+    endif()
+
+    # Add TBB support for benchmarks if enabled
+    if(XSIGMA_ENABLE_TBB)
+        find_package(TBB REQUIRED)
+        target_link_libraries(BenchmarkLogger PRIVATE TBB::tbb TBB::tbbmalloc)
+    endif()
+
+    message(STATUS "Logger benchmark executable will be built: BenchmarkLogger")
+endif()

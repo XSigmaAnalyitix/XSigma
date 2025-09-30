@@ -6,8 +6,8 @@
 #include <cstdio>
 #include <string>
 
+#include "logging/logger.h"
 #include "util/exception.h"
-#include "util/logger.h"
 
 #define XSIGMA_CHECK_EQ(a, b) XSIGMA_CHECK((a) == (b))
 

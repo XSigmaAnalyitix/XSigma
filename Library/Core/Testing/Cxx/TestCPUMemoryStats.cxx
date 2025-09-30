@@ -28,6 +28,7 @@
 
 #include "common/configure.h"  // IWYU pragma: keep
 #include "common/pointer.h"
+#include "logging/logger.h"
 #include "memory/cpu/allocator.h"
 #include "memory/cpu/allocator_bfc.h"
 #include "memory/cpu/allocator_device.h"
@@ -35,7 +36,6 @@
 #include "memory/cpu/allocator_tracking.h"
 #include "memory/cpu/allocator_typed.h"
 #include "memory/unified_memory_stats.h"
-#include "util/logging.h"
 #include "xsigmaTest.h"
 
 using namespace xsigma;

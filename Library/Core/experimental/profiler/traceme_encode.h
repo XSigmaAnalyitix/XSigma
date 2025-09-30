@@ -39,7 +39,8 @@ limitations under the License.
 #include <string>
 
 #include "common/macros.h"
-#include "util/logging.h"
+#include "logging/logger.h"
+#include "util/exception.h"
 #include "util/strcat.h"
 #include "util/string_util.h"
 
@@ -56,8 +57,7 @@ struct TraceMeArg
     // AbslStringify is being used (it may reference default arguments that are on
     // the caller's stack, if we constructed it here those default arguments would
     // be destroyed before they are used).
-    TraceMeArg(
-        std::string_view k, XSIGMA_ATTRIBUTE_LIFETIME_BOUND const xsigma::strings::AlphaNum& v)
+    TraceMeArg(std::string_view k, XSIGMA_LIFETIME_BOUND const xsigma::strings::AlphaNum& v)
         : key(k), value(v.Piece())
     {
     }
@@ -77,7 +77,9 @@ namespace traceme_internal
 // REQUIRED: The address range [out, out + str.size()] must have been allocated.
 XSIGMA_FORCE_INLINE char* append(char* out, std::string_view str)
 {
-    DCHECK(!strings::StrContains(str, '#')) << "'#' is not a valid character in trace_me_encode";
+    XSIGMA_CHECK_DEBUG(
+        !strings::StrContains(str, '#'), "'#' is not a valid character in trace_me_encode");
+
     const size_t str_size = str.size();
     if XSIGMA_LIKELY (str_size > 0)
     {
@@ -111,7 +113,7 @@ XSIGMA_FORCE_INLINE std::string append_args(
             *out++ = ',';
         }
         *(out - 1) = '#';
-        DCHECK_EQ(out, begin + new_size);
+        XSIGMA_CHECK_DEBUG(out == begin + new_size);
     }
     return name;
 }

@@ -38,13 +38,13 @@
 
 #include "common/configure.h"
 #include "common/macros.h"
+#include "logging/logger.h"
 #include "memory/device.h"
 #include "memory/gpu/gpu_device_manager.h"
 #include "memory/gpu/gpu_memory_pool.h"
 #include "memory/gpu/gpu_memory_transfer.h"
 #include "memory/gpu/gpu_resource_tracker.h"
 #include "memory/unified_memory_stats.h"
-#include "util/logging.h"
 
 #ifdef XSIGMA_ENABLE_CUDA
 #include <cuda_runtime.h>

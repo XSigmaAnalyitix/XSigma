@@ -29,8 +29,8 @@
 
 #include "common/configure.h"
 #include "common/macros.h"
+#include "logging/logger.h"
 #include "util/exception.h"
-#include "util/logger.h"
 
 #if defined(XSIGMA_ENABLE_TBB)
 

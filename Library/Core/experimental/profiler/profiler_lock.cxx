@@ -38,7 +38,7 @@ limitations under the License.
 
 #include "common/macros.h"                  // for XSIGMA_UNLIKELY
 #include "experimental/profiler/env_var.h"  // for read_bool_from_env_var
-#include "util/logging.h"                   // for LogMessage, LOG, _XSIGMA_LOG_ERROR
+#include "logging/logger.h"                 // for XSIGMA_LOG_ERROR, LOG, _XSIGMA_LOG_ERROR
 
 namespace xsigma
 {
@@ -74,15 +74,15 @@ static_assert(ATOMIC_INT_LOCK_FREE == 2, "Assumed atomic<int> was lock free");
     }();
     if XSIGMA_UNLIKELY (tf_profiler_disabled)
     {
-        LOG(ERROR) << "TensorFlow Profiler is permanently disabled by env var "
-                   << "XSIGMA_DISABLE_PROFILING.";
+        XSIGMA_LOG_ERROR(
+            "TensorFlow Profiler is permanently disabled by env var XSIGMA_DISABLE_PROFILING.");
 
         return std::nullopt;
     }
     int already_active = g_session_active.exchange(1, std::memory_order_acq_rel);
     if (already_active)
     {
-        LOG(ERROR) << kProfilerLockContention;
+        XSIGMA_LOG_ERROR(kProfilerLockContention);
         return std::nullopt;
     }
     return ProfilerLock(/*active=*/true);

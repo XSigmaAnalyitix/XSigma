@@ -36,6 +36,12 @@ set(MAGIC_ENUM_OPT_BUILD_TESTS OFF CACHE BOOL "Disable magic_enum tests" FORCE)
 # loguru-specific options
 set(LOGURU_BUILD_EXAMPLES OFF CACHE BOOL "Disable loguru examples" FORCE)
 
+# glog-specific options
+set(BUILD_EXAMPLES OFF CACHE BOOL "Disable glog examples" FORCE)
+set(WITH_GFLAGS OFF CACHE BOOL "Disable gflags dependency for glog" FORCE)
+set(WITH_GTEST OFF CACHE BOOL "Disable gtest for glog" FORCE)
+set(WITH_GMOCK OFF CACHE BOOL "Disable gmock for glog" FORCE)
+
 # googletest-specific options
 set(BUILD_GMOCK OFF CACHE BOOL "Disable Google Mock" FORCE)
 set(INSTALL_GTEST OFF CACHE BOOL "Disable Google Test install" FORCE)
@@ -123,10 +129,6 @@ if(NOT DEFINED XSIGMA_ENABLE_MAGICENUM)
     set(XSIGMA_ENABLE_MAGICENUM ON CACHE BOOL "Enable magic_enum library")
 endif()
 
-if(NOT DEFINED XSIGMA_ENABLE_LOGURU)
-    set(XSIGMA_ENABLE_LOGURU ON CACHE BOOL "Enable loguru library")
-endif()
-
 # fmt - Modern C++ formatting library (mandatory dependency)
 add_third_party_library(fmt)
 if(TARGET fmt)
@@ -162,9 +164,11 @@ if(TARGET magic_enum)
     set_target_properties(magic_enum PROPERTIES FOLDER "ThirdParty/magic_enum")
 endif()
 
+# Logging backend libraries (conditionally added based on XSIGMA_LOGGING_BACKEND)
+
 # loguru - Lightweight C++ logging library
 add_third_party_library(loguru
-    CONDITION XSIGMA_ENABLE_LOGURU
+    CONDITION XSIGMA_USE_LOGURU
 )
 if(TARGET loguru)
     set_target_properties(loguru PROPERTIES FOLDER "ThirdParty/loguru")
@@ -176,6 +180,33 @@ if(TARGET loguru)
             target_link_options(loguru PRIVATE ${XSIGMA_SANITIZER_LINK_FLAGS})
         endif()
         message(STATUS "Applied sanitizer flags to loguru target")
+    endif()
+endif()
+
+# glog - Google logging library
+add_third_party_library(glog
+    CONDITION XSIGMA_USE_GLOG
+)
+if(TARGET glog)
+    set_target_properties(glog PROPERTIES FOLDER "ThirdParty/glog")
+
+    # Configure glog output directories to match XSigma project structure
+    foreach(config Debug Release RelWithDebInfo MinSizeRel)
+        string(TOUPPER ${config} config_upper)
+        set_target_properties(glog PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY_${config_upper} "${XSIGMA_BINARY_DIR}/bin"
+            ARCHIVE_OUTPUT_DIRECTORY_${config_upper} "${XSIGMA_BINARY_DIR}/lib"
+            LIBRARY_OUTPUT_DIRECTORY_${config_upper} "${XSIGMA_BINARY_DIR}/lib"
+        )
+    endforeach()
+
+    # Apply sanitizer flags to glog if sanitizers are enabled
+    if(XSIGMA_ENABLE_SANITIZER AND DEFINED XSIGMA_SANITIZER_COMPILE_FLAGS)
+        target_compile_options(glog PRIVATE ${XSIGMA_SANITIZER_COMPILE_FLAGS})
+        if(DEFINED XSIGMA_SANITIZER_LINK_FLAGS AND XSIGMA_SANITIZER_LINK_FLAGS)
+            target_link_options(glog PRIVATE ${XSIGMA_SANITIZER_LINK_FLAGS})
+        endif()
+        message(STATUS "Applied sanitizer flags to glog target")
     endif()
 endif()
 
@@ -254,7 +285,8 @@ if(XSIGMA_ENABLE_MAGICENUM)
     endif()
 endif()
 
-if(XSIGMA_ENABLE_LOGURU)
+# Logging backend aliases (only create for the selected backend)
+if(XSIGMA_USE_LOGURU)
     if(TARGET loguru::loguru)
         # loguru::loguru might be an alias, so we need to get the actual target
         get_target_property(loguru_aliased_target loguru::loguru ALIASED_TARGET)
@@ -267,6 +299,22 @@ if(XSIGMA_ENABLE_LOGURU)
     elseif(TARGET loguru)
         add_library(XSigma::loguru ALIAS loguru)
         message(STATUS "Created XSigma::loguru target alias")
+    endif()
+endif()
+
+if(XSIGMA_USE_GLOG)
+    if(TARGET glog::glog)
+        # glog::glog might be an alias, so we need to get the actual target
+        get_target_property(glog_aliased_target glog::glog ALIASED_TARGET)
+        if(glog_aliased_target)
+            add_library(XSigma::glog ALIAS ${glog_aliased_target})
+        else()
+            add_library(XSigma::glog ALIAS glog::glog)
+        endif()
+        message(STATUS "Created XSigma::glog target alias")
+    elseif(TARGET glog)
+        add_library(XSigma::glog ALIAS glog)
+        message(STATUS "Created XSigma::glog target alias")
     endif()
 endif()
 

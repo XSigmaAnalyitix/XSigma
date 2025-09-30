@@ -45,7 +45,8 @@ limitations under the License.
 
 #include "common/macros.h"
 #include "experimental/profiler/no_init.h"
-#include "util/logging.h"
+#include "logging/logger.h"
+#include "util/exception.h"
 
 namespace xsigma
 {
@@ -140,7 +141,7 @@ public:
     ~blocked_queue_base()
     {
         clear();
-        DCHECK(empty());
+        XSIGMA_CHECK_DEBUG(empty());
         delete end_block_;
     }
 
@@ -192,7 +193,7 @@ protected:
     // REQUIRES: The queue must not be empty.
     T pop_impl()
     {
-        DCHECK(!empty());
+        XSIGMA_CHECK_DEBUG(!empty());
         // Move the next element into the output.
         auto& slot    = start_block_->slots[start_++ - start_block_->start];
         T     element = std::move(slot).consume();
@@ -202,7 +203,7 @@ protected:
         {
             auto* old_block = std::exchange(start_block_, start_block_->next);
             delete old_block;
-            DCHECK_EQ(start_, start_block_->start);
+            XSIGMA_CHECK_DEBUG(start_ == start_block_->start);
         }
         return element;
     }
@@ -253,10 +254,10 @@ public:
 
         T& operator*() const
         {
-            DCHECK(block_ != nullptr);
-            DCHECK_GE(index_, block_->start);
-            DCHECK_LT(index_, block_->start + Block::kNumSlots);
-            DCHECK_LT(index_, queue_->End());
+            XSIGMA_CHECK_DEBUG(block_ != nullptr);
+            XSIGMA_CHECK_DEBUG(index_ >= block_->start);
+            XSIGMA_CHECK_DEBUG(index_ < block_->start + Block::kNumSlots);
+            XSIGMA_CHECK_DEBUG(index_ < queue_->End());
             return block_->slots[index_ - block_->start].value;
         }
 
@@ -264,17 +265,17 @@ public:
 
         Iterator& operator++()
         {
-            DCHECK(queue_ != nullptr);
-            DCHECK(block_ != nullptr);
+            XSIGMA_CHECK_DEBUG(queue_ != nullptr);
+            XSIGMA_CHECK_DEBUG(block_ != nullptr);
             if (index_ < queue_->End())
             {
                 ++index_;
                 auto next_block_start = block_->start + Block::kNumSlots;
-                DCHECK_LE(index_, next_block_start);
+                XSIGMA_CHECK_DEBUG(index_ < next_block_start);
                 if (index_ == next_block_start)
                 {
                     block_ = block_->next;
-                    DCHECK_NE(block_, nullptr);
+                    XSIGMA_CHECK_DEBUG(block_ != nullptr);
                 }
             }
             return (*this);

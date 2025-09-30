@@ -86,8 +86,7 @@ int Find(const std::vector<T>& array, const Pred& pred)
     std::vector<int> indices = FindAll(array, pred);
     if (indices.size() > 1)
     {
-        LOG(WARNING) << "Found multiple "
-                     << /*T().GetTypeName() <<*/ " when only one was expected.";
+        XSIGMA_LOG_WARNING("Found multiple when only one was expected.");
     }
     return indices.empty() ? -1 : indices.front();
 }
@@ -190,7 +189,7 @@ void CopyEventMetadata(
                 dst_stat.set_metadata_id(metadata.id());
             });
     }
-    DCHECK_EQ(src_event_metadata.stats_size(), dst_event_metadata.stats_size());
+    XSIGMA_CHECK_DEBUG(src_event_metadata.stats_size() == dst_event_metadata.stats_size());
 }
 
 // Copies src_event from source line to the destination line in the destination
@@ -340,7 +339,7 @@ xstat* find_or_add_mutable_stat(const x_stat_metadata& stat_metadata, xevent* ev
 
 void RemovePlane(x_space* space, const xplane* plane)
 {
-    DCHECK(plane != nullptr);
+    XSIGMA_CHECK_DEBUG(plane != nullptr);
     Remove(space->mutable_planes(), plane);
 }
 
@@ -446,7 +445,7 @@ void MergePlanes(const std::vector<const xplane*>& src_planes, xplane* dst_plane
 
 void RemoveLine(xplane* plane, const xline* line)
 {
-    DCHECK(line != nullptr);
+    XSIGMA_CHECK_DEBUG(line != nullptr);
     Remove(plane->mutable_lines(), line);
 }
 
@@ -739,11 +738,14 @@ void AggregateXPlane(const xplane& full_trace, xplane& aggregated_trace)
                 [&](xevent_visitor event)
                 {
                     timespan timespan = GetEventTimespan(event);
-                    first_op_start_ps = first_op_start_ps <= static_cast<uint64_t>(event.timestamp_ps())
-                                            ? first_op_start_ps
-                                            : timespan.begin_ps();
-                    last_op_end_ps    = last_op_end_ps >= static_cast<uint64_t>(event.end_timestamp_ps()) ? last_op_end_ps
-                                                                                   : timespan.end_ps();
+                    first_op_start_ps =
+                        first_op_start_ps <= static_cast<uint64_t>(event.timestamp_ps())
+                            ? first_op_start_ps
+                            : timespan.begin_ps();
+                    last_op_end_ps =
+                        last_op_end_ps >= static_cast<uint64_t>(event.end_timestamp_ps())
+                            ? last_op_end_ps
+                            : timespan.end_ps();
                     const auto& group_stat = event.get_stat(StatType::kGroupId);
                     int64_t     group_id   = group_stat.has_value()
                                                  ? group_stat->int_or_uint_value()
@@ -751,7 +753,7 @@ void AggregateXPlane(const xplane& full_trace, xplane& aggregated_trace)
 
                     StatByEvent& line_stats = stats[line.id()][group_id];
                     line_stats[event.id()].stat.update_stat(timespan.duration_ps());
-                    DCHECK(event_stack.empty() || !(event < event_stack.back()));
+                    XSIGMA_CHECK_DEBUG(event_stack.empty() || !(event < event_stack.back()));
                     while (!event_stack.empty() &&
                            !GetEventTimespan(event_stack.back()).includes(timespan))
                     {

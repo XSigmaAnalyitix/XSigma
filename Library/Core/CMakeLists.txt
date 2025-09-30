@@ -43,6 +43,7 @@ file(
   LIST_DIRECTORIES false
   "${CMAKE_CURRENT_SOURCE_DIR}/util/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/common/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/logging/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/experimental/profiler/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.h"
@@ -54,6 +55,7 @@ file(
   LIST_DIRECTORIES false
   "${CMAKE_CURRENT_SOURCE_DIR}/common/*.cxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/util/*.cxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/logging/*.cxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.cxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/experimental/profiler/*.cxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.cxx"
@@ -65,6 +67,7 @@ file(
   LIST_DIRECTORIES false
   "${CMAKE_CURRENT_SOURCE_DIR}/util/*.hxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/common/*.hxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/logging/*.hxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.hxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.hxx"
   ${xsigma_templates})
@@ -75,6 +78,13 @@ if(NOT XSIGMA_ENABLE_CUDA)
     list(REMOVE_ITEM sources ${GPU_SOURCE_FILES})
     file(GLOB_RECURSE GPU_HEADER_FILES memory/gpu/*.h)
     list(REMOVE_ITEM headers ${GPU_HEADER_FILES})
+endif()
+
+# Remove logging.cxx and logging.h for NATIVE backend (uses simplified implementation in logger.cxx)
+if(XSIGMA_USE_NATIVE_LOGGING)
+    list(REMOVE_ITEM sources "${CMAKE_CURRENT_SOURCE_DIR}/logging/logging.cxx")
+    list(REMOVE_ITEM headers "${CMAKE_CURRENT_SOURCE_DIR}/logging/logging.h")
+    message(STATUS "NATIVE logging backend: Excluding logging.cxx and logging.h (using simplified fmt-based implementation)")
 endif()
 
 if(XSIGMA_ENABLE_TBB)
@@ -159,12 +169,23 @@ if(XSIGMA_ENABLE_MAGICENUM AND TARGET XSigma::magic_enum)
     target_link_libraries(Core PUBLIC XSigma::magic_enum)
 endif()
 
-if(XSIGMA_ENABLE_LOGURU AND TARGET XSigma::loguru)
+# Logging backend dependencies (mutually exclusive based on XSIGMA_LOGGING_BACKEND)
+# Note: Compile definitions are PUBLIC so they propagate to all targets that link to Core
+# This ensures logging macros are available in test files and other dependent code
+if(XSIGMA_USE_NATIVE_LOGGING)
+    target_compile_definitions(Core PUBLIC XSIGMA_USE_NATIVE_LOGGING)
+    message(STATUS "Core library using NATIVE logging backend")
+elseif(XSIGMA_USE_LOGURU AND TARGET XSigma::loguru)
     target_link_libraries(Core PRIVATE XSigma::loguru)
-    target_compile_definitions(Core PRIVATE
-        XSIGMA_HAS_LOGURU
+    target_compile_definitions(Core PUBLIC
+        XSIGMA_USE_LOGURU
         XSIGMA_MODULE_ENABLE_XSIGMA_loguru=1
     )
+    message(STATUS "Core library using LOGURU logging backend")
+elseif(XSIGMA_USE_GLOG AND TARGET XSigma::glog)
+    target_link_libraries(Core PRIVATE XSigma::glog)
+    target_compile_definitions(Core PUBLIC XSIGMA_USE_GLOG)
+    message(STATUS "Core library using GLOG logging backend")
 endif()
 
 # Optional dependencies

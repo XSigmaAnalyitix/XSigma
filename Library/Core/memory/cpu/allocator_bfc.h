@@ -39,12 +39,11 @@
 #include <set>
 #include <vector>
 
-
 #include "common/macros.h"
+#include "logging/logger.h"
 #include "memory/cpu/allocator.h"
 #include "memory/cpu/helper/allocator_retry.h"
 #include "util/flat_hash.h"
-#include "util/logger.h"
 #include "util/strcat.h"
 #include "util/string_util.h"
 
