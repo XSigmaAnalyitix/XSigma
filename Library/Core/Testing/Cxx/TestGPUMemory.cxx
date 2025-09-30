@@ -1011,8 +1011,7 @@ void test_updated_allocator_integration()
             if (result == cudaSuccess && gpu_ptr)
             {
                 EXPECT_NE(gpu_ptr, nullptr);
-                XSIGMA_LOG_INFO(
-                    "Direct CUDA allocation successful: " << count << " elements allocated");
+                XSIGMA_LOG_INFO("Direct CUDA allocation successful: {} elements allocated", count);
 
                 // Test deallocation
                 result = cudaFree(gpu_ptr);
@@ -1040,7 +1039,7 @@ void test_updated_allocator_integration()
             if (main_ptr)
             {
                 EXPECT_NE(main_ptr, nullptr);
-                XSIGMA_LOG_INFO("Main allocator GPU allocation successful: " << 200 << " elements");
+                XSIGMA_LOG_INFO("Main allocator GPU allocation successful: {} elements", 200);
 
                 // Test deallocation through main allocator
                 main_gpu_allocator::free(main_ptr, device_enum::CUDA, 0, 200);
@@ -1062,7 +1061,7 @@ void test_updated_allocator_integration()
             // Test CPU allocation through main allocator
             auto cpu_ptr = main_cpu_allocator::allocate(300, device_enum::CPU, 0);
             EXPECT_NE(cpu_ptr, nullptr);
-            XSIGMA_LOG_INFO("CPU allocation successful: " << 300 << " elements");
+            XSIGMA_LOG_INFO("CPU allocation successful: {} elements", 300);
 
             // Test deallocation through main allocator
             main_cpu_allocator::free(cpu_ptr, device_enum::CPU, 0, 300);
@@ -1114,8 +1113,7 @@ void test_updated_allocator_integration()
 
             EXPECT_EQ(cpu_alignment, XSIGMA_ALIGNMENT);
             EXPECT_EQ(gpu_alignment, 256);
-            XSIGMA_LOG_INFO(
-                "Optimal alignment: CPU=" << cpu_alignment << ", GPU=" << gpu_alignment);
+            XSIGMA_LOG_INFO("Optimal alignment: CPU={}, GPU={}", cpu_alignment, gpu_alignment);
 
             // Test device type checking
             EXPECT_FALSE(is_gpu_device(device_enum::CPU));
@@ -1125,7 +1123,7 @@ void test_updated_allocator_integration()
 
             // Test GPU support availability
             XSIGMA_UNUSED bool has_gpu = has_gpu_support();
-            XSIGMA_LOG_INFO("GPU support available: " << (has_gpu ? "Yes" : "No"));
+            XSIGMA_LOG_INFO("GPU support available: {}", has_gpu ? "Yes" : "No");
         }
 
         XSIGMA_LOG_INFO("Updated allocator integration tests completed successfully");
@@ -1378,15 +1376,15 @@ struct benchmark_result
 
     void print() const
     {
-        XSIGMA_LOG_INFO("Benchmark: " << test_name);
-        XSIGMA_LOG_INFO("  Iterations: {} " << iterations);
-        XSIGMA_LOG_INFO("  Total time: {:.3f} ms " << total_time_ms);
-        XSIGMA_LOG_INFO("  Average time: {:.3f} ms " << avg_time_ms);
-        XSIGMA_LOG_INFO("  Min time: {:.3f} ms " << min_time_ms);
-        XSIGMA_LOG_INFO("  Max time: {:.3f} ms " << max_time_ms);
+        XSIGMA_LOG_INFO("Benchmark: {}", test_name);
+        XSIGMA_LOG_INFO("  Iterations: {}", iterations);
+        XSIGMA_LOG_INFO("  Total time: {:.3f} ms", total_time_ms);
+        XSIGMA_LOG_INFO("  Average time: {:.3f} ms", avg_time_ms);
+        XSIGMA_LOG_INFO("  Min time: {:.3f} ms", min_time_ms);
+        XSIGMA_LOG_INFO("  Max time: {:.3f} ms", max_time_ms);
         if (bytes_processed > 0)
         {
-            XSIGMA_LOG_INFO("  Throughput: {:.2f} MB/s" << throughput_mbps);
+            XSIGMA_LOG_INFO("  Throughput: {:.2f} MB/s", throughput_mbps);
         }
     }
 };
@@ -1463,16 +1461,16 @@ void test_cuda_caching_allocator_basic()
 
     // Test statistics
     auto stats = allocator.stats();
-    EXPECT_GT(stats.successful_allocations, 0);
-    EXPECT_GT(stats.successful_frees, 0);
-    EXPECT_GT(stats.cache_hits, 0);
+    EXPECT_GT(stats.successful_allocations.load(), 0);
+    EXPECT_GT(stats.successful_frees.load(), 0);
+    EXPECT_GT(stats.cache_hits.load(), 0);
 
-    XSIGMA_LOG_INFO("Cache hit rate: " << stats.cache_hit_rate() << "%");
+    XSIGMA_LOG_INFO("Cache hit rate: {}%", stats.cache_hit_rate());
 
     // Test cache clearing
     allocator.empty_cache();
     auto stats_after_clear = allocator.stats();
-    EXPECT_EQ(stats_after_clear.bytes_cached, 0);
+    EXPECT_EQ(stats_after_clear.bytes_cached.load(), 0);
 
     XSIGMA_LOG_INFO("CUDA caching allocator basic functionality tests completed successfully");
 }
@@ -1515,11 +1513,11 @@ void test_cuda_caching_allocator_template()
     auto float_stats  = float_allocator.stats();
     auto double_stats = double_allocator.stats();
 
-    EXPECT_GT(float_stats.successful_allocations, 0);
-    EXPECT_GT(double_stats.successful_allocations, 0);
+    EXPECT_GT(float_stats.successful_allocations.load(), 0);
+    EXPECT_GT(double_stats.successful_allocations.load(), 0);
 
-    XSIGMA_LOG_INFO("Float allocator cache hit rate: " << float_stats.cache_hit_rate() << "%");
-    XSIGMA_LOG_INFO("Double allocator cache hit rate: " << double_stats.cache_hit_rate() << "%");
+    XSIGMA_LOG_INFO("Float allocator cache hit rate: {}%", float_stats.cache_hit_rate());
+    XSIGMA_LOG_INFO("Double allocator cache hit rate: {}%", double_stats.cache_hit_rate());
 
     XSIGMA_LOG_INFO("CUDA caching allocator template interface tests completed successfully");
 }
@@ -1547,9 +1545,9 @@ void test_cuda_caching_allocator_statistics()
     }
 
     auto stats_after_alloc = allocator.stats();
-    EXPECT_EQ(stats_after_alloc.successful_allocations, num_allocations);
-    EXPECT_EQ(stats_after_alloc.cache_misses, num_allocations);
-    EXPECT_EQ(stats_after_alloc.cache_hits, 0);
+    EXPECT_EQ(stats_after_alloc.successful_allocations.load(), num_allocations);
+    EXPECT_EQ(stats_after_alloc.cache_misses.load(), num_allocations);
+    EXPECT_EQ(stats_after_alloc.cache_hits.load(), 0);
 
     // Deallocate all (should cache them)
     for (void* ptr : ptrs)
@@ -1558,8 +1556,8 @@ void test_cuda_caching_allocator_statistics()
     }
 
     auto stats_after_dealloc = allocator.stats();
-    EXPECT_EQ(stats_after_dealloc.successful_frees, num_allocations);
-    EXPECT_GT(stats_after_dealloc.bytes_cached, 0);
+    EXPECT_EQ(stats_after_dealloc.successful_frees.load(), num_allocations);
+    EXPECT_GT(stats_after_dealloc.bytes_cached.load(), 0);
 
     // Second round - should be cache hits
     ptrs.clear();
@@ -1571,17 +1569,17 @@ void test_cuda_caching_allocator_statistics()
     }
 
     auto stats_final = allocator.stats();
-    EXPECT_GT(stats_final.cache_hits, 0);
+    EXPECT_GT(stats_final.cache_hits.load(), 0);
     EXPECT_GT(stats_final.cache_hit_rate(), 0.0);
 
     XSIGMA_LOG_INFO("Final statistics:");
-    XSIGMA_LOG_INFO("  Total allocations: " << stats_final.successful_allocations);
-    XSIGMA_LOG_INFO("  Total frees: " << stats_final.successful_frees);
-    XSIGMA_LOG_INFO("  Cache hits: " << stats_final.cache_hits);
-    XSIGMA_LOG_INFO("  Cache misses: " << stats_final.cache_misses);
-    XSIGMA_LOG_INFO("  Cache hit rate: " << stats_final.cache_hit_rate() << "%");
-    XSIGMA_LOG_INFO("  Bytes allocated: " << stats_final.bytes_allocated);
-    XSIGMA_LOG_INFO("  Bytes cached: " << stats_final.bytes_cached);
+    XSIGMA_LOG_INFO("  Total allocations: {}", stats_final.successful_allocations.load());
+    XSIGMA_LOG_INFO("  Total frees: {}", stats_final.successful_frees.load());
+    XSIGMA_LOG_INFO("  Cache hits: {}", stats_final.cache_hits.load());
+    XSIGMA_LOG_INFO("  Cache misses: {}", stats_final.cache_misses.load());
+    XSIGMA_LOG_INFO("  Cache hit rate: {}%", stats_final.cache_hit_rate());
+    XSIGMA_LOG_INFO("  Bytes allocated: {}", stats_final.bytes_allocated.load());
+    XSIGMA_LOG_INFO("  Bytes cached: {}", stats_final.bytes_cached.load());
 
     // Clean up
     for (void* ptr : ptrs)
@@ -1681,7 +1679,7 @@ void test_gpu_allocator_factory()
     caching_allocator->deallocate(ptr, 1000);
 
     auto stats = caching_allocator->stats();
-    EXPECT_GT(stats.successful_allocations, 0);
+    EXPECT_GT(stats.successful_allocations.load(), 0);
 
     XSIGMA_LOG_INFO("GPU allocator factory tests completed successfully");
 }
@@ -1905,9 +1903,10 @@ void benchmark_direct_cuda_allocation(const BenchmarkConfig& config)
 {
     auto result = benchmark_direct_cuda_allocation_detailed(config);
     XSIGMA_LOG_INFO(
-        "[Direct] " << config.name << ": " << std::fixed << std::setprecision(2)
-                    << result.avg_time_us << " μs/op (" << result.throughput_mb_s
-                    << " MB/s) | N/A");
+        "[Direct] {}: {} μs/op ({:.2f} MB/s) | N/A",
+        config.name,
+        result.avg_time_us,
+        result.throughput_mb_s);
 }
 
 /**
@@ -1917,8 +1916,10 @@ void benchmark_gpu_pool_allocation(const BenchmarkConfig& config)
 {
     auto result = benchmark_gpu_pool_allocation_detailed(config);
     XSIGMA_LOG_INFO(
-        "[Pool] " << config.name << ": " << std::fixed << std::setprecision(2) << result.avg_time_us
-                  << " μs/op (" << result.throughput_mb_s << " MB/s) | Pool-based");
+        "[Pool] {}: {} μs/op ({:.2f} MB/s) | Pool-based",
+        config.name,
+        result.avg_time_us,
+        result.throughput_mb_s);
 }
 
 /**
@@ -1928,9 +1929,11 @@ void benchmark_cuda_caching_allocation(const BenchmarkConfig& config)
 {
     auto result = benchmark_cuda_caching_allocation_detailed(config);
     XSIGMA_LOG_INFO(
-        "[Caching] " << config.name << ": " << std::fixed << std::setprecision(2)
-                     << result.avg_time_us << " μs/op (" << result.throughput_mb_s << " MB/s) | "
-                     << result.cache_hit_rate << "% hit rate");
+        "[Caching] {}: {} μs/op ({:.2f} MB/s) | {}% hit rate",
+        config.name,
+        result.avg_time_us,
+        result.throughput_mb_s,
+        result.cache_hit_rate);
 }
 
 /**
@@ -1939,25 +1942,40 @@ void benchmark_cuda_caching_allocation(const BenchmarkConfig& config)
 void display_performance_comparison_table(
     const std::vector<std::vector<DetailedBenchmarkResult>>& all_results)
 {
-    XSIGMA_LOG_INFO("\n" << std::string(120, '='));
+    XSIGMA_LOG_INFO("\n{}", std::string(120, '='));
     XSIGMA_LOG_INFO(
         "                    COMPREHENSIVE GPU MEMORY ALLOCATION PERFORMANCE COMPARISON");
-    XSIGMA_LOG_INFO(std::string(120, '='));
+    XSIGMA_LOG_INFO("{}", std::string(120, '='));
 
     // Table header
-    XSIGMA_LOG_INFO(
-        std::left << std::setw(25) << "Test Scenario" << std::setw(15) << "Strategy"
-                  << std::setw(12) << "Avg Time" << std::setw(12) << "Min Time" << std::setw(12)
-                  << "Max Time" << std::setw(12) << "Throughput" << std::setw(12) << "Cache Hit"
-                  << std::setw(12) << "Overhead" << std::setw(12) << "vs Direct");
+    const auto str1 = fmt::format(
+        "{:<25}{:<15}{:<12}{:<12}{:<12}{:<12}{:<12}{:<12}{:<12}",
+        "Test Scenario",
+        "Strategy",
+        "Avg Time",
+        "Min Time",
+        "Max Time",
+        "Throughput",
+        "Cache Hit",
+        "Overhead",
+        "vs Direct");
 
-    XSIGMA_LOG_INFO(
-        std::left << std::setw(25) << "" << std::setw(15) << "" << std::setw(12) << "(μs/op)"
-                  << std::setw(12) << "(μs/op)" << std::setw(12) << "(μs/op)" << std::setw(12)
-                  << "(MB/s)" << std::setw(12) << "Rate (%)" << std::setw(12) << "(MB)"
-                  << std::setw(12) << "(% impr)");
+    XSIGMA_LOG_INFO("{}", str1);
 
-    XSIGMA_LOG_INFO(std::string(120, '-'));
+    const auto str2 = fmt::format(
+        "{:<25}{:<15}{:<12}{:<12}{:<12}{:<12}{:<12}{:<12}{:<12}",
+        "",
+        "",
+        "(μs/op)",
+        "(μs/op)",
+        "(μs/op)",
+        "(MB/s)",
+        "Rate (%)",
+        "(MB)",
+        "(% impr)");
+    XSIGMA_LOG_INFO("{}", str2);
+
+    XSIGMA_LOG_INFO("{}", std::string(120, '-'));
 
     for (const auto& test_results : all_results)
     {
@@ -1999,17 +2017,18 @@ void display_performance_comparison_table(
                                                     std::to_string(static_cast<int>(improvement)) +
                                                     "%"
                                               : "baseline";
-
-            XSIGMA_LOG_INFO(
-                std::left << std::setw(25) << (first_row ? result.test_name : "") << std::setw(15)
-                          << result.strategy_name << std::setw(12) << std::fixed
-                          << std::setprecision(2) << result.avg_time_us << std::setw(12)
-                          << std::fixed << std::setprecision(2) << result.min_time_us
-                          << std::setw(12) << std::fixed << std::setprecision(2)
-                          << result.max_time_us << std::setw(12) << std::fixed
-                          << std::setprecision(1) << result.throughput_mb_s << std::setw(12)
-                          << cache_hit_str << std::setw(12) << overhead_str << std::setw(12)
-                          << improvement_str);
+            const auto  str3            = fmt::format(
+                "{:<25}{:<15}{:<12.2f}{:<12.2f}{:<12.2f}{:<12.1f}{:<12}{:<12}{:<12}",
+                (first_row ? result.test_name : ""),
+                result.strategy_name,
+                result.avg_time_us,
+                result.min_time_us,
+                result.max_time_us,
+                result.throughput_mb_s,
+                cache_hit_str,
+                overhead_str,
+                improvement_str);
+            XSIGMA_LOG_INFO("{}", str3);
             first_row = false;
         }
         XSIGMA_LOG_INFO("");  // Empty line between test scenarios
@@ -2060,34 +2079,39 @@ void test_gpu_allocator_tracking_basic()
         // Test device info retrieval
         auto device_info = gpu_tracker->GetDeviceInfo();
         XSIGMA_LOG_INFO(
-            "Device: " << device_info.name
-                       << ", Memory: " << (device_info.total_memory_bytes / (1024 * 1024)) << " MB"
-                       << ", Bandwidth: " << device_info.memory_bandwidth_gb_per_sec << " GB/s");
+            "Device: {}, Memory: {} MB, Bandwidth: {} GB/s",
+            device_info.name,
+            device_info.total_memory_bytes / (1024 * 1024),
+            device_info.memory_bandwidth_gb_per_sec);
 
         // Test memory usage tracking
         auto [device_mem, unified_mem, pinned_mem] = gpu_tracker->GetGPUMemoryUsage();
         XSIGMA_LOG_INFO(
-            "Memory usage - Device: " << device_mem << ", Unified: " << unified_mem
-                                      << ", Pinned: " << pinned_mem);
+            "Memory usage - Device: {}, Unified: {}, Pinned: {}",
+            device_mem,
+            unified_mem,
+            pinned_mem);
 
         // Test timing statistics
         auto timing_stats = gpu_tracker->GetGPUTimingStats();
         XSIGMA_LOG_INFO(
-            "Timing stats - Allocations: " << timing_stats.total_allocations.load()
-                                           << ", Alloc time: "
-                                           << timing_stats.total_alloc_time_us.load() << " μs");
+            "Timing stats - Allocations: {}, Alloc time: {} μs",
+            timing_stats.total_allocations.load(),
+            timing_stats.total_alloc_time_us.load());
 
         // Test enhanced records
         auto enhanced_records = gpu_tracker->GetEnhancedGPURecords();
-        XSIGMA_LOG_INFO("Enhanced records count: " << enhanced_records.size());
+        XSIGMA_LOG_INFO("Enhanced records count: {}", enhanced_records.size());
 
         if (!enhanced_records.empty())
         {
             const auto& record = enhanced_records[0];
             XSIGMA_LOG_INFO(
-                "Record - Requested: " << record.requested_bytes << ", Allocated: "
-                                       << record.allocated_bytes << ", ID: " << record.allocation_id
-                                       << ", Duration: " << record.alloc_duration_us << " μs");
+                "Record - Requested: {}, Allocated: {}, ID: {}, Duration: {} μs",
+                record.requested_bytes,
+                record.allocated_bytes,
+                record.allocation_id,
+                record.alloc_duration_us);
         }
 
         // Test deallocation
@@ -2096,9 +2120,9 @@ void test_gpu_allocator_tracking_basic()
         // Verify deallocation timing
         auto post_dealloc_timing = gpu_tracker->GetGPUTimingStats();
         XSIGMA_LOG_INFO(
-            "Post-dealloc timing - Deallocations: "
-            << post_dealloc_timing.total_deallocations.load()
-            << ", Dealloc time: " << post_dealloc_timing.total_dealloc_time_us.load() << " μs");
+            "Post-dealloc timing - Deallocations: {}, Dealloc time: {} μs",
+            post_dealloc_timing.total_deallocations.load(),
+            post_dealloc_timing.total_dealloc_time_us.load());
 
         XSIGMA_LOG_INFO("Basic GPU allocation tracking test completed successfully");
     }
@@ -2143,8 +2167,7 @@ void test_gpu_allocator_tracking_performance()
     const size_t       num_allocations = 10;
     const size_t       base_size       = 1024;
 
-    XSIGMA_LOG_INFO(
-        "Performing " << num_allocations << " GPU allocations for performance analysis...");
+    XSIGMA_LOG_INFO("Performing {} GPU allocations for performance analysis...", num_allocations);
 
     for (size_t i = 0; i < num_allocations; ++i)
     {
@@ -2162,49 +2185,34 @@ void test_gpu_allocator_tracking_performance()
 
     if (!gpu_ptrs.empty())
     {
-        XSIGMA_LOG_INFO("Successfully allocated " << gpu_ptrs.size() << " GPU memory blocks");
+        XSIGMA_LOG_INFO("Successfully allocated {} GPU memory blocks", gpu_ptrs.size());
 
         // Test timing statistics
         auto   timing_stats   = gpu_tracker->GetGPUTimingStats();
         double avg_alloc_time = timing_stats.average_alloc_time_us();
 
         XSIGMA_LOG_INFO("Timing analysis:");
-        XSIGMA_LOG_INFO("  Total allocations: " << timing_stats.total_allocations.load());
-        XSIGMA_LOG_INFO(
-            "  Average allocation time: " << std::fixed << std::setprecision(2) << avg_alloc_time
-                                          << " μs");
-        XSIGMA_LOG_INFO(
-            "  Min allocation time: " << timing_stats.min_alloc_time_us.load() << " μs");
-        XSIGMA_LOG_INFO(
-            "  Max allocation time: " << timing_stats.max_alloc_time_us.load() << " μs");
+        XSIGMA_LOG_INFO("  Total allocations: {}", timing_stats.total_allocations.load());
+        XSIGMA_LOG_INFO("  Average allocation time: {} μs", avg_alloc_time);
+        XSIGMA_LOG_INFO("  Min allocation time: {} μs", timing_stats.min_alloc_time_us.load());
+        XSIGMA_LOG_INFO("  Max allocation time: {} μs", timing_stats.max_alloc_time_us.load());
 
         // Test bandwidth metrics
         auto bandwidth_metrics = gpu_tracker->GetBandwidthMetrics();
         XSIGMA_LOG_INFO("Bandwidth analysis:");
+        XSIGMA_LOG_INFO("  Peak bandwidth: {} GB/s", bandwidth_metrics.peak_bandwidth_gbps);
         XSIGMA_LOG_INFO(
-            "  Peak bandwidth: " << std::fixed << std::setprecision(2)
-                                 << bandwidth_metrics.peak_bandwidth_gbps << " GB/s");
-        XSIGMA_LOG_INFO(
-            "  Effective bandwidth: " << std::fixed << std::setprecision(2)
-                                      << bandwidth_metrics.effective_bandwidth_gbps << " GB/s");
-        XSIGMA_LOG_INFO(
-            "  Utilization: " << std::fixed << std::setprecision(1)
-                              << bandwidth_metrics.utilization_percentage << "%");
+            "  Effective bandwidth: {} GB/s", bandwidth_metrics.effective_bandwidth_gbps);
+        XSIGMA_LOG_INFO("  Utilization: {}%", bandwidth_metrics.utilization_percentage);
 
         // Test efficiency metrics
         auto [coalescing_efficiency, memory_utilization, gpu_efficiency_score] =
             gpu_tracker->GetGPUEfficiencyMetrics();
 
         XSIGMA_LOG_INFO("Efficiency analysis:");
-        XSIGMA_LOG_INFO(
-            "  Memory coalescing: " << std::fixed << std::setprecision(1)
-                                    << (coalescing_efficiency * 100.0) << "%");
-        XSIGMA_LOG_INFO(
-            "  Memory utilization: " << std::fixed << std::setprecision(1)
-                                     << (memory_utilization * 100.0) << "%");
-        XSIGMA_LOG_INFO(
-            "  Overall GPU efficiency: " << std::fixed << std::setprecision(1)
-                                         << (gpu_efficiency_score * 100.0) << "%");
+        XSIGMA_LOG_INFO("  Memory coalescing: {}%", coalescing_efficiency * 100.0);
+        XSIGMA_LOG_INFO("  Memory utilization: {}%", memory_utilization * 100.0);
+        XSIGMA_LOG_INFO("  Overall GPU efficiency: {}%", gpu_efficiency_score * 100.0);
 
         // Deallocate all memory
         XSIGMA_LOG_INFO("Deallocating GPU memory blocks...");
@@ -2220,10 +2228,8 @@ void test_gpu_allocator_tracking_performance()
 
         XSIGMA_LOG_INFO("Deallocation analysis:");
         XSIGMA_LOG_INFO(
-            "  Total deallocations: " << post_dealloc_timing.total_deallocations.load());
-        XSIGMA_LOG_INFO(
-            "  Average deallocation time: " << std::fixed << std::setprecision(2)
-                                            << avg_dealloc_time << " μs");
+            "  Total deallocations: {}", post_dealloc_timing.total_deallocations.load());
+        XSIGMA_LOG_INFO("  Average deallocation time: {} μs", avg_dealloc_time);
 
         XSIGMA_LOG_INFO("GPU performance analytics test completed successfully");
     }
@@ -2269,12 +2275,12 @@ void test_gpu_allocator_tracking_reporting()
     gpu_tracker->SetGPULoggingLevel(gpu_tracking_log_level::DEBUG);
     auto current_level = gpu_tracker->GetGPULoggingLevel();
     XSIGMA_LOG_INFO(
-        "Set logging level to DEBUG, current level: " << static_cast<int>(current_level));
+        "Set logging level to DEBUG, current level: {}", static_cast<int>(current_level));
 
     gpu_tracker->SetGPULoggingLevel(gpu_tracking_log_level::INFO);
     current_level = gpu_tracker->GetGPULoggingLevel();
     XSIGMA_LOG_INFO(
-        "Set logging level to INFO, current level: " << static_cast<int>(current_level));
+        "Set logging level to INFO, current level: {}", static_cast<int>(current_level));
 
     // Perform some allocations for report generation
     std::vector<void*> gpu_ptrs;
@@ -2287,7 +2293,7 @@ void test_gpu_allocator_tracking_reporting()
         if (ptr != nullptr)
         {
             gpu_ptrs.push_back(ptr);
-            XSIGMA_LOG_INFO("Allocated " << (1024 * (i + 1)) << " bytes with tag: " << tag);
+            XSIGMA_LOG_INFO("Allocated {} bytes with tag: {}", (1024 * (i + 1)), tag);
         }
     }
 
@@ -2307,16 +2313,16 @@ void test_gpu_allocator_tracking_reporting()
             if (line.find("Memory Usage Summary") != std::string::npos)
             {
                 in_summary = true;
-                XSIGMA_LOG_INFO("Report section: " << line);
+                XSIGMA_LOG_INFO("Report section: {}", line);
             }
             else if (in_summary && line.find("Performance Statistics") != std::string::npos)
             {
                 in_summary = false;
-                XSIGMA_LOG_INFO("Report section: " << line);
+                XSIGMA_LOG_INFO("Report section: {}", line);
             }
             else if (in_summary && !line.empty())
             {
-                XSIGMA_LOG_INFO("  " << line);
+                XSIGMA_LOG_INFO("  {}", line);
             }
         }
 
@@ -2324,17 +2330,17 @@ void test_gpu_allocator_tracking_reporting()
         XSIGMA_LOG_INFO("Generating detailed GPU memory report...");
         std::string detailed_report = gpu_tracker->GenerateGPUReport(true, true);
 
-        XSIGMA_LOG_INFO("Basic report size: " << basic_report.length() << " characters");
-        XSIGMA_LOG_INFO("Detailed report size: " << detailed_report.length() << " characters");
+        XSIGMA_LOG_INFO("Basic report size: {} characters", basic_report.length());
+        XSIGMA_LOG_INFO("Detailed report size: {} characters", detailed_report.length());
 
         // Test timing statistics reset
         XSIGMA_LOG_INFO("Testing timing statistics reset...");
         auto pre_reset_timing = gpu_tracker->GetGPUTimingStats();
-        XSIGMA_LOG_INFO("Pre-reset allocations: " << pre_reset_timing.total_allocations.load());
+        XSIGMA_LOG_INFO("Pre-reset allocations: {}", pre_reset_timing.total_allocations.load());
 
         gpu_tracker->ResetGPUTimingStats();
         auto post_reset_timing = gpu_tracker->GetGPUTimingStats();
-        XSIGMA_LOG_INFO("Post-reset allocations: " << post_reset_timing.total_allocations.load());
+        XSIGMA_LOG_INFO("Post-reset allocations: {}", post_reset_timing.total_allocations.load());
 
         // Clean up
         XSIGMA_LOG_INFO("Cleaning up GPU allocations...");
@@ -2382,7 +2388,7 @@ void benchmark_gpu_allocators()
 
     for (const auto& config : configs)
     {
-        XSIGMA_LOG_INFO("\n--- " << config.name << " ---");
+        XSIGMA_LOG_INFO("\n--- {} ---", config.name);
 
         std::vector<DetailedBenchmarkResult> test_results;
 
@@ -2426,9 +2432,9 @@ void benchmark_gpu_allocators()
     // Display comprehensive performance comparison table
     display_performance_comparison_table(all_detailed_results);
 
-    XSIGMA_LOG_INFO("\n" << std::string(120, '='));
+    XSIGMA_LOG_INFO("\n{}\n", std::string(120, '='));
     XSIGMA_LOG_INFO("                           ALLOCATION STRATEGY RECOMMENDATIONS");
-    XSIGMA_LOG_INFO(std::string(120, '='));
+    XSIGMA_LOG_INFO("{}", std::string(120, '='));
     XSIGMA_LOG_INFO(
         "📊 DIRECT CUDA:     Best for large, infrequent allocations (>1MB, <100 ops/sec)");
     XSIGMA_LOG_INFO(
@@ -2438,7 +2444,7 @@ void benchmark_gpu_allocators()
         "⚡ CUDA CACHING:    Best for small, high-frequency allocations (<64KB, >1000 ops/sec)");
     XSIGMA_LOG_INFO(
         "💡 MIXED WORKLOAD:  Use caching for primary allocations, pool for secondary buffers");
-    XSIGMA_LOG_INFO(std::string(120, '='));
+    XSIGMA_LOG_INFO("{}", std::string(120, '='));
 }
 
 void benchmark_memory_transfer()
@@ -2673,8 +2679,8 @@ void test_gpu_memory_error_handling()
             auto stats = tracker.get_statistics();
             XSIGMA_LOG_INFO(
                 "Tracker stats - Allocations: {}, Active: {}",
-                stats.total_allocations,
-                stats.active_allocations);
+                stats.total_allocations.load(),
+                stats.active_allocations.load());
 
             // Clean up
             for (auto ptr : ptrs)
@@ -2914,8 +2920,7 @@ XSIGMATEST(Core, GPUMemory)
 
     XSIGMA_LOG_INFO("All comprehensive GPU Memory Management tests completed successfully!");
     XSIGMA_LOG_INFO(
-        "Tested " << 40
-                  << " comprehensive test functions covering all memory management components!");
+        "Tested {} comprehensive test functions covering all memory management components!", 40);
     XSIGMA_LOG_INFO("Executed performance benchmarks for allocation and transfer operations!");
     XSIGMA_LOG_INFO("Tested error handling, edge cases, and alignment optimizations!");
     XSIGMA_LOG_INFO("Memory management system is ready for production use!");

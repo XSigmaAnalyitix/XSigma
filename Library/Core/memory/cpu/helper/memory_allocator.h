@@ -89,7 +89,7 @@ XSIGMA_FORCE_INLINE void* allocate(
     // Input validation
     if XSIGMA_UNLIKELY (nbytes == 0 || static_cast<std::ptrdiff_t>(nbytes) < 0)
     {
-        XSIGMA_LOG_WARNING("cpu allocate() called with negative or zero size: " << nbytes);
+        XSIGMA_LOG_WARNING("cpu allocate() called with negative or zero size: {}", nbytes);
         return nullptr;
     }
 
@@ -97,8 +97,9 @@ XSIGMA_FORCE_INLINE void* allocate(
     if XSIGMA_UNLIKELY (!is_valid_alignment(alignment))
     {
         XSIGMA_LOG_WARNING(
-            "cpu allocate() called with invalid alignment: "
-            << alignment << " (must be power of 2 >= " << sizeof(void*) << ")");
+            "cpu allocate() called with invalid alignment: {} (must be power of 2 >= {})",
+            alignment,
+            sizeof(void*));
         return nullptr;
     }
 #endif

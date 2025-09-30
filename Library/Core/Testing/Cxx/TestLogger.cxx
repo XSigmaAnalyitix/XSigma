@@ -56,9 +56,9 @@ XSIGMATEST(Core, Logger)
     XSIGMA_UNUSED auto v2 = xsigma::logger::ConvertToVerbosity("TRACE");
 
     std::string lines;
-    XSIGMA_LOGF(
+    XSIGMA_LOG(
         INFO,
-        "changing verbosity to %d",
+        "changing verbosity to {}",
         static_cast<int>(xsigma::logger_verbosity_enum::VERBOSITY_TRACE));
 
     xsigma::logger::AddCallback(
@@ -66,19 +66,22 @@ XSIGMATEST(Core, Logger)
 
     xsigma::logger::SetStderrVerbosity(xsigma::logger_verbosity_enum::VERBOSITY_TRACE);
 
-    XSIGMA_LOG_SCOPE_FUNCTION(TRACE);
+    XSIGMA_LOG_SCOPE_FUNCTION(INFO);
     {
-        XSIGMA_LOG_SCOPEF(TRACE, "Sonnet 18");
+        // Note: Formatted scope logging is not supported in fmt-style API
+        // Using simple scope start/end instead
+        XSIGMA_LOG_START_SCOPE(INFO, "Sonnet 18");
         const auto* whom = "thee";
-        XSIGMA_LOG(TRACE, "Shall I compare " << whom << " to a summer's day?");
+        XSIGMA_LOG(INFO, "Shall I compare {} to a summer's day?", whom);
 
         const auto* what0 = "lovely";
         const auto* what1 = "temperate";
-        XSIGMA_LOGF(TRACE, "Thou art more %s and more %s:", what0, what1);
+        XSIGMA_LOG(INFO, "Thou art more {} and more {}:", what0, what1);
 
         const auto* month = "May";
-        XSIGMA_LOG_IF(TRACE, true, << "Rough winds do shake the darling buds of " << month << ",");
-        XSIGMA_LOG_IFF(TRACE, true, "And %s’s lease hath all too short a date;", "summers");
+        XSIGMA_LOG_IF(INFO, true, "Rough winds do shake the darling buds of {},", month);
+        XSIGMA_LOG_IF(INFO, true, "And {}'s lease hath all too short a date;", "summers");
+        XSIGMA_LOG_END_SCOPE("Sonnet 18");
     }
 
     std::cerr << "--------------------------------------------" << std::endl
@@ -95,7 +98,7 @@ XSIGMATEST(Core, Logger)
     {
         XSIGMA_LOG_START_SCOPE(INFO, "scope-0");
     }
-    XSIGMA_LOG_START_SCOPEF(INFO, "scope-1", "scope %d", 1);
+    XSIGMA_LOG_START_SCOPE(INFO, "scope-1");
     XSIGMA_LOG_INFO("some text");
     XSIGMA_LOG_END_SCOPE("scope-1");
     {

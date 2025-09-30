@@ -58,9 +58,10 @@ allocator_tracking::allocator_tracking(
     if (log_level_.load(std::memory_order_relaxed) >= tracking_log_level::INFO)
     {
         XSIGMA_LOG_INFO(
-            "allocator_tracking initialized: " << "track_sizes=" << track_sizes_locally_
-                                               << ", enhanced=" << enhanced_tracking_enabled_
-                                               << ", underlying=" << allocator_->Name());
+            "allocator_tracking initialized: track_sizes={}, enhanced={}, underlying={}",
+            track_sizes_locally_,
+            enhanced_tracking_enabled_,
+            allocator_->Name());
     }
 }
 
@@ -93,15 +94,17 @@ void* allocator_tracking::allocate_raw(
 
     // Update min/max timing
     auto current_min = timing_stats_.min_alloc_time_us.load(std::memory_order_relaxed);
-    while (duration_us_unsigned < current_min && !timing_stats_.min_alloc_time_us.compare_exchange_weak(
-                                            current_min, duration_us_unsigned, std::memory_order_relaxed))
+    while (duration_us_unsigned < current_min &&
+           !timing_stats_.min_alloc_time_us.compare_exchange_weak(
+               current_min, duration_us_unsigned, std::memory_order_relaxed))
     {
         // Retry if another thread updated min_alloc_time_us
     }
 
     auto current_max = timing_stats_.max_alloc_time_us.load(std::memory_order_relaxed);
-    while (duration_us_unsigned > current_max && !timing_stats_.max_alloc_time_us.compare_exchange_weak(
-                                            current_max, duration_us_unsigned, std::memory_order_relaxed))
+    while (duration_us_unsigned > current_max &&
+           !timing_stats_.max_alloc_time_us.compare_exchange_weak(
+               current_max, duration_us_unsigned, std::memory_order_relaxed))
     {
         // Retry if another thread updated max_alloc_time_us
     }
@@ -113,8 +116,9 @@ void* allocator_tracking::allocate_raw(
         if (current_log_level >= tracking_log_level::WARNING)
         {
             XSIGMA_LOG_WARNING(
-                "allocator_tracking::allocate_raw failed: " << num_bytes
-                                                            << " bytes, alignment=" << alignment);
+                "allocator_tracking::allocate_raw failed: {} bytes, alignment={}",
+                num_bytes,
+                alignment);
         }
         return ptr;
     }
@@ -332,15 +336,17 @@ void allocator_tracking::deallocate_raw(void* ptr)
 
     // Update min/max timing
     auto current_min = timing_stats_.min_dealloc_time_us.load(std::memory_order_relaxed);
-    while (duration_us_unsigned < current_min && !timing_stats_.min_dealloc_time_us.compare_exchange_weak(
-                                            current_min, duration_us_unsigned, std::memory_order_relaxed))
+    while (duration_us_unsigned < current_min &&
+           !timing_stats_.min_dealloc_time_us.compare_exchange_weak(
+               current_min, duration_us_unsigned, std::memory_order_relaxed))
     {
         // Retry if another thread updated min_dealloc_time_us
     }
 
     auto current_max = timing_stats_.max_dealloc_time_us.load(std::memory_order_relaxed);
-    while (duration_us_unsigned > current_max && !timing_stats_.max_dealloc_time_us.compare_exchange_weak(
-                                            current_max, duration_us_unsigned, std::memory_order_relaxed))
+    while (duration_us_unsigned > current_max &&
+           !timing_stats_.max_dealloc_time_us.compare_exchange_weak(
+               current_max, duration_us_unsigned, std::memory_order_relaxed))
     {
         // Retry if another thread updated max_dealloc_time_us
     }
@@ -580,7 +586,7 @@ void allocator_tracking::SetLoggingLevel(tracking_log_level level) noexcept
 
     if (level >= tracking_log_level::INFO)
     {
-        XSIGMA_LOG_INFO("allocator_tracking logging level changed to: " << static_cast<int>(level));
+        XSIGMA_LOG_INFO("allocator_tracking logging level changed to: {}", static_cast<int>(level));
     }
 }
 

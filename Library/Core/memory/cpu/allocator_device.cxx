@@ -48,7 +48,7 @@ void* allocator_device::allocate_raw(size_t alignment, size_t num_bytes)
     if (result != cudaSuccess)
     {
         XSIGMA_LOG_WARNING(
-            "CUDA error in allocator_device::allocate_raw: " << std::to_string(result));
+            "CUDA error in allocator_device::allocate_raw: {}", std::to_string(result));
 
         return nullptr;
     }
@@ -71,7 +71,7 @@ void allocator_device::deallocate_raw(void* ptr)
     if (result != cudaSuccess)
     {
         // Log error but don't throw from free
-        XSIGMA_LOG_ERROR("CUDA error in allocator_device::free: " + std::to_string(result));
+        XSIGMA_LOG_ERROR("CUDA error in allocator_device::free: {}", std::to_string(result));
     }
 #else
     cpu::memory_allocator::free(ptr);

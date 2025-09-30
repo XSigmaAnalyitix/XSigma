@@ -200,31 +200,31 @@ bool profiler_report::export_xml_report(const std::string& filename) const
 
 void profiler_report::print_summary() const
 {
-    XSIGMA_LOG_INFO(generate_header_section());
-    XSIGMA_LOG_INFO(generate_summary_section());
+    XSIGMA_LOG_INFO("{}", generate_header_section());
+    XSIGMA_LOG_INFO("{}", generate_summary_section());
 }
 
 void profiler_report::print_detailed_report() const
 {
-    XSIGMA_LOG_INFO(generate_console_report());
+    XSIGMA_LOG_INFO("{}", generate_console_report());
 }
 
 void profiler_report::print_memory_report() const
 {
-    XSIGMA_LOG_INFO(generate_header_section());
-    XSIGMA_LOG_INFO(generate_memory_section());
+    XSIGMA_LOG_INFO("{}", generate_header_section());
+    XSIGMA_LOG_INFO("{}", generate_memory_section());
 }
 
 void profiler_report::print_timing_report() const
 {
-    XSIGMA_LOG_INFO(generate_header_section());
-    XSIGMA_LOG_INFO(generate_timing_section());
+    XSIGMA_LOG_INFO("{}", generate_header_section());
+    XSIGMA_LOG_INFO("{}", generate_timing_section());
 }
 
 void profiler_report::print_statistical_report() const
 {
-    XSIGMA_LOG_INFO(generate_header_section());
-    XSIGMA_LOG_INFO(generate_statistical_section());
+    XSIGMA_LOG_INFO("{}", generate_header_section());
+    XSIGMA_LOG_INFO("{}", generate_statistical_section());
 }
 
 // Helper method implementations

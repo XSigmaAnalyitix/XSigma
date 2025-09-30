@@ -1240,12 +1240,12 @@ XSIGMATEST(Core, EnhancedProfiler)
     }
     else
     {
-        XSIGMA_LOG_INFO(" " << (total_tests - passed_tests) << " test(s) FAILED!");
+        XSIGMA_LOG_INFO(" {} test(s) FAILED!", total_tests - passed_tests);
     }
     XSIGMA_LOG_IF(
         ERROR,
         passed_tests != total_tests,
-        << "Some Enhanced Profiler tests FAILED. Please check the logs for details.");
+        "Some Enhanced Profiler tests FAILED. Please check the logs for details.");
 
     END_TEST();
 }

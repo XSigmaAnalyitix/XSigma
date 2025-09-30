@@ -144,8 +144,7 @@ private:
 
         if (config_.debug_mode)
         {
-            XSIGMA_LOG_INFO(
-                "Direct GPU allocation: " << size << " bytes on device " << device_index);
+            XSIGMA_LOG_INFO("Direct GPU allocation: {} bytes on device {}", size, device_index);
         }
 
         return {ptr, size, device};
@@ -170,7 +169,8 @@ private:
             if (result != cudaSuccess && config_.debug_mode)
             {
                 XSIGMA_LOG_WARNING(
-                    "CUDA memory deallocation warning: " + std::string(cudaGetErrorString(result)));
+                    "CUDA memory deallocation warning: {}",
+                    std::string(cudaGetErrorString(result)));
             }
             break;
         }
@@ -185,8 +185,9 @@ private:
         if (config_.debug_mode)
         {
             XSIGMA_LOG_INFO(
-                "Direct GPU deallocation: " << block.size << " bytes from device "
-                                            << block.device.index());
+                "Direct GPU deallocation: {} bytes from device {}",
+                block.size,
+                block.device.index());
         }
     }
 
@@ -211,9 +212,10 @@ public:
         if (config_.debug_mode)
         {
             XSIGMA_LOG_INFO(
-                "GPU memory pool initialized with min_block="
-                << config_.min_block_size << ", max_block=" << config_.max_block_size
-                << ", growth_factor=" << config_.block_growth_factor);
+                "GPU memory pool initialized with min_block={}, max_block={}, growth_factor={}",
+                config_.min_block_size,
+                config_.max_block_size,
+                config_.block_growth_factor);
         }
     }
 
@@ -224,8 +226,8 @@ public:
         if (config_.debug_mode && !active_allocations_.empty())
         {
             XSIGMA_LOG_WARNING(
-                "GPU memory pool destroyed with " << active_allocations_.size()
-                                                  << " active allocations (potential memory leak)");
+                "GPU memory pool destroyed with {} active allocations (potential memory leak)",
+                active_allocations_.size());
         }
     }
 
@@ -269,7 +271,7 @@ public:
 
                     if (config_.debug_mode)
                     {
-                        XSIGMA_LOG_INFO("Cache hit: reusing block of size " << result_block.size);
+                        XSIGMA_LOG_INFO("Cache hit: reusing block of size {}", result_block.size);
                     }
 
                     return result_block;
@@ -334,7 +336,7 @@ public:
 
             if (config_.debug_mode)
             {
-                XSIGMA_LOG_INFO("Cached block of size " << cached_size);
+                XSIGMA_LOG_INFO("Cached block of size {}", cached_size);
             }
         }
         else

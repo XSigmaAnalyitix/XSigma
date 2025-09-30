@@ -135,8 +135,8 @@ Allocator* process_state::GetCPUAllocator(int numa_node)
                 allocator_opts);
 
             XSIGMA_LOG_INFO(
-                "Using allocator_bfc with memory limit of "
-                << cpu_mem_limit_in_mb << " MB for process_state CPU allocator");
+                "Using allocator_bfc with memory limit of {} MB for process_state CPU allocator",
+                cpu_mem_limit_in_mb);
         }
         else if (sub_allocator)
         {
@@ -149,8 +149,10 @@ Allocator* process_state::GetCPUAllocator(int numa_node)
                 "cpu_pool");
 
             XSIGMA_LOG_INFO(
-                "Using allocator_pool for process_state CPU allocator "
-                << "numa_enabled_=" << numa_enabled_ << " numa_node=" << numa_node);
+                "Using allocator_pool for process_state CPU allocator numa_enabled_={} "
+                "numa_node={}",
+                numa_enabled_,
+                numa_node);
         }
         else
         {

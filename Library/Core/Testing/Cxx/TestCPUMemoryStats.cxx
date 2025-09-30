@@ -102,7 +102,7 @@ public:
         EXPECT_FALSE(debug_str.empty());
         EXPECT_NE(debug_str.find("unified_resource_stats"), std::string::npos);
 
-        XSIGMA_LOG_INFO("  Debug string: " << debug_str);
+        XSIGMA_LOG_INFO("  Debug string: {}", debug_str);
         XSIGMA_LOG_INFO("✓ unified_resource_stats basic functionality passed");
     }
 
@@ -261,15 +261,9 @@ public:
         EXPECT_LE(metrics.internal_fragmentation, 100.0);
         EXPECT_GT(metrics.internal_fragmentation, 0.0);
 
-        XSIGMA_LOG_INFO(
-            "  Fragmentation ratio: " << std::fixed << std::setprecision(3)
-                                      << metrics.fragmentation_ratio);
-        XSIGMA_LOG_INFO(
-            "  Internal fragmentation: " << std::fixed << std::setprecision(1)
-                                         << metrics.internal_fragmentation << "%");
-        XSIGMA_LOG_INFO(
-            "  External fragmentation: " << std::fixed << std::setprecision(1)
-                                         << metrics.external_fragmentation << "%");
+        XSIGMA_LOG_INFO("  Fragmentation ratio: {}", metrics.fragmentation_ratio);
+        XSIGMA_LOG_INFO("  Internal fragmentation: {}%", metrics.internal_fragmentation);
+        XSIGMA_LOG_INFO("  External fragmentation: {}%", metrics.external_fragmentation);
 
         XSIGMA_LOG_INFO("✓ memory_fragmentation_metrics calculation passed");
     }
@@ -306,19 +300,16 @@ public:
         EXPECT_GT(ops_per_sec, 0.0);
 
         // Test report generation
-        std::string report = stats.generate_report();
-        XSIGMA_LOG_INFO(report);
+        const std::string report = stats.generate_report();
+        XSIGMA_LOG_INFO("{}", report);
         EXPECT_FALSE(report.empty());
         //EXPECT_NE(report.find("CPU_Allocator"), std::string::npos);
         EXPECT_NE(report.find("Resource Stats"), std::string::npos);
         EXPECT_NE(report.find("Cache Performance"), std::string::npos);
         EXPECT_NE(report.find("Overall Efficiency"), std::string::npos);
 
-        XSIGMA_LOG_INFO(
-            "  Overall efficiency: " << std::fixed << std::setprecision(1) << (efficiency * 100.0)
-                                     << "%");
-        XSIGMA_LOG_INFO(
-            "  Operations per second: " << std::fixed << std::setprecision(0) << ops_per_sec);
+        XSIGMA_LOG_INFO("  Overall efficiency: {}%", (efficiency * 100.0));
+        XSIGMA_LOG_INFO("  Operations per second: {}", ops_per_sec);
 
         // Test individual reset functionality
         stats.resource_stats.reset();
@@ -371,17 +362,19 @@ public:
         auto dealloc_time = std::chrono::duration_cast<std::chrono::microseconds>(end - mid);
 
         XSIGMA_LOG_INFO(
-            "Allocation time for " << num_iterations << " allocations: " << alloc_time.count()
-                                   << " microseconds");
+            "Allocation time for {} allocations: {} microseconds",
+            num_iterations,
+            alloc_time.count());
         XSIGMA_LOG_INFO(
-            "Deallocation time for " << num_iterations << " deallocations: " << dealloc_time.count()
-                                     << " microseconds");
+            "Deallocation time for {} deallocations: {} microseconds",
+            num_iterations,
+            dealloc_time.count());
         XSIGMA_LOG_INFO(
-            "Average allocation time: "
-            << (alloc_time.count() / static_cast<double>(num_iterations)) << " microseconds");
+            "Average allocation time: {} microseconds",
+            alloc_time.count() / static_cast<double>(num_iterations));
         XSIGMA_LOG_INFO(
-            "Average deallocation time: "
-            << (dealloc_time.count() / static_cast<double>(num_iterations)) << " microseconds");
+            "Average deallocation time: {} microseconds",
+            dealloc_time.count() / static_cast<double>(num_iterations));
 
         // Verify all allocations succeeded
         EXPECT_EQ(ptrs.size(), static_cast<size_t>(num_iterations));

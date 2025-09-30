@@ -269,7 +269,7 @@ namespace details
     if XSIGMA_UNLIKELY (!(cond))                                                          \
     {                                                                                     \
         const std::string& msg = XSIGMA_CHECK_MSG(cond, "", ##__VA_ARGS__);               \
-        XSIGMA_LOG_IF(WARNING, !(cond), "Check failed: " << msg);                         \
+        XSIGMA_LOG_IF(WARNING, !(cond), "Check failed: {}", msg);                         \
         xsigma::details::check_fail(__func__, __FILE__, static_cast<int>(__LINE__), msg); \
     }
 #endif

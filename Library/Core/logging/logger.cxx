@@ -1,5 +1,3 @@
-// SPDX-FileCopyrightText: Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
-// SPDX-License-Identifier: BSD-3-Clause
 #include "logging/logger.h"
 
 // Include appropriate logging backend headers
@@ -160,11 +158,10 @@ logger::LogScopeRAII::LogScopeRAII(
 #if defined(XSIGMA_USE_LOGURU)
     va_list vlist;
     va_start(vlist, format);
-    char buffer[1024];
-    vsnprintf(buffer, sizeof(buffer), format, vlist);
+    auto result = loguru::vstrprintf(format, vlist);
     va_end(vlist);
     this->Internals->Data = std::make_unique<loguru::LogScopeRAII>(
-        static_cast<loguru::Verbosity>(verbosity), fname, lineno, "%s", buffer);
+        static_cast<loguru::Verbosity>(verbosity), fname, lineno, "%s", result.c_str());
 #elif defined(XSIGMA_USE_GLOG)
     va_list vlist;
     va_start(vlist, format);

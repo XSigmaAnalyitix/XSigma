@@ -88,7 +88,7 @@ void Error::refresh_what()
 {
     what_.reset();
     what_without_backtrace_ = compute_what(/*include_backtrace*/ true);
-    XSIGMA_LOG_WARNING("Error message: " << what());
+    XSIGMA_LOG_WARNING("Error message: {}", what());
 }
 
 //-----------------------------------------------------------------------------

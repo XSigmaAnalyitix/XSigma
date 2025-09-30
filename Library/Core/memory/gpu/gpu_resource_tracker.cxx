@@ -89,18 +89,19 @@ private:
                         if (!leaks.empty() && leak_config_.enable_auto_reporting)
                         {
                             XSIGMA_LOG_WARNING(
-                                "GPU memory leak detection found " << leaks.size()
-                                                                   << " potential leaks");
-
+                                "GPU memory leak detection found {} potential leaks", leaks.size());
                             // Log details of first few leaks
                             for (size_t i = 0; i < std::min(leaks.size(), size_t(5)); ++i)
                             {
                                 const auto& leak = leaks[i];
                                 XSIGMA_LOG_WARNING(
-                                    "Leak " << (i + 1) << ": " << leak->size << " bytes at "
-                                            << leak->ptr << " allocated in " << leak->function_name
-                                            << " (" << leak->source_file << ":" << leak->source_line
-                                            << ")");
+                                    "Leak {}: {} bytes at {} allocated in {} ({})",
+                                    i + 1,
+                                    leak->size,
+                                    leak->ptr,
+                                    leak->function_name,
+                                    leak->source_file,
+                                    leak->source_line);
                             }
                         }
                     }
@@ -191,8 +192,9 @@ public:
         if (!active_allocations_.empty())
         {
             XSIGMA_LOG_WARNING(
-                "GPU resource tracker destroyed with "
-                << active_allocations_.size() << " active allocations (potential memory leaks)");
+                "GPU resource tracker destroyed with {} active allocations (potential memory "
+                "leaks)",
+                active_allocations_.size());
         }
     }
 

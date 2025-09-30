@@ -35,6 +35,8 @@ set(MAGIC_ENUM_OPT_BUILD_TESTS OFF CACHE BOOL "Disable magic_enum tests" FORCE)
 
 # loguru-specific options
 set(LOGURU_BUILD_EXAMPLES OFF CACHE BOOL "Disable loguru examples" FORCE)
+#set(LOGURU_USE_FMTLIB ON CACHE BOOL "Enable fmtlib formatting in loguru" FORCE)
+set(LOGURU_WITH_STREAMS ON CACHE BOOL "Enable streams in loguru" FORCE)
 
 # glog-specific options
 set(BUILD_EXAMPLES OFF CACHE BOOL "Disable glog examples" FORCE)
@@ -189,6 +191,7 @@ add_third_party_library(glog
 )
 if(TARGET glog)
     set_target_properties(glog PROPERTIES FOLDER "ThirdParty/glog")
+    set_target_properties(glog_internal PROPERTIES FOLDER "ThirdParty/glog")
 
     # Configure glog output directories to match XSigma project structure
     foreach(config Debug Release RelWithDebInfo MinSizeRel)
