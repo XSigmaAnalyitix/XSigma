@@ -558,7 +558,7 @@ int stoi(const std::string& str, std::size_t* pos)
     ss >> n;
 
     // Check for conversion failure
-    XSIGMA_CHECK_VALUE(!ss.fail(), "String is not a valid integer");
+    XSIGMA_CHECK(!ss.fail(), "String is not a valid integer");
 
     // Update position if requested
     if (pos != nullptr)

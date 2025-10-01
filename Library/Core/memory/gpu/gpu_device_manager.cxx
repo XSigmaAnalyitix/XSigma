@@ -336,8 +336,7 @@ public:
         }
 
         XSIGMA_THROW(
-            "Device not found: type=" + std::to_string(static_cast<int>(device_type)) +
-            ", index=" + std::to_string(device_index));
+            "Device not found: type={}, index={}", static_cast<int>(device_type), device_index);
     }
 
     //gpu_device_info select_optimal_device_for_monte_carlo(
@@ -429,9 +428,9 @@ public:
         if (!found)
         {
             XSIGMA_THROW(
-                "Cannot set context for unknown device: type=" +
-                std::to_string(static_cast<int>(device_type)) +
-                ", index=" + std::to_string(device_index));
+                "Cannot set context for unknown device: type={}, index={}",
+                static_cast<int>(device_type),
+                device_index);
         }
 
         // Set device context based on type
@@ -444,7 +443,7 @@ public:
             if (result != cudaSuccess)
             {
                 XSIGMA_THROW(
-                    "Failed to set CUDA device context: " +
+                    "Failed to set CUDA device context: {}",
                     std::string(cudaGetErrorString(result)));
             }
             break;

@@ -3,7 +3,7 @@
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
-#include "util/back_trace.h"
+#include "logging/back_trace.h"
 
 #include <string>
 #include <vector>

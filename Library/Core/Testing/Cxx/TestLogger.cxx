@@ -22,7 +22,6 @@
 #include <utility>
 
 #include "logging/logger.h"
-#include "util/exception.h"
 #include "xsigmaTest.h"
 
 namespace
@@ -89,7 +88,7 @@ XSIGMATEST(Core, Logger)
               << std::endl
               << "--------------------------------------------" << std::endl;
 
-    XSIGMA_WARN("testing generic warning -- should only show up in the log");
+    XSIGMA_LOG_WARNING("testing generic warning -- should only show up in the log");
 
     // remove callback since the user-data becomes invalid out of this function.
     xsigma::logger::RemoveCallback("sonnet-grabber");

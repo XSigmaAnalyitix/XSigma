@@ -178,8 +178,9 @@ gpu_allocator_tracking::gpu_allocator_tracking(
     if (!device_found)
     {
         XSIGMA_THROW(
-            "GPU device not found: type=" + std::to_string(static_cast<int>(device_type_)) +
-            ", index=" + std::to_string(device_index_));
+            "GPU device not found: type={}, index={}",
+            static_cast<int>(device_type_),
+            device_index_);
     }
 
     // Reserve space for GPU records to minimize reallocations
