@@ -35,21 +35,30 @@
  * @date 2024
  */
 
-#include <chrono>
-#include <cstdlib>
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <memory>
-#include <numeric>
-#include <thread>
-#include <vector>
+#include <fmt/format.h>   // for compile_string_to_view
+#include <gtest/gtest.h>  // for Test, TestInfo
 
-#include "experimental/profiler/memory_tracker.h"
-#include "experimental/profiler/profiler.h"
-#include "experimental/profiler/profiler_report.h"
-#include "experimental/profiler/statistical_analyzer.h"
-#include "xsigmaTest.h"
+#include <atomic>         // for atomic
+#include <chrono>         // for duration, duration_cast, operator-, high_resolution_...
+#include <cmath>          // for cos, sin, abs
+#include <cstdio>         // for remove
+#include <cstdlib>        // for free, malloc, size_t, abs
+#include <functional>     // for function, _Func_class
+#include <iostream>       // for char_traits, basic_ostream, operator<<, endl, cout
+#include <memory>         // for unique_ptr, allocator, _Simple_types
+#include <numeric>        // for accumulate
+#include <string>         // for operator+, basic_string, string, to_string, operator<<
+#include <thread>         // for thread, sleep_for
+#include <unordered_map>  // for unordered_map
+#include <utility>        // for max, pair
+#include <vector>         // for vector, _Vector_const_iterator, _Vector_iterato
+
+#include "experimental/profiler/memory_tracker.h"  // for memory_tracker
+#include "experimental/profiler/profiler.h"  // for profiler_session, profiler_session_builder, profiler...
+#include "experimental/profiler/profiler_report.h"  // for profiler_report
+#include "experimental/profiler/statistical_analyzer.h"  // for statistical_analyzer, statistical_metrics, time_seri...
+#include "logging/logger.h"                              // for XSIGMA_LOG_INFO, XSIGMA_LOG_IF
+#include "xsigmaTest.h"                                  // for END_TEST, XSIGMATEST
 
 using namespace xsigma;
 

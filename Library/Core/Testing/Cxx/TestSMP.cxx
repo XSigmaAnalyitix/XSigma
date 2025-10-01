@@ -17,24 +17,10 @@
  * Website: https://www.xsigma.co.uk
  */
 
-#include <cstdlib>
-#include <deque>
-#include <initializer_list>
-#include <iterator>
-#include <numeric>
-#include <ostream>
-#include <set>
-#include <string>
-#include <vector>
+#include <gtest/gtest.h>  // for Test, TestInfo
 
-#include "common/configure.h"  // IWYU pragma: keep
-#include "common/pointer.h"
-#include "logging/logger.h"
-#include "smp/Common/thread_local_api.h"
-#include "smp/Common/tools_api.h"
-#include "smp/tools.h"
-#include "smp/xsigma_thread_local.h"
-#include "xsigmaTest.h"
+#include "common/configure.h"
+#include "xsigmaTest.h"  // for END_TEST, XSIGMATEST
 
 XSIGMATEST(Core, SMP)
 {

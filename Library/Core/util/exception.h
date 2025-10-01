@@ -247,18 +247,21 @@ private:
  * @param error_cat Error category enum value
  * @param msg Error message string
  */
-#define XSIGMA_THROW_IMPL(error_cat, msg)                                              \
-    do                                                                                 \
-    {                                                                                  \
-        xsigma::SourceLocation loc = {__func__, __FILE__, static_cast<int>(__LINE__)}; \
-        if (xsigma::get_exception_mode() == xsigma::exception_mode::THROW)             \
-        {                                                                              \
-            throw xsigma::exception(loc, msg, xsigma::exception_category::error_cat);  \
-        }                                                                              \
-        else                                                                           \
-        {                                                                              \
-            XSIGMA_LOG_FATAL("Fatal error ({}): {}", #error_cat, msg);                 \
-        }                                                                              \
+#define XSIGMA_THROW_IMPL(error_cat, msg)                                             \
+    do                                                                                \
+    {                                                                                 \
+        xsigma::SourceLocation loc;                                                   \
+        loc.function = __func__;                                                      \
+        loc.file     = __FILE__;                                                      \
+        loc.line     = static_cast<int>(__LINE__);                                    \
+        if (xsigma::get_exception_mode() == xsigma::exception_mode::THROW)            \
+        {                                                                             \
+            throw xsigma::exception(loc, msg, xsigma::exception_category::error_cat); \
+        }                                                                             \
+        else                                                                          \
+        {                                                                             \
+            XSIGMA_LOG_FATAL("Fatal error ({}): {}", #error_cat, msg);                \
+        }                                                                             \
     } while (0)
 
 /**

@@ -1552,10 +1552,12 @@ memory_dump allocator_bfc::RecordMemoryMapInternal()
     const std::array<BinDebugInfo, kNumBins> bin_infos = get_bin_debug_info();
     for (BinNum bin_num = 0; bin_num < kNumBins; bin_num++)
     {
-        Bin*                b        = BinFromIndex(bin_num);
         const BinDebugInfo& bin_info = bin_infos[bin_num];
+#ifndef NDEBUG
+        Bin* b = BinFromIndex(bin_num);
         XSIGMA_CHECK_DEBUG(
             b->free_chunks.size() == bin_info.total_chunks_in_bin - bin_info.total_chunks_in_use);
+#endif
         BinSummary* bs = md.add_bin_summary();
         bs->set_bin(bin_num);
         bs->set_total_bytes_in_use(bin_info.total_bytes_in_use);

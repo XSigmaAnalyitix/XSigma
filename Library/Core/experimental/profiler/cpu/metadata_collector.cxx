@@ -32,22 +32,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
+#include <memory>  // for make_unique, unique_ptr
 
-//#include "absl/status/status.h"
-//#include "xla/backends/profiler/cpu/metadata_utils.h"
-//#include "xla/service/hlo.pb.h"
-//#include "xla/service/xla_debug_info_manager.h"
-#include "experimental/profiler/profiler_factory.h"
-#include "experimental/profiler/profiler_interface.h"
-#include "experimental/profiler/profiler_options.h"
-#include "experimental/profiler/xplane/xplane.h"
-#include "experimental/profiler/xplane/xplane_builder.h"
-#include "experimental/profiler/xplane/xplane_schema.h"
-#include "experimental/profiler/xplane/xplane_utils.h"
+#include "common/macros.h"                             // for XSIGMA_UNUSED
+#include "experimental/profiler/profiler_factory.h"    // for register_profiler_factory
+#include "experimental/profiler/profiler_interface.h"  // for profiler_interface
+#include "experimental/profiler/profiler_options.h"    // for profile_options
+#include "experimental/profiler/xplane/xplane.h"       // for x_space
 
 namespace xsigma::profiler
 {

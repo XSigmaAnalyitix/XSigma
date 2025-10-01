@@ -33,12 +33,12 @@ limitations under the License.
 ==============================================================================*/
 #include "experimental/profiler/profiler_lock.h"
 
-#include <atomic>   // for atomic, memory_order, ATOMIC_INT_LOCK_FREE
-#include <ostream>  // for operator<<
+#include <atomic>  // for atomic, memory_order, ATOMIC_INT_LOCK_FREE, ATOMIC_VAR_INIT
 
 #include "common/macros.h"                  // for XSIGMA_UNLIKELY
 #include "experimental/profiler/env_var.h"  // for read_bool_from_env_var
-#include "logging/logger.h"                 // for XSIGMA_LOG_ERROR, LOG, _XSIGMA_LOG_ERROR
+#include "fmt/format.h"                     // for compile_string_to_view
+#include "logging/logger.h"                 // for XSIGMA_LOG_ERROR
 
 namespace xsigma
 {

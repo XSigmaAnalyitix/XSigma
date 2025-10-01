@@ -17,26 +17,22 @@
  * Website: https://www.xsigma.co.uk
  */
 
-#include <algorithm>
-#include <chrono>
-#include <iomanip>
-#include <iostream>
-#include <memory>
-#include <optional>
-#include <thread>
-#include <vector>
+#include <fmt/format.h>  // for compile_string_to_view
+#include <gtest/gtest.h>  // for Message, TestPartResult, EXPECT_EQ, CmpHelperGE, CmpHelperNE, Asser...
 
-#include "common/configure.h"  // IWYU pragma: keep
-#include "common/pointer.h"
-#include "logging/logger.h"
-#include "memory/cpu/allocator.h"
-#include "memory/cpu/allocator_bfc.h"
-#include "memory/cpu/allocator_device.h"
-#include "memory/cpu/allocator_pool.h"
-#include "memory/cpu/allocator_tracking.h"
-#include "memory/cpu/allocator_typed.h"
-#include "memory/unified_memory_stats.h"
-#include "xsigmaTest.h"
+#include <atomic>   // for atomic
+#include <chrono>   // for duration, duration_cast, operator-, high_resolution_clock, microsec...
+#include <cmath>    // for abs
+#include <cstdint>  // for UINT64_MAX, uint8_t
+#include <cstdlib>  // for size_t, abs
+#include <memory>   // for _Simple_types, make_unique, unique_ptr
+#include <string>   // for string
+#include <vector>   // for vector, _Vector_const_iterator, _Vector_iterator
+
+#include "common/configure.h"
+#include "logging/logger.h"               // for XSIGMA_LOG_INFO
+#include "memory/cpu/allocator_device.h"  // for allocator_device
+#include "memory/unified_memory_stats.h"  // for atomic_timing_stats, unified_resource_stats, unified_cache_stats
 
 using namespace xsigma;
 

@@ -1,8 +1,20 @@
 #include "logging/logger.h"
 
+#include <array>          // for array
+#include <cstdarg>        // for va_end, va_list, va_start
+#include <cstdio>         // for vsnprintf
+#include <cstdlib>        // for strtol
+#include <cstring>        // for strcmp, strlen, strncpy
+#include <memory>         // for make_shared, shared_ptr, make_unique, unique_ptr
+#include <mutex>          // for mutex, lock_guard
+#include <thread>         // for get_id, operator==, thread
+#include <unordered_map>  // for unordered_map
+#include <utility>        // for pair
+#include <vector>         // for vector
+
 // Include appropriate logging backend headers
 #if defined(XSIGMA_USE_LOGURU)
-#include <loguru.hpp>
+#include <loguru.hpp>  // for LogScopeRAII, Message, Options, Verbosity, SignalOptions, g_stderr_verbosity, remov...
 #elif defined(XSIGMA_USE_GLOG)
 #include <glog/logging.h>
 #elif defined(XSIGMA_USE_NATIVE_LOGGING)
@@ -11,19 +23,7 @@
 
 #include <atomic>
 #include <chrono>
-#include <cstdlib>
 #endif
-
-#include <array>
-#include <cstdarg>
-#include <cstdio>
-#include <cstdlib>
-#include <memory>
-#include <mutex>
-#include <sstream>
-#include <thread>
-#include <unordered_map>
-#include <vector>
 
 //=============================================================================
 // NATIVE LOGGING BACKEND - Simplified fmt-based Implementation

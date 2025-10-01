@@ -31,12 +31,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
-#include <memory>
+#include <memory>  // for unique_ptr
 
-#include "experimental/profiler/cpu/python_tracer.h"
-#include "experimental/profiler/profiler_factory.h"
-#include "experimental/profiler/profiler_interface.h"
-#include "experimental/profiler/profiler_options.h"
+#include "common/macros.h"                             // for XSIGMA_UNUSED
+#include "experimental/profiler/profiler_factory.h"    // for register_profiler_factory
+#include "experimental/profiler/profiler_interface.h"  // for profiler_interface
+#include "experimental/profiler/profiler_options.h"    // for profile_options
 
 namespace xsigma
 {

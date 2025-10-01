@@ -17,39 +17,38 @@
  * Website: https://www.xsigma.co.uk
  */
 
-#include <gtest/gtest.h>  // for Message, TestPartResult, AssertionResult
+#include <fmt/format.h>   // for compile_string_to_view
+#include <gtest/gtest.h>  // for Test, Message, TestPartResult, AssertionResult, CmpHelperNE
 
-#include <algorithm>
 #include <atomic>       // for atomic, _Atomic_integral
-#include <chrono>       // for duration, duration_cast, operator-, high...
-#include <cstdint>      // for uint8_t, uint64_t, uintptr_t, SIZE_MAX
+#include <chrono>       // for duration, duration_cast, operator-, high_resolution_clock
+#include <cstdint>      // for uint8_t, uint64_t, uintptr_t, SIZE_MAX, UINT64_MAX, int64_t
 #include <cstdlib>      // for size_t, free, malloc
 #include <cstring>      // for memset
 #include <functional>   // for function, _Func_class
 #include <iomanip>      // for operator<<, setw, setprecision
-#include <iostream>     // for char_traits, basic_ostream, operator<<
+#include <iostream>     // for basic_ostream, operator<<, cout, scientific, fixed, left
 #include <limits>       // for numeric_limits
-#include <memory>       // for make_unique, unique_ptr, _Simple_types
+#include <memory>       // for make_unique, unique_ptr, _Simple_types, allocator
 #include <optional>     // for optional
-#include <string>       // for operator<<, string, operator+, to_string
+#include <string>       // for char_traits, operator<<, string, operator+, to_string, basic...
 #include <thread>       // for thread, sleep_for
 #include <type_traits>  // for is_trivial
 #include <utility>      // for move, min, max, max_element, min_element
-#include <vector>       // for vector, _Vector_iterator, _Vector_const_...
+#include <vector>       // for vector, _Vector_iterator, _Vector_const_iterator
 
-#include "common/configure.h"
-#include "common/pointer.h"                      // for make_ptr_unique_mutable
-#include "logging/logger.h"                      // for XSIGMA_LOG_INFO, END_LOG_TO_FILE_NAME
-#include "memory/cpu/allocator.h"                // for sub_allocator, allocation_attributes
-#include "memory/cpu/allocator_bfc.h"            // for allocator_bfc
-#include "memory/cpu/allocator_device.h"         // for allocator_device
-#include "memory/cpu/allocator_pool.h"           // for basic_cpu_allocator, allocator_pool, Noo...
-#include "memory/cpu/allocator_tracking.h"       // for allocator_tracking, enhanced_alloc_record
+#include "common/pointer.h"  // for make_ptr_unique_mutable
+#include "logging/logger.h"  // for XSIGMA_LOG_INFO, END_LOG_TO_FILE_NAME, START_LOG_TO_FILE_NAME
+#include "memory/cpu/allocator.h"  // for sub_allocator, allocation_attributes, Allocator, allocator_m...
+#include "memory/cpu/allocator_bfc.h"     // for allocator_bfc
+#include "memory/cpu/allocator_device.h"  // for allocator_device
+#include "memory/cpu/allocator_pool.h"  // for basic_cpu_allocator, allocator_pool, NoopRounder, round_up_i...
+#include "memory/cpu/allocator_tracking.h"  // for allocator_tracking, enhanced_alloc_record, tracking_log_level
 #include "memory/cpu/allocator_typed.h"          // for allocator_typed
 #include "memory/cpu/helper/memory_allocator.h"  // for free, allocate
 #include "memory/cpu/helper/process_state.h"     // for process_state
-#include "memory/unified_memory_stats.h"         // for atomic_timing_stats, unified_resource_stats
-#include "xsigmaTest.h"                          // for XSIGMATEST_CALL, XSIGMATEST_VOID, END_TEST
+#include "memory/unified_memory_stats.h"  // for atomic_timing_stats, unified_resource_stats, memory_fragment...
+#include "xsigmaTest.h"  // for XSIGMATEST_CALL, XSIGMATEST_VOID, END_TEST, XSIGMATEST
 
 using namespace xsigma;
 namespace xsigma

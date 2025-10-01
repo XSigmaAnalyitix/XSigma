@@ -118,15 +118,16 @@ typename Collection::value_type::second_type* FindOrNull(
     return &it->second;
 }
 
-constexpr int kNumHostEventTypes =
+XSIGMA_UNUSED constexpr int kNumHostEventTypes =
     HostEventType::kLastHostEventType - HostEventType::kFirstHostEventType + 1;
 
-constexpr int kNumStatTypes = StatType::kLastStatType - StatType::kFirstStatType + 1;
+XSIGMA_UNUSED constexpr int kNumStatTypes = StatType::kLastStatType - StatType::kFirstStatType + 1;
 
-constexpr int kNumMegaScaleStatTypes =
+XSIGMA_UNUSED constexpr int kNumMegaScaleStatTypes =
     MegaScaleStatType::kLastMegaScaleStatType - MegaScaleStatType::kFirstMegaScaleStatType + 1;
 
-constexpr int kNumLineIdTypes = LineIdType::kLastLineIdType - LineIdType::kFirstLineIdType + 1;
+XSIGMA_UNUSED constexpr int kNumLineIdTypes =
+    LineIdType::kLastLineIdType - LineIdType::kFirstLineIdType + 1;
 
 using HostEventTypeMap        = flat_hash_map<std::string_view, HostEventType>;
 using HostEventTypeStrMap     = flat_hash_map<HostEventType, std::string_view>;
@@ -458,7 +459,7 @@ const LineIdTypeStrMap& GetLineIdTypeStrMap()
 using TaskEnvStatTypeMap    = flat_hash_map<std::string_view, TaskEnvStatType>;
 using TaskEnvStatTypeStrMap = flat_hash_map<TaskEnvStatType, std::string_view>;
 
-constexpr int kNumTaskEnvStatTypes =
+XSIGMA_UNUSED constexpr int kNumTaskEnvStatTypes =
     TaskEnvStatType::kLastTaskEnvStatType - TaskEnvStatType::kFirstTaskEnvStatType + 1;
 
 const TaskEnvStatTypeMap& GetTaskEnvStatTypeMap()
