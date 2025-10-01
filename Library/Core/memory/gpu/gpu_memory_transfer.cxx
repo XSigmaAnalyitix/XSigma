@@ -61,7 +61,7 @@ public:
             if (result != cudaSuccess)
             {
                 XSIGMA_THROW(
-                    "Failed to create CUDA stream: " + std::string(cudaGetErrorString(result)));
+                    "Failed to create CUDA stream: {}", std::string(cudaGetErrorString(result)));
             }
         }
         else
@@ -76,7 +76,7 @@ public:
             if (result != cudaSuccess)
             {
                 XSIGMA_THROW(
-                    "Failed to create CUDA stream with priority: " +
+                    "Failed to create CUDA stream with priority: {}",
                     std::string(cudaGetErrorString(result)));
             }
         }
@@ -98,7 +98,7 @@ public:
         if (result != cudaSuccess)
         {
             XSIGMA_THROW(
-                "CUDA stream synchronization failed: " + std::string(cudaGetErrorString(result)));
+                "CUDA stream synchronization failed: {}", std::string(cudaGetErrorString(result)));
         }
     }
 

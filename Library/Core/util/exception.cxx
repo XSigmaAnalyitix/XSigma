@@ -1,50 +1,199 @@
 #include "util/exception.h"
 
 #include <algorithm>
+#include <atomic>
+#include <cstdlib>  // for getenv
 #include <functional>
+#include <mutex>
 #include <sstream>
 #include <utility>
 
+#include "logging/back_trace.h"
 #include "logging/logger.h"
-#include "util/back_trace.h"
 #include "util/string_util.h"
 
 namespace xsigma
 {
+// ============================================================================
+// Exception Mode Configuration
+// ============================================================================
+
 namespace
 {
+// Global exception mode with atomic access for thread safety
+std::atomic<exception_mode> g_exception_mode_{
+#ifdef XSIGMA_DEFAULT_EXCEPTION_MODE_LOG_FATAL
+    exception_mode::LOG_FATAL
+#else
+    exception_mode::THROW
+#endif
+};
+
+// Initialization flag to ensure environment is read only once
+std::atomic<bool> g_exception_mode_initialized_{false};
+std::mutex        g_exception_mode_init_mutex_;
+
 std::function<std::string(void)>* GetFetchStackTrace()  // NOLINT
 {
     static std::function<std::string(void)> func = []()
-    { return xsigma::back_trace::print(/*frames_to_skip=*/0, /*maximum_number_of_frames=*/32); };
+    {
+        // Skip 2 frames: this lambda and GetFetchStackTrace
+        return xsigma::back_trace::print(/*frames_to_skip=*/2, /*maximum_number_of_frames=*/32);
+    };
     return &func;
 };
 }  // namespace
 
+// ============================================================================
+// Exception Mode API Implementation
+// ============================================================================
+
+exception_mode get_exception_mode() noexcept
+{
+    // Lazy initialization from environment on first access
+    if (!g_exception_mode_initialized_.load(std::memory_order_acquire))
+    {
+        init_exception_mode_from_env();
+    }
+    return g_exception_mode_.load(std::memory_order_relaxed);
+}
+
+void set_exception_mode(exception_mode mode) noexcept
+{
+    g_exception_mode_.store(mode, std::memory_order_release);
+    g_exception_mode_initialized_.store(true, std::memory_order_release);
+}
+
+void init_exception_mode_from_env() noexcept
+{
+    std::lock_guard<std::mutex> lock(g_exception_mode_init_mutex_);
+
+    // Double-check after acquiring lock
+    if (g_exception_mode_initialized_.load(std::memory_order_acquire))
+    {
+        return;
+    }
+
+    try
+    {
+        const char* env_mode = std::getenv("XSIGMA_EXCEPTION_MODE");
+        if (env_mode != nullptr)
+        {
+            std::string mode_str(env_mode);
+            if (mode_str == "LOG_FATAL" || mode_str == "log_fatal")
+            {
+                g_exception_mode_.store(exception_mode::LOG_FATAL, std::memory_order_relaxed);
+                XSIGMA_LOG_INFO("Exception mode set to LOG_FATAL from environment");
+            }
+            else if (mode_str == "THROW" || mode_str == "throw")
+            {
+                g_exception_mode_.store(exception_mode::THROW, std::memory_order_relaxed);
+                XSIGMA_LOG_INFO("Exception mode set to THROW from environment");
+            }
+            else
+            {
+                XSIGMA_LOG_WARNING(
+                    "Invalid XSIGMA_EXCEPTION_MODE value: {}. Using default.", mode_str);
+            }
+        }
+    }
+    catch (...)
+    {
+        // Ignore any errors during initialization
+        // Keep the default mode
+    }
+
+    g_exception_mode_initialized_.store(true, std::memory_order_release);
+}
+
+// ============================================================================
+// Error Category Implementation
+// ============================================================================
+
+const char* exception_category_to_string(exception_category category) noexcept
+{
+    switch (category)
+    {
+    case exception_category::GENERIC:
+        return "GENERIC";
+    case exception_category::VALUE_ERROR:
+        return "VALUE_ERROR";
+    case exception_category::TYPE_ERROR:
+        return "TYPE_ERROR";
+    case exception_category::INDEX_ERROR:
+        return "INDEX_ERROR";
+    case exception_category::NOT_IMPLEMENTED:
+        return "NOT_IMPLEMENTED";
+    case exception_category::ENFORCE_FINITE:
+        return "ENFORCE_FINITE";
+    case exception_category::RUNTIME_ERROR:
+        return "RUNTIME_ERROR";
+    case exception_category::LOGIC_ERROR:
+        return "LOGIC_ERROR";
+    case exception_category::SYSTEM_ERROR:
+        return "SYSTEM_ERROR";
+    case exception_category::MEMORY_ERROR:
+        return "MEMORY_ERROR";
+    default:
+        return "UNKNOWN_ERROR";
+    }
+}
+
+// ============================================================================
+// Exception Class Implementation
+// ============================================================================
+
 // Explicitly define the virtual destructor to ensure the vtable is generated
-Error::~Error() = default;
+exception::~exception() = default;
 
 //-----------------------------------------------------------------------------
-Error::Error(std::string msg, std::string backtrace, const void* caller)
-    : msg_(std::move(msg)), backtrace_(std::move(backtrace)), caller_(caller)
+exception::exception(
+    std::string msg, std::string backtrace, const void* caller, exception_category category)
+    : msg_(std::move(msg)),
+      backtrace_(std::move(backtrace)),
+      caller_(caller),
+      nested_exception_(nullptr),
+      category_(category)
 {
     refresh_what();
 }
 
 //-----------------------------------------------------------------------------
-Error::Error(SourceLocation source_location, std::string msg)
-    : Error(
+exception::exception(SourceLocation source_location, std::string msg, exception_category category)
+    : exception(
           std::move(msg),
           xsigma::to_string(
               "Exception raised from ",
               source_location,
               " (most recent call first):\n",
-              (*GetFetchStackTrace())()))
+              (*GetFetchStackTrace())()),
+          nullptr,
+          category)
 {
 }
 
 //-----------------------------------------------------------------------------
-const char* Error::what() const noexcept
+exception::exception(
+    SourceLocation             source_location,
+    std::string                msg,
+    std::shared_ptr<exception> nested,
+    exception_category         category)
+    : msg_(std::move(msg)),
+      backtrace_(
+          xsigma::to_string(
+              "Exception raised from ",
+              source_location,
+              " (most recent call first):\n",
+              (*GetFetchStackTrace())())),
+      caller_(nullptr),
+      nested_exception_(std::move(nested)),
+      category_(category)
+{
+    refresh_what();
+}
+
+//-----------------------------------------------------------------------------
+const char* exception::what() const noexcept
 {
     return what_
         .ensure(
@@ -57,14 +206,14 @@ const char* Error::what() const noexcept
                 catch (...)
                 {
                     // what() is noexcept, we need to return something here.
-                    return std::string{"<Error computing Error::what()>"};
+                    return std::string{"<Error computing exception::what()>"};
                 }
             })
         .c_str();
 }
 
 //-----------------------------------------------------------------------------
-std::string Error::compute_what(bool include_backtrace) const
+std::string exception::compute_what(bool include_backtrace) const
 {
     std::ostringstream oss;
 
@@ -80,11 +229,18 @@ std::string Error::compute_what(bool include_backtrace) const
         oss << "\n" << backtrace();
     }
 
+    // Include nested exception information
+    if (nested_exception_)
+    {
+        oss << "\n\nCaused by:\n";
+        oss << nested_exception_->what();
+    }
+
     return oss.str();
 }
 
 //-----------------------------------------------------------------------------
-void Error::refresh_what()
+void exception::refresh_what()
 {
     what_.reset();
     what_without_backtrace_ = compute_what(/*include_backtrace*/ true);
@@ -92,7 +248,7 @@ void Error::refresh_what()
 }
 
 //-----------------------------------------------------------------------------
-void Error::add_context(std::string msg)
+void exception::add_context(std::string msg)
 {
     context_.push_back(std::move(msg));
     // TODO: Calling add_context O(n) times has O(n^2) cost.  We can fix
@@ -109,102 +265,7 @@ namespace details
 {
 void check_fail(const char* func, const char* file, int line, const std::string& msg)
 {
-    throw xsigma::Error({func, file, line}, msg);
-}
-
-//-----------------------------------------------------------------------------
-void check_fail(const char* func, const char* file, int line, const char* msg)
-{
-    throw xsigma::Error({func, file, line}, msg);
+    throw xsigma::exception({func, file, line}, msg, xsigma::exception_category::GENERIC);
 }
 }  // namespace details
-
-//-----------------------------------------------------------------------------
-namespace Warning
-{
-namespace
-{
-//-----------------------------------------------------------------------------
-WarningHandler* getBaseHandler()
-{
-    static WarningHandler base_warning_handler_ = WarningHandler();
-    return &base_warning_handler_;
-};
-
-//-----------------------------------------------------------------------------
-class ThreadWarningHandler
-{
-public:
-    ThreadWarningHandler() = delete;
-
-    static WarningHandler* get_handler()
-    {
-        if (warning_handler_ == nullptr)
-        {
-            warning_handler_ = getBaseHandler();
-        }
-        return warning_handler_;
-    }
-
-    // static void set_handler(WarningHandler* handler) { warning_handler_ = handler; }
-
-private:
-    static thread_local WarningHandler* warning_handler_;
-};
-
-thread_local WarningHandler* ThreadWarningHandler::warning_handler_ = nullptr;
-
-}  // namespace
-
-//-----------------------------------------------------------------------------
-void warn(SourceLocation source_location, const std::string& msg, const bool verbatim)
-{
-    ThreadWarningHandler::get_handler()->process(source_location, msg, verbatim);
-}
-
-//-----------------------------------------------------------------------------
-// void set_warning_handler(WarningHandler* handler) noexcept(true)
-//{
-//    ThreadWarningHandler::set_handler(handler);
-//}
-//
-// WarningHandler* get_warning_handler() noexcept(true)
-//{
-//    return ThreadWarningHandler::get_handler();
-//}
-
-bool warn_always = false;
-
-void set_warnAlways(bool setting) noexcept(true)
-{
-    warn_always = setting;
-}
-
-bool get_warnAlways() noexcept(true)
-{
-    return warn_always;
-}
-
-}  // namespace Warning
-
-void WarningHandler::process(
-    const SourceLocation& source_location, const std::string& msg, bool /*verbatim*/)
-{
-    xsigma::logger::Log(
-        logger_verbosity_enum::VERBOSITY_WARNING,
-        source_location.file,
-        source_location.line,
-        xsigma::to_string("Warning: ", msg.c_str(), " (function ", source_location.function, ")")
-            .c_str());
-}
-
-// std::string GetExceptionString(const std::exception& e)
-//{
-//#ifdef __GXX_RTTI
-//    return demangle(typeid(e).name()) + ": " + e.what();
-//#else
-//    return std::string("Exception (no RTTI available): ") + e.what();
-//#endif  // __GXX_RTTI
-//}
-
 }  // namespace xsigma

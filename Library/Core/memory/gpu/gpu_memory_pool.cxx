@@ -120,7 +120,7 @@ private:
                 if (result != cudaSuccess)
                 {
                     XSIGMA_THROW(
-                        "CUDA memory allocation failed: " +
+                        "CUDA memory allocation failed: {}",
                         std::string(cudaGetErrorString(result)));
                 }
                 size = aligned_size;
@@ -131,7 +131,7 @@ private:
                 if (result != cudaSuccess)
                 {
                     XSIGMA_THROW(
-                        "CUDA memory allocation failed: " +
+                        "CUDA memory allocation failed: {}",
                         std::string(cudaGetErrorString(result)));
                 }
             }
