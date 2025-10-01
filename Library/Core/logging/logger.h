@@ -1,18 +1,12 @@
 #pragma once
 
-#include <fmt/core.h>  // for fmt::format
+#include <string>  // for string
 
-#include <atomic>
-#include <chrono>
-#include <string>  // needed for std::string
-
-#include "common/macros.h"          // needed for macros
-#include "common/wrapping_hints.h"  // for XSIGMA_FILEPATH
-#include "logging/logger_verbosity_enum.h"
-
-#if defined(_MSC_VER)
-#include <sal.h>  // Needed for _In_z_ etc annotations
-#endif
+#include "common/export.h"                  // for XSIGMA_API
+#include "common/macros.h"                  // for XSIGMA_DELETE_COPY_AND_MOVE
+#include "common/wrapping_hints.h"          // for XSIGMA_FILEPATH
+#include "fmt/format.h"                     // for FMT_STRING
+#include "logging/logger_verbosity_enum.h"  // for logger_verbosity_enum
 
 // this is copied from `loguru.hpp`
 #if defined(__clang__) || defined(__GNUC__)
@@ -28,8 +22,6 @@
 #define XSIGMA_PRINTF_LIKE(fmtarg, firstvararg)
 #define XSIGMA_FORMAT_STRING_TYPE const char*
 #endif
-
-#include "logging/logger_verbosity_enum.h"
 
 namespace xsigma
 {

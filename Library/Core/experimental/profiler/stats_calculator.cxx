@@ -34,11 +34,13 @@ limitations under the License.
 
 #include "experimental/profiler/stats_calculator.h"
 
-#include <iomanip>
-#include <map>
-#include <queue>
-#include <sstream>
-#include <string>
+#include <iomanip>   // for operator<<, setprecision, setw
+#include <iostream>  // for endl
+#include <map>       // for map, _Tree_iterator, _Tree_const_iterator, _Tree_simple_types
+#include <memory>    // for _Simple_types
+#include <queue>     // for priority_queue
+#include <sstream>   // for basic_ostream, operator<<, stringstream, fixed, ostream, right
+#include <string>    // for char_traits, operator<<, operator<, string, allocator, basic_string
 
 namespace xsigma
 {

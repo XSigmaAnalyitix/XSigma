@@ -22,14 +22,14 @@
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
-#include <gtest/gtest.h>  // for Test, TestInfo (ptr only)
+#include <gtest/gtest.h>  // for Test, TestInfo
 
-#include <iostream>  // for char_traits, basic_ostream, operator<<, endl, cerr, ostream
+#include <cstdio>    // for unlink
+#include <iostream>  // for char_traits, basic_ostream, operator<<, endl, cerr, ostream, ostringstream
 
 #include "util/timer_log.h"  // for timer_log
 #include "xsigmaTest.h"      // for END_TEST, XSIGMATEST
 
-// Platform-specific includes for unlink and Sleep
 #if defined(__CYGWIN__)
 #include <sys/unistd.h>
 #elif defined(_WIN32)
