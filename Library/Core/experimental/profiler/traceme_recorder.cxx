@@ -105,13 +105,13 @@ class SplitEventTracker
 public:
     void AddStart(trace_me_recorder::Event&& event)
     {
-        XSIGMA_CHECK(event.is_start());
+        XSIGMA_CHECK(event.is_start(), "event is not a start event");
         start_events_.emplace(event.activity_id(), std::move(event));
     }
 
     void AddEnd(trace_me_recorder::Event* event)
     {
-        XSIGMA_CHECK(event->is_end());
+        XSIGMA_CHECK(event->is_end(), "event is not an end event");
         if (!FindStartAndMerge(event))
         {
             end_events_.push_back(event);

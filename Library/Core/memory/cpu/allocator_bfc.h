@@ -44,7 +44,7 @@
 #include "memory/cpu/allocator.h"
 #include "memory/cpu/helper/allocator_retry.h"
 #include "util/flat_hash.h"
-#include "util/strcat.h"
+//#include "util/strcat.h"
 #include "util/string_util.h"
 
 namespace xsigma
@@ -969,13 +969,50 @@ private:
         {
             std::string result;
 
+            // Helper lambda to format bytes in human-readable format (IEC 60027-2 binary prefixes)
+            auto format_bytes = [](int64_t bytes) -> std::string
+            {
+                bool negative = bytes < 0;
+                if (negative)
+                {
+                    bytes = -bytes;
+                }
+                std::string result;
+                if (bytes < 1024)
+                {
+                    result = std::to_string(bytes) + "B";
+                }
+                else
+                {
+                    const char*  units[]    = {"KiB", "MiB", "GiB", "TiB", "PiB"};
+                    const double divisors[] = {
+                        1024.0, 1048576.0, 1073741824.0, 1099511627776.0, 1125899906842624.0};
+                    for (int i = 4; i >= 0; --i)
+                    {
+                        if (bytes >= divisors[i])
+                        {
+                            std::ostringstream oss;
+                            oss << std::fixed << std::setprecision(2) << (bytes / divisors[i])
+                                << units[i];
+                            result = oss.str();
+                            break;
+                        }
+                    }
+                    if (result.empty())
+                    {
+                        result = std::to_string(bytes) + "B";
+                    }
+                }
+                return negative ? "-" + result : result;
+            };
+
             // Core chunk information
-            strings::StrAppend(
+            strings::str_append(
                 &result,
                 "Size: ",
-                numbers::HumanReadableNumBytes(size),
+                format_bytes(size),
                 " | Requested: ",
-                numbers::HumanReadableNumBytes(requested_size),
+                format_bytes(requested_size),
                 " | in_use: ",
                 in_use() ? "true" : "false",
                 " | bin: ",
@@ -984,7 +1021,7 @@ private:
             // Add timestamp information if relevant
             if (freed_at_count > 0)
             {
-                strings::StrAppend(&result, " | freed_at: ", freed_at_count);
+                strings::str_append(&result, " | freed_at: ", freed_at_count);
             }
 
             // Recursively include adjacent chunk information
@@ -993,18 +1030,18 @@ private:
                 if (prev != allocator_bfc::kInvalidChunkHandle)
                 {
                     const Chunk* p = a->ChunkFromHandle(prev);
-                    strings::StrAppend(&result, " | prev: [", p->debug_string(a, false), "]");
+                    strings::str_append(&result, " | prev: [", p->debug_string(a, false), "]");
                 }
                 if (next != allocator_bfc::kInvalidChunkHandle)
                 {
                     const Chunk* n = a->ChunkFromHandle(next);
-                    strings::StrAppend(&result, " | next: [", n->debug_string(a, false), "]");
+                    strings::str_append(&result, " | next: [", n->debug_string(a, false), "]");
                 }
             }
 
 #ifdef XSIGMA_MEM_DEBUG
             // Add debug-specific information
-            strings::StrAppend(
+            strings::str_append(
                 &result,
                 " | op: ",
                 (op_name ? op_name : "UNKNOWN"),
@@ -1543,6 +1580,43 @@ private:
             // Find insertion point maintaining sorted order
             auto entry = std::upper_bound(regions_.begin(), regions_.end(), ptr, &Comparator);
 
+            // Helper lambda to format bytes in human-readable format (IEC 60027-2 binary prefixes)
+            auto format_bytes = [](int64_t bytes) -> std::string
+            {
+                bool negative = bytes < 0;
+                if (negative)
+                {
+                    bytes = -bytes;
+                }
+                std::string result;
+                if (bytes < 1024)
+                {
+                    result = std::to_string(bytes) + "B";
+                }
+                else
+                {
+                    const char*  units[]    = {"KiB", "MiB", "GiB", "TiB", "PiB"};
+                    const double divisors[] = {
+                        1024.0, 1048576.0, 1073741824.0, 1099511627776.0, 1125899906842624.0};
+                    for (int i = 4; i >= 0; --i)
+                    {
+                        if (bytes >= divisors[i])
+                        {
+                            std::ostringstream oss;
+                            oss << std::fixed << std::setprecision(2) << (bytes / divisors[i])
+                                << units[i];
+                            result = oss.str();
+                            break;
+                        }
+                    }
+                    if (result.empty())
+                    {
+                        result = std::to_string(bytes) + "B";
+                    }
+                }
+                return negative ? "-" + result : result;
+            };
+
             // Check for coalescing opportunity with preceding region
             if (entry != regions_.begin())
             {
@@ -1553,8 +1627,8 @@ private:
                     XSIGMA_LOG_INFO(
                         "Extending region {} ({}) by {} bytes",
                         preceding_region->ptr(),
-                        numbers::HumanReadableNumBytes(preceding_region->memory_size()),
-                        numbers::HumanReadableNumBytes(memory_size));
+                        format_bytes(preceding_region->memory_size()),
+                        format_bytes(memory_size));
 
                     preceding_region->extend(memory_size);
                     return &*preceding_region;
@@ -1562,8 +1636,7 @@ private:
             }
 
             // No coalescing possible - insert new region
-            XSIGMA_LOG_INFO(
-                "Adding new region {} ({})", ptr, numbers::HumanReadableNumBytes(memory_size));
+            XSIGMA_LOG_INFO("Adding new region {} ({})", ptr, format_bytes(memory_size));
 
             regions_.insert(entry, AllocationRegion(ptr, memory_size));
             return nullptr;

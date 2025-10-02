@@ -42,7 +42,7 @@ limitations under the License.
 #include "common/macros.h"
 #include "logging/logger.h"
 #include "util/exception.h"
-#include "util/strcat.h"
+#include "util/string_util.h"
 
 //#include "tsl/experimental/profiler/lib/context_types.h"
 
@@ -520,12 +520,12 @@ enum LineIdType
 
 inline std::string TpuPlaneName(int32_t device_ordinal)
 {
-    return strings::StrCat(kTpuPlanePrefix, device_ordinal);
+    return strings::str_cat(kTpuPlanePrefix, device_ordinal);
 }
 
 inline std::string GpuPlaneName(int32_t device_ordinal)
 {
-    return strings::StrCat(kGpuPlanePrefix, device_ordinal);
+    return strings::str_cat(kGpuPlanePrefix, device_ordinal);
 }
 
 std::string_view GetHostEventTypeStr(HostEventType event_type);

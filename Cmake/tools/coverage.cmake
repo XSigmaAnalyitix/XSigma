@@ -36,11 +36,9 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANGXX)
     set(XSIGMA_LLVM_PROFILE_FILE "${XSIGMA_COVERAGE_PROFRAW_DIR}/default-%p.profraw")
     set(ENV{LLVM_PROFILE_FILE} "${XSIGMA_LLVM_PROFILE_FILE}")
 
-    # Set environment variable for CTest to use during test execution
-    # This ensures profraw files are generated when tests run via CTest
-    if(XSIGMA_BUILD_TESTING)
-      set_property(TEST PROPERTY ENVIRONMENT "LLVM_PROFILE_FILE=${XSIGMA_LLVM_PROFILE_FILE}")
-    endif()
+    # Export the LLVM_PROFILE_FILE variable so it can be used by test CMakeLists.txt files
+    # Tests need to set this environment variable when they are created
+    set(XSIGMA_LLVM_PROFILE_FILE "${XSIGMA_LLVM_PROFILE_FILE}" CACHE INTERNAL "LLVM profile file path for coverage")
 
   elseif(CMAKE_COMPILER_IS_GNUCXX AND UNIX)
     # GCC coverage using gcov (Unix/Linux only)

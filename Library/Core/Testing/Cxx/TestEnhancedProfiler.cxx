@@ -504,7 +504,7 @@ bool test_thread_safety()
         for (int t = 0; t < num_threads; ++t)
         {
             threads.emplace_back(
-                [t, &completed_operations, operations_per_thread]()
+                [t, &completed_operations, operations_per_thread = operations_per_thread]()
                 {
                     for (int i = 0; i < operations_per_thread; ++i)
                     {
@@ -945,7 +945,6 @@ bool test_integration()
 
         session->start();
 
-        // Test integration with existing timer_log (if available)
         {
             XSIGMA_PROFILE_SCOPE("integration_test");
             simulate_work(10);

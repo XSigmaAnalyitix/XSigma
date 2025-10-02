@@ -43,7 +43,7 @@ else()
     endif()
     
     list(APPEND CPPCHECK_ARGS
-        "--enable=warning,style,performance,portability"
+        "--enable=warning,style,performance,portability,unusedFunction"
         "--force"
         "--quiet"
         "--inline-suppr"

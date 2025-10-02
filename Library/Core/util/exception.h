@@ -1,5 +1,4 @@
-#ifndef CORE_UTIL_EXCEPTION_H
-#define CORE_UTIL_EXCEPTION_H
+#pragma once
 
 #include <fmt/format.h>
 
@@ -161,7 +160,7 @@ public:
     // xsigma-style exception constructor.
     // NB: the implementation of this is actually in exception.cxx
     XSIGMA_API exception(
-        SourceLocation source_location, std::string msg, exception_category category);
+        source_location source_location, std::string msg, exception_category category);
 
     // Base constructor
     XSIGMA_API exception(
@@ -179,7 +178,7 @@ public:
      * @param category Error category
      */
     XSIGMA_API exception(
-        SourceLocation             source_location,
+        source_location            source_location,
         std::string                msg,
         std::shared_ptr<exception> nested,
         exception_category         category = exception_category::GENERIC);
@@ -250,7 +249,7 @@ private:
 #define XSIGMA_THROW_IMPL(error_cat, msg)                                             \
     do                                                                                \
     {                                                                                 \
-        xsigma::SourceLocation loc;                                                   \
+        xsigma::source_location loc;                                                  \
         loc.function = __func__;                                                      \
         loc.file     = __FILE__;                                                      \
         loc.line     = static_cast<int>(__LINE__);                                    \
@@ -410,5 +409,3 @@ inline std::string format_check_msg(const char* cond_str)
         XSIGMA_CHECK(condition, ##__VA_ARGS__); \
     } while (0)
 #endif
-
-#endif  // CORE_UTIL_EXCEPTION_H

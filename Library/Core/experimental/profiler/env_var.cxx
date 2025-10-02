@@ -42,7 +42,7 @@ limitations under the License.
 
 #include "logging/logger.h"    // for XSIGMA_LOG_ERROR
 #include "util/exception.h"    // for XSIGMA_CHECK
-#include "util/string_util.h"  // for safe_strto64, safe_strtof, split_string
+#include "util/string_util.h"  // for safe_strto64, safe_strtof
 
 namespace xsigma
 {
@@ -95,10 +95,39 @@ bool read_int64_from_env_var(std::string_view env_var_name, int64_t default_val,
     {
         return true;
     }
-    if (numbers::safe_strto64(tf_env_var_val, value))
+
+    // Inline safe string to int64 conversion
+    try
     {
-        return true;
+        std::string str(tf_env_var_val);
+        // Trim whitespace
+        size_t start = str.find_first_not_of(" \t\n\r");
+        size_t end   = str.find_last_not_of(" \t\n\r");
+        if (start == std::string::npos)
+        {
+            XSIGMA_LOG_ERROR(
+                "InvalidArgument Failed to parse the env-var {} into int64: {}. Use the default "
+                "value: {}",
+                env_var_name,
+                tf_env_var_val,
+                default_val);
+            return false;
+        }
+        str = str.substr(start, end - start + 1);
+
+        size_t  pos = 0;
+        int64_t val = std::stoll(str, &pos);
+        if (pos == str.length())
+        {
+            *value = val;
+            return true;
+        }
     }
+    catch (...)
+    {
+        // Conversion failed
+    }
+
     XSIGMA_LOG_ERROR(
         "InvalidArgument Failed to parse the env-var {} into int64: {}. Use the default value: {}",
         env_var_name,
@@ -116,10 +145,39 @@ bool read_float_from_env_var(std::string_view env_var_name, float default_val, f
     {
         return true;
     }
-    if (numbers::safe_strtof(tf_env_var_val, value))
+
+    // Inline safe string to float conversion
+    try
     {
-        return true;
+        std::string str(tf_env_var_val);
+        // Trim whitespace
+        size_t start = str.find_first_not_of(" \t\n\r");
+        size_t end   = str.find_last_not_of(" \t\n\r");
+        if (start == std::string::npos)
+        {
+            XSIGMA_LOG_ERROR(
+                "InvalidArgument Failed to parse the env-var {} into float: {}. Use the default "
+                "value: {}",
+                env_var_name,
+                tf_env_var_val,
+                default_val);
+            return false;
+        }
+        str = str.substr(start, end - start + 1);
+
+        size_t pos = 0;
+        float  val = std::stof(str, &pos);
+        if (pos == str.length())
+        {
+            *value = val;
+            return true;
+        }
     }
+    catch (...)
+    {
+        // Conversion failed
+    }
+
     XSIGMA_LOG_ERROR(
         "InvalidArgument Failed to parse the env-var {} into float: {}. Use the default value: {}",
         env_var_name,
@@ -147,9 +205,28 @@ bool read_strings_from_env_var(
     std::string_view env_var_name, std::string_view default_val, std::vector<std::string>& value)
 {
     std::string str_val;
-    XSIGMA_CHECK(read_string_from_env_var(env_var_name, default_val, str_val));
+    XSIGMA_CHECK(
+        read_string_from_env_var(env_var_name, default_val, str_val),
+        "Failed to read string from env var: {}",
+        env_var_name);
 
-    value = split_string(str_val, {','});
+    // Inline string splitting by comma
+    value.clear();
+    if (!str_val.empty())
+    {
+        std::istringstream iss(str_val);
+        std::string        token;
+        while (std::getline(iss, token, ','))
+        {
+            // Trim whitespace from token
+            size_t start = token.find_first_not_of(" \t\n\r");
+            size_t end   = token.find_last_not_of(" \t\n\r");
+            if (start != std::string::npos)
+            {
+                value.push_back(token.substr(start, end - start + 1));
+            }
+        }
+    }
 
     return true;
 }

@@ -41,7 +41,6 @@
 # =============================================================================
 
 # Syntax errors from complex macro combinations
-syntaxError:Library/Core/util/timer_log.h:87
 syntaxError:Library/Core/util/logging.h:155
 
 # =============================================================================

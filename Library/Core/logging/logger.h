@@ -421,7 +421,7 @@ private:
                   xsigma::logger_verbosity_enum::VERBOSITY_##verbosity_name, \
                   __FILE__,                                                  \
                   __LINE__,                                                  \
-                  "{}",                                                      \
+                  "%s",                                                      \
                   __func__)
 
 /**

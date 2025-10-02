@@ -49,10 +49,38 @@
 #include "experimental/profiler/traceme.h"
 #include "util/exception.h"
 #include "util/flat_hash.h"
-#include "util/strcat.h"
+#include "util/string_util.h"
 
 namespace xsigma
 {
+
+// Helper function to format bytes in human-readable format (IEC 60027-2 binary prefixes)
+// Inline implementation to avoid adding to string_util.h
+static std::string format_human_readable_bytes(int64_t bytes)
+{
+    if (bytes < 0)
+    {
+        return "-" + format_human_readable_bytes(-bytes);
+    }
+    if (bytes < 1024)
+    {
+        return std::to_string(bytes) + "B";
+    }
+    const char*  units[]    = {"KiB", "MiB", "GiB", "TiB", "PiB"};
+    const double divisors[] = {
+        1024.0, 1048576.0, 1073741824.0, 1099511627776.0, 1125899906842624.0};
+    for (int i = 4; i >= 0; --i)
+    {
+        if (bytes >= divisors[i])
+        {
+            std::ostringstream oss;
+            oss << std::fixed << std::setprecision(2) << (bytes / divisors[i]) << units[i];
+            return oss.str();
+        }
+    }
+    return std::to_string(bytes) + "B";
+}
+
 class MemAllocatorStats
 {
 public:
@@ -253,7 +281,7 @@ allocator_bfc::allocator_bfc(
     {
         size_t bin_size = BinNumToSize(b);
         XSIGMA_LOG_INFO_DEBUG(
-            "Creating bin of max chunk size {}", numbers::HumanReadableNumBytes(bin_size));
+            "Creating bin of max chunk size {}", format_human_readable_bytes(bin_size));
         new (BinFromIndex(b)) Bin(this, bin_size);
         XSIGMA_CHECK(BinForSize(bin_size) == BinFromIndex(b));
         XSIGMA_CHECK(BinForSize(bin_size + 255) == BinFromIndex(b));
@@ -350,7 +378,7 @@ bool allocator_bfc::Extend(size_t alignment, size_t rounded_bytes)
 
     XSIGMA_LOG_INFO_DEBUG(
         "Extending allocation by {} bytes for {}",
-        numbers::HumanReadableNumBytes(bytes_received),
+        format_human_readable_bytes(bytes_received),
         Name());
 
     stats_.pool_bytes.fetch_add(bytes_received, std::memory_order_relaxed);
@@ -366,7 +394,7 @@ bool allocator_bfc::Extend(size_t alignment, size_t rounded_bytes)
 
     XSIGMA_LOG_INFO_DEBUG(
         "Total allocated bytes: {}",
-        numbers::HumanReadableNumBytes(stats_.pool_bytes.load(std::memory_order_relaxed)));
+        format_human_readable_bytes(stats_.pool_bytes.load(std::memory_order_relaxed)));
 
     XSIGMA_LOG_INFO_DEBUG(
         "Allocated memory at {} to {}",
@@ -520,7 +548,7 @@ void* allocator_bfc::allocate_raw(
                         "Allocator ({}) ran out of memory trying to allocate {} with "
                         "freed_by_count={}.{}",
                         Name(),
-                        numbers::HumanReadableNumBytes(num_bytes),
+                        format_human_readable_bytes(num_bytes),
                         freed_by_count,
                         (!allocation_attr.retry_on_failure
                              ? " The caller indicates that this is not a failure, but"
@@ -738,7 +766,7 @@ void* allocator_bfc::AllocateRawInternal(
             "improve the situation. \nCurrent allocation summary follows."
             "\nCurrent allocation summary follows.",
             Name(),
-            numbers::HumanReadableNumBytes(num_bytes),
+            format_human_readable_bytes(num_bytes),
             rounded_bytes);
 
         DumpMemoryLog(rounded_bytes);
@@ -1419,9 +1447,9 @@ void allocator_bfc::DumpMemoryLog(size_t num_bytes)
             b->bin_size,
             bin_info.total_chunks_in_bin,
             bin_info.total_chunks_in_use,
-            numbers::HumanReadableNumBytes(bin_info.total_bytes_in_bin),
-            numbers::HumanReadableNumBytes(bin_info.total_bytes_in_use),
-            numbers::HumanReadableNumBytes(bin_info.total_requested_bytes_in_use));
+            format_human_readable_bytes(bin_info.total_bytes_in_bin),
+            format_human_readable_bytes(bin_info.total_bytes_in_use),
+            format_human_readable_bytes(bin_info.total_requested_bytes_in_use));
     }
 
     // Find the bin that we would have liked to allocate in, so we
@@ -1430,8 +1458,8 @@ void allocator_bfc::DumpMemoryLog(size_t num_bytes)
 
     XSIGMA_LOG_INFO(
         "Bin for {} was {}, Chunk State: ",
-        numbers::HumanReadableNumBytes(num_bytes),
-        numbers::HumanReadableNumBytes(b->bin_size));
+        format_human_readable_bytes(num_bytes),
+        format_human_readable_bytes(b->bin_size));
 
     for (ChunkHandle h : b->free_chunks)
     {
@@ -1453,16 +1481,16 @@ void allocator_bfc::DumpMemoryLog(size_t num_bytes)
             {
                 in_use_by_size[c->size]++;
             }
-            std::string buf = strings::StrCat(
+            std::string buf = strings::str_cat(
                 (c->in_use() ? "InUse" : "Free "),
-                " at ",
-                strings::Hex(reinterpret_cast<uint64_t>(c->ptr)),
+                " at 0x",
+                strings::format_hex(reinterpret_cast<uint64_t>(c->ptr)),
                 " of size ",
                 c->size);
 #ifdef XSIGMA_MEM_DEBUG
             if (ShouldRecordOpName())
             {
-                std::strings::StrAppend(
+                strings::str_append(
                     &buf,
                     " by op ",
                     c->op_name,
@@ -1472,10 +1500,10 @@ void allocator_bfc::DumpMemoryLog(size_t num_bytes)
                     c->step_id);
             }
 #endif
-            strings::StrAppend(&buf, " next ", c->next);
+            strings::str_append(&buf, " next ", c->next);
             if (timing_counter_)
             {
-                strings::StrAppend(&buf, " freed_at_count ", c->freed_at_count);
+                strings::str_append(&buf, " freed_at_count ", c->freed_at_count);
             }
             XSIGMA_LOG_INFO("{}", buf);
             h = c->next;
@@ -1490,10 +1518,10 @@ void allocator_bfc::DumpMemoryLog(size_t num_bytes)
             "{} Chunks of size {} totalling {}",
             it.second,
             it.first,
-            numbers::HumanReadableNumBytes(it.first * it.second));
+            format_human_readable_bytes(it.first * it.second));
         total_bytes += (it.first * it.second);
     }
-    XSIGMA_LOG_INFO("Sum Total of in-use chunks: {}", numbers::HumanReadableNumBytes(total_bytes));
+    XSIGMA_LOG_INFO("Sum Total of in-use chunks: {}", format_human_readable_bytes(total_bytes));
     XSIGMA_LOG_INFO(
         "Total bytes in pool: {} memory_limit_: {} available bytes: {} "
         "curr_region_allocation_bytes_: {}",
@@ -1511,7 +1539,7 @@ void allocator_bfc::MaybeWriteMemoryMap()
     if (gpu_memory_map_file != nullptr)
     {
         std::unique_ptr<WritableFile> dump_file;
-        std::string                   file_name = std::strings::StrCat(
+        std::string                   file_name = strings::str_cat(
             gpu_memory_map_file, "_", Name(), ".", Env::Default()->NowMicros());
         std::Status status = Env::Default()->NewWritableFile(file_name, &dump_file);
         if (!status.ok())

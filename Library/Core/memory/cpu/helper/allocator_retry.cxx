@@ -46,8 +46,8 @@ public:
     XSIGMA_DELETE_COPY(scoped_time_tracker);
 
     scoped_time_tracker()                                 = default;
-    scoped_time_tracker(scoped_time_tracker&&)            = default;
-    scoped_time_tracker& operator=(scoped_time_tracker&&) = default;
+    scoped_time_tracker(scoped_time_tracker&&)            = delete;
+    scoped_time_tracker& operator=(scoped_time_tracker&&) = delete;
 
     // Start tracking time if not already tracking
     void enable()

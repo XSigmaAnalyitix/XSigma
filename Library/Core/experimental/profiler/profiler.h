@@ -54,10 +54,8 @@
 #include <unordered_map>
 #include <vector>
 
-
 #include "experimental/profiler/profiler_interface.h"
 #include "experimental/profiler/traceme.h"
-#include "util/timer_log.h"
 
 namespace xsigma
 {

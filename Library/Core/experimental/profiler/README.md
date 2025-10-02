@@ -216,17 +216,6 @@ The Enhanced Profiler is designed for minimal overhead:
 
 The profiler integrates seamlessly with existing XSigma components:
 
-### With timer_log
-```cpp
-// Enhanced profiler can work alongside existing timer_log
-timer_log::MarkStartEvent("legacy_timing");
-{
-    XSIGMA_PROFILE_SCOPE("enhanced_timing");
-    // Your code here
-}
-timer_log::MarkEndEvent("legacy_timing");
-```
-
 ### With TraceMe
 ```cpp
 // Enhanced profiler builds on TraceMe infrastructure

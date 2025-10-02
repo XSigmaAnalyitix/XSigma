@@ -602,7 +602,6 @@ void test_basic_cuda_memory()
 {
     XSIGMA_LOG_INFO("Testing basic CUDA memory operations...");
     {
-#if defined(XSIGMA_ENABLE_CUDA)
         // Test basic CUDA memory allocation
         const size_t size   = 1024;
         float*       d_data = nullptr;
@@ -642,7 +641,6 @@ void test_basic_cuda_memory()
         EXPECT_EQ(cudaSuccess, err);
 
         XSIGMA_LOG_INFO("Basic CUDA memory operations completed successfully");
-#endif
     }
 }
 
@@ -1001,7 +999,6 @@ void test_updated_allocator_integration()
         // Test 1: Direct CUDA allocation (replacing gpu_allocator)
         XSIGMA_LOG_INFO("Testing direct CUDA allocation...");
         {
-#ifdef XSIGMA_ENABLE_CUDA
             // Test direct GPU allocation using CUDA
             float*       gpu_ptr = nullptr;
             const size_t count   = 1000;
@@ -1024,9 +1021,6 @@ void test_updated_allocator_integration()
                     "Direct CUDA allocation failed or returned nullptr (expected if no GPU "
                     "available)");
             }
-#else
-            XSIGMA_LOG_INFO("CUDA not enabled, skipping direct CUDA allocation test");
-#endif
         }
 
         // Test 2: Main allocator template with GPU support
@@ -1141,7 +1135,6 @@ void test_gpu_allocator_comprehensive()
 {
     XSIGMA_LOG_INFO("Testing direct CUDA allocation functionality (replacing gpu_allocator)...");
 
-#ifdef XSIGMA_ENABLE_CUDA
     // Test 1: Basic allocation and deallocation
     XSIGMA_LOG_INFO("Testing basic allocation/deallocation...");
     {
@@ -1182,11 +1175,7 @@ void test_gpu_allocator_comprehensive()
             XSIGMA_LOG_INFO("Different data types test passed");
         }
     }
-#else
-    XSIGMA_LOG_INFO("CUDA not enabled, skipping direct CUDA allocation tests");
-#endif
 
-#ifdef XSIGMA_ENABLE_CUDA
     // Test 3: Large allocations
     XSIGMA_LOG_INFO("Testing large allocations...");
     {
@@ -1242,7 +1231,6 @@ void test_gpu_allocator_comprehensive()
         }
         XSIGMA_LOG_INFO("Zero-size allocation test passed");
     }
-#endif
 
     XSIGMA_LOG_INFO("Direct CUDA allocation tests completed successfully");
 }
@@ -1810,14 +1798,13 @@ DetailedBenchmarkResult benchmark_gpu_pool_allocation_detailed(const BenchmarkCo
             size_t count = config.allocation_size / sizeof(float);
             // Direct CUDA allocation (gpu_allocator removed)
             float* ptr = nullptr;
-#ifdef XSIGMA_ENABLE_CUDA
+
             cudaError_t result = cudaMalloc(reinterpret_cast<void**>(&ptr), count * sizeof(float));
             if (result == cudaSuccess && ptr)
             {
                 ptrs.push_back(ptr);
                 cudaFree(ptr);
             }
-#endif
 
             auto end_time = std::chrono::high_resolution_clock::now();
             auto duration =
@@ -2547,7 +2534,6 @@ void test_gpu_memory_error_handling()
         XSIGMA_LOG_INFO("Testing invalid device indices...");
         {
             // Test negative device index - should handle gracefully with direct CUDA
-#ifdef XSIGMA_ENABLE_CUDA
             float*      ptr1   = nullptr;
             cudaError_t result = cudaSetDevice(-1);
             if (result != cudaSuccess)
@@ -2579,7 +2565,6 @@ void test_gpu_memory_error_handling()
             {
                 EXPECT_TRUE(true);  // Large device index correctly rejected
             }
-#endif
 
             XSIGMA_LOG_INFO("Invalid device indices test completed");
         }
@@ -2588,7 +2573,7 @@ void test_gpu_memory_error_handling()
         XSIGMA_LOG_INFO("Testing extremely large allocations...");
         {
             const size_t huge_size = SIZE_MAX / sizeof(float) / 2;  // Half of max possible
-#ifdef XSIGMA_ENABLE_CUDA
+
             float*      ptr = nullptr;
             cudaError_t result =
                 cudaMalloc(reinterpret_cast<void**>(&ptr), huge_size * sizeof(float));
@@ -2604,8 +2589,6 @@ void test_gpu_memory_error_handling()
                     "Large allocation correctly failed with CUDA error: {}",
                     cudaGetErrorString(result));
             }
-#endif
-
             XSIGMA_LOG_INFO("Extremely large allocations test completed");
         }
 
@@ -2613,18 +2596,17 @@ void test_gpu_memory_error_handling()
         XSIGMA_LOG_INFO("Testing null pointer deallocation...");
         {
             // Should not crash with direct CUDA
-#ifdef XSIGMA_ENABLE_CUDA
+
             cudaError_t result = cudaFree(nullptr);
             // cudaFree(nullptr) is safe and returns cudaSuccess
             EXPECT_EQ(result, cudaSuccess);
-#endif
+
             XSIGMA_LOG_INFO("Null pointer deallocation test completed");
         }
 
         // Test 4: Single deallocation validation (double deallocation test disabled due to crash)
         XSIGMA_LOG_INFO("Testing single deallocation validation...");
         {
-#ifdef XSIGMA_ENABLE_CUDA
             float*      ptr    = nullptr;
             cudaError_t result = cudaMalloc(reinterpret_cast<void**>(&ptr), 1000 * sizeof(float));
             if (result == cudaSuccess && ptr)
@@ -2635,7 +2617,6 @@ void test_gpu_memory_error_handling()
                 // Direct CUDA calls handle double deallocation more gracefully
                 XSIGMA_LOG_INFO("Single deallocation validation completed");
             }
-#endif
         }
 
         // Test 5: Memory pool configuration edge cases
@@ -2663,7 +2644,6 @@ void test_gpu_memory_error_handling()
             std::vector<float*> ptrs;
             const size_t        num_allocs = 50;
 
-#ifdef XSIGMA_ENABLE_CUDA
             for (size_t i = 0; i < num_allocs; ++i)
             {
                 float*      ptr = nullptr;
@@ -2687,7 +2667,6 @@ void test_gpu_memory_error_handling()
             {
                 cudaFree(ptr);
             }
-#endif
 
             XSIGMA_LOG_INFO("Resource tracker stress test completed");
         }
@@ -2742,7 +2721,7 @@ void test_gpu_memory_alignment_comprehensive()
 
                 // Test allocation with direct CUDA (alignment handled by CUDA runtime)
                 float* ptr = nullptr;
-#ifdef XSIGMA_ENABLE_CUDA
+
                 cudaError_t result =
                     cudaMalloc(reinterpret_cast<void**>(&ptr), 1000 * sizeof(float));
 
@@ -2774,9 +2753,6 @@ void test_gpu_memory_alignment_comprehensive()
                         test.name,
                         cudaGetErrorString(result));
                 }
-#else
-                XSIGMA_LOG_INFO("{} allocation skipped (CUDA not available)", test.name);
-#endif
             }
 
             XSIGMA_LOG_INFO("Different allocator alignments test completed");
@@ -2787,13 +2763,15 @@ void test_gpu_memory_alignment_comprehensive()
 }
 
 }  // namespace
+#endif
 
 XSIGMATEST(Core, GPUMemory)
 {
     START_LOG_TO_FILE_NAME(GPUMemory);
 
-    XSIGMA_LOG_INFO("Starting comprehensive Memory Management tests...");
+#ifdef XSIGMA_ENABLE_CUDA
 
+    XSIGMA_LOG_INFO("Starting comprehensive Memory Management tests...");
     // Test CPU allocator functionality (always available)
     test_cpu_allocator_basic();
     test_cpu_allocator_alignment();
@@ -2924,13 +2902,8 @@ XSIGMATEST(Core, GPUMemory)
     XSIGMA_LOG_INFO("Executed performance benchmarks for allocation and transfer operations!");
     XSIGMA_LOG_INFO("Tested error handling, edge cases, and alignment optimizations!");
     XSIGMA_LOG_INFO("Memory management system is ready for production use!");
-
     END_LOG_TO_FILE_NAME(GPUMemory);
-    END_TEST();
-}
-#else
-XSIGMATEST(Core, GPUMemory)
-{
-    END_TEST();
-}
+
 #endif
+    END_TEST();
+}

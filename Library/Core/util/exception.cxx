@@ -159,14 +159,12 @@ exception::exception(
 }
 
 //-----------------------------------------------------------------------------
-exception::exception(SourceLocation source_location, std::string msg, exception_category category)
+exception::exception(source_location source_location, std::string msg, exception_category category)
     : exception(
           std::move(msg),
-          xsigma::to_string(
-              "Exception raised from ",
-              source_location,
-              " (most recent call first):\n",
-              (*GetFetchStackTrace())()),
+          std::string("Exception raised from ") + std::string(source_location.function) + " at " +
+              std::string(source_location.file) + ":" + std::to_string(source_location.line) +
+              " (most recent call first):\n" + (*GetFetchStackTrace())(),
           nullptr,
           category)
 {
@@ -174,17 +172,15 @@ exception::exception(SourceLocation source_location, std::string msg, exception_
 
 //-----------------------------------------------------------------------------
 exception::exception(
-    SourceLocation             source_location,
+    source_location            source_location,
     std::string                msg,
     std::shared_ptr<exception> nested,
     exception_category         category)
     : msg_(std::move(msg)),
       backtrace_(
-          xsigma::to_string(
-              "Exception raised from ",
-              source_location,
-              " (most recent call first):\n",
-              (*GetFetchStackTrace())())),
+          std::string("Exception raised from ") + std::string(source_location.function) + " at " +
+          std::string(source_location.file) + ":" + std::to_string(source_location.line) +
+          " (most recent call first):\n" + (*GetFetchStackTrace())()),
       caller_(nullptr),
       nested_exception_(std::move(nested)),
       category_(category)
