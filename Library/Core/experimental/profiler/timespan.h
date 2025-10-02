@@ -37,7 +37,7 @@ limitations under the License.
 #include <string>
 
 #include "logging/logger.h"
-#include "util/strcat.h"
+#include "util/string_util.h"
 
 namespace xsigma
 {
@@ -131,7 +131,7 @@ public:
     // Returns a string that shows the begin and end times.
     std::string debug_string() const
     {
-        return strings::StrCat("[", begin_ps(), ", ", end_ps(), "]");
+        return strings::str_cat("[", begin_ps(), ", ", end_ps(), "]");
     }
 
     // Compares timespans by their duration_ps (ascending), begin time

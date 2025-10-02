@@ -1,6 +1,4 @@
-#ifndef __cpu_info_h__
-#define __cpu_info_h__
-
+#pragma once
 
 #include "common/macros.h"
 
@@ -17,5 +15,3 @@ public:
         std::ptrdiff_t& l1, std::ptrdiff_t& l2, std::ptrdiff_t& l3, std::ptrdiff_t& l3_count);
 };
 }  // namespace xsigma
-
-#endif

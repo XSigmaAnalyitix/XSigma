@@ -41,7 +41,7 @@
 #include "memory/cpu/allocator_tracking.h"
 #include "memory/cpu/helper/allocator_registry.h"
 #include "util/exception.h"
-#include "util/strcat.h"
+#include "util/string_util.h"
 
 namespace xsigma
 {
@@ -59,7 +59,7 @@ process_state::process_state() : numa_enabled_(false), cpu_allocators_cached_(0)
 
 std::string process_state::MemDesc::debug_string() const
 {
-    return strings::StrCat(
+    return strings::str_cat(
         (loc == CPU ? "CPU " : "GPU "),
         dev_index,
         ", dma: ",

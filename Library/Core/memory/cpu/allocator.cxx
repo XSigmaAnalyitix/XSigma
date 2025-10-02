@@ -32,7 +32,7 @@
 
 #include "memory/cpu/allocator_tracking.h"         // for allocator_tracking
 #include "memory/cpu/helper/allocator_registry.h"  // for allocator_factory_registry, process_st...
-#include "util/strcat.h"                           // for StrCat
+#include "util/string_util.h"                      // for str_cat
 
 namespace xsigma
 {
@@ -56,7 +56,7 @@ bool CPUAllocatorFullStatsEnabled()
 
 std::string allocator_attributes::debug_string() const
 {
-    return xsigma::strings::StrCat(
+    return xsigma::strings::str_cat(
         "allocator_attributes(on_host=",
         on_host(),
         " nic_compatible=",

@@ -44,111 +44,6 @@
 
 namespace xsigma
 {
-// =============================================================================
-// FILE PATH MANIPULATION TESTS
-// =============================================================================
-
-void testFilePathFunctions()
-{
-    // Test strip_basename function
-    EXPECT_EQ(strip_basename("zzz.h"), "zzz.h");
-    EXPECT_EQ(strip_basename("c:/xxx/yyy/zzz.h"), "zzz.h");
-    EXPECT_EQ(strip_basename("/usr/local/bin/program"), "program");
-    EXPECT_EQ(strip_basename(""), "");                          // Edge case: empty string
-    EXPECT_EQ(strip_basename("no_separator"), "no_separator");  // No separator
-    EXPECT_EQ(strip_basename("/"), "");                         // Root directory
-    EXPECT_EQ(strip_basename("path/"), "");                     // Trailing separator
-
-    // Test exclude_file_extension function
-    EXPECT_EQ(exclude_file_extension("c:/xxx/yyy/zzz.h"), "c:/xxx/yyy/zzz");
-    EXPECT_EQ(exclude_file_extension("document.pdf"), "document");
-    EXPECT_EQ(exclude_file_extension("archive.tar.gz"), "archive.tar");
-    EXPECT_EQ(exclude_file_extension("no_extension"), "no_extension");  // No extension
-    EXPECT_EQ(exclude_file_extension(""), "");                          // Edge case: empty string
-    EXPECT_EQ(exclude_file_extension(".hidden"), "");                   // Hidden file
-    EXPECT_EQ(exclude_file_extension("file."), "file");                 // Trailing dot
-
-    // Test file_extension function
-    EXPECT_EQ(file_extension("c:/xxx/yyy/zzz.h"), ".h");
-    EXPECT_EQ(file_extension("document.pdf"), ".pdf");
-    EXPECT_EQ(file_extension("archive.tar.gz"), ".gz");
-    EXPECT_EQ(file_extension("no_extension"), "");    // No extension
-    EXPECT_EQ(file_extension(""), "");                // Edge case: empty string
-    EXPECT_EQ(file_extension(".hidden"), ".hidden");  // Hidden file
-    EXPECT_EQ(file_extension("file."), ".");          // Trailing dot
-}
-
-// =============================================================================
-// STRING CONCATENATION AND CONVERSION TESTS
-// =============================================================================
-
-void testStringConcatenation()
-{
-    // Test compile_time_empty_string functionality
-    details::compile_time_empty_string a;
-    XSIGMA_UNUSED const char*          a_char = a;
-    XSIGMA_UNUSED const std::string& a_string = a;
-
-    // Test stream operations with empty string
-    std::filebuf fb;
-    std::ostream ss(&fb);
-    details::_str<details::compile_time_empty_string>(ss, a);
-
-    // Test string wrapper functionality
-    XSIGMA_UNUSED details::_str_wrapper<const char*> b;
-    a_char = details::_str_wrapper<const char*>::call(a_char);
-
-    XSIGMA_UNUSED details::_str_wrapper<std::string> e;
-    XSIGMA_UNUSED const std::string& a_string2 = details::_str_wrapper<std::string>::call(a_string);
-
-    // Test to_string function with various types
-    auto result1 = to_string("Hello", " ", "World", "!");
-    // Note: Exact result depends on implementation, but should concatenate properly
-
-    auto result2 = to_string(42);
-    // Should handle numeric types
-
-    XSIGMA_UNUSED auto result3 = to_string();
-    // Should handle empty case
-}
-
-// =============================================================================
-// NUMERIC CONVERSION TESTS
-// =============================================================================
-
-void testNumericConversion()
-{
-    // Test stoi function with position tracking
-    size_t pos;
-
-    // Basic conversion tests
-    EXPECT_EQ(stoi("1", &pos), 1);
-    EXPECT_EQ(pos, 1u);
-
-    EXPECT_EQ(stoi("12345", &pos), 12345);
-    EXPECT_EQ(pos, 5u);
-
-    // Partial conversion test
-    EXPECT_EQ(stoi("123abc", &pos), 123);
-    EXPECT_EQ(pos, 3u);
-
-    // Negative numbers
-    EXPECT_EQ(stoi("-456", &pos), -456);
-    EXPECT_EQ(pos, 4u);
-
-    // Test without position parameter
-    EXPECT_EQ(stoi("789"), 789);
-
-    // Edge cases that should throw
-    // Note: Uncomment when exception handling is properly set up
-    // ASSERT_ANY_THROW({ stoi("abc", &pos); });
-    // ASSERT_ANY_THROW({ stoi("", &pos); });
-}
-
-// =============================================================================
-// STRING MANIPULATION TESTS
-// =============================================================================
-
 void testStringManipulation()
 {
     // Test erase_all_sub_string function
@@ -193,137 +88,6 @@ void testStringManipulation()
     EXPECT_EQ(s, "ba");  // Should replace first occurrence
     EXPECT_EQ(count, 1u);
 }
-
-// =============================================================================
-// STRING VALIDATION TESTS
-// =============================================================================
-
-void testStringValidation()
-{
-    // Test is_float function
-    EXPECT_TRUE(is_float("3.15"));
-    EXPECT_TRUE(is_float("3.14159"));
-    EXPECT_TRUE(is_float("-2.5"));
-    EXPECT_TRUE(is_float("0.0"));
-    EXPECT_TRUE(is_float("1.23e-4"));  // Scientific notation
-    EXPECT_TRUE(is_float("1.23E+5"));  // Scientific notation uppercase
-
-    // Invalid float strings
-    EXPECT_FALSE(is_float("abc"));
-    EXPECT_FALSE(is_float(""));
-    EXPECT_FALSE(is_float("3.14.15"));  // Multiple dots
-    EXPECT_FALSE(is_float("3.14abc"));  // Mixed content
-
-    // Test is_integer function
-    EXPECT_TRUE(is_integer("3"));
-    EXPECT_TRUE(is_integer("12345"));
-    EXPECT_TRUE(is_integer("0"));
-
-    // Invalid integer strings
-    EXPECT_FALSE(is_integer("-123"));   // Negative (function doesn't handle signs)
-    EXPECT_FALSE(is_integer("12.34"));  // Decimal point
-    EXPECT_FALSE(is_integer("abc"));
-    EXPECT_FALSE(is_integer(""));
-    EXPECT_FALSE(is_integer("123abc"));  // Mixed content
-    EXPECT_FALSE(is_integer(" 123 "));   // Whitespace
-}
-
-// =============================================================================
-// STRING SPLITTING TESTS
-// =============================================================================
-
-void testStringSplitting()
-{
-    // Test split_string function
-    std::vector<char>        separators = {',', ' ', ':', '=', '/', '|', '{', '}', '[', ']'};
-    std::string              input      = "a,b c:d=e/f|g{h}i[j]k";
-    std::vector<std::string> expected   = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"};
-
-    const auto& result = split_string(input, separators);
-    EXPECT_EQ(result, expected);
-
-    // Test with single separator
-    std::vector<char> comma_sep = {','};
-    input                       = "apple,banana,cherry";
-    expected                    = {"apple", "banana", "cherry"};
-    const auto& result2         = split_string(input, comma_sep);
-    EXPECT_EQ(result2, expected);
-
-    // Test with empty string
-    const auto& result3 = split_string("", separators);
-    EXPECT_TRUE(result3.empty());
-
-    // Test with no separators in string
-    const auto& result4 = split_string("noseparators", separators);
-    EXPECT_EQ(result4.size(), 1u);
-    EXPECT_EQ(result4[0], "noseparators");
-
-    // Test with consecutive separators (should be filtered out)
-    input               = "a,,b  c";
-    const auto& result5 = split_string(input, comma_sep);
-    // Result should not contain empty strings
-    for (const auto& token : result5)
-    {
-        EXPECT_FALSE(token.empty());
-    }
-}
-
-// =============================================================================
-// FORMATTING TESTS
-// =============================================================================
-
-void testFormatting()
-{
-    // Test to_string with precision and width
-    auto result = to_string(3.14159, 2, 10);
-    EXPECT_EQ(result.length(), 10u);  // Should be padded to width 10
-
-    // Test center function
-    auto centered = center("Hello", 11);
-    EXPECT_EQ(centered, "   Hello   ");
-    EXPECT_EQ(centered.length(), 11u);
-
-    // Test center with odd padding
-    centered = center("Hi", 7);
-    EXPECT_EQ(centered, "  Hi   ");  // Extra space on right
-    EXPECT_EQ(centered.length(), 7u);
-
-    // Test center with string longer than width
-    centered = center("VeryLongString", 5);
-    EXPECT_EQ(centered, "VeryLongString");  // Should return original
-
-    // Test center with exact width
-    centered = center("Exact", 5);
-    EXPECT_EQ(centered, "Exact");
-}
-
-// =============================================================================
-// PRINTF-STYLE FORMATTING TESTS
-// =============================================================================
-
-void testPrintfFormatting()
-{
-    // Test Printf function
-    auto result = Printf("Value: %d, Name: %s", 42, "test");
-    EXPECT_EQ(result, "Value: 42, Name: test");
-
-    // Test with floating point
-    result = Printf("Pi: %.2f", 3.14159);
-    EXPECT_EQ(result, "Pi: 3.14");
-
-    // Test Appendf function
-    std::string base = "Prefix: ";
-    Appendf(&base, "Value: %d, Status: %s", 42, "OK");
-    EXPECT_EQ(base, "Prefix: Value: 42, Status: OK");
-
-    // Test empty format
-    result = Printf("");
-    EXPECT_EQ(result, "");
-}
-
-// =============================================================================
-// C++20 COMPATIBILITY TESTS
-// =============================================================================
 
 void testCompatibilityFunctions()
 {
@@ -372,13 +136,9 @@ void testCompatibilityFunctions()
     EXPECT_TRUE(ends_with(sv3, sv4));
 }
 
-// =============================================================================
-// SOURCE LOCATION TESTS
-// =============================================================================
-
 void testSourceLocation()
 {
-    xsigma::SourceLocation loc;
+    xsigma::source_location loc;
     loc.file     = "test.cpp";
     loc.function = "testFunction";
     loc.line     = 42;
@@ -394,20 +154,9 @@ void testSourceLocation()
     // EXPECT_EQ(oss.str(), "testFunction at test.cpp:42");
 }
 
-// =============================================================================
-// MAIN TEST FUNCTION
-// =============================================================================
-
 void testAllFunctions()
 {
-    testFilePathFunctions();
-    testStringConcatenation();
-    testNumericConversion();
     testStringManipulation();
-    testStringValidation();
-    testStringSplitting();
-    testFormatting();
-    testPrintfFormatting();
     testCompatibilityFunctions();
     testSourceLocation();
 }

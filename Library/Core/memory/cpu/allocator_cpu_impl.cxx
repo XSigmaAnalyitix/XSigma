@@ -40,7 +40,7 @@
 #include "memory/cpu/helper/allocator_registry.h"
 #include "memory/cpu/helper/mem.h"
 #include "memory/cpu/helper/memory_allocator.h"
-#include "util/strcat.h"
+//#include "util/strcat.h"
 
 namespace xsigma
 {

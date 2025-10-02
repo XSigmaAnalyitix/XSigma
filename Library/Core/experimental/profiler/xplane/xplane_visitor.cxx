@@ -41,7 +41,7 @@ limitations under the License.
 #include "experimental/profiler/xplane/xplane.h"
 #include "logging/logger.h"
 #include "util/flat_hash.h"
-#include "util/strcat.h"
+#include "util/string_util.h"
 
 namespace xsigma
 {
@@ -68,11 +68,11 @@ std::string x_stat_visitor::to_string() const
     switch (stat_->value_case())
     {
     case xstat::value_case_type::kInt64Value:
-        return strings::StrCat(stat_->int64_value());
+        return std::to_string(stat_->int64_value());
     case xstat::value_case_type::kUint64Value:
-        return strings::StrCat(stat_->uint64_value());
+        return std::to_string(stat_->uint64_value());
     case xstat::value_case_type::kDoubleValue:
-        return strings::StrCat(stat_->double_value());
+        return std::to_string(stat_->double_value());
     case xstat::value_case_type::kStrValue:
         return stat_->str_value();
     case xstat::value_case_type::kBytesValue:
@@ -135,7 +135,7 @@ void xplane_visitor::build_event_type_map(
             std::optional<int64_t> event_type = event_type_getter(metadata.name());
             if (event_type.has_value())
             {
-                auto result = event_type_by_id_.emplace(metadata_id, *event_type);
+                [[maybe_unused]] auto result = event_type_by_id_.emplace(metadata_id, *event_type);
                 XSIGMA_CHECK_DEBUG(result.second);  // inserted
                 break;
             }
@@ -174,7 +174,7 @@ void xplane_visitor::build_stat_type_map(
             std::optional<int64_t> stat_type = stat_type_getter(metadata.name());
             if (stat_type.has_value())
             {
-                auto result = stat_type_by_id_.emplace(metadata_id, *stat_type);
+                [[maybe_unused]] auto result = stat_type_by_id_.emplace(metadata_id, *stat_type);
                 XSIGMA_CHECK_DEBUG(result.second);  // inserted
                 stat_metadata_by_type_.emplace(*stat_type, &metadata);
                 break;

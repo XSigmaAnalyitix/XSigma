@@ -141,7 +141,7 @@ public:
     ~blocked_queue_base()
     {
         clear();
-        XSIGMA_CHECK_DEBUG(empty());
+        XSIGMA_CHECK_DEBUG(empty(), "Queue is not empty in destructor");
         delete end_block_;
     }
 
@@ -193,7 +193,8 @@ protected:
     // REQUIRES: The queue must not be empty.
     T pop_impl()
     {
-        XSIGMA_CHECK_DEBUG(!empty());
+        XSIGMA_CHECK_DEBUG(!empty(), "Queue is empty in pop_impl");
+
         // Move the next element into the output.
         auto& slot    = start_block_->slots[start_++ - start_block_->start];
         T     element = std::move(slot).consume();
@@ -203,7 +204,8 @@ protected:
         {
             auto* old_block = std::exchange(start_block_, start_block_->next);
             delete old_block;
-            XSIGMA_CHECK_DEBUG(start_ == start_block_->start);
+            XSIGMA_CHECK_DEBUG(
+                start_ == start_block_->start, "start_ is not equal to start_block_->start");
         }
         return element;
     }
@@ -254,10 +256,23 @@ public:
 
         T& operator*() const
         {
-            XSIGMA_CHECK_DEBUG(block_ != nullptr);
-            XSIGMA_CHECK_DEBUG(index_ >= block_->start);
-            XSIGMA_CHECK_DEBUG(index_ < block_->start + Block::kNumSlots);
-            XSIGMA_CHECK_DEBUG(index_ < queue_->End());
+            XSIGMA_CHECK_DEBUG(block_ != nullptr, "block_ is nullptr");
+            XSIGMA_CHECK_DEBUG(
+                index_ >= block_->start,
+                "index_ {} is less than block_->start {}",
+                index_,
+                block_->start);
+            XSIGMA_CHECK_DEBUG(
+                index_ < block_->start + Block::kNumSlots,
+                "index_ {} is greater than block_->start{} + Block::kNumSlots{}",
+                index_,
+                block_->start,
+                Block::kNumSlots);
+            XSIGMA_CHECK_DEBUG(
+                index_ < queue_->End(),
+                "index_={} is greater than queue_->End()={}",
+                index_,
+                queue_->End());
             return block_->slots[index_ - block_->start].value;
         }
 
@@ -265,17 +280,21 @@ public:
 
         Iterator& operator++()
         {
-            XSIGMA_CHECK_DEBUG(queue_ != nullptr);
-            XSIGMA_CHECK_DEBUG(block_ != nullptr);
+            XSIGMA_CHECK_DEBUG(queue_ != nullptr, "queue_ is nullptr");
+            XSIGMA_CHECK_DEBUG(block_ != nullptr, "block_ is nullptr");
             if (index_ < queue_->End())
             {
                 ++index_;
                 auto next_block_start = block_->start + Block::kNumSlots;
-                XSIGMA_CHECK_DEBUG(index_ < next_block_start);
+                XSIGMA_CHECK_DEBUG(
+                    index_ < next_block_start,
+                    "index_ {} is greater than next_block_start {}",
+                    index_,
+                    next_block_start);
                 if (index_ == next_block_start)
                 {
                     block_ = block_->next;
-                    XSIGMA_CHECK_DEBUG(block_ != nullptr);
+                    XSIGMA_CHECK_DEBUG(block_ != nullptr, "block_ is nullptr");
                 }
             }
             return (*this);

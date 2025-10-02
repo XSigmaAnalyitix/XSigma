@@ -1,5 +1,4 @@
-#ifndef CORE_BACKTRACE_H
-#define CORE_BACKTRACE_H
+#pragma once
 
 #include <cstddef>
 #include <string>
@@ -22,10 +21,7 @@ struct XSIGMA_VISIBILITY stack_frame
     std::string source_file;           ///< Source file (if available with debug symbols)
     int         source_line;           ///< Source line number (if available)
 
-    stack_frame()
-        : return_address(nullptr), frame_number(0), source_line(-1)
-    {
-    }
+    stack_frame() : return_address(nullptr), frame_number(0), source_line(-1) {}
 };
 
 /**
@@ -33,14 +29,14 @@ struct XSIGMA_VISIBILITY stack_frame
  */
 struct XSIGMA_VISIBILITY backtrace_options
 {
-    size_t frames_to_skip           = 0;     ///< Number of top frames to skip
-    size_t maximum_number_of_frames = 64;    ///< Maximum frames to capture
-    bool   skip_python_frames       = true;  ///< Skip Python interpreter frames
-    bool   include_addresses        = true;  ///< Include memory addresses in output
-    bool   include_offsets          = true;  ///< Include function offsets
-    bool   compact_format           = false; ///< Use compact single-line format
-    bool   resolve_symbols          = true;  ///< Attempt symbol resolution (Windows)
-    bool   include_source_info      = false; ///< Include source file/line (requires debug symbols)
+    size_t frames_to_skip           = 0;      ///< Number of top frames to skip
+    size_t maximum_number_of_frames = 64;     ///< Maximum frames to capture
+    bool   skip_python_frames       = true;   ///< Skip Python interpreter frames
+    bool   include_addresses        = true;   ///< Include memory addresses in output
+    bool   include_offsets          = true;   ///< Include function offsets
+    bool   compact_format           = false;  ///< Use compact single-line format
+    bool   resolve_symbols          = true;   ///< Attempt symbol resolution (Windows)
+    bool   include_source_info      = false;  ///< Include source file/line (requires debug symbols)
 };
 
 /**
@@ -149,5 +145,3 @@ public:
     static bool is_supported();
 };
 }  // namespace xsigma
-
-#endif  // CORE_BACKTRACE_H

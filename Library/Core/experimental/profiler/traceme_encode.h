@@ -41,7 +41,7 @@ limitations under the License.
 #include "common/macros.h"
 #include "logging/logger.h"
 #include "util/exception.h"
-#include "util/strcat.h"
+//#include "util/strcat.h"
 #include "util/string_util.h"
 
 namespace xsigma
@@ -50,15 +50,31 @@ namespace xsigma
 // An argument passed to TraceMeEncode.
 struct TraceMeArg
 {
-    // String conversions of value types are supported via AlphaNum. We keep a
-    // reference to the AlphaNum's internal buffer here, so it must remain valid
-    // for the lifetime of this object. We cannot store it by value because it is
-    // not safe to construct an AlphaNum as a member of a class, particularly when
-    // AbslStringify is being used (it may reference default arguments that are on
-    // the caller's stack, if we constructed it here those default arguments would
-    // be destroyed before they are used).
-    TraceMeArg(std::string_view k, XSIGMA_LIFETIME_BOUND const xsigma::strings::AlphaNum& v)
-        : key(k), value(v.Piece())
+    // String conversions of value types are supported via string_view.
+    // The string_view must remain valid for the lifetime of this object.
+    TraceMeArg(std::string_view k, std::string_view v) : key(k), value(v) {}
+
+    // Constructor for string literals and const char*
+    TraceMeArg(std::string_view k, const char* v) : key(k), value(v ? v : "") {}
+
+    // Constructor for std::string
+    TraceMeArg(std::string_view k, XSIGMA_LIFETIME_BOUND const std::string& v) : key(k), value(v) {}
+
+    // Constructor for numeric types (int, long, uint64_t, double, etc.)
+    // We store the converted string in a member variable to ensure it remains valid
+    template <typename T>
+    TraceMeArg(
+        std::string_view k,
+        T                v,
+        typename std::enable_if<
+            std::is_arithmetic<T>::value && !std::is_same<T, bool>::value>::type* = nullptr)
+        : key(k), value_storage_(std::to_string(v)), value(value_storage_)
+    {
+    }
+
+    // Constructor for bool
+    TraceMeArg(std::string_view k, bool v)
+        : key(k), value_storage_(v ? "true" : "false"), value(value_storage_)
     {
     }
 
@@ -66,6 +82,8 @@ struct TraceMeArg
     void operator=(const TraceMeArg&) = delete;
 
     std::string_view key;
+    // Storage for converted numeric values (must be declared before 'value')
+    std::string      value_storage_;
     std::string_view value;
 };
 
@@ -78,7 +96,9 @@ namespace traceme_internal
 XSIGMA_FORCE_INLINE char* append(char* out, std::string_view str)
 {
     XSIGMA_CHECK_DEBUG(
-        !strings::StrContains(str, '#'), "'#' is not a valid character in trace_me_encode");
+        !strings::str_contains(str, '#'),
+        "'#' is not a valid character in trace_me_encode {}",
+        str);
 
     const size_t str_size = str.size();
     if XSIGMA_LIKELY (str_size > 0)
@@ -113,7 +133,12 @@ XSIGMA_FORCE_INLINE std::string append_args(
             *out++ = ',';
         }
         *(out - 1) = '#';
-        XSIGMA_CHECK_DEBUG(out == begin + new_size);
+        XSIGMA_CHECK_DEBUG(
+            out == begin + new_size,
+            "out={} is not equal to begin={} + new_size={}",
+            out,
+            begin,
+            new_size);
     }
     return name;
 }
@@ -175,17 +200,17 @@ XSIGMA_FORCE_INLINE std::string trace_me_encode(std::initializer_list<TraceMeArg
 // Concatenates op_name and op_type.
 XSIGMA_FORCE_INLINE std::string trace_me_op(std::string_view op_name, std::string_view op_type)
 {
-    return strings::StrCat(op_name, ":", op_type);
+    return strings::str_cat(op_name, ":", op_type);
 }
 
 XSIGMA_FORCE_INLINE std::string trace_me_op(const char* op_name, const char* op_type)
 {
-    return strings::StrCat(op_name, ":", op_type);
+    return strings::str_cat(op_name, ":", op_type);
 }
 
 XSIGMA_FORCE_INLINE std::string trace_me_op(std::string&& op_name, std::string_view op_type)
 {
-    strings::StrAppend(&op_name, ":", op_type);
+    strings::str_append(&op_name, ":", op_type);
     return op_name;
 }
 
@@ -193,12 +218,12 @@ XSIGMA_FORCE_INLINE std::string trace_me_op(std::string&& op_name, std::string_v
 XSIGMA_FORCE_INLINE std::string trace_me_op_override(
     std::string_view op_name, std::string_view op_type)
 {
-    return strings::StrCat("#tf_op=", op_name, ":", op_type, "#");
+    return strings::str_cat("#tf_op=", op_name, ":", op_type, "#");
 }
 
 XSIGMA_FORCE_INLINE std::string trace_me_op_override(const char* op_name, const char* op_type)
 {
-    return strings::StrCat("#tf_op=", op_name, ":", op_type, "#");
+    return strings::str_cat("#tf_op=", op_name, ":", op_type, "#");
 }
 
 }  // namespace xsigma

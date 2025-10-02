@@ -1,5 +1,4 @@
-#ifndef XSIGMA_UTIL_REGISTRY_H_
-#define XSIGMA_UTIL_REGISTRY_H_
+#pragma once
 
 #ifndef __XSIGMA_WRAP__
 
@@ -216,5 +215,3 @@ public:
 
 }  // namespace xsigma
 #endif  // ! __XSIGMA_WRAP__
-
-#endif  // XSIGMA_UTIL_REGISTRY_H_

@@ -78,6 +78,9 @@ if(WIN32)
             "/wd4244" "/wd4267" "/wd4996" "/wd4251" "/wd4018"
         )
 
+        # Enable unused function warnings (C4505 is only available at /W4, so enable it explicitly)
+        #xsigma_add_cxx_flag_if_supported("/w14505")  # C4505: unreferenced local function has been removed
+
         # Copy CXX flags to C flags (minus C++-specific ones)
         set(XSIGMA_REQUIRED_C_FLAGS ${XSIGMA_REQUIRED_CXX_FLAGS})
         list(REMOVE_ITEM XSIGMA_REQUIRED_C_FLAGS "/Zc:__cplusplus" "/permissive-")
@@ -113,6 +116,11 @@ if(WIN32)
                 "/bigobj"
                 "/utf-8"
             )
+
+            # Enable unused function warnings for clang-cl
+            # clang-cl supports both MSVC-style and Clang-style warnings
+            #xsigma_add_cxx_flag_if_supported("/clang:-Wunused-function")
+            #xsigma_add_cxx_flag_if_supported("/clang:-Wunused-member-function")
             
             # Clang-cl parallel compilation
             if(XSIGMA_PARALLEL_COMPILE)
@@ -135,6 +143,8 @@ if(WIN32)
             # Use GCC-style flags for regular Clang on Windows
             xsigma_add_cxx_flag_if_supported("-fvisibility=hidden")
             xsigma_add_cxx_flag_if_supported("-fvisibility-inlines-hidden")
+            #xsigma_add_cxx_flag_if_supported("-Wunused-function") 
+            #xsigma_add_cxx_flag_if_supported("-Wunused-member-function")
             
             # Windows-specific Clang flags
             if(MINGW)
@@ -173,6 +183,8 @@ if(WIN32)
         xsigma_add_cxx_flag_if_supported("-fvisibility=hidden")
         xsigma_add_cxx_flag_if_supported("-fvisibility-inlines-hidden")
         xsigma_add_cxx_flag_if_supported("-mthreads")
+        #xsigma_add_cxx_flag_if_supported("-Wunused-function") 
+        #xsigma_add_cxx_flag_if_supported("-Wunused-member-function")
         
         # Performance flags
         xsigma_add_cxx_flag_if_supported("-ftree-vectorize")
@@ -212,6 +224,8 @@ else()
     xsigma_add_cxx_flag_if_supported("-fPIC")
     xsigma_add_cxx_flag_if_supported("-fvisibility=hidden")
     xsigma_add_cxx_flag_if_supported("-fvisibility-inlines-hidden")
+    #xsigma_add_cxx_flag_if_supported("-Wunused-function") 
+    #xsigma_add_cxx_flag_if_supported("-Wunused-member-function")
 
     # Threading support
     xsigma_add_cxx_flag_if_supported("-pthread")
