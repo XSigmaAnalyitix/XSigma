@@ -190,11 +190,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${XSIGMA_BINARY_DIR}/lib")
 if(XSIGMA_BUILD_TESTING STREQUAL "ON" OR XSIGMA_BUILD_TESTING STREQUAL "WANT")
     enable_testing()
     include(CTest)
-
-    # Include Google Test if enabled
-    if(XSIGMA_ENABLE_GTEST OR XSIGMA_ENABLE_BENCHMARK)
-        include(googletest)
-    endif()
 endif()
 
 # Add third-party dependencies

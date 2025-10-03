@@ -98,7 +98,7 @@ if(WIN32)
         endif()
 
         # MSVC linker optimizations
-        list(APPEND XSIGMA_LINKER_FLAGS_COMMON "/OPT:REF" "/OPT:ICF")
+        #list(APPEND XSIGMA_LINKER_FLAGS_COMMON "/OPT:REF" "/OPT:ICF")
         
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         message(STATUS "XSigma: Using Clang on Windows...")
@@ -135,7 +135,7 @@ if(WIN32)
             endif()
             
             # MSVC-style linker flags work with clang-cl
-            list(APPEND XSIGMA_LINKER_FLAGS_COMMON "/OPT:REF" "/OPT:ICF")
+            #list(APPEND XSIGMA_LINKER_FLAGS_COMMON "/OPT:REF" "/OPT:ICF")
             
         else()
             message(STATUS "XSigma: Using Clang with GCC-style interface on Windows")

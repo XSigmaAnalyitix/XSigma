@@ -167,6 +167,7 @@ endif()
 
 if(XSIGMA_ENABLE_MAGICENUM AND TARGET XSigma::magic_enum)
     target_link_libraries(Core PUBLIC XSigma::magic_enum)
+    target_compile_definitions(Core PUBLIC XSIGMA_USE_MAGICENUM)
 endif()
 
 # Logging backend dependencies (mutually exclusive based on XSIGMA_LOGGING_BACKEND)

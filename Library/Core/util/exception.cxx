@@ -105,40 +105,6 @@ void init_exception_mode_from_env() noexcept
 
     g_exception_mode_initialized_.store(true, std::memory_order_release);
 }
-
-// ============================================================================
-// Error Category Implementation
-// ============================================================================
-
-const char* exception_category_to_string(exception_category category) noexcept
-{
-    switch (category)
-    {
-    case exception_category::GENERIC:
-        return "GENERIC";
-    case exception_category::VALUE_ERROR:
-        return "VALUE_ERROR";
-    case exception_category::TYPE_ERROR:
-        return "TYPE_ERROR";
-    case exception_category::INDEX_ERROR:
-        return "INDEX_ERROR";
-    case exception_category::NOT_IMPLEMENTED:
-        return "NOT_IMPLEMENTED";
-    case exception_category::ENFORCE_FINITE:
-        return "ENFORCE_FINITE";
-    case exception_category::RUNTIME_ERROR:
-        return "RUNTIME_ERROR";
-    case exception_category::LOGIC_ERROR:
-        return "LOGIC_ERROR";
-    case exception_category::SYSTEM_ERROR:
-        return "SYSTEM_ERROR";
-    case exception_category::MEMORY_ERROR:
-        return "MEMORY_ERROR";
-    default:
-        return "UNKNOWN_ERROR";
-    }
-}
-
 // ============================================================================
 // Exception Class Implementation
 // ============================================================================

@@ -22,14 +22,18 @@
 #include <thread>
 #include <vector>
 
-#include "util/logger.h"
+#include "logging/logger.h"
 
 // Benchmark: Simple log message (INFO level)
 static void BM_LogSimpleInfo(benchmark::State& state)
 {
     for (auto _ : state)
     {
-        xsigma::logger::Log(xsigma::logger::Severity::INFO, "Simple info message");
+        xsigma::logger::Log(
+            xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+            __FILE__,
+            __LINE__,
+            "Simple info message");
     }
     state.SetItemsProcessed(state.iterations());
 }
@@ -40,7 +44,11 @@ static void BM_LogSimpleWarning(benchmark::State& state)
 {
     for (auto _ : state)
     {
-        xsigma::logger::Log(xsigma::logger::Severity::WARNING, "Simple warning message");
+        xsigma::logger::Log(
+            xsigma::logger_verbosity_enum::VERBOSITY_WARNING,
+            __FILE__,
+            __LINE__,
+            "Simple warning message");
     }
     state.SetItemsProcessed(state.iterations());
 }
@@ -51,7 +59,11 @@ static void BM_LogSimpleError(benchmark::State& state)
 {
     for (auto _ : state)
     {
-        xsigma::logger::Log(xsigma::logger::Severity::ERROR, "Simple error message");
+        xsigma::logger::Log(
+            xsigma::logger_verbosity_enum::VERBOSITY_ERROR,
+            __FILE__,
+            __LINE__,
+            "Simple error message");
     }
     state.SetItemsProcessed(state.iterations());
 }
@@ -63,7 +75,12 @@ static void BM_LogFormattedSingleInt(benchmark::State& state)
     int value = 42;
     for (auto _ : state)
     {
-        xsigma::logger::LogF(xsigma::logger::Severity::INFO, "Value: %d", value);
+        xsigma::logger::LogF(
+            xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+            __FILE__,
+            __LINE__,
+            "Value: %d",
+            value);
     }
     state.SetItemsProcessed(state.iterations());
 }
@@ -75,11 +92,13 @@ static void BM_LogFormattedMultipleArgs(benchmark::State& state)
     int    int_val    = 42;
     double double_val = 3.14159;
     const char* str_val = "test";
-    
+
     for (auto _ : state)
     {
         xsigma::logger::LogF(
-            xsigma::logger::Severity::INFO,
+            xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+            __FILE__,
+            __LINE__,
             "Int: %d, Double: %.2f, String: %s",
             int_val,
             double_val,
@@ -94,10 +113,15 @@ static void BM_LogFormattedLongString(benchmark::State& state)
 {
     const char* long_string = "This is a relatively long string that might be used in a log message "
                               "to test the performance impact of longer messages";
-    
+
     for (auto _ : state)
     {
-        xsigma::logger::LogF(xsigma::logger::Severity::INFO, "Message: %s", long_string);
+        xsigma::logger::LogF(
+            xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+            __FILE__,
+            __LINE__,
+            "Message: %s",
+            long_string);
     }
     state.SetItemsProcessed(state.iterations());
 }
@@ -108,7 +132,11 @@ static void BM_LogScopeCreation(benchmark::State& state)
 {
     for (auto _ : state)
     {
-        auto scope = xsigma::logger::StartScope("BenchmarkScope");
+        xsigma::logger::LogScopeRAII scope(
+            xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+            __FILE__,
+            __LINE__,
+            "BenchmarkScope");
         benchmark::DoNotOptimize(scope);
     }
     state.SetItemsProcessed(state.iterations());
@@ -121,7 +149,12 @@ static void BM_LogScopeFormattedCreation(benchmark::State& state)
     int iteration = 0;
     for (auto _ : state)
     {
-        auto scope = xsigma::logger::StartScopeF("BenchmarkScope_%d", iteration++);
+        xsigma::logger::LogScopeRAII scope(
+            xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+            __FILE__,
+            __LINE__,
+            "BenchmarkScope_%d",
+            iteration++);
         benchmark::DoNotOptimize(scope);
     }
     state.SetItemsProcessed(state.iterations());
@@ -133,11 +166,23 @@ static void BM_LogNestedScopes(benchmark::State& state)
 {
     for (auto _ : state)
     {
-        auto scope1 = xsigma::logger::StartScope("OuterScope");
+        xsigma::logger::LogScopeRAII scope1(
+            xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+            __FILE__,
+            __LINE__,
+            "OuterScope");
         {
-            auto scope2 = xsigma::logger::StartScope("MiddleScope");
+            xsigma::logger::LogScopeRAII scope2(
+                xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+                __FILE__,
+                __LINE__,
+                "MiddleScope");
             {
-                auto scope3 = xsigma::logger::StartScope("InnerScope");
+                xsigma::logger::LogScopeRAII scope3(
+                    xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+                    __FILE__,
+                    __LINE__,
+                    "InnerScope");
                 benchmark::DoNotOptimize(scope3);
             }
             benchmark::DoNotOptimize(scope2);
@@ -159,7 +204,9 @@ static void BM_LogMultiThreaded(benchmark::State& state)
     for (auto _ : state)
     {
         xsigma::logger::Log(
-            xsigma::logger::Severity::INFO,
+            xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+            __FILE__,
+            __LINE__,
             "Multi-threaded log message");
     }
 
@@ -167,7 +214,7 @@ static void BM_LogMultiThreaded(benchmark::State& state)
     {
         // Teardown code (runs once per benchmark)
     }
-    
+
     state.SetItemsProcessed(state.iterations());
 }
 BENCHMARK(BM_LogMultiThreaded)->Threads(1);
@@ -183,12 +230,14 @@ static void BM_LogFormattedMultiThreaded(benchmark::State& state)
     for (auto _ : state)
     {
         xsigma::logger::LogF(
-            xsigma::logger::Severity::INFO,
+            xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+            __FILE__,
+            __LINE__,
             "Thread %d: iteration %lld",
             thread_id,
             state.iterations());
     }
-    
+
     state.SetItemsProcessed(state.iterations());
 }
 BENCHMARK(BM_LogFormattedMultiThreaded)->Threads(1);
@@ -203,10 +252,15 @@ static void BM_LogScopeMultiThreaded(benchmark::State& state)
 
     for (auto _ : state)
     {
-        auto scope = xsigma::logger::StartScopeF("Thread_%d_Scope", thread_id);
+        xsigma::logger::LogScopeRAII scope(
+            xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+            __FILE__,
+            __LINE__,
+            "Thread_%d_Scope",
+            thread_id);
         benchmark::DoNotOptimize(scope);
     }
-    
+
     state.SetItemsProcessed(state.iterations());
 }
 BENCHMARK(BM_LogScopeMultiThreaded)->Threads(1);
@@ -218,30 +272,49 @@ BENCHMARK(BM_LogScopeMultiThreaded)->Threads(8);
 static void BM_LogMixedOperations(benchmark::State& state)
 {
     int counter = 0;
-    
+
     for (auto _ : state)
     {
         // Simulate a typical function with logging
-        auto scope = xsigma::logger::StartScopeF("Operation_%d", counter);
-        
-        xsigma::logger::Log(xsigma::logger::Severity::INFO, "Starting operation");
-        
+        xsigma::logger::LogScopeRAII scope(
+            xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+            __FILE__,
+            __LINE__,
+            "Operation_%d",
+            counter);
+
+        xsigma::logger::Log(
+            xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+            __FILE__,
+            __LINE__,
+            "Starting operation");
+
         xsigma::logger::LogF(
-            xsigma::logger::Severity::INFO,
+            xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+            __FILE__,
+            __LINE__,
             "Processing item %d",
             counter);
-        
+
         if (counter % 10 == 0)
         {
-            xsigma::logger::Log(xsigma::logger::Severity::WARNING, "Checkpoint reached");
+            xsigma::logger::Log(
+                xsigma::logger_verbosity_enum::VERBOSITY_WARNING,
+                __FILE__,
+                __LINE__,
+                "Checkpoint reached");
         }
-        
-        xsigma::logger::Log(xsigma::logger::Severity::INFO, "Operation completed");
-        
+
+        xsigma::logger::Log(
+            xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+            __FILE__,
+            __LINE__,
+            "Operation completed");
+
         counter++;
         benchmark::DoNotOptimize(scope);
     }
-    
+
     state.SetItemsProcessed(state.iterations());
 }
 BENCHMARK(BM_LogMixedOperations);
@@ -251,21 +324,23 @@ static void BM_LogMemoryAllocation(benchmark::State& state)
 {
     std::vector<std::string> messages;
     messages.reserve(100);
-    
+
     for (int i = 0; i < 100; ++i)
     {
         messages.push_back("Message " + std::to_string(i));
     }
-    
+
     size_t index = 0;
     for (auto _ : state)
     {
         xsigma::logger::Log(
-            xsigma::logger::Severity::INFO,
+            xsigma::logger_verbosity_enum::VERBOSITY_INFO,
+            __FILE__,
+            __LINE__,
             messages[index % messages.size()].c_str());
         index++;
     }
-    
+
     state.SetItemsProcessed(state.iterations());
 }
 BENCHMARK(BM_LogMemoryAllocation);
@@ -280,7 +355,3 @@ static void BM_SetThreadName(benchmark::State& state)
     state.SetItemsProcessed(state.iterations());
 }
 BENCHMARK(BM_SetThreadName);
-
-// Main function for benchmark
-BENCHMARK_MAIN();
-

@@ -224,10 +224,60 @@ if(TARGET mimalloc-static)
     set_target_properties(mimalloc-static PROPERTIES FOLDER "ThirdParty/mimalloc")
 endif()
 
-# Google Benchmark and Google Test are handled by Cmake/tools/googletest.cmake
-# which is included from the main CMakeLists.txt when XSIGMA_ENABLE_GTEST or XSIGMA_ENABLE_BENCHMARK is enabled
-# We only need to set folder properties here if the targets exist
+# =============================================================================
+# Google Test and Google Benchmark Integration (following cpuinfo pattern)
+# =============================================================================
 
+# Google Test - Unit testing framework
+if(XSIGMA_ENABLE_GTEST)
+    # Check if gtest target already exists (avoid duplicate add_subdirectory)
+    if(NOT TARGET gtest)
+        message(STATUS "Adding Google Test from ThirdParty/googletest")
+
+        # Set options before adding subdirectory (following cpuinfo pattern)
+        # Force shared CRT on MSVC to match XSigma's runtime library settings
+        if(MSVC)
+            set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+        endif()
+
+        # Add googletest subdirectory
+        # This creates targets: gtest, gtest_main, gmock, gmock_main
+        add_subdirectory(
+            "${CMAKE_CURRENT_SOURCE_DIR}/googletest"
+            "${CMAKE_CURRENT_BINARY_DIR}/googletest"
+            EXCLUDE_FROM_ALL
+        )
+
+        message(STATUS "✓ Google Test targets created: gtest, gtest_main")
+    else()
+        message(STATUS "Google Test targets already exist, skipping add_subdirectory")
+    endif()
+endif()
+
+# Google Benchmark - Microbenchmarking framework
+if(XSIGMA_ENABLE_BENCHMARK)
+    # Check if benchmark target already exists (avoid duplicate add_subdirectory)
+    if(NOT TARGET benchmark)
+        message(STATUS "Adding Google Benchmark from ThirdParty/benchmark")
+
+        # Set options before adding subdirectory (following cpuinfo pattern)
+        set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+
+        # Add benchmark subdirectory
+        # This creates targets: benchmark, benchmark_main
+        add_subdirectory(
+            "${CMAKE_CURRENT_SOURCE_DIR}/benchmark"
+            "${CMAKE_CURRENT_BINARY_DIR}/benchmark"
+            EXCLUDE_FROM_ALL
+        )
+
+        message(STATUS "✓ Google Benchmark targets created: benchmark, benchmark_main")
+    else()
+        message(STATUS "Google Benchmark targets already exist, skipping add_subdirectory")
+    endif()
+endif()
+
+# Set folder properties for Visual Studio organization
 if(TARGET benchmark)
     set_target_properties(benchmark PROPERTIES FOLDER "ThirdParty/benchmark")
 endif()
