@@ -89,14 +89,6 @@ enum class exception_category : int
 };
 
 /**
- * @brief Convert exception category to string
- *
- * @param category Exception category
- * @return String representation of the category
- */
-XSIGMA_API const char* exception_category_to_string(exception_category category) noexcept;
-
-/**
  * @brief Enhanced exception class with configurable behavior
  *
  * Features:

@@ -33,9 +33,8 @@
 // ENUM CONVERSION UTILITIES
 // =============================================================================
 
-#if XSIGMA_MODULE_ENABLE_XSIGMA_magicenum
-#include "xsigma_magic_enum.h"
-#include XSIGMA_MAGIC_ENUM(magic_enum.hpp)
+#if XSIGMA_USE_MAGICENUM
+#include <magic_enum/magic_enum.hpp>
 
 namespace xsigma
 {
