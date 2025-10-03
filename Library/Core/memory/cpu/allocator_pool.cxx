@@ -324,6 +324,8 @@ void allocator_pool::EvictOne()
     }
 }
 
+basic_cpu_allocator::~basic_cpu_allocator() = default;
+
 void* basic_cpu_allocator::Alloc(size_t alignment, size_t num_bytes, size_t* bytes_received)
 {
     xsigma::trace_me traceme("basic_cpu_allocator::Alloc");

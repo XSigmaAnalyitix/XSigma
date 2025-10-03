@@ -256,8 +256,13 @@ else()
     # Copy flags to C (they should be compatible)
     set(XSIGMA_REQUIRED_C_FLAGS ${XSIGMA_REQUIRED_CXX_FLAGS})
 
-    # Unix linker optimizations
-    list(APPEND XSIGMA_LINKER_FLAGS_COMMON "-Wl,--gc-sections" "-Wl,--as-needed")
+    # Unix linker optimizations (Linux-specific)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        list(APPEND XSIGMA_LINKER_FLAGS_COMMON "-Wl,--gc-sections" "-Wl,--as-needed")
+    elseif(APPLE)
+        # macOS linker optimizations
+        list(APPEND XSIGMA_LINKER_FLAGS_COMMON "-Wl,-dead_strip")
+    endif()
 
 endif()
 
@@ -305,6 +310,13 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         xsigma_add_cxx_flag_if_supported("-stdlib=libc++")
         # Apple Clang specific optimizations
         xsigma_add_cxx_flag_if_supported("-fcolor-diagnostics")
+    elseif(APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        # Homebrew LLVM on macOS
+        message(STATUS "XSigma: Homebrew LLVM Clang detected on macOS")
+        xsigma_add_cxx_flag_if_supported("-stdlib=libc++")
+        xsigma_add_cxx_flag_if_supported("-fcolor-diagnostics")
+        # Note: The hash_compat.h header provides std::__hash_memory implementation
+        # for compatibility with Homebrew LLVM on macOS
     elseif(WIN32 AND NOT CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
         message(STATUS "XSigma: Clang on Windows with GCC interface")
         # Additional Windows-specific Clang flags can go here

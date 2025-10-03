@@ -49,6 +49,20 @@ else()
         "-Xiwyu" "--quoted_includes_first"
     )
 
+    # Add system root for macOS to help IWYU find system headers
+    if(APPLE)
+        execute_process(
+            COMMAND xcrun --show-sdk-path
+            OUTPUT_VARIABLE MACOS_SDK_PATH
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET
+        )
+        if(MACOS_SDK_PATH)
+            list(APPEND XSIGMA_IWYU_ARGS "-isysroot" "${MACOS_SDK_PATH}")
+            message(STATUS "IWYU using macOS SDK: ${MACOS_SDK_PATH}")
+        endif()
+    endif()
+
     if(IWYU_MAPPING_FILE)
         list(PREPEND XSIGMA_IWYU_ARGS "-Xiwyu" "--mapping_file=${IWYU_MAPPING_FILE}")
     endif()
