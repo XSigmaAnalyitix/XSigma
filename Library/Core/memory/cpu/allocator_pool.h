@@ -416,7 +416,7 @@ public:
     size_t RoundUp(size_t num_bytes) override { return 1uLL << Log2Ceiling64(num_bytes); }
 };
 
-class basic_cpu_allocator : public sub_allocator
+class XSIGMA_VISIBILITY basic_cpu_allocator : public sub_allocator
 {
 public:
     basic_cpu_allocator(
@@ -427,7 +427,7 @@ public:
     {
     }
 
-    ~basic_cpu_allocator() override {}
+    XSIGMA_API ~basic_cpu_allocator() override;
 
     XSIGMA_API void* Alloc(size_t alignment, size_t num_bytes, size_t* bytes_received) override;
 

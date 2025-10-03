@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/../build_ninja/bin/CoreCxxTests",
+            "args": ["--gtest_filter=Core.hash_util_edge_cases"],
+            "cwd": "${workspaceFolder}",
+            "MIMode": "lldb"
+        }
+    ]
+}

@@ -140,6 +140,13 @@ message(STATUS \"Coverage data merged successfully: ${XSIGMA_COVERAGE_REPORT_DIR
       set(TEST_EXE_DIR "${CMAKE_BINARY_DIR}/bin")
     endif()
 
+    # Determine the library directory
+    if(CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+      set(LIB_DIR "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+    else()
+      set(LIB_DIR "${CMAKE_BINARY_DIR}/lib")
+    endif()
+
     # Create helper script for generating coverage reports (handles test executable discovery)
     set(COVERAGE_REPORT_SCRIPT "${CMAKE_BINARY_DIR}/coverage_report.cmake")
     file(WRITE "${COVERAGE_REPORT_SCRIPT}" "
@@ -157,10 +164,24 @@ endif()
 
 message(STATUS \"Generating coverage report for \${TEST_COUNT} test executable(s)\")
 
-# Find shared libraries (DLLs/SOs) that contain instrumented code
-file(GLOB SHARED_LIBS
+# Find shared libraries (DLLs/SOs/dylibs) that contain instrumented code
+# Look in both the test executable directory (Windows) and library directory (Unix/macOS)
+file(GLOB SHARED_LIBS_BIN
   \"${TEST_EXE_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}\"
 )
+file(GLOB SHARED_LIBS_LIB
+  \"${LIB_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}\"
+)
+set(SHARED_LIBS \${SHARED_LIBS_BIN} \${SHARED_LIBS_LIB})
+list(REMOVE_DUPLICATES SHARED_LIBS)
+
+list(LENGTH SHARED_LIBS SHARED_LIB_COUNT)
+message(STATUS \"Found \${SHARED_LIB_COUNT} shared librar(y|ies) for coverage analysis\")
+foreach(SHARED_LIB \${SHARED_LIBS})
+  get_filename_component(LIB_NAME \"\${SHARED_LIB}\" NAME)
+  message(STATUS \"  - \${LIB_NAME}\")
+endforeach()
+
 
 # Build the report command
 set(REPORT_CMD \"${LLVM_COV}\" report)
@@ -209,10 +230,24 @@ endif()
 
 message(STATUS \"Generating HTML coverage report for \${TEST_COUNT} test executable(s)\")
 
-# Find shared libraries (DLLs/SOs) that contain instrumented code
-file(GLOB SHARED_LIBS
+# Find shared libraries (DLLs/SOs/dylibs) that contain instrumented code
+# Look in both the test executable directory (Windows) and library directory (Unix/macOS)
+file(GLOB SHARED_LIBS_BIN
   \"${TEST_EXE_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}\"
 )
+file(GLOB SHARED_LIBS_LIB
+  \"${LIB_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}\"
+)
+set(SHARED_LIBS \${SHARED_LIBS_BIN} \${SHARED_LIBS_LIB})
+list(REMOVE_DUPLICATES SHARED_LIBS)
+
+list(LENGTH SHARED_LIBS SHARED_LIB_COUNT)
+message(STATUS \"Found \${SHARED_LIB_COUNT} shared librar(y|ies) for HTML coverage report\")
+foreach(SHARED_LIB \${SHARED_LIBS})
+  get_filename_component(LIB_NAME \"\${SHARED_LIB}\" NAME)
+  message(STATUS \"  - \${LIB_NAME}\")
+endforeach()
+
 
 # Build the HTML report command
 set(HTML_CMD \"${LLVM_COV}\" show)

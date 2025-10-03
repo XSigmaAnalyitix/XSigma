@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <iomanip>
 #include <sstream>
 
@@ -23,8 +24,22 @@ namespace
 {
 
 /**
+ * @brief Custom hash function for void pointers
+ *
+ * Provides a simple hash implementation for void* that doesn't rely on
+ * std::__hash_memory which may not be available in all libc++ versions.
+ */
+struct void_ptr_hash
+{
+    std::size_t operator()(void* ptr) const noexcept
+    {
+        return static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(ptr));
+    }
+};
+
+/**
  * @brief Internal implementation of GPU memory pool
- * 
+ *
  * This class provides the concrete implementation of the GPU memory pool
  * interface, managing memory blocks across different size classes and
  * device types with thread-safe operations.
@@ -41,8 +56,8 @@ private:
     /** @brief Map of size class to cached blocks */
     std::unordered_map<size_t, std::vector<gpu_memory_block>> cached_blocks_;
 
-    /** @brief Map of active allocations for tracking */
-    std::unordered_map<void*, gpu_memory_block> active_allocations_;
+    /** @brief Map of active allocations for tracking (using custom hash for void*) */
+    std::unordered_map<void*, gpu_memory_block, void_ptr_hash> active_allocations_;
 
     /** @brief Current total allocated bytes */
     std::atomic<size_t> allocated_bytes_{0};

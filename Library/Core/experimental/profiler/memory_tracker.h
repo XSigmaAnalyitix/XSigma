@@ -40,6 +40,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <vector>
+#include <cstdint>
 
 
 #include "profiler.h"
@@ -54,6 +55,22 @@
 
 namespace xsigma
 {
+
+/**
+ * @brief Custom hash function for void pointers
+ *
+ * Provides a simple hash implementation for void* that doesn't rely on
+ * std::__hash_memory which may not be available in all libc++ versions.
+ */
+struct void_ptr_hash
+{
+    std::size_t operator()(void* ptr) const noexcept
+    {
+        // Convert pointer to uintptr_t and use it as hash
+        // This is a simple but effective hash for pointers
+        return static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(ptr));
+    }
+};
 
 /**
  * @brief Memory allocation tracking entry
@@ -212,8 +229,8 @@ private:
     /// Mutex for thread-safe access to allocation tracking data
     mutable std::mutex allocations_mutex_;
 
-    /// Map of active memory allocations
-    std::unordered_map<void*, xsigma::memory_allocation> active_allocations_;
+    /// Map of active memory allocations (using custom hash for void*)
+    std::unordered_map<void*, xsigma::memory_allocation, xsigma::void_ptr_hash> active_allocations_;
 
     /// Atomic counter for current memory usage
     std::atomic<size_t> current_usage_{0};

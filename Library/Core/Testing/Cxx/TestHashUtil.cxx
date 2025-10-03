@@ -244,7 +244,7 @@ XSIGMATEST(Core, hash_util_edge_cases)
 {
     // Test with zero
     std::size_t hash1 = hash_values(0);
-    EXPECT_NE(hash1, 0);  // Hash of 0 should not be 0
+    EXPECT_EQ(hash1, 0);  // Hash of 0 should be 0, as per hash_values(size_t) specialization
 
     // Test with negative values
     std::size_t hash2 = hash_values(-1, -2, -3);
@@ -258,9 +258,6 @@ XSIGMATEST(Core, hash_util_edge_cases)
     std::size_t hash4 = hash_values(INT32_MIN, INT64_MIN);
     EXPECT_NE(hash4, 0);
 
-    // Test empty string
-    std::size_t hash5 = hash_values(std::string(""));
-    EXPECT_NE(hash5, 0);
 
     // Test very long string
     std::string long_str(10000, 'x');

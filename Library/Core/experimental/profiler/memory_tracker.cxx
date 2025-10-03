@@ -32,6 +32,16 @@
 #include <unistd.h>
 
 #include <fstream>
+
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#include <mach/mach.h>
+#include <mach/vm_statistics.h>
+#include <mach/mach_types.h>
+#include <mach/mach_init.h>
+#include <mach/mach_host.h>
+#endif
+
 #endif
 
 #include <algorithm>
@@ -190,7 +200,22 @@ size_t memory_tracker::get_available_system_memory() const
         return static_cast<size_t>(memInfo.ullAvailPhys);
     }
     return 0;
+#elif defined(__APPLE__)
+    // On macOS, use mach API to get available memory
+    vm_size_t page_size;
+    vm_statistics64_data_t vm_stat;
+    mach_msg_type_number_t host_size = sizeof(vm_statistics64_data_t) / sizeof(natural_t);
+
+    if (host_page_size(mach_host_self(), &page_size) == KERN_SUCCESS &&
+        host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&vm_stat, &host_size) == KERN_SUCCESS)
+    {
+        // Available memory = free pages + inactive pages + purgeable pages
+        uint64_t available_pages = vm_stat.free_count + vm_stat.inactive_count + vm_stat.purgeable_count;
+        return static_cast<size_t>(available_pages * page_size);
+    }
+    return 0;
 #else
+    // Linux and other Unix systems
     long pages     = sysconf(_SC_AVPHYS_PAGES);
     long page_size = sysconf(_SC_PAGE_SIZE);
     if (pages > 0 && page_size > 0)

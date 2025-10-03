@@ -19,6 +19,9 @@
 
 #include "statistical_analyzer.h"
 
+// Include hash compatibility layer for libc++ versions that don't export __hash_memory
+#include "common/hash_compat.h"
+
 // Prevent Windows min/max macros from interfering
 #ifdef _WIN32
 #ifndef NOMINMAX

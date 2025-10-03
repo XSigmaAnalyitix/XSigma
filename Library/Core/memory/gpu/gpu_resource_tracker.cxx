@@ -1,6 +1,7 @@
 #include "memory/gpu/gpu_resource_tracker.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <iomanip>
 #include <mutex>
 #include <sstream>
@@ -32,6 +33,20 @@ namespace
 {
 
 /**
+ * @brief Custom hash function for void pointers
+ *
+ * Provides a simple hash implementation for void* that doesn't rely on
+ * std::__hash_memory which may not be available in all libc++ versions.
+ */
+struct void_ptr_hash
+{
+    std::size_t operator()(void* ptr) const noexcept
+    {
+        return static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(ptr));
+    }
+};
+
+/**
  * @brief Internal implementation of GPU resource tracker
  */
 class gpu_resource_tracker_impl : public gpu_resource_tracker
@@ -46,8 +61,8 @@ private:
     /** @brief Next allocation ID */
     std::atomic<size_t> next_allocation_id_{1};
 
-    /** @brief Map of active allocations */
-    std::unordered_map<void*, std::shared_ptr<gpu_allocation_info>> active_allocations_;
+    /** @brief Map of active allocations (using custom hash for void*) */
+    std::unordered_map<void*, std::shared_ptr<gpu_allocation_info>, void_ptr_hash> active_allocations_;
 
     /** @brief Map of all allocations (including deallocated) */
     std::unordered_map<size_t, std::shared_ptr<gpu_allocation_info>> all_allocations_;

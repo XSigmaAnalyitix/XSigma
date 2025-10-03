@@ -18,8 +18,7 @@
 
 #include "util/string_util.h"
 
-#include <corecrt_math.h>  // for signbit, HUGE_VAL
-
+#include <cmath>           // for signbit, HUGE_VAL
 #include <array>          // for array
 #include <cctype>         // for isdigit, isspace, tolower
 #include <cfloat>         // for DBL_DIG, FLT_DIG, DBL_MAX

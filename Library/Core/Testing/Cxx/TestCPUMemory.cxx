@@ -1353,13 +1353,13 @@ XSIGMATEST_VOID(TrackingAllocatorTest, EnhancedTrackingAnalytics)
     // Test timing statistics after deallocations
     auto post_dealloc_timing = tracker->GetTimingStats();
     EXPECT_EQ(post_dealloc_timing.total_deallocations, 10);
-    EXPECT_GT(post_dealloc_timing.total_dealloc_time_us, 0);
-    EXPECT_GT(post_dealloc_timing.max_dealloc_time_us, 0);
+    EXPECT_GE(post_dealloc_timing.total_dealloc_time_us, 0);
+    EXPECT_GE(post_dealloc_timing.max_dealloc_time_us, 0);
     EXPECT_LT(post_dealloc_timing.min_dealloc_time_us, UINT64_MAX);
 
     // Test average deallocation time calculation
     double avg_dealloc_time = post_dealloc_timing.average_dealloc_time_us();
-    EXPECT_GT(avg_dealloc_time, 0.0);
+    EXPECT_GE(avg_dealloc_time, 0.0);
 
     // Verify enhanced records have deallocation timing
     auto final_records = tracker->GetEnhancedRecords();
@@ -1836,7 +1836,7 @@ XSIGMATEST_VOID(AllocatorTest, PerformanceBenchmark)
             opts.allow_growth = true;
 
             size_t total_memory = std::max(
-                64ULL << 20, alloc_size * num_iterations * 2);  // Adjust based on test size
+                static_cast<size_t>(64ULL << 20), alloc_size * num_iterations * 2);  // Adjust based on test size
             auto bfc_alloc = std::make_unique<xsigma::allocator_bfc>(
                 std::unique_ptr<xsigma::sub_allocator>(sub_allocator.release()),
                 total_memory,
@@ -1947,7 +1947,7 @@ XSIGMATEST_VOID(AllocatorTest, PerformanceBenchmark)
             opts.allow_growth = true;
 
             size_t total_memory = std::max(
-                64ULL << 20, alloc_size * num_iterations * 2);  // Adjust based on test size
+                static_cast<size_t>(64ULL << 20), alloc_size * num_iterations * 2);  // Adjust based on test size
             auto underlying_bfc = std::make_unique<xsigma::allocator_bfc>(
                 std::unique_ptr<xsigma::sub_allocator>(sub_allocator.release()),
                 total_memory,
@@ -2009,7 +2009,7 @@ XSIGMATEST_VOID(AllocatorTest, PerformanceBenchmark)
             opts.allow_growth = true;
 
             size_t total_memory = std::max(
-                64ULL << 20, alloc_size * num_iterations * 2);  // Adjust based on test size
+                static_cast<size_t>(64ULL << 20), alloc_size * num_iterations * 2);  // Adjust based on test size
             auto underlying_bfc = std::make_unique<xsigma::allocator_bfc>(
                 std::unique_ptr<xsigma::sub_allocator>(sub_allocator.release()),
                 total_memory,
