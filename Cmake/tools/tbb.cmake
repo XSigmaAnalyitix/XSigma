@@ -48,10 +48,10 @@ set(TBB_FROM_SOURCE FALSE)
 
 if(NOT XSIGMA_TBB_FORCE_BUILD_FROM_SOURCE)
     message(STATUS "Searching for system-installed Intel TBB...")
-    
+
     # Try to find TBB using our custom FindTBB module first
     find_package(TBB QUIET)
-    
+
     if(TBB_FOUND AND TARGET TBB::tbb)
         message(STATUS "✅ Found system-installed Intel TBB")
         message(STATUS "   TBB Include Dir: ${TBB_INCLUDE_DIR}")
@@ -61,7 +61,7 @@ if(NOT XSIGMA_TBB_FORCE_BUILD_FROM_SOURCE)
         if(TBB_MALLOC_LIBRARY_RELEASE)
             message(STATUS "   TBB Malloc Library: ${TBB_MALLOC_LIBRARY_RELEASE}")
         endif()
-        
+
         # Verify the targets work
         if(TARGET TBB::tbb)
             message(STATUS "   TBB::tbb target available")
@@ -69,7 +69,7 @@ if(NOT XSIGMA_TBB_FORCE_BUILD_FROM_SOURCE)
         if(TARGET TBB::tbbmalloc)
             message(STATUS "   TBB::tbbmalloc target available")
         endif()
-        
+
         return()
     else()
         message(STATUS "❌ System-installed Intel TBB not found")
@@ -96,6 +96,11 @@ FetchContent_Declare(
     GIT_PROGRESS TRUE
 )
 
+# Set TBB-specific variables before fetching
+set(TBB_TEST OFF CACHE BOOL "Disable TBB tests" FORCE)
+set(TBB_EXAMPLES OFF CACHE BOOL "Disable TBB examples" FORCE)
+set(TBB_STRICT OFF CACHE BOOL "Disable strict mode for compatibility" FORCE)
+
 # Set TBB build options before fetching
 set(TBB_TEST OFF CACHE BOOL "Build TBB tests" FORCE)
 set(TBB_EXAMPLES OFF CACHE BOOL "Build TBB examples" FORCE)
@@ -116,11 +121,34 @@ if(WIN32)
     set(TBB_ENABLE_PIC OFF CACHE BOOL "Disable TBB PIC on Windows" FORCE)
     set(CMAKE_CXX_COMPILE_OPTIONS_PIC "" CACHE STRING "Clear PIC options" FORCE)
     set(CMAKE_C_COMPILE_OPTIONS_PIC "" CACHE STRING "Clear PIC options" FORCE)
+    # Additional Windows-specific TBB configuration
+    set(TBB_STRICT OFF CACHE BOOL "Disable strict mode for Windows compatibility" FORCE)
+    set(TBB_TEST OFF CACHE BOOL "Disable TBB tests" FORCE)
+    set(TBB_EXAMPLES OFF CACHE BOOL "Disable TBB examples" FORCE)
 endif()
 
 # Fetch and build TBB
 message(STATUS "Downloading Intel TBB source code...")
+
+# Temporarily save and clear PIC-related variables on Windows to prevent TBB build issues
+if(WIN32)
+    set(_SAVED_CMAKE_POSITION_INDEPENDENT_CODE ${CMAKE_POSITION_INDEPENDENT_CODE})
+    set(_SAVED_CMAKE_CXX_COMPILE_OPTIONS_PIC "${CMAKE_CXX_COMPILE_OPTIONS_PIC}")
+    set(_SAVED_CMAKE_C_COMPILE_OPTIONS_PIC "${CMAKE_C_COMPILE_OPTIONS_PIC}")
+
+    set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
+    set(CMAKE_CXX_COMPILE_OPTIONS_PIC "")
+    set(CMAKE_C_COMPILE_OPTIONS_PIC "")
+endif()
+
 FetchContent_MakeAvailable(oneTBB)
+
+# Restore saved variables on Windows
+if(WIN32)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ${_SAVED_CMAKE_POSITION_INDEPENDENT_CODE})
+    set(CMAKE_CXX_COMPILE_OPTIONS_PIC "${_SAVED_CMAKE_CXX_COMPILE_OPTIONS_PIC}")
+    set(CMAKE_C_COMPILE_OPTIONS_PIC "${_SAVED_CMAKE_C_COMPILE_OPTIONS_PIC}")
+endif()
 
 # Check if TBB was successfully populated
 FetchContent_GetProperties(oneTBB)
@@ -156,7 +184,49 @@ if(TARGET TBB::tbbmalloc)
 endif()
 
 # =============================================================================
-# Step 4: Export TBB information for other parts of the build system
+# Step 4: Configure TBB output directories to match XSigma project structure
+# =============================================================================
+
+# Configure TBB output directories to match XSigma project structure
+# This ensures TBB binaries are placed in the correct locations for runtime linking
+if(TBB_FROM_SOURCE)
+    # Get the actual TBB targets (not the imported interface targets)
+    # TBB creates targets like 'tbb' and 'tbbmalloc' when built from source
+    set(_tbb_targets)
+    if(TARGET tbb)
+        list(APPEND _tbb_targets tbb)
+    endif()
+    if(TARGET tbbmalloc)
+        list(APPEND _tbb_targets tbbmalloc)
+    endif()
+
+    # Configure output directories for each TBB target
+    foreach(_tbb_target ${_tbb_targets})
+        if(TARGET ${_tbb_target})
+            # Set output directories for all build configurations
+            foreach(config Debug Release RelWithDebInfo MinSizeRel)
+                string(TOUPPER ${config} config_upper)
+                set_target_properties(${_tbb_target} PROPERTIES
+                    RUNTIME_OUTPUT_DIRECTORY_${config_upper} "${XSIGMA_BINARY_DIR}/bin"
+                    ARCHIVE_OUTPUT_DIRECTORY_${config_upper} "${XSIGMA_BINARY_DIR}/lib"
+                    LIBRARY_OUTPUT_DIRECTORY_${config_upper} "${XSIGMA_BINARY_DIR}/lib"
+                )
+            endforeach()
+
+            # Also set the default output directories (for single-config generators)
+            set_target_properties(${_tbb_target} PROPERTIES
+                RUNTIME_OUTPUT_DIRECTORY "${XSIGMA_BINARY_DIR}/bin"
+                ARCHIVE_OUTPUT_DIRECTORY "${XSIGMA_BINARY_DIR}/lib"
+                LIBRARY_OUTPUT_DIRECTORY "${XSIGMA_BINARY_DIR}/lib"
+            )
+
+            message(STATUS "Configured output directories for TBB target '${_tbb_target}'")
+        endif()
+    endforeach()
+endif()
+
+# =============================================================================
+# Step 5: Export TBB information for other parts of the build system
 # =============================================================================
 
 # Set variables that other parts of the build system might expect
