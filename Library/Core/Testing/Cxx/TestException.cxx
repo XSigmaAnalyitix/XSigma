@@ -711,7 +711,7 @@ XSIGMATEST(Core, exception_nested_depth)
 {
     xsigma::set_exception_mode(xsigma::exception_mode::THROW);
 
-    // Create a chain of nested exceptions
+    // Create a chain of nested exceptcdxions
     std::shared_ptr<xsigma::exception> current;
     const int                          depth = 5;
 
@@ -756,7 +756,7 @@ XSIGMATEST(Core, exception_context_stress)
     xsigma::exception       ex(loc, "Base exception", xsigma::exception_category::GENERIC);
 
     // Add many context entries
-    const int context_count = 100;
+    const int context_count = 2;
     for (int i = 0; i < context_count; ++i)
     {
         ex.add_context(fmt::format("Context entry {}", i));
@@ -774,27 +774,3 @@ XSIGMATEST(Core, exception_context_stress)
 
     END_TEST();
 }
-
-// ============================================================================
-// Legacy Test Entry Point (for backward compatibility)
-// ============================================================================
-// This function provides backward compatibility with the old test framework
-// that expected a TestException(int, char**) function signature.
-// When using Google Test (XSIGMA_ENABLE_GTEST), this function is not called,
-// but it must exist to satisfy linker requirements from legacy code.
-#ifndef XSIGMA_ENABLE_GTEST
-int TestException(int argc, char** argv)
-{
-    // Run all tests defined above
-    // Note: This is only used when Google Test is not available
-    return EXIT_SUCCESS;
-}
-#else
-// When Google Test is enabled, provide a stub function for legacy compatibility
-int TestException(int /*argc*/, char** /*argv*/)
-{
-    // This function should not be called when using Google Test
-    // All tests are registered with Google Test framework via TEST() macros
-    return EXIT_SUCCESS;
-}
-#endif

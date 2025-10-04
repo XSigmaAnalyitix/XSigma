@@ -100,8 +100,28 @@ endif()
 # TBB Support
 # =============================================================================
 if(XSIGMA_ENABLE_TBB)
-    find_package(TBB REQUIRED)
-    target_link_libraries(CoreCxxTests PRIVATE TBB::tbb TBB::tbbmalloc)
+    # TBB targets should be available from the tbb.cmake module
+    if(TARGET TBB::tbb)
+        target_link_libraries(CoreCxxTests PRIVATE TBB::tbb)
+        if(TARGET TBB::tbbmalloc)
+            target_link_libraries(CoreCxxTests PRIVATE TBB::tbbmalloc)
+        endif()
+        message(STATUS "CoreCxxTests linked with TBB")
+    else()
+        message(WARNING "XSIGMA_ENABLE_TBB is ON but TBB::tbb target is not available for tests")
+    endif()
+endif()
+
+# =============================================================================
+# Mimalloc Support
+# =============================================================================
+if(XSIGMA_ENABLE_MIMALLOC)
+    if(TARGET mimalloc-static)
+        target_link_libraries(CoreCxxTests PRIVATE mimalloc-static)
+        message(STATUS "CoreCxxTests linked with mimalloc-static")
+    else()
+        message(WARNING "XSIGMA_ENABLE_MIMALLOC is ON but mimalloc-static target is not available for tests")
+    endif()
 endif()
 
 # =============================================================================
@@ -119,6 +139,12 @@ file(
 
     # Link libraries (following cpuinfo pattern: simple target_link_libraries)
     target_link_libraries(CoreCxxBenchmark PRIVATE benchmark XSigma::Core ${XSIGMA_CUDA_LIBRARIES})
+
+    # Add mimalloc support for benchmarks
+    if(XSIGMA_ENABLE_MIMALLOC AND TARGET mimalloc-static)
+        target_link_libraries(CoreCxxBenchmark PRIVATE mimalloc-static)
+        message(STATUS "CoreCxxBenchmark linked with mimalloc-static")
+    endif()
 
     # Set target properties
     set_target_properties(CoreCxxBenchmark PROPERTIES

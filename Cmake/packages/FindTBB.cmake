@@ -1,5 +1,6 @@
 ﻿# FindTBB.cmake - Find Intel Threading Building Blocks (TBB)
-# Simplified TBB finder that creates proper imported targets
+# Enhanced TBB finder with support for multiple installation methods
+# Supports: vcpkg, apt, homebrew, Intel oneAPI, manual installations
 
 cmake_minimum_required(VERSION 3.15)
 
@@ -8,6 +9,11 @@ if(TARGET TBB::tbb)
     set(TBB_FOUND TRUE)
     return()
 endif()
+
+# Set module information
+set(TBB_FIND_VERSION_MAJOR 2021)
+set(TBB_FIND_VERSION_MINOR 0)
+set(TBB_FIND_VERSION "${TBB_FIND_VERSION_MAJOR}.${TBB_FIND_VERSION_MINOR}")
 
 # Find TBB root directory
 if(NOT TBB_ROOT)
@@ -34,14 +40,22 @@ endif()
 
 # Add common system paths for TBB
 list(APPEND _tbb_search_paths
+    # Standard Unix paths
     /usr/local
     /usr
+    /opt/local  # MacPorts
+    # Intel-specific paths
     /opt/intel/tbb
     /opt/intel/oneapi/tbb/latest
+    /opt/intel/oneapi/tbb/2021.11.0
+    /opt/intel/oneapi/tbb/2021.10.0
+    # Windows Intel paths
     $ENV{PROGRAMFILES}/Intel/TBB
     $ENV{PROGRAMFILES}/Intel/oneAPI/tbb/latest
     "C:/Program Files/Intel/TBB"
     "C:/Program Files/Intel/oneAPI/tbb/latest"
+    # vcpkg paths (will be handled by CMAKE_PREFIX_PATH usually)
+    # Homebrew paths (will be handled by CMAKE_PREFIX_PATH usually)
 )
 
 # Find include directory
@@ -59,9 +73,15 @@ find_path(TBB_INCLUDE_DIR
 
 if(NOT TBB_INCLUDE_DIR)
     if(TBB_FIND_REQUIRED)
-        message(FATAL_ERROR "Could not find TBB include directory")
+        message(FATAL_ERROR "Could not find TBB include directory. Searched paths: ${_tbb_search_paths}")
+    elseif(NOT TBB_FIND_QUIETLY)
+        message(STATUS "TBB include directory not found. Searched paths: ${_tbb_search_paths}")
     endif()
     return()
+endif()
+
+if(NOT TBB_FIND_QUIETLY)
+    message(STATUS "Found TBB include directory: ${TBB_INCLUDE_DIR}")
 endif()
 
 # Set up library search paths based on platform and architecture
@@ -170,11 +190,25 @@ endif()
 include(FindPackageHandleStandardArgs)
 
 find_package_handle_standard_args(TBB
+    FOUND_VAR TBB_FOUND
     REQUIRED_VARS TBB_INCLUDE_DIR TBB_LIBRARY_RELEASE
+    VERSION_VAR TBB_FIND_VERSION
+    HANDLE_COMPONENTS
 )
 
 if(NOT TBB_FOUND)
+    if(NOT TBB_FIND_QUIETLY)
+        message(STATUS "TBB not found. Searched library paths: ${_tbb_lib_paths}")
+        message(STATUS "TBB library names searched: ${_tbb_lib_names}")
+    endif()
     return()
+endif()
+
+if(NOT TBB_FIND_QUIETLY)
+    message(STATUS "Found TBB library: ${TBB_LIBRARY_RELEASE}")
+    if(TBB_MALLOC_LIBRARY_RELEASE)
+        message(STATUS "Found TBB malloc library: ${TBB_MALLOC_LIBRARY_RELEASE}")
+    endif()
 endif()
 
 # Create imported targets
@@ -197,6 +231,15 @@ if(NOT TARGET TBB::tbb)
         set_target_properties(TBB::tbb PROPERTIES
             INTERFACE_LINK_LIBRARIES "pthread;dl"
         )
+    elseif(WIN32)
+        # Windows may need additional libraries
+        set_target_properties(TBB::tbb PROPERTIES
+            INTERFACE_LINK_LIBRARIES ""
+        )
+    endif()
+
+    if(NOT TBB_FIND_QUIETLY)
+        message(STATUS "Created TBB::tbb imported target")
     endif()
 endif()
 
@@ -213,6 +256,12 @@ if(TBB_MALLOC_LIBRARY_RELEASE AND NOT TARGET TBB::tbbmalloc)
             IMPORTED_LOCATION_DEBUG "${TBB_MALLOC_LIBRARY_DEBUG}"
         )
     endif()
+
+    if(NOT TBB_FIND_QUIETLY)
+        message(STATUS "Created TBB::tbbmalloc imported target")
+    endif()
+elseif(NOT TBB_FIND_QUIETLY AND NOT TBB_MALLOC_LIBRARY_RELEASE)
+    message(STATUS "TBB malloc library not found - TBB::tbbmalloc target not created")
 endif()
 
 # Mark variables as advanced

@@ -46,7 +46,7 @@ public:
 
 //--------------------------------------------------------------------------------
 // This instance will show up in any translation unit that uses tools_impl.
-// It will make sure tools_impl statics are initialized before there are used
+// It will make sure tools_impl statistics are initialized before there are used
 // and finalized when they are done being used.
 static tools_implTBBInitialize tools_implTBBInitializer;
 
