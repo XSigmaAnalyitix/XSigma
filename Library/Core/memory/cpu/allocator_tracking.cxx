@@ -86,7 +86,7 @@ void* allocator_tracking::allocate_raw(
     auto end_time = std::chrono::steady_clock::now();
     auto duration_us =
         std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
-    auto duration_us_unsigned = static_cast<uint64_t>(std::max(0LL, duration_us));
+    auto duration_us_unsigned = std::max<uint64_t>(0ULL, duration_us);
 
     // Update timing statistics
     timing_stats_.total_allocations.fetch_add(1, std::memory_order_relaxed);
@@ -328,7 +328,7 @@ void allocator_tracking::deallocate_raw(void* ptr)
     auto end_time = std::chrono::steady_clock::now();
     auto duration_us =
         std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
-    auto duration_us_unsigned = static_cast<uint64_t>(std::max(0LL, duration_us));
+    auto duration_us_unsigned = std::max<uint64_t>(0ULL, duration_us);
 
     // Update timing statistics
     timing_stats_.total_deallocations.fetch_add(1, std::memory_order_relaxed);

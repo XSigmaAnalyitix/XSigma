@@ -337,6 +337,7 @@ public:
 
         XSIGMA_THROW(
             "Device not found: type={}, index={}", static_cast<int>(device_type), device_index);
+        return {}; // Added to satisfy compiler C4715
     }
 
     //gpu_device_info select_optimal_device_for_monte_carlo(

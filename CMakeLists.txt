@@ -118,8 +118,8 @@ elseif(XSIGMA_LOGGING_BACKEND STREQUAL "GLOG")
     set(XSIGMA_USE_GLOG ON)
 endif()
 
-# TBB backend temporarily disabled (incomplete implementation)
-option(XSIGMA_ENABLE_TBB "Enable Intel TBB (Threading Building Blocks) support." OFF)
+# Intel TBB (Threading Building Blocks) support with automatic fallback
+option(XSIGMA_ENABLE_TBB "Enable Intel TBB (Threading Building Blocks) support with automatic fallback." ON)
 mark_as_advanced(XSIGMA_ENABLE_TBB)
 
 option(XSIGMA_ENABLE_MIMALLOC "Enable Microsoft mimalloc high-performance memory allocator support." ON)
@@ -157,6 +157,7 @@ include(platform)
 include(cuda)
 include(mkl)
 include(numa)
+include(tbb)
 include(clangTidy)
 include(cppcheck)
 include(iwyu)

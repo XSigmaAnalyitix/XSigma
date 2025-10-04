@@ -79,7 +79,7 @@ namespace QueueBaseInternal
 // remains in the queue.
 //
 // Beyond the QueueBase,
-//   * LockFreeQueue's PopAll() will generate a BlockedQueue effeciently
+//   * LockFreeQueue's PopAll() will generate a BlockedQueue efficiently
 //   * BlockedQueue support move constructor/assignment and iterators
 
 template <typename T, size_t kBlockSize>

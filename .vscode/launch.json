@@ -5,7 +5,7 @@
             "name": "Debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/../build_ninja/bin/CoreCxxTests",
+            "program": "${workspaceFolder}/../build_vs22/bin/CoreCxxTests",
             "args": ["--gtest_filter=Core.hash_util_edge_cases"],
             "cwd": "${workspaceFolder}",
             "MIMode": "lldb"

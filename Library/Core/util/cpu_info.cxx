@@ -21,17 +21,17 @@ void cpu_info::info()
     {
         fmt::print("-- Running on unknown CPU");
     }
-    fmt::print("-- suport f16c:     {}\n", cpuinfo_has_x86_f16c() ? "True" : "False");
-    fmt::print("-- suport sse:      {}\n", cpuinfo_has_x86_sse() ? "True" : "False");
-    fmt::print("-- suport sse2:     {}\n", cpuinfo_has_x86_sse2() ? "True" : "False");
-    fmt::print("-- suport sse3:     {}\n", cpuinfo_has_x86_sse3() ? "True" : "False");
-    fmt::print("-- suport sse4a:    {}\n", cpuinfo_has_x86_sse4a() ? "True" : "False");
-    fmt::print("-- suport sse4_1:   {}\n", cpuinfo_has_x86_sse4_1() ? "True" : "False");
-    fmt::print("-- suport sse4_2:   {}\n", cpuinfo_has_x86_sse4_2() ? "True" : "False");
-    fmt::print("-- suport avx:      {}\n", cpuinfo_has_x86_avx() ? "True" : "False");
-    fmt::print("-- suport avx2:     {}\n", cpuinfo_has_x86_avx2() ? "True" : "False");
-    fmt::print("-- suport axv512:   {}\n", cpuinfo_has_x86_avx512f() ? "True" : "False");
-    fmt::print("-- suport arm neon: {}\n", cpuinfo_has_arm_neon() ? "True" : "False");
+    fmt::print("-- support f16c:     {}\n", cpuinfo_has_x86_f16c() ? "True" : "False");
+    fmt::print("-- support sse:      {}\n", cpuinfo_has_x86_sse() ? "True" : "False");
+    fmt::print("-- support sse2:     {}\n", cpuinfo_has_x86_sse2() ? "True" : "False");
+    fmt::print("-- support sse3:     {}\n", cpuinfo_has_x86_sse3() ? "True" : "False");
+    fmt::print("-- support sse4a:    {}\n", cpuinfo_has_x86_sse4a() ? "True" : "False");
+    fmt::print("-- support sse4_1:   {}\n", cpuinfo_has_x86_sse4_1() ? "True" : "False");
+    fmt::print("-- support sse4_2:   {}\n", cpuinfo_has_x86_sse4_2() ? "True" : "False");
+    fmt::print("-- support avx:      {}\n", cpuinfo_has_x86_avx() ? "True" : "False");
+    fmt::print("-- support avx2:     {}\n", cpuinfo_has_x86_avx2() ? "True" : "False");
+    fmt::print("-- support axv512:   {}\n", cpuinfo_has_x86_avx512f() ? "True" : "False");
+    fmt::print("-- support arm neon: {}\n", cpuinfo_has_arm_neon() ? "True" : "False");
 
     fmt::print("-- size of double {}\n", static_cast<int>(sizeof(double)));
     fmt::print("-- size of float {}\n", static_cast<int>(sizeof(float)));

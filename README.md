@@ -27,24 +27,20 @@ XSigma is a production-ready C++ library featuring:
 
 ```bash
 # Clone and build with default settings
-git clone <repository-url>
+git clone https://github.com/XSigmaAnalyitix/XSigma.git
 cd XSigma
 
 # Configure and build
-cmake -B build -S .
-cmake --build build
+cd Scripts
+python setup.py ninja.clang.config.build
 ```
 
 ### Optimized Release Build
 
 ```bash
 # High-performance build with AVX2 and LTO
-cmake -B build -S . \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DXSIGMA_ENABLE_LTO=ON \
-    -DXSIGMA_VECTORIZATION_TYPE=avx2
-
-cmake --build build --config Release
+cd Scripts
+python setup.py ninja.clang.release.lto.avx2.config.build
 ```
 
 ### Using setup.py (Recommended)
@@ -149,6 +145,59 @@ Integrated static analysis tools to improve code quality: Include-What-You-Use (
 
 ---
 
+### Spell Checking
+
+Automated spell checking using codespell to maintain code quality and documentation consistency across the codebase.
+
+**Configuration:**
+- **`.codespellrc`** - Configuration file defining spell check behavior
+- **Excluded directories** - `.git`, `.augment`, `.github`, `.vscode`, `build`, `Build`, `Cmake`, `ThirdParty`
+- **Custom dictionary** - Project-specific words like "ThirdParty" are ignored
+- **Hidden files** - Excluded from spell checking
+
+#### Manual Usage
+
+**Running codespell locally:**
+```bash
+# Install codespell (if not already installed)
+pip install codespell
+
+# Run spell check on the entire codebase
+codespell
+# Alternative if codespell is not in PATH:
+python -m codespell
+
+# Run with verbose output
+codespell -v
+
+# Check specific files or directories
+codespell README.md docs/
+
+# Show configuration being used
+codespell --help
+```
+
+#### Adding Exceptions
+
+To add words that should be ignored by codespell, edit the `.codespellrc` file:
+```ini
+ignore-words-list = ThirdParty,yourword,anotherword
+```
+
+#### Integration Options
+
+- **Future setup.py integration** - Could be added to the Scripts/setup.py workflow alongside other code quality tools (clangtidy, iwyu, cppcheck)
+- **Pre-commit hooks** - Can be integrated for automatic checking before commits
+- **CI/CD pipeline** - Suitable for continuous integration to ensure documentation quality
+- **IDE integration** - Many editors support codespell plugins for real-time checking
+
+**Benefits:**
+- Maintains professional documentation standards
+- Catches common spelling errors in code comments and documentation
+- Configurable to ignore technical terms and project-specific vocabulary
+
+---
+
 ### Cross-Platform Building
 
 Full cross-platform compatibility across Windows, Linux, and macOS with platform-specific optimizations and build instructions.
@@ -173,6 +222,7 @@ Full cross-platform compatibility across Windows, Linux, and macOS with platform
 - **[Sanitizers](docs/sanitizers.md)** - Memory debugging and analysis tools
 - **[Code Coverage](docs/code-coverage.md)** - Coverage analysis and reporting
 - **[Static Analysis](docs/static-analysis.md)** - IWYU and Cppcheck tools
+- **[Spell Checking](#spell-checking)** - Codespell configuration and usage
 - **[Cross-Platform Building](docs/cross-platform-building.md)** - Platform-specific build instructions
 - **[Usage Examples](docs/usage-examples.md)** - Practical build configuration examples
 
@@ -210,22 +260,16 @@ cd XSigma
 git submodule update --init --recursive
 
 # Configure and build
-cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j
+cd Scripts
+python setup.py ninja.clang.release.config.build
 ```
 
 ### Running Tests
 
 ```bash
 # Enable testing during configuration
-cmake -B build -S . \
-    -DCMAKE_BUILD_TYPE=Debug \
-    -DXSIGMA_BUILD_TESTING=ON \
-    -DXSIGMA_GOOGLE_TEST=ON
-
-# Build and run tests
-cmake --build build -j
-ctest --test-dir build --output-on-failure
+cd Scripts
+python setup.py ninja.clang.debug.test.gtest.config.build.test
 ```
 
 ## Troubleshooting
@@ -244,12 +288,14 @@ If you see warnings about missing third-party libraries:
 
 2. Use external libraries:
    ```bash
-   cmake -B build -S . -DXSIGMA_USE_EXTERNAL=ON
+   cd Scripts
+   python setup.py ninja.clang.external.config.build
    ```
 
 3. Disable unused features:
    ```bash
-   cmake -B build -S . -DXSIGMA_ENABLE_MAGIC_ENUM=OFF
+   cd Scripts
+   python setup.py ninja.clang.magic_enum.config.build
    ```
 
 **Vectorization Issues**
@@ -257,14 +303,14 @@ If you see warnings about missing third-party libraries:
 If vectorization fails to compile:
 
 1. Check compiler support
-2. Use lower vectorization: `-DXSIGMA_VECTORIZATION_TYPE=avx`
-3. Disable vectorization: `-DXSIGMA_VECTORIZATION_TYPE=no`
+2. Use lower vectorization: add `avx` flag to setup.py command
+3. Disable vectorization: omit vectorization flags from setup.py command
 
 **LTO Issues**
 
 If Link-Time Optimization fails:
 
-1. Disable LTO: `-DXSIGMA_ENABLE_LTO=OFF`
+1. Disable LTO: add `lto` flag to setup.py command (inverts default ON to OFF)
 2. Check compiler version
 3. Increase available memory
 
@@ -272,9 +318,9 @@ If Link-Time Optimization fails:
 
 For faster builds:
 
-1. Use external libraries: `-DXSIGMA_USE_EXTERNAL=ON`
+1. Use external libraries: add `external` flag to setup.py command
 2. Disable unused features
-3. Use parallel compilation: `cmake --build build -j`
+3. Use parallel compilation: (automatically handled by setup.py)
 
 For more detailed troubleshooting, see the specific feature documentation.
 
@@ -310,17 +356,20 @@ The vectorization system supports CPU SIMD instruction sets:
 
 **For daily development:**
 ```bash
-cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug -DXSIGMA_BUILD_TESTING=ON
+cd Scripts
+python setup.py ninja.clang.debug.test.config.build
 ```
 
 **For production releases:**
 ```bash
-cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DXSIGMA_ENABLE_LTO=ON
+cd Scripts
+python setup.py ninja.clang.release.lto.config.build
 ```
 
 **For CI/CD pipelines:**
 ```bash
-cmake -B build -S . -DXSIGMA_USE_EXTERNAL=ON -DXSIGMA_BUILD_TESTING=ON
+cd Scripts
+python setup.py ninja.clang.external.test.config.build
 ```
 
 ### Performance Optimization

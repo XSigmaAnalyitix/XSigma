@@ -191,8 +191,21 @@ endif()
 
 # Optional dependencies
 if(XSIGMA_ENABLE_TBB)
-    find_package(TBB REQUIRED)
-    target_link_libraries(Core PRIVATE TBB::tbb TBB::tbbmalloc)
+    # TBB targets should be available from the tbb.cmake module
+    if(NOT TARGET TBB::tbb)
+        message(FATAL_ERROR "XSIGMA_ENABLE_TBB is ON but TBB::tbb target is not available. This indicates a configuration error.")
+    endif()
+
+    # Link with TBB
+    target_link_libraries(Core PRIVATE TBB::tbb)
+
+    # Link with TBB malloc if available
+    if(TARGET TBB::tbbmalloc)
+        target_link_libraries(Core PRIVATE TBB::tbbmalloc)
+        message(STATUS "Core library linked with TBB and TBB malloc")
+    else()
+        message(STATUS "Core library linked with TBB (TBB malloc not available)")
+    endif()
 endif()
 
 if(XSIGMA_ENABLE_MIMALLOC)

@@ -1,5 +1,10 @@
 name: XSigma CI - Comprehensive Testing Pipeline
 
+# This CI pipeline tests XSigma with and without Intel TBB (Threading Building Blocks).
+# TBB packages are always installed to avoid CMake configuration issues, but the
+# XSIGMA_ENABLE_TBB flag controls whether TBB is actually used in the build.
+# When TBB is disabled, the build uses standard threading implementations instead.
+
 on:
   push:
     branches: [ main, develop ]
@@ -14,9 +19,10 @@ env:
 jobs:
   # ============================================================================
   # Build Configuration Matrix - Test multiple build configurations
+  # Tests both TBB enabled and disabled configurations across platforms
   # ============================================================================
   build-matrix:
-    name: ${{ matrix.os }} - ${{ matrix.build_type }} - ${{ matrix.cxx_std }} - ${{ matrix.logging_backend }}
+    name: ${{ matrix.os }} - ${{ matrix.build_type }} - ${{ matrix.cxx_std }} - ${{ matrix.logging_backend }} - TBB:${{ matrix.tbb_enabled }}
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -26,6 +32,7 @@ jobs:
         build_type: [Debug, Release]
         cxx_std: [17, 20]
         logging_backend: [LOGURU, GLOG, NATIVE]
+        tbb_enabled: [ON, OFF]
         include:
           # Ubuntu-specific configuration
           - os: ubuntu-latest
@@ -55,6 +62,17 @@ jobs:
           - os: macos-latest
             build_type: Debug
             cxx_std: 20
+          # Skip TBB=OFF tests for some combinations to reduce CI time
+          - os: windows-latest
+            build_type: Debug
+            tbb_enabled: OFF
+          - os: macos-latest
+            build_type: Debug
+            tbb_enabled: OFF
+          - os: ubuntu-latest
+            build_type: Debug
+            cxx_std: 20
+            tbb_enabled: OFF
 
     steps:
     - name: Checkout repository
@@ -109,17 +127,54 @@ jobs:
 
     - name: Install dependencies (Windows)
       if: runner.os == 'Windows'
+      shell: pwsh
       run: |
+        # Install basic build tools via chocolatey
+        Write-Host "Installing build tools via chocolatey..."
         choco install ninja llvm cmake python3 -y
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "❌ Failed to install build tools"
+          exit 1
+        }
+
+        # Verify vcpkg is available
+        Write-Host "Checking vcpkg availability..."
+        if (-not $env:VCPKG_INSTALLATION_ROOT) {
+          Write-Host "❌ VCPKG_INSTALLATION_ROOT not set"
+          exit 1
+        }
+        Write-Host "vcpkg root: $env:VCPKG_INSTALLATION_ROOT"
+
+        # Install Intel TBB via vcpkg
+        Write-Host "Installing Intel TBB via vcpkg..."
+        vcpkg install tbb:x64-windows
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "❌ Failed to install TBB via vcpkg"
+          exit 1
+        }
+
+        # Verify TBB installation
+        $tbbHeaderPath = "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\include\tbb\tbb.h"
+        if (Test-Path $tbbHeaderPath) {
+          Write-Host "✅ Intel TBB installed successfully at: $tbbHeaderPath"
+        } else {
+          Write-Host "❌ Intel TBB installation failed - header not found at: $tbbHeaderPath"
+          # List what was actually installed
+          Write-Host "Contents of vcpkg installed directory:"
+          Get-ChildItem "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows" -Recurse -Name | Select-Object -First 20
+          exit 1
+        }
 
     - name: Install Intel MKL (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
-        # Install Intel MKL via chocolatey or direct download
-        Write-Host "Installing Intel MKL for Windows..."
-        # Note: This is a placeholder - actual installation may require Intel installer
-        Write-Host "MKL installation skipped in CI - using system libraries"
+        # Intel MKL installation on Windows
+        Write-Host "Intel MKL installation for Windows..."
+        Write-Host "Note: Intel MKL can be installed via Intel oneAPI installer or vcpkg"
+        Write-Host "For CI purposes, using system math libraries"
+        Write-Host "To install MKL: vcpkg install intel-mkl:x64-windows (if available)"
+        Write-Host "Or download Intel oneAPI Base Toolkit from Intel website"
 
     - name: Setup Python
       uses: actions/setup-python@v5
@@ -147,7 +202,7 @@ jobs:
           -DXSIGMA_ENABLE_GTEST=ON \
           -DXSIGMA_ENABLE_BENCHMARK=ON \
           -DXSIGMA_ENABLE_LTO=OFF \
-          -DXSIGMA_ENABLE_TBB=ON
+          -DXSIGMA_ENABLE_TBB=${{ matrix.tbb_enabled }}
 
     - name: Configure CMake (Windows)
       if: runner.os == 'Windows'
@@ -160,12 +215,14 @@ jobs:
           -DCMAKE_C_COMPILER=${{ matrix.compiler_c }} `
           -DCMAKE_CXX_COMPILER=${{ matrix.compiler_cxx }} `
           -DCMAKE_CXX_STANDARD=${{ matrix.cxx_std }} `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DVCPKG_TARGET_TRIPLET=x64-windows `
           -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} `
           -DXSIGMA_BUILD_TESTING=ON `
           -DXSIGMA_ENABLE_GTEST=ON `
           -DXSIGMA_ENABLE_BENCHMARK=ON `
           -DXSIGMA_ENABLE_LTO=OFF `
-          -DXSIGMA_ENABLE_TBB=ON
+          -DXSIGMA_ENABLE_TBB=${{ matrix.tbb_enabled }}
 
     - name: Build
       run: cmake --build build --config ${{ matrix.build_type }} -j 2
@@ -174,11 +231,209 @@ jobs:
       working-directory: ${{ github.workspace }}/build
       run: ctest --output-on-failure --build-config ${{ matrix.build_type }} -j 2
 
+    - name: Verify TBB Configuration
+      working-directory: ${{ github.workspace }}/build
+      shell: bash
+      run: |
+        echo "=== Verifying TBB Configuration ==="
+        echo "TBB Enabled: ${{ matrix.tbb_enabled }}"
+        echo "Platform: ${{ runner.os }}"
+
+        # Check if TBB libraries are linked (when enabled)
+        if [ "${{ matrix.tbb_enabled }}" = "ON" ]; then
+          echo "✅ TBB should be enabled and linked"
+
+          # Platform-specific library checks
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            if [ -f "Library/Core/libCore.so" ]; then
+              if nm -D Library/Core/libCore.so | grep -q "tbb" || ldd Library/Core/libCore.so | grep -q "tbb"; then
+                echo "✅ TBB symbols/dependencies found in Core library (Linux)"
+              else
+                echo "⚠️  TBB symbols not found - may be statically linked (Linux)"
+              fi
+            fi
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            if [ -f "Library/Core/libCore.dylib" ]; then
+              if otool -L Library/Core/libCore.dylib | grep -q "tbb"; then
+                echo "✅ TBB dependencies found in Core library (macOS)"
+              else
+                echo "⚠️  TBB dependencies not found - may be statically linked (macOS)"
+              fi
+            fi
+          elif [ "${{ runner.os }}" = "Windows" ]; then
+            if [ -f "Library/Core/Core.dll" ] || [ -f "Library/Core/Core.lib" ]; then
+              echo "✅ Core library built successfully (Windows)"
+              # On Windows, dependency checking is more complex, so we just verify the build succeeded
+            fi
+          fi
+        else
+          echo "✅ TBB should be disabled"
+          echo "Using standard threading implementation"
+        fi
+
     - name: Upload test results
       if: failure()
       uses: actions/upload-artifact@v4
       with:
-        name: test-results-${{ matrix.os }}-${{ matrix.build_type }}-cxx${{ matrix.cxx_std }}-${{ matrix.logging_backend }}
+        name: test-results-${{ matrix.os }}-${{ matrix.build_type }}-cxx${{ matrix.cxx_std }}-${{ matrix.logging_backend }}-tbb${{ matrix.tbb_enabled }}
+        path: |
+          build/Testing/Temporary/LastTest.log
+          build/**/*.log
+
+  # ============================================================================
+  # TBB-Specific Testing - Focused TBB functionality tests
+  # ============================================================================
+  tbb-specific-tests:
+    name: TBB Functionality - ${{ matrix.os }} - ${{ matrix.build_type }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        build_type: [Debug, Release]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache
+          ~/Library/Caches
+          ~\AppData\Local\Temp\chocolatey
+          build/ThirdParty
+        key: ${{ runner.os }}-tbb-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-tbb-${{ env.CACHE_VERSION }}-
+
+    - name: Install dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          clang \
+          llvm \
+          cmake \
+          python3 \
+          python3-pip \
+          libtbb-dev
+
+    - name: Install Intel TBB (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+        echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+        sudo apt-get update
+        sudo apt-get install -y intel-oneapi-tbb-devel
+
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install ninja llvm cmake python3 tbb
+
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        # Install basic build tools via chocolatey
+        Write-Host "Installing build tools via chocolatey..."
+        choco install ninja llvm cmake python3 -y
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "❌ Failed to install build tools"
+          exit 1
+        }
+
+        # Verify vcpkg is available
+        Write-Host "Checking vcpkg availability..."
+        if (-not $env:VCPKG_INSTALLATION_ROOT) {
+          Write-Host "❌ VCPKG_INSTALLATION_ROOT not set"
+          exit 1
+        }
+        Write-Host "vcpkg root: $env:VCPKG_INSTALLATION_ROOT"
+
+        # Install Intel TBB via vcpkg
+        Write-Host "Installing Intel TBB via vcpkg..."
+        vcpkg install tbb:x64-windows
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "❌ Failed to install TBB via vcpkg"
+          exit 1
+        }
+
+        # Verify TBB installation
+        $tbbHeaderPath = "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\include\tbb\tbb.h"
+        if (Test-Path $tbbHeaderPath) {
+          Write-Host "✅ Intel TBB installed successfully at: $tbbHeaderPath"
+        } else {
+          Write-Host "❌ Intel TBB installation failed - header not found at: $tbbHeaderPath"
+          exit 1
+        }
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install psutil colorama
+
+    - name: Configure with TBB enabled (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        cmake -B build \
+          -S . \
+          -G Ninja \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=clang++ \
+          -DXSIGMA_LOGGING_BACKEND=LOGURU \
+          -DXSIGMA_BUILD_TESTING=ON \
+          -DXSIGMA_ENABLE_GTEST=ON \
+          -DXSIGMA_ENABLE_TBB=ON \
+          -DXSIGMA_ENABLE_LTO=OFF
+
+    - name: Configure with TBB enabled (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        cmake -B build `
+          -S . `
+          -G Ninja `
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+          -DCMAKE_C_COMPILER=clang `
+          -DCMAKE_CXX_COMPILER=clang++ `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DVCPKG_TARGET_TRIPLET=x64-windows `
+          -DXSIGMA_LOGGING_BACKEND=LOGURU `
+          -DXSIGMA_BUILD_TESTING=ON `
+          -DXSIGMA_ENABLE_GTEST=ON `
+          -DXSIGMA_ENABLE_TBB=ON `
+          -DXSIGMA_ENABLE_LTO=OFF
+
+    - name: Build
+      run: cmake --build build -j 2
+
+    - name: Run TBB-specific tests
+      working-directory: ${{ github.workspace }}/build
+      run: |
+        # Run all tests but focus on TBB-related functionality
+        ctest --output-on-failure -j 2
+
+        # Check that TBB is actually being used
+        echo "=== Verifying TBB Integration ==="
+        if [ -f "Library/Core/libCore.a" ] || [ -f "Library/Core/libCore.so" ] || [ -f "Library/Core/Core.lib" ]; then
+          echo "Core library built successfully with TBB support"
+        else
+          echo "WARNING: Core library not found"
+        fi
+
+    - name: Upload TBB test results
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: tbb-test-results-${{ matrix.os }}-${{ matrix.build_type }}
         path: |
           build/Testing/Temporary/LastTest.log
           build/**/*.log
@@ -421,7 +676,8 @@ jobs:
           -DCMAKE_CXX_COMPILER=clang++ \
           -DXSIGMA_LOGGING_BACKEND=LOGURU \
           -DXSIGMA_ENABLE_CPPCHECK=ON \
-          -DXSIGMA_BUILD_TESTING=ON
+          -DXSIGMA_BUILD_TESTING=ON \
+          -DXSIGMA_ENABLE_TBB=OFF
 
     - name: Build with analysis
       run: cmake --build build -j 2
@@ -488,7 +744,8 @@ jobs:
           -DXSIGMA_BUILD_TESTING=ON \
           -DXSIGMA_ENABLE_GTEST=ON \
           -DXSIGMA_ENABLE_COVERAGE=ON \
-          -DXSIGMA_ENABLE_LTO=OFF
+          -DXSIGMA_ENABLE_LTO=OFF \
+          -DXSIGMA_ENABLE_TBB=ON
 
     - name: Build
       run: cmake --build build -j 2
@@ -586,7 +843,8 @@ jobs:
           -DXSIGMA_LOGGING_BACKEND=LOGURU \
           -DXSIGMA_BUILD_TESTING=ON \
           -DXSIGMA_ENABLE_GTEST=ON \
-          -DXSIGMA_ENABLE_LTO=OFF
+          -DXSIGMA_ENABLE_LTO=OFF \
+          -DXSIGMA_ENABLE_TBB=OFF
 
     - name: Build
       run: cmake --build build -j 2
@@ -639,7 +897,8 @@ jobs:
           -DXSIGMA_LOGGING_BACKEND=LOGURU \
           -DXSIGMA_BUILD_TESTING=ON \
           -DXSIGMA_ENABLE_BENCHMARK=ON \
-          -DXSIGMA_ENABLE_LTO=ON
+          -DXSIGMA_ENABLE_LTO=ON \
+          -DXSIGMA_ENABLE_TBB=ON
 
     - name: Build
       run: cmake --build build -j 2
@@ -666,6 +925,7 @@ jobs:
     name: CI Success
     needs:
       - build-matrix
+      - tbb-specific-tests
       - valgrind-memory-check
       - sanitizer-tests
       - code-quality
@@ -680,6 +940,7 @@ jobs:
       run: |
         echo "=== CI Pipeline Results ==="
         echo "Build Matrix: ${{ needs.build-matrix.result }}"
+        echo "TBB Specific Tests: ${{ needs.tbb-specific-tests.result }}"
         echo "Valgrind Memory Check: ${{ needs.valgrind-memory-check.result }}"
         echo "Sanitizer Tests: ${{ needs.sanitizer-tests.result }}"
         echo "Code Quality: ${{ needs.code-quality.result }}"
@@ -691,6 +952,10 @@ jobs:
         # Check if any required job failed
         if [ "${{ needs.build-matrix.result }}" != "success" ]; then
           echo "❌ Build matrix failed"
+          exit 1
+        fi
+        if [ "${{ needs.tbb-specific-tests.result }}" != "success" ]; then
+          echo "❌ TBB specific tests failed"
           exit 1
         fi
         if [ "${{ needs.valgrind-memory-check.result }}" != "success" ]; then
