@@ -722,12 +722,41 @@ class XsigmaConfiguration:
         return self.__run_ctest()
 
     def __run_valgrind_test(self, source_path, build_path):
+        """Run tests with Valgrind memory checking."""
         script_full_path = f"{source_path}/Scripts/valgrind_ctest.sh"
-        return subprocess.call(
-            [script_full_path, build_path],
-            stdin=subprocess.PIPE,
-            shell=self.__shell_flag(),
-        )
+
+        # Check if script exists
+        if not os.path.exists(script_full_path):
+            print_status(f"Valgrind test script not found: {script_full_path}", "ERROR")
+            print_status("The script should have been created during setup", "ERROR")
+            return 1
+
+        # Make script executable
+        try:
+            os.chmod(script_full_path, 0o755)
+        except Exception as e:
+            print_status(f"Failed to make script executable: {e}", "WARNING")
+
+        # Check platform compatibility
+        if platform.system() == "Darwin" and platform.machine() == "arm64":
+            print_status("WARNING: Valgrind does not support Apple Silicon (ARM64)", "WARNING")
+            print_status("Consider using sanitizers instead:", "INFO")
+            print_status("  AddressSanitizer: python3 setup.py config.ninja.clang.test --sanitizer.address", "INFO")
+            print_status("  LeakSanitizer:    python3 setup.py config.ninja.clang.test --sanitizer.leak", "INFO")
+            print_status("Attempting to run Valgrind anyway (will fail if not installed)...", "WARNING")
+
+        print_status(f"Running Valgrind tests from: {script_full_path}", "INFO")
+        print_status(f"Build directory: {build_path}", "INFO")
+
+        try:
+            return subprocess.call(
+                [script_full_path, build_path],
+                stdin=subprocess.PIPE,
+                shell=self.__shell_flag(),
+            )
+        except Exception as e:
+            print_status(f"Failed to run Valgrind tests: {e}", "ERROR")
+            return 1
 
     def __run_ctest(self):
         ctest_cmd = ["ctest"]

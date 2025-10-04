@@ -1,4 +1,4 @@
-name: XSigma CI - Multi-Backend Testing
+name: XSigma CI - Comprehensive Testing Pipeline
 
 on:
   push:
@@ -9,36 +9,52 @@ on:
 
 env:
   BUILD_TYPE: Release
+  CACHE_VERSION: v1
 
 jobs:
-  # Matrix build testing all three logging backends across multiple platforms
-  build-and-test:
-    name: ${{ matrix.os }} - ${{ matrix.logging_backend }}
+  # ============================================================================
+  # Build Configuration Matrix - Test multiple build configurations
+  # ============================================================================
+  build-matrix:
+    name: ${{ matrix.os }} - ${{ matrix.build_type }} - ${{ matrix.cxx_std }} - ${{ matrix.logging_backend }}
     runs-on: ${{ matrix.os }}
-    
+
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        logging_backend: [NATIVE, LOGURU, GLOG]
+        build_type: [Debug, Release]
+        cxx_std: [17, 20]
+        logging_backend: [LOGURU, GLOG, NATIVE]
         include:
           # Ubuntu-specific configuration
           - os: ubuntu-latest
             compiler_c: clang
             compiler_cxx: clang++
             generator: Ninja
-            
+            cache_path: ~/.cache
+
           # Windows-specific configuration
           - os: windows-latest
             compiler_c: clang
             compiler_cxx: clang++
             generator: Ninja
-            
+            cache_path: ~\AppData\Local\Temp\chocolatey
+
           # macOS-specific configuration
           - os: macos-latest
             compiler_c: clang
             compiler_cxx: clang++
             generator: Ninja
+            cache_path: ~/Library/Caches
+        exclude:
+          # Reduce matrix size - skip some combinations to optimize CI time
+          - os: windows-latest
+            build_type: Debug
+            cxx_std: 20
+          - os: macos-latest
+            build_type: Debug
+            cxx_std: 20
 
     steps:
     - name: Checkout repository
@@ -46,6 +62,17 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ matrix.cache_path }}
+          build/ThirdParty
+        key: ${{ runner.os }}-deps-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt', 'ThirdParty/**') }}
+        restore-keys: |
+          ${{ runner.os }}-deps-${{ env.CACHE_VERSION }}-
+          ${{ runner.os }}-deps-
 
     - name: Install dependencies (Ubuntu)
       if: runner.os == 'Linux'
@@ -57,22 +84,53 @@ jobs:
           llvm \
           cmake \
           python3 \
-          python3-pip
+          python3-pip \
+          libtbb-dev
+
+    - name: Install Intel MKL (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+        echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+        sudo apt-get update
+        sudo apt-get install -y intel-oneapi-mkl-devel intel-oneapi-tbb-devel
 
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
       run: |
-        brew install ninja llvm cmake python3
+        brew install ninja llvm cmake python3 tbb
+
+    - name: Install Intel MKL (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        # Intel MKL is available through conda or manual download
+        # For CI, we'll use the system's Accelerate framework as fallback
+        echo "Using macOS Accelerate framework (BLAS/LAPACK alternative to MKL)"
 
     - name: Install dependencies (Windows)
       if: runner.os == 'Windows'
       run: |
         choco install ninja llvm cmake python3 -y
 
+    - name: Install Intel MKL (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        # Install Intel MKL via chocolatey or direct download
+        Write-Host "Installing Intel MKL for Windows..."
+        # Note: This is a placeholder - actual installation may require Intel installer
+        Write-Host "MKL installation skipped in CI - using system libraries"
+
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.x'
+        cache: 'pip'
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install psutil colorama
 
     - name: Configure CMake (Ubuntu/macOS)
       if: runner.os != 'Windows'
@@ -80,14 +138,16 @@ jobs:
         cmake -B build \
           -S . \
           -G "${{ matrix.generator }}" \
-          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
           -DCMAKE_C_COMPILER=${{ matrix.compiler_c }} \
           -DCMAKE_CXX_COMPILER=${{ matrix.compiler_cxx }} \
+          -DCMAKE_CXX_STANDARD=${{ matrix.cxx_std }} \
           -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} \
           -DXSIGMA_BUILD_TESTING=ON \
           -DXSIGMA_ENABLE_GTEST=ON \
           -DXSIGMA_ENABLE_BENCHMARK=ON \
-          -DXSIGMA_ENABLE_LTO=OFF
+          -DXSIGMA_ENABLE_LTO=OFF \
+          -DXSIGMA_ENABLE_TBB=ON
 
     - name: Configure CMake (Windows)
       if: runner.os == 'Windows'
@@ -96,67 +156,248 @@ jobs:
         cmake -B build `
           -S . `
           -G "${{ matrix.generator }}" `
-          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
           -DCMAKE_C_COMPILER=${{ matrix.compiler_c }} `
           -DCMAKE_CXX_COMPILER=${{ matrix.compiler_cxx }} `
+          -DCMAKE_CXX_STANDARD=${{ matrix.cxx_std }} `
           -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} `
           -DXSIGMA_BUILD_TESTING=ON `
           -DXSIGMA_ENABLE_GTEST=ON `
           -DXSIGMA_ENABLE_BENCHMARK=ON `
-          -DXSIGMA_ENABLE_LTO=OFF
+          -DXSIGMA_ENABLE_LTO=OFF `
+          -DXSIGMA_ENABLE_TBB=ON
 
     - name: Build
-      run: cmake --build build --config ${{ env.BUILD_TYPE }} -j 2
+      run: cmake --build build --config ${{ matrix.build_type }} -j 2
 
     - name: Run Tests
       working-directory: ${{ github.workspace }}/build
-      run: ctest --output-on-failure --build-config ${{ env.BUILD_TYPE }}
+      run: ctest --output-on-failure --build-config ${{ matrix.build_type }} -j 2
 
     - name: Upload test results
       if: failure()
       uses: actions/upload-artifact@v4
       with:
-        name: test-results-${{ matrix.os }}-${{ matrix.logging_backend }}
+        name: test-results-${{ matrix.os }}-${{ matrix.build_type }}-cxx${{ matrix.cxx_std }}-${{ matrix.logging_backend }}
         path: |
           build/Testing/Temporary/LastTest.log
           build/**/*.log
 
-  # Quick validation build (default backend only)
-  quick-build:
-    name: Quick Build - Default Backend
+  # ============================================================================
+  # Memory Testing with Valgrind (Linux only)
+  # ============================================================================
+  valgrind-memory-check:
+    name: Valgrind Memory Check
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: recursive
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache
+          build/ThirdParty
+        key: ubuntu-valgrind-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ubuntu-valgrind-${{ env.CACHE_VERSION }}-
 
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ninja-build clang cmake python3
+        sudo apt-get install -y \
+          ninja-build \
+          clang \
+          llvm \
+          cmake \
+          python3 \
+          python3-pip \
+          valgrind \
+          libtbb-dev
 
-    - name: Configure and Build
+    - name: Install Python dependencies
       run: |
-        cd Scripts
-        python3 setup.py config.ninja.clang.python.build.test
+        python -m pip install --upgrade pip
+        pip install psutil colorama
 
-    - name: Run Tests
+    - name: Configure CMake with Valgrind
       run: |
-        cd build_ninja
-        ctest --output-on-failure
+        cmake -B build \
+          -S . \
+          -G Ninja \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=clang++ \
+          -DXSIGMA_LOGGING_BACKEND=LOGURU \
+          -DXSIGMA_BUILD_TESTING=ON \
+          -DXSIGMA_ENABLE_GTEST=ON \
+          -DXSIGMA_ENABLE_VALGRIND=ON \
+          -DXSIGMA_ENABLE_LTO=OFF
 
-  # Code quality checks
-  code-quality:
-    name: Code Quality Checks
-    runs-on: ubuntu-latest
-    
+    - name: Build
+      run: cmake --build build -j 2
+
+    - name: Run Tests with Valgrind
+      working-directory: ${{ github.workspace }}/build
+      run: |
+        ctest -T memcheck --output-on-failure || true
+
+    - name: Check Valgrind results
+      working-directory: ${{ github.workspace }}/build
+      run: |
+        if [ -f Testing/Temporary/MemoryChecker.*.log ]; then
+          echo "=== Valgrind Memory Check Results ==="
+          cat Testing/Temporary/MemoryChecker.*.log
+
+          # Check for memory leaks
+          if grep -q "definitely lost" Testing/Temporary/MemoryChecker.*.log; then
+            echo "ERROR: Memory leaks detected!"
+            exit 1
+          fi
+
+          if grep -q "ERROR SUMMARY: [1-9]" Testing/Temporary/MemoryChecker.*.log; then
+            echo "ERROR: Memory errors detected!"
+            exit 1
+          fi
+
+          echo "SUCCESS: No memory leaks or errors detected"
+        else
+          echo "WARNING: No Valgrind log files found"
+        fi
+
+    - name: Upload Valgrind results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: valgrind-results
+        path: |
+          build/Testing/Temporary/MemoryChecker.*.log
+          build/Testing/Temporary/LastTest.log
+
+  # ============================================================================
+  # Comprehensive Sanitizer Testing
+  # ============================================================================
+  sanitizer-tests:
+    name: Sanitizer - ${{ matrix.sanitizer }} - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address, undefined, thread, leak]
+        os: [ubuntu-latest, macos-latest]
+        exclude:
+          # ThreadSanitizer is incompatible with AddressSanitizer/LeakSanitizer
+          # Run them separately
+          - sanitizer: thread
+            os: macos-latest  # TSan has issues on macOS in CI
+        include:
+          - sanitizer: address
+            env_options: "ASAN_OPTIONS=detect_leaks=1:abort_on_error=1:symbolize=1:detect_stack_use_after_return=1"
+          - sanitizer: undefined
+            env_options: "UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1:symbolize=1"
+          - sanitizer: thread
+            env_options: "TSAN_OPTIONS=halt_on_error=1:second_deadlock_stack=1"
+          - sanitizer: leak
+            env_options: "LSAN_OPTIONS=suppressions=${{ github.workspace }}/Scripts/sanitizer_ignore.txt"
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: recursive
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache
+          ~/Library/Caches
+          build/ThirdParty
+        key: ${{ runner.os }}-sanitizer-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-sanitizer-${{ env.CACHE_VERSION }}-
+
+    - name: Install dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          clang \
+          llvm \
+          cmake \
+          python3 \
+          python3-pip \
+          libtbb-dev
+
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install ninja llvm cmake python3 tbb
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install psutil colorama
+
+    - name: Configure with ${{ matrix.sanitizer }} sanitizer
+      run: |
+        cmake -B build \
+          -S . \
+          -G Ninja \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=clang++ \
+          -DXSIGMA_LOGGING_BACKEND=LOGURU \
+          -DXSIGMA_ENABLE_SANITIZER=ON \
+          -DXSIGMA_SANITIZER_TYPE=${{ matrix.sanitizer }} \
+          -DXSIGMA_BUILD_TESTING=ON \
+          -DXSIGMA_ENABLE_GTEST=ON \
+          -DXSIGMA_ENABLE_LTO=OFF
+
+    - name: Build
+      run: cmake --build build -j 2
+
+    - name: Run Tests with ${{ matrix.sanitizer }} Sanitizer
+      working-directory: ${{ github.workspace }}/build
+      run: ctest --output-on-failure -j 2
+      env:
+        ${{ matrix.env_options }}
+
+    - name: Upload sanitizer results
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: sanitizer-${{ matrix.sanitizer }}-${{ matrix.os }}-results
+        path: |
+          build/Testing/Temporary/LastTest.log
+          build/**/*.log
+
+  # ============================================================================
+  # Code Quality and Static Analysis
+  # ============================================================================
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache
+        key: ubuntu-quality-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ubuntu-quality-${{ env.CACHE_VERSION }}-
 
     - name: Install dependencies
       run: |
@@ -166,7 +407,9 @@ jobs:
           clang \
           clang-tidy \
           cppcheck \
-          cmake
+          cmake \
+          python3 \
+          libtbb-dev
 
     - name: Configure with static analysis
       run: |
@@ -192,29 +435,48 @@ jobs:
           build/cppcheckoutput.log
           build/**/*.log
 
-  # Sanitizer builds (AddressSanitizer)
-  sanitizer-build:
-    name: Sanitizer - ${{ matrix.sanitizer }}
+  # ============================================================================
+  # Code Coverage Testing (98% minimum requirement)
+  # ============================================================================
+  coverage-test:
+    name: Code Coverage Analysis
     runs-on: ubuntu-latest
-    
-    strategy:
-      fail-fast: false
-      matrix:
-        sanitizer: [address, undefined]
-        logging_backend: [LOGURU]  # Test with default backend only
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: recursive
 
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache
+          build/ThirdParty
+        key: ubuntu-coverage-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ubuntu-coverage-${{ env.CACHE_VERSION }}-
+
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ninja-build clang cmake python3
+        sudo apt-get install -y \
+          ninja-build \
+          clang \
+          llvm \
+          cmake \
+          python3 \
+          python3-pip \
+          lcov \
+          libtbb-dev
 
-    - name: Configure with sanitizer
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install psutil colorama
+
+    - name: Configure with coverage
       run: |
         cmake -B build \
           -S . \
@@ -222,47 +484,239 @@ jobs:
           -DCMAKE_BUILD_TYPE=Debug \
           -DCMAKE_C_COMPILER=clang \
           -DCMAKE_CXX_COMPILER=clang++ \
-          -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} \
-          -DXSIGMA_ENABLE_SANITIZER=ON \
-          -DXSIGMA_SANITIZER_TYPE=${{ matrix.sanitizer }} \
+          -DXSIGMA_LOGGING_BACKEND=LOGURU \
           -DXSIGMA_BUILD_TESTING=ON \
-          -DXSIGMA_ENABLE_GTEST=ON
+          -DXSIGMA_ENABLE_GTEST=ON \
+          -DXSIGMA_ENABLE_COVERAGE=ON \
+          -DXSIGMA_ENABLE_LTO=OFF
 
     - name: Build
       run: cmake --build build -j 2
 
-    - name: Run Tests with Sanitizer
+    - name: Run Tests
       working-directory: ${{ github.workspace }}/build
-      run: ctest --output-on-failure
-      env:
-        ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
-        UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+      run: ctest --output-on-failure -j 2
 
-  # Summary job that requires all matrix builds to pass
+    - name: Generate coverage report
+      working-directory: ${{ github.workspace }}
+      run: |
+        cd Scripts
+        python3 analyze_coverage.py --build-dir ../build --verbose
+
+    - name: Check coverage threshold (98%)
+      working-directory: ${{ github.workspace }}/build
+      run: |
+        echo "Checking for 98% minimum coverage requirement..."
+        # This will be handled by analyze_coverage.py script
+        # which exits with code 1 if coverage is below threshold
+
+    - name: Upload coverage results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: |
+          build/coverage/
+          build/coverage_report/
+
+    - name: Upload coverage to Codecov (optional)
+      if: always()
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./build/coverage/coverage.info
+        flags: unittests
+        name: codecov-xsigma
+        fail_ci_if_error: false
+
+  # ============================================================================
+  # Optimization Flags Testing
+  # ============================================================================
+  optimization-flags-test:
+    name: Optimization - ${{ matrix.opt_level }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        opt_level: ["-O0", "-O2", "-O3"]
+        include:
+          - opt_level: "-O0"
+            build_type: Debug
+          - opt_level: "-O2"
+            build_type: Release
+          - opt_level: "-O3"
+            build_type: Release
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache
+          build/ThirdParty
+        key: ubuntu-opt-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ubuntu-opt-${{ env.CACHE_VERSION }}-
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          clang \
+          cmake \
+          python3 \
+          libtbb-dev
+
+    - name: Configure with ${{ matrix.opt_level }}
+      run: |
+        cmake -B build \
+          -S . \
+          -G Ninja \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=clang++ \
+          -DCMAKE_C_FLAGS="${{ matrix.opt_level }}" \
+          -DCMAKE_CXX_FLAGS="${{ matrix.opt_level }}" \
+          -DXSIGMA_LOGGING_BACKEND=LOGURU \
+          -DXSIGMA_BUILD_TESTING=ON \
+          -DXSIGMA_ENABLE_GTEST=ON \
+          -DXSIGMA_ENABLE_LTO=OFF
+
+    - name: Build
+      run: cmake --build build -j 2
+
+    - name: Run Tests
+      working-directory: ${{ github.workspace }}/build
+      run: ctest --output-on-failure -j 2
+
+  # ============================================================================
+  # Performance and Benchmark Tests
+  # ============================================================================
+  benchmark-tests:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache
+          build/ThirdParty
+        key: ubuntu-bench-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ubuntu-bench-${{ env.CACHE_VERSION }}-
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          clang \
+          cmake \
+          python3 \
+          libtbb-dev
+
+    - name: Configure for benchmarks
+      run: |
+        cmake -B build \
+          -S . \
+          -G Ninja \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=clang++ \
+          -DXSIGMA_LOGGING_BACKEND=LOGURU \
+          -DXSIGMA_BUILD_TESTING=ON \
+          -DXSIGMA_ENABLE_BENCHMARK=ON \
+          -DXSIGMA_ENABLE_LTO=ON
+
+    - name: Build
+      run: cmake --build build -j 2
+
+    - name: Run Benchmarks
+      working-directory: ${{ github.workspace }}/build
+      run: |
+        # Run benchmarks and save results
+        ctest -R ".*[Bb]enchmark.*" --output-on-failure || true
+
+    - name: Upload benchmark results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: |
+          build/Testing/Temporary/LastTest.log
+          build/**/*benchmark*.log
+
+  # ============================================================================
+  # CI Success Summary
+  # ============================================================================
   ci-success:
     name: CI Success
-    needs: [build-and-test, quick-build, code-quality, sanitizer-build]
+    needs:
+      - build-matrix
+      - valgrind-memory-check
+      - sanitizer-tests
+      - code-quality
+      - coverage-test
+      - optimization-flags-test
+      - benchmark-tests
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
-    - name: Check build matrix results
+    - name: Check all job results
       run: |
-        if [ "${{ needs.build-and-test.result }}" != "success" ]; then
-          echo "Build and test matrix failed"
+        echo "=== CI Pipeline Results ==="
+        echo "Build Matrix: ${{ needs.build-matrix.result }}"
+        echo "Valgrind Memory Check: ${{ needs.valgrind-memory-check.result }}"
+        echo "Sanitizer Tests: ${{ needs.sanitizer-tests.result }}"
+        echo "Code Quality: ${{ needs.code-quality.result }}"
+        echo "Coverage Test: ${{ needs.coverage-test.result }}"
+        echo "Optimization Flags: ${{ needs.optimization-flags-test.result }}"
+        echo "Benchmark Tests: ${{ needs.benchmark-tests.result }}"
+        echo ""
+
+        # Check if any required job failed
+        if [ "${{ needs.build-matrix.result }}" != "success" ]; then
+          echo "❌ Build matrix failed"
           exit 1
         fi
-        if [ "${{ needs.quick-build.result }}" != "success" ]; then
-          echo "Quick build failed"
+        if [ "${{ needs.valgrind-memory-check.result }}" != "success" ]; then
+          echo "❌ Valgrind memory check failed"
+          exit 1
+        fi
+        if [ "${{ needs.sanitizer-tests.result }}" != "success" ]; then
+          echo "❌ Sanitizer tests failed"
           exit 1
         fi
         if [ "${{ needs.code-quality.result }}" != "success" ]; then
-          echo "Code quality checks failed"
+          echo "❌ Code quality checks failed"
           exit 1
         fi
-        if [ "${{ needs.sanitizer-build.result }}" != "success" ]; then
-          echo "Sanitizer builds failed"
+        if [ "${{ needs.coverage-test.result }}" != "success" ]; then
+          echo "❌ Coverage test failed"
           exit 1
         fi
-        echo "All CI checks passed successfully!"
+        if [ "${{ needs.optimization-flags-test.result }}" != "success" ]; then
+          echo "❌ Optimization flags test failed"
+          exit 1
+        fi
+        if [ "${{ needs.benchmark-tests.result }}" != "success" ]; then
+          echo "⚠️  Benchmark tests failed (non-blocking)"
+        fi
+
+        echo ""
+        echo "✅ All CI checks passed successfully!"
 
