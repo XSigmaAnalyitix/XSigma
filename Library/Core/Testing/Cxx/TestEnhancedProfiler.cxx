@@ -102,7 +102,7 @@ void simulate_cpu_intensive_work()
 bool test_basic_functionality()
 {
     std::cout << "Testing basic profiler functionality..." << std::endl;
-
+	
     auto session = profiler_session_builder()
                        .with_timing(true)
                        .with_memory_tracking(true)
