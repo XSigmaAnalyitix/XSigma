@@ -166,4 +166,19 @@ file(
     endif()
 
     message(STATUS "✓ BenchmarkSimple executable configured")
+    # =============================================================================
+    # TBB Support
+    # =============================================================================
+    if(XSIGMA_ENABLE_TBB)
+        # TBB targets should be available from the tbb.cmake module
+        if(TARGET TBB::tbb)
+            target_link_libraries(CoreCxxBenchmark PRIVATE TBB::tbb)
+            if(TARGET TBB::tbbmalloc)
+                target_link_libraries(CoreCxxBenchmark PRIVATE TBB::tbbmalloc)
+            endif()
+            message(STATUS "CoreCxxBenchmark linked with TBB")
+        else()
+            message(WARNING "XSIGMA_ENABLE_TBB is ON but TBB::tbb target is not available for tests")
+        endif()
+    endif()
 endif()

@@ -605,7 +605,7 @@ bool test_performance_overhead()
 
         // Calculate overhead
         double overhead_ratio = static_cast<double>(profiled_duration.count()) /
-                                std::max(static_cast<long long>(1), baseline_duration.count());
+                                std::max<long long>(1LL, baseline_duration.count());
 
         std::cout << "Baseline duration: " << baseline_duration.count() << " microseconds"
                   << std::endl;
