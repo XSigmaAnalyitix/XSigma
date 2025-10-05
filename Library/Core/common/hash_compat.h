@@ -22,6 +22,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#ifdef _LIBCPP_NOESCAPE
+
 /**
  * @file hash_compat.h
  * @brief Compatibility layer for hash functions across different libc++ versions
@@ -100,4 +102,4 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 _LIBCPP_END_NAMESPACE_STD
 
 #endif  // _LIBCPP_VERSION && !__GLIBCXX__
-
+#endif
