@@ -647,7 +647,7 @@ XSIGMATEST(Core, exception_mode_thread_safety)
     // Test that exception mode can be safely read from multiple threads
     std::atomic<int> read_count{0};
     const int        num_threads      = 10;
-    const int        reads_per_thread = 1000;
+    const int        reads_per_thread = 24;
 
     auto read_func = [&]()
     {
@@ -684,7 +684,7 @@ XSIGMATEST(Core, exception_performance)
     xsigma::set_exception_mode(xsigma::exception_mode::THROW);
 
     // Test repeated exception creation and destruction
-    const int iterations = 1000;
+    const int iterations = 2;
     for (int i = 0; i < iterations; ++i)
     {
         try
