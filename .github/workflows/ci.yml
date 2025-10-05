@@ -553,6 +553,9 @@ jobs:
           # Run them separately
           - sanitizer: thread
             os: macos-latest  # TSan has issues on macOS in CI
+          # LeakSanitizer is not supported on macOS ARM64 (Apple Silicon)
+          - sanitizer: leak
+            os: macos-latest
         include:
           - sanitizer: address
             env_options: '{"ASAN_OPTIONS":"detect_leaks=1:abort_on_error=1:symbolize=1:detect_stack_use_after_return=1"}'
