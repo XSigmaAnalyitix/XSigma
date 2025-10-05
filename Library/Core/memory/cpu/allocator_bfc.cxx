@@ -510,7 +510,7 @@ void* allocator_bfc::AllocateRawInternalWithRetry(
 void* allocator_bfc::allocate_raw(
     size_t unused_alignment, size_t num_bytes, const allocation_attributes& allocation_attr)
 {
-    XSIGMA_LOG_INFO_DEBUG("allocate_raw {}  {}", Name(), num_bytes);
+    //XSIGMA_LOG_INFO_DEBUG("allocate_raw {}  {}", Name(), num_bytes);
     void* result = [&]
     {
         if (!opts_.allow_retry_on_failure || !allocation_attr.retry_on_failure)
@@ -564,9 +564,9 @@ void* allocator_bfc::allocate_raw(
             return AllocateRawInternalWithRetry(unused_alignment, num_bytes, allocation_attr);
         }
     }();
-    XSIGMA_LOG_INFO_DEBUG("allocate_raw {}  {} {}", Name(), num_bytes, result);
-    XSIGMA_LOG_INFO_DEBUG(
-        "[mem-verbose] allocate_raw,{},{},{},{},{}", Name(), num_bytes, result, "", "");
+    //XSIGMA_LOG_INFO_DEBUG("allocate_raw {}  {} {}", Name(), num_bytes, result);
+    //XSIGMA_LOG_INFO_DEBUG(
+    //   "[mem-verbose] allocate_raw,{},{},{},{},{}", Name(), num_bytes, result, "", "");
     return result;
 }
 
@@ -892,11 +892,11 @@ void* allocator_bfc::FindChunkPtr(
 
                 int64_t current_bytes = stats_.bytes_in_use.load(std::memory_order_relaxed);
                 int64_t peak_bytes    = stats_.peak_bytes_in_use.load(std::memory_order_relaxed);
-                if (current_bytes > peak_bytes)
-                {
-                    XSIGMA_LOG_INFO_DEBUG(
-                        "New Peak memory usage of {} bytes for {}", current_bytes, Name());
-                }
+                // if (current_bytes > peak_bytes)
+                // {
+                //     XSIGMA_LOG_INFO_DEBUG(
+                //         "New Peak memory usage of {} bytes for {}", current_bytes, Name());
+                // }
 
                 // Update peak bytes atomically
                 while (current_bytes > peak_bytes &&
@@ -940,7 +940,7 @@ void* allocator_bfc::FindChunkPtr(
                 }
 #endif
 
-                XSIGMA_LOG_INFO_DEBUG("Returning: {}\nA: {}", chunk->ptr, RenderOccupancy());
+                //XSIGMA_LOG_INFO_DEBUG("Returning: {}\nA: {}", chunk->ptr, RenderOccupancy());
                 return chunk->ptr;
             }
         }
