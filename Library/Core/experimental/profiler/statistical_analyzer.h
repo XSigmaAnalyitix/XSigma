@@ -32,11 +32,10 @@
 #include <limits>
 #include <mutex>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
-
 #include "profiler.h"
+#include "util/flat_hash.h"
 
 namespace xsigma
 {
@@ -100,9 +99,9 @@ public:
     xsigma::statistical_metrics calculate_custom_stats(const std::string& name) const;
 
     // Batch analysis
-    std::unordered_map<std::string, xsigma::statistical_metrics> calculate_all_timing_stats() const;
-    std::unordered_map<std::string, xsigma::statistical_metrics> calculate_all_memory_stats() const;
-    std::unordered_map<std::string, xsigma::statistical_metrics> calculate_all_custom_stats() const;
+    xsigma_map<std::string, xsigma::statistical_metrics> calculate_all_timing_stats() const;
+    xsigma_map<std::string, xsigma::statistical_metrics> calculate_all_memory_stats() const;
+    xsigma_map<std::string, xsigma::statistical_metrics> calculate_all_custom_stats() const;
 
     // Time series analysis
     std::vector<xsigma::time_series_point> get_time_series(const std::string& series_name) const;
@@ -142,10 +141,10 @@ private:
     mutable std::mutex custom_mutex_;
     mutable std::mutex time_series_mutex_;
 
-    std::unordered_map<std::string, std::vector<double>>                    timing_data_;
-    std::unordered_map<std::string, std::vector<double>>                    memory_data_;
-    std::unordered_map<std::string, std::vector<double>>                    custom_data_;
-    std::unordered_map<std::string, std::vector<xsigma::time_series_point>> time_series_data_;
+    xsigma_map<std::string, std::vector<double>>                    timing_data_;
+    xsigma_map<std::string, std::vector<double>>                    memory_data_;
+    xsigma_map<std::string, std::vector<double>>                    custom_data_;
+    xsigma_map<std::string, std::vector<xsigma::time_series_point>> time_series_data_;
 
     // Configuration
     size_t              max_samples_per_series_ = 10000;

@@ -10,6 +10,7 @@
 #include "common/macros.h"
 #include "logging/logger.h"
 #include "util/exception.h"
+#include "util/flat_hash.h"
 
 // Hash specialization for std::pair<device_enum, int>
 namespace std
@@ -62,10 +63,10 @@ private:
     std::atomic<size_t> next_allocation_id_{1};
 
     /** @brief Map of active allocations (using custom hash for void*) */
-    std::unordered_map<void*, std::shared_ptr<gpu_allocation_info>, void_ptr_hash> active_allocations_;
+    xsigma_map<void*, std::shared_ptr<gpu_allocation_info>, void_ptr_hash> active_allocations_;
 
     /** @brief Map of all allocations (including deallocated) */
-    std::unordered_map<size_t, std::shared_ptr<gpu_allocation_info>> all_allocations_;
+    xsigma_map<size_t, std::shared_ptr<gpu_allocation_info>> all_allocations_;
 
     /** @brief Leak detection configuration */
     leak_detection_config leak_config_;
@@ -507,7 +508,7 @@ public:
         oss << "  Potential leaks: " << leaks.size() << "\n\n";
 
         // Active allocations by device
-        std::unordered_map<
+        xsigma_map<
             std::pair<device_enum, int>,
             std::vector<std::shared_ptr<gpu_allocation_info>>,
             std::hash<std::pair<device_enum, int>>>

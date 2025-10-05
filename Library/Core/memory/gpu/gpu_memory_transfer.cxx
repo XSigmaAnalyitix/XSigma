@@ -7,12 +7,12 @@
 #include <queue>
 #include <sstream>
 #include <thread>
-#include <unordered_map>
 
 #include "common/configure.h"
 #include "common/macros.h"
 #include "logging/logger.h"
 #include "util/exception.h"
+#include "util/flat_hash.h"
 
 // Hash specialization for std::pair<device_enum, int>
 namespace std
@@ -157,7 +157,7 @@ private:
     std::atomic<size_t> next_transfer_id_{1};
 
     /** @brief Active transfer operations */
-    std::unordered_map<size_t, std::unique_ptr<transfer_operation>> active_transfers_;
+    xsigma_map<size_t, std::unique_ptr<transfer_operation>> active_transfers_;
 
     /** @brief Transfer statistics */
     std::atomic<size_t> total_transfers_{0};
@@ -166,7 +166,7 @@ private:
     std::atomic<size_t> failed_transfers_{0};
 
     /** @brief Default streams for each device */
-    std::unordered_map<
+    xsigma_map<
         std::pair<device_enum, int>,
         std::unique_ptr<gpu_stream>,
         std::hash<std::pair<device_enum, int>>>

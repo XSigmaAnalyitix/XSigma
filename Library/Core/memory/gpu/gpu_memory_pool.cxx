@@ -10,6 +10,7 @@
 #include "common/macros.h"
 #include "logging/logger.h"
 #include "util/exception.h"
+#include "util/flat_hash.h"
 
 #ifdef XSIGMA_ENABLE_CUDA
 #include <cuda_runtime.h>
@@ -54,10 +55,10 @@ private:
     mutable std::mutex mutex_;
 
     /** @brief Map of size class to cached blocks */
-    std::unordered_map<size_t, std::vector<gpu_memory_block>> cached_blocks_;
+    xsigma_map<size_t, std::vector<gpu_memory_block>> cached_blocks_;
 
     /** @brief Map of active allocations for tracking (using custom hash for void*) */
-    std::unordered_map<void*, gpu_memory_block, void_ptr_hash> active_allocations_;
+    xsigma_map<void*, gpu_memory_block, void_ptr_hash> active_allocations_;
 
     /** @brief Current total allocated bytes */
     std::atomic<size_t> allocated_bytes_{0};

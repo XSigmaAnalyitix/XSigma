@@ -17,16 +17,16 @@
  * Website: https://www.xsigma.co.uk
  */
 
+#include <algorithm>
 #include <cstdint>
 #include <map>
 #include <set>
 #include <string>
-#include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <algorithm>
 
 #include "logging/logger.h"
+#include "util/flat_hash.h"
 #include "util/hash_util.h"
 #include "xsigmaTest.h"
 
@@ -335,7 +335,7 @@ XSIGMATEST(Core, hash_util_platform_independence)
 XSIGMATEST(Core, hash_util_container_integration)
 {
     // Test std::pair as key in unordered_map (uses our hash specialization)
-    std::unordered_map<std::pair<int, int>, std::string> map1;
+    xsigma_map<std::pair<int, int>, std::string> map1;
     map1[std::make_pair(1, 2)] = "one-two";
     map1[std::make_pair(3, 4)] = "three-four";
 
@@ -344,7 +344,7 @@ XSIGMATEST(Core, hash_util_container_integration)
     EXPECT_EQ(map1.size(), 2);
 
     // Test with string pairs
-    std::unordered_map<std::pair<std::string, std::string>, int> map2;
+    xsigma_map<std::pair<std::string, std::string>, int> map2;
     map2[std::make_pair(std::string("hello"), std::string("world"))] = 1;
     map2[std::make_pair(std::string("foo"), std::string("bar"))]     = 2;
 
