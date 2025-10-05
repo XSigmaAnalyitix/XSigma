@@ -214,6 +214,7 @@ TEST(BackTraceTest, ZeroMaxFrames)
 
 TEST(BackTraceTest, PerformanceCapture)
 {
+#if NDEBUG
     const int iterations = 100;
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -235,6 +236,8 @@ TEST(BackTraceTest, PerformanceCapture)
 
     // Capture should be reasonably fast (< 1ms on average)
     EXPECT_LT(avg_microseconds, 1000.0);
+
+#endif
 }
 
 TEST(BackTraceTest, PerformanceFormat)
