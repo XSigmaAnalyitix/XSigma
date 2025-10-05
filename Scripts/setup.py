@@ -301,7 +301,6 @@ class XsigmaFlags:
 
                 # CMake options with default ON - keep ON in setup.py
                 "lto": self.ON,  # XSIGMA_ENABLE_LTO default is ON
-                "benchmark": self.ON,  # XSIGMA_ENABLE_BENCHMARK default is ON
                 "gtest": self.ON,  # XSIGMA_ENABLE_GTEST default is ON
                 "magic_enum": self.ON,  # XSIGMA_ENABLE_MAGIC_ENUM default is ON
                 "loguru": self.ON,  # XSIGMA_ENABLE_LOGURU default is ON
@@ -309,6 +308,7 @@ class XsigmaFlags:
 
                 # CMake options with default OFF - keep OFF in setup.py
                 # (already set by dict.fromkeys above)
+                # "benchmark": self.OFF,  # XSIGMA_ENABLE_BENCHMARK default is OFF (changed from ON)
                 # "cuda": self.OFF,  # XSIGMA_ENABLE_CUDA default is OFF
                 # "mkl": self.OFF,  # XSIGMA_ENABLE_MKL default is OFF
                 # "numa": self.OFF,  # XSIGMA_ENABLE_NUMA default is OFF
@@ -369,7 +369,7 @@ class XsigmaFlags:
                 self.builder_suffix += f"_java{arg}"
             elif arg in self.__key:
                 # Implement inverse logic based on CMake defaults
-                if arg in ["loguru", "lto", "benchmark", "gtest", "magic_enum", "mimalloc"]:
+                if arg in ["loguru", "lto", "gtest", "magic_enum", "mimalloc"]:
                     # These have CMake default ON, so providing the arg turns them OFF
                     self.__value[arg] = self.OFF
                 else:
@@ -377,7 +377,10 @@ class XsigmaFlags:
                     self.__value[arg] = self.ON
 
                 # Special handling for specific flags
-                if arg == "mkl":
+                if arg == "benchmark":
+                    # Add benchmark to builder suffix for clarity
+                    self.builder_suffix += "_benchmark"
+                elif arg == "mkl":
                     self.__value["dist"] = "mkl"
 
                 # Add to builder suffix (except for certain flags)
@@ -1092,6 +1095,13 @@ def main():
         print("")
         print("  # Note: Coverage analysis is automatic when 'coverage' is enabled")
         print("  #       No need to add '.analyze' to coverage builds")
+        print("\nBenchmark examples:")
+        print("  # Enable Google Benchmark for performance testing")
+        print("  python setup.py ninja.clang.release.benchmark.config.build")
+        print("  python setup.py ninja.clang.release.lto.benchmark.config.build")
+        print("")
+        print("  # Note: Benchmark is disabled by default. Use 'benchmark' flag to enable.")
+        print("  #       Recommended to use with Release build for accurate performance results.")
         print("\nAvailable options:")
         XsigmaFlags([]).helper()
         return
