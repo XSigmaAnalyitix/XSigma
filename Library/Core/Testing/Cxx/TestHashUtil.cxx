@@ -24,6 +24,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <algorithm>
 
 #include "logging/logger.h"
 #include "util/hash_util.h"

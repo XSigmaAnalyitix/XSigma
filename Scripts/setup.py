@@ -184,6 +184,7 @@ class XsigmaFlags:
             "cxxstd",
             "cppcheck",
             "cppcheck_autofix",
+            "spell",
         ]
         self.__description = [
             # Valid CMake options
@@ -212,6 +213,7 @@ class XsigmaFlags:
             "C++ standard: cxx17, cxx20, cxx23",
             "enable cppcheck static analysis",
             "enable automatic cppcheck fixes (WARNING: modifies source files)",
+            "enable spell checking with automatic corrections",
         ]
 
     def __build_cmake_flag(self):
@@ -243,6 +245,7 @@ class XsigmaFlags:
             "cxxstd": "XSIGMA_CXX_STANDARD",
             "cppcheck": "XSIGMA_ENABLE_CPPCHECK",
             "cppcheck_autofix": "XSIGMA_ENABLE_AUTOFIX",
+            "spell": "XSIGMA_ENABLE_SPELL",
 
             # Non-CMake flags (for internal use, not passed to CMake)
             "mkl_threading": "MKL_THREADING",
@@ -395,6 +398,10 @@ class XsigmaFlags:
 
         if self.__value.get("cppcheck_autofix") == self.ON:
             print_status("CPPCHECK AUTOFIX ENABLED: Source files will be automatically modified during build!", "WARNING")
+            print_status("Ensure you have committed your changes before building with this option.", "WARNING")
+
+        if self.__value.get("spell") == self.ON:
+            print_status("SPELL CHECKING ENABLED: Automatic spelling corrections will be applied during build!", "WARNING")
             print_status("Ensure you have committed your changes before building with this option.", "WARNING")
 
         # Validate C++ standard
@@ -1042,6 +1049,7 @@ def main():
         print("\nSpecial flags:")
         print("  --enable-cppcheck-autofix  Enable automatic cppcheck fixes (WARNING: modifies source files)")
         print("  --cppcheck-autofix         Alias for --enable-cppcheck-autofix")
+        print("  spell                      Enable spell checking with automatic corrections (WARNING: modifies source files)")
         print("\nLogging backend flags:")
         print("  --logging.backend=BACKEND  Set logging backend")
         print("  --logging-backend=BACKEND  Alias for --logging.backend")
@@ -1068,6 +1076,10 @@ def main():
         print("  python setup.py vs22.test.build.config --sanitizer.undefined")
         print("  python setup.py ninja.clang.build.test --sanitizer.address")
         print("  python setup.py vs22.test.build --sanitizer-type=thread")
+        print("\nSpell checking examples:")
+        print("  # Enable spell checking with automatic corrections")
+        print("  python setup.py ninja.clang.config.build.test.spell")
+        print("  python setup.py vs22.config.build.spell")
         print("\nCoverage analysis examples:")
         print("  # Build with coverage (analysis runs automatically)")
         print("  python setup.py ninja.clang.config.build.test.coverage")

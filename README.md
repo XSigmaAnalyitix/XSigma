@@ -186,10 +186,24 @@ ignore-words-list = ThirdParty,yourword,anotherword
 
 #### Integration Options
 
-- **Future setup.py integration** - Could be added to the Scripts/setup.py workflow alongside other code quality tools (clangtidy, iwyu, cppcheck)
+- **setup.py integration** - Now available in the Scripts/setup.py workflow alongside other code quality tools (clangtidy, iwyu, cppcheck)
 - **Pre-commit hooks** - Can be integrated for automatic checking before commits
 - **CI/CD pipeline** - Suitable for continuous integration to ensure documentation quality
 - **IDE integration** - Many editors support codespell plugins for real-time checking
+
+#### setup.py Integration
+
+**Enable spell checking with automatic corrections:**
+```bash
+# Enable spell checking during build (WARNING: modifies source files)
+python setup.py ninja.clang.config.build.test.spell
+python setup.py vs22.config.build.spell
+
+# Combine with other tools
+python setup.py ninja.clang.config.build.test.spell.cppcheck
+```
+
+**Important:** When `spell` is enabled, codespell will automatically apply spelling corrections to source files during the build process. Ensure you have committed your changes before building with this option.
 
 **Benefits:**
 - Maintains professional documentation standards

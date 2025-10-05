@@ -417,6 +417,7 @@ jobs:
 
     - name: Run TBB-specific tests
       working-directory: ${{ github.workspace }}/build
+      shell: bash
       run: |
         # Run all tests but focus on TBB-related functionality
         ctest --output-on-failure -j 2

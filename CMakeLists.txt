@@ -71,6 +71,7 @@ set(XSIGMA_SANITIZER_TYPE
 set_property(CACHE XSIGMA_SANITIZER_TYPE PROPERTY STRINGS address undefined thread memory leak)
 option(XSIGMA_ENABLE_CPPCHECK "Enable cppcheck" OFF)
 option(XSIGMA_ENABLE_AUTOFIX "Enable automatic cppcheck fixes (WARNING: modifies source files)" OFF)
+option(XSIGMA_ENABLE_SPELL "Enable spell checking with automatic corrections (WARNING: modifies source files)" OFF)
 
 # Vectorization options
 set(XSIGMA_VECTORIZATION_TYPE
@@ -160,6 +161,7 @@ include(numa)
 include(tbb)
 include(clangTidy)
 include(cppcheck)
+include(spell)
 include(iwyu)
 include(coverage)
 include(memcheckValgrind)
