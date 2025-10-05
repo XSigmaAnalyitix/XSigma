@@ -200,7 +200,7 @@ jobs:
           -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} \
           -DXSIGMA_BUILD_TESTING=ON \
           -DXSIGMA_ENABLE_GTEST=ON \
-          -DXSIGMA_ENABLE_BENCHMARK=ON \
+          -DXSIGMA_ENABLE_BENCHMARK=OFF \
           -DXSIGMA_ENABLE_LTO=OFF \
           -DXSIGMA_ENABLE_TBB=${{ matrix.tbb_enabled }}
 
@@ -220,7 +220,7 @@ jobs:
           -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} `
           -DXSIGMA_BUILD_TESTING=ON `
           -DXSIGMA_ENABLE_GTEST=ON `
-          -DXSIGMA_ENABLE_BENCHMARK=ON `
+          -DXSIGMA_ENABLE_BENCHMARK=OFF `
           -DXSIGMA_ENABLE_LTO=OFF `
           -DXSIGMA_ENABLE_TBB=${{ matrix.tbb_enabled }}
 
@@ -391,6 +391,7 @@ jobs:
           -DXSIGMA_LOGGING_BACKEND=LOGURU \
           -DXSIGMA_BUILD_TESTING=ON \
           -DXSIGMA_ENABLE_GTEST=ON \
+          -DXSIGMA_ENABLE_BENCHMARK=OFF \
           -DXSIGMA_ENABLE_TBB=ON \
           -DXSIGMA_ENABLE_LTO=OFF
 
@@ -409,6 +410,7 @@ jobs:
           -DXSIGMA_LOGGING_BACKEND=LOGURU `
           -DXSIGMA_BUILD_TESTING=ON `
           -DXSIGMA_ENABLE_GTEST=ON `
+          -DXSIGMA_ENABLE_BENCHMARK=OFF `
           -DXSIGMA_ENABLE_TBB=ON `
           -DXSIGMA_ENABLE_LTO=OFF
 
@@ -896,7 +898,7 @@ jobs:
           -DCMAKE_CXX_COMPILER=clang++ \
           -DXSIGMA_LOGGING_BACKEND=LOGURU \
           -DXSIGMA_BUILD_TESTING=ON \
-          -DXSIGMA_ENABLE_BENCHMARK=ON \
+          -DXSIGMA_ENABLE_BENCHMARK=OFF \
           -DXSIGMA_ENABLE_LTO=ON \
           -DXSIGMA_ENABLE_TBB=ON
 

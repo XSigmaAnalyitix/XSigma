@@ -306,15 +306,22 @@ configure_sanitizer_ignore_file()
 
 # Apply sanitizer configuration to build target
 if(TARGET xsigmabuild)
+    # Apply sanitizer compile flags directly without BUILD_INTERFACE wrapper
+    # This ensures flags are properly propagated to all targets linking to xsigmabuild
     target_compile_options(xsigmabuild INTERFACE
-        "$<BUILD_INTERFACE:${xsigma_sanitize_args}>")
+        ${xsigma_sanitize_args})
 
     if(xsigma_sanitize_link_args)
+        # Apply sanitizer link flags directly without BUILD_INTERFACE wrapper
         target_link_options(xsigmabuild INTERFACE
-            "$<BUILD_INTERFACE:${xsigma_sanitize_link_args}>")
+            ${xsigma_sanitize_link_args})
     endif()
 
     message(STATUS "Applied sanitizer configuration to xsigmabuild target")
+    message(STATUS "  Compile flags: ${xsigma_sanitize_args}")
+    if(xsigma_sanitize_link_args)
+        message(STATUS "  Link flags: ${xsigma_sanitize_link_args}")
+    endif()
 else()
     message(WARNING "xsigmabuild target not found - sanitizer flags not applied")
 endif()

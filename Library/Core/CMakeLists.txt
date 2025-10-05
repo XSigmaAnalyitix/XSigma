@@ -123,6 +123,10 @@ endif()
 # Create alias for consistent naming
 add_library(XSigma::Core ALIAS Core)
 
+# Link to xsigmabuild to inherit sanitizer and other build flags
+# This ensures Core library gets all compiler/linker flags from the build configuration
+target_link_libraries(Core PUBLIC XSigma::build)
+
 # Apply IWYU to the Core target (if available)
 if(COMMAND xsigma_apply_iwyu)
     xsigma_apply_iwyu(Core)
