@@ -58,7 +58,7 @@ set(XSIGMA_BUILD_TESTING
     "ON"
     CACHE STRING "Build module testing directories")
 set_property(CACHE XSIGMA_BUILD_TESTING PROPERTY STRINGS "ON;OFF;WANT")
-option(XSIGMA_ENABLE_BENCHMARK "Enable google benchmark" ON)
+option(XSIGMA_ENABLE_BENCHMARK "Enable google benchmark" OFF)
 option(XSIGMA_ENABLE_GTEST "Enable google test" ON)
 
 option(XSIGMA_ENABLE_VALGRIND "Execute test suite with Valgrind" OFF)
