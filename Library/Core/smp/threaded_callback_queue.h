@@ -28,12 +28,12 @@
 #include <memory>              // For unique_ptr
 #include <mutex>               // For mutex
 #include <thread>              // For thread
-#include <unordered_map>       // For unordered_map
 #include <unordered_set>       // For unordered_set
 #include <vector>              // For vector
 
 #include "common/macros.h"
 #include "common/pointer.h"
+#include "util/flat_hash.h"
 
 #if !defined(__WRAP__)
 
@@ -505,7 +505,7 @@ private:
    * the number of threads and the thread executing the shrinkage is supposed to finish, we solve
    * the problem by swapping this thread id with the one of 0, who will finish in its place.
    */
-    std::unordered_map<std::thread::id, std::shared_ptr<std::atomic_int>> ThreadIdToIndex;
+    xsigma_map<std::thread::id, std::shared_ptr<std::atomic_int>> ThreadIdToIndex;
 
     /**
    * Futures of controls that were passed to they queue. They allow to run controls in the same

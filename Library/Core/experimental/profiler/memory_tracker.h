@@ -36,14 +36,13 @@
  */
 
 #include <atomic>
+#include <cstdint>
 #include <memory>
 #include <mutex>
-#include <unordered_map>
 #include <vector>
-#include <cstdint>
-
 
 #include "profiler.h"
+#include "util/flat_hash.h"
 
 #ifdef _WIN32
 #include <psapi.h>
@@ -230,7 +229,7 @@ private:
     mutable std::mutex allocations_mutex_;
 
     /// Map of active memory allocations (using custom hash for void*)
-    std::unordered_map<void*, xsigma::memory_allocation, xsigma::void_ptr_hash> active_allocations_;
+    xsigma_map<void*, xsigma::memory_allocation, xsigma::void_ptr_hash> active_allocations_;
 
     /// Atomic counter for current memory usage
     std::atomic<size_t> current_usage_{0};

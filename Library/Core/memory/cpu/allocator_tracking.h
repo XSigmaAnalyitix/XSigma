@@ -36,13 +36,13 @@
 #include <optional>
 #include <shared_mutex>
 #include <tuple>
-#include <unordered_map>
 #include <vector>
 
 #include "common/macros.h"
 #include "logging/logger.h"
 #include "memory/cpu/allocator.h"
 #include "memory/unified_memory_stats.h"
+#include "util/flat_hash.h"
 
 namespace xsigma
 {
@@ -759,7 +759,7 @@ private:
      * **Value**: Chunk metadata with size and ID information
      * **Lifecycle**: Entries added on allocation, removed on deallocation
      */
-    std::unordered_map<const void*, Chunk> in_use_ XSIGMA_GUARDED_BY(mu_);
+    xsigma_map<const void*, Chunk> in_use_ XSIGMA_GUARDED_BY(mu_);
 
     /**
      * @brief Counter for generating unique allocation IDs.

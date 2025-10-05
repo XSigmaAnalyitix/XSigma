@@ -95,6 +95,13 @@
         "span": "cpp",
         "cfenv": "cpp",
         "cinttypes": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "complex": "cpp",
+        "filesystem": "cpp",
+        "ranges": "cpp",
+        "scoped_allocator": "cpp",
+        "source_location": "cpp",
+        "stack": "cpp",
+        "xtree": "cpp"
     }
 }

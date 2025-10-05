@@ -30,13 +30,13 @@
 #include <optional>
 #include <string>
 #include <thread>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "experimental/profiler/lock_free_queue.h"
 #include "experimental/profiler/per_thread.h"
 #include "util/exception.h"
+#include "util/flat_hash.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -142,7 +142,7 @@ private:
 
     // Start events are collected from each ThreadLocalRecorder::Consume() call.
     // Their data is merged into end_events.
-    /*std::flat_hash_map*/ std::unordered_map<int64_t, trace_me_recorder::Event> start_events_;
+    xsigma_map<int64_t, trace_me_recorder::Event> start_events_;
 
     // End events are stored in the output of TraceMeRecorder::Consume().
     std::vector<trace_me_recorder::Event*> end_events_;

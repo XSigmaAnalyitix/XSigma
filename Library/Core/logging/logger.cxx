@@ -1,16 +1,17 @@
 #include "logging/logger.h"
 
-#include <array>          // for array
-#include <cstdarg>        // for va_end, va_list, va_start
-#include <cstdio>         // for vsnprintf
-#include <cstdlib>        // for strtol
-#include <cstring>        // for strcmp, strlen, strncpy
-#include <memory>         // for make_shared, shared_ptr, make_unique, unique_ptr
-#include <mutex>          // for mutex, lock_guard
-#include <thread>         // for get_id, operator==, thread
-#include <unordered_map>  // for unordered_map
-#include <utility>        // for pair
-#include <vector>         // for vector
+#include <array>    // for array
+#include <cstdarg>  // for va_end, va_list, va_start
+#include <cstdio>   // for vsnprintf
+#include <cstdlib>  // for strtol
+#include <cstring>  // for strcmp, strlen, strncpy
+#include <memory>   // for make_shared, shared_ptr, make_unique, unique_ptr
+#include <mutex>    // for mutex, lock_guard
+#include <thread>   // for get_id, operator==, thread
+#include <utility>  // for pair
+#include <vector>   // for vector
+
+#include "util/flat_hash.h"
 
 // Include appropriate logging backend headers
 #if defined(XSIGMA_USE_LOGURU)
@@ -195,9 +196,9 @@ namespace detail
 {
 #if defined(XSIGMA_USE_LOGURU)
 using scope_pair = std::pair<std::string, std::shared_ptr<loguru::LogScopeRAII>>;
-static std::mutex                                                   g_mutex;
-static std::unordered_map<std::thread::id, std::vector<scope_pair>> g_vectors;
-static std::vector<scope_pair>&                                     get_vector()
+static std::mutex                                           g_mutex;
+static xsigma_map<std::thread::id, std::vector<scope_pair>> g_vectors;
+static std::vector<scope_pair>&                             get_vector()
 {
     const std::lock_guard<std::mutex> guard(g_mutex);
     return g_vectors[std::this_thread::get_id()];

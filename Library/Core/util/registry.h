@@ -11,11 +11,11 @@
 // Make all macro invocations from inside the at namespace.
 #include <functional>
 #include <mutex>
-#include <unordered_map>
 #include <vector>
 
 #include "common/macros.h"
 #include "util/exception.h"
+#include "util/flat_hash.h"
 
 namespace xsigma
 {
@@ -64,8 +64,8 @@ public:
     Registry& operator=(const Registry& /*rhs*/) = delete;
 
 private:
-    std::unordered_map<KeyType, Function> registry_{};
-    std::mutex                            register_mutex_;
+    xsigma_map<KeyType, Function> registry_{};
+    std::mutex                    register_mutex_;
 };
 
 template <class KeyType, typename Function>
@@ -132,8 +132,8 @@ public:
     Registry& operator=(const Registry& /*rhs*/) = delete;
 
 private:
-    std::unordered_map<KeyType, Function> registry_{};
-    std::mutex                            register_mutex_;
+    xsigma_map<KeyType, Function> registry_{};
+    std::mutex                    register_mutex_;
 };
 
 template <class KeyType, class ReturnType, class... Args>

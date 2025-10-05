@@ -553,13 +553,13 @@ jobs:
             os: macos-latest  # TSan has issues on macOS in CI
         include:
           - sanitizer: address
-            env_options: "ASAN_OPTIONS=detect_leaks=1:abort_on_error=1:symbolize=1:detect_stack_use_after_return=1"
+            env_options: '{"ASAN_OPTIONS":"detect_leaks=1:abort_on_error=1:symbolize=1:detect_stack_use_after_return=1"}'
           - sanitizer: undefined
-            env_options: "UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1:symbolize=1"
+            env_options: '{"UBSAN_OPTIONS":"print_stacktrace=1:halt_on_error=1:symbolize=1"}'
           - sanitizer: thread
-            env_options: "TSAN_OPTIONS=halt_on_error=1:second_deadlock_stack=1"
+            env_options: '{"TSAN_OPTIONS":"halt_on_error=1:second_deadlock_stack=1"}'
           - sanitizer: leak
-            env_options: "LSAN_OPTIONS=suppressions=${{ github.workspace }}/Scripts/sanitizer_ignore.txt"
+            env_options: '{"LSAN_OPTIONS":"suppressions=$GITHUB_WORKSPACE/Scripts/sanitizer_ignore.txt"}'
 
     steps:
     - name: Checkout repository
@@ -622,8 +622,7 @@ jobs:
     - name: Run Tests with ${{ matrix.sanitizer }} Sanitizer
       working-directory: ${{ github.workspace }}/build
       run: ctest --output-on-failure -j 2
-      env:
-        ${{ matrix.env_options }}
+      env: ${{ fromJSON(matrix.env_options) }}
 
     - name: Upload sanitizer results
       if: failure()
