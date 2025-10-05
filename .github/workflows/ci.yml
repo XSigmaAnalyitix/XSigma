@@ -30,7 +30,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         build_type: [Debug, Release]
-        cxx_std: [17, 20]
+        cxx_std: [17, 20, 23]
         logging_backend: [LOGURU, GLOG, NATIVE]
         tbb_enabled: [ON, OFF]
         include:
