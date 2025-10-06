@@ -262,6 +262,14 @@ if(TARGET glog)
 endif()
 
 # mimalloc - Microsoft's high-performance memory allocator (conditional)
+# Configure mimalloc for ThreadSanitizer compatibility if needed BEFORE adding the library
+if(XSIGMA_ENABLE_MIMALLOC AND XSIGMA_ENABLE_SANITIZER AND XSIGMA_SANITIZER_TYPE STREQUAL "thread")
+    set(MI_DEBUG_TSAN ON CACHE BOOL "Build mimalloc with thread sanitizer support" FORCE)
+    message(STATUS "Enabling MI_DEBUG_TSAN for ThreadSanitizer compatibility")
+    # Note: mimalloc requires Clang for ThreadSanitizer support, but we'll try to work around this
+    # by manually adding the ThreadSanitizer flags to mimalloc targets after they're created
+endif()
+
 add_third_party_library(mimalloc
     CONDITION XSIGMA_ENABLE_MIMALLOC
 )
@@ -270,6 +278,16 @@ if(TARGET mimalloc)
 endif()
 if(TARGET mimalloc-static)
     set_target_properties(mimalloc-static PROPERTIES FOLDER "ThirdParty/mimalloc")
+
+    # Manually apply ThreadSanitizer flags to mimalloc-static if needed
+    # This works around the limitation that mimalloc's CMakeLists.txt only applies
+    # ThreadSanitizer flags when CMAKE_C_COMPILER_ID matches "Clang"
+    if(XSIGMA_ENABLE_SANITIZER AND XSIGMA_SANITIZER_TYPE STREQUAL "thread")
+        message(STATUS "Manually applying ThreadSanitizer flags to mimalloc-static")
+        target_compile_definitions(mimalloc-static PRIVATE MI_TSAN=1)
+        target_compile_options(mimalloc-static PRIVATE -fsanitize=thread -g -O1)
+        target_link_options(mimalloc-static PRIVATE -fsanitize=thread)
+    endif()
 endif()
 
 # =============================================================================
