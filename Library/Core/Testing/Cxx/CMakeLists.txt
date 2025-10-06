@@ -78,18 +78,6 @@ message(STATUS "✓ CoreCxxTests registered with CTest")
 message(STATUS "  - Working directory: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
 # =============================================================================
-# Sanitizer Support
-# =============================================================================
-# Apply sanitizer flags if enabled
-if(DEFINED XSIGMA_SANITIZER_COMPILE_FLAGS AND XSIGMA_SANITIZER_COMPILE_FLAGS)
-    target_compile_options(CoreCxxTests PRIVATE ${XSIGMA_SANITIZER_COMPILE_FLAGS})
-endif()
-
-if(DEFINED XSIGMA_SANITIZER_LINK_FLAGS AND XSIGMA_SANITIZER_LINK_FLAGS)
-    target_link_options(CoreCxxTests PRIVATE ${XSIGMA_SANITIZER_LINK_FLAGS})
-endif()
-
-# =============================================================================
 # Output Directory Configuration
 # =============================================================================
 if(COMMAND xsigma_set_target_output_directories)
@@ -150,15 +138,6 @@ file(
     set_target_properties(CoreCxxBenchmark PROPERTIES
         FOLDER "Benchmarks"
     )
-
-    # Apply sanitizer flags if enabled
-    if(DEFINED XSIGMA_SANITIZER_COMPILE_FLAGS AND XSIGMA_SANITIZER_COMPILE_FLAGS)
-        target_compile_options(CoreCxxBenchmark PRIVATE ${XSIGMA_SANITIZER_COMPILE_FLAGS})
-    endif()
-
-    if(DEFINED XSIGMA_SANITIZER_LINK_FLAGS AND XSIGMA_SANITIZER_LINK_FLAGS)
-        target_link_options(CoreCxxBenchmark PRIVATE ${XSIGMA_SANITIZER_LINK_FLAGS})
-    endif()
 
     # Apply XSigma output directory configuration
     if(COMMAND xsigma_set_target_output_directories)

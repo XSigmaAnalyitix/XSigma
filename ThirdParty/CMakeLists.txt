@@ -175,7 +175,7 @@ add_third_party_library(loguru
 if(TARGET loguru)
     set_target_properties(loguru PROPERTIES FOLDER "ThirdParty/loguru")
 
-    # Apply sanitizer flags to loguru if sanitizers are enabled
+    # # Apply sanitizer flags to loguru if sanitizers are enabled
     if(XSIGMA_ENABLE_SANITIZER AND DEFINED XSIGMA_SANITIZER_COMPILE_FLAGS)
         target_compile_options(loguru PRIVATE ${XSIGMA_SANITIZER_COMPILE_FLAGS})
         if(DEFINED XSIGMA_SANITIZER_LINK_FLAGS AND XSIGMA_SANITIZER_LINK_FLAGS)
