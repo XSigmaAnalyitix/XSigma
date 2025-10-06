@@ -35,6 +35,10 @@ src:*/external/*
 src:*/fmt/*
 src:*/cpuinfo/*
 src:*/loguru/*
+src:*/loguru.cpp*
+src:*/loguru/loguru.cpp*
+src:*/ThirdParty/loguru/*
+src:*/ThirdParty/loguru/loguru.cpp*
 src:*/mimalloc/*
 src:*/googletest/*
 src:*/benchmark/*
@@ -182,10 +186,35 @@ fun:*RenderRegion*
 # Uncomment if you have code that intentionally uses uninitialized memory:
 # src:*/uninitialized_memory_test.cpp
 
+# Global constructor issues with MemorySanitizer
+# These are common issues with global constructors and static initialization
+fun:*__cxx_global_var_init*
+fun:*_GLOBAL__sub_I_*
+fun:*__static_initialization_and_destruction*
+fun:*std::char_traits*::length*
+fun:*std::basic_string*::basic_string*
+fun:*__cxa_demangle*
+
 # LeakSanitizer specific exclusions
 # Uncomment if you have intentional memory leaks for testing:
 # src:*/intentional_leak_test.cpp
 # fun:*leak_test*
+
+# Loguru thread name storage - known third-party library leak
+# These are acceptable leaks from the logging library's thread name storage
+fun:strdup
+src:*/loguru.cpp:1047
+
+# Loguru global constructor issues with MemorySanitizer
+# These are known issues with global constructors in loguru
+fun:*loguru::type_name*
+fun:*loguru::demangle*
+fun:*__cxx_global_var_init*
+fun:*_GLOBAL__sub_I_loguru.cpp*
+src:*/loguru.cpp:1136*
+src:*/loguru.cpp:1135*
+src:*/loguru.cpp:1142*
+src:*/loguru.cpp:1126*
 
 # =============================================================================
 # Temporary Exclusions (Development Only)

@@ -771,11 +771,7 @@ class XsigmaConfiguration:
     def __run_ctest(self):
         ctest_cmd = ["ctest"]
 
-        if self.__value["system"] == "Linux":
-            os.chmod("unix_path.sh", 0o755)
-
         if self.__value["system"] == "Windows":
-            self.__setup_windows_path()
             if self.__value["builder"] != "ninja":
                 ctest_cmd.extend(["-C", self.__value["build_enum"]])
 

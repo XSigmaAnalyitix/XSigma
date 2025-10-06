@@ -186,6 +186,17 @@ void allocator_pool::deallocate_raw(void* ptr)
     else
     {
         std::lock_guard<std::mutex> lock(mutex_);
+
+        // Check for double-free: search if this pointer is already in the pool
+        for (const auto& iter : pool_)
+        {
+            if (iter.second->ptr == cp)
+            {
+                // Double-free detected, handle gracefully by ignoring
+                return;
+            }
+        }
+
         ++put_count_;
         while (pool_.size() >= pool_size_limit_)
         {

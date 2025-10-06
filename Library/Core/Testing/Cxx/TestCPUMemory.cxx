@@ -441,7 +441,7 @@ XSIGMATEST_VOID(TrackingAllocatorTest, BasicTracking)
     // Create a base allocator
     auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-    auto pool = new allocator_pool(
+    auto pool = std::make_unique<allocator_pool>(
         10,
         false,
         std::move(base_allocator),
@@ -449,7 +449,7 @@ XSIGMATEST_VOID(TrackingAllocatorTest, BasicTracking)
         "base_pool");
 
     // Create tracking allocator (use pointer due to protected destructor)
-    auto tracker = new xsigma::allocator_tracking(pool, true);
+    auto tracker = new xsigma::allocator_tracking(pool.get(), true);
 
     // Test basic allocation tracking
     void* ptr1 = tracker->allocate_raw(64, 1024);
@@ -485,13 +485,16 @@ XSIGMATEST_VOID(TrackingAllocatorTest, BasicTracking)
     {
         tracker->deallocate_raw(ptr);
     }
+
+    // Properly cleanup tracking allocator by releasing reference
+    tracker->GetRecordsAndUnRef();
 }
 // Test allocator_typed functionality
 XSIGMATEST_VOID(TypedAllocatorTest, BasicTypedAllocation)
 {
     auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-    auto pool = new allocator_pool(
+    auto pool = std::make_unique<allocator_pool>(
         10,
         false,
         std::move(base_allocator),
@@ -499,7 +502,7 @@ XSIGMATEST_VOID(TypedAllocatorTest, BasicTypedAllocation)
         "typed_pool");
 
     // Test allocation of simple types
-    int* int_array = allocator_typed::Allocate<int>(pool, 100, allocation_attributes());
+    int* int_array = allocator_typed::Allocate<int>(pool.get(), 100, allocation_attributes());
     EXPECT_NE(nullptr, int_array);
     EXPECT_TRUE(IsAligned(int_array, alignof(int)));
 
@@ -515,11 +518,11 @@ XSIGMATEST_VOID(TypedAllocatorTest, BasicTypedAllocation)
         EXPECT_EQ(int_array[i], i * 2);
     }
 
-    allocator_typed::Deallocate(pool, int_array, 100);
+    allocator_typed::Deallocate(pool.get(), int_array, 100);
 
     // Test allocation of complex types
     TestStruct* struct_array =
-        allocator_typed::Allocate<TestStruct>(pool, 10, allocation_attributes());
+        allocator_typed::Allocate<TestStruct>(pool.get(), 10, allocation_attributes());
     EXPECT_NE(nullptr, struct_array);
     EXPECT_TRUE(IsAligned(struct_array, alignof(TestStruct)));
 
@@ -539,14 +542,14 @@ XSIGMATEST_VOID(TypedAllocatorTest, BasicTypedAllocation)
         EXPECT_EQ(struct_array[i].data[0], static_cast<char>(i));
     }
 
-    allocator_typed::Deallocate(pool, struct_array, 10);
+    allocator_typed::Deallocate(pool.get(), struct_array, 10);
 }
 // Test allocator_typed overflow protection
 XSIGMATEST_VOID(TypedAllocatorTest, OverflowProtection)
 {
     auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-    auto pool = new allocator_pool(
+    auto pool = std::make_unique<allocator_pool>(
         10,
         false,
         std::move(base_allocator),
@@ -556,7 +559,7 @@ XSIGMATEST_VOID(TypedAllocatorTest, OverflowProtection)
     // Test allocation that would overflow size_t
     size_t      max_count = std::numeric_limits<size_t>::max() / sizeof(TestStruct) + 1;
     TestStruct* overflow_ptr =
-        allocator_typed::Allocate<TestStruct>(pool, max_count, allocation_attributes());
+        allocator_typed::Allocate<TestStruct>(pool.get(), max_count, allocation_attributes());
     EXPECT_EQ(nullptr, overflow_ptr);  // Should return nullptr on overflow
 
     // Test maximum valid allocation
@@ -568,7 +571,7 @@ XSIGMATEST_VOID(TypedAllocatorTest, OverflowProtection)
 
     // This might fail due to memory constraints, which is acceptable
     TestStruct* large_ptr =
-        allocator_typed::Allocate<TestStruct>(pool, max_valid_count, allocation_attributes());
+        allocator_typed::Allocate<TestStruct>(pool.get(), max_valid_count, allocation_attributes());
     if (large_ptr != nullptr)
     {
         // If allocation succeeded, test basic access
@@ -577,7 +580,7 @@ XSIGMATEST_VOID(TypedAllocatorTest, OverflowProtection)
         EXPECT_EQ(large_ptr[0].x, 42);
         EXPECT_EQ(large_ptr[max_valid_count - 1].x, 24);
 
-        allocator_typed::Deallocate(pool, large_ptr, max_valid_count);
+        allocator_typed::Deallocate(pool.get(), large_ptr, max_valid_count);
     }
 }
 
@@ -586,7 +589,7 @@ XSIGMATEST_VOID(AllocatorTest, StressTest)
 {
     auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-    auto pool = new allocator_pool(
+    auto pool = std::make_unique<allocator_pool>(
         50,
         false,
         std::move(base_allocator),
@@ -651,7 +654,7 @@ XSIGMATEST_VOID(AllocatorTest, ErrorHandling)
 {
     auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-    auto pool = new allocator_pool(
+    auto pool = std::make_unique<allocator_pool>(
         10,
         false,
         std::move(base_allocator),
@@ -693,13 +696,13 @@ XSIGMATEST_VOID(AllocatorTest, MemoryLeakDetection)
 {
     auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-    auto pool = new allocator_pool(
+    auto pool = std::make_unique<allocator_pool>(
         10,
         false,
         std::move(base_allocator),
         util::make_ptr_unique_mutable<NoopRounder>(),
         "leak_pool");
-    auto allocator_tracking = new xsigma::allocator_tracking(pool, true);
+    auto allocator_tracking = new xsigma::allocator_tracking(pool.get(), true);
 
     // Get initial statistics
     auto initial_stats = allocator_tracking->GetStats();
@@ -733,6 +736,9 @@ XSIGMATEST_VOID(AllocatorTest, MemoryLeakDetection)
     {
         EXPECT_EQ(final_stats->bytes_in_use, initial_stats->bytes_in_use);
     }
+
+    // Properly cleanup tracking allocator by releasing reference
+    allocator_tracking->GetRecordsAndUnRef();
 }
 
 // Test allocator statistics and monitoring
@@ -740,13 +746,13 @@ XSIGMATEST_VOID(AllocatorTest, StatisticsAndMonitoring)
 {
     auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-    auto pool = new allocator_pool(
+    auto pool = std::make_unique<allocator_pool>(
         10,
         false,
         std::move(base_allocator),
         util::make_ptr_unique_mutable<NoopRounder>(),
         "stats_pool");
-    auto allocator_tracking = new xsigma::allocator_tracking(pool, true);
+    auto allocator_tracking = new xsigma::allocator_tracking(pool.get(), true);
 
     // Test statistics collection
     auto stats = allocator_tracking->GetStats();
@@ -775,6 +781,9 @@ XSIGMATEST_VOID(AllocatorTest, StatisticsAndMonitoring)
 
     // Test allocator name (allocator_tracking returns the underlying allocator's name)
     EXPECT_EQ(std::string(allocator_tracking->Name()), std::string("stats_pool"));
+
+    // Properly cleanup tracking allocator by releasing reference
+    allocator_tracking->GetRecordsAndUnRef();
 }
 
 // ============================================================================
@@ -1094,6 +1103,9 @@ XSIGMATEST_VOID(TrackingAllocatorTest, AllocationTracking)
     tracker->deallocate_raw(ptr1);
     tracker->deallocate_raw(ptr2);
 
+    // Properly cleanup tracking allocator by releasing reference
+    tracker->GetRecordsAndUnRef();
+
     XSIGMA_LOG_INFO("Memory allocation tracking and leak detection tests completed successfully");
 }
 
@@ -1148,6 +1160,9 @@ XSIGMATEST_VOID(TrackingAllocatorTest, StatisticsCollection)
     {
         tracker->deallocate_raw(ptr);
     }
+
+    // Properly cleanup tracking allocator by releasing reference
+    tracker->GetRecordsAndUnRef();
 
     XSIGMA_LOG_INFO("Allocation statistics collection and reporting tests completed successfully");
 }
@@ -1209,6 +1224,9 @@ XSIGMATEST_VOID(TrackingAllocatorTest, MemoryUsageMonitoring)
         tracker->deallocate_raw(ptr);
     }
 
+    // Properly cleanup tracking allocator by releasing reference
+    tracker->GetRecordsAndUnRef();
+
     XSIGMA_LOG_INFO("Memory usage monitoring and bounds checking tests completed successfully");
 }
 
@@ -1259,6 +1277,10 @@ XSIGMATEST_VOID(TrackingAllocatorTest, UnderlyingAllocatorIntegration)
     EXPECT_NE(nullptr, pool_ptr);
 
     pool_tracker->deallocate_raw(pool_ptr);
+
+    // Properly cleanup tracking allocator by releasing reference
+    bfc_tracker->GetRecordsAndUnRef();
+    pool_tracker->GetRecordsAndUnRef();
 
     XSIGMA_LOG_INFO(
         "Integration with underlying allocator implementations tests completed successfully");
@@ -1368,6 +1390,9 @@ XSIGMATEST_VOID(TrackingAllocatorTest, EnhancedTrackingAnalytics)
         EXPECT_GE(record.dealloc_duration_us, 0);
     }
 
+    // Properly cleanup tracking allocator by releasing reference
+    tracker->GetRecordsAndUnRef();
+
     XSIGMA_LOG_INFO(
         "Enhanced tracking analytics and performance profiling tests completed successfully");
 }
@@ -1431,6 +1456,9 @@ XSIGMATEST_VOID(TrackingAllocatorTest, LoggingAndReporting)
     {
         tracker->deallocate_raw(ptr);
     }
+
+    // Properly cleanup tracking allocator by releasing reference
+    tracker->GetRecordsAndUnRef();
 
     XSIGMA_LOG_INFO("Logging levels and comprehensive reporting tests completed successfully");
 }
@@ -1748,6 +1776,9 @@ XSIGMATEST_VOID(TypedAllocatorTest, AllocatorInfrastructureIntegration)
 
     xsigma::allocator_typed::Deallocate(tracking_alloc, tracked_longs, 50);
 
+    // Properly cleanup tracking allocator by releasing reference
+    tracking_alloc->GetRecordsAndUnRef();
+
     XSIGMA_LOG_INFO("Integration with allocator infrastructure tests completed successfully");
 }
 
@@ -1996,7 +2027,8 @@ XSIGMATEST_VOID(AllocatorTest, PerformanceBenchmark)
             size_results.push_back(result);
             EXPECT_EQ(ptrs.size(), num_iterations);
 
-            // Note: tracker has protected destructor, so we don't delete it
+            // Properly cleanup tracking allocator by releasing reference
+            tracker->GetRecordsAndUnRef();
         }
 
         // ========== TYPED ALLOCATOR (type-safe wrapper) ==========
