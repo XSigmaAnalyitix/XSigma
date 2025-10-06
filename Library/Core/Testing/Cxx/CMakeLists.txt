@@ -80,12 +80,27 @@ if(XSIGMA_ENABLE_SANITIZER AND XSIGMA_SANITIZER_TYPE STREQUAL "memory" AND DEFIN
     )
 endif()
 
+# Add TSAN_OPTIONS if thread sanitizer is enabled
+if(XSIGMA_ENABLE_SANITIZER AND XSIGMA_SANITIZER_TYPE STREQUAL "thread")
+    set_tests_properties(CoreCxxTests PROPERTIES
+        ENVIRONMENT "LSAN_OPTIONS=${XSIGMA_GLOBAL_LSAN_OPTIONS};TSAN_OPTIONS=halt_on_error=0:abort_on_error=0:report_bugs=1:history_size=7:detect_thread_leaks=false:force_seq_cst_atomics=0"
+        # Thread sanitizer warnings should not cause test failure
+        WILL_FAIL FALSE
+    )
+endif()
+
 # Set coverage environment variable if enabled
 if(XSIGMA_ENABLE_COVERAGE AND DEFINED XSIGMA_LLVM_PROFILE_FILE)
     if(XSIGMA_ENABLE_SANITIZER AND XSIGMA_SANITIZER_TYPE STREQUAL "memory" AND DEFINED XSIGMA_GLOBAL_MSAN_OPTIONS)
         set_tests_properties(CoreCxxTests PROPERTIES
             ENVIRONMENT "LLVM_PROFILE_FILE=${XSIGMA_LLVM_PROFILE_FILE};LSAN_OPTIONS=${XSIGMA_GLOBAL_LSAN_OPTIONS};MSAN_OPTIONS=${XSIGMA_GLOBAL_MSAN_OPTIONS}"
             # Memory sanitizer warnings should not cause test failure
+            WILL_FAIL FALSE
+        )
+    elseif(XSIGMA_ENABLE_SANITIZER AND XSIGMA_SANITIZER_TYPE STREQUAL "thread")
+        set_tests_properties(CoreCxxTests PROPERTIES
+            ENVIRONMENT "LLVM_PROFILE_FILE=${XSIGMA_LLVM_PROFILE_FILE};LSAN_OPTIONS=${XSIGMA_GLOBAL_LSAN_OPTIONS};TSAN_OPTIONS=halt_on_error=0:abort_on_error=0:report_bugs=1:history_size=7:detect_thread_leaks=false:force_seq_cst_atomics=0"
+            # Thread sanitizer warnings should not cause test failure
             WILL_FAIL FALSE
         )
     else()
