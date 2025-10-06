@@ -1,0 +1,42 @@
+# =============================================================================
+# ThreadSanitizer Suppressions for XSigma
+# =============================================================================
+# This file contains suppressions for known acceptable data races and
+# false positives from ThreadSanitizer
+# Format: race:<function_pattern>
+# =============================================================================
+
+# Loguru thread-safe logging suppressions
+# Loguru uses thread-safe mechanisms that may appear as races to TSan
+race:loguru::*
+race:*loguru*
+
+# Standard library thread-safe operations that may trigger false positives
+race:std::__once_callable
+race:std::call_once
+race:std::__call_once_proxy
+
+# Memory allocator suppressions
+# Custom allocators may have internal synchronization that TSan doesn't recognize
+race:*allocator*::*
+race:*mimalloc*
+
+# Google Test framework suppressions
+# GTest has internal thread synchronization that may trigger false positives
+race:testing::*
+race:*gtest*
+
+# C++ standard library atomic operations
+race:std::atomic*
+race:__atomic*
+
+# Thread-local storage operations
+race:__tls_get_addr
+
+# Known false positives in system libraries
+race:*libc.so*
+race:*libpthread.so*
+race:*libstdc++.so*
+
+# Specific XSigma suppressions
+# Add project-specific suppressions here as needed

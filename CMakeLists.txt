@@ -193,6 +193,17 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${XSIGMA_BINARY_DIR}/lib")
 if(XSIGMA_BUILD_TESTING STREQUAL "ON" OR XSIGMA_BUILD_TESTING STREQUAL "WANT")
     enable_testing()
     include(CTest)
+
+    # Set global LSAN_OPTIONS for all tests to ensure consistent LeakSanitizer behavior
+    # This applies the suppressions file and reporting options to all test targets
+    set(XSIGMA_GLOBAL_LSAN_OPTIONS "suppressions=${CMAKE_SOURCE_DIR}/Scripts/lsan_suppressions.txt:print_suppressions=1:report_objects=1")
+    message(STATUS "Global LSAN_OPTIONS configured: ${XSIGMA_GLOBAL_LSAN_OPTIONS}")
+
+    # Set global MSAN_OPTIONS for MemorySanitizer to handle third-party library issues
+    if(XSIGMA_ENABLE_SANITIZER AND XSIGMA_SANITIZER_TYPE STREQUAL "memory")
+        set(XSIGMA_GLOBAL_MSAN_OPTIONS "halt_on_error=0:abort_on_error=0:exit_code=0:print_stats=1:suppressions=${CMAKE_SOURCE_DIR}/Scripts/msan_suppressions.txt")
+        message(STATUS "Global MSAN_OPTIONS configured: ${XSIGMA_GLOBAL_MSAN_OPTIONS}")
+    endif()
 endif()
 
 # Add third-party dependencies

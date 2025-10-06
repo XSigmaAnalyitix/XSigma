@@ -18,6 +18,56 @@ set(BUILD_TESTING OFF CACHE BOOL "Disable testing for third-party libraries" FOR
 set(BUILD_EXAMPLES OFF CACHE BOOL "Disable examples for third-party libraries" FORCE)
 set(BUILD_BENCHMARKS OFF CACHE BOOL "Disable benchmarks for third-party libraries" FORCE)
 
+# Disable sanitizers for all third-party libraries
+# This prevents third-party code from being instrumented with sanitizers
+# which can cause false positives and performance issues
+if(XSIGMA_ENABLE_SANITIZER)
+    message(STATUS "Disabling sanitizers for third-party libraries")
+
+    # Save current sanitizer flags
+    set(_SAVED_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    set(_SAVED_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+    set(_SAVED_CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+    set(_SAVED_CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+
+    # Remove sanitizer flags from CMAKE flags for third-party builds
+    string(REGEX REPLACE "-fsanitize=[^ ]*" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REGEX REPLACE "-fsanitize-[^ ]*" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REGEX REPLACE "-fno-omit-frame-pointer" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REGEX REPLACE "-fno-inline[^ ]*" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REGEX REPLACE "-fno-tree-vectorize" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+
+    string(REGEX REPLACE "-fsanitize=[^ ]*" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+    string(REGEX REPLACE "-fsanitize-[^ ]*" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+    string(REGEX REPLACE "-fno-omit-frame-pointer" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+    string(REGEX REPLACE "-fno-inline[^ ]*" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+    string(REGEX REPLACE "-fno-tree-vectorize" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+
+    string(REGEX REPLACE "-fsanitize=[^ ]*" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+    string(REGEX REPLACE "-fsanitize-[^ ]*" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+
+    string(REGEX REPLACE "-fsanitize=[^ ]*" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+    string(REGEX REPLACE "-fsanitize-[^ ]*" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+
+    # Clean up any double spaces
+    string(REGEX REPLACE "  +" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REGEX REPLACE "  +" " " CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+    string(REGEX REPLACE "  +" " " CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+    string(REGEX REPLACE "  +" " " CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+
+    # Ensure -fPIC is present for shared library builds
+    if(BUILD_SHARED_LIBS)
+        if(NOT CMAKE_CXX_FLAGS MATCHES "-fPIC")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+        endif()
+        if(NOT CMAKE_C_FLAGS MATCHES "-fPIC")
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+        endif()
+    endif()
+
+    message(STATUS "Third-party libraries will be built without sanitizer instrumentation")
+endif()
+
 # fmt-specific options
 set(FMT_TEST OFF CACHE BOOL "Disable fmt tests" FORCE)
 set(FMT_DOC OFF CACHE BOOL "Disable fmt documentation" FORCE)
@@ -175,13 +225,11 @@ add_third_party_library(loguru
 if(TARGET loguru)
     set_target_properties(loguru PROPERTIES FOLDER "ThirdParty/loguru")
 
-    # # Apply sanitizer flags to loguru if sanitizers are enabled
-    if(XSIGMA_ENABLE_SANITIZER AND DEFINED XSIGMA_SANITIZER_COMPILE_FLAGS)
-        target_compile_options(loguru PRIVATE ${XSIGMA_SANITIZER_COMPILE_FLAGS})
-        if(DEFINED XSIGMA_SANITIZER_LINK_FLAGS AND XSIGMA_SANITIZER_LINK_FLAGS)
-            target_link_options(loguru PRIVATE ${XSIGMA_SANITIZER_LINK_FLAGS})
-        endif()
-        message(STATUS "Applied sanitizer flags to loguru target")
+    # Explicitly disable sanitizers for loguru (third-party library)
+    if(XSIGMA_ENABLE_SANITIZER)
+        target_compile_options(loguru PRIVATE -fno-sanitize=all)
+        target_link_options(loguru PRIVATE -fno-sanitize=all)
+        message(STATUS "Disabled sanitizer instrumentation for loguru target")
     endif()
 endif()
 
@@ -434,3 +482,70 @@ endif()
 
 # Restore the original BUILD_SHARED_LIBS setting
 set(BUILD_SHARED_LIBS ${_SAVED_BUILD_SHARED_LIBS} CACHE BOOL "Build shared libraries" FORCE)
+
+# Disable sanitizers for all third-party targets
+if(XSIGMA_ENABLE_SANITIZER)
+    # List of all third-party targets that should be excluded from sanitizer instrumentation
+    set(THIRD_PARTY_TARGETS
+        fmt
+        cpuinfo
+        cpuinfo_internals
+        loguru
+        mimalloc-static
+        mimalloc-debug
+        gtest
+        gtest_main
+        gmock
+        gmock_main
+        benchmark
+        benchmark_main
+        magic_enum
+        glog
+    )
+
+    foreach(target ${THIRD_PARTY_TARGETS})
+        if(TARGET ${target})
+            # Check if target is an INTERFACE library
+            get_target_property(target_type ${target} TYPE)
+            if(target_type STREQUAL "INTERFACE_LIBRARY")
+                message(STATUS "Skipping INTERFACE target: ${target}")
+            else()
+                message(STATUS "Disabling sanitizer instrumentation for third-party target: ${target}")
+
+                # Remove all sanitizer-related flags from the target
+                get_target_property(compile_options ${target} COMPILE_OPTIONS)
+                if(compile_options)
+                    # Filter out sanitizer flags
+                    list(FILTER compile_options EXCLUDE REGEX "-fsanitize.*")
+                    list(FILTER compile_options EXCLUDE REGEX "-fno-omit-frame-pointer")
+                    list(FILTER compile_options EXCLUDE REGEX "-fno-inline.*")
+                    list(FILTER compile_options EXCLUDE REGEX "-fno-tree-vectorize")
+                    list(FILTER compile_options EXCLUDE REGEX "-fsanitize-memory-track-origins.*")
+                    list(FILTER compile_options EXCLUDE REGEX "-fsanitize-ignorelist.*")
+                    set_target_properties(${target} PROPERTIES COMPILE_OPTIONS "${compile_options}")
+                endif()
+
+                get_target_property(link_options ${target} LINK_OPTIONS)
+                if(link_options)
+                    # Filter out sanitizer flags
+                    list(FILTER link_options EXCLUDE REGEX "-fsanitize.*")
+                    set_target_properties(${target} PROPERTIES LINK_OPTIONS "${link_options}")
+                endif()
+
+                # Ensure -fPIC for shared library builds
+                if(BUILD_SHARED_LIBS)
+                    target_compile_options(${target} PRIVATE -fPIC)
+                endif()
+            endif()
+        endif()
+    endforeach()
+endif()
+
+# Restore original sanitizer flags for main project
+if(XSIGMA_ENABLE_SANITIZER AND DEFINED _SAVED_CMAKE_CXX_FLAGS)
+    set(CMAKE_CXX_FLAGS "${_SAVED_CMAKE_CXX_FLAGS}")
+    set(CMAKE_C_FLAGS "${_SAVED_CMAKE_C_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${_SAVED_CMAKE_EXE_LINKER_FLAGS}")
+    set(CMAKE_SHARED_LINKER_FLAGS "${_SAVED_CMAKE_SHARED_LINKER_FLAGS}")
+    message(STATUS "Restored sanitizer flags for main project")
+endif()

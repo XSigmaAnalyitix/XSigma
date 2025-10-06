@@ -93,6 +93,8 @@ function(configure_sanitizer_flags)
             list(APPEND xsigma_sanitize_args "/MD")
             # Suppress ASAN warning about debug info for third-party libraries
             list(APPEND xsigma_sanitize_args "/wd5072")
+            # Disable optimizations for sanitizer compatibility
+            list(APPEND xsigma_sanitize_args "/Od")
         endif()
     else()
         # GCC/Clang sanitizer configuration
@@ -102,7 +104,15 @@ function(configure_sanitizer_flags)
         # Common flags for all sanitizers
         list(APPEND xsigma_sanitize_args "-fno-omit-frame-pointer")
         list(APPEND xsigma_sanitize_args "-g")
-        list(APPEND xsigma_sanitize_args "-O1")
+
+        # Disable optimizations for sanitizer compatibility
+        # Use -O0 for maximum debugging capability or -O1 for minimal optimizations
+        list(APPEND xsigma_sanitize_args "-O0")
+
+        # Disable conflicting optimization flags
+        list(APPEND xsigma_sanitize_args "-fno-inline")
+        list(APPEND xsigma_sanitize_args "-fno-inline-functions")
+        list(APPEND xsigma_sanitize_args "-fno-tree-vectorize")
 
         # Windows-specific library requirements for sanitizers
         if(WIN32 AND CMAKE_COMPILER_IS_CLANGXX)
@@ -142,10 +152,15 @@ function(configure_sanitizer_flags)
             # ThreadSanitizer requires position-independent code
             list(APPEND xsigma_sanitize_args "-fPIC")
 
+            # Disable problematic optimizations for ThreadSanitizer
+            list(APPEND xsigma_sanitize_args "-fno-builtin-malloc")
+            list(APPEND xsigma_sanitize_args "-fno-builtin-calloc")
+            list(APPEND xsigma_sanitize_args "-fno-builtin-realloc")
+            list(APPEND xsigma_sanitize_args "-fno-builtin-free")
+
             # GCC-specific ThreadSanitizer optimizations
-            if(CMAKE_COMPILER_IS_GNUCXX)
-                list(APPEND xsigma_sanitize_args "-ftsan-instrument-func-entry-exit")
-            endif()
+            # Note: -ftsan-instrument-func-entry-exit is not supported in all GCC versions
+            # The basic -fsanitize=thread flag provides sufficient instrumentation
 
         elseif(XSIGMA_SANITIZER_TYPE STREQUAL "memory")
             # MemorySanitizer specific flags (Clang only)
@@ -155,10 +170,8 @@ function(configure_sanitizer_flags)
 
         elseif(XSIGMA_SANITIZER_TYPE STREQUAL "leak")
             # LeakSanitizer flags
-            # GCC-specific leak detection optimizations
-            if(CMAKE_COMPILER_IS_GNUCXX)
-                list(APPEND xsigma_sanitize_args "-fsanitize-recover=leak")
-            endif()
+            # Note: -fsanitize-recover=leak is not supported by GCC
+            # LeakSanitizer runs at program exit and doesn't support recovery
         endif()
     endif()
 
@@ -290,6 +303,59 @@ function(configure_sanitizer_ignore_file)
 endfunction()
 
 # =============================================================================
+# Third-Party Library Exclusion Functions
+# =============================================================================
+
+function(exclude_third_party_from_sanitizers)
+    # List of third-party targets to exclude from sanitizer instrumentation
+    set(THIRD_PARTY_TARGETS
+        fmt
+        cpuinfo
+        cpuinfo_internals
+        loguru
+        mimalloc-static
+        mimalloc-debug
+        gtest
+        gtest_main
+        gmock
+        gmock_main
+        benchmark
+        benchmark_main
+        magic_enum
+    )
+
+    foreach(target ${THIRD_PARTY_TARGETS})
+        if(TARGET ${target})
+            message(STATUS "Excluding ${target} from sanitizer instrumentation")
+
+            # Remove sanitizer flags from this target
+            get_target_property(target_compile_options ${target} COMPILE_OPTIONS)
+            if(target_compile_options)
+                # Filter out sanitizer flags
+                list(FILTER target_compile_options EXCLUDE REGEX ".*fsanitize.*")
+                set_target_properties(${target} PROPERTIES COMPILE_OPTIONS "${target_compile_options}")
+            endif()
+
+            # Set target-specific compile options to override inherited sanitizer flags
+            target_compile_options(${target} PRIVATE
+                -fno-sanitize=all
+            )
+
+            # Also remove sanitizer flags from link options
+            get_target_property(target_link_options ${target} LINK_OPTIONS)
+            if(target_link_options)
+                list(FILTER target_link_options EXCLUDE REGEX ".*fsanitize.*")
+                set_target_properties(${target} PROPERTIES LINK_OPTIONS "${target_link_options}")
+            endif()
+
+            target_link_options(${target} PRIVATE
+                -fno-sanitize=all
+            )
+        endif()
+    endforeach()
+endfunction()
+
+# =============================================================================
 # Main Sanitizer Configuration
 # =============================================================================
 
@@ -304,8 +370,51 @@ configure_sanitizer_runtime_libraries()
 # Configure ignore file
 configure_sanitizer_ignore_file()
 
+# Function to override optimization flags when sanitizers are enabled
+function(override_optimization_flags_for_sanitizers)
+    if(NOT CMAKE_COMPILER_IS_MSVC)
+        # Override CMAKE build type flags to disable optimizations
+        if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+            message(STATUS "Overriding optimization flags for sanitizer compatibility")
+
+            # Clear existing optimization flags
+            string(REGEX REPLACE "-O[0-3s]" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+            string(REGEX REPLACE "-O[0-3s]" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+            string(REGEX REPLACE "-O[0-3s]" "" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+            string(REGEX REPLACE "-O[0-3s]" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+
+            # Remove conflicting optimization flags
+            string(REGEX REPLACE "-march=native" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+            string(REGEX REPLACE "-march=native" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+            string(REGEX REPLACE "-march=native" "" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+            string(REGEX REPLACE "-march=native" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+
+            string(REGEX REPLACE "-ftree-vectorize" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+            string(REGEX REPLACE "-ftree-vectorize" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+            string(REGEX REPLACE "-ftree-vectorize" "" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+            string(REGEX REPLACE "-ftree-vectorize" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+
+            string(REGEX REPLACE "-finline-functions" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+            string(REGEX REPLACE "-finline-functions" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+            string(REGEX REPLACE "-finline-functions" "" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+            string(REGEX REPLACE "-finline-functions" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+
+            # Set sanitizer-compatible optimization level
+            set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O0" PARENT_SCOPE)
+            set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O0" PARENT_SCOPE)
+            set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O0" PARENT_SCOPE)
+            set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -O0" PARENT_SCOPE)
+
+            message(STATUS "  Optimization flags overridden: -O0 for sanitizer compatibility")
+        endif()
+    endif()
+endfunction()
+
 # Apply sanitizer configuration to build target
 if(TARGET xsigmabuild)
+    # Override optimization flags first
+    override_optimization_flags_for_sanitizers()
+
     # Apply sanitizer compile flags directly without BUILD_INTERFACE wrapper
     # This ensures flags are properly propagated to all targets linking to xsigmabuild
     target_compile_options(xsigmabuild INTERFACE
@@ -322,6 +431,9 @@ if(TARGET xsigmabuild)
     if(xsigma_sanitize_link_args)
         message(STATUS "  Link flags: ${xsigma_sanitize_link_args}")
     endif()
+
+    # Exclude third-party libraries from sanitizer instrumentation
+    exclude_third_party_from_sanitizers()
 else()
     message(WARNING "xsigmabuild target not found - sanitizer flags not applied")
 endif()
@@ -358,9 +470,16 @@ set(XSIGMA_SANITIZER_COMPILE_FLAGS "${xsigma_sanitize_args}" CACHE INTERNAL "San
 set(XSIGMA_SANITIZER_LINK_FLAGS "${xsigma_sanitize_link_args}" CACHE INTERNAL "Sanitizer link flags")
 
 # Set environment variables for testing
-if(_xsigma_testing_ld_preload)
+# Note: Do NOT set LD_PRELOAD for ThreadSanitizer during CMake configuration
+# as it interferes with CMake tools like ninja
+if(_xsigma_testing_ld_preload AND NOT XSIGMA_SANITIZER_TYPE STREQUAL "thread")
     set(ENV{LD_PRELOAD} "${_xsigma_testing_ld_preload}")
     message(STATUS "Set LD_PRELOAD for testing: ${_xsigma_testing_ld_preload}")
+elseif(_xsigma_testing_ld_preload AND XSIGMA_SANITIZER_TYPE STREQUAL "thread")
+    # For ThreadSanitizer, store the library path but don't set LD_PRELOAD during configuration
+    set(XSIGMA_TSAN_LIBRARY_PATH "${_xsigma_testing_ld_preload}" CACHE INTERNAL "ThreadSanitizer library path for test execution")
+    message(STATUS "ThreadSanitizer library found: ${_xsigma_testing_ld_preload}")
+    message(STATUS "Note: LD_PRELOAD will be set only during test execution to avoid CMake tool interference")
 endif()
 
 # Print configuration summary

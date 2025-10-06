@@ -701,7 +701,7 @@ void AggregateXPlane(const xplane& full_trace, xplane& aggregated_trace)
 {
     struct EventStat
     {
-        stat<int64_t> stat;
+        xsigma::stat<int64_t> stat;
         int64_t       children_duration;
     };
     using StatByEvent = flat_hash_map<int64_t /*event_id*/, EventStat>;

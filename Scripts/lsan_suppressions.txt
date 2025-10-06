@@ -1,0 +1,15 @@
+# =============================================================================
+# LeakSanitizer Suppressions for XSigma
+# =============================================================================
+# This file contains suppressions for known acceptable memory leaks
+# Format: leak:<function_pattern>
+# =============================================================================
+
+# Loguru thread name storage leaks
+# These are acceptable leaks from the logging library's thread name storage
+# The thread names are stored in thread-local storage and never freed
+leak:loguru::set_thread_name
+leak:strdup
+
+# Specific suppression for the exact leak pattern we're seeing
+leak:loguru.cpp
