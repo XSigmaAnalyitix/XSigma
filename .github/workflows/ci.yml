@@ -46,7 +46,7 @@ jobs:
             compiler_c: clang
             compiler_cxx: clang++
             generator: Ninja
-            cache_path: ~\AppData\Local\Temp\chocolatey
+            cache_path: ~/AppData/Local/Temp/chocolatey
 
           # macOS-specific configuration
           - os: macos-latest
@@ -133,14 +133,14 @@ jobs:
         Write-Host "Installing build tools via chocolatey..."
         choco install ninja llvm cmake python3 -y
         if ($LASTEXITCODE -ne 0) {
-          Write-Host "❌ Failed to install build tools"
+          Write-Host "ERROR: Failed to install build tools"
           exit 1
         }
 
         # Verify vcpkg is available
         Write-Host "Checking vcpkg availability..."
         if (-not $env:VCPKG_INSTALLATION_ROOT) {
-          Write-Host "❌ VCPKG_INSTALLATION_ROOT not set"
+          Write-Host "ERROR: VCPKG_INSTALLATION_ROOT not set"
           exit 1
         }
         Write-Host "vcpkg root: $env:VCPKG_INSTALLATION_ROOT"
@@ -149,16 +149,16 @@ jobs:
         Write-Host "Installing Intel TBB via vcpkg..."
         vcpkg install tbb:x64-windows
         if ($LASTEXITCODE -ne 0) {
-          Write-Host "❌ Failed to install TBB via vcpkg"
+          Write-Host "ERROR: Failed to install TBB via vcpkg"
           exit 1
         }
 
         # Verify TBB installation
         $tbbHeaderPath = "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\include\tbb\tbb.h"
         if (Test-Path $tbbHeaderPath) {
-          Write-Host "✅ Intel TBB installed successfully at: $tbbHeaderPath"
+          Write-Host "SUCCESS: Intel TBB installed successfully at: $tbbHeaderPath"
         } else {
-          Write-Host "❌ Intel TBB installation failed - header not found at: $tbbHeaderPath"
+          Write-Host "ERROR: Intel TBB installation failed - header not found at: $tbbHeaderPath"
           # List what was actually installed
           Write-Host "Contents of vcpkg installed directory:"
           Get-ChildItem "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows" -Recurse -Name | Select-Object -First 20
@@ -241,33 +241,33 @@ jobs:
 
         # Check if TBB libraries are linked (when enabled)
         if [ "${{ matrix.tbb_enabled }}" = "ON" ]; then
-          echo "✅ TBB should be enabled and linked"
+          echo "SUCCESS: TBB should be enabled and linked"
 
           # Platform-specific library checks
           if [ "${{ runner.os }}" = "Linux" ]; then
             if [ -f "Library/Core/libCore.so" ]; then
               if nm -D Library/Core/libCore.so | grep -q "tbb" || ldd Library/Core/libCore.so | grep -q "tbb"; then
-                echo "✅ TBB symbols/dependencies found in Core library (Linux)"
+                echo "SUCCESS: TBB symbols/dependencies found in Core library (Linux)"
               else
-                echo "⚠️  TBB symbols not found - may be statically linked (Linux)"
+                echo "WARNING: TBB symbols not found - may be statically linked (Linux)"
               fi
             fi
           elif [ "${{ runner.os }}" = "macOS" ]; then
             if [ -f "Library/Core/libCore.dylib" ]; then
               if otool -L Library/Core/libCore.dylib | grep -q "tbb"; then
-                echo "✅ TBB dependencies found in Core library (macOS)"
+                echo "SUCCESS: TBB dependencies found in Core library (macOS)"
               else
-                echo "⚠️  TBB dependencies not found - may be statically linked (macOS)"
+                echo "WARNING: TBB dependencies not found - may be statically linked (macOS)"
               fi
             fi
           elif [ "${{ runner.os }}" = "Windows" ]; then
             if [ -f "Library/Core/Core.dll" ] || [ -f "Library/Core/Core.lib" ]; then
-              echo "✅ Core library built successfully (Windows)"
+              echo "SUCCESS: Core library built successfully (Windows)"
               # On Windows, dependency checking is more complex, so we just verify the build succeeded
             fi
           fi
         else
-          echo "✅ TBB should be disabled"
+          echo "SUCCESS: TBB should be disabled"
           echo "Using standard threading implementation"
         fi
 
@@ -305,7 +305,7 @@ jobs:
         path: |
           ~/.cache
           ~/Library/Caches
-          ~\AppData\Local\Temp\chocolatey
+          ~/AppData/Local/Temp/chocolatey
           build/ThirdParty
         key: ${{ runner.os }}-tbb-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt') }}
         restore-keys: |
@@ -345,14 +345,14 @@ jobs:
         Write-Host "Installing build tools via chocolatey..."
         choco install ninja llvm cmake python3 -y
         if ($LASTEXITCODE -ne 0) {
-          Write-Host "❌ Failed to install build tools"
+          Write-Host "ERROR: Failed to install build tools"
           exit 1
         }
 
         # Verify vcpkg is available
         Write-Host "Checking vcpkg availability..."
         if (-not $env:VCPKG_INSTALLATION_ROOT) {
-          Write-Host "❌ VCPKG_INSTALLATION_ROOT not set"
+          Write-Host "ERROR: VCPKG_INSTALLATION_ROOT not set"
           exit 1
         }
         Write-Host "vcpkg root: $env:VCPKG_INSTALLATION_ROOT"
@@ -361,16 +361,16 @@ jobs:
         Write-Host "Installing Intel TBB via vcpkg..."
         vcpkg install tbb:x64-windows
         if ($LASTEXITCODE -ne 0) {
-          Write-Host "❌ Failed to install TBB via vcpkg"
+          Write-Host "ERROR: Failed to install TBB via vcpkg"
           exit 1
         }
 
         # Verify TBB installation
         $tbbHeaderPath = "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\include\tbb\tbb.h"
         if (Test-Path $tbbHeaderPath) {
-          Write-Host "✅ Intel TBB installed successfully at: $tbbHeaderPath"
+          Write-Host "SUCCESS: Intel TBB installed successfully at: $tbbHeaderPath"
         } else {
-          Write-Host "❌ Intel TBB installation failed - header not found at: $tbbHeaderPath"
+          Write-Host "ERROR: Intel TBB installation failed - header not found at: $tbbHeaderPath"
           exit 1
         }
 
@@ -441,15 +441,6 @@ jobs:
           build/Testing/Temporary/LastTest.log
           build/**/*.log
 
-
-
-
-
-
-
-
-
-
   # ============================================================================
   # Simplified Sanitizer Testing (Clang Only)
   # ============================================================================
@@ -515,7 +506,7 @@ jobs:
       run: |
         choco install llvm ninja cmake python3 -y
         if ($LASTEXITCODE -ne 0) {
-          Write-Host "❌ Failed to install dependencies"
+          Write-Host "ERROR: Failed to install dependencies"
           exit 1
         }
         # Install TBB via vcpkg
@@ -555,11 +546,34 @@ jobs:
             -DXSIGMA_SANITIZER_TYPE=${{ matrix.sanitizer }} \
             -DXSIGMA_BUILD_TESTING=ON \
             -DXSIGMA_ENABLE_GTEST=ON \
-            -DXSIGMA_ENABLE_LTO=OFF
+            -DXSIGMA_ENABLE_LTO=OFF \
+            -DXSIGMA_ENABLE_TBB=ON
         fi
 
     - name: Build
       run: cmake --build build -j 2
+
+    - name: Setup sanitizer environment
+      shell: bash
+      run: |
+        # Set up sanitizer-specific environment variables
+        case "${{ matrix.sanitizer }}" in
+          "address")
+            echo "ASAN_OPTIONS=print_stacktrace=1:check_initialization_order=1:strict_init_order=1:suppressions=${{ github.workspace }}/Scripts/asan_suppressions.txt" >> $GITHUB_ENV
+            ;;
+          "leak")
+            echo "LSAN_OPTIONS=print_suppressions=0:suppressions=${{ github.workspace }}/Scripts/lsan_suppressions.txt" >> $GITHUB_ENV
+            ;;
+          "thread")
+            echo "TSAN_OPTIONS=print_stacktrace=1:halt_on_error=1:suppressions=${{ github.workspace }}/Scripts/tsan_suppressions.txt" >> $GITHUB_ENV
+            ;;
+          "undefined")
+            echo "UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1:suppressions=${{ github.workspace }}/Scripts/ubsan_suppressions.txt" >> $GITHUB_ENV
+            ;;
+          "memory")
+            echo "MSAN_OPTIONS=print_stats=1:halt_on_error=1:suppressions=${{ github.workspace }}/Scripts/msan_suppressions.txt" >> $GITHUB_ENV
+            ;;
+        esac
 
     - name: Run Tests with ${{ matrix.sanitizer }} Sanitizer
       working-directory: ${{ github.workspace }}/build
@@ -868,7 +882,6 @@ jobs:
       - build-matrix
       - tbb-specific-tests
       - sanitizer-tests
-      - windows-sanitizer-tests
       - code-quality
       - coverage-test
       - optimization-flags-test
@@ -882,8 +895,7 @@ jobs:
         echo "=== CI Pipeline Results ==="
         echo "Build Matrix: ${{ needs.build-matrix.result }}"
         echo "TBB Specific Tests: ${{ needs.tbb-specific-tests.result }}"
-        echo "Sanitizer Tests (Ubuntu): ${{ needs.sanitizer-tests.result }}"
-        echo "Windows Sanitizer Tests: ${{ needs.windows-sanitizer-tests.result }}"
+        echo "Sanitizer Tests: ${{ needs.sanitizer-tests.result }}"
         echo "Code Quality: ${{ needs.code-quality.result }}"
         echo "Coverage Test: ${{ needs.coverage-test.result }}"
         echo "Optimization Flags: ${{ needs.optimization-flags-test.result }}"
@@ -892,37 +904,33 @@ jobs:
 
         # Check if any required job failed
         if [ "${{ needs.build-matrix.result }}" != "success" ]; then
-          echo "❌ Build matrix failed"
+          echo "ERROR: Build matrix failed"
           exit 1
         fi
         if [ "${{ needs.tbb-specific-tests.result }}" != "success" ]; then
-          echo "❌ TBB specific tests failed"
+          echo "ERROR: TBB specific tests failed"
           exit 1
         fi
         if [ "${{ needs.sanitizer-tests.result }}" != "success" ]; then
-          echo "❌ Ubuntu sanitizer tests failed"
-          exit 1
-        fi
-        if [ "${{ needs.windows-sanitizer-tests.result }}" != "success" ]; then
-          echo "❌ Windows sanitizer tests failed"
+          echo "ERROR: Sanitizer tests failed"
           exit 1
         fi
         if [ "${{ needs.code-quality.result }}" != "success" ]; then
-          echo "❌ Code quality checks failed"
+          echo "ERROR: Code quality checks failed"
           exit 1
         fi
         if [ "${{ needs.coverage-test.result }}" != "success" ]; then
-          echo "❌ Coverage test failed"
+          echo "ERROR: Coverage test failed"
           exit 1
         fi
         if [ "${{ needs.optimization-flags-test.result }}" != "success" ]; then
-          echo "❌ Optimization flags test failed"
+          echo "ERROR: Optimization flags test failed"
           exit 1
         fi
         if [ "${{ needs.benchmark-tests.result }}" != "success" ]; then
-          echo "⚠️  Benchmark tests failed (non-blocking)"
+          echo "WARNING: Benchmark tests failed (non-blocking)"
         fi
 
         echo ""
-        echo "✅ All CI checks passed successfully!"
+        echo "SUCCESS: All CI checks passed successfully!"
 
