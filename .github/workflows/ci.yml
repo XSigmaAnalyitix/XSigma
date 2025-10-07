@@ -454,7 +454,13 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         sanitizer: [address, undefined, thread, leak]
         exclude:
-          # MemorySanitizer is not supported on Windows
+          # Windows: Only AddressSanitizer is enabled, disable all others
+          - os: windows-latest
+            sanitizer: undefined
+          - os: windows-latest
+            sanitizer: thread
+          - os: windows-latest
+            sanitizer: leak
           - os: windows-latest
             sanitizer: memory
           # LeakSanitizer is not supported on Apple Silicon (ARM64)
