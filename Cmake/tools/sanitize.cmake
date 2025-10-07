@@ -1,546 +1,231 @@
 # =============================================================================
-# XSigma Sanitizer Configuration
+# XSigma Simplified Sanitizer Configuration
 # =============================================================================
-# Comprehensive sanitizer support for memory debugging and analysis
+# Simplified sanitizer support for memory debugging and analysis
 # Supports: AddressSanitizer, UndefinedBehaviorSanitizer, ThreadSanitizer,
 #          MemorySanitizer, and LeakSanitizer
-# Compatible with: GCC, Clang, Apple Clang, and MSVC (where supported)
+# Compatible with: Clang only (cross-platform: Linux, macOS, Windows)
 # =============================================================================
-
-if(NOT XSIGMA_ENABLE_SANITIZER)
-    return()
-endif()
-
-# Validate sanitizer type
-set(VALID_SANITIZER_TYPES "address;undefined;thread;memory;leak")
-if(NOT XSIGMA_SANITIZER_TYPE IN_LIST VALID_SANITIZER_TYPES)
-    message(FATAL_ERROR "Invalid XSIGMA_SANITIZER_TYPE: ${XSIGMA_SANITIZER_TYPE}. "
-                        "Valid options are: ${VALID_SANITIZER_TYPES}")
-endif()
-
-# Compiler detection
-set(CMAKE_COMPILER_IS_CLANGXX FALSE)
-set(CMAKE_COMPILER_IS_MSVC FALSE)
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-    set(CMAKE_COMPILER_IS_CLANGXX TRUE)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    set(CMAKE_COMPILER_IS_MSVC TRUE)
-endif()
-
-# =============================================================================
-# Sanitizer Compatibility Matrix
-# =============================================================================
-function(check_sanitizer_compatibility)
-    set(SANITIZER_SUPPORTED FALSE)
-
-    if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANGXX)
-        # GCC and Clang support most sanitizers
-        if(XSIGMA_SANITIZER_TYPE STREQUAL "address" OR
-           XSIGMA_SANITIZER_TYPE STREQUAL "undefined" OR
-           XSIGMA_SANITIZER_TYPE STREQUAL "thread" OR
-           XSIGMA_SANITIZER_TYPE STREQUAL "leak")
-            set(SANITIZER_SUPPORTED TRUE)
-        elseif(XSIGMA_SANITIZER_TYPE STREQUAL "memory")
-            # MemorySanitizer is Clang-only
-            if(CMAKE_COMPILER_IS_CLANGXX)
-                set(SANITIZER_SUPPORTED TRUE)
-            else()
-                message(WARNING "MemorySanitizer is only supported with Clang. "
-                               "Falling back to AddressSanitizer.")
-                set(XSIGMA_SANITIZER_TYPE "address" CACHE STRING
-                    "The sanitizer to use" FORCE)
-                set(SANITIZER_SUPPORTED TRUE)
-            endif()
-        endif()
-    elseif(CMAKE_COMPILER_IS_MSVC)
-        # MSVC only supports AddressSanitizer
-        if(XSIGMA_SANITIZER_TYPE STREQUAL "address")
-            set(SANITIZER_SUPPORTED TRUE)
-        else()
-            message(WARNING "MSVC only supports AddressSanitizer. "
-                           "Falling back to AddressSanitizer.")
-            set(XSIGMA_SANITIZER_TYPE "address" CACHE STRING
-                "The sanitizer to use" FORCE)
-            set(SANITIZER_SUPPORTED TRUE)
-        endif()
-    endif()
-
-    # Windows-specific AddressSanitizer limitation check
-    if(WIN32 AND XSIGMA_SANITIZER_TYPE STREQUAL "address" AND CMAKE_COMPILER_IS_CLANGXX)
-        message(WARNING "AddressSanitizer on Windows with Clang has known linker compatibility issues")
-        message(WARNING "when mixing libraries compiled with and without AddressSanitizer.")
-        message(WARNING "This causes 'annotate_string' symbol mismatch errors.")
-        message(WARNING "Consider using MSVC compiler for AddressSanitizer on Windows,")
-        message(WARNING "or use UndefinedBehaviorSanitizer instead.")
-        message(WARNING "Disabling AddressSanitizer for this build.")
-        set(SANITIZER_SUPPORTED FALSE)
-    endif()
-
-    if(NOT SANITIZER_SUPPORTED)
-        message(WARNING "Sanitizer ${XSIGMA_SANITIZER_TYPE} is not supported "
-                       "with compiler ${CMAKE_CXX_COMPILER_ID}")
-        message(STATUS "Continuing build without sanitizers")
-        # Disable sanitizers for this build
-        set(XSIGMA_ENABLE_SANITIZER OFF CACHE BOOL "Enable sanitizers" FORCE)
-        return()
-    endif()
-
-    # Export to parent scope
-    set(XSIGMA_SANITIZER_TYPE ${XSIGMA_SANITIZER_TYPE} PARENT_SCOPE)
-endfunction()
-
-check_sanitizer_compatibility()
 
 # Early exit if sanitizers are disabled
 if(NOT XSIGMA_ENABLE_SANITIZER)
-    message(STATUS "Sanitizers are disabled, skipping sanitizer configuration")
     return()
 endif()
 
 # =============================================================================
-# Sanitizer Configuration Functions
+# Compiler Validation - Clang Only
+# =============================================================================
+
+function(validate_sanitizer_compiler)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        message(FATAL_ERROR
+            "Sanitizers are only supported with Clang compiler.\n"
+            "Current compiler: ${CMAKE_CXX_COMPILER_ID}\n"
+            "Please use Clang to enable sanitizers.")
+    endif()
+
+    message(STATUS "Sanitizer compiler validation passed: ${CMAKE_CXX_COMPILER_ID}")
+endfunction()
+
+validate_sanitizer_compiler()
+
+# =============================================================================
+# Build Configuration Enforcement
+# =============================================================================
+
+function(enforce_debug_build)
+    # On Windows, use RelWithDebInfo to match sanitizer runtime library
+    if(WIN32)
+        if(NOT CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+            message(STATUS "Sanitizers on Windows require RelWithDebInfo build - forcing CMAKE_BUILD_TYPE to RelWithDebInfo")
+            set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Build type" FORCE)
+        endif()
+    else()
+        # On other platforms, use Debug as before
+        if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+            message(STATUS "Sanitizers require Debug build - forcing CMAKE_BUILD_TYPE to Debug")
+            set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
+        endif()
+    endif()
+
+    message(STATUS "Build type enforced for sanitizers: ${CMAKE_BUILD_TYPE}")
+endfunction()
+
+enforce_debug_build()
+
+# =============================================================================
+# Sanitizer Configuration
+# =============================================================================
+
+# Validate sanitizer type
+set(VALID_SANITIZERS "address;undefined;thread;memory;leak")
+if(NOT XSIGMA_SANITIZER_TYPE IN_LIST VALID_SANITIZERS)
+    message(FATAL_ERROR
+        "Invalid sanitizer type: ${XSIGMA_SANITIZER_TYPE}\n"
+        "Valid options: ${VALID_SANITIZERS}")
+endif()
+
+# Platform-specific sanitizer validation
+if(XSIGMA_SANITIZER_TYPE STREQUAL "memory" AND WIN32)
+    message(FATAL_ERROR "MemorySanitizer is not supported on Windows")
+endif()
+
+if(XSIGMA_SANITIZER_TYPE STREQUAL "thread" AND WIN32)
+    message(FATAL_ERROR "ThreadSanitizer is not supported on Windows with Clang. Use AddressSanitizer instead.")
+endif()
+
+if(XSIGMA_SANITIZER_TYPE STREQUAL "undefined" AND WIN32)
+    message(WARNING "UndefinedBehaviorSanitizer may have linker issues on Windows with Clang. Consider using AddressSanitizer instead.")
+endif()
+
+if(XSIGMA_SANITIZER_TYPE STREQUAL "leak" AND APPLE AND CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+    message(FATAL_ERROR "LeakSanitizer is not supported on Apple Silicon (ARM64)")
+endif()
+
+message(STATUS "Configuring ${XSIGMA_SANITIZER_TYPE} sanitizer with Clang")
+
+# =============================================================================
+# Sanitizer Flags Configuration
 # =============================================================================
 
 function(configure_sanitizer_flags)
-    set(xsigma_sanitize_args)
-    set(xsigma_sanitize_link_args)
+    # Base sanitizer flags
+    set(SANITIZER_COMPILE_FLAGS "-fsanitize=${XSIGMA_SANITIZER_TYPE}")
+    set(SANITIZER_LINK_FLAGS "-fsanitize=${XSIGMA_SANITIZER_TYPE}")
 
-    if(CMAKE_COMPILER_IS_MSVC)
-        # MSVC sanitizer configuration
-        if(XSIGMA_SANITIZER_TYPE STREQUAL "address")
-            list(APPEND xsigma_sanitize_args "/fsanitize=address")
-            # MSVC AddressSanitizer requires specific runtime library
-            list(APPEND xsigma_sanitize_args "/MD")
-            # Suppress ASAN warning about debug info for third-party libraries
-            list(APPEND xsigma_sanitize_args "/wd5072")
-            # Disable optimizations for sanitizer compatibility
-            list(APPEND xsigma_sanitize_args "/Od")
-        endif()
-    else()
-        # GCC/Clang sanitizer configuration
-        list(APPEND xsigma_sanitize_args "-fsanitize=${XSIGMA_SANITIZER_TYPE}")
-        list(APPEND xsigma_sanitize_link_args "-fsanitize=${XSIGMA_SANITIZER_TYPE}")
+    # Disable ALL optimizations for sanitizer builds
+    list(APPEND SANITIZER_COMPILE_FLAGS "-O0")
 
-        # Common flags for all sanitizers
-        list(APPEND xsigma_sanitize_args "-fno-omit-frame-pointer")
-        list(APPEND xsigma_sanitize_args "-g")
+    # Essential debugging flags
+    list(APPEND SANITIZER_COMPILE_FLAGS "-g")
+    list(APPEND SANITIZER_COMPILE_FLAGS "-fno-omit-frame-pointer")
 
-        # Disable optimizations for sanitizer compatibility
-        # Use -O0 for maximum debugging capability or -O1 for minimal optimizations
-        list(APPEND xsigma_sanitize_args "-O0")
-
-        # Disable conflicting optimization flags
-        list(APPEND xsigma_sanitize_args "-fno-inline")
-        list(APPEND xsigma_sanitize_args "-fno-inline-functions")
-        list(APPEND xsigma_sanitize_args "-fno-tree-vectorize")
-
-        # Windows-specific library requirements for sanitizers
-        if(WIN32 AND CMAKE_COMPILER_IS_CLANGXX)
-            if(XSIGMA_SANITIZER_TYPE STREQUAL "undefined")
-                # UBSan on Windows requires additional system libraries
-                list(APPEND xsigma_sanitize_link_args "-ldbghelp")
-            endif()
-        endif()
-
-        # Additional flags for specific sanitizers
-        if(XSIGMA_SANITIZER_TYPE STREQUAL "address")
-            list(APPEND xsigma_sanitize_args "-fno-optimize-sibling-calls")
-
-            # Enable stack-use-after-return detection (Clang and newer GCC)
-            # Note: Temporarily disabled on Windows due to linker mismatch issues with third-party libraries
-            if(NOT WIN32 AND (CMAKE_COMPILER_IS_CLANGXX OR
-               (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "8.0")))
-                list(APPEND xsigma_sanitize_args "-fsanitize-address-use-after-scope")
-            endif()
-
-            # GCC-specific AddressSanitizer optimizations
-            if(CMAKE_COMPILER_IS_GNUCXX)
-                list(APPEND xsigma_sanitize_args "-fsanitize-recover=address")
-            endif()
-
-        elseif(XSIGMA_SANITIZER_TYPE STREQUAL "undefined")
-            # Enable additional UBSan checks
-            list(APPEND xsigma_sanitize_args "-fno-sanitize-recover=undefined")
-
-            # GCC-specific UBSan flags
-            if(CMAKE_COMPILER_IS_GNUCXX)
-                # Enable additional undefined behavior checks in GCC
-                list(APPEND xsigma_sanitize_args "-fsanitize=float-divide-by-zero")
-                list(APPEND xsigma_sanitize_args "-fsanitize=float-cast-overflow")
-            endif()
-
-        elseif(XSIGMA_SANITIZER_TYPE STREQUAL "thread")
-            # ThreadSanitizer requires position-independent code
-            list(APPEND xsigma_sanitize_args "-fPIC")
-
-            # Disable problematic optimizations for ThreadSanitizer
-            list(APPEND xsigma_sanitize_args "-fno-builtin-malloc")
-            list(APPEND xsigma_sanitize_args "-fno-builtin-calloc")
-            list(APPEND xsigma_sanitize_args "-fno-builtin-realloc")
-            list(APPEND xsigma_sanitize_args "-fno-builtin-free")
-
-            # GCC-specific ThreadSanitizer optimizations
-            # Note: -ftsan-instrument-func-entry-exit is not supported in all GCC versions
-            # The basic -fsanitize=thread flag provides sufficient instrumentation
-
-        elseif(XSIGMA_SANITIZER_TYPE STREQUAL "memory")
-            # MemorySanitizer specific flags (Clang only)
-            if(CMAKE_COMPILER_IS_CLANGXX)
-                list(APPEND xsigma_sanitize_args "-fsanitize-memory-track-origins=2")
-            endif()
-
-        elseif(XSIGMA_SANITIZER_TYPE STREQUAL "leak")
-            # LeakSanitizer flags
-            # Note: -fsanitize-recover=leak is not supported by GCC
-            # LeakSanitizer runs at program exit and doesn't support recovery
-        endif()
+    # Sanitizer-specific flags
+    if(XSIGMA_SANITIZER_TYPE STREQUAL "address")
+        list(APPEND SANITIZER_COMPILE_FLAGS "-fno-optimize-sibling-calls")
+    elseif(XSIGMA_SANITIZER_TYPE STREQUAL "memory")
+        list(APPEND SANITIZER_COMPILE_FLAGS "-fsanitize-memory-track-origins=2")
     endif()
 
-    # Export to parent scope and cache for global access
-    set(xsigma_sanitize_args ${xsigma_sanitize_args} PARENT_SCOPE)
-    set(xsigma_sanitize_link_args ${xsigma_sanitize_link_args} PARENT_SCOPE)
-    set(XSIGMA_SANITIZER_COMPILE_FLAGS ${xsigma_sanitize_args} CACHE INTERNAL "Sanitizer compile flags")
-    set(XSIGMA_SANITIZER_LINK_FLAGS ${xsigma_sanitize_link_args} CACHE INTERNAL "Sanitizer link flags")
+    # Export flags to parent scope
+    set(XSIGMA_SANITIZER_COMPILE_FLAGS ${SANITIZER_COMPILE_FLAGS} PARENT_SCOPE)
+    set(XSIGMA_SANITIZER_LINK_FLAGS ${SANITIZER_LINK_FLAGS} PARENT_SCOPE)
+
+    message(STATUS "Sanitizer compile flags: ${SANITIZER_COMPILE_FLAGS}")
+    message(STATUS "Sanitizer link flags: ${SANITIZER_LINK_FLAGS}")
 endfunction()
 
-function(configure_sanitizer_runtime_libraries)
-    if(UNIX AND NOT APPLE AND NOT CMAKE_COMPILER_IS_MSVC)
-        # Find sanitizer runtime libraries for preloading
-        set(sanitizer_libraries)
-
-        # Get compiler-specific library paths
-        if(CMAKE_COMPILER_IS_GNUCXX)
-            # GCC sanitizer libraries
-            execute_process(
-                COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libasan.so
-                OUTPUT_VARIABLE GCC_ASAN_PATH
-                OUTPUT_STRIP_TRAILING_WHITESPACE
-            )
-            execute_process(
-                COMMAND ${CMAKE_CXX_COMPILER} -print-search-dirs
-                OUTPUT_VARIABLE GCC_SEARCH_DIRS
-                OUTPUT_STRIP_TRAILING_WHITESPACE
-            )
-        endif()
-
-        if(XSIGMA_SANITIZER_TYPE STREQUAL "address")
-            if(CMAKE_COMPILER_IS_GNUCXX)
-                # Try GCC-specific path first
-                find_library(XSIGMA_ASAN_LIBRARY
-                    NAMES libasan.so.8 libasan.so.7 libasan.so.6 libasan.so.5 libasan.so
-                    PATHS ${GCC_ASAN_PATH}
-                    DOC "AddressSanitizer runtime library (GCC)")
-            else()
-                # Clang paths
-                find_library(XSIGMA_ASAN_LIBRARY
-                    NAMES libclang_rt.asan-x86_64.so libasan.so.8 libasan.so.7 libasan.so.6 libasan.so.5
-                    DOC "AddressSanitizer runtime library (Clang)")
-            endif()
-            if(XSIGMA_ASAN_LIBRARY)
-                list(APPEND sanitizer_libraries ${XSIGMA_ASAN_LIBRARY})
-            endif()
-
-        elseif(XSIGMA_SANITIZER_TYPE STREQUAL "thread")
-            if(CMAKE_COMPILER_IS_GNUCXX)
-                find_library(XSIGMA_TSAN_LIBRARY
-                    NAMES libtsan.so.2 libtsan.so.1 libtsan.so.0 libtsan.so
-                    DOC "ThreadSanitizer runtime library (GCC)")
-            else()
-                find_library(XSIGMA_TSAN_LIBRARY
-                    NAMES libclang_rt.tsan-x86_64.so libtsan.so.2 libtsan.so.1 libtsan.so.0
-                    DOC "ThreadSanitizer runtime library (Clang)")
-            endif()
-            if(XSIGMA_TSAN_LIBRARY)
-                list(APPEND sanitizer_libraries ${XSIGMA_TSAN_LIBRARY})
-            endif()
-
-        elseif(XSIGMA_SANITIZER_TYPE STREQUAL "undefined")
-            if(CMAKE_COMPILER_IS_GNUCXX)
-                find_library(XSIGMA_UBSAN_LIBRARY
-                    NAMES libubsan.so.1 libubsan.so.0 libubsan.so
-                    DOC "UndefinedBehaviorSanitizer runtime library (GCC)")
-            else()
-                find_library(XSIGMA_UBSAN_LIBRARY
-                    NAMES libclang_rt.ubsan_standalone-x86_64.so libubsan.so.1 libubsan.so.0
-                    DOC "UndefinedBehaviorSanitizer runtime library (Clang)")
-            endif()
-            if(XSIGMA_UBSAN_LIBRARY)
-                list(APPEND sanitizer_libraries ${XSIGMA_UBSAN_LIBRARY})
-            endif()
-
-        elseif(XSIGMA_SANITIZER_TYPE STREQUAL "memory")
-            # MemorySanitizer is Clang-only
-            if(CMAKE_COMPILER_IS_CLANGXX)
-                find_library(XSIGMA_MSAN_LIBRARY
-                    NAMES libclang_rt.msan-x86_64.so libmsan.so.0
-                    DOC "MemorySanitizer runtime library (Clang)")
-                if(XSIGMA_MSAN_LIBRARY)
-                    list(APPEND sanitizer_libraries ${XSIGMA_MSAN_LIBRARY})
-                endif()
-            endif()
-
-        elseif(XSIGMA_SANITIZER_TYPE STREQUAL "leak")
-            if(CMAKE_COMPILER_IS_GNUCXX)
-                find_library(XSIGMA_LSAN_LIBRARY
-                    NAMES liblsan.so.0 liblsan.so
-                    DOC "LeakSanitizer runtime library (GCC)")
-            else()
-                find_library(XSIGMA_LSAN_LIBRARY
-                    NAMES libclang_rt.lsan-x86_64.so liblsan.so.0
-                    DOC "LeakSanitizer runtime library (Clang)")
-            endif()
-            if(XSIGMA_LSAN_LIBRARY)
-                list(APPEND sanitizer_libraries ${XSIGMA_LSAN_LIBRARY})
-            endif()
-        endif()
-
-        if(sanitizer_libraries)
-            mark_as_advanced(XSIGMA_ASAN_LIBRARY XSIGMA_TSAN_LIBRARY
-                           XSIGMA_UBSAN_LIBRARY XSIGMA_MSAN_LIBRARY XSIGMA_LSAN_LIBRARY)
-            string(REPLACE ";" ":" sanitizer_preload "${sanitizer_libraries}")
-            set(_xsigma_testing_ld_preload "${sanitizer_preload}" PARENT_SCOPE)
-            message(STATUS "Found sanitizer runtime libraries: ${sanitizer_libraries}")
-        else()
-            message(STATUS "No sanitizer runtime libraries found for preloading")
-        endif()
-    endif()
-endfunction()
-function(configure_sanitizer_ignore_file)
-    # Configure sanitizer ignore file for Clang
-    if(CMAKE_COMPILER_IS_CLANGXX)
-        set(SCRIPTS_IGNORE "${XSIGMA_SOURCE_DIR}/Scripts/sanitizer_ignore.txt")
-
-        if(EXISTS "${SCRIPTS_IGNORE}")
-            message(STATUS "Using sanitizer ignore file: ${SCRIPTS_IGNORE}")
-            # Add ignore file to sanitizer arguments
-            list(APPEND xsigma_sanitize_args
-                 "SHELL:-fsanitize-ignorelist=${SCRIPTS_IGNORE}")
-            set(xsigma_sanitize_args ${xsigma_sanitize_args} PARENT_SCOPE)
-        else()
-            message(WARNING "Sanitizer ignore file not found: ${SCRIPTS_IGNORE}")
-            message(WARNING "Sanitizer will run without ignore list")
-        endif()
-    endif()
-endfunction()
-
-# =============================================================================
-# Third-Party Library Exclusion Functions
-# =============================================================================
-
-function(exclude_third_party_from_sanitizers)
-    # List of third-party targets to exclude from sanitizer instrumentation
-    set(THIRD_PARTY_TARGETS
-        fmt
-        cpuinfo
-        cpuinfo_internals
-        loguru
-        mimalloc-static
-        mimalloc-debug
-        gtest
-        gtest_main
-        gmock
-        gmock_main
-        benchmark
-        benchmark_main
-        magic_enum
-    )
-
-    # On Windows with AddressSanitizer, third-party libraries should not have sanitizer flags
-    # applied in the first place (handled by xsigma_apply_sanitizer_to_third_party_targets),
-    # so we only need to ensure they don't inherit flags from global settings
-    if(WIN32 AND XSIGMA_SANITIZER_TYPE STREQUAL "address")
-        message(STATUS "Disabling sanitizers for third-party libraries")
-        message(STATUS "Third-party libraries will be built without sanitizer instrumentation")
-    endif()
-
-    foreach(target ${THIRD_PARTY_TARGETS})
-        if(TARGET ${target})
-            message(STATUS "Disabling sanitizer instrumentation for third-party target: ${target}")
-
-            # Remove sanitizer flags from this target
-            get_target_property(target_compile_options ${target} COMPILE_OPTIONS)
-            if(target_compile_options)
-                # Filter out sanitizer flags
-                list(FILTER target_compile_options EXCLUDE REGEX ".*fsanitize.*")
-                set_target_properties(${target} PROPERTIES COMPILE_OPTIONS "${target_compile_options}")
-            endif()
-
-            # Set target-specific compile options to override inherited sanitizer flags
-            if(CMAKE_COMPILER_IS_MSVC)
-                # MSVC doesn't support -fno-sanitize=all, so we need to remove sanitizer flags differently
-                # For MSVC, we rely on the flag filtering above and don't add conflicting flags
-                message(STATUS "  MSVC: Relying on flag filtering for ${target}")
-            else()
-                # GCC/Clang: Use -fno-sanitize=all to disable sanitizers for this target
-                target_compile_options(${target} PRIVATE
-                    -fno-sanitize=all
-                )
-            endif()
-
-            # Also remove sanitizer flags from link options
-            get_target_property(target_link_options ${target} LINK_OPTIONS)
-            if(target_link_options)
-                list(FILTER target_link_options EXCLUDE REGEX ".*fsanitize.*")
-                set_target_properties(${target} PROPERTIES LINK_OPTIONS "${target_link_options}")
-            endif()
-
-            if(NOT CMAKE_COMPILER_IS_MSVC)
-                # Only add -fno-sanitize=all for GCC/Clang
-                target_link_options(${target} PRIVATE
-                    -fno-sanitize=all
-                )
-            endif()
-        endif()
-    endforeach()
-endfunction()
-
-# =============================================================================
-# Main Sanitizer Configuration
-# =============================================================================
-
-message(STATUS "Configuring ${XSIGMA_SANITIZER_TYPE} sanitizer for ${CMAKE_CXX_COMPILER_ID}")
-
-# Configure sanitizer flags
 configure_sanitizer_flags()
 
-# Configure runtime libraries
-configure_sanitizer_runtime_libraries()
+# =============================================================================
+# Apply Sanitizer Configuration
+# =============================================================================
 
-# Configure ignore file
-configure_sanitizer_ignore_file()
-
-# Function to override optimization flags when sanitizers are enabled
-function(override_optimization_flags_for_sanitizers)
-    if(NOT CMAKE_COMPILER_IS_MSVC)
-        # Override CMAKE build type flags to disable optimizations
-        if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-            message(STATUS "Overriding optimization flags for sanitizer compatibility")
-
-            # Clear existing optimization flags
-            string(REGEX REPLACE "-O[0-3s]" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-            string(REGEX REPLACE "-O[0-3s]" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-            string(REGEX REPLACE "-O[0-3s]" "" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-            string(REGEX REPLACE "-O[0-3s]" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-
-            # Remove conflicting optimization flags
-            string(REGEX REPLACE "-march=native" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-            string(REGEX REPLACE "-march=native" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-            string(REGEX REPLACE "-march=native" "" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-            string(REGEX REPLACE "-march=native" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-
-            string(REGEX REPLACE "-ftree-vectorize" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-            string(REGEX REPLACE "-ftree-vectorize" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-            string(REGEX REPLACE "-ftree-vectorize" "" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-            string(REGEX REPLACE "-ftree-vectorize" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-
-            string(REGEX REPLACE "-finline-functions" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-            string(REGEX REPLACE "-finline-functions" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-            string(REGEX REPLACE "-finline-functions" "" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-            string(REGEX REPLACE "-finline-functions" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-
-            # Set sanitizer-compatible optimization level
-            set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O0" PARENT_SCOPE)
-            set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O0" PARENT_SCOPE)
-            set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O0" PARENT_SCOPE)
-            set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -O0" PARENT_SCOPE)
-
-            message(STATUS "  Optimization flags overridden: -O0 for sanitizer compatibility")
-        endif()
-    endif()
-endfunction()
-
-# Apply sanitizer configuration to build target
+# Apply sanitizer configuration to build target only (exclude third-party)
 if(TARGET xsigmabuild)
-    # Override optimization flags first
-    override_optimization_flags_for_sanitizers()
+    # Apply sanitizer compile flags
+    target_compile_options(xsigmabuild INTERFACE ${XSIGMA_SANITIZER_COMPILE_FLAGS})
 
-    # Apply sanitizer compile flags directly without BUILD_INTERFACE wrapper
-    # This ensures flags are properly propagated to all targets linking to xsigmabuild
-    target_compile_options(xsigmabuild INTERFACE
-        ${xsigma_sanitize_args})
-
-    if(xsigma_sanitize_link_args)
-        # Apply sanitizer link flags directly without BUILD_INTERFACE wrapper
-        target_link_options(xsigmabuild INTERFACE
-            ${xsigma_sanitize_link_args})
+    # Apply sanitizer link flags
+    if(XSIGMA_SANITIZER_LINK_FLAGS)
+        target_link_options(xsigmabuild INTERFACE ${XSIGMA_SANITIZER_LINK_FLAGS})
     endif()
 
     message(STATUS "Applied sanitizer configuration to xsigmabuild target")
-    message(STATUS "  Compile flags: ${xsigma_sanitize_args}")
-    if(xsigma_sanitize_link_args)
-        message(STATUS "  Link flags: ${xsigma_sanitize_link_args}")
-    endif()
-
-    # Exclude third-party libraries from sanitizer instrumentation
-    exclude_third_party_from_sanitizers()
-
-    # Sanitizer flags remain active for main project targets (Core library, tests, etc.)
-    message(STATUS "Restored sanitizer flags for main project")
+    message(STATUS "  Third-party dependencies excluded to prevent linker mismatches")
 else()
-    message(WARNING "xsigmabuild target not found - sanitizer flags not applied")
+    message(FATAL_ERROR "xsigmabuild target not found - cannot apply sanitizer configuration")
 endif()
 
-# Function to apply sanitizer flags to third-party libraries
-# This ensures consistent annotations between main project and third-party libraries
-function(xsigma_apply_sanitizer_to_third_party_targets)
-    if(NOT xsigma_sanitize_args)
-        return()
-    endif()
+# Configure suppression files for sanitizers
+function(configure_sanitizer_suppressions)
+    set(SCRIPTS_DIR "${CMAKE_SOURCE_DIR}/Scripts")
 
-    # On Windows, avoid applying sanitizer flags to third-party libraries to prevent
-    # linker symbol mismatches (e.g., annotate_string symbol conflicts)
-    if(WIN32 AND XSIGMA_SANITIZER_TYPE STREQUAL "address")
-        message(STATUS "Skipping sanitizer flag application to third-party targets on Windows with AddressSanitizer")
-        message(STATUS "  This prevents linker symbol mismatches between Core library and third-party libraries")
-        return()
-    endif()
-
-    # List of third-party targets that need sanitizer flags for consistency
-    set(THIRD_PARTY_TARGETS
-        gtest
-        gtest_main
-        fmt
-        benchmark
-        benchmark_main
-    )
-
-    foreach(target_name ${THIRD_PARTY_TARGETS})
-        if(TARGET ${target_name})
-            target_compile_options(${target_name} PRIVATE ${xsigma_sanitize_args})
-            if(xsigma_sanitize_link_args)
-                target_link_options(${target_name} PRIVATE ${xsigma_sanitize_link_args})
-            endif()
-            message(STATUS "Applied sanitizer flags to third-party target: ${target_name}")
+    if(XSIGMA_SANITIZER_TYPE STREQUAL "address")
+        set(SUPPRESSION_FILE "${SCRIPTS_DIR}/asan_suppressions.txt")
+        if(EXISTS ${SUPPRESSION_FILE})
+            set(ENV{ASAN_OPTIONS} "suppressions=${SUPPRESSION_FILE}:halt_on_error=1:abort_on_error=1")
+            message(STATUS "AddressSanitizer suppressions: ${SUPPRESSION_FILE}")
         endif()
-    endforeach()
+    elseif(XSIGMA_SANITIZER_TYPE STREQUAL "undefined")
+        set(SUPPRESSION_FILE "${SCRIPTS_DIR}/ubsan_suppressions.txt")
+        if(EXISTS ${SUPPRESSION_FILE})
+            set(ENV{UBSAN_OPTIONS} "suppressions=${SUPPRESSION_FILE}:halt_on_error=1:abort_on_error=1")
+            message(STATUS "UndefinedBehaviorSanitizer suppressions: ${SUPPRESSION_FILE}")
+        endif()
+    elseif(XSIGMA_SANITIZER_TYPE STREQUAL "thread")
+        set(SUPPRESSION_FILE "${SCRIPTS_DIR}/tsan_suppressions.txt")
+        if(EXISTS ${SUPPRESSION_FILE})
+            set(ENV{TSAN_OPTIONS} "suppressions=${SUPPRESSION_FILE}:halt_on_error=1:abort_on_error=1")
+            message(STATUS "ThreadSanitizer suppressions: ${SUPPRESSION_FILE}")
+        endif()
+    elseif(XSIGMA_SANITIZER_TYPE STREQUAL "memory")
+        set(SUPPRESSION_FILE "${SCRIPTS_DIR}/msan_suppressions.txt")
+        if(EXISTS ${SUPPRESSION_FILE})
+            set(ENV{MSAN_OPTIONS} "suppressions=${SUPPRESSION_FILE}:halt_on_error=1:abort_on_error=1")
+            message(STATUS "MemorySanitizer suppressions: ${SUPPRESSION_FILE}")
+        endif()
+    elseif(XSIGMA_SANITIZER_TYPE STREQUAL "leak")
+        set(SUPPRESSION_FILE "${SCRIPTS_DIR}/lsan_suppressions.txt")
+        if(EXISTS ${SUPPRESSION_FILE})
+            set(ENV{LSAN_OPTIONS} "suppressions=${SUPPRESSION_FILE}:halt_on_error=1:abort_on_error=1")
+            message(STATUS "LeakSanitizer suppressions: ${SUPPRESSION_FILE}")
+        endif()
+    endif()
 endfunction()
 
-# Store sanitizer flags in cache for use by other parts of the build system
-set(XSIGMA_SANITIZER_COMPILE_FLAGS "${xsigma_sanitize_args}" CACHE INTERNAL "Sanitizer compile flags")
-set(XSIGMA_SANITIZER_LINK_FLAGS "${xsigma_sanitize_link_args}" CACHE INTERNAL "Sanitizer link flags")
+configure_sanitizer_suppressions()
 
-# Set environment variables for testing
-# Note: Do NOT set LD_PRELOAD for ThreadSanitizer during CMake configuration
-# as it interferes with CMake tools like ninja
-if(_xsigma_testing_ld_preload AND NOT XSIGMA_SANITIZER_TYPE STREQUAL "thread")
-    set(ENV{LD_PRELOAD} "${_xsigma_testing_ld_preload}")
-    message(STATUS "Set LD_PRELOAD for testing: ${_xsigma_testing_ld_preload}")
-elseif(_xsigma_testing_ld_preload AND XSIGMA_SANITIZER_TYPE STREQUAL "thread")
-    # For ThreadSanitizer, store the library path but don't set LD_PRELOAD during configuration
-    set(XSIGMA_TSAN_LIBRARY_PATH "${_xsigma_testing_ld_preload}" CACHE INTERNAL "ThreadSanitizer library path for test execution")
-    message(STATUS "ThreadSanitizer library found: ${_xsigma_testing_ld_preload}")
-    message(STATUS "Note: LD_PRELOAD will be set only during test execution to avoid CMake tool interference")
+# =============================================================================
+# Windows-specific Linker Compatibility Fixes
+# =============================================================================
+
+# On Windows, ensure consistent debug settings to prevent linker mismatches
+if(WIN32)
+    # Force consistent _ITERATOR_DEBUG_LEVEL across all targets
+    add_compile_definitions(_ITERATOR_DEBUG_LEVEL=0)
+
+    # Force consistent runtime library settings to match sanitizer runtime
+    # Use release runtime library to match sanitizer runtime
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+
+    # Override debug build to use release runtime
+    set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Build type for sanitizer compatibility" FORCE)
+
+    # Apply minimal sanitizer flags globally to prevent linker mismatches
+    # Only apply the sanitizer flag itself, not the debug flags
+    string(JOIN " " SANITIZER_FLAG_STR "-fsanitize=${XSIGMA_SANITIZER_TYPE}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SANITIZER_FLAG_STR}" CACHE STRING "C flags with sanitizer" FORCE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_FLAG_STR}" CACHE STRING "CXX flags with sanitizer" FORCE)
+
+    if(XSIGMA_SANITIZER_LINK_FLAGS)
+        string(JOIN " " SANITIZER_LINK_FLAGS_STR ${XSIGMA_SANITIZER_LINK_FLAGS})
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${SANITIZER_LINK_FLAGS_STR}" CACHE STRING "Exe linker flags with sanitizer" FORCE)
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SANITIZER_LINK_FLAGS_STR}" CACHE STRING "Shared linker flags with sanitizer" FORCE)
+    endif()
+
+    message(STATUS "Applied Windows-specific sanitizer compatibility fixes")
+    message(STATUS "  _ITERATOR_DEBUG_LEVEL=0 to prevent runtime library mismatches")
+    message(STATUS "  Runtime library: MultiThreadedDLL (/MD) to match sanitizer runtime")
+    message(STATUS "  Build type: RelWithDebInfo for sanitizer compatibility")
+    message(STATUS "  Minimal global sanitizer flags to ensure linker compatibility")
 endif()
 
-# Print configuration summary
-message(STATUS "Sanitizer configuration complete:")
-message(STATUS "  Type: ${XSIGMA_SANITIZER_TYPE}")
-message(STATUS "  Compiler: ${CMAKE_CXX_COMPILER_ID}")
-message(STATUS "  Compile flags: ${xsigma_sanitize_args}")
-if(xsigma_sanitize_link_args)
-    message(STATUS "  Link flags: ${xsigma_sanitize_link_args}")
+# =============================================================================
+# Summary
+# =============================================================================
+
+message(STATUS "=== Sanitizer Configuration Summary ===")
+message(STATUS "Sanitizer Type: ${XSIGMA_SANITIZER_TYPE}")
+message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
+if(WIN32)
+    message(STATUS "Target Scope: All code (Windows compatibility mode)")
+    message(STATUS "Third-party Dependencies: Minimal instrumentation for linker compatibility")
+    message(STATUS "Windows Fixes: _ITERATOR_DEBUG_LEVEL=0, minimal global flags")
+else()
+    message(STATUS "Target Scope: Main library code only")
+    message(STATUS "Third-party Dependencies: Excluded from instrumentation")
 endif()
-if(_xsigma_testing_ld_preload)
-    message(STATUS "  Runtime preload: ${_xsigma_testing_ld_preload}")
-endif()
+message(STATUS "Suppression Files: Configured for runtime error filtering")
+message(STATUS "========================================")

@@ -115,7 +115,7 @@ Comprehensive sanitizer support for memory debugging and analysis with all moder
 - **MemorySanitizer** - Uninitialized memory reads
 - **LeakSanitizer** - Memory leak detection
 
-📖 **[Read more: Sanitizers Guide](docs/sanitizers.md)**
+📖 **[Read more: Sanitizers Guide](docs/sanitizer.md)**
 
 ---
 
