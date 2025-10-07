@@ -123,10 +123,10 @@ private:
     bool                                    first_alloc_made_      = false;
     struct FactoryEntry
     {
-        const char*                        source_file;
-        int                                source_line;
+        const char*                        source_file = nullptr;
+        int                                source_line = 0;
         std::string                        name;
-        int                                priority;
+        int                                priority = 0;
         std::unique_ptr<allocator_factory> factory;
         std::unique_ptr<Allocator>         allocator;
         // Index 0 corresponds to NUMANOAFFINITY, other indices are (numa_node +
