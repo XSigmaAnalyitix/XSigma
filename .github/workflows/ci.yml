@@ -443,36 +443,35 @@ jobs:
 
 
 
+
+
+
+
+
+
+
   # ============================================================================
-  # Linux Sanitizer Testing with Multiple Compilers
+  # Simplified Sanitizer Testing (Clang Only)
   # ============================================================================
   sanitizer-tests:
-    name: Linux ${{ matrix.sanitizer }} - ${{ matrix.compiler }}
-    runs-on: ubuntu-latest
+    name: Sanitizer ${{ matrix.sanitizer }} - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
-        sanitizer: [address, undefined, thread, leak]
-        compiler: [gcc, clang]
-        include:
-          # GCC configurations
-          - compiler: gcc
-            c_compiler: gcc
-            cxx_compiler: g++
-          # Clang configurations
-          - compiler: clang
-            c_compiler: clang
-            cxx_compiler: clang++
-          # Sanitizer-specific environment options
-          - sanitizer: address
-            env_options: '{"ASAN_OPTIONS":"detect_leaks=1:abort_on_error=1:symbolize=1:detect_stack_use_after_return=1"}'
-          - sanitizer: undefined
-            env_options: '{"UBSAN_OPTIONS":"print_stacktrace=1:halt_on_error=1:symbolize=1:suppressions={{ github.workspace }}/Scripts/sanitizer_ignore.txt"}'
-          - sanitizer: thread
-            env_options: '{"TSAN_OPTIONS":"halt_on_error=1:second_deadlock_stack=1"}'
-          - sanitizer: leak
-            env_options: '{"LSAN_OPTIONS":"suppressions={{ github.workspace }}/Scripts/sanitizer_ignore.txt"}'
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        sanitizer: [address, undefined, thread, leak, memory]
+        exclude:
+          # MemorySanitizer is not supported on Windows
+          - os: windows-latest
+            sanitizer: memory
+          # LeakSanitizer is not supported on Apple Silicon (ARM64)
+          - os: macos-latest
+            sanitizer: leak
+          # MemorySanitizer may have issues on macOS
+          - os: macos-latest
+            sanitizer: memory
 
     steps:
     - name: Checkout repository
@@ -485,18 +484,18 @@ jobs:
       with:
         path: |
           ~/.cache
+          ~/AppData/Local/Temp/chocolatey
           build/ThirdParty
         key: ${{ runner.os }}-sanitizer-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt') }}
         restore-keys: |
           ${{ runner.os }}-sanitizer-${{ env.CACHE_VERSION }}-
 
     - name: Install dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
         sudo apt-get install -y \
           ninja-build \
-          gcc \
-          g++ \
           clang \
           llvm \
           cmake \
@@ -504,233 +503,72 @@ jobs:
           python3-pip \
           libtbb-dev
 
+    - name: Install dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install ninja cmake llvm tbb
+        echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
+      run: |
+        choco install llvm ninja cmake python3 -y
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "❌ Failed to install dependencies"
+          exit 1
+        }
+        # Install TBB via vcpkg
+        vcpkg install tbb:x64-windows
+
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install psutil colorama
 
-    - name: Configure with ${{ matrix.sanitizer }} sanitizer (${{ matrix.compiler }})
+    - name: Configure with ${{ matrix.sanitizer }} sanitizer
+      shell: bash
       run: |
-        cmake -B build \
-          -S . \
-          -G Ninja \
-          -DCMAKE_BUILD_TYPE=Debug \
-          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
-          -DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }} \
-          -DXSIGMA_LOGGING_BACKEND=LOGURU \
-          -DXSIGMA_ENABLE_SANITIZER=ON \
-          -DXSIGMA_SANITIZER_TYPE=${{ matrix.sanitizer }} \
-          -DXSIGMA_BUILD_TESTING=ON \
-          -DXSIGMA_ENABLE_GTEST=ON \
-          -DXSIGMA_ENABLE_LTO=OFF
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          export PATH="/c/Program Files/LLVM/bin:$PATH"
+          cmake -B build -S . -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DXSIGMA_LOGGING_BACKEND=LOGURU \
+            -DXSIGMA_ENABLE_SANITIZER=ON \
+            -DXSIGMA_SANITIZER_TYPE=${{ matrix.sanitizer }} \
+            -DXSIGMA_BUILD_TESTING=ON \
+            -DXSIGMA_ENABLE_GTEST=ON \
+            -DXSIGMA_ENABLE_LTO=OFF \
+            -DXSIGMA_ENABLE_TBB=ON \
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_TARGET_TRIPLET=x64-windows
+        else
+          cmake -B build -S . -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DXSIGMA_LOGGING_BACKEND=LOGURU \
+            -DXSIGMA_ENABLE_SANITIZER=ON \
+            -DXSIGMA_SANITIZER_TYPE=${{ matrix.sanitizer }} \
+            -DXSIGMA_BUILD_TESTING=ON \
+            -DXSIGMA_ENABLE_GTEST=ON \
+            -DXSIGMA_ENABLE_LTO=OFF
+        fi
 
-    - name: Build (${{ matrix.compiler }})
+    - name: Build
       run: cmake --build build -j 2
 
-    - name: Run Tests with ${{ matrix.sanitizer }} Sanitizer (${{ matrix.compiler }})
+    - name: Run Tests with ${{ matrix.sanitizer }} Sanitizer
       working-directory: ${{ github.workspace }}/build
       run: ctest --output-on-failure -j 2
-      env: ${{ fromJSON(matrix.env_options) }}
 
     - name: Upload sanitizer results
       if: failure()
       uses: actions/upload-artifact@v4
       with:
-        name: sanitizer-${{ matrix.sanitizer }}-${{ matrix.compiler }}-results
-        path: |
-          build/Testing/Temporary/LastTest.log
-          build/**/*.log
-
-  # ============================================================================
-  # Windows Sanitizer Testing with Multiple Compilers
-  # ============================================================================
-  windows-sanitizer-tests:
-    name: Windows AddressSanitizer - ${{ matrix.compiler }}
-    runs-on: windows-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        compiler: [msvc, clang]
-        include:
-          - compiler: msvc
-            c_compiler: cl
-            cxx_compiler: cl
-            generator: "Visual Studio 17 2022"
-            env_options: '{"ASAN_OPTIONS":"detect_leaks=0:abort_on_error=1:symbolize=1"}'
-          - compiler: clang
-            c_compiler: clang
-            cxx_compiler: clang++
-            generator: Ninja
-            env_options: '{"ASAN_OPTIONS":"detect_leaks=1:abort_on_error=1:symbolize=1:detect_stack_use_after_return=1"}'
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Cache dependencies
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~\AppData\Local\Temp\chocolatey
-          build/ThirdParty
-        key: windows-sanitizer-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt') }}
-        restore-keys: |
-          windows-sanitizer-${{ env.CACHE_VERSION }}-
-
-    - name: Install LLVM/Clang 18+ (Clang builds only)
-      if: matrix.compiler == 'clang'
-      shell: pwsh
-      run: |
-        Write-Host "Installing LLVM/Clang 18+ via chocolatey..."
-        choco install llvm --version=18.1.8 -y --force
-        if ($LASTEXITCODE -ne 0) {
-          Write-Host "❌ Failed to install LLVM/Clang 18+"
-          exit 1
-        }
-
-        # Verify Clang installation and version
-        $clangPath = "C:\Program Files\LLVM\bin\clang.exe"
-        if (Test-Path $clangPath) {
-          Write-Host "✅ Clang installed at: $clangPath"
-          & $clangPath --version
-          $clangVersion = & $clangPath --version | Select-String "clang version (\d+\.\d+)" | ForEach-Object { $_.Matches[0].Groups[1].Value }
-          if ([double]$clangVersion -ge 18.0) {
-            Write-Host "✅ Clang version $clangVersion meets requirement (>=18.0)"
-          } else {
-            Write-Host "❌ Clang version $clangVersion is below requirement (>=18.0)"
-            exit 1
-          }
-        } else {
-          Write-Host "❌ Clang not found at expected path: $clangPath"
-          exit 1
-        }
-
-    - name: Setup MSVC (MSVC builds only)
-      if: matrix.compiler == 'msvc'
-      uses: microsoft/setup-msbuild@v2
-      with:
-        vs-version: '17.0'
-
-    - name: Install build dependencies
-      shell: pwsh
-      run: |
-        Write-Host "Installing build tools..."
-        if ("${{ matrix.compiler }}" -eq "clang") {
-          choco install ninja cmake python3 -y
-        } else {
-          choco install cmake python3 -y
-        }
-        if ($LASTEXITCODE -ne 0) {
-          Write-Host "❌ Failed to install build tools"
-          exit 1
-        }
-
-    - name: Install Intel TBB via vcpkg
-      shell: pwsh
-      run: |
-        # Verify vcpkg is available
-        Write-Host "Checking vcpkg availability..."
-        if (-not $env:VCPKG_INSTALLATION_ROOT) {
-          Write-Host "❌ VCPKG_INSTALLATION_ROOT not set"
-          exit 1
-        }
-        Write-Host "vcpkg root: $env:VCPKG_INSTALLATION_ROOT"
-
-        # Install Intel TBB via vcpkg
-        Write-Host "Installing Intel TBB via vcpkg..."
-        vcpkg install tbb:x64-windows
-        if ($LASTEXITCODE -ne 0) {
-          Write-Host "❌ Failed to install TBB via vcpkg"
-          exit 1
-        }
-
-        # Verify TBB installation
-        $tbbHeaderPath = "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\include\tbb\tbb.h"
-        if (Test-Path $tbbHeaderPath) {
-          Write-Host "✅ Intel TBB installed successfully"
-        } else {
-          Write-Host "❌ Intel TBB installation failed"
-          exit 1
-        }
-
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install psutil colorama
-
-    - name: Configure with AddressSanitizer (${{ matrix.compiler }})
-      shell: pwsh
-      run: |
-        # Set up environment for the specific compiler
-        if ("${{ matrix.compiler }}" -eq "clang") {
-          $env:PATH = "C:\Program Files\LLVM\bin;$env:PATH"
-        }
-
-        # Configure CMake with compiler-specific settings
-        $cmakeArgs = @(
-          "-B", "build",
-          "-S", ".",
-          "-G", "${{ matrix.generator }}",
-          "-DCMAKE_BUILD_TYPE=Debug",
-          "-DCMAKE_C_COMPILER=${{ matrix.c_compiler }}",
-          "-DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }}",
-          "-DXSIGMA_LOGGING_BACKEND=LOGURU",
-          "-DXSIGMA_ENABLE_SANITIZER=ON",
-          "-DXSIGMA_SANITIZER_TYPE=address",
-          "-DXSIGMA_BUILD_TESTING=ON",
-          "-DXSIGMA_ENABLE_GTEST=ON",
-          "-DXSIGMA_ENABLE_LTO=OFF",
-          "-DXSIGMA_ENABLE_TBB=ON"
-        )
-
-        # Add vcpkg toolchain for both compilers
-        if ($env:VCPKG_INSTALLATION_ROOT) {
-          $cmakeArgs += "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
-          $cmakeArgs += "-DVCPKG_TARGET_TRIPLET=x64-windows"
-        }
-
-        cmake @cmakeArgs
-
-    - name: Build (${{ matrix.compiler }})
-      shell: pwsh
-      run: |
-        # Set up environment for the specific compiler
-        if ("${{ matrix.compiler }}" -eq "clang") {
-          $env:PATH = "C:\Program Files\LLVM\bin;$env:PATH"
-        }
-
-        # Build with appropriate configuration
-        if ("${{ matrix.compiler }}" -eq "msvc") {
-          cmake --build build --config Debug -j 2
-        } else {
-          cmake --build build -j 2
-        }
-
-    - name: Run Tests with AddressSanitizer (${{ matrix.compiler }})
-      working-directory: ${{ github.workspace }}/build
-      shell: pwsh
-      run: |
-        # Set up environment for the specific compiler
-        if ("${{ matrix.compiler }}" -eq "clang") {
-          $env:PATH = "C:\Program Files\LLVM\bin;$env:PATH"
-        }
-
-        # Run tests with appropriate configuration
-        if ("${{ matrix.compiler }}" -eq "msvc") {
-          ctest --output-on-failure --build-config Debug -j 2
-        } else {
-          ctest --output-on-failure -j 2
-        }
-      env: ${{ fromJSON(matrix.env_options) }}
-
-    - name: Upload Windows sanitizer results
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: windows-sanitizer-${{ matrix.compiler }}-results
+        name: sanitizer-${{ matrix.sanitizer }}-${{ matrix.os }}-results
         path: |
           build/Testing/Temporary/LastTest.log
           build/**/*.log

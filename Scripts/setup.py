@@ -197,7 +197,7 @@ class XsigmaFlags:
             "build shared or static libraries",
             "enable clang-tidy checks",
             "enable include-what-you-use (iwyu) checks",
-            "enable sanitizer memory check",
+            "enable sanitizer memory check (Clang only)",
             "sanitizer type: address, undefined, thread, memory, leak",
             "enable valgrind memory check",
             "enable code coverage",
@@ -229,10 +229,11 @@ class XsigmaFlags:
             "static": "BUILD_SHARED_LIBS",
             "clangtidy": "XSIGMA_ENABLE_CLANGTIDY",
             "iwyu": "XSIGMA_ENABLE_IWYU",
-            "benchmark": "XSIGMA_ENABLE_BENCHMARK",
-            "gtest": "XSIGMA_ENABLE_GTEST",
             "sanitizer": "XSIGMA_ENABLE_SANITIZER",
             "sanitizer_enum": "XSIGMA_SANITIZER_TYPE",
+            "benchmark": "XSIGMA_ENABLE_BENCHMARK",
+            "gtest": "XSIGMA_ENABLE_GTEST",
+
             "valgrind": "XSIGMA_ENABLE_VALGRIND",
             "coverage": "XSIGMA_ENABLE_COVERAGE",
             "test": "XSIGMA_BUILD_TESTING",
@@ -320,6 +321,7 @@ class XsigmaFlags:
                 # "valgrind": self.OFF,  # XSIGMA_ENABLE_VALGRIND default is OFF
                 # "coverage": self.OFF,  # XSIGMA_ENABLE_COVERAGE default is OFF
                 # "sanitizer": self.OFF,  # XSIGMA_ENABLE_SANITIZER default is OFF
+
             }
         )
 
@@ -391,9 +393,11 @@ class XsigmaFlags:
         """Validate flag combinations and warn about potential issues."""
         if self.__value.get("python") == self.ON and self.__value.get("java") == self.ON:
             print_status("Python and Java bindings enabled simultaneously - this may increase build time.", "WARNING")
-        
+
         if self.__value.get("sanitizer") == self.ON and self.__value.get("valgrind") == self.ON:
             print_status("Both sanitizer and valgrind enabled - consider using only one.", "WARNING")
+        
+
         
         if self.__value.get("coverage") == self.ON and self.__value.get("test") != self.ON:
             print_status("Coverage enabled but testing is disabled - enabling tests automatically.", "WARNING")
@@ -979,16 +983,6 @@ def parse_args(args):
         # Handle cppcheck autofix flags
         if arg in ["--enable-cppcheck-autofix", "--cppcheck-autofix"]:
             processed_args.append("cppcheck_autofix")
-        # Handle logging backend flags with dot notation (e.g., --logging.backend=GLOG)
-        elif arg.startswith("--logging.backend=") or arg.startswith("--logging-backend="):
-            backend_type = arg.split("=", 1)[1].upper()
-            valid_backends = ["NATIVE", "LOGURU", "GLOG"]
-            if backend_type in valid_backends:
-                processed_args.append(backend_type.lower())
-                print_status(f"Logging backend set to {backend_type}", "INFO")
-            else:
-                print_status(f"Invalid logging backend: {backend_type}. Valid options: {', '.join(valid_backends)}", "ERROR")
-                sys.exit(1)
         # Handle sanitizer flags with dot notation (e.g., --sanitizer.undefined)
         elif arg.startswith("--sanitizer."):
             sanitizer_type = arg.split(".", 1)[1].lower()
@@ -1010,6 +1004,17 @@ def parse_args(args):
             else:
                 print_status(f"Invalid sanitizer type: {sanitizer_type}. Valid options: {', '.join(valid_sanitizers)}", "ERROR")
                 sys.exit(1)
+        # Handle logging backend flags with dot notation (e.g., --logging.backend=GLOG)
+        elif arg.startswith("--logging.backend=") or arg.startswith("--logging-backend="):
+            backend_type = arg.split("=", 1)[1].upper()
+            valid_backends = ["NATIVE", "LOGURU", "GLOG"]
+            if backend_type in valid_backends:
+                processed_args.append(backend_type.lower())
+                print_status(f"Logging backend set to {backend_type}", "INFO")
+            else:
+                print_status(f"Invalid logging backend: {backend_type}. Valid options: {', '.join(valid_backends)}", "ERROR")
+                sys.exit(1)
+
         else:
             # Apply the original parsing logic
             processed_args.extend(re.split(r"_|\.|\ ", arg.lower()))

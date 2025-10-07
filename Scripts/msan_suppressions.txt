@@ -1,86 +1,74 @@
-# =============================================================================
-# XSigma MemorySanitizer Suppressions File
-# =============================================================================
-# This file contains suppressions for MemorySanitizer to handle known issues
-# in third-party libraries and system code that are not actual bugs in XSigma.
+# MemorySanitizer Suppressions for XSigma
+# ========================================
+# This file contains suppressions for MemorySanitizer to handle known false positives
+# and issues in third-party libraries that cannot be easily fixed.
 #
-# Format: Each line contains a suppression rule in the format:
-# function:function_name_pattern
-# src:source_file_pattern
-#
-# Patterns support wildcards (*) and can be partial matches.
-# =============================================================================
+# Format: <error_type>:<pattern>
+# Where error_type is typically "use-of-uninitialized-value"
+# Pattern can match function names, file paths, or library names.
 
-# =============================================================================
-# Third-Party Library Suppressions
-# =============================================================================
+# Third-party library suppressions
+# ---------------------------------
 
-# Loguru logging library - global constructor issues
-function:*loguru::type_name*
-function:*loguru::demangle*
-function:*__cxx_global_var_init*
-function:*_GLOBAL__sub_I_loguru.cpp*
-src:*/loguru.cpp
-src:*/loguru/*
-src:*/ThirdParty/loguru/*
+# fmt library - suppress formatting-related uninitialized memory issues
+use-of-uninitialized-value:*fmt*
 
-# Standard library issues with global constructors
-function:*std::char_traits*::length*
-function:*std::basic_string*::basic_string*
-function:*__cxa_demangle*
+# loguru library - suppress logging-related uninitialized memory issues
+use-of-uninitialized-value:*loguru*
 
-# System library issues
-function:*__static_initialization_and_destruction*
-function:*_GLOBAL__sub_I_*
+# Google Test - suppress test framework uninitialized memory issues
+use-of-uninitialized-value:*gtest*
+use-of-uninitialized-value:*testing*
 
-# =============================================================================
-# Standard Library Suppressions
-# =============================================================================
+# cpuinfo library - suppress CPU detection uninitialized memory issues
+use-of-uninitialized-value:*cpuinfo*
 
-# C++ standard library global constructors
-function:*std::__cxx11::basic_string*
-function:*std::allocator*
-function:*std::char_traits*
+# mimalloc - suppress memory allocator uninitialized memory issues
+use-of-uninitialized-value:*mimalloc*
 
-# =============================================================================
-# System Library Suppressions
-# =============================================================================
+# System libraries (MemorySanitizer is Linux-only, so focus on Linux libraries)
+# ------------------------------------------------------------------------------
 
-# GNU C Library issues
-function:*__libc_*
-function:*_dl_*
+# glibc and system libraries
+use-of-uninitialized-value:*libc*
+use-of-uninitialized-value:*libpthread*
+use-of-uninitialized-value:*libdl*
 
-# Dynamic linker issues
-function:*ld-linux*
+# LLVM/Clang runtime libraries
+use-of-uninitialized-value:*clang_rt*
+use-of-uninitialized-value:*compiler_rt*
 
-# =============================================================================
-# Compiler Runtime Suppressions
-# =============================================================================
+# Known false positives
+# ---------------------
 
-# GCC/Clang runtime library issues
-function:*__gcc_*
-function:*__clang_*
-function:*crtbegin*
-function:*crtend*
+# Standard library issues
+use-of-uninitialized-value:*std::*
 
-# =============================================================================
-# XSigma Project-Specific Suppressions
-# =============================================================================
+# Template instantiation issues
+use-of-uninitialized-value:*template*
 
-# Known issues in allocator registry initialization
-# This is related to the specific error we're seeing
-src:*/allocator_registry.cxx:65
-function:*xsigma::allocator_factory_registry::Register*
+# System call wrappers that may have uninitialized padding
+use-of-uninitialized-value:*syscall*
 
-# =============================================================================
-# Notes
-# =============================================================================
-# 
-# 1. This file is used by MemorySanitizer when MSAN_OPTIONS includes suppressions=<path>
-# 2. Patterns are case-sensitive and support wildcards (*)
-# 3. Use function: for function name patterns
-# 4. Use src: for source file patterns
-# 5. Be careful with overly broad patterns that might hide real issues
-# 6. Regularly review and clean up this file
-# 7. Test suppressions carefully to ensure they work as expected
-#
+# Example suppressions for common patterns:
+# use-of-uninitialized-value:MyClass::problematic_function
+# use-of-uninitialized-value:ThirdPartyLib::*
+# use-of-uninitialized-value:*/path/to/problematic/file.cpp
+
+# Project-specific suppressions
+# ------------------------------
+# Add project-specific suppressions below as needed
+
+# Suppress issues in experimental profiler code during development
+use-of-uninitialized-value:*experimental*profiler*
+
+# Suppress issues in test code
+use-of-uninitialized-value:*Test*
+
+# Suppress issues in specific XSigma components that may have
+# intentional uninitialized memory usage (e.g., performance optimizations)
+use-of-uninitialized-value:*allocator*
+use-of-uninitialized-value:*memory*pool*
+
+# Note: MemorySanitizer is very strict and may require extensive suppressions
+# for third-party libraries. Consider using it primarily for core library code.

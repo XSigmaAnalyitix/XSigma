@@ -63,12 +63,13 @@ option(XSIGMA_ENABLE_GTEST "Enable google test" ON)
 
 option(XSIGMA_ENABLE_VALGRIND "Execute test suite with Valgrind" OFF)
 option(XSIGMA_ENABLE_COVERAGE "Build XSIGMA with coverage" OFF)
-option(XSIGMA_ENABLE_SANITIZER "Build with sanitizer support." OFF)
+option(XSIGMA_ENABLE_SANITIZER "Build with sanitizer support (Clang only)" OFF)
 set(XSIGMA_SANITIZER_TYPE
         "address"
         CACHE STRING "The sanitizer to use. Options are address, undefined, thread, memory, leak")
 
 set_property(CACHE XSIGMA_SANITIZER_TYPE PROPERTY STRINGS address undefined thread memory leak)
+
 option(XSIGMA_ENABLE_CPPCHECK "Enable cppcheck" OFF)
 option(XSIGMA_ENABLE_AUTOFIX "Enable automatic cppcheck fixes (WARNING: modifies source files)" OFF)
 option(XSIGMA_ENABLE_SPELL "Enable spell checking with automatic corrections (WARNING: modifies source files)" OFF)
@@ -174,6 +175,8 @@ add_library(XSigma::build ALIAS xsigmabuild)
 # Include sanitizer configuration after xsigmabuild target is created
 include(sanitize)
 
+
+
 # Set compile features
 target_compile_features(xsigmabuild INTERFACE cxx_std_${XSIGMA_CXX_STANDARD})
 
@@ -194,16 +197,7 @@ if(XSIGMA_BUILD_TESTING STREQUAL "ON" OR XSIGMA_BUILD_TESTING STREQUAL "WANT")
     enable_testing()
     include(CTest)
 
-    # Set global LSAN_OPTIONS for all tests to ensure consistent LeakSanitizer behavior
-    # This applies the suppressions file and reporting options to all test targets
-    set(XSIGMA_GLOBAL_LSAN_OPTIONS "suppressions=${CMAKE_SOURCE_DIR}/Scripts/lsan_suppressions.txt:print_suppressions=1:report_objects=1")
-    message(STATUS "Global LSAN_OPTIONS configured: ${XSIGMA_GLOBAL_LSAN_OPTIONS}")
 
-    # Set global MSAN_OPTIONS for MemorySanitizer to handle third-party library issues
-    if(XSIGMA_ENABLE_SANITIZER AND XSIGMA_SANITIZER_TYPE STREQUAL "memory")
-        set(XSIGMA_GLOBAL_MSAN_OPTIONS "halt_on_error=0:abort_on_error=0:exit_code=0:print_stats=1:suppressions=${CMAKE_SOURCE_DIR}/Scripts/msan_suppressions.txt")
-        message(STATUS "Global MSAN_OPTIONS configured: ${XSIGMA_GLOBAL_MSAN_OPTIONS}")
-    endif()
 endif()
 
 # Add third-party dependencies

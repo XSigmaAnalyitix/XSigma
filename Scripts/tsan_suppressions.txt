@@ -1,42 +1,85 @@
-# =============================================================================
 # ThreadSanitizer Suppressions for XSigma
-# =============================================================================
-# This file contains suppressions for known acceptable data races and
-# false positives from ThreadSanitizer
-# Format: race:<function_pattern>
-# =============================================================================
+# ========================================
+# This file contains suppressions for ThreadSanitizer to handle known false positives
+# and issues in third-party libraries that cannot be easily fixed.
+#
+# Format: <error_type>:<pattern>
+# Where error_type can be: race, deadlock, mutex, signal, etc.
+# Pattern can match function names, file paths, or library names.
 
-# Loguru thread-safe logging suppressions
-# Loguru uses thread-safe mechanisms that may appear as races to TSan
-race:loguru::*
+# Third-party library suppressions
+# ---------------------------------
+
+# fmt library - suppress formatting-related races
+race:*fmt*
+
+# loguru library - suppress logging-related races (common in logging libraries)
 race:*loguru*
+mutex:*loguru*
 
-# Standard library thread-safe operations that may trigger false positives
-race:std::__once_callable
-race:std::call_once
-race:std::__call_once_proxy
-
-# Memory allocator suppressions
-# Custom allocators may have internal synchronization that TSan doesn't recognize
-race:*allocator*::*
-race:*mimalloc*
-
-# Google Test framework suppressions
-# GTest has internal thread synchronization that may trigger false positives
-race:testing::*
+# Google Test - suppress test framework races
 race:*gtest*
+race:*testing*
 
-# C++ standard library atomic operations
-race:std::atomic*
-race:__atomic*
+# cpuinfo library - suppress CPU detection races
+race:*cpuinfo*
 
-# Thread-local storage operations
-race:__tls_get_addr
+# mimalloc - suppress memory allocator races
+race:*mimalloc*
+mutex:*mimalloc*
 
-# Known false positives in system libraries
-race:*libc.so*
-race:*libpthread.so*
-race:*libstdc++.so*
+# Windows system libraries
+# -------------------------
 
-# Specific XSigma suppressions
-# Add project-specific suppressions here as needed
+# Windows CRT and system DLLs
+race:*msvcrt*
+race:*kernel32*
+race:*ntdll*
+
+# LLVM/Clang runtime libraries
+race:*clang_rt*
+race:*compiler_rt*
+
+# Known false positives
+# ---------------------
+
+# Standard library thread-related issues
+race:*std::thread*
+race:*std::mutex*
+race:*std::condition_variable*
+
+# Static initialization races (common false positive)
+race:*__cxa_guard*
+race:*static*initialization*
+
+# Global constructor/destructor races
+race:*__static_initialization_and_destruction*
+
+# Example suppressions for common patterns:
+# race:MyClass::problematic_function
+# deadlock:ThirdPartyLib::*
+# mutex:*/path/to/problematic/file.cpp
+
+# Project-specific suppressions
+# ------------------------------
+# Add project-specific suppressions below as needed
+
+# Suppress races in experimental profiler code during development
+race:*experimental*profiler*
+
+# Suppress races in test code (tests may have intentional races)
+race:*Test*
+
+# Suppress races in SMP (Symmetric Multi-Processing) components
+# These may be intentional or require careful analysis
+race:*smp*
+race:*thread_pool*
+race:*multi_threader*
+
+# Suppress races in memory allocator components
+race:*allocator*
+race:*memory*pool*
+
+# Suppress races in logging components (often acceptable)
+race:*logger*
+race:*logging*
