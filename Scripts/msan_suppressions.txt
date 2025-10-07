@@ -19,6 +19,8 @@ use-of-uninitialized-value:*loguru*
 # Google Test - suppress test framework uninitialized memory issues
 use-of-uninitialized-value:*gtest*
 use-of-uninitialized-value:*testing*
+use-of-uninitialized-value:*TestEventRepeater*
+use-of-uninitialized-value:*TestEventListeners*
 
 # cpuinfo library - suppress CPU detection uninitialized memory issues
 use-of-uninitialized-value:*cpuinfo*
@@ -69,6 +71,8 @@ use-of-uninitialized-value:*Test*
 # intentional uninitialized memory usage (e.g., performance optimizations)
 use-of-uninitialized-value:*allocator*
 use-of-uninitialized-value:*memory*pool*
+
+# Note: Fixed allocator registry initialization issue by adding default member initializers
 
 # Note: MemorySanitizer is very strict and may require extensive suppressions
 # for third-party libraries. Consider using it primarily for core library code.
