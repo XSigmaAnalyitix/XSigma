@@ -66,9 +66,24 @@ function(check_sanitizer_compatibility)
         endif()
     endif()
 
+    # Windows-specific AddressSanitizer limitation check
+    if(WIN32 AND XSIGMA_SANITIZER_TYPE STREQUAL "address" AND CMAKE_COMPILER_IS_CLANGXX)
+        message(WARNING "AddressSanitizer on Windows with Clang has known linker compatibility issues")
+        message(WARNING "when mixing libraries compiled with and without AddressSanitizer.")
+        message(WARNING "This causes 'annotate_string' symbol mismatch errors.")
+        message(WARNING "Consider using MSVC compiler for AddressSanitizer on Windows,")
+        message(WARNING "or use UndefinedBehaviorSanitizer instead.")
+        message(WARNING "Disabling AddressSanitizer for this build.")
+        set(SANITIZER_SUPPORTED FALSE)
+    endif()
+
     if(NOT SANITIZER_SUPPORTED)
-        message(FATAL_ERROR "Sanitizer ${XSIGMA_SANITIZER_TYPE} is not supported "
-                           "with compiler ${CMAKE_CXX_COMPILER_ID}")
+        message(WARNING "Sanitizer ${XSIGMA_SANITIZER_TYPE} is not supported "
+                       "with compiler ${CMAKE_CXX_COMPILER_ID}")
+        message(STATUS "Continuing build without sanitizers")
+        # Disable sanitizers for this build
+        set(XSIGMA_ENABLE_SANITIZER OFF CACHE BOOL "Enable sanitizers" FORCE)
+        return()
     endif()
 
     # Export to parent scope
@@ -76,6 +91,12 @@ function(check_sanitizer_compatibility)
 endfunction()
 
 check_sanitizer_compatibility()
+
+# Early exit if sanitizers are disabled
+if(NOT XSIGMA_ENABLE_SANITIZER)
+    message(STATUS "Sanitizers are disabled, skipping sanitizer configuration")
+    return()
+endif()
 
 # =============================================================================
 # Sanitizer Configuration Functions
@@ -127,8 +148,9 @@ function(configure_sanitizer_flags)
             list(APPEND xsigma_sanitize_args "-fno-optimize-sibling-calls")
 
             # Enable stack-use-after-return detection (Clang and newer GCC)
-            if(CMAKE_COMPILER_IS_CLANGXX OR
-               (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "8.0"))
+            # Note: Temporarily disabled on Windows due to linker mismatch issues with third-party libraries
+            if(NOT WIN32 AND (CMAKE_COMPILER_IS_CLANGXX OR
+               (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "8.0")))
                 list(APPEND xsigma_sanitize_args "-fsanitize-address-use-after-scope")
             endif()
 
@@ -324,9 +346,17 @@ function(exclude_third_party_from_sanitizers)
         magic_enum
     )
 
+    # On Windows with AddressSanitizer, third-party libraries should not have sanitizer flags
+    # applied in the first place (handled by xsigma_apply_sanitizer_to_third_party_targets),
+    # so we only need to ensure they don't inherit flags from global settings
+    if(WIN32 AND XSIGMA_SANITIZER_TYPE STREQUAL "address")
+        message(STATUS "Disabling sanitizers for third-party libraries")
+        message(STATUS "Third-party libraries will be built without sanitizer instrumentation")
+    endif()
+
     foreach(target ${THIRD_PARTY_TARGETS})
         if(TARGET ${target})
-            message(STATUS "Excluding ${target} from sanitizer instrumentation")
+            message(STATUS "Disabling sanitizer instrumentation for third-party target: ${target}")
 
             # Remove sanitizer flags from this target
             get_target_property(target_compile_options ${target} COMPILE_OPTIONS)
@@ -337,9 +367,16 @@ function(exclude_third_party_from_sanitizers)
             endif()
 
             # Set target-specific compile options to override inherited sanitizer flags
-            target_compile_options(${target} PRIVATE
-                -fno-sanitize=all
-            )
+            if(CMAKE_COMPILER_IS_MSVC)
+                # MSVC doesn't support -fno-sanitize=all, so we need to remove sanitizer flags differently
+                # For MSVC, we rely on the flag filtering above and don't add conflicting flags
+                message(STATUS "  MSVC: Relying on flag filtering for ${target}")
+            else()
+                # GCC/Clang: Use -fno-sanitize=all to disable sanitizers for this target
+                target_compile_options(${target} PRIVATE
+                    -fno-sanitize=all
+                )
+            endif()
 
             # Also remove sanitizer flags from link options
             get_target_property(target_link_options ${target} LINK_OPTIONS)
@@ -348,9 +385,12 @@ function(exclude_third_party_from_sanitizers)
                 set_target_properties(${target} PROPERTIES LINK_OPTIONS "${target_link_options}")
             endif()
 
-            target_link_options(${target} PRIVATE
-                -fno-sanitize=all
-            )
+            if(NOT CMAKE_COMPILER_IS_MSVC)
+                # Only add -fno-sanitize=all for GCC/Clang
+                target_link_options(${target} PRIVATE
+                    -fno-sanitize=all
+                )
+            endif()
         endif()
     endforeach()
 endfunction()
@@ -434,6 +474,9 @@ if(TARGET xsigmabuild)
 
     # Exclude third-party libraries from sanitizer instrumentation
     exclude_third_party_from_sanitizers()
+
+    # Sanitizer flags remain active for main project targets (Core library, tests, etc.)
+    message(STATUS "Restored sanitizer flags for main project")
 else()
     message(WARNING "xsigmabuild target not found - sanitizer flags not applied")
 endif()
@@ -442,6 +485,14 @@ endif()
 # This ensures consistent annotations between main project and third-party libraries
 function(xsigma_apply_sanitizer_to_third_party_targets)
     if(NOT xsigma_sanitize_args)
+        return()
+    endif()
+
+    # On Windows, avoid applying sanitizer flags to third-party libraries to prevent
+    # linker symbol mismatches (e.g., annotate_string symbol conflicts)
+    if(WIN32 AND XSIGMA_SANITIZER_TYPE STREQUAL "address")
+        message(STATUS "Skipping sanitizer flag application to third-party targets on Windows with AddressSanitizer")
+        message(STATUS "  This prevents linker symbol mismatches between Core library and third-party libraries")
         return()
     endif()
 
