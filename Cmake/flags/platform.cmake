@@ -1,362 +1,208 @@
-# =============================================================================
-# XSigma Platform-Specific Compiler Optimization Module (Improved)
-# =============================================================================
-
-# Guard against multiple inclusions
-if(XSIGMA_PLATFORM_CONFIGURED)
-    return()
-endif()
-set(XSIGMA_PLATFORM_CONFIGURED TRUE CACHE INTERNAL "Platform module loaded")
-
-include(CheckCXXCompilerFlag)
-include(CheckCCompilerFlag)
-
-# User-configurable optimization levels
-option(XSIGMA_AGGRESSIVE_OPTS "Enable aggressive optimizations (may break IEEE compliance)" OFF)
-option(XSIGMA_NATIVE_ARCH "Enable native architecture optimizations" ON)
-option(XSIGMA_PARALLEL_COMPILE "Enable parallel compilation" ON)
-
-# Initialize platform-specific flag lists (using lists for better handling)
-
+set(XSIGMA_REQUIRED_C_FLAGS)
+set(XSIGMA_REQUIRED_CXX_FLAGS)
 message("--avx compiler flags: ${VECTORIZATION_COMPILER_FLAGS}")
 set(XSIGMA_REQUIRED_C_FLAGS ${VECTORIZATION_COMPILER_FLAGS})
 set(XSIGMA_REQUIRED_CXX_FLAGS ${VECTORIZATION_COMPILER_FLAGS})
-set(XSIGMA_LINKER_FLAGS_COMMON)
-
-# Helper function to safely add compiler flags
-function(xsigma_add_cxx_flag_if_supported flag)
-    string(MAKE_C_IDENTIFIER "HAVE_FLAG_${flag}" flag_var)
-    check_cxx_compiler_flag("${flag}" ${flag_var})
-    if(${flag_var})
-        list(APPEND XSIGMA_REQUIRED_CXX_FLAGS "${flag}")
-        set(XSIGMA_REQUIRED_CXX_FLAGS ${XSIGMA_REQUIRED_CXX_FLAGS} PARENT_SCOPE)
-    else()
-        message(WARNING "XSigma: Compiler flag '${flag}' not supported, skipping")
+# make sure Crun is linked in with the native compiler, it is
+# not used by default for shared libraries and is required for
+# things like java to work.
+if(CMAKE_SYSTEM MATCHES "SunOS.*")
+  if(NOT CMAKE_COMPILER_IS_GNUCXX)
+    find_library(XSIGMA_SUNCC_CRUN_LIBRARY Crun /opt/SUNWspro/lib)
+    if(XSIGMA_SUNCC_CRUN_LIBRARY)
+      link_libraries(${XSIGMA_SUNCC_CRUN_LIBRARY})
     endif()
-endfunction()
-
-function(xsigma_add_c_flag_if_supported flag)
-    string(MAKE_C_IDENTIFIER "HAVE_C_FLAG_${flag}" flag_var)
-    check_c_compiler_flag("${flag}" ${flag_var})
-    if(${flag_var})
-        list(APPEND XSIGMA_REQUIRED_C_FLAGS "${flag}")
-        set(XSIGMA_REQUIRED_C_FLAGS ${XSIGMA_REQUIRED_C_FLAGS} PARENT_SCOPE)
-    else()
-        message(WARNING "XSigma: C compiler flag '${flag}' not supported, skipping")
+    find_library(XSIGMA_SUNCC_CSTD_LIBRARY Cstd /opt/SUNWspro/lib)
+    if(XSIGMA_SUNCC_CSTD_LIBRARY)
+      link_libraries(${XSIGMA_SUNCC_CSTD_LIBRARY})
     endif()
-endfunction()
+  endif()
+endif()
 
-# =============================================================================
-# Windows Platform Optimizations
-# =============================================================================
+if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+  # Enable exceptions because XSIGMA and third party code rely on C++ exceptions.
+  # Allow C++ to catch exceptions. Emscripten disables it by default due to high overhead.
+  # Generate helper functions to get stack traces for uncaught exceptions
+  set(XSIGMA_REQUIRED_CXX_FLAGS "${XSIGMA_REQUIRED_CXX_FLAGS} -fwasm-exceptions")
+  set(XSIGMA_REQUIRED_C_FLAGS "${XSIGMA_REQUIRED_C_FLAGS} -fwasm-exceptions")
+  set(XSIGMA_REQUIRED_EXE_LINKER_FLAGS "${XSIGMA_REQUIRED_EXE_LINKER_FLAGS} -fwasm-exceptions -sEXCEPTION_STACK_TRACES=1")
+  set(XSIGMA_REQUIRED_SHARED_LINKER_FLAGS "${XSIGMA_REQUIRED_SHARED_LINKER_FLAGS} -fwasm-exceptions -sEXCEPTION_STACK_TRACES=1")
+  set(XSIGMA_REQUIRED_MODULE_LINKER_FLAGS "${XSIGMA_REQUIRED_MODULE_LINKER_FLAGS} -fwasm-exceptions -sEXCEPTION_STACK_TRACES=1")
+  # Consumers linking to XSIGMA also need to add the exception flag.
+  if (TARGET XSIGMAplatform)
+    target_link_options(XSIGMAplatform
+      INTERFACE
+        "-fwasm-exceptions"
+        "-sEXCEPTION_STACK_TRACES=1")
+  endif ()
+  if (XSIGMA_WEBASSEMBLY_THREADS)
+    # Remove after https://github.com/WebAssembly/design/issues/1271 is closed
+    # Set Wno flag globally because even though the flag is added in XSIGMACompilerWarningFlags.cmake,
+    # wrapping tools do not link with `XSIGMAplatform`
+    set(XSIGMA_REQUIRED_CXX_FLAGS "${XSIGMA_REQUIRED_CXX_FLAGS} -pthread -Wno-pthreads-mem-growth")
+    set(XSIGMA_REQUIRED_C_FLAGS "${XSIGMA_REQUIRED_C_FLAGS} -pthread -Wno-pthreads-mem-growth")
+    set(XSIGMA_REQUIRED_EXE_LINKER_FLAGS "${XSIGMA_REQUIRED_EXE_LINKER_FLAGS} -pthread")
+    set(XSIGMA_REQUIRED_SHARED_LINKER_FLAGS "${XSIGMA_REQUIRED_SHARED_LINKER_FLAGS} -pthread")
+    set(XSIGMA_REQUIRED_MODULE_LINKER_FLAGS "${XSIGMA_REQUIRED_MODULE_LINKER_FLAGS} -pthread")
+    # Consumers linking to XSIGMA also need to add the pthread flag.
+    if (TARGET XSIGMAplatform)
+      target_compile_options(XSIGMAplatform
+        INTERFACE
+          "-pthread"
+          "-Wno-pthreads-mem-growth")
+      target_link_options(XSIGMAplatform
+        INTERFACE
+          "-pthread")
+    endif ()
+  endif ()
+  if (XSIGMA_WEBASSEMBLY_64_BIT)
+    set(XSIGMA_REQUIRED_CXX_FLAGS "${XSIGMA_REQUIRED_CXX_FLAGS} -sMEMORY64=1")
+    set(XSIGMA_REQUIRED_C_FLAGS "${XSIGMA_REQUIRED_C_FLAGS} -sMEMORY64=1")
+    set(XSIGMA_REQUIRED_EXE_LINKER_FLAGS "${XSIGMA_REQUIRED_EXE_LINKER_FLAGS} -sMEMORY64=1")
+    set(XSIGMA_REQUIRED_SHARED_LINKER_FLAGS "${XSIGMA_REQUIRED_SHARED_LINKER_FLAGS} -sMEMORY64=1")
+    set(XSIGMA_REQUIRED_MODULE_LINKER_FLAGS "${XSIGMA_REQUIRED_MODULE_LINKER_FLAGS} -sMEMORY64=1")
+    # Consumers linking to XSIGMA also need to add the memory64 flag.
+    if (TARGET XSIGMAplatform)
+      target_compile_options(XSIGMAplatform
+        INTERFACE
+          "-sMEMORY64=1")
+      target_link_options(XSIGMAplatform
+        INTERFACE
+          "-sMEMORY64=1")
+    endif ()
+  endif ()
+endif ()
 
-if(WIN32)
-    message(STATUS "XSigma: Configuring Windows optimizations...")
-    
-    if(MSVC)
-        message(STATUS "XSigma: Using MSVC on Windows...")
-        
-        # Essential MSVC flags
-        list(APPEND XSIGMA_REQUIRED_CXX_FLAGS
-            "/Zc:__cplusplus"
-            "/permissive-"
-            "/Zc:inline"
-            "/Zc:throwingNew"
-            "/volatile:iso"
-            "/bigobj"
-            "/utf-8"
-        )
-
-        # Performance flags
-        xsigma_add_cxx_flag_if_supported("/favor:INTEL64")
-        xsigma_add_cxx_flag_if_supported("/Gy")  # Function-level linking
-        xsigma_add_cxx_flag_if_supported("/Gw")  # Global data optimization
-
-        # Warning configuration
-        list(APPEND XSIGMA_REQUIRED_CXX_FLAGS
-            "/W3"
-            "/wd4244" "/wd4267" "/wd4996" "/wd4251" "/wd4018"
-        )
-
-        # Enable unused function warnings (C4505 is only available at /W4, so enable it explicitly)
-        #xsigma_add_cxx_flag_if_supported("/w14505")  # C4505: unreferenced local function has been removed
-
-        # Copy CXX flags to C flags (minus C++-specific ones)
-        set(XSIGMA_REQUIRED_C_FLAGS ${XSIGMA_REQUIRED_CXX_FLAGS})
-        list(REMOVE_ITEM XSIGMA_REQUIRED_C_FLAGS "/Zc:__cplusplus" "/permissive-")
-
-        # Parallel compilation
-        if(XSIGMA_PARALLEL_COMPILE)
-            include(ProcessorCount)
-            ProcessorCount(PROCESSOR_COUNT)
-            if(PROCESSOR_COUNT EQUAL 0)
-                set(PROCESSOR_COUNT 4)
-            endif()
-            list(APPEND XSIGMA_REQUIRED_CXX_FLAGS "/MP${PROCESSOR_COUNT}")
-            list(APPEND XSIGMA_REQUIRED_C_FLAGS "/MP${PROCESSOR_COUNT}")
-            message(STATUS "XSigma: MSVC parallel compilation enabled (${PROCESSOR_COUNT} processes)")
-        endif()
-
-        # MSVC linker optimizations
-        #list(APPEND XSIGMA_LINKER_FLAGS_COMMON "/OPT:REF" "/OPT:ICF")
-        
-    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        message(STATUS "XSigma: Using Clang on Windows...")
-        
-        # Clang on Windows can use either GCC-style or MSVC-style flags
-        # Check if using clang-cl (MSVC-compatible interface)
-        if(CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC" OR 
-           CMAKE_CXX_COMPILER MATCHES "clang-cl")
-            message(STATUS "XSigma: Using clang-cl (MSVC-compatible interface)")
-            
-            # Use MSVC-style flags for clang-cl
-            list(APPEND XSIGMA_REQUIRED_CXX_FLAGS
-                "/clang:-march=native"  # Clang-specific native optimization
-                "/W3"
-                "/bigobj"
-                "/utf-8"
-            )
-
-            # Enable unused function warnings for clang-cl
-            # clang-cl supports both MSVC-style and Clang-style warnings
-            #xsigma_add_cxx_flag_if_supported("/clang:-Wunused-function")
-            #xsigma_add_cxx_flag_if_supported("/clang:-Wunused-member-function")
-            
-            # Clang-cl parallel compilation
-            if(XSIGMA_PARALLEL_COMPILE)
-                include(ProcessorCount)
-                ProcessorCount(PROCESSOR_COUNT)
-                if(PROCESSOR_COUNT EQUAL 0)
-                    set(PROCESSOR_COUNT 4)
-                endif()
-                list(APPEND XSIGMA_REQUIRED_CXX_FLAGS "/MP${PROCESSOR_COUNT}")
-                list(APPEND XSIGMA_REQUIRED_C_FLAGS "/MP${PROCESSOR_COUNT}")
-                message(STATUS "XSigma: clang-cl parallel compilation enabled (${PROCESSOR_COUNT} processes)")
-            endif()
-            
-            # MSVC-style linker flags work with clang-cl
-            #list(APPEND XSIGMA_LINKER_FLAGS_COMMON "/OPT:REF" "/OPT:ICF")
-            
-        else()
-            message(STATUS "XSigma: Using Clang with GCC-style interface on Windows")
-            
-            # Use GCC-style flags for regular Clang on Windows
-            xsigma_add_cxx_flag_if_supported("-fvisibility=hidden")
-            xsigma_add_cxx_flag_if_supported("-fvisibility-inlines-hidden")
-            #xsigma_add_cxx_flag_if_supported("-Wunused-function") 
-            #xsigma_add_cxx_flag_if_supported("-Wunused-member-function")
-            
-            # Windows-specific Clang flags
-            if(MINGW)
-                message(STATUS "XSigma: MinGW environment detected")
-                xsigma_add_cxx_flag_if_supported("-mthreads")
-                xsigma_add_c_flag_if_supported("-mthreads")
-            endif()
-            
-            # Performance flags
-            xsigma_add_cxx_flag_if_supported("-ftree-vectorize")
-            xsigma_add_cxx_flag_if_supported("-finline-functions")
-            
-            # Native architecture optimization
-            if(XSIGMA_NATIVE_ARCH)
-                xsigma_add_cxx_flag_if_supported("-march=native")
-            endif()
-            
-            # Warning configuration
-            xsigma_add_cxx_flag_if_supported("-Wall")
-            xsigma_add_cxx_flag_if_supported("-Wextra")
-            xsigma_add_cxx_flag_if_supported("-Wno-unused-parameter")
-            
-            # MinGW linker optimizations
-            if(MINGW)
-                list(APPEND XSIGMA_LINKER_FLAGS_COMMON "-Wl,--gc-sections")
-            endif()
-        endif()
-        
-        # Copy flags to C
-        set(XSIGMA_REQUIRED_C_FLAGS ${XSIGMA_REQUIRED_CXX_FLAGS})
-        
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        message(STATUS "XSigma: Using GCC on Windows (MinGW/MSYS2)...")
-        
-        # GCC on Windows (MinGW)
-        xsigma_add_cxx_flag_if_supported("-fvisibility=hidden")
-        xsigma_add_cxx_flag_if_supported("-fvisibility-inlines-hidden")
-        xsigma_add_cxx_flag_if_supported("-mthreads")
-        #xsigma_add_cxx_flag_if_supported("-Wunused-function") 
-        #xsigma_add_cxx_flag_if_supported("-Wunused-member-function")
-        
-        # Performance flags
-        xsigma_add_cxx_flag_if_supported("-ftree-vectorize")
-        xsigma_add_cxx_flag_if_supported("-finline-functions")
-        
-        if(XSIGMA_NATIVE_ARCH)
-            xsigma_add_cxx_flag_if_supported("-march=native")
-        endif()
-        
-        # Warning configuration
-        xsigma_add_cxx_flag_if_supported("-Wall")
-        xsigma_add_cxx_flag_if_supported("-Wextra")
-        
-        # Copy flags to C
-        set(XSIGMA_REQUIRED_C_FLAGS ${XSIGMA_REQUIRED_CXX_FLAGS})
-        
-        # MinGW linker optimizations
-        list(APPEND XSIGMA_LINKER_FLAGS_COMMON "-Wl,--gc-sections")
+# A GCC compiler.
+if(CMAKE_COMPILER_IS_GNUCXX)
+  if(XSIGMA_USE_X)
+    unset(WIN32)
+  endif()
+  if(WIN32)
+# The platform is gcc on cygwin.
+    set(XSIGMA_REQUIRED_CXX_FLAGS "${XSIGMA_REQUIRED_CXX_FLAGS} -mwin32")
+    set(XSIGMA_REQUIRED_C_FLAGS "${XSIGMA_REQUIRED_C_FLAGS} -mwin32")
+    link_libraries(-lgdi32)
+  endif()
+  if(MINGW)
+    set(XSIGMA_REQUIRED_CXX_FLAGS "${XSIGMA_REQUIRED_CXX_FLAGS} -mthreads")
+    set(XSIGMA_REQUIRED_C_FLAGS "${XSIGMA_REQUIRED_C_FLAGS} -mthreads")
+    set(XSIGMA_REQUIRED_EXE_LINKER_FLAGS "${XSIGMA_REQUIRED_EXE_LINKER_FLAGS} -mthreads")
+    set(XSIGMA_REQUIRED_SHARED_LINKER_FLAGS "${XSIGMA_REQUIRED_SHARED_LINKER_FLAGS} -mthreads")
+    set(XSIGMA_REQUIRED_MODULE_LINKER_FLAGS "${XSIGMA_REQUIRED_MODULE_LINKER_FLAGS} -mthreads")
+  endif()
+  if(CMAKE_SYSTEM MATCHES "SunOS.*")
+    # Disable warnings that occur in X11 headers.
+    if(DART_ROOT AND BUILD_TESTING)
+      set(XSIGMA_REQUIRED_CXX_FLAGS "${XSIGMA_REQUIRED_CXX_FLAGS} -Wno-unknown-pragmas")
+      set(XSIGMA_REQUIRED_C_FLAGS "${XSIGMA_REQUIRED_C_FLAGS} -Wno-unknown-pragmas")
     endif()
-
-    # Common Windows definitions
-    add_definitions(
-        -D_CRT_SECURE_NO_WARNINGS
-        -D_SCL_SECURE_NO_WARNINGS
-        -DWIN32_LEAN_AND_MEAN
-        -DNOMINMAX
-    )
-
-# =============================================================================
-# Unix-like Platform Optimizations (Linux, macOS, BSD, etc.)
-# =============================================================================
-
+  endif()
 else()
-    message(STATUS "XSigma: Configuring Unix-like platform optimizations...")
-
-    # Essential flags for Unix-like systems
-    xsigma_add_cxx_flag_if_supported("-fPIC")
-    xsigma_add_cxx_flag_if_supported("-fvisibility=hidden")
-    xsigma_add_cxx_flag_if_supported("-fvisibility-inlines-hidden")
-    #xsigma_add_cxx_flag_if_supported("-Wunused-function") 
-    #xsigma_add_cxx_flag_if_supported("-Wunused-member-function")
-
-    # Threading support
-    xsigma_add_cxx_flag_if_supported("-pthread")
-    xsigma_add_c_flag_if_supported("-pthread")
-
-    # Safe performance flags
-    xsigma_add_cxx_flag_if_supported("-ftree-vectorize")
-    xsigma_add_cxx_flag_if_supported("-finline-functions")
-    
-    # Aggressive optimizations (optional)
-    if(XSIGMA_AGGRESSIVE_OPTS)
-        message(WARNING "XSigma: Enabling aggressive optimizations - may break IEEE compliance")
-        xsigma_add_cxx_flag_if_supported("-ffast-math")
-        xsigma_add_cxx_flag_if_supported("-funroll-loops")
-    endif()
-
-    # Native architecture optimization
-    if(XSIGMA_NATIVE_ARCH)
-        xsigma_add_cxx_flag_if_supported("-march=native")
-    endif()
-
-    # Warning configuration
-    xsigma_add_cxx_flag_if_supported("-Wall")
-    xsigma_add_cxx_flag_if_supported("-Wextra")
-    xsigma_add_cxx_flag_if_supported("-Wno-ignored-attributes")
-    xsigma_add_cxx_flag_if_supported("-Wno-unused-parameter")
-
-    # Copy flags to C (they should be compatible)
-    set(XSIGMA_REQUIRED_C_FLAGS ${XSIGMA_REQUIRED_CXX_FLAGS})
-
-    # Unix linker optimizations (Linux-specific)
-    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        list(APPEND XSIGMA_LINKER_FLAGS_COMMON "-Wl,--gc-sections" "-Wl,--as-needed")
-    elseif(APPLE)
-        # macOS linker optimizations
-        list(APPEND XSIGMA_LINKER_FLAGS_COMMON "-Wl,-dead_strip")
-    endif()
-
+  if(CMAKE_ANSI_CFLAGS)
+    set(XSIGMA_REQUIRED_C_FLAGS "${XSIGMA_REQUIRED_C_FLAGS} ${CMAKE_ANSI_CFLAGS}")
+  endif()
+  if(CMAKE_SYSTEM MATCHES "OSF1-V.*")
+     set(XSIGMA_REQUIRED_CXX_FLAGS
+         "${XSIGMA_REQUIRED_CXX_FLAGS} -timplicit_local -no_implicit_include")
+  endif()
+  if(CMAKE_SYSTEM MATCHES "AIX.*")
+    # allow t-ypeid and d-ynamic_cast usage (normally off by default on xlC)
+    set(XSIGMA_REQUIRED_CXX_FLAGS "${XSIGMA_REQUIRED_CXX_FLAGS} -qrtti=all")
+    # silence duplicate symbol warnings on AIX
+    set(XSIGMA_REQUIRED_EXE_LINKER_FLAGS "${XSIGMA_REQUIRED_EXE_LINKER_FLAGS} -bhalt:5")
+    set(XSIGMA_REQUIRED_SHARED_LINKER_FLAGS "${XSIGMA_REQUIRED_SHARED_LINKER_FLAGS} -bhalt:5")
+    set(XSIGMA_REQUIRED_MODULE_LINKER_FLAGS "${XSIGMA_REQUIRED_MODULE_LINKER_FLAGS} -bhalt:5")
+  endif()
+  if(CMAKE_SYSTEM MATCHES "HP-UX.*")
+     set(XSIGMA_REQUIRED_C_FLAGS
+         "${XSIGMA_REQUIRED_C_FLAGS} +W2111 +W2236 +W4276")
+     set(XSIGMA_REQUIRED_CXX_FLAGS
+         "${XSIGMA_REQUIRED_CXX_FLAGS} +W2111 +W2236 +W4276")
+  endif()
 endif()
 
-# =============================================================================
-# Compiler-Specific Optimizations (Cross-Platform)
-# =============================================================================
-
-# GCC specific (works on Windows via MinGW and Unix systems)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    message(STATUS "XSigma: Applying GCC-specific optimizations...")
-    
-    # Version-specific optimizations
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "9.0")
-        xsigma_add_cxx_flag_if_supported("-fconcepts")
+# figure out whether the compiler might be the Intel compiler
+set(_MAY_BE_INTEL_COMPILER FALSE)
+if(UNIX)
+  if(CMAKE_CXX_COMPILER_ID)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+      set(_MAY_BE_INTEL_COMPILER TRUE)
     endif()
-    
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "11.0")
-        xsigma_add_cxx_flag_if_supported("-fmodules-ts")
+  else()
+    if(NOT CMAKE_COMPILER_IS_GNUCXX)
+      set(_MAY_BE_INTEL_COMPILER TRUE)
     endif()
-    
-    # GCC-specific performance optimizations
-    xsigma_add_cxx_flag_if_supported("-fdevirtualize-speculatively")
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "10.0")
-        xsigma_add_cxx_flag_if_supported("-fipa-pta")
-    endif()
+  endif()
 endif()
 
-# Clang specific (works on Windows, macOS, and Linux)
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    message(STATUS "XSigma: Applying Clang-specific optimizations...")
-    
-    # Cross-platform Clang optimizations
-    xsigma_add_cxx_flag_if_supported("-fstrict-aliasing")
-    xsigma_add_cxx_flag_if_supported("-fvectorize")
-    xsigma_add_cxx_flag_if_supported("-fslp-vectorize")
-    
-    # Clang version-specific features
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "12.0")
-        xsigma_add_cxx_flag_if_supported("-fexperimental-new-pass-manager")
-    endif()
-    
-    # Platform-specific Clang configurations
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-        message(STATUS "XSigma: Apple Clang detected")
-        xsigma_add_cxx_flag_if_supported("-stdlib=libc++")
-        # Apple Clang specific optimizations
-        xsigma_add_cxx_flag_if_supported("-fcolor-diagnostics")
-    elseif(APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        # Homebrew LLVM on macOS
-        message(STATUS "XSigma: Homebrew LLVM Clang detected on macOS")
-        xsigma_add_cxx_flag_if_supported("-stdlib=libc++")
-        xsigma_add_cxx_flag_if_supported("-fcolor-diagnostics")
-        # Note: The hash_compat.h header provides std::__hash_memory implementation
-        # for compatibility with Homebrew LLVM on macOS
-    elseif(WIN32 AND NOT CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
-        message(STATUS "XSigma: Clang on Windows with GCC interface")
-        # Additional Windows-specific Clang flags can go here
-    endif()
+#if so, test whether -i_dynamic is needed
+if(_MAY_BE_INTEL_COMPILER)
+  include(${CMAKE_CURRENT_LIST_DIR}/TestNO_ICC_IDYNAMIC_NEEDED.cmake)
+  testno_icc_idynamic_needed(NO_ICC_IDYNAMIC_NEEDED ${CMAKE_CURRENT_LIST_DIR})
+  if(NO_ICC_IDYNAMIC_NEEDED)
+    set(XSIGMA_REQUIRED_CXX_FLAGS "${XSIGMA_REQUIRED_CXX_FLAGS}")
+  else()
+    set(XSIGMA_REQUIRED_CXX_FLAGS "${XSIGMA_REQUIRED_CXX_FLAGS} -i_dynamic")
+  endif()
 endif()
 
-# Intel Compiler
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel" OR CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-    message(STATUS "XSigma: Applying Intel compiler optimizations...")
-    xsigma_add_cxx_flag_if_supported("-xHost")
-    xsigma_add_cxx_flag_if_supported("-ipo")
-    xsigma_add_cxx_flag_if_supported("-vec-report=2")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "PGI")
+  # --diag_suppress=236 is for constant value asserts used for error handling
+  # This can be restricted to the implementation and doesn't need to propagate
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --diag_suppress=236")
+
+  # --diag_suppress=381 is for redundant semi-colons used in macros
+  # This needs to propagate to anything that includes XSIGMA headers
+  set(XSIGMA_REQUIRED_CXX_FLAGS "${XSIGMA_REQUIRED_CXX_FLAGS} --diag_suppress=381")
 endif()
 
-# =============================================================================
-# Final Flag Application
-# =============================================================================
-
-# Convert lists to space-separated strings for CMake compatibility
-if(XSIGMA_REQUIRED_CXX_FLAGS)
-    string(REPLACE ";" " " XSIGMA_CXX_FLAGS_STR "${XSIGMA_REQUIRED_CXX_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${XSIGMA_CXX_FLAGS_STR}")
+if(MSVC)
+# Use the highest warning level for visual c++ compiler.
+  set(CMAKE_CXX_WARNING_LEVEL 4)
+  if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
+    STRING(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+  endif()
 endif()
 
-if(XSIGMA_REQUIRED_C_FLAGS)
-    string(REPLACE ";" " " XSIGMA_C_FLAGS_STR "${XSIGMA_REQUIRED_C_FLAGS}")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${XSIGMA_C_FLAGS_STR}")
+# Disable deprecation warnings for standard C and STL functions in VS2015+
+# and later
+if(MSVC)
+  add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS)
+  add_definitions(-D_SCL_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
 endif()
 
-if(XSIGMA_LINKER_FLAGS_COMMON)
-    string(REPLACE ";" " " XSIGMA_LINKER_FLAGS_STR "${XSIGMA_LINKER_FLAGS_COMMON}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${XSIGMA_LINKER_FLAGS_STR}")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${XSIGMA_LINKER_FLAGS_STR}")
+# Enable /MP flag for Visual Studio
+if(MSVC)
+  set(CMAKE_CXX_MP_FLAG OFF CACHE BOOL "Build with /MP flag enabled")
+  set(PROCESSOR_COUNT "$ENV{NUMBER_OF_PROCESSORS}")
+  set(CMAKE_CXX_MP_NUM_PROCESSORS ${PROCESSOR_COUNT} CACHE STRING "The maximum number of processes for the /MP flag")
+  if (CMAKE_CXX_MP_FLAG)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP${CMAKE_CXX_MP_NUM_PROCESSORS}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP${CMAKE_CXX_MP_NUM_PROCESSORS}")
+  endif ()
 endif()
 
-# Configuration summary
-message(STATUS "XSigma: Platform optimization completed")
-message(STATUS "XSigma: Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
-message(STATUS "XSigma: C++ Flags: ${CMAKE_CXX_FLAGS}")
-message(STATUS "XSigma: Linker Flags: ${CMAKE_EXE_LINKER_FLAGS}")
+# Enable /bigobj for MSVC to allow larger symbol tables
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /bigobj")
+endif()
 
-# Cache important settings
-set(XSIGMA_PLATFORM_CONFIGURED TRUE CACHE INTERNAL "Platform optimization completed")
+# Use /utf-8 so that MSVC uses utf-8 in source files and object files
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8")
+endif()
+
+#-----------------------------------------------------------------------------
+# Add compiler flags XSIGMA needs to work on this platform.  This must be
+# done after the call to CMAKE_EXPORT_BUILD_SETTINGS, but before any
+# try-compiles are done.
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${XSIGMA_REQUIRED_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${XSIGMA_REQUIRED_CXX_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${XSIGMA_REQUIRED_EXE_LINKER_FLAGS}")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${XSIGMA_REQUIRED_SHARED_LINKER_FLAGS}")
+set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${XSIGMA_REQUIRED_MODULE_LINKER_FLAGS}")

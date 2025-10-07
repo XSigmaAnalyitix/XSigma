@@ -202,6 +202,19 @@ inline constexpr int XSIGMA_COMPILE_TIME_MAX_GPUS = 16;
 #endif
 
 //----------------------------------------------------------------------------
+// A function level attribute to disable checking for use of uninitialized
+// memory when built with MemorySanitizer.
+#if defined(__clang__)
+#if __has_feature(memory_sanitizer)
+#define XSIGMA_NO_SANITIZE_MEMORY __attribute__((no_sanitize_memory))
+#else
+#define XSIGMA_NO_SANITIZE_MEMORY
+#endif  // __has_feature(memory_sanitizer)
+#else
+#define XSIGMA_NO_SANITIZE_MEMORY
+#endif  // __clang__
+
+//----------------------------------------------------------------------------
 #define MACRO_CORE_TYPE_ID_NAME(x) typeid(x).name()
 
 #define XSIGMA_DELETE_CLASS(type)            \
