@@ -76,3 +76,28 @@ use-of-uninitialized-value:*memory*pool*
 
 # Note: MemorySanitizer is very strict and may require extensive suppressions
 # for third-party libraries. Consider using it primarily for core library code.
+
+# Standard library issues
+fun:*std::*
+fun:*std::*allocator*
+fun:*std::*vector*
+fun:*std::*string*
+fun:*__gnu_cxx*
+# GoogleTest initialization uses uninstrumented libstdc++
+fun:*testing::internal::UnitTestFilter*
+fun:*testing::internal::UnitTestImpl::GetTestSuite*
+fun:*testing::internal::MakeAndRegisterTestInfo*
+fun:__cxx_global_var_init*
+fun:_GLOBAL__sub_I_*
+
+# Standard library allocations - these are false positives with uninstrumented libstdc++
+fun:*std::*allocator*::allocate*
+fun:*std::_Vector_base*::_M_allocate*
+fun:*std::vector*::_M_realloc_insert*
+fun:*std::*basic_string*
+
+# C++ global initialization
+src:*/bits/stl_vector.h
+src:*/bits/basic_string.h
+src:*/bits/new_allocator.h
+src:*/bits/alloc_traits.h

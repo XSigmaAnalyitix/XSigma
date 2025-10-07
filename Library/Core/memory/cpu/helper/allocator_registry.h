@@ -125,13 +125,13 @@ private:
     {
         const char*                        source_file = nullptr;
         int                                source_line = 0;
-        std::string                        name;
-        int                                priority = 0;
-        std::unique_ptr<allocator_factory> factory;
-        std::unique_ptr<Allocator>         allocator;
+        std::string                        name        = "";
+        int                                priority    = 0;
+        std::unique_ptr<allocator_factory> factory     = nullptr;
+        std::unique_ptr<Allocator>         allocator   = nullptr;
         // Index 0 corresponds to NUMANOAFFINITY, other indices are (numa_node +
         // 1).
-        std::vector<std::unique_ptr<xsigma::sub_allocator>> sub_allocators;
+        std::vector<std::unique_ptr<xsigma::sub_allocator>> sub_allocators{};
     };
     std::vector<FactoryEntry> factories_ XSIGMA_GUARDED_BY(mu_);
 

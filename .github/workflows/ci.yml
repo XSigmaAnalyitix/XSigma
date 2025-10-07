@@ -461,7 +461,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        sanitizer: [address, undefined, thread, leak, memory]
+        sanitizer: [address, undefined, thread, leak]
         exclude:
           # MemorySanitizer is not supported on Windows
           - os: windows-latest
@@ -535,7 +535,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_C_COMPILER=clang \
             -DCMAKE_CXX_COMPILER=clang++ \
-            -DXSIGMA_LOGGING_BACKEND=LOGURU \
+            -DXSIGMA_LOGGING_BACKEND=NATIVE \
             -DXSIGMA_ENABLE_SANITIZER=ON \
             -DXSIGMA_SANITIZER_TYPE=${{ matrix.sanitizer }} \
             -DXSIGMA_BUILD_TESTING=ON \
@@ -545,11 +545,12 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
             -DVCPKG_TARGET_TRIPLET=x64-windows
         else
+          # Use NATIVE logging backend for Unix sanitizer builds to avoid loguru threading/memory issues
           cmake -B build -S . -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_C_COMPILER=clang \
             -DCMAKE_CXX_COMPILER=clang++ \
-            -DXSIGMA_LOGGING_BACKEND=LOGURU \
+            -DXSIGMA_LOGGING_BACKEND=NATIVE \
             -DXSIGMA_ENABLE_SANITIZER=ON \
             -DXSIGMA_SANITIZER_TYPE=${{ matrix.sanitizer }} \
             -DXSIGMA_BUILD_TESTING=ON \

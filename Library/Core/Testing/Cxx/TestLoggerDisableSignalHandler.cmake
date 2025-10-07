@@ -12,7 +12,7 @@
 #
 #==========================================================================
 
-message(STATUS "Testing disabling of stack trace printing by vtkLogger")
+message(STATUS "Testing disabling of stack trace printing by XSIGMALogger")
 execute_process(COMMAND ${EXECUTABLE_PATH}
   OUTPUT_VARIABLE error_output
   RESULT_VARIABLE result_var)

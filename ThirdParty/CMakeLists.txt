@@ -2,6 +2,8 @@
 cmake_minimum_required(VERSION 3.16)
 message(STATUS "DEBUG: Processing ThirdParty/CMakeLists.txt")
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # Force static libraries for third-party dependencies
 # Save the current BUILD_SHARED_LIBS setting
 set(_SAVED_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})

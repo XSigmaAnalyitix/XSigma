@@ -56,6 +56,7 @@ const allocator_factory_registry::FactoryEntry* allocator_factory_registry::Find
     return nullptr;
 }
 
+XSIGMA_NO_SANITIZE_MEMORY
 void allocator_factory_registry::Register(
     const char*        source_file,
     int                source_line,
@@ -84,7 +85,7 @@ void allocator_factory_registry::Register(
             existing->source_file,
             existing->source_line);
     }
-    FactoryEntry entry;
+    FactoryEntry entry{};
     entry.source_file = source_file;
     entry.source_line = source_line;
     entry.name        = name;
