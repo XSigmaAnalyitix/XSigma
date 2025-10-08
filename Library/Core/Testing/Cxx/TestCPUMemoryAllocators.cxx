@@ -36,8 +36,8 @@
 
 // Platform-specific includes
 #ifdef XSIGMA_ENABLE_TBB
-#include <tbb/scalable_allocator.h>
 #include <tbb/cache_aligned_allocator.h>
+#include <tbb/scalable_allocator.h>
 #endif
 
 #ifdef XSIGMA_ENABLE_MIMALLOC
@@ -66,12 +66,12 @@ class allocator_test_interface
 {
 public:
     virtual ~allocator_test_interface() = default;
-    
-    virtual void* allocate(std::size_t size, std::size_t alignment = 64) noexcept = 0;
-    virtual void deallocate(void* ptr, std::size_t size = 0) noexcept = 0;
-    virtual const char* name() const noexcept = 0;
-    virtual bool supports_alignment(std::size_t alignment) const noexcept = 0;
-    virtual bool is_thread_safe() const noexcept = 0;
+
+    virtual void*       allocate(std::size_t size, std::size_t alignment = 64) noexcept = 0;
+    virtual void        deallocate(void* ptr, std::size_t size = 0) noexcept            = 0;
+    virtual const char* name() const noexcept                                           = 0;
+    virtual bool        supports_alignment(std::size_t alignment) const noexcept        = 0;
+    virtual bool        is_thread_safe() const noexcept                                 = 0;
 };
 
 /**
@@ -85,12 +85,12 @@ public:
 #ifdef XSIGMA_ENABLE_MIMALLOC
         return mi_malloc_aligned(size, alignment);
 #else
-        XSIGMA_UNUSED(size);
-        XSIGMA_UNUSED(alignment);
+        (void)size;
+        (void)alignment;
         return nullptr;
 #endif
     }
-    
+
     void deallocate(void* ptr, XSIGMA_UNUSED std::size_t size = 0) noexcept override
     {
 #ifdef XSIGMA_ENABLE_MIMALLOC
@@ -99,11 +99,11 @@ public:
         (void)ptr;
 #endif
     }
-    
+
     const char* name() const noexcept override { return "mimalloc"; }
-    bool supports_alignment(std::size_t alignment) const noexcept override 
-    { 
-        return alignment > 0 && (alignment & (alignment - 1)) == 0; // Power of 2
+    bool        supports_alignment(std::size_t alignment) const noexcept override
+    {
+        return alignment > 0 && (alignment & (alignment - 1)) == 0;  // Power of 2
     }
     bool is_thread_safe() const noexcept override { return true; }
 };
@@ -133,11 +133,11 @@ public:
         (void)ptr;
 #endif
     }
-    
+
     const char* name() const noexcept override { return "tbb_scalable"; }
-    bool supports_alignment(std::size_t alignment) const noexcept override 
-    { 
-        return alignment > 0 && (alignment & (alignment - 1)) == 0; // Power of 2
+    bool        supports_alignment(std::size_t alignment) const noexcept override
+    {
+        return alignment > 0 && (alignment & (alignment - 1)) == 0;  // Power of 2
     }
     bool is_thread_safe() const noexcept override { return true; }
 };
@@ -161,7 +161,7 @@ public:
         return ptr;
 #endif
     }
-    
+
     void deallocate(void* ptr, XSIGMA_UNUSED std::size_t size = 0) noexcept override
     {
         if (ptr != nullptr)
@@ -173,11 +173,12 @@ public:
 #endif
         }
     }
-    
+
     const char* name() const noexcept override { return "standard_aligned"; }
-    bool supports_alignment(std::size_t alignment) const noexcept override 
-    { 
-        return alignment >= sizeof(void*) && (alignment & (alignment - 1)) == 0; // Power of 2, >= pointer size
+    bool        supports_alignment(std::size_t alignment) const noexcept override
+    {
+        return alignment >= sizeof(void*) &&
+               (alignment & (alignment - 1)) == 0;  // Power of 2, >= pointer size
     }
     bool is_thread_safe() const noexcept override { return true; }
 };
@@ -192,15 +193,15 @@ public:
     {
         return xsigma::cpu::memory_allocator::allocate(size, alignment);
     }
-    
+
     void deallocate(void* ptr, std::size_t size = 0) noexcept override
     {
         xsigma::cpu::memory_allocator::free(ptr, size);
     }
-    
+
     const char* name() const noexcept override { return "xsigma_cpu"; }
-    bool supports_alignment(std::size_t alignment) const noexcept override 
-    { 
+    bool        supports_alignment(std::size_t alignment) const noexcept override
+    {
         return xsigma::cpu::memory_allocator::is_valid_alignment(alignment);
     }
     bool is_thread_safe() const noexcept override { return true; }
@@ -216,13 +217,13 @@ protected:
     {
         // Initialize all available allocators
         allocators_.clear();
-        
+
         // Always add XSigma's default allocator
         allocators_.emplace_back(std::make_unique<xsigma_cpu_test_allocator>());
-        
+
         // Add standard aligned allocator
         allocators_.emplace_back(std::make_unique<standard_aligned_test_allocator>());
-        
+
 #ifdef XSIGMA_ENABLE_MIMALLOC
         allocators_.emplace_back(std::make_unique<mimalloc_test_allocator>());
 #endif
@@ -237,12 +238,9 @@ protected:
             XSIGMA_LOG_INFO("  - {}", alloc->name());
         }
     }
-    
-    void TearDown() override
-    {
-        allocators_.clear();
-    }
-    
+
+    void TearDown() override { allocators_.clear(); }
+
     std::vector<std::unique_ptr<allocator_test_interface>> allocators_;
 };
 
@@ -253,31 +251,31 @@ protected:
 TEST_F(cpu_memory_allocator_test, basic_allocation_deallocation)
 {
     XSIGMA_LOG_INFO("Testing basic allocation and deallocation...");
-    
+
     for (const auto& allocator : allocators_)
     {
         SCOPED_TRACE("Allocator: " + std::string(allocator->name()));
-        
+
         // Test various sizes
         std::vector<std::size_t> sizes = {1, 8, 16, 64, 256, 1024, 4096, 65536};
-        
+
         for (std::size_t size : sizes)
         {
             void* ptr = allocator->allocate(size);
             EXPECT_NE(nullptr, ptr) << "Failed to allocate " << size << " bytes";
-            
+
             if (ptr != nullptr)
             {
                 // Write to memory to ensure it's accessible
                 std::memset(ptr, 0xAA, size);
-                
+
                 // Verify memory is writable and readable
                 auto* byte_ptr = static_cast<unsigned char*>(ptr);
                 for (std::size_t i = 0; i < size; ++i)
                 {
                     EXPECT_EQ(0xAA, byte_ptr[i]) << "Memory corruption at offset " << i;
                 }
-                
+
                 allocator->deallocate(ptr, size);
             }
         }
@@ -287,20 +285,20 @@ TEST_F(cpu_memory_allocator_test, basic_allocation_deallocation)
 TEST_F(cpu_memory_allocator_test, zero_size_allocation)
 {
     XSIGMA_LOG_INFO("Testing zero-size allocation behavior...");
-    
+
     for (const auto& allocator : allocators_)
     {
         SCOPED_TRACE("Allocator: " + std::string(allocator->name()));
-        
+
         void* ptr = allocator->allocate(0);
         // Zero-size allocation behavior is implementation-defined
         // Some allocators return nullptr, others return a valid pointer
-        
+
         if (ptr != nullptr)
         {
             allocator->deallocate(ptr, 0);
         }
-        
+
         // Should not crash
         SUCCEED();
     }
@@ -329,7 +327,7 @@ TEST_F(cpu_memory_allocator_test, memory_alignment_verification)
     XSIGMA_LOG_INFO("Testing memory alignment requirements...");
 
     std::vector<std::size_t> alignments = {16, 32, 64, 128, 256, 512, 1024};
-    std::vector<std::size_t> sizes = {64, 256, 1024, 4096};
+    std::vector<std::size_t> sizes      = {64, 256, 1024, 4096};
 
     for (const auto& allocator : allocators_)
     {
@@ -339,14 +337,14 @@ TEST_F(cpu_memory_allocator_test, memory_alignment_verification)
         {
             if (!allocator->supports_alignment(alignment))
             {
-                continue; // Skip unsupported alignments
+                continue;  // Skip unsupported alignments
             }
 
             for (std::size_t size : sizes)
             {
                 void* ptr = allocator->allocate(size, alignment);
-                EXPECT_NE(nullptr, ptr) << "Failed to allocate " << size
-                                       << " bytes with " << alignment << "-byte alignment";
+                EXPECT_NE(nullptr, ptr) << "Failed to allocate " << size << " bytes with "
+                                        << alignment << "-byte alignment";
 
                 if (ptr != nullptr)
                 {
@@ -370,8 +368,8 @@ TEST_F(cpu_memory_allocator_test, cache_line_alignment)
 {
     XSIGMA_LOG_INFO("Testing cache line alignment (64-byte)...");
 
-    constexpr std::size_t cache_line_size = 64;
-    std::vector<std::size_t> sizes = {1, 32, 64, 128, 256, 1024, 4096};
+    constexpr std::size_t    cache_line_size = 64;
+    std::vector<std::size_t> sizes           = {1, 32, 64, 128, 256, 1024, 4096};
 
     for (const auto& allocator : allocators_)
     {
@@ -391,8 +389,7 @@ TEST_F(cpu_memory_allocator_test, cache_line_alignment)
             {
                 auto addr = reinterpret_cast<std::uintptr_t>(ptr);
                 EXPECT_EQ(0u, addr % cache_line_size)
-                    << "Memory not cache-line aligned. Address: 0x"
-                    << std::hex << addr << std::dec;
+                    << "Memory not cache-line aligned. Address: 0x" << std::hex << addr << std::dec;
 
                 allocator->deallocate(ptr, size);
             }
@@ -409,9 +406,9 @@ TEST_F(cpu_memory_allocator_test, large_allocations)
     XSIGMA_LOG_INFO("Testing large memory allocations...");
 
     std::vector<std::size_t> large_sizes = {
-        1024 * 1024,        // 1 MB
-        16 * 1024 * 1024,   // 16 MB
-        64 * 1024 * 1024    // 64 MB
+        1024 * 1024,       // 1 MB
+        16 * 1024 * 1024,  // 16 MB
+        64 * 1024 * 1024   // 64 MB
     };
 
     for (const auto& allocator : allocators_)
@@ -449,8 +446,8 @@ TEST_F(cpu_memory_allocator_test, large_allocations)
             }
             else
             {
-                XSIGMA_LOG_WARNING("Failed to allocate {} MB with {}",
-                                  size / (1024 * 1024), allocator->name());
+                XSIGMA_LOG_WARNING(
+                    "Failed to allocate {} MB with {}", size / (1024 * 1024), allocator->name());
             }
         }
     }
@@ -464,7 +461,7 @@ TEST_F(cpu_memory_allocator_test, memory_pattern_integrity)
 {
     XSIGMA_LOG_INFO("Testing memory pattern integrity...");
 
-    constexpr std::size_t test_size = 8192;
+    constexpr std::size_t test_size    = 8192;
     constexpr std::size_t pattern_size = 256;
 
     for (const auto& allocator : allocators_)
@@ -489,9 +486,9 @@ TEST_F(cpu_memory_allocator_test, memory_pattern_integrity)
             {
                 unsigned char expected = static_cast<unsigned char>(i % pattern_size);
                 EXPECT_EQ(expected, byte_ptr[i])
-                    << "Pattern mismatch at offset " << i
-                    << " (expected " << static_cast<int>(expected)
-                    << ", got " << static_cast<int>(byte_ptr[i]) << ")";
+                    << "Pattern mismatch at offset " << i << " (expected "
+                    << static_cast<int>(expected) << ", got " << static_cast<int>(byte_ptr[i])
+                    << ")";
             }
 
             allocator->deallocate(ptr, test_size);
@@ -507,15 +504,15 @@ TEST_F(cpu_memory_allocator_test, concurrent_allocation_deallocation)
 {
     XSIGMA_LOG_INFO("Testing concurrent allocation and deallocation...");
 
-    constexpr std::size_t num_threads = 4;
+    constexpr std::size_t num_threads            = 4;
     constexpr std::size_t allocations_per_thread = 1000;
-    constexpr std::size_t allocation_size = 1024;
+    constexpr std::size_t allocation_size        = 1024;
 
     for (const auto& allocator : allocators_)
     {
         if (!allocator->is_thread_safe())
         {
-            continue; // Skip non-thread-safe allocators
+            continue;  // Skip non-thread-safe allocators
         }
 
         SCOPED_TRACE("Allocator: " + std::string(allocator->name()));
@@ -524,7 +521,8 @@ TEST_F(cpu_memory_allocator_test, concurrent_allocation_deallocation)
         std::atomic<std::size_t> successful_deallocations{0};
         std::vector<std::thread> threads;
 
-        auto worker = [&]() {
+        auto worker = [&]()
+        {
             std::vector<void*> ptrs;
             ptrs.reserve(allocations_per_thread);
 
@@ -569,8 +567,11 @@ TEST_F(cpu_memory_allocator_test, concurrent_allocation_deallocation)
         EXPECT_EQ(successful_allocations.load(), successful_deallocations.load())
             << "Allocation/deallocation count mismatch";
 
-        XSIGMA_LOG_INFO("Allocator {}: {}/{} successful allocations",
-                       allocator->name(), successful_allocations.load(), expected_total);
+        XSIGMA_LOG_INFO(
+            "Allocator {}: {}/{} successful allocations",
+            allocator->name(),
+            successful_allocations.load(),
+            expected_total);
     }
 }
 
@@ -578,7 +579,7 @@ TEST_F(cpu_memory_allocator_test, thread_local_allocation_patterns)
 {
     XSIGMA_LOG_INFO("Testing thread-local allocation patterns...");
 
-    constexpr std::size_t num_threads = 8;
+    constexpr std::size_t num_threads            = 8;
     constexpr std::size_t allocations_per_thread = 500;
 
     for (const auto& allocator : allocators_)
@@ -590,11 +591,12 @@ TEST_F(cpu_memory_allocator_test, thread_local_allocation_patterns)
 
         SCOPED_TRACE("Allocator: " + std::string(allocator->name()));
 
-        std::atomic<bool> test_failed{false};
+        std::atomic<bool>        test_failed{false};
         std::vector<std::thread> threads;
 
-        auto worker = [&](std::size_t thread_id) {
-            std::mt19937 rng(static_cast<unsigned int>(thread_id));
+        auto worker = [&](std::size_t thread_id)
+        {
+            std::mt19937                               rng(static_cast<unsigned int>(thread_id));
             std::uniform_int_distribution<std::size_t> size_dist(64, 4096);
 
             std::vector<std::pair<void*, std::size_t>> allocations;
@@ -604,7 +606,7 @@ TEST_F(cpu_memory_allocator_test, thread_local_allocation_patterns)
             for (std::size_t i = 0; i < allocations_per_thread; ++i)
             {
                 std::size_t size = size_dist(rng);
-                void* ptr = allocator->allocate(size);
+                void*       ptr  = allocator->allocate(size);
 
                 if (ptr != nullptr)
                 {
@@ -615,7 +617,7 @@ TEST_F(cpu_memory_allocator_test, thread_local_allocation_patterns)
                     // Randomly deallocate some allocations
                     if (allocations.size() > 10 && (rng() % 4) == 0)
                     {
-                        std::size_t idx = rng() % allocations.size();
+                        std::size_t idx          = rng() % allocations.size();
                         auto [old_ptr, old_size] = allocations[idx];
 
                         // Verify pattern before deallocation
@@ -671,11 +673,11 @@ TEST_F(cpu_memory_allocator_test, stress_test_mixed_sizes)
     {
         SCOPED_TRACE("Allocator: " + std::string(allocator->name()));
 
-        std::mt19937 rng(42); // Fixed seed for reproducibility
+        std::mt19937                               rng(42);  // Fixed seed for reproducibility
         std::uniform_int_distribution<std::size_t> size_dist(1, 65536);
         std::vector<std::pair<void*, std::size_t>> active_allocations;
 
-        std::size_t total_allocated = 0;
+        std::size_t total_allocated  = 0;
         std::size_t peak_allocations = 0;
 
         for (std::size_t i = 0; i < num_iterations; ++i)
@@ -684,7 +686,7 @@ TEST_F(cpu_memory_allocator_test, stress_test_mixed_sizes)
             {
                 // Allocate
                 std::size_t size = size_dist(rng);
-                void* ptr = allocator->allocate(size);
+                void*       ptr  = allocator->allocate(size);
 
                 if (ptr != nullptr)
                 {
@@ -698,7 +700,7 @@ TEST_F(cpu_memory_allocator_test, stress_test_mixed_sizes)
             else
             {
                 // Deallocate random allocation
-                std::size_t idx = rng() % active_allocations.size();
+                std::size_t idx  = rng() % active_allocations.size();
                 auto [ptr, size] = active_allocations[idx];
 
                 allocator->deallocate(ptr, size);
@@ -713,8 +715,11 @@ TEST_F(cpu_memory_allocator_test, stress_test_mixed_sizes)
             allocator->deallocate(ptr, size);
         }
 
-        XSIGMA_LOG_INFO("Allocator {}: Peak {} allocations, {} total bytes allocated",
-                       allocator->name(), peak_allocations, total_allocated);
+        XSIGMA_LOG_INFO(
+            "Allocator {}: Peak {} allocations, {} total bytes allocated",
+            allocator->name(),
+            peak_allocations,
+            total_allocated);
     }
 }
 
@@ -758,11 +763,17 @@ TEST_F(cpu_memory_allocator_test, allocation_speed_comparison)
 
         auto end_time = std::chrono::high_resolution_clock::now();
 
-        auto alloc_duration = std::chrono::duration_cast<std::chrono::microseconds>(mid_time - start_time);
-        auto dealloc_duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - mid_time);
+        auto alloc_duration =
+            std::chrono::duration_cast<std::chrono::microseconds>(mid_time - start_time);
+        auto dealloc_duration =
+            std::chrono::duration_cast<std::chrono::microseconds>(end_time - mid_time);
 
-        XSIGMA_LOG_INFO("Allocator {}: {} successful allocations, alloc: {}μs, dealloc: {}μs",
-                       allocator->name(), ptrs.size(), alloc_duration.count(), dealloc_duration.count());
+        XSIGMA_LOG_INFO(
+            "Allocator {}: {} successful allocations, alloc: {}μs, dealloc: {}μs",
+            allocator->name(),
+            ptrs.size(),
+            alloc_duration.count(),
+            dealloc_duration.count());
 
         // Verify we got most allocations
         EXPECT_GE(ptrs.size(), num_allocations * 0.95) << "Too many allocation failures";

@@ -31,10 +31,10 @@ cd Scripts
 python setup.py ninja.clang.python.build.test
 
 # Build with GLOG
-python setup.py ninja.clang.python.build.test --logging.backend=GLOG
+python setup.py ninja.clang.python.build.test --logging=GLOG
 
 # Build with NATIVE
-python setup.py ninja.clang.python.build.test --logging.backend=NATIVE
+python setup.py ninja.clang.python.build.test --logging=NATIVE
 ```
 
 ### Using CMake Directly

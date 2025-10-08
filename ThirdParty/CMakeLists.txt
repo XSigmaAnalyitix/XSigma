@@ -4,11 +4,6 @@ message(STATUS "DEBUG: Processing ThirdParty/CMakeLists.txt")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Force static libraries for third-party dependencies
-# Save the current BUILD_SHARED_LIBS setting
-set(_SAVED_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static build for third-party libraries" FORCE)
-
 # Option to use external libraries instead of bundled ones
 option(XSIGMA_ENABLE_EXTERNAL "Use external copies of third party libraries by default" OFF)
 
@@ -21,7 +16,6 @@ set(BUILD_EXAMPLES OFF CACHE BOOL "Disable examples for third-party libraries" F
 set(BUILD_BENCHMARKS OFF CACHE BOOL "Disable benchmarks for third-party libraries" FORCE)
 
 
-
 # fmt-specific options
 set(FMT_TEST OFF CACHE BOOL "Disable fmt tests" FORCE)
 set(FMT_DOC OFF CACHE BOOL "Disable fmt documentation" FORCE)
@@ -32,6 +26,7 @@ set(CPUINFO_BUILD_TOOLS OFF CACHE BOOL "Disable cpuinfo tools" FORCE)
 set(CPUINFO_BUILD_UNIT_TESTS OFF CACHE BOOL "Disable cpuinfo unit tests" FORCE)
 set(CPUINFO_BUILD_MOCK_TESTS OFF CACHE BOOL "Disable cpuinfo mock tests" FORCE)
 set(CPUINFO_BUILD_BENCHMARKS OFF CACHE BOOL "Disable cpuinfo benchmarks" FORCE)
+set(CPUINFO_LIBRARY_TYPE "static" CACHE STRING "Type of cpuinfo library (shared, static, or default) to build")
 
 # magic_enum-specific options
 set(MAGIC_ENUM_OPT_BUILD_EXAMPLES OFF CACHE BOOL "Disable magic_enum examples" FORCE)
@@ -121,26 +116,9 @@ function(add_third_party_library name)
 endfunction()
 
 # Add third-party libraries conditionally based on XSIGMA_ENABLE_XXX options
-
-# Define default enable options for core libraries if not set
-if(NOT DEFINED XSIGMA_ENABLE_FMT)
-    set(XSIGMA_ENABLE_FMT ON CACHE BOOL "Enable fmt library")
-endif()
-
-if(NOT DEFINED XSIGMA_ENABLE_CPUINFO)
-    set(XSIGMA_ENABLE_CPUINFO ON CACHE BOOL "Enable cpuinfo library")
-endif()
-
-if(NOT DEFINED XSIGMA_ENABLE_MAGICENUM)
-    set(XSIGMA_ENABLE_MAGICENUM ON CACHE BOOL "Enable magic_enum library")
-endif()
-
-# fmt - Modern C++ formatting library (mandatory dependency)
 add_third_party_library(fmt)
 if(TARGET fmt)
     set_target_properties(fmt PROPERTIES FOLDER "ThirdParty/fmt")
-
-
 endif()
 if(TARGET fmt-header-only)
     set_target_properties(fmt-header-only PROPERTIES FOLDER "ThirdParty/fmt")
@@ -164,15 +142,17 @@ if(TARGET magic_enum)
 endif()
 
 # Logging backend libraries (conditionally added based on XSIGMA_LOGGING_BACKEND)
-
-# loguru - Lightweight C++ logging library
-add_third_party_library(loguru
-    CONDITION XSIGMA_USE_LOGURU
-)
-if(TARGET loguru)
+if(XSIGMA_USE_LOGURU)
+    # Save the current BUILD_SHARED_LIBS state
+    set(_saved_build_shared_libs ${BUILD_SHARED_LIBS})
+    
+    # Force loguru to be static
+    set(BUILD_SHARED_LIBS OFF)
+    # loguru - Lightweight C++ logging library
+    add_third_party_library(loguru)
+    # Restore the original BUILD_SHARED_LIBS state
+    set(BUILD_SHARED_LIBS ${_saved_build_shared_libs})
     set_target_properties(loguru PROPERTIES FOLDER "ThirdParty/loguru")
-
-
 endif()
 
 # glog - Google logging library
@@ -182,18 +162,6 @@ add_third_party_library(glog
 if(TARGET glog)
     set_target_properties(glog PROPERTIES FOLDER "ThirdParty/glog")
     set_target_properties(glog_internal PROPERTIES FOLDER "ThirdParty/glog")
-
-    # Configure glog output directories to match XSigma project structure
-    foreach(config Debug Release RelWithDebInfo MinSizeRel)
-        string(TOUPPER ${config} config_upper)
-        set_target_properties(glog PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY_${config_upper} "${XSIGMA_BINARY_DIR}/bin"
-            ARCHIVE_OUTPUT_DIRECTORY_${config_upper} "${XSIGMA_BINARY_DIR}/lib"
-            LIBRARY_OUTPUT_DIRECTORY_${config_upper} "${XSIGMA_BINARY_DIR}/lib"
-        )
-    endforeach()
-
-
 endif()
 
 # mimalloc - Microsoft's high-performance memory allocator (conditional)
@@ -206,12 +174,10 @@ if(TARGET mimalloc)
 endif()
 if(TARGET mimalloc-static)
     set_target_properties(mimalloc-static PROPERTIES FOLDER "ThirdParty/mimalloc")
-
-
 endif()
 
 # =============================================================================
-# Google Test and Google Benchmark Integration (following cpuinfo pattern)
+# Google Test and Google Benchmark Integration
 # =============================================================================
 
 # Google Test - Unit testing framework
@@ -220,7 +186,7 @@ if(XSIGMA_ENABLE_GTEST)
     if(NOT TARGET gtest)
         message(STATUS "Adding Google Test from ThirdParty/googletest")
 
-        # Set options before adding subdirectory (following cpuinfo pattern)
+        # Set options before adding subdirectory
         # Force shared CRT on MSVC to match XSigma's runtime library settings
         if(MSVC)
             set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -245,9 +211,6 @@ if(XSIGMA_ENABLE_BENCHMARK)
     # Check if benchmark target already exists (avoid duplicate add_subdirectory)
     if(NOT TARGET benchmark)
         message(STATUS "Adding Google Benchmark from ThirdParty/benchmark")
-
-        # Set options before adding subdirectory (following cpuinfo pattern)
-        set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
 
         # Add benchmark subdirectory
         # This creates targets: benchmark, benchmark_main
@@ -411,6 +374,3 @@ if(XSIGMA_ENABLE_GTEST)
         endif()
     endif()
 endif()
-
-# Restore the original BUILD_SHARED_LIBS setting
-set(BUILD_SHARED_LIBS ${_SAVED_BUILD_SHARED_LIBS} CACHE BOOL "Build shared libraries" FORCE)

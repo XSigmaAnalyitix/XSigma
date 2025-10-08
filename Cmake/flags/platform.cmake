@@ -3,6 +3,12 @@ set(XSIGMA_REQUIRED_CXX_FLAGS)
 message("--avx compiler flags: ${VECTORIZATION_COMPILER_FLAGS}")
 set(XSIGMA_REQUIRED_C_FLAGS ${VECTORIZATION_COMPILER_FLAGS})
 set(XSIGMA_REQUIRED_CXX_FLAGS ${VECTORIZATION_COMPILER_FLAGS})
+
+if(XSIGMA_ENABLE_SANITIZER)
+  set(XSIGMA_REQUIRED_CXX_FLAGS "${XSIGMA_REQUIRED_CXX_FLAGS} -O1 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls")
+  set(XSIGMA_REQUIRED_C_FLAGS "${XSIGMA_REQUIRED_C_FLAGS} -O1 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls")
+endif()
+
 # make sure Crun is linked in with the native compiler, it is
 # not used by default for shared libraries and is required for
 # things like java to work.

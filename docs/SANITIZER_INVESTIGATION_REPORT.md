@@ -251,13 +251,13 @@ To reproduce and verify the fixes locally:
 ```bash
 # Test with ThreadSanitizer
 cd Scripts
-python setup.py ninja.clang.config.build.test --sanitizer.thread --logging.backend=NATIVE
+python setup.py ninja.clang.config.build.test --sanitizer.thread --logging=NATIVE
 
 # Test with MemorySanitizer  
-python setup.py ninja.clang.config.build.test --sanitizer.memory --logging.backend=NATIVE
+python setup.py ninja.clang.config.build.test --sanitizer.memory --logging=NATIVE
 
 # Test with AddressSanitizer
-python setup.py ninja.clang.config.build.test --sanitizer.address --logging.backend=NATIVE
+python setup.py ninja.clang.config.build.test --sanitizer.address --logging=NATIVE
 ```
 
 ### CI Monitoring

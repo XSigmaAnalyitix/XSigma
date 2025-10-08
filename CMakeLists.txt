@@ -136,6 +136,10 @@ if (NOT UNIX OR APPLE)
   set(XSIGMA_ENABLE_MEMKIND OFF)
 endif()
 
+if(XSIGMA_ENABLE_SANITIZER)
+  set(XSIGMA_ENABLE_MIMALLOC OFF)
+endif()
+
 # Set global variables
 set(XSIGMA_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(XSIGMA_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
@@ -174,8 +178,6 @@ add_library(XSigma::build ALIAS xsigmabuild)
 
 # Include sanitizer configuration after xsigmabuild target is created
 include(sanitize)
-
-
 
 # Set compile features
 target_compile_features(xsigmabuild INTERFACE cxx_std_${XSIGMA_CXX_STANDARD})

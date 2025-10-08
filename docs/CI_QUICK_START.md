@@ -95,10 +95,10 @@ cd Scripts
 python3 setup.py config.ninja.clang.build.test
 
 # GLOG
-python3 setup.py config.ninja.clang.build.test --logging.backend=GLOG
+python3 setup.py config.ninja.clang.build.test --logging=GLOG
 
 # NATIVE
-python3 setup.py config.ninja.clang.build.test --logging.backend=NATIVE
+python3 setup.py config.ninja.clang.build.test --logging=NATIVE
 ```
 
 ### 9. Debug vs Release Builds
@@ -146,7 +146,7 @@ cd Scripts
 python3 setup.py config.ninja.clang.build.test --sanitizer.undefined
 
 # 6. Different logging backend
-python3 setup.py config.ninja.clang.build.test --logging.backend=GLOG
+python3 setup.py config.ninja.clang.build.test --logging=GLOG
 
 # 7. Release build
 python3 setup.py config.ninja.clang.build.test release

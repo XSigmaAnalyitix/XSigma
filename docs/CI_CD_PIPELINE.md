@@ -195,7 +195,7 @@ All jobs use GitHub Actions cache to speed up builds:
 cd Scripts
 python3 setup.py config.ninja.clang.build.test
 python3 setup.py config.ninja.clang.build.test.release
-python3 setup.py config.ninja.clang.build.test --logging.backend=GLOG
+python3 setup.py config.ninja.clang.build.test --logging=GLOG
 ```
 
 ### Valgrind Memory Check
