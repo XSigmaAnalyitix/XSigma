@@ -327,7 +327,7 @@ public:
         if (n == 0)
             return nullptr;
 
-        void* ptr = allocator_device::allocate(n * scalar_size);
+        void* ptr =nullptr;// allocator_device::allocate(n * scalar_size);
         return static_cast<pointer>(ptr);
     }
 
@@ -340,8 +340,8 @@ public:
         if (!ptr)
             return;
 
-        allocator_device::free(ptr);
-        ptr = nullptr;
+        //allocator_device::free(ptr);
+        //ptr = nullptr;
     }
 
     /**
