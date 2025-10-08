@@ -180,13 +180,13 @@ By using NATIVE logging, we eliminate all the loguru-related issues and let the 
 ```bash
 # Test ThreadSanitizer with NATIVE logging
 cd Scripts
-python setup.py ninja.clang.config.build.test --sanitizer.thread --logging.backend=NATIVE
+python setup.py ninja.clang.config.build.test --sanitizer.thread --logging=NATIVE
 
 # Test MemorySanitizer with NATIVE logging
-python setup.py ninja.clang.config.build.test --sanitizer.memory --logging.backend=NATIVE
+python setup.py ninja.clang.config.build.test --sanitizer.memory --logging=NATIVE
 
 # Test AddressSanitizer with NATIVE logging
-python setup.py ninja.clang.config.build.test --sanitizer.address --logging.backend=NATIVE
+python setup.py ninja.clang.config.build.test --sanitizer.address --logging=NATIVE
 ```
 
 ### What to Look For

@@ -34,7 +34,7 @@ target_compile_definitions(CoreCxxTests PRIVATE
     _VARIADIC_MAX=10
 )
 
-# Link libraries (following cpuinfo pattern: simple target_link_libraries)
+# Link libraries
 target_link_libraries(CoreCxxTests PRIVATE
     gtest
     gtest_main
@@ -48,66 +48,24 @@ set_target_properties(CoreCxxTests PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
 )
 
-# Disable memory sanitizer for TestFMT.cxx due to compiler crash with fmt library templates
-if(XSIGMA_ENABLE_SANITIZER AND XSIGMA_SANITIZER_TYPE STREQUAL "memory")
-    set_source_files_properties(TestFMT.cxx PROPERTIES
-        COMPILE_FLAGS "-fno-sanitize=memory"
-    )
-    message(STATUS "Disabled memory sanitizer for TestFMT.cxx due to compiler compatibility issues")
-endif()
-
 # =============================================================================
 # Google Test Discovery for CTest and Visual Studio Test Explorer
 # =============================================================================
-# Following cpuinfo pattern: simple add_test() calls
 
-# Register test with CTest (following cpuinfo pattern)
+# Register test with CTest
 add_test(NAME CoreCxxTests COMMAND CoreCxxTests WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
 # Set test properties
 set_tests_properties(CoreCxxTests PROPERTIES
     TIMEOUT 300
     LABELS "Core;Unit"
-    ENVIRONMENT "LSAN_OPTIONS=${XSIGMA_GLOBAL_LSAN_OPTIONS}"
 )
-
-# Add MSAN_OPTIONS if memory sanitizer is enabled
-if(XSIGMA_ENABLE_SANITIZER AND XSIGMA_SANITIZER_TYPE STREQUAL "memory" AND DEFINED XSIGMA_GLOBAL_MSAN_OPTIONS)
-    set_tests_properties(CoreCxxTests PROPERTIES
-        ENVIRONMENT "LSAN_OPTIONS=${XSIGMA_GLOBAL_LSAN_OPTIONS};MSAN_OPTIONS=${XSIGMA_GLOBAL_MSAN_OPTIONS}"
-        # Memory sanitizer warnings should not cause test failure
-        WILL_FAIL FALSE
-    )
-endif()
-
-# Add TSAN_OPTIONS if thread sanitizer is enabled
-if(XSIGMA_ENABLE_SANITIZER AND XSIGMA_SANITIZER_TYPE STREQUAL "thread")
-    set_tests_properties(CoreCxxTests PROPERTIES
-        ENVIRONMENT "LSAN_OPTIONS=${XSIGMA_GLOBAL_LSAN_OPTIONS};TSAN_OPTIONS=halt_on_error=0:abort_on_error=0:report_bugs=1:history_size=7:detect_thread_leaks=false:force_seq_cst_atomics=0"
-        # Thread sanitizer warnings should not cause test failure
-        WILL_FAIL FALSE
-    )
-endif()
 
 # Set coverage environment variable if enabled
 if(XSIGMA_ENABLE_COVERAGE AND DEFINED XSIGMA_LLVM_PROFILE_FILE)
-    if(XSIGMA_ENABLE_SANITIZER AND XSIGMA_SANITIZER_TYPE STREQUAL "memory" AND DEFINED XSIGMA_GLOBAL_MSAN_OPTIONS)
-        set_tests_properties(CoreCxxTests PROPERTIES
-            ENVIRONMENT "LLVM_PROFILE_FILE=${XSIGMA_LLVM_PROFILE_FILE};LSAN_OPTIONS=${XSIGMA_GLOBAL_LSAN_OPTIONS};MSAN_OPTIONS=${XSIGMA_GLOBAL_MSAN_OPTIONS}"
-            # Memory sanitizer warnings should not cause test failure
-            WILL_FAIL FALSE
-        )
-    elseif(XSIGMA_ENABLE_SANITIZER AND XSIGMA_SANITIZER_TYPE STREQUAL "thread")
-        set_tests_properties(CoreCxxTests PROPERTIES
-            ENVIRONMENT "LLVM_PROFILE_FILE=${XSIGMA_LLVM_PROFILE_FILE};LSAN_OPTIONS=${XSIGMA_GLOBAL_LSAN_OPTIONS};TSAN_OPTIONS=halt_on_error=0:abort_on_error=0:report_bugs=1:history_size=7:detect_thread_leaks=false:force_seq_cst_atomics=0"
-            # Thread sanitizer warnings should not cause test failure
-            WILL_FAIL FALSE
-        )
-    else()
-        set_tests_properties(CoreCxxTests PROPERTIES
-            ENVIRONMENT "LLVM_PROFILE_FILE=${XSIGMA_LLVM_PROFILE_FILE};LSAN_OPTIONS=${XSIGMA_GLOBAL_LSAN_OPTIONS}"
-        )
-    endif()
+    set_tests_properties(CoreCxxTests PROPERTIES
+        ENVIRONMENT "LLVM_PROFILE_FILE=${XSIGMA_LLVM_PROFILE_FILE}"
+    )
 endif()
 
 message(STATUS "✓ CoreCxxTests registered with CTest")
@@ -140,11 +98,11 @@ endif()
 # Mimalloc Support
 # =============================================================================
 if(XSIGMA_ENABLE_MIMALLOC)
-    if(TARGET mimalloc-static)
-        target_link_libraries(CoreCxxTests PRIVATE mimalloc-static)
-        message(STATUS "CoreCxxTests linked with mimalloc-static")
+    if(TARGET XSigma::mimalloc)
+        target_link_libraries(CoreCxxTests PRIVATE XSigma::mimalloc)
+        message(STATUS "CoreCxxTests linked with XSigma::mimalloc")
     else()
-        message(WARNING "XSIGMA_ENABLE_MIMALLOC is ON but mimalloc-static target is not available for tests")
+        message(WARNING "XSIGMA_ENABLE_MIMALLOC is ON but XSigma::mimalloc target is not available for tests")
     endif()
 endif()
 
@@ -161,13 +119,13 @@ file(
 )
     add_executable(CoreCxxBenchmark ${bench_sources})
 
-    # Link libraries (following cpuinfo pattern: simple target_link_libraries)
+    # Link libraries
     target_link_libraries(CoreCxxBenchmark PRIVATE benchmark XSigma::Core ${XSIGMA_CUDA_LIBRARIES})
 
     # Add mimalloc support for benchmarks
-    if(XSIGMA_ENABLE_MIMALLOC AND TARGET mimalloc-static)
-        target_link_libraries(CoreCxxBenchmark PRIVATE mimalloc-static)
-        message(STATUS "CoreCxxBenchmark linked with mimalloc-static")
+    if(XSIGMA_ENABLE_MIMALLOC AND TARGET XSigma::mimalloc)
+        target_link_libraries(CoreCxxBenchmark PRIVATE XSigma::mimalloc)
+        message(STATUS "CoreCxxBenchmark linked with XSigma::mimalloc")
     endif()
 
     # Set target properties

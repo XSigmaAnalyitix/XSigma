@@ -184,7 +184,6 @@ elseif(XSIGMA_USE_LOGURU AND TARGET XSigma::loguru)
     target_link_libraries(Core PRIVATE XSigma::loguru)
     target_compile_definitions(Core PUBLIC
         XSIGMA_USE_LOGURU
-        XSIGMA_MODULE_ENABLE_XSIGMA_loguru=1
     )
     message(STATUS "Core library using LOGURU logging backend")
 elseif(XSIGMA_USE_GLOG AND TARGET XSigma::glog)
@@ -213,8 +212,9 @@ if(XSIGMA_ENABLE_TBB)
 endif()
 
 if(XSIGMA_ENABLE_MIMALLOC)
-    target_link_libraries(Core PRIVATE "mimalloc-static")
-    add_dependencies(Core mimalloc-static)
+    target_link_libraries(Core PRIVATE XSigma::mimalloc)
+    
+    add_dependencies(Core XSigma::mimalloc)
 endif()
 
 # CUDA support

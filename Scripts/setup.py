@@ -1004,8 +1004,8 @@ def parse_args(args):
             else:
                 print_status(f"Invalid sanitizer type: {sanitizer_type}. Valid options: {', '.join(valid_sanitizers)}", "ERROR")
                 sys.exit(1)
-        # Handle logging backend flags with dot notation (e.g., --logging.backend=GLOG)
-        elif arg.startswith("--logging.backend=") or arg.startswith("--logging-backend="):
+        # Handle logging backend flags with dot notation (e.g., --logging=GLOG)
+        elif arg.startswith("--logging="):
             backend_type = arg.split("=", 1)[1].upper()
             valid_backends = ["NATIVE", "LOGURU", "GLOG"]
             if backend_type in valid_backends:
@@ -1055,8 +1055,7 @@ def main():
         print("  --cppcheck-autofix         Alias for --enable-cppcheck-autofix")
         print("  spell                      Enable spell checking with automatic corrections (WARNING: modifies source files)")
         print("\nLogging backend flags:")
-        print("  --logging.backend=BACKEND  Set logging backend")
-        print("  --logging-backend=BACKEND  Alias for --logging.backend")
+        print("  --logging=BACKEND  Set logging backend")
         print("                             Options: NATIVE, LOGURU, GLOG")
         print("                             Default: LOGURU")
         print("\nSanitizer flags:")
@@ -1071,9 +1070,9 @@ def main():
         print("                             thread, memory, leak")
         print("\nLogging backend examples:")
         print("  # Use GLOG backend")
-        print("  python setup.py ninja.clang.config.build.test --logging.backend=GLOG")
+        print("  python setup.py ninja.clang.config.build.test --logging=GLOG")
         print("  # Use NATIVE backend")
-        print("  python setup.py ninja.clang.config.build.test --logging-backend=NATIVE")
+        print("  python setup.py ninja.clang.config.build.test --logging=NATIVE")
         print("  # Use LOGURU backend (default, no flag needed)")
         print("  python setup.py ninja.clang.config.build.test")
         print("\nSanitizer examples:")

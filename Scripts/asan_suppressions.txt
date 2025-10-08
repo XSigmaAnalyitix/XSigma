@@ -38,6 +38,12 @@ leak:*kernel32*
 leak:*ntdll*
 leak:*user32*
 
+# Suppress bad-free errors in Windows runtime libraries when using mimalloc
+# This is a known issue when mixing custom allocators with system libraries
+bad-free:*ucrtbased*
+bad-free:*MSVCP140D*
+bad-free:*msvcrt*
+
 # LLVM/Clang runtime libraries
 leak:*clang_rt*
 leak:*compiler_rt*
