@@ -271,6 +271,9 @@ public:
     void* allocate_raw(size_t alignment, size_t num_bytes) override
     {
         // Check for large allocation warning (rate-limited)
+        // cppcheck-suppress syntaxError
+        // Explanation: XSIGMA_UNLIKELY is a branch prediction macro that expands to compiler-specific
+        // attributes (__builtin_expect or [[unlikely]]). Cppcheck doesn't understand this macro syntax.
         if XSIGMA_UNLIKELY (num_bytes > static_cast<size_t>(LargeAllocationWarningBytes()))
         {
             const auto current_count =

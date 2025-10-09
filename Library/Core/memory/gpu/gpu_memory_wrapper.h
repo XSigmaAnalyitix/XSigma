@@ -340,7 +340,7 @@ public:
     gpu_memory_wrapper()
         : ptr_(nullptr),
           count_(0),
-          device_(device_enum::CPU, 0),
+          device_(device_enum::CUDA, 0),
           pool_(nullptr),
           block_(),
           deleter_(nullptr),

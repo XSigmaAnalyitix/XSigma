@@ -750,6 +750,7 @@ class XsigmaConfiguration:
             ".",
             "--platform=unspecified",
             "--enable=style",
+"--inline-suppr", 
             "-q",
             "--library=qt",
             "--library=posix",

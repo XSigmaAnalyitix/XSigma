@@ -1,5 +1,6 @@
 #include "memory/gpu/gpu_resource_tracker.h"
 
+#include <numeric>
 #include <algorithm>
 #include <cstdint>
 #include <iomanip>

@@ -113,6 +113,10 @@ int multi_threader::GetGlobalDefaultNumberOfThreads()
 #ifndef XSIGMA_USE_PTHREADS
         // If we are not multithreading, the number of threads should
         // always be 1
+        // cppcheck-suppress redundantAssignment
+        // Explanation: This assignment is platform-dependent. On systems without threading support
+        // (no WIN32_THREADS and no PTHREADS), num must be set to 1. The previous assignments are
+        // only active on specific platforms (Linux, macOS, Windows), so this is not redundant.
         num = 1;
 #endif
 #endif

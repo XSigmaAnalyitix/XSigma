@@ -158,6 +158,10 @@ Allocator* process_state::GetCPUAllocator(int numa_node)
             allocator = allocator_cpu_base();
         }
 
+        // cppcheck-suppress knownConditionTrueFalse
+        // Explanation: The condition depends on runtime configuration (use_allocator_tracking) and
+        // the allocator type. While it may be constant in some build configurations, it's not
+        // always true or false - it varies based on the allocator implementation and settings.
         if (use_allocator_tracking && !allocator->TracksAllocationSizes())
         {
             allocator = new allocator_tracking(allocator, true);

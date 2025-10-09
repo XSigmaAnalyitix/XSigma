@@ -257,7 +257,7 @@ std::vector<stack_frame> back_trace::capture(const backtrace_options& options)
     {
         return result;  // Failed to get symbols
     }
-
+    // cppcheck-suppress arithOperationsOnVoidPointer
     const std::vector<std::string> symbols(raw_symbols.get(), raw_symbols.get() + callstack.size());
 
     // Parse each frame

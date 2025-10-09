@@ -453,7 +453,7 @@ public:
             XSIGMA_THROW("Unsupported device type for context setting");
         }
 
-        current_device_ = target_device;
+        current_device_ = *device_it;
     }
 
     gpu_device_info get_current_device() const override
