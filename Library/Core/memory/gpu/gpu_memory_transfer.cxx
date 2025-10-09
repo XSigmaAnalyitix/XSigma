@@ -307,7 +307,7 @@ private:
 public:
     gpu_memory_transfer_impl() = default;
 
-    ~gpu_memory_transfer_impl() override { wait_for_all_transfers(); }
+    ~gpu_memory_transfer_impl() override { gpu_memory_transfer_impl::wait_for_all_transfers(); }
 
     gpu_transfer_info transfer_sync(
         const void*        src,
@@ -505,7 +505,7 @@ public:
         }
 
         // Wait for all operations to complete
-        for (auto& op : operations)
+        for (const auto& op : operations)
         {
             try
             {

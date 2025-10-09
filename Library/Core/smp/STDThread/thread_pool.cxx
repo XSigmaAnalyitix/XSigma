@@ -22,7 +22,7 @@ struct thread_pool::ThreadJob
     // This constructor is needed because aggregate initialization can not have default value
     // (prior to C++14)
     // also because emplace_back can not use aggregate initialization (prior to C++20)
-    ThreadJob(ProxyData* proxy = nullptr, std::function<void()> function = nullptr)
+    explicit ThreadJob(ProxyData* proxy = nullptr, std::function<void()> function = nullptr)
         : Proxy{proxy}, Function{std::move(function)}
     {
     }
@@ -50,7 +50,7 @@ struct thread_pool::ProxyThreadData
     // This constructor is needed because aggregate initialization can not have default value
     // (prior to C++14)
     // also because emplace_back can not use aggregate initialization (prior to C++20)
-    ProxyThreadData(ThreadData* threadData = nullptr, std::size_t id = 0)
+    explicit ProxyThreadData(ThreadData* threadData = nullptr, std::size_t id = 0)
         : Thread{threadData}, Id{id}
     {
     }
@@ -144,7 +144,7 @@ void thread_pool::Proxy::Join()
             auto it = std::find_if(
                 threadData.Jobs.begin(),
                 threadData.Jobs.end(),
-                [this](ThreadJob& job) { return job.Proxy == this->Data.get(); });
+                [this](const ThreadJob& job) { return job.Proxy == this->Data.get(); });
 
             if (it == threadData.Jobs.end())  // no remaining job associated to this proxy
             {
@@ -228,12 +228,12 @@ thread_pool::~thread_pool()
 {
     this->Joining.store(true, std::memory_order_release);
 
-    for (auto& threadData : this->Threads)
+    for (const auto& threadData : this->Threads)
     {
         threadData->ConditionVariable.notify_one();
     }
 
-    for (auto& threadData : this->Threads)
+    for (const auto& threadData : this->Threads)
     {
         threadData->SystemThread.join();
     }
@@ -280,15 +280,17 @@ std::size_t thread_pool::GetThreadId() const
     {
         std::unique_lock<std::mutex> lock{threadData->Mutex};  // protect threadData->Jobs access
         assert(threadData->RunningJob != NoRunningJob && "Invalid state");
-        auto& proxyThreads = threadData->Jobs[threadData->RunningJob].Proxy->Threads;
+        const auto& proxyThreads = threadData->Jobs[threadData->RunningJob].Proxy->Threads;
         lock.unlock();
 
-        for (const auto& proxyThread : proxyThreads)
+        auto proxy_it = std::find_if(
+            proxyThreads.begin(),
+            proxyThreads.end(),
+            [threadData](const auto& proxyThread) { return proxyThread.Thread == threadData; });
+
+        if (proxy_it != proxyThreads.end())
         {
-            if (proxyThread.Thread == threadData)
-            {
-                return proxyThread.Id;
-            }
+            return proxy_it->Id;
         }
     }
 
@@ -388,12 +390,13 @@ void thread_pool::FillThreadsForNestedProxy(ProxyData* proxy, std::size_t maxCou
     {
         for (auto* parent = proxy->Parent; parent != nullptr; parent = parent->Parent)
         {
-            for (auto& proxyThread : parent->Threads)
+            bool found = std::any_of(
+                parent->Threads.begin(),
+                parent->Threads.end(),
+                [threadData](const auto& proxyThread) { return proxyThread.Thread == threadData; });
+            if (found)
             {
-                if (proxyThread.Thread == threadData)
-                {
-                    return false;
-                }
+                return false;
             }
         }
 

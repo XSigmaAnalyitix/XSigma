@@ -25,9 +25,9 @@ inline HashType GetHash(ThreadIdType id)
     const HashType offset_basis = 2166136261U;
     const HashType FNV_prime    = 16777619U;
 
-    auto*    bp   = reinterpret_cast<unsigned char*>(&id);
-    auto*    be   = bp + sizeof(id);
-    HashType hval = offset_basis;
+    auto*       bp   = reinterpret_cast<unsigned char*>(&id);
+    const auto* be   = bp + sizeof(id);
+    HashType    hval = offset_basis;
     while (bp < be)
     {
         hval ^= static_cast<HashType>(*bp++);

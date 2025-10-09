@@ -39,6 +39,7 @@
 #include <iomanip>
 #include <memory>
 #include <mutex>
+#include <numeric>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -1353,11 +1354,9 @@ void RenderRegion(
     const char* ptr_c      = static_cast<const char*>(ptr);
 
     size_t start_location = ((ptr_c - base_ptr_c + offset) * resolution) / total_render_size;
-    XSIGMA_CHECK_DEBUG(start_location >= 0);
     XSIGMA_CHECK_DEBUG(start_location < resolution);
     size_t end_location =
         ((ptr_c + size - 1 - base_ptr_c + offset) * resolution) / total_render_size;
-    XSIGMA_CHECK_DEBUG(end_location >= 0);
     XSIGMA_CHECK_DEBUG(end_location < resolution);
 
     for (size_t i = start_location; i <= end_location; ++i)
@@ -1375,11 +1374,11 @@ std::string allocator_bfc::RenderOccupancy()
     char         rendered[resolution];
 
     // Compute the total region size to render over
-    size_t total_region_size = 0;
-    for (const auto& region : region_manager_.regions())
-    {
-        total_region_size += region.memory_size();
-    }
+    size_t total_region_size = std::accumulate(
+        region_manager_.regions().begin(),
+        region_manager_.regions().end(),
+        size_t{0},
+        [](size_t sum, const auto& region) { return sum + region.memory_size(); });
 
     if (total_region_size == 0)
     {

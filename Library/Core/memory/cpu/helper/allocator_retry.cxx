@@ -100,8 +100,8 @@ void* allocator_retry::allocate_raw(
 
     using Clock         = std::chrono::steady_clock;
     const auto deadline = Clock::now() + std::chrono::milliseconds(max_millis_to_wait);
-    bool       first    = true;
-    void*      ptr      = nullptr;
+
+    void* ptr = nullptr;
 
     while (ptr == nullptr)
     {
@@ -111,12 +111,6 @@ void* allocator_retry::allocate_raw(
         if (ptr == nullptr)
         {
             auto now = Clock::now();
-
-            // Initialize deadline on first failure
-            if (first)
-            {
-                first = false;
-            }
 
             if (now < deadline)
             {

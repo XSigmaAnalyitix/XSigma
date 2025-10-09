@@ -46,14 +46,13 @@ allocator_factory_registry* allocator_factory_registry::singleton()
 const allocator_factory_registry::FactoryEntry* allocator_factory_registry::FindEntry(
     const std::string& name, int priority) const
 {
-    for (const auto& entry : factories_)
-    {
-        if (name == entry.name && priority == entry.priority)
-        {
-            return &entry;
-        }
-    }
-    return nullptr;
+    auto it = std::find_if(
+        factories_.begin(),
+        factories_.end(),
+        [&name, priority](const auto& entry)
+        { return name == entry.name && priority == entry.priority; });
+
+    return (it != factories_.end()) ? &(*it) : nullptr;
 }
 
 XSIGMA_NO_SANITIZE_MEMORY

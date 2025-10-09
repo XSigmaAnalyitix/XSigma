@@ -164,18 +164,17 @@ gpu_allocator_tracking::gpu_allocator_tracking(
     auto  devices        = device_manager.get_available_devices();
 
     // Find our target device
-    bool device_found = false;
-    for (const auto& device : devices)
-    {
-        if (device.device_type == device_type_ && device.device_index == device_index_)
-        {
-            device_info_ = device;
-            device_found = true;
-            break;
-        }
-    }
+    auto device_it = std::find_if(
+        devices.begin(),
+        devices.end(),
+        [this](const auto& device)
+        { return device.device_type == device_type_ && device.device_index == device_index_; });
 
-    if (!device_found)
+    if (device_it != devices.end())
+    {
+        device_info_ = *device_it;
+    }
+    else
     {
         XSIGMA_THROW(
             "GPU device not found: type={}, index={}",
@@ -475,14 +474,17 @@ void gpu_allocator_tracking::deallocate_raw(void* ptr, size_t bytes, void* strea
     if (enhanced_tracking_enabled_)
     {
         std::shared_lock<std::shared_mutex> enhanced_lock(gpu_shared_mu_);
-        for (auto& record : gpu_records_)
-        {
-            // Simple pointer matching - in production might need more sophisticated tracking
-            if (record.dealloc_timestamp_us == 0)  // Not yet deallocated
+        auto                                record_it = std::find_if(
+            gpu_records_.begin(),
+            gpu_records_.end(),
+            [](const auto& record)
             {
-                allocation_id = record.allocation_id;
-                break;
-            }
+                return record.dealloc_timestamp_us == 0;  // Not yet deallocated
+            });
+
+        if (record_it != gpu_records_.end())
+        {
+            allocation_id = record_it->allocation_id;
         }
     }
 
@@ -558,16 +560,18 @@ void gpu_allocator_tracking::deallocate_raw(void* ptr, size_t bytes, void* strea
     if (enhanced_tracking_enabled_ && allocation_id > 0)
     {
         std::unique_lock<std::shared_mutex> enhanced_lock(gpu_shared_mu_);
-        for (auto& record : gpu_records_)
+        auto                                record_it = std::find_if(
+            gpu_records_.begin(),
+            gpu_records_.end(),
+            [allocation_id](const auto& record)
+            { return record.allocation_id == allocation_id && record.dealloc_timestamp_us == 0; });
+
+        if (record_it != gpu_records_.end())
         {
-            if (record.allocation_id == allocation_id && record.dealloc_timestamp_us == 0)
-            {
-                record.dealloc_duration_us  = duration_us;
-                record.dealloc_timestamp_us = std::chrono::duration_cast<std::chrono::microseconds>(
-                                                  end_time.time_since_epoch())
-                                                  .count();
-                break;
-            }
+            record_it->dealloc_duration_us = duration_us;
+            record_it->dealloc_timestamp_us =
+                std::chrono::duration_cast<std::chrono::microseconds>(end_time.time_since_epoch())
+                    .count();
         }
     }
 

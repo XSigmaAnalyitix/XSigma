@@ -77,8 +77,7 @@ void NUMAMove(void* ptr, size_t size, int numa_node_id)
     uintptr_t page_start_ptr = ((reinterpret_cast<uintptr_t>(ptr)) & ~(getpagesize() - 1));
     ptrdiff_t offset         = reinterpret_cast<uintptr_t>(ptr) - page_start_ptr;
     // Avoid extra dynamic allocation and NUMA api calls
-    XSIGMA_CHECK(
-        numa_node_id >= 0 && static_cast<unsigned>(numa_node_id) < sizeof(unsigned long) * 8, "");
+    XSIGMA_CHECK(static_cast<unsigned>(numa_node_id) < sizeof(unsigned long) * 8, "");
     unsigned long mask = 1UL << numa_node_id;
     XSIGMA_CHECK(
         mbind(

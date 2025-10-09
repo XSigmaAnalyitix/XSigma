@@ -237,7 +237,7 @@ public:
 
     ~gpu_memory_pool_impl() override
     {
-        clear_cache();
+        gpu_memory_pool_impl::clear_cache();
 
         if (config_.debug_mode && !active_allocations_.empty())
         {

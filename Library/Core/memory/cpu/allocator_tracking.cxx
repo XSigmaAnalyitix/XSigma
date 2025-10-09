@@ -356,13 +356,14 @@ void allocator_tracking::deallocate_raw(void* ptr)
     {
         std::unique_lock<std::shared_mutex> enhanced_lock(shared_mu_);
         // Find the corresponding allocation record and update deallocation time
-        for (auto& record : enhanced_records_)
+        auto record_it = std::find_if(
+            enhanced_records_.begin(),
+            enhanced_records_.end(),
+            [allocation_id](const auto& record) { return record.allocation_id == allocation_id; });
+
+        if (record_it != enhanced_records_.end())
         {
-            if (record.allocation_id == allocation_id)
-            {
-                record.dealloc_duration_us = duration_us;
-                break;
-            }
+            record_it->dealloc_duration_us = duration_us;
         }
     }
 
@@ -490,10 +491,7 @@ std::vector<alloc_record> allocator_tracking::GetCurrentRecords()
     {
         std::unique_lock<std::mutex> lock(mu_);
 
-        for (const alloc_record& alloc : allocations_)
-        {
-            allocations.emplace_back(alloc);
-        }
+        std::copy(allocations_.begin(), allocations_.end(), std::back_inserter(allocations));
     }
     return allocations;
 }
@@ -616,10 +614,10 @@ std::tuple<double, double, double> allocator_tracking::GetEfficiencyMetrics() co
 
     double utilization_ratio = 1.0;
     double overhead_ratio    = 0.0;
-    size_t total_requested   = 0;
 
     if (track_sizes_locally_)
     {
+        size_t total_requested = 0;
         // Calculate actual utilization from tracked data
         for (const auto& [ptr, chunk] : in_use_)
         {

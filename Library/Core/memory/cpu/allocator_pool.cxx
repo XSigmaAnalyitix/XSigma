@@ -178,7 +178,7 @@ void allocator_pool::deallocate_raw(void* ptr)
     if (ptr == nullptr)
         return;
     ChunkPrefix* cp = FindPrefix(ptr);
-    XSIGMA_CHECK((void*)cp <= (void*)ptr);
+    XSIGMA_CHECK(static_cast<void*>(cp) <= static_cast<void*>(ptr));
     if (!has_size_limit_ && !auto_resize_)
     {
         allocator_->Free(cp, cp->num_bytes);
@@ -188,13 +188,13 @@ void allocator_pool::deallocate_raw(void* ptr)
         std::lock_guard<std::mutex> lock(mutex_);
 
         // Check for double-free: search if this pointer is already in the pool
-        for (const auto& iter : pool_)
+        if (std::any_of(
+                pool_.begin(),
+                pool_.end(),
+                [cp](const auto& iter) { return iter.second->ptr == cp; }))
         {
-            if (iter.second->ptr == cp)
-            {
-                // Double-free detected, handle gracefully by ignoring
-                return;
-            }
+            // Double-free detected, handle gracefully by ignoring
+            return;
         }
 
         ++put_count_;

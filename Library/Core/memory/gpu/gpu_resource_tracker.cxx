@@ -306,7 +306,7 @@ public:
         auto it = active_allocations_.find(ptr);
         if (it != active_allocations_.end())
         {
-            auto& info = it->second;
+            const auto& info = it->second;
             info->access_count.fetch_add(1);
             info->last_access_time = std::chrono::high_resolution_clock::now();
         }
@@ -523,11 +523,11 @@ public:
         oss << "Active Allocations by Device:\n";
         for (const auto& [device_key, allocations] : by_device)
         {
-            size_t total_bytes = 0;
-            for (const auto& alloc : allocations)
-            {
-                total_bytes += alloc->size;
-            }
+            size_t total_bytes = std::accumulate(
+                allocations.begin(),
+                allocations.end(),
+                size_t{0},
+                [](size_t sum, const auto& alloc) { return sum + alloc->size; });
 
             oss << "  Device " << static_cast<int>(device_key.first) << ":" << device_key.second
                 << " - " << allocations.size() << " allocations, " << std::fixed
