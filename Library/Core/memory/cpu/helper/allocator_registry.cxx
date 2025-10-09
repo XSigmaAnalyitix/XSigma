@@ -97,15 +97,12 @@ Allocator* allocator_factory_registry::GetAllocator()
 {
     std::lock_guard<std::mutex> l(mu_);
     first_alloc_made_        = true;
-    FactoryEntry* best_entry = nullptr;
-    for (auto& entry : factories_)
-    {
-        if (best_entry == nullptr || entry.priority > best_entry->priority)
-        {
-            best_entry = &entry;
-        }
-    }
+    auto it = std::max_element(factories_.begin(), factories_.end(),
+                          [](const auto& a, const auto& b) {
+                              return a.priority < b.priority;
+                          });
 
+    auto* best_entry = it != factories_.end() ? &*it : nullptr;
     if (best_entry)
     {
         if (!best_entry->allocator)

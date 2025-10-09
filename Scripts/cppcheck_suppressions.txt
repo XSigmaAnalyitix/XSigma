@@ -4,8 +4,3 @@
 *:Library/Core/experimental/*
 unknownMacro:*XSIGMA_UNLIKELY*
 unknownMacro:*XSIGMA_LIKELY*
-syntaxError:Library/Core/memory/cpu/allocator_cpu_impl.cxx:274
-syntaxError:Library/Core/memory/cpu/helper/memory_allocator.cxx:57
-syntaxError:Library/Core/memory/gpu/gpu_allocator_tracking.cxx:347
-knownConditionTrueFalse:Library/Core/memory/cpu/helper/process_state.cxx:161
-redundantAssignment:Library/Core/smp/multi_threader.cxx:116
