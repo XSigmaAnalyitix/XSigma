@@ -183,7 +183,6 @@ class XsigmaFlags:
             "external",
             "cxxstd",
             "cppcheck",
-            "cppcheck_autofix",
             "spell",
         ]
         self.__description = [
@@ -212,7 +211,6 @@ class XsigmaFlags:
             "use external copies of third party libraries by default",
             "C++ standard: cxx17, cxx20, cxx23",
             "enable cppcheck static analysis",
-            "enable automatic cppcheck fixes (WARNING: modifies source files)",
             "enable spell checking with automatic corrections",
         ]
 
@@ -245,7 +243,6 @@ class XsigmaFlags:
             "external": "XSIGMA_ENABLE_EXTERNAL",
             "cxxstd": "XSIGMA_CXX_STANDARD",
             "cppcheck": "XSIGMA_ENABLE_CPPCHECK",
-            "cppcheck_autofix": "XSIGMA_ENABLE_AUTOFIX",
             "spell": "XSIGMA_ENABLE_SPELL",
 
             # Non-CMake flags (for internal use, not passed to CMake)
@@ -493,6 +490,9 @@ class XsigmaFlags:
     def is_valgrind(self):
         return self.__value["valgrind"] == self.ON
 
+    def is_cppcheck(self):
+        return self.__value["cppcheck"] == self.ON
+
 
 
 
@@ -723,6 +723,87 @@ class XsigmaConfiguration:
         except subprocess.CalledProcessError as e:
             print_status(f"Build failed: {e}", "ERROR")
             sys.exit(1)
+
+    def cppcheck(self, source_path, build_path):
+        """Run cppcheck static analysis on the codebase."""
+        if self.__value["build"] != "build" or not self.__xsigma_flags.is_cppcheck():
+            return 0
+
+        print_status("Running cppcheck static analysis...", "INFO")
+
+        # Check if cppcheck is installed
+        try:
+            subprocess.run(["cppcheck", "--version"], capture_output=True, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print_status("cppcheck not found. Please install cppcheck:", "ERROR")
+            print_status("  - Ubuntu/Debian: sudo apt-get install cppcheck", "INFO")
+            print_status("  - CentOS/RHEL/Fedora: sudo dnf install cppcheck", "INFO")
+            print_status("  - macOS: brew install cppcheck", "INFO")
+            print_status("  - Windows: choco install cppcheck or winget install cppcheck", "INFO")
+            return 1
+        
+        os.makedirs(build_path, exist_ok=True)
+        output_file = os.path.join(build_path, "cppcheck_output.log")
+        # Build cppcheck command with exact parameters as specified
+        cppcheck_cmd = [
+            "cppcheck",
+            ".",
+            "--platform=unspecified",
+            "--enable=style",
+            "-q",
+            "--library=qt",
+            "--library=posix",
+            "--library=gnu",
+            "--library=bsd",
+            "--library=windows",
+            "--check-level=exhaustive",
+            "--template={id},{file}:{line},{severity},{message}",
+            f"--suppressions-list=Scripts/cppcheck_suppressions.txt",
+            "-j8",
+            "-I",
+            "Library",
+            f"--output-file={output_file}"
+        ]
+
+        try:
+            # Change to project root directory to run cppcheck
+            original_dir = os.getcwd()
+            os.chdir(source_path)
+
+            print_status(f"Running cppcheck from: {source_path}", "INFO")
+            print_status(f"Command: {' '.join(cppcheck_cmd)}", "INFO")
+
+            result = subprocess.run(
+                cppcheck_cmd,
+                capture_output=True,
+                text=True,
+                check=False
+            )
+
+            # Change back to build directory
+            os.chdir(original_dir)
+
+            # Display cppcheck output
+            if result.stdout:
+                print(result.stdout)
+            if result.stderr:
+                print(result.stderr)
+
+            if result.returncode == 0:
+                print_status("Cppcheck analysis completed successfully", "SUCCESS")
+            else:
+                print_status(f"Cppcheck analysis completed with warnings (exit code: {result.returncode})", "WARNING")
+
+            return result.returncode
+
+        except Exception as e:
+            print_status(f"Error running cppcheck: {e}", "ERROR")
+            # Change back to build directory in case of error
+            try:
+                os.chdir(original_dir)
+            except:
+                pass
+            return 1
 
 
 
@@ -980,11 +1061,8 @@ def parse_args(args):
     processed_args = []
 
     for arg in args:
-        # Handle cppcheck autofix flags
-        if arg in ["--enable-cppcheck-autofix", "--cppcheck-autofix"]:
-            processed_args.append("cppcheck_autofix")
         # Handle sanitizer flags with dot notation (e.g., --sanitizer.undefined)
-        elif arg.startswith("--sanitizer."):
+        if arg.startswith("--sanitizer."):
             sanitizer_type = arg.split(".", 1)[1].lower()
             valid_sanitizers = ["address", "undefined", "thread", "memory", "leak"]
             if sanitizer_type in valid_sanitizers:
@@ -1051,8 +1129,6 @@ def main():
         print("  coverage  - Enable coverage (automatically runs analysis)")
         print("  analyze   - Re-analyze existing coverage data (standalone)")
         print("\nSpecial flags:")
-        print("  --enable-cppcheck-autofix  Enable automatic cppcheck fixes (WARNING: modifies source files)")
-        print("  --cppcheck-autofix         Alias for --enable-cppcheck-autofix")
         print("  spell                      Enable spell checking with automatic corrections (WARNING: modifies source files)")
         print("\nLogging backend flags:")
         print("  --logging=BACKEND  Set logging backend")
@@ -1121,6 +1197,7 @@ def main():
         print_status(f"Build directory: {build_path}", "INFO")
         compilation_calc.config(source_path, build_path)
         compilation_calc.build()
+        compilation_calc.cppcheck(source_path, build_path)
         compilation_calc.test(source_path, build_path)
         compilation_calc.coverage(source_path, build_path)
         compilation_calc.analyze(source_path, build_path)
