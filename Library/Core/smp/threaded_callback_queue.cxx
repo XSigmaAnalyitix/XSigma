@@ -328,7 +328,7 @@ bool threaded_callback_queue::TryInvoke(ptr_mutable<xsigmaSharedFutureBase> invo
                 return false;
             }
 
-            SharedFutureBasePointer& result = this->InvokerQueue[index];
+            const SharedFutureBasePointer& result = this->InvokerQueue[index];
 
             // Someone has reinserted in the front another invoker. invoker is already running.
             if (result != invoker)

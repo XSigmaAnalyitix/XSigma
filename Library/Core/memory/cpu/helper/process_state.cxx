@@ -138,9 +138,8 @@ Allocator* process_state::GetCPUAllocator(int numa_node)
                 "Using allocator_bfc with memory limit of {} MB for process_state CPU allocator",
                 cpu_mem_limit_in_mb);
         }
-        else if (sub_allocator)
+        else if (sub_allocator != nullptr)
         {
-            XSIGMA_CHECK_DEBUG(sub_allocator != nullptr);
             allocator = new allocator_pool(
                 /*pool_size_limit=*/100,
                 /*auto_resize=*/true,
@@ -156,7 +155,6 @@ Allocator* process_state::GetCPUAllocator(int numa_node)
         }
         else
         {
-            XSIGMA_CHECK_DEBUG(sub_allocator == nullptr);
             allocator = allocator_cpu_base();
         }
 

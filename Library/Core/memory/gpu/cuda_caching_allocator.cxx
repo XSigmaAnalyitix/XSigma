@@ -142,8 +142,7 @@ struct cuda_caching_allocator::Impl
         std::lock_guard<std::mutex> lock(mutex_);
         reclaim_deferred_blocks_locked();
 
-        Block* block     = find_suitable_block_locked(size);
-        bool   cache_hit = (block != nullptr);
+        Block* block = find_suitable_block_locked(size);
 
         if (block == nullptr)
         {

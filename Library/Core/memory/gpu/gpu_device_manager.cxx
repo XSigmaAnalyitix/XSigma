@@ -69,10 +69,11 @@ private:
 
 #ifdef NVML_AVAILABLE
             // Initialize NVML for device monitoring
-            nvmlReturn_t nvml_result    = nvmlInit();
-            bool         nvml_available = (nvml_result == NVML_SUCCESS);
+            nvmlReturn_t nvml_result = nvmlInit();
+            (void)(nvml_result ==
+                   NVML_SUCCESS);  // Suppress unused variable warning for nvml_available
 #else
-            bool nvml_available = false;
+            // NVML not available
 #endif
 
             // Enumerate CUDA devices
@@ -327,17 +328,20 @@ public:
     {
         std::lock_guard<std::mutex> lock(mutex_);
 
-        for (const auto& device : available_devices_)
+        auto device_it = std::find_if(
+            available_devices_.begin(),
+            available_devices_.end(),
+            [device_type, device_index](const auto& device)
+            { return device.device_type == device_type && device.device_index == device_index; });
+
+        if (device_it != available_devices_.end())
         {
-            if (device.device_type == device_type && device.device_index == device_index)
-            {
-                return device;
-            }
+            return *device_it;
         }
 
         XSIGMA_THROW(
             "Device not found: type={}, index={}", static_cast<int>(device_type), device_index);
-        return {}; // Added to satisfy compiler C4715
+        return {};  // Added to satisfy compiler C4715
     }
 
     //gpu_device_info select_optimal_device_for_monte_carlo(
@@ -414,19 +418,13 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
 
         // Find the device
-        gpu_device_info target_device;
-        bool            found = false;
-        for (const auto& device : available_devices_)
-        {
-            if (device.device_type == device_type && device.device_index == device_index)
-            {
-                target_device = device;
-                found         = true;
-                break;
-            }
-        }
+        auto device_it = std::find_if(
+            available_devices_.begin(),
+            available_devices_.end(),
+            [device_type, device_index](const auto& device)
+            { return device.device_type == device_type && device.device_index == device_index; });
 
-        if (!found)
+        if (device_it == available_devices_.end())
         {
             XSIGMA_THROW(
                 "Cannot set context for unknown device: type={}, index={}",

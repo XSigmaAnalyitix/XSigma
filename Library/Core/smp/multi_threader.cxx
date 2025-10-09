@@ -142,10 +142,13 @@ multi_threader::multi_threader()
         this->MultipleMethod[i]                  = nullptr;
         this->SpawnedThreadActiveFlag[i]         = 0;
         this->SpawnedThreadActiveFlagLock[i]     = nullptr;
+        this->SpawnedThreadProcessID[i]          = xsigmaThreadProcessIDType{};
         this->SpawnedThreadInfoArray[i].ThreadID = i;
+        this->MultipleData[i]                    = nullptr;
     }
 
     this->SingleMethod    = nullptr;
+    this->SingleData      = nullptr;
     this->NumberOfThreads = multi_threader::GetGlobalDefaultNumberOfThreads();
 }
 
@@ -218,9 +221,8 @@ void multi_threader::SetMultipleMethod(int index, xsigmaThreadFunctionType f, vo
 // Execute the method set as the SingleMethod on NumberOfThreads threads.
 void multi_threader::SingleMethodExecute()
 {
-    int thread_loop = 0;
-
 #ifdef XSIGMA_USE_WIN32_THREADS
+    int    thread_loop;
     DWORD  threadId;
     HANDLE process_id[XSIGMA_MAX_THREADS] = {};
 #endif
@@ -254,7 +256,7 @@ void multi_threader::SingleMethodExecute()
             nullptr,
             0,
             this->SingleMethod,
-            ((void*)(&this->ThreadInfoArray[thread_loop])),
+            static_cast<void*>(&this->ThreadInfoArray[thread_loop]),
             0,
             &threadId);
 
@@ -264,7 +266,7 @@ void multi_threader::SingleMethodExecute()
     // Now, the parent thread calls this->SingleMethod() itself
     this->ThreadInfoArray[0].UserData        = this->SingleData;
     this->ThreadInfoArray[0].NumberOfThreads = this->NumberOfThreads;
-    this->SingleMethod((void*)(&this->ThreadInfoArray[0]));
+    this->SingleMethod(static_cast<void*>(&this->ThreadInfoArray[0]));
 
     // The parent thread has finished this->SingleMethod() - so now it
     // waits for each of the other processes to exit
@@ -291,6 +293,7 @@ void multi_threader::SingleMethodExecute()
     // First, start up the this->NumberOfThreads-1 processes.  Keep track
     // of their process ids for use later in the pthread_join call
 
+    int            thread_loop;
     pthread_attr_t attr;
 
     pthread_attr_init(&attr);
@@ -307,7 +310,7 @@ void multi_threader::SingleMethodExecute()
             &(process_id[thread_loop]),
             &attr,
             reinterpret_cast<xsigmaExternCThreadFunctionType>(this->SingleMethod),
-            ((void*)(&this->ThreadInfoArray[thread_loop])));
+            static_cast<void*>(&this->ThreadInfoArray[thread_loop]));
 
         XSIGMA_CHECK(
             threadError == 0,
@@ -318,7 +321,7 @@ void multi_threader::SingleMethodExecute()
     // Now, the parent thread calls this->SingleMethod() itself
     this->ThreadInfoArray[0].UserData        = this->SingleData;
     this->ThreadInfoArray[0].NumberOfThreads = this->NumberOfThreads;
-    this->SingleMethod((void*)(&this->ThreadInfoArray[0]));
+    this->SingleMethod(static_cast<void*>(&this->ThreadInfoArray[0]));
 
     // The parent thread has finished this->SingleMethod() - so now it
     // waits for each of the other processes to exit
@@ -333,7 +336,7 @@ void multi_threader::SingleMethodExecute()
     // There is no multi threading, so there is only one thread.
     this->ThreadInfoArray[0].UserData        = this->SingleData;
     this->ThreadInfoArray[0].NumberOfThreads = this->NumberOfThreads;
-    this->SingleMethod((void*)(&this->ThreadInfoArray[0]));
+    this->SingleMethod(static_cast<void*>(&this->ThreadInfoArray[0]));
 #endif
 #endif
 }
@@ -361,7 +364,7 @@ void multi_threader::MultipleMethodExecute()
     for (thread_loop = 0; thread_loop < this->NumberOfThreads; thread_loop++)
     {
         XSIGMA_CHECK(
-            (this->MultipleMethod[thread_loop] != (xsigmaThreadFunctionType) nullptr),
+            (this->MultipleMethod[thread_loop] != static_cast<xsigmaThreadFunctionType>(nullptr)),
             "No multiple method set for: ",
             thread_loop);
     }
@@ -385,7 +388,7 @@ void multi_threader::MultipleMethodExecute()
             nullptr,
             0,
             this->MultipleMethod[thread_loop],
-            ((void*)(&this->ThreadInfoArray[thread_loop])),
+            static_cast<void*>(&this->ThreadInfoArray[thread_loop]),
             0,
             &threadId);
 
@@ -395,7 +398,7 @@ void multi_threader::MultipleMethodExecute()
     // Now, the parent thread calls the last method itself
     this->ThreadInfoArray[0].UserData        = this->MultipleData[0];
     this->ThreadInfoArray[0].NumberOfThreads = this->NumberOfThreads;
-    (this->MultipleMethod[0])((void*)(&this->ThreadInfoArray[0]));
+    (this->MultipleMethod[0])(static_cast<void*>(&this->ThreadInfoArray[0]));
 
     // The parent thread has finished its method - so now it
     // waits for each of the other threads to exit
@@ -439,13 +442,13 @@ void multi_threader::MultipleMethodExecute()
             &(process_id[thread_loop]),
             &attr,
             reinterpret_cast<xsigmaExternCThreadFunctionType>(this->MultipleMethod[thread_loop]),
-            ((void*)(&this->ThreadInfoArray[thread_loop])));
+            static_cast<void*>(&this->ThreadInfoArray[thread_loop]));
     }
 
     // Now, the parent thread calls the last method itself
     this->ThreadInfoArray[0].UserData        = this->MultipleData[0];
     this->ThreadInfoArray[0].NumberOfThreads = this->NumberOfThreads;
-    (this->MultipleMethod[0])((void*)(&this->ThreadInfoArray[0]));
+    (this->MultipleMethod[0])(static_cast<void*>(&this->ThreadInfoArray[0]));
 
     // The parent thread has finished its method - so now it
     // waits for each of the other processes to exit
@@ -460,12 +463,12 @@ void multi_threader::MultipleMethodExecute()
     // There is no multi threading, so there is only one thread.
     this->ThreadInfoArray[0].UserData        = this->MultipleData[0];
     this->ThreadInfoArray[0].NumberOfThreads = this->NumberOfThreads;
-    (this->MultipleMethod[0])((void*)(&this->ThreadInfoArray[0]));
+    (this->MultipleMethod[0])(static_cast<void*>(&this->ThreadInfoArray[0]));
 #endif
 #endif
 }
 
-int multi_threader::SpawnThread(xsigmaThreadFunctionType f, void* userdata)
+int multi_threader::SpawnThread(const xsigmaThreadFunctionType f, void* userdata)
 {
     int id;
 
@@ -495,8 +498,8 @@ int multi_threader::SpawnThread(xsigmaThreadFunctionType f, void* userdata)
     // Using CreateThread on Windows
     //
     DWORD threadId;
-    this->SpawnedThreadProcessID[id] =
-        CreateThread(nullptr, 0, f, ((void*)(&this->SpawnedThreadInfoArray[id])), 0, &threadId);
+    this->SpawnedThreadProcessID[id] = CreateThread(
+        nullptr, 0, f, static_cast<void*>(&this->SpawnedThreadInfoArray[id]), 0, &threadId);
     XSIGMA_CHECK(this->SpawnedThreadProcessID[id], "Error in thread creation !!!");
 #endif
 
@@ -513,7 +516,7 @@ int multi_threader::SpawnThread(xsigmaThreadFunctionType f, void* userdata)
         &(this->SpawnedThreadProcessID[id]),
         &attr,
         reinterpret_cast<xsigmaExternCThreadFunctionType>(f),
-        ((void*)(&this->SpawnedThreadInfoArray[id])));
+        static_cast<void*>(&this->SpawnedThreadInfoArray[id]));
 
 #endif
 
