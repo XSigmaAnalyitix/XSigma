@@ -203,6 +203,27 @@ if(MSVC)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8")
 endif()
 
+if(APPLE)
+    message(STATUS "Applying macOS LLVM linker options")
+
+    set(LLVM_LINK_FLAGS
+        -L/opt/homebrew/opt/llvm/lib/c++
+        -L/opt/homebrew/opt/llvm/lib
+        -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++
+        -Wl,-rpath,/opt/homebrew/opt/llvm/lib
+    )
+
+    # Add each flag only if not already included
+    foreach(flag IN LISTS LLVM_LINK_FLAGS)
+        string(FIND "${CMAKE_EXE_LINKER_FLAGS}" "${flag}" flag_found)
+        if(flag_found EQUAL -1)
+            add_link_options(${flag})
+        endif()
+    endforeach()
+endif()
+
+
+
 #-----------------------------------------------------------------------------
 # Add compiler flags XSIGMA needs to work on this platform.  This must be
 # done after the call to CMAKE_EXPORT_BUILD_SETTINGS, but before any

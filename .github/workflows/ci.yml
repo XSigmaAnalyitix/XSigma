@@ -232,11 +232,37 @@ jobs:
     - name: Install CUDA Toolkit (Ubuntu)
       if: runner.os == 'Linux' && matrix.cuda_enabled == 'ON'
       run: |
-        # Install NVIDIA CUDA Toolkit for Ubuntu
-        wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
-        sudo dpkg -i cuda-keyring_1.0-1_all.deb
+        # Install NVIDIA CUDA Toolkit for Ubuntu using system package manager
+        # This is more reliable than downloading from NVIDIA repos in CI environment
+        echo "=== Installing CUDA Toolkit via apt ==="
         sudo apt-get update
-        sudo apt-get install -y cuda-toolkit-12-3 || echo "CUDA installation failed, continuing without CUDA"
+        sudo apt-get install -y nvidia-cuda-toolkit || {
+          echo "WARNING: CUDA installation via nvidia-cuda-toolkit failed"
+          echo "Attempting alternative installation method..."
+
+          # Fallback: Try NVIDIA's official repository
+          wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb || {
+            echo "ERROR: Failed to download CUDA keyring"
+            echo "Continuing without CUDA support"
+            exit 0
+          }
+
+          sudo dpkg -i cuda-keyring_1.0-1_all.deb
+          sudo apt-get update
+          sudo apt-get install -y cuda-toolkit-12-3 || {
+            echo "WARNING: CUDA toolkit installation failed"
+            echo "Continuing build without CUDA support"
+            exit 0
+          }
+        }
+
+        # Verify CUDA installation
+        if command -v nvcc &> /dev/null; then
+          echo "SUCCESS: CUDA installed successfully"
+          nvcc --version
+        else
+          echo "INFO: CUDA not available, build will continue without CUDA support"
+        fi
 
     - name: Install Intel MKL (Ubuntu)
       if: runner.os == 'Linux'
@@ -251,6 +277,21 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         brew install ninja llvm cmake python3 tbb
+
+    - name: Setup macOS linker environment
+      if: runner.os == 'macOS'
+      run: |
+        # Set up linker flags for Homebrew LLVM libc++
+        # This fixes the missing std::__1::__hash_memory symbol issue
+        echo "LDFLAGS=-L/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib" >> $GITHUB_ENV
+        echo "CPPFLAGS=-I/opt/homebrew/opt/llvm/include" >> $GITHUB_ENV
+        echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
+
+        # Verify the environment setup
+        echo "=== macOS Linker Environment Setup ==="
+        echo "LDFLAGS: -L/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib"
+        echo "CPPFLAGS: -I/opt/homebrew/opt/llvm/include"
+        echo "PATH updated to include: /opt/homebrew/opt/llvm/bin"
 
     - name: Install CUDA Toolkit (macOS)
       if: runner.os == 'macOS' && matrix.cuda_enabled == 'ON'
@@ -287,12 +328,60 @@ jobs:
       shell: pwsh
       run: |
         # Install NVIDIA CUDA Toolkit for Windows
-        Write-Host "Installing CUDA Toolkit via chocolatey..."
-        choco install cuda -y
-        if ($LASTEXITCODE -ne 0) {
-          Write-Host "WARNING: CUDA installation failed, continuing without CUDA"
+        Write-Host "=== Installing CUDA Toolkit for Windows ==="
+
+        # Try chocolatey installation first
+        Write-Host "Attempting CUDA installation via chocolatey..."
+        try {
+          choco install cuda --version=12.3.0 -y --no-progress --timeout=600
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "SUCCESS: CUDA Toolkit installed via chocolatey"
+
+            # Verify installation
+            $nvccPath = Get-Command nvcc -ErrorAction SilentlyContinue
+            if ($nvccPath) {
+              Write-Host "CUDA compiler found at: $($nvccPath.Source)"
+              & nvcc --version
+            } else {
+              Write-Host "WARNING: nvcc not found in PATH after installation"
+            }
+          } else {
+            throw "Chocolatey installation returned non-zero exit code"
+          }
+        } catch {
+          Write-Host "WARNING: CUDA installation via chocolatey failed: $_"
+          Write-Host "Attempting direct download from NVIDIA..."
+
+          try {
+            # Fallback: Direct download from NVIDIA
+            $cudaUrl = "https://developer.download.nvidia.com/compute/cuda/12.3.0/network_installers/cuda_12.3.0_windows_network.exe"
+            $installerPath = "$env:TEMP\cuda_installer.exe"
+
+            Write-Host "Downloading CUDA installer..."
+            Invoke-WebRequest -Uri $cudaUrl -OutFile $installerPath -TimeoutSec 300
+
+            Write-Host "Running CUDA installer (silent mode)..."
+            Start-Process -FilePath $installerPath -ArgumentList "-s" -Wait -NoNewWindow
+
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "SUCCESS: CUDA installed via direct download"
+            } else {
+              throw "Direct installer returned non-zero exit code"
+            }
+          } catch {
+            Write-Host "WARNING: Direct CUDA installation also failed: $_"
+            Write-Host "Build will continue without CUDA support"
+            Write-Host "This is non-fatal - CUDA is optional for this build configuration"
+          }
+        }
+
+        # Final verification
+        Write-Host "`n=== CUDA Installation Summary ==="
+        if (Get-Command nvcc -ErrorAction SilentlyContinue) {
+          Write-Host "Status: CUDA available"
+          & nvcc --version
         } else {
-          Write-Host "CUDA Toolkit installed successfully"
+          Write-Host "Status: CUDA not available (build will continue without CUDA)"
         }
 
     - name: Install Intel MKL (Windows)
@@ -485,6 +574,14 @@ jobs:
       run: |
         brew install ninja llvm cmake python3 tbb
 
+    - name: Setup macOS linker environment (TBB tests)
+      if: runner.os == 'macOS'
+      run: |
+        # Set up linker flags for Homebrew LLVM libc++
+        echo "LDFLAGS=-L/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib" >> $GITHUB_ENV
+        echo "CPPFLAGS=-I/opt/homebrew/opt/llvm/include" >> $GITHUB_ENV
+        echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
+
     # ===== Python Setup =====
     - name: Setup Python
       uses: actions/setup-python@v5
@@ -628,6 +725,13 @@ jobs:
       run: |
         brew install ninja cmake llvm tbb
         echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
+
+    - name: Setup macOS linker environment (Sanitizer tests)
+      if: matrix.os == 'macos-latest'
+      run: |
+        # Set up linker flags for Homebrew LLVM libc++
+        echo "LDFLAGS=-L/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib" >> $GITHUB_ENV
+        echo "CPPFLAGS=-I/opt/homebrew/opt/llvm/include" >> $GITHUB_ENV
 
     # ===== Python Setup =====
     - name: Setup Python
