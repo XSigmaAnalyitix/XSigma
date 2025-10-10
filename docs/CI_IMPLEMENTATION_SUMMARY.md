@@ -14,7 +14,7 @@ This document summarizes the comprehensive CI/CD pipeline implementation for the
   - Dedicated `valgrind-memory-check` job running on Ubuntu
   - Full memory leak detection with detailed reporting
   - Automatic failure on memory leaks or errors
-  - Suppression file support via `Cmake/xsigmaValgrindSuppression.txt`
+  - Suppression file support via `Scripts/valgrind_suppression.txt`
   - Platform compatibility checks (warns on Apple Silicon)
   - Created `Scripts/valgrind_ctest.sh` helper script
 

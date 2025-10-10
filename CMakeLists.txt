@@ -166,7 +166,7 @@ include(clangTidy)
 include(spell)
 include(iwyu)
 include(coverage)
-include(memcheckValgrind)
+include(valgrind)
 include(helperMacros)
 
 # Create build interface target for common settings
@@ -204,6 +204,12 @@ add_subdirectory(ThirdParty)
 
 # Add subdirectories
 add_subdirectory(Library)
+
+# Apply Valgrind timeout multiplier to all tests (if Valgrind is enabled)
+# This must be called after all tests are registered
+if(XSIGMA_ENABLE_VALGRIND AND XSIGMA_BUILD_TESTING)
+    xsigma_apply_valgrind_timeouts()
+endif()
 
 # Include summary at the end
 include(summary)
