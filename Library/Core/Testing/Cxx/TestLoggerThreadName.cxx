@@ -62,7 +62,7 @@ void Thread2()
     }
 }
 
-XSIGMATEST(Core, LoggerThreadName)
+XSIGMATEST(Logger, thread_name)
 {
     XSIGMA_UNUSED int    arg     = 0;
     XSIGMA_UNUSED char** arg_str = nullptr;

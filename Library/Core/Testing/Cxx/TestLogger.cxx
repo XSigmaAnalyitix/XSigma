@@ -34,7 +34,7 @@ XSIGMA_UNUSED void log_handler(void* user_data, const xsigma::logger::Message& m
 }
 }  // namespace
 
-XSIGMATEST(Core, Logger)
+XSIGMATEST(Logger, test)
 {
     int    arg     = 0;
     char** arg_str = nullptr;

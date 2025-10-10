@@ -18,4 +18,11 @@
 #define XSIGMA_VECTORIZED
 #endif
 
+// Compression configuration
+#ifdef XSIGMA_ENABLE_COMPRESSION
+#ifdef XSIGMA_COMPRESSION_TYPE_SNAPPY
+#define XSIGMA_COMPRESSION_TYPE_SNAPPY
+#endif
+#endif
+
 #endif  // __xsigma_configure_h__

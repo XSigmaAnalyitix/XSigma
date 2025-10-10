@@ -1122,7 +1122,7 @@ XSIGMA_API void DisableCPUAllocatorStats() noexcept;
  * **Thread Safety**: Safe to call from any thread
  * **Performance**: O(1) - simple flag check
  */
-bool CPUAllocatorStatsEnabled() noexcept;
+XSIGMA_API bool CPUAllocatorStatsEnabled() noexcept;
 
 /**
  * @brief Enables comprehensive statistics collection in CPU allocators.

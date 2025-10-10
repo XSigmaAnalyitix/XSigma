@@ -371,34 +371,34 @@
 //    profiler.ProfileLoop();
 //}
 //
-XSIGMATEST(Core, Profiler)
-{
-    //    START_LOG_TO_FILE_NAME(Profiler);
-    //
-    //    XSIGMATEST_CALL(ProfilerSessionTest, run);
-    //    // ProfilerLockTest cases
-    //    XSIGMATEST_CALL(ProfilerLockTest, DefaultConstructorCreatesInactiveInstance);
-    //    XSIGMATEST_CALL(ProfilerLockTest, AcquireAndReleaseExplicitly);
-    //    XSIGMATEST_CALL(ProfilerLockTest, AcquireAndReleaseOnDestruction);
-    //    XSIGMATEST_CALL(ProfilerLockTest, ReacquireWithoutReleaseFails);
-    //    XSIGMATEST_CALL(ProfilerLockTest, ReacquireAfterReleaseSucceeds);
-    //    XSIGMATEST_CALL(ProfilerLockTest, InactiveAfterMove);
-    //
-    //    // ProfilerFactoryTest cases
-    //    XSIGMATEST_CALL(ProfilerFactoryTest, FactoryFunctionPointer);
-    //    XSIGMATEST_CALL(ProfilerFactoryTest, FactoryLambda);
-    //    XSIGMATEST_CALL(ProfilerFactoryTest, FactoryReturnsNull);
-    //    XSIGMATEST_CALL(ProfilerFactoryTest, FactoryClassCapturedByLambda);
-    //
-    //    // TraceMeEncodeTest cases
-    //    XSIGMATEST_CALL(TraceMeEncodeTest, NoArgTest);
-    //    XSIGMATEST_CALL(TraceMeEncodeTest, OneArgTest);
-    //    XSIGMATEST_CALL(TraceMeEncodeTest, TwoArgsTest);
-    //    XSIGMATEST_CALL(TraceMeEncodeTest, ThreeArgsTest);
-    //    XSIGMATEST_CALL(TraceMeEncodeTest, TemporaryStringTest);
-    //    XSIGMATEST_CALL(TraceMeEncodeTest, NoNameTest);
-    //
-    //    END_LOG_TO_FILE_NAME(Profiler);
-    //
-    END_TEST();
-}
+//XSIGMATEST(Profiler, test)
+//{
+//    START_LOG_TO_FILE_NAME(Profiler);
+//
+//    XSIGMATEST_CALL(ProfilerSessionTest, run);
+//    // ProfilerLockTest cases
+//    XSIGMATEST_CALL(ProfilerLockTest, DefaultConstructorCreatesInactiveInstance);
+//    XSIGMATEST_CALL(ProfilerLockTest, AcquireAndReleaseExplicitly);
+//    XSIGMATEST_CALL(ProfilerLockTest, AcquireAndReleaseOnDestruction);
+//    XSIGMATEST_CALL(ProfilerLockTest, ReacquireWithoutReleaseFails);
+//    XSIGMATEST_CALL(ProfilerLockTest, ReacquireAfterReleaseSucceeds);
+//    XSIGMATEST_CALL(ProfilerLockTest, InactiveAfterMove);
+//
+//    // ProfilerFactoryTest cases
+//    XSIGMATEST_CALL(ProfilerFactoryTest, FactoryFunctionPointer);
+//    XSIGMATEST_CALL(ProfilerFactoryTest, FactoryLambda);
+//    XSIGMATEST_CALL(ProfilerFactoryTest, FactoryReturnsNull);
+//    XSIGMATEST_CALL(ProfilerFactoryTest, FactoryClassCapturedByLambda);
+//
+//    // TraceMeEncodeTest cases
+//    XSIGMATEST_CALL(TraceMeEncodeTest, NoArgTest);
+//    XSIGMATEST_CALL(TraceMeEncodeTest, OneArgTest);
+//    XSIGMATEST_CALL(TraceMeEncodeTest, TwoArgsTest);
+//    XSIGMATEST_CALL(TraceMeEncodeTest, ThreeArgsTest);
+//    XSIGMATEST_CALL(TraceMeEncodeTest, TemporaryStringTest);
+//    XSIGMATEST_CALL(TraceMeEncodeTest, NoNameTest);
+//
+//    END_LOG_TO_FILE_NAME(Profiler);
+//
+// END_TEST();/
+//}

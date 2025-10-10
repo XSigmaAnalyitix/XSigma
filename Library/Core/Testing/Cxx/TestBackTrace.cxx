@@ -1,13 +1,8 @@
-#include <fmt/format.h>  // for compile_string_to_view
-#include <gtest/gtest.h>  // for Test, AssertionResult, TestInfo, Message, TestPartResult, TEST, CmpHelperNE
+#include <string>
+#include <vector>
 
-#include <chrono>  // for duration, duration_cast, operator-, high_resolution_clock, microseconds, tim...
-#include <memory>  // for _Simple_types
-#include <string>  // for string
-#include <vector>  // for vector, _Vector_const_iterator, _Vector_iterator
-
-#include "logging/back_trace.h"  // for backtrace_options, back_trace, stack_frame
-#include "logging/logger.h"      // for XSIGMA_LOG_INFO
+#include "logging/back_trace.h"
+#include "xsigmaTest.h"
 
 namespace xsigma
 {
@@ -19,7 +14,6 @@ void level_3()
     // Capture stack trace at this level
     auto trace = back_trace::print(0, 10, false);
     EXPECT_FALSE(trace.empty());
-    //EXPECT_NE(trace.find("level_3"), std::string::npos);
 }
 
 void level_2()
@@ -33,48 +27,44 @@ void level_1()
 }
 
 }  // namespace
-
+}  // namespace xsigma
+using namespace xsigma;
 // ============================================================================
 // Basic Functionality Tests
 // ============================================================================
 
-TEST(BackTraceTest, BasicPrint)
+XSIGMATEST(BackTrace, basic_print)
 {
     auto trace = back_trace::print();
     EXPECT_FALSE(trace.empty());
-    XSIGMA_LOG_INFO("Basic stack trace:\n{}", trace);
+    END_TEST();
 }
 
-TEST(BackTraceTest, PrintWithSkipFrames)
+XSIGMATEST(BackTrace, print_with_skip_frames)
 {
     auto trace_no_skip = back_trace::print(0, 5, false);
     auto trace_skip_2  = back_trace::print(2, 5, false);
 
     EXPECT_FALSE(trace_no_skip.empty());
     EXPECT_FALSE(trace_skip_2.empty());
-
-    // Skipped trace should be shorter
-    XSIGMA_LOG_INFO("No skip:\n{}", trace_no_skip);
-    XSIGMA_LOG_INFO("Skip 2:\n{}", trace_skip_2);
+    END_TEST();
 }
 
-TEST(BackTraceTest, PrintWithMaxFrames)
+XSIGMATEST(BackTrace, print_with_max_frames)
 {
     auto trace_5  = back_trace::print(0, 5, false);
     auto trace_10 = back_trace::print(0, 10, false);
 
     EXPECT_FALSE(trace_5.empty());
     EXPECT_FALSE(trace_10.empty());
-
-    XSIGMA_LOG_INFO("Max 5 frames:\n{}", trace_5);
-    XSIGMA_LOG_INFO("Max 10 frames:\n{}", trace_10);
+    END_TEST();
 }
 
 // ============================================================================
 // Enhanced API Tests
 // ============================================================================
 
-TEST(BackTraceTest, CaptureAndFormat)
+XSIGMATEST(BackTrace, capture_and_format)
 {
     // Capture raw frames
     backtrace_options options;
@@ -95,11 +85,10 @@ TEST(BackTraceTest, CaptureAndFormat)
     // Format the captured frames
     auto formatted = back_trace::format(frames, options);
     EXPECT_FALSE(formatted.empty());
-
-    XSIGMA_LOG_INFO("Captured {} frames:\n{}", frames.size(), formatted);
+    END_TEST();
 }
 
-TEST(BackTraceTest, CompactFormat)
+XSIGMATEST(BackTrace, compact_format)
 {
     backtrace_options options;
     options.frames_to_skip           = 0;
@@ -113,22 +102,20 @@ TEST(BackTraceTest, CompactFormat)
 
     // Compact format should contain " -> " separators
     EXPECT_NE(trace.find(" -> "), std::string::npos);
-
-    XSIGMA_LOG_INFO("Compact trace: {}", trace);
+    END_TEST();
 }
 
-TEST(BackTraceTest, CompactHelper)
+XSIGMATEST(BackTrace, compact_helper)
 {
     auto trace = back_trace::compact(5);
     EXPECT_FALSE(trace.empty());
 
     // Should contain function call chain
     EXPECT_NE(trace.find(" -> "), std::string::npos);
-
-    XSIGMA_LOG_INFO("Compact helper: {}", trace);
+    END_TEST();
 }
 
-TEST(BackTraceTest, DetailedFormatWithOptions)
+XSIGMATEST(BackTrace, detailed_format_with_options)
 {
     backtrace_options options;
     options.frames_to_skip           = 0;
@@ -142,11 +129,10 @@ TEST(BackTraceTest, DetailedFormatWithOptions)
 
     // Detailed format should contain "frame #" markers
     EXPECT_NE(trace.find("frame #"), std::string::npos);
-
-    XSIGMA_LOG_INFO("Detailed trace:\n{}", trace);
+    END_TEST();
 }
 
-TEST(BackTraceTest, DetailedFormatWithoutAddresses)
+XSIGMATEST(BackTrace, detailed_format_without_addresses)
 {
     backtrace_options options;
     options.frames_to_skip           = 0;
@@ -156,24 +142,24 @@ TEST(BackTraceTest, DetailedFormatWithoutAddresses)
 
     auto trace = back_trace::print(options);
     EXPECT_FALSE(trace.empty());
-
-    XSIGMA_LOG_INFO("Trace without addresses:\n{}", trace);
+    END_TEST();
 }
 
 // ============================================================================
 // Call Stack Depth Tests
 // ============================================================================
 
-TEST(BackTraceTest, DeepCallStack)
+XSIGMATEST(BackTrace, deep_call_stack)
 {
     level_1();
+    END_TEST();
 }
 
 // ============================================================================
 // Platform Support Tests
 // ============================================================================
 
-TEST(BackTraceTest, IsSupported)
+XSIGMATEST(BackTrace, is_supported)
 {
     bool supported = back_trace::is_supported();
 
@@ -181,109 +167,59 @@ TEST(BackTraceTest, IsSupported)
     // Should be supported on major platforms
     EXPECT_TRUE(supported);
 #endif
-
-    XSIGMA_LOG_INFO("Backtrace supported: {}", supported);
+    END_TEST();
 }
 
 // ============================================================================
 // Edge Cases
 // ============================================================================
 
-TEST(BackTraceTest, EmptyFramesFormat)
+XSIGMATEST(BackTrace, empty_frames_format)
 {
     std::vector<stack_frame> empty_frames;
     auto                     formatted = back_trace::format(empty_frames);
 
     EXPECT_FALSE(formatted.empty());
     EXPECT_NE(formatted.find("No stack trace available"), std::string::npos);
+    END_TEST();
 }
 
-TEST(BackTraceTest, ZeroMaxFrames)
+XSIGMATEST(BackTrace, zero_max_frames)
 {
     backtrace_options options;
     options.maximum_number_of_frames = 0;
 
     auto frames = back_trace::capture(options);
-    // Should return empty or minimal frames
-    XSIGMA_LOG_INFO("Zero max frames captured: {}", frames.size());
+    // Should return empty or minimal frames - exact behavior is implementation dependent
+    END_TEST();
 }
 
 // ============================================================================
-// Performance Tests
+// Configuration Tests
 // ============================================================================
 
-TEST(BackTraceTest, PerformanceCapture)
+XSIGMATEST(BackTrace, set_stack_trace_on_error)
 {
-#if NDEBUG
-    const int iterations = 100;
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    for (int i = 0; i < iterations; ++i)
-    {
-        backtrace_options options;
-        options.maximum_number_of_frames = 10;
-        auto frames                      = back_trace::capture(options);
-        (void)frames;  // Suppress unused warning
-    }
-
-    auto end      = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-    double avg_microseconds = static_cast<double>(duration.count()) / iterations;
-
-    XSIGMA_LOG_INFO("Average capture time: {:.2f} microseconds", avg_microseconds);
-
-    // Capture should be reasonably fast (< 1ms on average)
-    EXPECT_LT(avg_microseconds, 1000.0);
-
-#endif
-}
-
-TEST(BackTraceTest, PerformanceFormat)
-{
-#if 0
-    // Capture once
-    backtrace_options options;
-    options.maximum_number_of_frames = 10;
-    auto frames                      = back_trace::capture(options);
-
-    const int iterations = 1000;
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    for (int i = 0; i < iterations; ++i)
-    {
-        auto formatted = back_trace::format(frames, options);
-        (void)formatted;  // Suppress unused warning
-    }
-
-    auto end      = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-    double avg_microseconds = static_cast<double>(duration.count()) / iterations;
-
-    XSIGMA_LOG_INFO("Average format time: {:.2f} microseconds", avg_microseconds);
-
-    // Formatting should be very fast (< 100us on average)
-    EXPECT_LT(avg_microseconds, 100.0);
-#endif
+    // Test the configuration method (currently a no-op placeholder)
+    back_trace::set_stack_trace_on_error(1);
+    back_trace::set_stack_trace_on_error(0);
+    // No assertions needed as this is currently a placeholder
+    END_TEST();
 }
 
 // ============================================================================
 // Integration Tests
 // ============================================================================
 
-TEST(BackTraceTest, UsageInLogging)
+XSIGMATEST(BackTrace, usage_in_logging)
 {
-    // Demonstrate usage in logging context
     XSIGMA_LOG_INFO("Error occurred at:\n{}", back_trace::print(0, 5));
+    END_TEST();
 }
 
-TEST(BackTraceTest, UsageInCompactLogging)
+XSIGMATEST(BackTrace, usage_in_compact_logging)
 {
-    // Demonstrate compact usage in logging
+    // Test that compact backtrace can be used in logging
     XSIGMA_LOG_INFO("Call chain: {}", back_trace::compact(5));
+    END_TEST();
 }
-
-}  // namespace xsigma

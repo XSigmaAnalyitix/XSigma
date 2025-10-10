@@ -80,6 +80,13 @@ if(NOT XSIGMA_ENABLE_CUDA)
     list(REMOVE_ITEM headers ${GPU_HEADER_FILES})
 endif()
 
+if(XSIGMA_ENABLE_COMPRESSION)
+    if(XSIGMA_COMPRESSION_TYPE STREQUAL "SNAPPY")
+    list(APPEND headers "${CMAKE_CURRENT_SOURCE_DIR}/compression/snappy.h")
+    list(APPEND sources  "${CMAKE_CURRENT_SOURCE_DIR}/compression/snappy.cxx")
+    endif()
+endif()
+
 # Remove logging.cxx and logging.h for NATIVE backend (uses simplified implementation in logger.cxx)
 if(XSIGMA_USE_NATIVE_LOGGING)
     list(REMOVE_ITEM sources "${CMAKE_CURRENT_SOURCE_DIR}/logging/logging.cxx")
@@ -190,6 +197,16 @@ elseif(XSIGMA_USE_GLOG AND TARGET XSigma::glog)
     target_link_libraries(Core PRIVATE XSigma::glog)
     target_compile_definitions(Core PUBLIC XSIGMA_USE_GLOG)
     message(STATUS "Core library using GLOG logging backend")
+endif()
+
+# Compression support configuration
+if(XSIGMA_ENABLE_COMPRESSION)
+    target_compile_definitions(Core PUBLIC XSIGMA_ENABLE_COMPRESSION)
+    if(XSIGMA_COMPRESSION_TYPE_SNAPPY)
+        target_compile_definitions(Core PUBLIC XSIGMA_COMPRESSION_TYPE_SNAPPY)
+        # TODO: Add Snappy library dependency when available
+        # target_link_libraries(Core PRIVATE snappy::snappy)
+    endif()
 endif()
 
 # Optional dependencies

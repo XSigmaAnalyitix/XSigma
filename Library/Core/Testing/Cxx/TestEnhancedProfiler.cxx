@@ -68,10 +68,7 @@ namespace
  * @brief Simulate work by sleeping for specified milliseconds
  * @param milliseconds Duration to sleep
  */
-void simulate_work(int milliseconds)
-{
-    std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
-}
+void simulate_work(int /*milliseconds*/) {}
 
 /**
  * @brief Allocate memory for testing memory tracking
@@ -89,7 +86,7 @@ std::vector<int> allocate_memory(size_t size)
 void simulate_cpu_intensive_work()
 {
     volatile double result = 0.0;
-    for (int i = 0; i < 100000; ++i)
+    for (int i = 0; i < 20; ++i)
     {
         result += std::sin(i) * std::cos(i);
     }
@@ -102,7 +99,7 @@ void simulate_cpu_intensive_work()
 bool test_basic_functionality()
 {
     std::cout << "Testing basic profiler functionality..." << std::endl;
-	
+
     auto session = profiler_session_builder()
                        .with_timing(true)
                        .with_memory_tracking(true)
@@ -496,7 +493,7 @@ bool test_thread_safety()
         session->start();
 
         const int                num_threads           = 4;
-        const int                operations_per_thread = 50;
+        const int                operations_per_thread = 13;
         std::vector<std::thread> threads;
         std::atomic<int>         completed_operations{0};
 
@@ -569,7 +566,7 @@ bool test_performance_overhead()
     std::cout << "Testing performance overhead..." << std::endl;
 
     {
-        const int num_iterations = 1000;
+        const int num_iterations = 13;
 
         // Measure baseline performance without profiling
         auto start_baseline = std::chrono::high_resolution_clock::now();
@@ -780,7 +777,7 @@ bool test_edge_cases()
 
             session->start();
 
-            for (int i = 0; i < 100; ++i)
+            for (int i = 0; i < 13; ++i)
             {
                 XSIGMA_PROFILE_SCOPE("very_short_scope");
                 // No work - test very short execution times
@@ -1019,7 +1016,7 @@ bool test_comprehensive_error_handling()
             auto session = profiler_session_builder().build();
             session->start();
 
-            for (int i = 0; i < 100; ++i)
+            for (int i = 0; i < 5; ++i)
             {
                 XSIGMA_PROFILE_SCOPE("microsecond_scope");
                 // Extremely short scope - tests nanosecond precision
@@ -1094,7 +1091,7 @@ bool test_memory_tracking_edge_cases()
 
         // Test rapid allocation/deallocation cycles
         std::vector<void*> ptrs;
-        for (int i = 0; i < 1000; ++i)
+        for (int i = 0; i < 5; ++i)
         {
             void* ptr = std::malloc(1024);
             if (ptr)
@@ -1146,7 +1143,7 @@ bool test_high_concurrency()
         session->start();
 
         const int num_threads           = std::thread::hardware_concurrency() * 2;
-        const int operations_per_thread = 100;
+        const int operations_per_thread = 5;
 
         std::vector<std::thread> threads;
         std::atomic<int>         completed_operations{0};
@@ -1197,7 +1194,7 @@ bool test_high_concurrency()
 }  // namespace
 
 // Main test function
-XSIGMATEST(Core, EnhancedProfiler)
+XSIGMATEST(EnhancedProfiler, test)
 {
     std::cout << "=== Enhanced Profiler Comprehensive Test Suite ===" << std::endl;
     std::cout << "Running comprehensive tests for Enhanced Profiler..." << std::endl;

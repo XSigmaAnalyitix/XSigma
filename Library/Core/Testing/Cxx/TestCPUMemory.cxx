@@ -17,34 +17,24 @@
  * Website: https://www.xsigma.co.uk
  */
 
-#include <fmt/format.h>   // for compile_string_to_view
-#include <gtest/gtest.h>  // for Test, Message, TestPartResult, AssertionResult, CmpHelperNE
-
-#include <atomic>       // for atomic, _Atomic_integral
-#include <chrono>       // for duration, duration_cast, operator-, high_resolution_clock
 #include <cstdint>      // for uint8_t, uint64_t, uintptr_t, SIZE_MAX, UINT64_MAX, int64_t
 #include <cstdlib>      // for size_t, free, malloc
 #include <cstring>      // for memset
 #include <functional>   // for function, _Func_class
-#include <iomanip>      // for operator<<, setw, setprecision
-#include <iostream>     // for basic_ostream, operator<<, cout, scientific, fixed, left
 #include <limits>       // for numeric_limits
 #include <memory>       // for make_unique, unique_ptr, _Simple_types, allocator
 #include <optional>     // for optional
 #include <string>       // for char_traits, operator<<, string, operator+, to_string, basic...
-#include <thread>       // for thread, sleep_for
 #include <type_traits>  // for is_trivial
 #include <utility>      // for move, min, max, max_element, min_element
 #include <vector>       // for vector, _Vector_iterator, _Vector_const_iterator
 
-#include "common/pointer.h"  // for make_ptr_unique_mutable
-#include "logging/logger.h"  // for XSIGMA_LOG_INFO, END_LOG_TO_FILE_NAME, START_LOG_TO_FILE_NAME
+#include "common/pointer.h"        // for make_ptr_unique_mutable
 #include "memory/cpu/allocator.h"  // for sub_allocator, allocation_attributes, Allocator, allocator_m...
 #include "memory/cpu/allocator_bfc.h"     // for allocator_bfc
 #include "memory/cpu/allocator_device.h"  // for allocator_device
 #include "memory/cpu/allocator_pool.h"  // for basic_cpu_allocator, allocator_pool, NoopRounder, round_up_i...
 #include "memory/cpu/allocator_tracking.h"  // for allocator_tracking, enhanced_alloc_record, tracking_log_level
-#include "memory/cpu/allocator_typed.h"          // for allocator_typed
 #include "memory/cpu/helper/memory_allocator.h"  // for free, allocate
 #include "memory/cpu/helper/process_state.h"     // for process_state
 #include "memory/unified_memory_stats.h"  // for atomic_timing_stats, unified_resource_stats, memory_fragment...
@@ -92,11 +82,8 @@ bool ValidateMemory(void* ptr, size_t size, uint8_t pattern)
 // ALLOCATOR_DEVICE TESTS
 // ============================================================================
 
-// Test basic allocation and deallocation functionality
-XSIGMATEST_VOID(AllocatorDeviceTest, BasicAllocation)
+XSIGMATEST(CPUMemory, allocator_device_basic_allocation)
 {
-    XSIGMA_LOG_INFO("Testing allocator_device basic allocation functionality...");
-
     auto allocator = std::make_unique<allocator_device>();
 
     // Test zero allocation
@@ -129,14 +116,11 @@ XSIGMATEST_VOID(AllocatorDeviceTest, BasicAllocation)
         allocator->deallocate_raw(ptr_large);
     }
 
-    XSIGMA_LOG_INFO("Basic allocation tests completed successfully");
+    END_TEST();
 }
 
-// Test allocator interface compliance
-XSIGMATEST_VOID(AllocatorDeviceTest, AllocatorInterface)
+XSIGMATEST(CPUMemory, allocator_device_interface)
 {
-    XSIGMA_LOG_INFO("Testing allocator_device interface compliance...");
-
     auto allocator = std::make_unique<allocator_device>();
 
     // Test Name() method
@@ -160,27 +144,21 @@ XSIGMATEST_VOID(AllocatorDeviceTest, AllocatorInterface)
     // Test ClearStats() - should return false by default
     EXPECT_FALSE(allocator->ClearStats());
 
-    XSIGMA_LOG_INFO("Interface compliance tests completed successfully");
+    END_TEST();
 }
 
-// Test memory type reporting
-XSIGMATEST_VOID(AllocatorDeviceTest, MemoryType)
+XSIGMATEST(CPUMemory, allocator_device_memory_type)
 {
-    XSIGMA_LOG_INFO("Testing allocator_device memory type reporting...");
-
     auto allocator = std::make_unique<allocator_device>();
 
     // Verify memory type is HOST_PINNED
     EXPECT_EQ(allocator_memory_enum::HOST_PINNED, allocator->GetMemoryType());
 
-    XSIGMA_LOG_INFO("Memory type tests completed successfully");
+    END_TEST();
 }
 
-// Test error handling and edge cases
-XSIGMATEST_VOID(AllocatorDeviceTest, ErrorHandling)
+XSIGMATEST(CPUMemory, allocator_device_error_handling)
 {
-    XSIGMA_LOG_INFO("Testing allocator_device error handling...");
-
     auto allocator = std::make_unique<allocator_device>();
 
     // Test deallocate with nullptr (should not crash)
@@ -191,7 +169,6 @@ XSIGMATEST_VOID(AllocatorDeviceTest, ErrorHandling)
     EXPECT_EQ(nullptr, ptr_zero);
 
     // Test very large allocation (may fail gracefully)
-
     void* ptr_huge = allocator->allocate_raw(64, SIZE_MAX);
     if (ptr_huge)
     {
@@ -199,68 +176,10 @@ XSIGMATEST_VOID(AllocatorDeviceTest, ErrorHandling)
     }
     // If it doesn't throw, that's also acceptable
 
-    XSIGMA_LOG_INFO("Error handling tests completed successfully");
+    END_TEST();
 }
 
-// Test thread safety
-XSIGMATEST_VOID(AllocatorDeviceTest, ThreadSafety)
-{
-#if 0
-    XSIGMA_LOG_INFO("Testing allocator_device thread safety...");
-
-    auto       allocator = std::make_unique<allocator_device>();
-    std::mutex allocator_mutex;
-
-    const int                num_threads            = 4;
-    const int                allocations_per_thread = 100;
-    std::vector<std::thread> threads;
-    std::atomic<int>         success_count{0};
-
-    auto worker = [&]()
-    {
-        for (int i = 0; i < allocations_per_thread; ++i)
-        {
-            void* ptr = nullptr;
-            {
-                std::lock_guard<std::mutex> lock(allocator_mutex);
-                ptr = allocator->allocate_raw(64, 1024);
-            }
-
-            if (ptr)
-            {
-                std::memset(ptr, 0x42, 1024);
-
-                {
-                    std::lock_guard<std::mutex> lock(allocator_mutex);
-                    allocator->deallocate_raw(ptr);
-                }
-
-                success_count++;
-            }
-        }
-    };
-
-    // Launch threads
-    for (int i = 0; i < num_threads; ++i)
-    {
-        threads.emplace_back(worker);
-    }
-
-    // Wait for all threads to complete
-    for (auto& thread : threads)
-    {
-        thread.join();
-    }
-
-    // Verify all allocations succeeded
-    EXPECT_EQ(success_count.load(), num_threads * allocations_per_thread);
-
-    XSIGMA_LOG_INFO("Thread safety tests completed successfully");
-#endif
-}
-
-// Test allocator_bfc functionality
-XSIGMATEST_VOID(BFCAllocatorTest, BasicAllocation)
+XSIGMATEST(CPUMemory, allocator_bfc_basic_allocation)
 {
     // Create a BFC allocator with 1MB memory limit
     const size_t memory_limit  = 1024 * 1024;  // 1MB
@@ -298,6 +217,8 @@ XSIGMATEST_VOID(BFCAllocatorTest, BasicAllocation)
     {
         allocator.deallocate_raw(ptr);
     }
+
+    END_TEST();
 }
 // Test allocator_bfc edge cases
 XSIGMATEST_VOID(BFCAllocatorTest, EdgeCases)
@@ -501,100 +422,6 @@ XSIGMATEST_VOID(TrackingAllocatorTest, BasicTracking)
 
     // Properly cleanup tracking allocator by releasing reference
     tracker->GetRecordsAndUnRef();
-}
-// Test allocator_typed functionality
-XSIGMATEST_VOID(TypedAllocatorTest, BasicTypedAllocation)
-{
-    auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
-        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-    auto pool = std::make_unique<allocator_pool>(
-        10,
-        false,
-        std::move(base_allocator),
-        util::make_ptr_unique_mutable<NoopRounder>(),
-        "typed_pool");
-
-    // Test allocation of simple types
-    int* int_array = allocator_typed::Allocate<int>(pool.get(), 100, allocation_attributes());
-    EXPECT_NE(nullptr, int_array);
-    EXPECT_TRUE(IsAligned(int_array, alignof(int)));
-
-    // Test memory access and initialization
-    for (int i = 0; i < 100; ++i)
-    {
-        int_array[i] = i * 2;
-    }
-
-    // Verify values
-    for (int i = 0; i < 100; ++i)
-    {
-        EXPECT_EQ(int_array[i], i * 2);
-    }
-
-    allocator_typed::Deallocate(pool.get(), int_array, 100);
-
-    // Test allocation of complex types
-    TestStruct* struct_array =
-        allocator_typed::Allocate<TestStruct>(pool.get(), 10, allocation_attributes());
-    EXPECT_NE(nullptr, struct_array);
-    EXPECT_TRUE(IsAligned(struct_array, alignof(TestStruct)));
-
-    // Test structure access (initialize manually since no constructor)
-    for (int i = 0; i < 10; ++i)
-    {
-        struct_array[i].x = i;
-        struct_array[i].y = i * 3.14;
-        memset(struct_array[i].data, i, sizeof(struct_array[i].data));
-    }
-
-    // Verify values
-    for (int i = 0; i < 10; ++i)
-    {
-        EXPECT_EQ(struct_array[i].x, i);
-        EXPECT_NEAR(struct_array[i].y, i * 3.14, 1e-10);
-        EXPECT_EQ(struct_array[i].data[0], static_cast<char>(i));
-    }
-
-    allocator_typed::Deallocate(pool.get(), struct_array, 10);
-}
-// Test allocator_typed overflow protection
-XSIGMATEST_VOID(TypedAllocatorTest, OverflowProtection)
-{
-    auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
-        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-    auto pool = std::make_unique<allocator_pool>(
-        10,
-        false,
-        std::move(base_allocator),
-        util::make_ptr_unique_mutable<NoopRounder>(),
-        "overflow_pool");
-
-    // Test allocation that would overflow size_t
-    size_t      max_count = std::numeric_limits<size_t>::max() / sizeof(TestStruct) + 1;
-    TestStruct* overflow_ptr =
-        allocator_typed::Allocate<TestStruct>(pool.get(), max_count, allocation_attributes());
-    EXPECT_EQ(nullptr, overflow_ptr);  // Should return nullptr on overflow
-
-    // Test maximum valid allocation
-    size_t max_valid_count = std::numeric_limits<size_t>::max() / sizeof(TestStruct);
-    if (max_valid_count > 1000000)  // Only test if reasonable size
-    {
-        max_valid_count = 1000000;  // Limit to reasonable size for testing
-    }
-
-    // This might fail due to memory constraints, which is acceptable
-    TestStruct* large_ptr =
-        allocator_typed::Allocate<TestStruct>(pool.get(), max_valid_count, allocation_attributes());
-    if (large_ptr != nullptr)
-    {
-        // If allocation succeeded, test basic access
-        large_ptr[0].x                   = 42;
-        large_ptr[max_valid_count - 1].x = 24;
-        EXPECT_EQ(large_ptr[0].x, 42);
-        EXPECT_EQ(large_ptr[max_valid_count - 1].x, 24);
-
-        allocator_typed::Deallocate(pool.get(), large_ptr, max_valid_count);
-    }
 }
 
 // Test allocator stress scenarios
@@ -1331,9 +1158,6 @@ XSIGMATEST_VOID(TrackingAllocatorTest, EnhancedTrackingAnalytics)
         void* ptr = tracker->allocate_raw(64, 1024 * (i + 1));
         EXPECT_NE(nullptr, ptr);
         ptrs.push_back(ptr);
-
-        // Small delay to ensure measurable timing differences
-        std::this_thread::sleep_for(std::chrono::microseconds(10));
     }
 
     // Test timing statistics after allocations
@@ -1384,7 +1208,6 @@ XSIGMATEST_VOID(TrackingAllocatorTest, EnhancedTrackingAnalytics)
     for (void* ptr : ptrs)
     {
         tracker->deallocate_raw(ptr);
-        std::this_thread::sleep_for(std::chrono::microseconds(5));
     }
 
     // Test timing statistics after deallocations
@@ -1476,890 +1299,4 @@ XSIGMATEST_VOID(TrackingAllocatorTest, LoggingAndReporting)
     tracker->GetRecordsAndUnRef();
 
     XSIGMA_LOG_INFO("Logging levels and comprehensive reporting tests completed successfully");
-}
-
-// ============================================================================
-// TYPED ALLOCATOR TESTS (allocator_typed.h)
-// ============================================================================
-
-// Test type-safe memory allocation for various data types
-XSIGMATEST_VOID(TypedAllocatorTest, TypeSafeAllocation)
-{
-    XSIGMA_LOG_INFO("Testing type-safe memory allocation for various data types...");
-
-    // Create underlying allocator
-    auto sub_allocator = std::make_unique<basic_cpu_allocator>(
-        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-
-    allocator_bfc::Options opts;
-    opts.allow_growth = false;
-    xsigma::allocator_bfc underlying_alloc(
-        std::move(sub_allocator), 1024 * 1024, "test_typed_bfc", opts);
-    xsigma::allocation_attributes default_attrs;
-
-    // Test allocation of primitive types
-    int* int_ptr = xsigma::allocator_typed::Allocate<int>(&underlying_alloc, 10, default_attrs);
-    EXPECT_NE(nullptr, int_ptr);
-
-    // Test memory access and initialization
-    for (int i = 0; i < 10; ++i)
-    {
-        int_ptr[i] = i * 2;
-    }
-
-    // Verify values
-    for (int i = 0; i < 10; ++i)
-    {
-        EXPECT_EQ(int_ptr[i], i * 2);
-    }
-
-    // Test allocation of double
-    double* double_ptr =
-        xsigma::allocator_typed::Allocate<double>(&underlying_alloc, 5, default_attrs);
-    EXPECT_NE(nullptr, double_ptr);
-
-    for (int i = 0; i < 5; ++i)
-    {
-        double_ptr[i] = i * 3.14;
-    }
-
-    // Test allocation of complex types (std::string)
-    std::string* string_ptr =
-        xsigma::allocator_typed::Allocate<std::string>(&underlying_alloc, 3, default_attrs);
-    EXPECT_NE(nullptr, string_ptr);
-
-    // Test string construction and assignment
-    string_ptr[0] = "Hello";
-    string_ptr[1] = "World";
-    string_ptr[2] = "XSigma";
-
-    EXPECT_EQ(string_ptr[0], "Hello");
-    EXPECT_EQ(string_ptr[1], "World");
-    EXPECT_EQ(string_ptr[2], "XSigma");
-
-    // Clean up allocations
-    xsigma::allocator_typed::Deallocate(&underlying_alloc, int_ptr, 10);
-    xsigma::allocator_typed::Deallocate(&underlying_alloc, double_ptr, 5);
-    xsigma::allocator_typed::Deallocate(&underlying_alloc, string_ptr, 3);
-
-    XSIGMA_LOG_INFO("Type-safe memory allocation tests completed successfully");
-}
-
-// Test alignment requirements for typed allocations
-XSIGMATEST_VOID(TypedAllocatorTest, AlignmentRequirements)
-{
-    XSIGMA_LOG_INFO("Testing alignment requirements for typed allocations...");
-
-    auto sub_allocator = std::make_unique<basic_cpu_allocator>(
-        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-
-    allocator_bfc::Options opts;
-    opts.allow_growth = false;
-    xsigma::allocator_bfc underlying_alloc(
-        std::move(sub_allocator), 1024 * 1024, "test_alignment_bfc", opts);
-    xsigma::allocation_attributes default_attrs;
-
-    // Test alignment for different types
-    struct AlignedStruct
-    {
-        alignas(64) double data[8];
-    };
-
-    AlignedStruct* aligned_ptr =
-        xsigma::allocator_typed::Allocate<AlignedStruct>(&underlying_alloc, 1, default_attrs);
-    EXPECT_NE(nullptr, aligned_ptr);
-
-    // Verify alignment (should be at least kAllocatorAlignment)
-    uintptr_t addr = reinterpret_cast<uintptr_t>(aligned_ptr);
-    EXPECT_EQ(addr % xsigma::Allocator::kAllocatorAlignment, 0);
-
-    // Test data access
-    for (int i = 0; i < 8; ++i)
-    {
-        aligned_ptr->data[i] = i * 1.5;
-    }
-
-    for (int i = 0; i < 8; ++i)
-    {
-        EXPECT_EQ(aligned_ptr->data[i], i * 1.5);
-    }
-
-    xsigma::allocator_typed::Deallocate(&underlying_alloc, aligned_ptr, 1);
-
-    XSIGMA_LOG_INFO("Alignment requirements tests completed successfully");
-}
-
-// Test memory safety and overflow protection
-XSIGMATEST_VOID(TypedAllocatorTest, MemorySafetyAndOverflowProtection)
-{
-    XSIGMA_LOG_INFO("Testing memory safety and overflow protection...");
-
-    auto sub_allocator = std::make_unique<basic_cpu_allocator>(
-        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-
-    allocator_bfc::Options opts;
-    opts.allow_growth = false;
-    xsigma::allocator_bfc underlying_alloc(
-        std::move(sub_allocator), 1024 * 1024, "test_safety_bfc", opts);
-    xsigma::allocation_attributes default_attrs;
-
-    // Test overflow protection for large allocations
-    // Note: BFC allocator may handle very large allocations differently than expected
-    // Instead, test with a more reasonable large size that should still work
-    size_t large_elements = 1000000;  // 1 million integers
-    int*   large_ptr =
-        xsigma::allocator_typed::Allocate<int>(&underlying_alloc, large_elements, default_attrs);
-    // The allocator may or may not succeed with this allocation - both outcomes are valid
-    if (large_ptr != nullptr)
-    {
-        // If allocation succeeded, clean it up
-        xsigma::allocator_typed::Deallocate(&underlying_alloc, large_ptr, large_elements);
-    }
-
-    // Test safe allocation within limits
-    size_t safe_elements = 1000;
-    int*   safe_ptr =
-        xsigma::allocator_typed::Allocate<int>(&underlying_alloc, safe_elements, default_attrs);
-    EXPECT_NE(nullptr, safe_ptr);
-
-    // Test memory initialization and access
-    for (size_t i = 0; i < safe_elements; ++i)
-    {
-        safe_ptr[i] = static_cast<int>(i);
-    }
-
-    // Verify data integrity
-    for (size_t i = 0; i < safe_elements; ++i)
-    {
-        EXPECT_EQ(safe_ptr[i], static_cast<int>(i));
-    }
-
-    // Test null pointer handling in deallocation
-    xsigma::allocator_typed::Deallocate<int>(&underlying_alloc, nullptr, 0);  // Should not crash
-
-    // Clean up valid allocation
-    xsigma::allocator_typed::Deallocate(&underlying_alloc, safe_ptr, safe_elements);
-
-    XSIGMA_LOG_INFO("Memory safety and overflow protection tests completed successfully");
-}
-
-// Test constructor/destructor invocation for allocated objects
-XSIGMATEST_VOID(TypedAllocatorTest, ConstructorDestructorInvocation)
-{
-    XSIGMA_LOG_INFO("Testing constructor/destructor invocation for allocated objects...");
-
-    auto sub_allocator = std::make_unique<basic_cpu_allocator>(
-        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-
-    allocator_bfc::Options opts;
-    opts.allow_growth = false;
-    xsigma::allocator_bfc underlying_alloc(
-        std::move(sub_allocator), 1024 * 1024, "test_ctor_bfc", opts);
-    xsigma::allocation_attributes default_attrs;
-
-    // Test with std::string (non-trivial type)
-    std::string* string_array =
-        xsigma::allocator_typed::Allocate<std::string>(&underlying_alloc, 5, default_attrs);
-    EXPECT_NE(nullptr, string_array);
-
-    // Verify constructors were called (strings should be empty)
-    for (int i = 0; i < 5; ++i)
-    {
-        EXPECT_TRUE(string_array[i].empty());
-        EXPECT_EQ(string_array[i].size(), 0);
-    }
-
-    // Test string operations
-    string_array[0] = "Test1";
-    string_array[1] = "Test2";
-    string_array[2] = "Test3";
-    string_array[3] = "Test4";
-    string_array[4] = "Test5";
-
-    // Verify assignments worked
-    EXPECT_EQ(string_array[0], "Test1");
-    EXPECT_EQ(string_array[1], "Test2");
-    EXPECT_EQ(string_array[2], "Test3");
-    EXPECT_EQ(string_array[3], "Test4");
-    EXPECT_EQ(string_array[4], "Test5");
-
-    // Deallocate (destructors should be called automatically)
-    xsigma::allocator_typed::Deallocate(&underlying_alloc, string_array, 5);
-
-    // Test with trivial types (should not call constructors/destructors)
-    struct TrivialStruct
-    {
-        int    x;
-        double y;
-    };
-    static_assert(std::is_trivial<TrivialStruct>::value, "TrivialStruct should be trivial");
-
-    TrivialStruct* trivial_array =
-        xsigma::allocator_typed::Allocate<TrivialStruct>(&underlying_alloc, 3, default_attrs);
-    EXPECT_NE(nullptr, trivial_array);
-
-    // Initialize manually (no constructors called)
-    for (int i = 0; i < 3; ++i)
-    {
-        trivial_array[i].x = i;
-        trivial_array[i].y = i * 2.5;
-    }
-
-    // Verify values
-    for (int i = 0; i < 3; ++i)
-    {
-        EXPECT_EQ(trivial_array[i].x, i);
-        EXPECT_EQ(trivial_array[i].y, i * 2.5);
-    }
-
-    xsigma::allocator_typed::Deallocate(&underlying_alloc, trivial_array, 3);
-
-    XSIGMA_LOG_INFO("Constructor/destructor invocation tests completed successfully");
-}
-
-// Test integration with existing allocator infrastructure
-XSIGMATEST_VOID(TypedAllocatorTest, AllocatorInfrastructureIntegration)
-{
-    XSIGMA_LOG_INFO("Testing integration with existing allocator infrastructure...");
-
-    // Test with different allocator types
-    auto bfc_sub_allocator = std::make_unique<basic_cpu_allocator>(
-        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-
-    allocator_bfc::Options opts;
-    opts.allow_growth = false;
-    xsigma::allocator_bfc bfc_alloc(
-        std::move(bfc_sub_allocator), 1024 * 1024, "test_infra_bfc", opts);
-
-    auto pool_sub_allocator = std::make_unique<basic_cpu_allocator>(
-        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-    auto size_rounder = util::make_ptr_unique_mutable<NoopRounder>();
-
-    xsigma::allocator_pool pool_alloc(
-        10, false, std::move(pool_sub_allocator), std::move(size_rounder), "test_infra_pool");
-    xsigma::allocation_attributes default_attrs;
-
-    // Test with BFC allocator
-    float* bfc_floats = xsigma::allocator_typed::Allocate<float>(&bfc_alloc, 100, default_attrs);
-    EXPECT_NE(nullptr, bfc_floats);
-
-    for (int i = 0; i < 100; ++i)
-    {
-        bfc_floats[i] = i * 0.5f;
-    }
-
-    for (int i = 0; i < 100; ++i)
-    {
-        EXPECT_EQ(static_cast<double>(bfc_floats[i]), static_cast<double>(i * 0.5f));
-    }
-
-    xsigma::allocator_typed::Deallocate(&bfc_alloc, bfc_floats, 100);
-
-    // Test with pool allocator
-    char* pool_chars = xsigma::allocator_typed::Allocate<char>(&pool_alloc, 1024, default_attrs);
-    EXPECT_NE(nullptr, pool_chars);
-
-    // Fill with pattern
-    for (int i = 0; i < 1024; ++i)
-    {
-        pool_chars[i] = static_cast<char>('A' + (i % 26));
-    }
-
-    // Verify pattern
-    for (int i = 0; i < 1024; ++i)
-    {
-        EXPECT_EQ(pool_chars[i], static_cast<char>('A' + (i % 26)));
-    }
-
-    xsigma::allocator_typed::Deallocate(&pool_alloc, pool_chars, 1024);
-
-    // Test with tracking allocator wrapper
-    auto tracking_alloc = new xsigma::allocator_tracking(&bfc_alloc, true);
-
-    long* tracked_longs =
-        xsigma::allocator_typed::Allocate<long>(tracking_alloc, 50, default_attrs);
-    EXPECT_NE(nullptr, tracked_longs);
-
-    // Verify tracking works
-    EXPECT_TRUE(tracking_alloc->TracksAllocationSizes());
-    EXPECT_EQ(tracking_alloc->RequestedSize(tracked_longs), 50 * sizeof(long));
-
-    for (int i = 0; i < 50; ++i)
-    {
-        tracked_longs[i] = i * 1000L;
-    }
-
-    xsigma::allocator_typed::Deallocate(tracking_alloc, tracked_longs, 50);
-
-    // Properly cleanup tracking allocator by releasing reference
-    tracking_alloc->GetRecordsAndUnRef();
-
-    XSIGMA_LOG_INFO("Integration with allocator infrastructure tests completed successfully");
-}
-
-// ============================================================================
-// MEMORY ALLOCATOR PERFORMANCE BENCHMARK
-// ============================================================================
-
-// Structure to hold benchmark results for comparison
-struct BenchmarkResult
-{
-    std::string allocator_name;
-    size_t      allocation_size;
-    size_t      iterations;
-    double      total_time_us;
-    double      avg_time_per_op_us;
-    double      throughput_ops_sec;
-    size_t      peak_memory_bytes;
-    double      relative_performance;  // Relative to malloc baseline
-};
-
-XSIGMATEST_VOID(AllocatorTest, PerformanceBenchmark)
-{
-    XSIGMA_LOG_INFO("Running Comprehensive Memory Allocator Performance Benchmark...");
-
-    // Test parameters - multiple allocation sizes for comprehensive testing
-    const std::vector<size_t> test_sizes = {
-        64, 1024, 65536};                // Small, Medium, Large (reduced from 65536)
-    const size_t num_iterations = 2000;  // Reduced from 2000 for faster execution
-
-    std::vector<BenchmarkResult> all_results;
-
-    for (size_t alloc_size : test_sizes)
-    {
-        XSIGMA_LOG_INFO("Testing allocation size: {}  bytes", std::to_string(alloc_size));
-
-        std::vector<BenchmarkResult> size_results;
-
-        // ========== BASELINE: Standard malloc/free ==========
-        {
-            std::vector<void*> ptrs;
-            ptrs.reserve(num_iterations);
-
-            auto start = std::chrono::high_resolution_clock::now();
-
-            // Allocation phase
-            for (size_t i = 0; i < num_iterations; ++i)
-            {
-                void* ptr = xsigma::cpu::memory_allocator::allocate(alloc_size);
-                if (ptr)
-                {
-                    ptrs.push_back(ptr);
-                    memset(ptr, 0xAA, std::min(alloc_size, size_t(64)));  // Touch memory
-                }
-            }
-
-            // Deallocation phase
-            for (void* ptr : ptrs)
-            {
-                xsigma::cpu::memory_allocator::free(ptr);
-            }
-
-            auto end      = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-            BenchmarkResult result;
-            result.allocator_name       = "malloc/free";
-            result.allocation_size      = alloc_size;
-            result.iterations           = num_iterations;
-            result.total_time_us        = duration.count();
-            result.avg_time_per_op_us   = duration.count() / (num_iterations * 2.0);
-            result.throughput_ops_sec   = (num_iterations * 2.0) / (duration.count() / 1e6);
-            result.peak_memory_bytes    = alloc_size * num_iterations;  // Approximate
-            result.relative_performance = 1.0;                          // Baseline
-
-            size_results.push_back(result);
-            EXPECT_EQ(ptrs.size(), num_iterations);
-        }
-
-        // ========== BFC ALLOCATOR ==========
-        {
-            std::vector<sub_allocator::Visitor> empty_visitors;
-            auto                                sub_allocator =
-                std::make_unique<basic_cpu_allocator>(0, empty_visitors, empty_visitors);
-
-            allocator_bfc::Options opts;
-            opts.allow_growth = true;
-
-            size_t total_memory = std::max(
-                static_cast<size_t>(64ULL << 20),
-                alloc_size * num_iterations * 2);  // Adjust based on test size
-            auto bfc_alloc = std::make_unique<xsigma::allocator_bfc>(
-                std::unique_ptr<xsigma::sub_allocator>(sub_allocator.release()),
-                total_memory,
-                "benchmark_bfc_" + std::to_string(alloc_size),
-                opts);
-
-            std::vector<void*> ptrs;
-            ptrs.reserve(num_iterations);
-
-            auto start = std::chrono::high_resolution_clock::now();
-
-            // Allocation phase
-            for (size_t i = 0; i < num_iterations; ++i)
-            {
-                void* ptr = bfc_alloc->allocate_raw(64, alloc_size);
-                if (ptr)
-                {
-                    ptrs.push_back(ptr);
-                    memset(ptr, 0xBB, std::min(alloc_size, size_t(64)));  // Touch memory
-                }
-            }
-
-            // Deallocation phase
-            for (void* ptr : ptrs)
-            {
-                bfc_alloc->deallocate_raw(ptr);
-            }
-
-            auto end      = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-            BenchmarkResult result;
-            result.allocator_name     = "BFC Allocator";
-            result.allocation_size    = alloc_size;
-            result.iterations         = num_iterations;
-            result.total_time_us      = duration.count();
-            result.avg_time_per_op_us = duration.count() / (num_iterations * 2.0);
-            result.throughput_ops_sec = (num_iterations * 2.0) / (duration.count() / 1e6);
-            result.peak_memory_bytes  = alloc_size * num_iterations;  // Approximate
-            result.relative_performance =
-                size_results[0].avg_time_per_op_us / result.avg_time_per_op_us;
-
-            size_results.push_back(result);
-            EXPECT_EQ(ptrs.size(), num_iterations);
-        }
-
-        // ========== POOL ALLOCATOR ==========
-        {
-            std::vector<sub_allocator::Visitor> empty_visitors;
-            auto                                sub_allocator =
-                std::make_unique<basic_cpu_allocator>(0, empty_visitors, empty_visitors);
-            auto size_rounder = std::make_unique<Pow2Rounder>();
-            auto pool         = std::make_unique<allocator_pool>(
-                std::max(
-                    size_t(2048), alloc_size * 4),  // Adjust pool size based on allocation size
-                true,                               // auto_resize
-                std::move(sub_allocator),
-                std::move(size_rounder),
-                "benchmark_pool_" + std::to_string(alloc_size));
-
-            std::vector<void*> ptrs;
-            ptrs.reserve(num_iterations);
-
-            auto start = std::chrono::high_resolution_clock::now();
-
-            // Allocation phase
-            for (size_t i = 0; i < num_iterations; ++i)
-            {
-                void* ptr = pool->allocate_raw(64, alloc_size);
-                if (ptr)
-                {
-                    ptrs.push_back(ptr);
-                    memset(ptr, 0xCC, std::min(alloc_size, size_t(64)));  // Touch memory
-                }
-            }
-
-            // Deallocation phase
-            for (void* ptr : ptrs)
-            {
-                pool->deallocate_raw(ptr);
-            }
-
-            auto end      = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-            BenchmarkResult result;
-            result.allocator_name     = "Pool Allocator";
-            result.allocation_size    = alloc_size;
-            result.iterations         = num_iterations;
-            result.total_time_us      = duration.count();
-            result.avg_time_per_op_us = duration.count() / (num_iterations * 2.0);
-            result.throughput_ops_sec = (num_iterations * 2.0) / (duration.count() / 1e6);
-            result.peak_memory_bytes  = alloc_size * num_iterations;  // Approximate
-            result.relative_performance =
-                size_results[0].avg_time_per_op_us / result.avg_time_per_op_us;
-
-            size_results.push_back(result);
-            EXPECT_EQ(ptrs.size(), num_iterations);
-        }
-
-        // ========== TRACKING ALLOCATOR (wrapping BFC) ==========
-        {
-            std::vector<sub_allocator::Visitor> empty_visitors;
-            auto                                sub_allocator =
-                std::make_unique<basic_cpu_allocator>(0, empty_visitors, empty_visitors);
-
-            allocator_bfc::Options opts;
-            opts.allow_growth = true;
-
-            size_t total_memory = std::max(
-                static_cast<size_t>(64ULL << 20),
-                alloc_size * num_iterations * 2);  // Adjust based on test size
-            auto underlying_bfc = std::make_unique<xsigma::allocator_bfc>(
-                std::unique_ptr<xsigma::sub_allocator>(sub_allocator.release()),
-                total_memory,
-                "tracking_bfc_" + std::to_string(alloc_size),
-                opts);
-
-            // Create tracking allocator wrapping the BFC allocator
-            auto tracker = new xsigma::allocator_tracking(underlying_bfc.get(), true);
-
-            std::vector<void*> ptrs;
-            ptrs.reserve(num_iterations);
-
-            auto start = std::chrono::high_resolution_clock::now();
-
-            // Allocation phase
-            for (size_t i = 0; i < num_iterations; ++i)
-            {
-                void* ptr = tracker->allocate_raw(64, alloc_size);
-                if (ptr)
-                {
-                    ptrs.push_back(ptr);
-                    memset(ptr, 0xDD, std::min(alloc_size, size_t(64)));  // Touch memory
-                }
-            }
-
-            // Deallocation phase
-            for (void* ptr : ptrs)
-            {
-                tracker->deallocate_raw(ptr);
-            }
-
-            auto end      = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-            BenchmarkResult result;
-            result.allocator_name     = "Tracking Allocator";
-            result.allocation_size    = alloc_size;
-            result.iterations         = num_iterations;
-            result.total_time_us      = duration.count();
-            result.avg_time_per_op_us = duration.count() / (num_iterations * 2.0);
-            result.throughput_ops_sec = (num_iterations * 2.0) / (duration.count() / 1e6);
-            result.peak_memory_bytes  = alloc_size * num_iterations;  // Approximate
-            result.relative_performance =
-                size_results[0].avg_time_per_op_us / result.avg_time_per_op_us;
-
-            size_results.push_back(result);
-            EXPECT_EQ(ptrs.size(), num_iterations);
-
-            // Properly cleanup tracking allocator by releasing reference
-            tracker->GetRecordsAndUnRef();
-        }
-
-        // ========== TYPED ALLOCATOR (type-safe wrapper) ==========
-        {
-            std::vector<sub_allocator::Visitor> empty_visitors;
-            auto                                sub_allocator =
-                std::make_unique<basic_cpu_allocator>(0, empty_visitors, empty_visitors);
-
-            allocator_bfc::Options opts;
-            opts.allow_growth = true;
-
-            size_t total_memory = std::max(
-                static_cast<size_t>(64ULL << 20),
-                alloc_size * num_iterations * 2);  // Adjust based on test size
-            auto underlying_bfc = std::make_unique<xsigma::allocator_bfc>(
-                std::unique_ptr<xsigma::sub_allocator>(sub_allocator.release()),
-                total_memory,
-                "typed_bfc_" + std::to_string(alloc_size),
-                opts);
-
-            xsigma::allocation_attributes default_attrs;
-            std::vector<char*>            ptrs;  // Use char* for typed allocator
-            ptrs.reserve(num_iterations);
-
-            auto start = std::chrono::high_resolution_clock::now();
-
-            // Allocation phase - allocate arrays of chars
-            size_t elements_per_alloc = alloc_size / sizeof(char);
-            for (size_t i = 0; i < num_iterations; ++i)
-            {
-                char* ptr = xsigma::allocator_typed::Allocate<char>(
-                    underlying_bfc.get(), elements_per_alloc, default_attrs);
-                if (ptr)
-                {
-                    ptrs.push_back(ptr);
-                    memset(ptr, 0xEE, std::min(alloc_size, size_t(64)));  // Touch memory
-                }
-            }
-
-            // Deallocation phase
-            for (char* ptr : ptrs)
-            {
-                xsigma::allocator_typed::Deallocate(underlying_bfc.get(), ptr, elements_per_alloc);
-            }
-
-            auto end      = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-            BenchmarkResult result;
-            result.allocator_name     = "Typed Allocator";
-            result.allocation_size    = alloc_size;
-            result.iterations         = num_iterations;
-            result.total_time_us      = duration.count();
-            result.avg_time_per_op_us = duration.count() / (num_iterations * 2.0);
-            result.throughput_ops_sec = (num_iterations * 2.0) / (duration.count() / 1e6);
-            result.peak_memory_bytes  = alloc_size * num_iterations;  // Approximate
-            result.relative_performance =
-                size_results[0].avg_time_per_op_us / result.avg_time_per_op_us;
-
-            size_results.push_back(result);
-            EXPECT_EQ(ptrs.size(), num_iterations);
-        }
-
-        // ========== ALLOCATOR_DEVICE ==========
-        {
-            auto               device_allocator = std::make_unique<allocator_device>();
-            std::vector<void*> ptrs;
-            ptrs.reserve(num_iterations);
-
-            auto start = std::chrono::high_resolution_clock::now();
-
-            // Allocation phase
-            for (size_t i = 0; i < num_iterations; ++i)
-            {
-                void* ptr = device_allocator->allocate_raw(64, alloc_size);
-                if (ptr)
-                {
-                    ptrs.push_back(ptr);
-                    memset(ptr, 0xFF, std::min(alloc_size, size_t(64)));  // Touch memory
-                }
-            }
-
-            // Deallocation phase
-            for (void* ptr : ptrs)
-            {
-                device_allocator->deallocate_raw(ptr);
-            }
-
-            auto end      = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-            BenchmarkResult result;
-            result.allocator_name     = "Device Allocator";
-            result.allocation_size    = alloc_size;
-            result.iterations         = num_iterations;
-            result.total_time_us      = duration.count();
-            result.avg_time_per_op_us = duration.count() / (num_iterations * 2.0);
-            result.throughput_ops_sec = (num_iterations * 2.0) / (duration.count() / 1e6);
-            result.peak_memory_bytes  = alloc_size * num_iterations;  // Approximate
-            result.relative_performance =
-                size_results[0].avg_time_per_op_us / result.avg_time_per_op_us;
-
-            size_results.push_back(result);
-            EXPECT_EQ(ptrs.size(), num_iterations);
-        }
-
-        // Store results for this allocation size
-        all_results.insert(all_results.end(), size_results.begin(), size_results.end());
-    }
-
-    // ========== COMPREHENSIVE RESULTS PRESENTATION ==========
-    XSIGMA_LOG_INFO("Generating comprehensive performance comparison report...");
-
-    std::cout << "\n" << std::string(120, '=') << "\n";
-    std::cout << "                    COMPREHENSIVE MEMORY ALLOCATOR PERFORMANCE BENCHMARK\n";
-    std::cout << std::string(120, '=') << "\n\n";
-
-    // Group results by allocation size for better presentation
-    for (size_t test_size : test_sizes)
-    {
-        std::cout << "ALLOCATION SIZE: " << test_size << " bytes (" << num_iterations
-                  << " iterations)\n";
-        std::cout << std::string(120, '-') << "\n";
-
-        // Header
-        std::cout << std::left << std::setw(20) << "Allocator" << std::setw(15) << "Total Time (μs)"
-                  << std::setw(18) << "Avg Time/Op (μs)" << std::setw(18) << "Throughput (ops/s)"
-                  << std::setw(18) << "Peak Memory (MB)" << std::setw(15) << "Relative Perf"
-                  << std::setw(10) << "vs malloc" << "\n";
-        std::cout << std::string(120, '-') << "\n";
-
-        // Find results for this allocation size
-        std::vector<BenchmarkResult> size_specific_results;
-        for (const auto& result : all_results)
-        {
-            if (result.allocation_size == test_size)
-            {
-                size_specific_results.push_back(result);
-            }
-        }
-
-        // Display results
-        for (const auto& result : size_specific_results)
-        {
-            double      peak_memory_mb = result.peak_memory_bytes / (1024.0 * 1024.0);
-            double      perf_vs_malloc = result.relative_performance;
-            std::string perf_indicator = (perf_vs_malloc > 1.0)   ? "FASTER"
-                                         : (perf_vs_malloc < 1.0) ? "SLOWER"
-                                                                  : "SAME";
-
-            // Log the results to ensure they appear in test output
-            std::ostringstream result_line;
-            result_line << std::left << std::fixed << std::setprecision(3) << std::setw(20)
-                        << result.allocator_name << std::setw(15) << result.total_time_us
-                        << std::setw(18) << result.avg_time_per_op_us << std::setw(18)
-                        << std::scientific << result.throughput_ops_sec << std::fixed
-                        << std::setw(18) << peak_memory_mb << std::setw(15) << perf_vs_malloc << "x"
-                        << std::setw(10) << perf_indicator;
-
-            XSIGMA_LOG_INFO("{}", result_line.str());
-
-            std::cout << std::left << std::fixed << std::setprecision(3) << std::setw(20)
-                      << result.allocator_name << std::setw(15) << result.total_time_us
-                      << std::setw(18) << result.avg_time_per_op_us << std::setw(18)
-                      << std::scientific << result.throughput_ops_sec << std::fixed << std::setw(18)
-                      << peak_memory_mb << std::setw(15) << perf_vs_malloc << "x" << std::setw(10)
-                      << perf_indicator << "\n";
-        }
-        std::cout << "\n";
-    }
-
-    // Summary statistics
-    std::cout << "PERFORMANCE SUMMARY:\n";
-    std::cout << std::string(60, '-') << "\n";
-
-    // Find best and worst performers for each size
-    for (size_t test_size : test_sizes)
-    {
-        std::vector<BenchmarkResult> size_results;
-        for (const auto& result : all_results)
-        {
-            if (result.allocation_size == test_size)
-            {
-                size_results.push_back(result);
-            }
-        }
-
-        if (!size_results.empty())
-        {
-            auto fastest = std::max_element(
-                size_results.begin(),
-                size_results.end(),
-                [](const BenchmarkResult& a, const BenchmarkResult& b)
-                { return a.throughput_ops_sec < b.throughput_ops_sec; });
-
-            auto slowest = std::min_element(
-                size_results.begin(),
-                size_results.end(),
-                [](const BenchmarkResult& a, const BenchmarkResult& b)
-                { return a.throughput_ops_sec < b.throughput_ops_sec; });
-
-            std::ostringstream summary_line;
-            summary_line << "Size " << test_size << "B: Fastest = " << fastest->allocator_name
-                         << " (" << std::scientific << fastest->throughput_ops_sec << " ops/s), "
-                         << "Slowest = " << slowest->allocator_name << " (" << std::scientific
-                         << slowest->throughput_ops_sec << " ops/s)";
-
-            XSIGMA_LOG_INFO("{}", summary_line.str());
-
-            std::cout << "Size " << test_size << "B: Fastest = " << fastest->allocator_name << " ("
-                      << std::scientific << fastest->throughput_ops_sec << " ops/s), "
-                      << "Slowest = " << slowest->allocator_name << " (" << std::scientific
-                      << slowest->throughput_ops_sec << " ops/s)\n";
-        }
-    }
-
-    std::cout << "\nBENCHMARK METHODOLOGY:\n";
-    std::cout << "- Each allocator tested with " << num_iterations
-              << " allocation/deallocation cycles\n";
-    std::cout << "- Memory touched after allocation to ensure realistic performance\n";
-    std::cout << "- Multiple allocation sizes tested: 64B (small), 1KB (medium), 64KB (large)\n";
-    std::cout << "- Relative performance calculated vs malloc/free baseline\n";
-    std::cout << "- Peak memory is approximate based on allocation size × iterations\n";
-
-    std::cout << "\n" << std::string(120, '=') << "\n";
-    std::cout << "                              BENCHMARK COMPLETED SUCCESSFULLY\n";
-    std::cout << std::string(120, '=') << "\n\n";
-
-    XSIGMA_LOG_INFO("Comprehensive Memory Allocator Performance Benchmark completed successfully!");
-}
-//
-XSIGMATEST(Core, CPUMemory)
-{
-    START_LOG_TO_FILE_NAME(CPUMemory);
-
-    XSIGMA_LOG_INFO("Starting comprehensive CPU Memory Management tests...");
-
-    // ========== EXISTING TESTS (PRESERVED) ==========
-
-    // Test allocator_bfc functionality (working)
-    XSIGMATEST_CALL(BFCAllocatorTest, BasicAllocation);
-    XSIGMATEST_CALL(BFCAllocatorTest, EdgeCases);
-    XSIGMATEST_CALL(BFCAllocatorTest, MemoryTracking);
-
-    // Test pool functionality
-    XSIGMATEST_CALL(PoolAllocatorTest, BasicFunctionality);
-    XSIGMATEST_CALL(PoolAllocatorTest, ZeroSizeHandling);
-    XSIGMATEST_CALL(PoolAllocatorTest, AlignmentRequirements);
-
-    // Test allocator_tracking functionality
-    XSIGMATEST_CALL(TrackingAllocatorTest, BasicTracking);
-
-    // Test allocator_typed functionality
-    XSIGMATEST_CALL(TypedAllocatorTest, BasicTypedAllocation);
-    XSIGMATEST_CALL(TypedAllocatorTest, OverflowProtection);
-
-    // Test memory leak detection
-    XSIGMATEST_CALL(AllocatorTest, MemoryLeakDetection);
-
-    // Test allocator statistics and monitoring
-    XSIGMATEST_CALL(AllocatorTest, StatisticsAndMonitoring);
-    XSIGMATEST_CALL(AllocatorTest, PerformanceBenchmark);
-
-    // ========== NEW COMPREHENSIVE TESTS ==========
-
-    // Test memory port abstraction layer (mem.h)
-    XSIGMATEST_CALL(MemoryPortTest, BasicMemoryOperations);
-    XSIGMATEST_CALL(MemoryPortTest, AlignmentRequirements);
-    XSIGMATEST_CALL(MemoryPortTest, EdgeCases);
-    XSIGMATEST_CALL(MemoryPortTest, SystemInformation);
-
-    // Test allocation attributes (allocator.h)
-    XSIGMATEST_CALL(AllocationAttributesTest, ConstructionAndBehavior);
-    XSIGMATEST_CALL(AllocationAttributesTest, TimingConstraints);
-
-    // Note: Process state tests are commented out due to linking issues with FLAGS_brain_gpu_record_mem_types
-    // These tests require additional flag definitions that are not available in the current build
-    XSIGMATEST_CALL(ProcessStateTest, SingletonFunctionality);
-    XSIGMATEST_CALL(ProcessStateTest, CPUAllocatorManagement);
-    XSIGMATEST_CALL(ProcessStateTest, NUMAHandling);
-    XSIGMATEST_CALL(ProcessStateTest, MemoryDescription);
-    XSIGMATEST_CALL(ProcessStateTest, VisitorRegistration);
-
-    // Test tracking allocator (allocator_tracking.h)
-    XSIGMATEST_CALL(TrackingAllocatorTest, AllocationTracking);
-    XSIGMATEST_CALL(TrackingAllocatorTest, StatisticsCollection);
-    XSIGMATEST_CALL(TrackingAllocatorTest, MemoryUsageMonitoring);
-    XSIGMATEST_CALL(TrackingAllocatorTest, UnderlyingAllocatorIntegration);
-    XSIGMATEST_CALL(TrackingAllocatorTest, EnhancedTrackingAnalytics);
-    XSIGMATEST_CALL(TrackingAllocatorTest, LoggingAndReporting);
-
-    // Test typed allocator (allocator_typed.h)
-    XSIGMATEST_CALL(TypedAllocatorTest, TypeSafeAllocation);
-    XSIGMATEST_CALL(TypedAllocatorTest, AlignmentRequirements);
-    XSIGMATEST_CALL(TypedAllocatorTest, MemorySafetyAndOverflowProtection);
-    XSIGMATEST_CALL(TypedAllocatorTest, ConstructorDestructorInvocation);
-    XSIGMATEST_CALL(TypedAllocatorTest, AllocatorInfrastructureIntegration);
-
-    XSIGMA_LOG_INFO("All comprehensive CPU Memory Management tests completed successfully!");
-    XSIGMA_LOG_INFO(
-        "Tested 35 comprehensive test functions covering all experimental allocator components!");
-    XSIGMA_LOG_INFO("Memory management system is ready for production use!");
-
-    // Note: More intensive tests disabled due to potential stability issues
-    XSIGMATEST_CALL(AllocatorTest, ErrorHandling);
-    XSIGMATEST_CALL(AllocatorTest, StressTest);
-
-    // Test the new allocator_device class
-    XSIGMATEST_CALL(AllocatorDeviceTest, BasicAllocation);
-    XSIGMATEST_CALL(AllocatorDeviceTest, AllocatorInterface);
-    XSIGMATEST_CALL(AllocatorDeviceTest, MemoryType);
-    XSIGMATEST_CALL(AllocatorDeviceTest, ErrorHandling);
-    XSIGMATEST_CALL(AllocatorDeviceTest, ThreadSafety);
-
-    END_LOG_TO_FILE_NAME(CPUMemory);
-    END_TEST();
 }

@@ -28,11 +28,12 @@
 
 #include "memory/cpu/allocator.h"
 
-#include <memory>  // for _Simple_types
+#include <memory>
 
-#include "memory/cpu/allocator_tracking.h"         // for allocator_tracking
-#include "memory/cpu/helper/allocator_registry.h"  // for allocator_factory_registry, process_st...
-#include "util/string_util.h"                      // for str_cat
+#include "memory/cpu/allocator_cpu.h"
+#include "memory/cpu/allocator_tracking.h"
+#include "memory/cpu/helper/process_state.h"
+#include "util/string_util.h"
 
 namespace xsigma
 {
@@ -68,11 +69,8 @@ std::string allocator_attributes::debug_string() const
 
 Allocator* allocator_cpu_base()
 {
-    static Allocator* cpu_alloc = allocator_factory_registry::singleton()->GetAllocator();
-    // TODO(tucker): This really seems wrong.  It's only going to be effective on
-    // the first call in a process (but the desired effect is associated with a
-    // session), and we probably ought to be tracking the highest level Allocator,
-    // not the lowest.  Revisit the advertised semantics of the triggering option.
+    static Allocator* cpu_alloc = new allocator_cpu();
+
     if (cpu_allocator_collect_full_stats && !cpu_alloc->TracksAllocationSizes())
     {
         cpu_alloc = new allocator_tracking(cpu_alloc, true);
@@ -82,11 +80,8 @@ Allocator* allocator_cpu_base()
 
 Allocator* cpu_allocator(int numa_node)
 {
-    // Correctness relies on devices being created prior to the first call
-    // to cpu_allocator, if devices are ever to be created in the process.
-    // Device creation in turn triggers process_state creation and the availability
-    // of the correct access pointer via this function call.
-    static process_state_interface* ps = allocator_factory_registry::singleton()->process_state();
+    static auto* ps = process_state::singleton();
+
     if (ps != nullptr)
     {
         return ps->GetCPUAllocator(numa_node);

@@ -21,15 +21,16 @@
  * - Adapted for XSigma quantitative computing requirements
  * - Added high-performance memory allocation optimizations
  * - Integrated NUMA-aware allocation strategies
+ * - Separated compression functionality to dedicated module
  *
  * Contact: licensing@xsigma.co.uk
  * Website: https://www.xsigma.co.uk
  */
+
 #pragma once
 
 #include <cstdint>
 #include <type_traits>
-
 
 #include "common/macros.h"
 
@@ -58,57 +59,6 @@ namespace xsigma
  */
 namespace port
 {
-// ========== Snappy Compression Functions ==========
-
-/**
- * @brief Compress data using Snappy compression algorithm.
- * @param input Input data to compress
- * @param length Length of input data in bytes
- * @param output Output string to store compressed data
- * @return true if compression succeeded, false otherwise
- */
-XSIGMA_API bool snappy_compress(const char* input, size_t length, std::string* output);
-
-/**
- * @brief Compress data from I/O vector using Snappy compression.
- * @param iov Array of I/O vectors containing input data
- * @param uncompressed_length Total length of uncompressed data
- * @param output Output string to store compressed data
- * @return true if compression succeeded, false otherwise
- */
-XSIGMA_API bool snappy_compress_from_io_vec(
-    const struct iovec* iov, size_t uncompressed_length, std::string* output);
-
-/**
- * @brief Get the uncompressed length of Snappy-compressed data.
- * @param input Compressed input data
- * @param length Length of compressed data in bytes
- * @param result Pointer to store the uncompressed length
- * @return true if length retrieval succeeded, false otherwise
- */
-XSIGMA_API bool snappy_get_uncompressed_length(const char* input, size_t length, size_t* result);
-
-/**
- * @brief Uncompress Snappy-compressed data.
- * @param input Compressed input data
- * @param length Length of compressed data in bytes
- * @param output Output buffer to store uncompressed data
- * @return true if decompression succeeded, false otherwise
- */
-XSIGMA_API bool snappy_uncompress(const char* input, size_t length, char* output);
-
-/**
- * @brief Uncompress Snappy-compressed data to I/O vector.
- * @param compressed Compressed input data
- * @param compressed_length Length of compressed data in bytes
- * @param iov Array of I/O vectors to store uncompressed data
- * @param iov_cnt Number of I/O vectors in the array
- * @return true if decompression succeeded, false otherwise
- */
-XSIGMA_API bool snappy_uncompress_to_io_vec(
-    const char* compressed, size_t compressed_length, const struct iovec* iov, size_t iov_cnt);
-
-// ========== System Memory Information ==========
 
 /**
  * @brief Comprehensive system memory information.
@@ -157,8 +107,6 @@ struct memory_bandwidth_info
     int64_t bw_used{0};
 };
 
-// ========== System Information Retrieval ==========
-
 /**
  * @brief Retrieves comprehensive host memory information.
  *
@@ -186,7 +134,7 @@ struct memory_bandwidth_info
  * }
  * ```
  */
-memory_info GetMemoryInfo();
+XSIGMA_API memory_info GetMemoryInfo();
 
 /**
  * @brief Retrieves host memory bandwidth utilization information.
@@ -209,7 +157,7 @@ memory_info GetMemoryInfo();
  *
  * **Limitations**: Not all platforms provide bandwidth information
  */
-memory_bandwidth_info GetMemoryBandwidthInfo();
+XSIGMA_API memory_bandwidth_info GetMemoryBandwidthInfo();
 
 /**
  * @brief Returns amount of available RAM in bytes.

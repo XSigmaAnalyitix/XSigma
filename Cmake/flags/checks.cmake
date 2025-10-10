@@ -159,32 +159,6 @@ if(NOT DEFINED XSIGMA_MATH_LIB_VALIDATED)
     message(STATUS "XSigma: Math library support validated")
 endif()
 
-# Standard library headers validation (cached)
-if(NOT DEFINED XSIGMA_STD_HEADERS_VALIDATED)
-    set(REQUIRED_HEADERS
-        "memory"
-        "vector"
-        "string"
-        "algorithm"
-        "functional"
-        "thread"
-        "mutex"
-        "atomic"
-        "chrono"
-        "random"
-    )
-
-    foreach(header ${REQUIRED_HEADERS})
-        check_include_file_cxx("${header}" HAVE_${header})
-        if(NOT HAVE_${header})
-            message(FATAL_ERROR "XSigma: Required C++ header <${header}> not found")
-        endif()
-    endforeach()
-
-    set(XSIGMA_STD_HEADERS_VALIDATED TRUE CACHE INTERNAL "Standard headers validation completed")
-    message(STATUS "XSigma: Standard library headers validated")
-endif()
-
 # =============================================================================
 # Compiler Capability Validation (Cached)
 # =============================================================================

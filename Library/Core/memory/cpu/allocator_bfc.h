@@ -35,6 +35,7 @@
 #include <cstdint>
 #include <deque>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <set>
 #include <vector>
@@ -42,9 +43,7 @@
 #include "common/macros.h"
 #include "logging/logger.h"
 #include "memory/cpu/allocator.h"
-#include "memory/cpu/helper/allocator_retry.h"
 #include "util/flat_hash.h"
-//#include "util/strcat.h"
 #include "util/string_util.h"
 
 namespace xsigma
@@ -2125,14 +2124,6 @@ private:
      * **Use Cases**: Performance analysis, memory usage debugging, optimization
      */
     std::array<BinDebugInfo, kNumBins> get_bin_debug_info() XSIGMA_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
-
-    /**
-     * @brief Retry helper for handling allocation failures with backoff.
-     *
-     * Manages retry logic, exponential backoff, and condition variable
-     * coordination for failed allocation attempts.
-     */
-    allocator_retry retry_helper_;
 
     // ========== Immutable Configuration (Set During Construction) ==========
 
