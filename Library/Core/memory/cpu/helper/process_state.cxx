@@ -39,7 +39,6 @@
 #include "memory/cpu/allocator_bfc.h"
 #include "memory/cpu/allocator_pool.h"
 #include "memory/cpu/allocator_tracking.h"
-#include "memory/cpu/helper/allocator_registry.h"
 #include "util/exception.h"
 #include "util/string_util.h"
 
@@ -48,10 +47,7 @@ namespace xsigma
 
 /*static*/ process_state* process_state::singleton()
 {
-    static auto*          instance = new process_state;
-    static std::once_flag f;
-    std::call_once(f, []() { allocator_factory_registry::singleton()->SetProcessState(instance); });
-
+    static auto* instance = new process_state;
     return instance;
 }
 

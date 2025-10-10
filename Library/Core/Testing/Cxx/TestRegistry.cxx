@@ -39,7 +39,7 @@ using namespace xsigma;
  *
  * Covers: Register, Has, run methods
  */
-XSIGMATEST(Core, registry_basic)
+XSIGMATEST(registry, basic)
 {
     using TestFunction = std::function<int(int, int)>;
     Registry<std::string, TestFunction> registry;
@@ -65,7 +65,7 @@ XSIGMATEST(Core, registry_basic)
  *
  * Covers: executing registered functions
  */
-XSIGMATEST(Core, registry_run)
+XSIGMATEST(registry, run)
 {
     using TestFunction = std::function<int(int, int)>;
     Registry<std::string, TestFunction> registry;
@@ -92,7 +92,7 @@ XSIGMATEST(Core, registry_run)
  *
  * Covers: object factory pattern, creator registry
  */
-XSIGMATEST(Core, registry_creator_basic)
+XSIGMATEST(registry, creator_basic)
 {
     // Define a base class
     class base_class
@@ -148,7 +148,7 @@ XSIGMATEST(Core, registry_creator_basic)
  *
  * Covers: factory functions with constructor arguments
  */
-XSIGMATEST(Core, registry_creator_with_args)
+XSIGMATEST(registry, creator_with_args)
 {
     class configurable_class
     {
@@ -184,7 +184,7 @@ XSIGMATEST(Core, registry_creator_with_args)
  *
  * Covers: automatic registration via Registerer
  */
-XSIGMATEST(Core, registry_registerer)
+XSIGMATEST(registry, registerer)
 {
     using TestFunction = std::function<int()>;
     static Registry<std::string, TestFunction> test_registry;
@@ -208,7 +208,7 @@ XSIGMATEST(Core, registry_registerer)
  *
  * Covers: concurrent registration and access
  */
-XSIGMATEST(Core, registry_thread_safety)
+XSIGMATEST(registry, thread_safety)
 {
     using TestFunction = std::function<int(int)>;
     Registry<std::string, TestFunction> registry;
@@ -257,7 +257,7 @@ XSIGMATEST(Core, registry_thread_safety)
  *
  * Covers: retrieving all registered keys
  */
-XSIGMATEST(Core, registry_keys)
+XSIGMATEST(registry, keys)
 {
     using TestFunction = std::function<void()>;
     Registry<std::string, TestFunction> registry;
@@ -297,7 +297,7 @@ XSIGMATEST(Core, registry_keys)
  *
  * Covers: different function signatures, return types
  */
-XSIGMATEST(Core, registry_value_types)
+XSIGMATEST(registry, value_types)
 {
     // Test with void return
     Registry<std::string, std::function<void()>> void_registry;
@@ -331,7 +331,7 @@ XSIGMATEST(Core, registry_value_types)
  *
  * Covers: empty registry, duplicate keys, empty keys
  */
-XSIGMATEST(Core, registry_edge_cases)
+XSIGMATEST(registry, edge_cases)
 {
     using TestFunction = std::function<int()>;
     Registry<std::string, TestFunction> registry;
@@ -362,7 +362,7 @@ XSIGMATEST(Core, registry_edge_cases)
  *
  * Covers: automatic registration for creator pattern
  */
-XSIGMATEST(Core, registry_creator_registerer)
+XSIGMATEST(registry, creator_registerer)
 {
     class test_base
     {
@@ -401,7 +401,7 @@ XSIGMATEST(Core, registry_creator_registerer)
  *
  * Covers: default creator template method
  */
-XSIGMATEST(Core, registry_default_creator)
+XSIGMATEST(registry, default_creator)
 {
     class simple_class
     {
@@ -448,7 +448,7 @@ XSIGMATEST(Core, registry_default_creator)
  *
  * Covers: many registrations, lookup performance
  */
-XSIGMATEST(Core, registry_performance)
+XSIGMATEST(registry, performance)
 {
     using TestFunction = std::function<int(int)>;
     Registry<std::string, TestFunction> registry;
@@ -486,7 +486,7 @@ XSIGMATEST(Core, registry_performance)
  *
  * Covers: multiple arguments, reference parameters
  */
-XSIGMATEST(Core, registry_complex_signatures)
+XSIGMATEST(registry, complex_signatures)
 {
     // Test with multiple arguments
     using MultiArgFunc = std::function<int(int, double, std::string)>;
@@ -529,7 +529,7 @@ XSIGMATEST(Core, registry_complex_signatures)
  *
  * Covers: int keys, enum keys
  */
-XSIGMATEST(Core, registry_integer_keys)
+XSIGMATEST(registry, integer_keys)
 {
     using TestFunction = std::function<int()>;
     Registry<int, TestFunction> int_registry;
@@ -558,7 +558,7 @@ XSIGMATEST(Core, registry_integer_keys)
  *
  * Covers: shared ownership pattern
  */
-XSIGMATEST(Core, registry_shared_ptr)
+XSIGMATEST(registry, shared_ptr)
 {
     class shared_class
     {
@@ -593,7 +593,7 @@ XSIGMATEST(Core, registry_shared_ptr)
  *
  * Covers: consistent behavior across platforms
  */
-XSIGMATEST(Core, registry_platform_independence)
+XSIGMATEST(registry, platform_independence)
 {
     using TestFunction = std::function<int64_t(int32_t)>;
     Registry<std::string, TestFunction> registry;
@@ -619,7 +619,7 @@ XSIGMATEST(Core, registry_platform_independence)
  * Covers: naming conventions, no exceptions, proper structure
  * Note: This test verifies the API follows conventions
  */
-XSIGMATEST(Core, registry_coding_conventions)
+XSIGMATEST(registry, coding_conventions)
 {
     // Verify class names are snake_case (Registry is template, acceptable)
     // Verify method names are snake_case

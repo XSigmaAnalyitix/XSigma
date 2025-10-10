@@ -22,7 +22,7 @@
 #include "common/configure.h"
 #include "xsigmaTest.h"  // for END_TEST, XSIGMATEST
 
-XSIGMATEST(Core, SMP)
+XSIGMATEST(SMP, test)
 {
     END_TEST();
 }

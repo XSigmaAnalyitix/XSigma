@@ -163,7 +163,7 @@ void testAllFunctions()
 
 }  // namespace xsigma
 
-XSIGMATEST(Core, StringUtil)
+XSIGMATEST(StringUtil, test)
 {
     xsigma::testAllFunctions();
     END_TEST();

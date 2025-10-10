@@ -41,7 +41,7 @@ using namespace xsigma;
  *
  * Covers: hash_combine with various types, seed modification
  */
-XSIGMATEST(Core, hash_util_basic_combine)
+XSIGMATEST(HashUtil, hash_util_basic_combine)
 {
     // Test hash_combine with integers
     std::size_t seed1 = 0;
@@ -80,7 +80,7 @@ XSIGMATEST(Core, hash_util_basic_combine)
  *
  * Covers: specialized hash_combine for size_t values
  */
-XSIGMATEST(Core, hash_util_combine_size_t)
+XSIGMATEST(HashUtil, hash_util_combine_size_t)
 {
     // Test size_t specialization
     std::size_t seed1 = 0;
@@ -112,7 +112,7 @@ XSIGMATEST(Core, hash_util_combine_size_t)
  *
  * Covers: hash_pair with various types, consistency
  */
-XSIGMATEST(Core, hash_util_pair)
+XSIGMATEST(HashUtil, hash_util_pair)
 {
     // Test hash_pair with integers
     auto        pair1 = std::make_pair(1, 2);
@@ -155,7 +155,7 @@ XSIGMATEST(Core, hash_util_pair)
  *
  * Covers: hash_range with various containers, empty ranges
  */
-XSIGMATEST(Core, hash_util_range)
+XSIGMATEST(HashUtil, hash_util_range)
 {
     // Test hash_range with vector
     std::vector<int> vec1  = {1, 2, 3, 4, 5};
@@ -198,7 +198,7 @@ XSIGMATEST(Core, hash_util_range)
  *
  * Covers: hash_values with multiple types, order sensitivity
  */
-XSIGMATEST(Core, hash_util_values)
+XSIGMATEST(HashUtil, hash_util_values)
 {
     // Test hash_values with single value
     std::size_t hash1 = hash_values(42);
@@ -241,7 +241,7 @@ XSIGMATEST(Core, hash_util_values)
  *
  * Covers: zero values, negative values, extreme values
  */
-XSIGMATEST(Core, hash_util_edge_cases)
+XSIGMATEST(HashUtil, hash_util_edge_cases)
 {
     // Test with zero
     //auto hash1 = hash_values(0);
@@ -276,7 +276,7 @@ XSIGMATEST(Core, hash_util_edge_cases)
  *
  * Covers: collision resistance, distribution uniformity
  */
-XSIGMATEST(Core, hash_util_distribution)
+XSIGMATEST(HashUtil, hash_util_distribution)
 {
     // Test that sequential values produce well-distributed hashes
     std::set<std::size_t> hashes;
@@ -306,7 +306,7 @@ XSIGMATEST(Core, hash_util_distribution)
  *
  * Covers: cross-platform consistency, fixed-width types
  */
-XSIGMATEST(Core, hash_util_platform_independence)
+XSIGMATEST(HashUtil, hash_util_platform_independence)
 {
     // Use fixed-width types for platform independence
     std::size_t hash1 = hash_values(int32_t(42), int64_t(1000));
@@ -332,7 +332,7 @@ XSIGMATEST(Core, hash_util_platform_independence)
  *
  * Covers: unordered_map, unordered_set with custom hash
  */
-XSIGMATEST(Core, hash_util_container_integration)
+XSIGMATEST(HashUtil, hash_util_container_integration)
 {
     // Test std::pair as key in unordered_map (uses our hash specialization)
     xsigma_map<std::pair<int, int>, std::string> map1;
@@ -374,7 +374,7 @@ XSIGMATEST(Core, hash_util_container_integration)
  *
  * Covers: performance, scalability
  */
-XSIGMATEST(Core, hash_util_performance)
+XSIGMATEST(HashUtil, hash_util_performance)
 {
     // Test hashing performance with many values
     const int                iterations = 10000;
@@ -414,7 +414,7 @@ XSIGMATEST(Core, hash_util_performance)
  *
  * Covers: collision detection, hash quality
  */
-XSIGMATEST(Core, hash_util_collision_resistance)
+XSIGMATEST(HashUtil, hash_util_collision_resistance)
 {
     // Test with similar values
     std::unordered_set<std::size_t> hashes;
@@ -456,7 +456,7 @@ XSIGMATEST(Core, hash_util_collision_resistance)
  *
  * Covers: nested containers, custom types
  */
-XSIGMATEST(Core, hash_util_complex_types)
+XSIGMATEST(HashUtil, hash_util_complex_types)
 {
     // Test with nested pairs
     using NestedPair   = std::pair<std::pair<int, int>, std::pair<int, int>>;
@@ -488,7 +488,7 @@ XSIGMATEST(Core, hash_util_complex_types)
  *
  * Covers: deterministic behavior, repeatability
  */
-XSIGMATEST(Core, hash_util_consistency)
+XSIGMATEST(HashUtil, hash_util_consistency)
 {
     // Test that same input always produces same output
     const int   test_runs      = 100;

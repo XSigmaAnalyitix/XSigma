@@ -35,10 +35,8 @@
 #include <unordered_map>
 #include <vector>
 
-
 #include "common/macros.h"
 #include "memory/cpu/allocator.h"
-#include "memory/cpu/helper/allocator_registry.h"
 #include "util/flat_hash.h"
 
 namespace xsigma
@@ -48,7 +46,7 @@ class allocator_pool;
 
 // Singleton that manages per-process state, e.g. allocation of
 // shared resources.
-class XSIGMA_VISIBILITY process_state : public process_state_interface
+class XSIGMA_VISIBILITY process_state
 {
 public:
     XSIGMA_API static process_state* singleton();
@@ -80,7 +78,7 @@ public:
 
     // Returns the one cpu_allocator used for the given numa_node.
     // Treats numa_node == NUMANOAFFINITY as numa_node == 0.
-    XSIGMA_API Allocator* GetCPUAllocator(int numa_node) override;
+    XSIGMA_API Allocator* GetCPUAllocator(int numa_node);
 
     // Registers alloc visitor for the CPU allocator(s).
     // REQUIRES: must be called before GetCPUAllocator.

@@ -25,7 +25,7 @@
 #include "util/cpu_info.h"   // for cpu_info
 #include "xsigmaTest.h"      // for END_TEST, XSIGMATEST
 
-XSIGMATEST(Core, CPUinfo)
+XSIGMATEST(CPUinfo, CPUinfo)
 {
     START_LOG_TO_FILE_NAME(CPUinfo);
 

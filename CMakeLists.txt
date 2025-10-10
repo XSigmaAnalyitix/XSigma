@@ -92,6 +92,14 @@ option(XSIGMA_ENABLE_EXTERNAL "Use external copies of third party libraries by d
 option(XSIGMA_ENABLE_MAGICENUM "Enable magic_enum static reflection for enums." ON)
 mark_as_advanced(XSIGMA_ENABLE_MAGICENUM)
 
+# Compression support options
+option(XSIGMA_ENABLE_COMPRESSION "Enable compression support" OFF)
+set(XSIGMA_COMPRESSION_TYPE
+    "none"
+    CACHE STRING "Compression library to use. Options are  none, snappy")
+set_property(CACHE XSIGMA_COMPRESSION_TYPE PROPERTY STRINGS none snappy)
+mark_as_advanced(XSIGMA_ENABLE_COMPRESSION XSIGMA_COMPRESSION_TYPE)
+
 # Logging backend selection (mutually exclusive)
 set(XSIGMA_LOGGING_BACKEND
     "LOGURU"
@@ -136,6 +144,21 @@ endif()
 
 if(XSIGMA_ENABLE_SANITIZER)
   set(XSIGMA_ENABLE_MIMALLOC OFF)
+endif()
+
+# Compression configuration validation and setup
+if(XSIGMA_ENABLE_COMPRESSION)
+    if(XSIGMA_COMPRESSION_TYPE STREQUAL "SNAPPY")
+        set(XSIGMA_COMPRESSION_TYPE_SNAPPY ON)
+        message(STATUS "Compression enabled: Snappy")
+    elseif(XSIGMA_COMPRESSION_TYPE STREQUAL "NONE")
+        set(XSIGMA_ENABLE_COMPRESSION OFF)
+        message(STATUS "Compression type set to NONE - disabling compression")
+    else()
+        message(FATAL_ERROR "Invalid XSIGMA_COMPRESSION_TYPE: ${XSIGMA_COMPRESSION_TYPE}. Valid options are: NONE, SNAPPY")
+    endif()
+else()
+    message(STATUS "Compression disabled")
 endif()
 
 # Set global variables
