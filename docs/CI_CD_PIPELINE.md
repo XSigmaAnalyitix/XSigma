@@ -247,7 +247,7 @@ All jobs must pass for CI to succeed:
 
 ### Valgrind Failures
 - Check `Testing/Temporary/MemoryChecker.*.log` for details
-- Add suppressions to `Cmake/xsigmaValgrindSuppression.txt` for false positives
+- Add suppressions to `Scripts/valgrind_suppression.txt` for false positives
 - Ensure tests don't have actual memory leaks
 
 ### Sanitizer Failures

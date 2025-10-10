@@ -80,35 +80,109 @@ cd Scripts
 
 ## Valgrind Configuration
 
+### Configuration Architecture
+The Valgrind integration follows a clean separation of concerns:
+
+1. **CMake Configuration** (`Cmake/tools/valgrind.cmake`):
+   - All Valgrind options and settings
+   - Timeout configuration and multipliers
+   - Suppression file management
+   - Platform compatibility checks
+
+2. **Shell Script** (`Scripts/valgrind_ctest.sh`):
+   - Test execution logic only
+   - Result analysis and reporting
+   - No hardcoded configuration
+
+This architecture ensures:
+- Single source of truth for configuration
+- Easy maintenance and updates
+- Consistent behavior across environments
+
 ### Suppression File
 The project includes a suppression file to filter out known false positives:
-- Location: `Cmake/xsigmaValgrindSuppression.txt`
+- Location: `Scripts/valgrind_suppression.txt`
 - Automatically used by the build system
 - Can be customized for project-specific suppressions
 
 ### Valgrind Options
-The default configuration includes:
+All Valgrind options are configured in `Cmake/tools/valgrind.cmake`. The default configuration includes:
+
+**Core Settings:**
 - `--tool=memcheck`: Memory error detector
 - `--leak-check=full`: Detailed leak information
 - `--show-leak-kinds=all`: Show all types of leaks
-- `--track-origins=yes`: Track origins of uninitialized values
-- `--gen-suppressions=all`: Generate suppression entries
-- `--trace-children=yes`: Trace child processes
 - `--show-reachable=yes`: Show reachable memory
+
+**Error Tracking:**
+- `--track-origins=yes`: Track origins of uninitialized values
+- `--track-fds=yes`: Track file descriptor leaks
+- `--error-exitcode=1`: Exit with error code on issues
+
+**Output and Reporting:**
+- `--verbose`: Detailed output
 - `--num-callers=50`: Stack trace depth
+- `--gen-suppressions=all`: Generate suppression entries
+- `--xml=yes`: Machine-readable XML output
+
+**Process Handling:**
+- `--trace-children=yes`: Trace child processes
+
+### Timeout Configuration
+Tests run significantly slower under Valgrind (typically 10-50x slower). The timeout configuration handles this automatically:
+
+**Default Settings:**
+- Timeout multiplier: **20x** (configurable via `XSIGMA_VALGRIND_TIMEOUT_MULTIPLIER`)
+- Global CTest timeout: **1800 seconds** (30 minutes)
+- Individual test timeouts are automatically multiplied
+
+**Customizing Timeouts:**
+```bash
+# Configure with custom timeout multiplier
+cmake -DXSIGMA_ENABLE_VALGRIND=ON \
+      -DXSIGMA_VALGRIND_TIMEOUT_MULTIPLIER=30 \
+      ..
+```
+
+**How It Works:**
+1. Tests define normal timeouts (e.g., 300 seconds for CoreCxxTests)
+2. When Valgrind is enabled, timeouts are automatically multiplied
+3. Example: 300s × 20 = 6000s (100 minutes) under Valgrind
+4. This prevents false timeout failures while maintaining safety limits
 
 ## Interpreting Results
 
 ### Memory Leak Types
-1. **Definitely Lost**: Memory that is no longer accessible (real leak)
-2. **Indirectly Lost**: Memory lost due to definitely lost blocks
-3. **Possibly Lost**: Memory that might be leaked (pointer arithmetic)
-4. **Still Reachable**: Memory still accessible at exit (not necessarily a leak)
+1. **Definitely Lost**: Memory that is no longer accessible (real leak) - **MUST FIX**
+2. **Indirectly Lost**: Memory lost due to definitely lost blocks - **MUST FIX**
+3. **Possibly Lost**: Memory that might be leaked (pointer arithmetic) - **INVESTIGATE**
+4. **Still Reachable**: Memory still accessible at exit (not necessarily a leak) - **OPTIONAL**
 
-### Exit Codes
-- `0`: All tests passed, no memory errors
-- `1`: Tests failed or memory errors detected
-- Other: System or configuration errors
+### Exit Codes and Test Status
+The script intelligently determines test status based on multiple factors:
+
+**Exit Code 0 (Success):**
+- All tests passed with no memory issues
+- Tests timed out BUT no memory issues detected (timeout is treated as warning only)
+
+**Exit Code 1 (Failure):**
+- Memory leaks detected (definitely lost, indirectly lost)
+- Memory errors detected (invalid reads/writes, uninitialized values)
+- Tests failed for reasons other than timeout
+
+**Key Behavior:**
+- **Timeouts without memory issues = PASS**: The script recognizes that timeouts under Valgrind are often due to slow execution, not actual failures
+- **Memory issues = FAIL**: Any memory leak or error causes failure, regardless of test completion
+- **Detailed logging**: All results are logged for manual inspection if needed
+
+### Understanding Test Output
+```
+[✓] No memory leaks detected
+[✓] No memory errors detected
+[!] Some tests timed out
+[i] Consider this a PASS for memory checking purposes
+```
+This indicates a successful memory check despite timeout.
 
 ## Alternatives for Apple Silicon (ARM64)
 
@@ -177,17 +251,57 @@ docker run -v $(pwd):/workspace -it xsigma-valgrind bash
 **Solution**: Use sanitizers instead (see alternatives section).
 
 ### Issue: "Too many false positives"
-**Solution**: Add suppressions to `Cmake/xsigmaValgrindSuppression.txt`.
+**Solution**: Add suppressions to `Scripts/valgrind_suppression.txt`.
+
+### Issue: "Tests timeout under Valgrind"
+**Symptoms:**
+```
+The following tests FAILED:
+      1 - CoreCxxTests (Timeout)
+```
+
+**Solutions:**
+1. **Automatic (Recommended)**: The timeout multiplier should handle this automatically. If you still see timeouts:
+   ```bash
+   # Increase the timeout multiplier
+   cmake -DXSIGMA_ENABLE_VALGRIND=ON \
+         -DXSIGMA_VALGRIND_TIMEOUT_MULTIPLIER=30 \
+         ..
+   ```
+
+2. **Manual**: Edit the test timeout in the test's CMakeLists.txt:
+   ```cmake
+   set_tests_properties(CoreCxxTests PROPERTIES
+       TIMEOUT 600  # Increase from 300 to 600
+   )
+   ```
+
+3. **Check if it's a real issue**: If the script reports "No memory issues detected" despite timeout, the memory check passed. The timeout is just a warning.
 
 ### Issue: "Tests run very slowly"
-**Solution**: This is normal. Valgrind significantly slows down execution (10-50x slower).
+**Solution**: This is normal. Valgrind significantly slows down execution (10-50x slower). The timeout configuration accounts for this.
 
 ### Issue: "Valgrind crashes on macOS"
-**Solution**: 
+**Solution**:
 - Update to the latest Valgrind version
 - Try using an older macOS version
 - Use Docker with Linux
 - Switch to sanitizers
+
+### Issue: "Script reports failure but no memory errors shown"
+**Diagnosis**: Check the detailed logs:
+```bash
+# View Valgrind logs
+ls -lh build_ninja_valgrind/Testing/Temporary/MemoryChecker.*.log
+
+# Search for specific errors
+grep -i "error\|leak" build_ninja_valgrind/Testing/Temporary/MemoryChecker.*.log
+```
+
+**Common causes:**
+- File descriptor leaks (check with `--track-fds=yes`)
+- Reachable memory at exit (usually not a real issue)
+- Third-party library issues (add suppressions)
 
 ## Performance Considerations
 
