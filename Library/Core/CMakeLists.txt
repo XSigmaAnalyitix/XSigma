@@ -75,9 +75,11 @@ file(
 # Remove GPU files if CUDA is not enabled
 if(NOT XSIGMA_ENABLE_CUDA)
     file(GLOB_RECURSE GPU_SOURCE_FILES memory/gpu/*.cxx)
-    list(REMOVE_ITEM sources ${GPU_SOURCE_FILES})
-    file(GLOB_RECURSE GPU_HEADER_FILES memory/gpu/*.h)
+    file(GLOB_RECURSE GPU_HEADER_FILES memory/gpu/*.h memory/gpu/*.hxx)
     list(REMOVE_ITEM headers ${GPU_HEADER_FILES})
+    list(REMOVE_ITEM sources ${GPU_SOURCE_FILES})
+    list(REMOVE_ITEM sources "${CMAKE_CURRENT_SOURCE_DIR}/memeory/cpu/allocator_device.cxx")
+    list(REMOVE_ITEM headers "${CMAKE_CURRENT_SOURCE_DIR}/memory/cpu/allocator_device.h")
 endif()
 
 if(XSIGMA_ENABLE_COMPRESSION)

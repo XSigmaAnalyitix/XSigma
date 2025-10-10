@@ -31,8 +31,8 @@
 
 // Platform-specific includes
 #ifdef XSIGMA_ENABLE_TBB
-#include <tbb/scalable_allocator.h>
 #include <tbb/cache_aligned_allocator.h>
+#include <tbb/scalable_allocator.h>
 #endif
 
 #ifdef XSIGMA_ENABLE_MIMALLOC
@@ -58,10 +58,10 @@ namespace benchmarks
 class allocator_benchmark_interface
 {
 public:
-    virtual ~allocator_benchmark_interface() = default;
-    virtual void* allocate(std::size_t size, std::size_t alignment = 64) noexcept = 0;
-    virtual void deallocate(void* ptr, std::size_t size = 0) noexcept = 0;
-    virtual const char* name() const noexcept = 0;
+    virtual ~allocator_benchmark_interface()                                            = default;
+    virtual void*       allocate(std::size_t size, std::size_t alignment = 64) noexcept = 0;
+    virtual void        deallocate(void* ptr, std::size_t size = 0) noexcept            = 0;
+    virtual const char* name() const noexcept                                           = 0;
 };
 
 class mimalloc_benchmark_allocator : public allocator_benchmark_interface
@@ -72,11 +72,12 @@ public:
 #ifdef XSIGMA_ENABLE_MIMALLOC
         return mi_malloc_aligned(size, alignment);
 #else
-        XSIGMA_UNUSED(size); XSIGMA_UNUSED(alignment);
+        XSIGMA_UNUSED(size);
+        XSIGMA_UNUSED(alignment);
         return nullptr;
 #endif
     }
-    
+
     void deallocate(void* ptr, XSIGMA_UNUSED std::size_t size = 0) noexcept override
     {
 #ifdef XSIGMA_ENABLE_MIMALLOC
@@ -85,7 +86,7 @@ public:
         XSIGMA_UNUSED(ptr);
 #endif
     }
-    
+
     const char* name() const noexcept override { return "mimalloc"; }
 };
 
@@ -101,14 +102,14 @@ public:
         return nullptr;
 #endif
     }
-    
+
     void deallocate(XSIGMA_UNUSED void* ptr, XSIGMA_UNUSED std::size_t size = 0) noexcept override
     {
 #ifdef XSIGMA_ENABLE_TBB
         scalable_aligned_free(ptr);
 #endif
     }
-    
+
     const char* name() const noexcept override { return "tbb_scalable"; }
 };
 
@@ -128,7 +129,7 @@ public:
         return ptr;
 #endif
     }
-    
+
     void deallocate(void* ptr, XSIGMA_UNUSED std::size_t size = 0) noexcept override
     {
         if (ptr != nullptr)
@@ -140,7 +141,7 @@ public:
 #endif
         }
     }
-    
+
     const char* name() const noexcept override { return "standard_aligned"; }
 };
 
@@ -151,12 +152,12 @@ public:
     {
         return xsigma::cpu::memory_allocator::allocate(size, alignment);
     }
-    
+
     void deallocate(void* ptr, std::size_t size = 0) noexcept override
     {
         xsigma::cpu::memory_allocator::free(ptr, size);
     }
-    
+
     const char* name() const noexcept override { return "xsigma_cpu"; }
 };
 
@@ -164,12 +165,12 @@ public:
 // Benchmark Helper Functions
 // =============================================================================
 
-template<typename AllocatorType>
+template <typename AllocatorType>
 void benchmark_simple_allocation(benchmark::State& state)
 {
-    AllocatorType allocator;
+    AllocatorType     allocator;
     const std::size_t size = static_cast<std::size_t>(state.range(0));
-    
+
     for (auto _ : state)
     {
         void* ptr = allocator.allocate(size);
@@ -180,23 +181,23 @@ void benchmark_simple_allocation(benchmark::State& state)
         }
         benchmark::ClobberMemory();
     }
-    
+
     state.SetBytesProcessed(static_cast<int64_t>(state.iterations() * size));
     state.SetItemsProcessed(static_cast<int64_t>(state.iterations()));
 }
 
-template<typename AllocatorType>
+template <typename AllocatorType>
 void benchmark_batch_allocation(benchmark::State& state)
 {
-    AllocatorType allocator;
-    const std::size_t batch_size = static_cast<std::size_t>(state.range(0));
+    AllocatorType     allocator;
+    const std::size_t batch_size      = static_cast<std::size_t>(state.range(0));
     const std::size_t allocation_size = static_cast<std::size_t>(state.range(1));
-    
+
     for (auto _ : state)
     {
         std::vector<void*> ptrs;
         ptrs.reserve(batch_size);
-        
+
         // Allocation phase
         for (std::size_t i = 0; i < batch_size; ++i)
         {
@@ -206,43 +207,44 @@ void benchmark_batch_allocation(benchmark::State& state)
                 ptrs.push_back(ptr);
             }
         }
-        
+
         benchmark::DoNotOptimize(ptrs.data());
-        
+
         // Deallocation phase
         for (void* ptr : ptrs)
         {
             allocator.deallocate(ptr, allocation_size);
         }
-        
+
         benchmark::ClobberMemory();
     }
-    
-    state.SetBytesProcessed(static_cast<int64_t>(state.iterations() * batch_size * allocation_size));
+
+    state.SetBytesProcessed(
+        static_cast<int64_t>(state.iterations() * batch_size * allocation_size));
     state.SetItemsProcessed(static_cast<int64_t>(state.iterations() * batch_size));
 }
 
-template<typename AllocatorType>
+template <typename AllocatorType>
 void benchmark_mixed_sizes(benchmark::State& state)
 {
-    AllocatorType allocator;
+    AllocatorType     allocator;
     const std::size_t num_allocations = static_cast<std::size_t>(state.range(0));
-    
+
     // Pre-generate random sizes for consistency
-    std::mt19937 rng(42);
+    std::mt19937                               rng(42);
     std::uniform_int_distribution<std::size_t> size_dist(64, 4096);
-    std::vector<std::size_t> sizes;
+    std::vector<std::size_t>                   sizes;
     sizes.reserve(num_allocations);
     for (std::size_t i = 0; i < num_allocations; ++i)
     {
         sizes.push_back(size_dist(rng));
     }
-    
+
     for (auto _ : state)
     {
         std::vector<void*> ptrs;
         ptrs.reserve(num_allocations);
-        
+
         // Allocation phase
         for (std::size_t size : sizes)
         {
@@ -252,31 +254,32 @@ void benchmark_mixed_sizes(benchmark::State& state)
                 ptrs.push_back(ptr);
             }
         }
-        
+
         benchmark::DoNotOptimize(ptrs.data());
-        
+
         // Deallocation phase
         for (std::size_t i = 0; i < ptrs.size(); ++i)
         {
             allocator.deallocate(ptrs[i], sizes[i]);
         }
-        
+
         benchmark::ClobberMemory();
     }
-    
+
     std::size_t total_bytes = 0;
-    for (std::size_t size : sizes) total_bytes += size;
-    
+    for (std::size_t size : sizes)
+        total_bytes += size;
+
     state.SetBytesProcessed(static_cast<int64_t>(state.iterations() * total_bytes));
     state.SetItemsProcessed(static_cast<int64_t>(state.iterations() * num_allocations));
 }
 
-template<typename AllocatorType>
+template <typename AllocatorType>
 void benchmark_memory_access_pattern(benchmark::State& state)
 {
-    AllocatorType allocator;
+    AllocatorType     allocator;
     const std::size_t size = static_cast<std::size_t>(state.range(0));
-    
+
     for (auto _ : state)
     {
         void* ptr = allocator.allocate(size);
@@ -285,22 +288,22 @@ void benchmark_memory_access_pattern(benchmark::State& state)
             // Sequential write pattern
             std::memset(ptr, 0xAA, size);
             benchmark::DoNotOptimize(ptr);
-            
+
             // Sequential read pattern
             volatile std::size_t checksum = 0;
-            auto* byte_ptr = static_cast<unsigned char*>(ptr);
+            auto*                byte_ptr = static_cast<unsigned char*>(ptr);
             for (std::size_t i = 0; i < size; ++i)
             {
                 checksum += byte_ptr[i];
             }
             benchmark::DoNotOptimize(checksum);
-            
+
             allocator.deallocate(ptr, size);
         }
         benchmark::ClobberMemory();
     }
-    
-    state.SetBytesProcessed(static_cast<int64_t>(state.iterations() * size * 2)); // Read + Write
+
+    state.SetBytesProcessed(static_cast<int64_t>(state.iterations() * size * 2));  // Read + Write
     state.SetItemsProcessed(static_cast<int64_t>(state.iterations()));
 }
 
@@ -448,11 +451,11 @@ BENCHMARK_TEMPLATE(benchmark_memory_access_pattern, tbb_scalable_benchmark_alloc
 // Alignment-Specific Benchmarks
 // =============================================================================
 
-template<typename AllocatorType>
+template <typename AllocatorType>
 void benchmark_aligned_allocation(benchmark::State& state)
 {
-    AllocatorType allocator;
-    const std::size_t size = 1024;
+    AllocatorType     allocator;
+    const std::size_t size      = 1024;
     const std::size_t alignment = static_cast<std::size_t>(state.range(0));
 
     for (auto _ : state)
@@ -473,25 +476,45 @@ void benchmark_aligned_allocation(benchmark::State& state)
 // Alignment benchmarks for all allocators
 BENCHMARK_TEMPLATE(benchmark_aligned_allocation, xsigma_cpu_benchmark_allocator)
     ->Name("BM_XSigmaCPU_AlignedAllocation")
-    ->Arg(16)->Arg(32)->Arg(64)->Arg(128)->Arg(256)->Arg(512)
+    ->Arg(16)
+    ->Arg(32)
+    ->Arg(64)
+    ->Arg(128)
+    ->Arg(256)
+    ->Arg(512)
     ->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_TEMPLATE(benchmark_aligned_allocation, standard_aligned_benchmark_allocator)
     ->Name("BM_StandardAligned_AlignedAllocation")
-    ->Arg(16)->Arg(32)->Arg(64)->Arg(128)->Arg(256)->Arg(512)
+    ->Arg(16)
+    ->Arg(32)
+    ->Arg(64)
+    ->Arg(128)
+    ->Arg(256)
+    ->Arg(512)
     ->Unit(benchmark::kMicrosecond);
 
 #ifdef XSIGMA_ENABLE_MIMALLOC
 BENCHMARK_TEMPLATE(benchmark_aligned_allocation, mimalloc_benchmark_allocator)
     ->Name("BM_Mimalloc_AlignedAllocation")
-    ->Arg(16)->Arg(32)->Arg(64)->Arg(128)->Arg(256)->Arg(512)
+    ->Arg(16)
+    ->Arg(32)
+    ->Arg(64)
+    ->Arg(128)
+    ->Arg(256)
+    ->Arg(512)
     ->Unit(benchmark::kMicrosecond);
 #endif
 
 #ifdef XSIGMA_ENABLE_TBB
 BENCHMARK_TEMPLATE(benchmark_aligned_allocation, tbb_scalable_benchmark_allocator)
     ->Name("BM_TBBScalable_AlignedAllocation")
-    ->Arg(16)->Arg(32)->Arg(64)->Arg(128)->Arg(256)->Arg(512)
+    ->Arg(16)
+    ->Arg(32)
+    ->Arg(64)
+    ->Arg(128)
+    ->Arg(256)
+    ->Arg(512)
     ->Unit(benchmark::kMicrosecond);
 #endif
 
@@ -499,10 +522,10 @@ BENCHMARK_TEMPLATE(benchmark_aligned_allocation, tbb_scalable_benchmark_allocato
 // Fragmentation Test Benchmark
 // =============================================================================
 
-template<typename AllocatorType>
+template <typename AllocatorType>
 void benchmark_fragmentation_pattern(benchmark::State& state)
 {
-    AllocatorType allocator;
+    AllocatorType     allocator;
     const std::size_t num_allocations = static_cast<std::size_t>(state.range(0));
 
     for (auto _ : state)
@@ -563,27 +586,33 @@ void benchmark_fragmentation_pattern(benchmark::State& state)
 // Fragmentation benchmarks
 BENCHMARK_TEMPLATE(benchmark_fragmentation_pattern, xsigma_cpu_benchmark_allocator)
     ->Name("BM_XSigmaCPU_Fragmentation")
-    ->Arg(1000)->Arg(5000)
+    ->Arg(1000)
+    ->Arg(5000)
     ->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_TEMPLATE(benchmark_fragmentation_pattern, standard_aligned_benchmark_allocator)
     ->Name("BM_StandardAligned_Fragmentation")
-    ->Arg(1000)->Arg(5000)
+    ->Arg(1000)
+    ->Arg(5000)
     ->Unit(benchmark::kMicrosecond);
 
 #ifdef XSIGMA_ENABLE_MIMALLOC
 BENCHMARK_TEMPLATE(benchmark_fragmentation_pattern, mimalloc_benchmark_allocator)
     ->Name("BM_Mimalloc_Fragmentation")
-    ->Arg(1000)->Arg(5000)
+    ->Arg(1000)
+    ->Arg(5000)
     ->Unit(benchmark::kMicrosecond);
 #endif
 
 #ifdef XSIGMA_ENABLE_TBB
 BENCHMARK_TEMPLATE(benchmark_fragmentation_pattern, tbb_scalable_benchmark_allocator)
     ->Name("BM_TBBScalable_Fragmentation")
-    ->Arg(1000)->Arg(5000)
+    ->Arg(1000)
+    ->Arg(5000)
     ->Unit(benchmark::kMicrosecond);
 #endif
 
 }  // namespace benchmarks
 }  // namespace xsigma
+
+BENCHMARK_MAIN();
