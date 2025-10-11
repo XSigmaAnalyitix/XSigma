@@ -131,8 +131,8 @@ XSIGMATEST(CPUMemory, allocator_device_interface)
     allocator_memory_enum memory_type = allocator->GetMemoryType();
     EXPECT_EQ(allocator_memory_enum::HOST_PINNED, memory_type);
 
-    // Test TracksAllocationSizes() - should return false by default
-    EXPECT_FALSE(allocator->TracksAllocationSizes());
+    // Test tracks_allocation_sizes() - should return false by default
+    EXPECT_FALSE(allocator->tracks_allocation_sizes());
 
     // Test AllocatesOpaqueHandle() - should return false
     EXPECT_FALSE(allocator->AllocatesOpaqueHandle());
@@ -268,7 +268,7 @@ XSIGMATEST_VOID(BFCAllocatorTest, MemoryTracking)
     allocator_bfc allocator(std::move(sub_allocator), memory_limit, "test_bfc_tracking", opts);
 
     // Test allocation size tracking
-    if (allocator.TracksAllocationSizes())
+    if (allocator.tracks_allocation_sizes())
     {
         void* ptr = allocator.allocate_raw(64, 1024);
         EXPECT_NE(nullptr, ptr);
@@ -607,7 +607,7 @@ XSIGMATEST_VOID(AllocatorTest, StatisticsAndMonitoring)
     }
 
     // Test allocation size tracking
-    if (allocator_tracking->TracksAllocationSizes())
+    if (allocator_tracking->tracks_allocation_sizes())
     {
         void* ptr = allocator_tracking->allocate_raw(64, 2048);
         EXPECT_NE(nullptr, ptr);
@@ -923,7 +923,7 @@ XSIGMATEST_VOID(TrackingAllocatorTest, AllocationTracking)
     EXPECT_NE(nullptr, ptr1);
 
     // Verify tracking capabilities
-    EXPECT_TRUE(tracker->TracksAllocationSizes());
+    EXPECT_TRUE(tracker->tracks_allocation_sizes());
     EXPECT_EQ(tracker->RequestedSize(ptr1), 1024);
     EXPECT_GE(tracker->AllocatedSize(ptr1), 1024);
 
@@ -1100,7 +1100,7 @@ XSIGMATEST_VOID(TrackingAllocatorTest, UnderlyingAllocatorIntegration)
     EXPECT_NE(nullptr, ptr);
 
     // Verify size tracking works
-    EXPECT_TRUE(bfc_tracker->TracksAllocationSizes());
+    EXPECT_TRUE(bfc_tracker->tracks_allocation_sizes());
     EXPECT_EQ(bfc_tracker->RequestedSize(ptr), 1024);
     EXPECT_GE(bfc_tracker->AllocatedSize(ptr), 1024);
 

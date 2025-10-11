@@ -41,7 +41,7 @@ allocator_tracking::allocator_tracking(
     Allocator* allocator, bool track_sizes, bool enable_enhanced_tracking)
     : allocator_(allocator),
       track_sizes_locally_(
-          (track_sizes && !allocator_->TracksAllocationSizes()) || enable_enhanced_tracking),
+          (track_sizes && !allocator_->tracks_allocation_sizes()) || enable_enhanced_tracking),
       next_allocation_id_(0),
       enhanced_tracking_enabled_(enable_enhanced_tracking)
 {
@@ -132,7 +132,7 @@ void* allocator_tracking::allocate_raw(
         //                + std::to_string(num_bytes) + " bytes, time="
         //                + std::to_string(duration_us) + "μs");
     }
-    if (allocator_->TracksAllocationSizes())
+    if (allocator_->tracks_allocation_sizes())
     {
         size_t  allocated_bytes = allocator_->AllocatedSize(ptr);
         int64_t allocation_id   = 0;
@@ -285,7 +285,7 @@ void allocator_tracking::deallocate_raw(void* ptr)
     bool should_delete;
     // fetch the following outside the lock in case the call to
     // AllocatedSize is slow
-    bool    tracks_allocation_sizes = allocator_->TracksAllocationSizes();
+    bool    tracks_allocation_sizes = allocator_->tracks_allocation_sizes();
     size_t  allocated_bytes         = 0;
     int64_t allocation_id           = 0;
 
@@ -386,9 +386,9 @@ void allocator_tracking::deallocate_raw(void* ptr)
     }
 }
 
-bool allocator_tracking::TracksAllocationSizes() const noexcept
+bool allocator_tracking::tracks_allocation_sizes() const noexcept
 {
-    return track_sizes_locally_ || allocator_->TracksAllocationSizes();
+    return track_sizes_locally_ || allocator_->tracks_allocation_sizes();
 }
 
 size_t allocator_tracking::RequestedSize(const void* ptr) const

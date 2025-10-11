@@ -338,7 +338,7 @@ void* gpu_allocator_tracking::allocate_raw(
         }
 #endif
 
-        if (current_log_level >= gpu_tracking_log_level::ERROR)
+        if (static_cast<int>(current_log_level) >= static_cast<int>(gpu_tracking_log_level::ERROR))
         {
             XSIGMA_LOG_ERROR(
                 "GPU allocation failed: {}, bytes={}, device={}", e.what(), bytes, device_index_);

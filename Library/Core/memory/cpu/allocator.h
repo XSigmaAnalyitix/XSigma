@@ -416,14 +416,14 @@ public:
      *
      * **Example**:
      * ```cpp
-     * if (allocator->TracksAllocationSizes()) {
+     * if (allocator->tracks_allocation_sizes()) {
      *     size_t actual_size = allocator->AllocatedSize(ptr);
      *     size_t requested_size = allocator->RequestedSize(ptr);
      *     std::cout << "Overhead: " << (actual_size - requested_size) << " bytes\n";
      * }
      * ```
      */
-    virtual bool TracksAllocationSizes() const noexcept { return false; }
+    virtual bool tracks_allocation_sizes() const noexcept { return false; }
 
     /**
      * @brief Indicates whether allocator returns opaque handles instead of memory pointers.
@@ -461,7 +461,7 @@ public:
      * @return Original requested size in bytes
      *
      * **Requirements**:
-     * - TracksAllocationSizes() must return true
+     * - tracks_allocation_sizes() must return true
      * - ptr must not be nullptr
      * - ptr must have been allocated by this allocator instance
      *
@@ -472,7 +472,7 @@ public:
      * **Example**:
      * ```cpp
      * void* ptr = allocator->allocate_raw(64, 1000);
-     * if (allocator->TracksAllocationSizes()) {
+     * if (allocator->tracks_allocation_sizes()) {
      *     size_t requested = allocator->RequestedSize(ptr);  // Returns 1000
      *     size_t actual = allocator->AllocatedSize(ptr);     // May return 1024
      * }
@@ -495,7 +495,7 @@ public:
      * @return Actual allocated size in bytes
      *
      * **Requirements**:
-     * - TracksAllocationSizes() must return true
+     * - tracks_allocation_sizes() must return true
      * - ptr must not be nullptr
      * - ptr must have been allocated by this allocator instance
      *
@@ -523,7 +523,7 @@ public:
      * @return Unique allocation ID (>0), or 0 if not available
      *
      * **Requirements**:
-     * - TracksAllocationSizes() must return true
+     * - tracks_allocation_sizes() must return true
      * - ptr must not be nullptr
      * - ptr must have been allocated by this allocator instance
      *
@@ -551,7 +551,7 @@ public:
     /**
      * @brief Returns allocated size with potentially slow computation.
      *
-     * Attempts to determine the allocated size even when TracksAllocationSizes()
+     * Attempts to determine the allocated size even when tracks_allocation_sizes()
      * returns false. May use expensive system calls or memory introspection.
      * Should only be used for debugging or when performance is not critical.
      *
@@ -567,7 +567,7 @@ public:
      * **Use Cases**: Debugging, memory analysis tools, diagnostics
      *
      * **Implementation Strategy**:
-     * - If TracksAllocationSizes() is true: delegate to fast AllocatedSize()
+     * - If tracks_allocation_sizes() is true: delegate to fast AllocatedSize()
      * - Otherwise: attempt system-specific size queries (malloc_usable_size, etc.)
      * - Return 0 if size cannot be determined
      *
@@ -582,7 +582,7 @@ public:
     {
         if constexpr (true)
         {  // Use C++17 if constexpr for potential optimization
-            if (TracksAllocationSizes())
+            if (tracks_allocation_sizes())
             {
                 return AllocatedSize(ptr);
             }

@@ -155,7 +155,7 @@ public:
         mm_->erase(iter);
         a_->deallocate_raw(p);
     }
-    bool   TracksAllocationSizes() const noexcept override { return a_->TracksAllocationSizes(); }
+    bool tracks_allocation_sizes() const noexcept override { return a_->tracks_allocation_sizes(); }
     size_t RequestedSize(const void* p) const override { return a_->RequestedSize(p); }
     size_t AllocatedSize(const void* p) const override { return a_->AllocatedSize(p); }
     std::optional<allocator_stats> GetStats() override { return a_->GetStats(); }

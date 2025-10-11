@@ -1275,7 +1275,7 @@ bool allocator_bfc::MergeTimestampedChunks(size_t required_bytes)
     return satisfied;
 }
 
-bool allocator_bfc::TracksAllocationSizes() const noexcept
+bool allocator_bfc::tracks_allocation_sizes() const noexcept
 {
     return true;
 }

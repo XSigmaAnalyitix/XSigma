@@ -448,7 +448,7 @@ public:
      * **Performance**: O(1) - simple constant return
      * **Capabilities**: Enables RequestedSize(), AllocatedSize(), AllocationId()
      */
-    bool TracksAllocationSizes() const noexcept override;
+    bool tracks_allocation_sizes() const noexcept override;
 
     /**
      * @brief Returns the original size requested for an allocation.
