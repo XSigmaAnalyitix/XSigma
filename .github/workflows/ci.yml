@@ -284,7 +284,7 @@ jobs:
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
       run: |
-        brew install ninja llvm cmake python3 tbb valgrind cppcheck
+        brew install ninja llvm cmake python3 tbb cppcheck
 
     - name: Setup macOS linker environment
       if: runner.os == 'macOS'
@@ -422,17 +422,17 @@ jobs:
       if: runner.os != 'Windows'
       run: |
         echo "=== Verifying Code Quality Tools Installation ==="
-        echo "Valgrind version:"
-        valgrind --version || echo "Valgrind not available"
-        echo ""
-        echo "Cppcheck version:"
-        cppcheck --version || echo "Cppcheck not available"
-        echo ""
         if [ "${{ runner.os }}" = "Linux" ]; then
+          echo "Valgrind version:"
+          valgrind --version || echo "Valgrind not available"
+          echo ""
           echo "NUMA library check:"
           ldconfig -p | grep numa || echo "NUMA libraries not found"
           echo ""
         fi
+        echo "Cppcheck version:"
+        cppcheck --version || echo "Cppcheck not available"
+        echo ""
         echo "Tools verification complete"
 
     # ===== CMake Configuration =====
@@ -603,7 +603,7 @@ jobs:
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
       run: |
-        brew install ninja llvm cmake python3 tbb valgrind cppcheck
+        brew install ninja llvm cmake python3 tbb cppcheck
 
     - name: Setup macOS linker environment (TBB tests)
       if: runner.os == 'macOS'
@@ -757,7 +757,7 @@ jobs:
     - name: Install dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
-        brew install ninja cmake llvm tbb valgrind cppcheck
+        brew install ninja cmake llvm tbb cppcheck
         echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
 
     - name: Setup macOS linker environment (Sanitizer tests)
