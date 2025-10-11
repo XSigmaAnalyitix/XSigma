@@ -18,11 +18,8 @@
 
 #include "util/string_util.h"
 
-#include <cmath>           // for signbit, HUGE_VAL
 #include <array>          // for array
-#include <cctype>         // for isdigit, isspace, tolower
-#include <cfloat>         // for DBL_DIG, FLT_DIG, DBL_MAX
-#include <cmath>          // for isnan, signbit, abs
+#include <cmath>          // for signbit, HUGE_VAL
 #include <cstdarg>        // for va_end, va_list, va_copy, va_start
 #include <cstdio>         // for snprintf, vsnprintf
 #include <cstdlib>        // for strtod, strtof, abs, strtol

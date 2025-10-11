@@ -16,7 +16,7 @@ set(CLANG_TIDY_FOUND
     CACHE BOOL "Found clang-tidy.")
 mark_as_advanced(CLANG_TIDY_FOUND)
 
-function(xsigma_module_enable_clang_tidy target_name)
+function(xsigma_target_clang_tidy target_name)
   set_target_properties(${target_name} PROPERTIES
     C_CLANG_TIDY "${CLANG_TIDY_PATH};-warnings-as-errors=*"
     CXX_CLANG_TIDY "${CLANG_TIDY_PATH};-warnings-as-errors=*"

@@ -122,15 +122,8 @@ struct cuda_caching_allocator::Impl
 
     ~Impl()
     {
-        try
-        {
-            std::lock_guard<std::mutex> lock(mutex_);
-            release_all_blocks_noexcept();
-        }
-        catch (...)
-        {
-            // best effort; do not throw from destructor
-        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        release_all_blocks_noexcept();
     }
 
     void* allocate(size_t size, cuda_caching_allocator::stream_type stream)

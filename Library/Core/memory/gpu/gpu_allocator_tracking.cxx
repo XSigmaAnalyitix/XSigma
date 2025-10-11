@@ -253,16 +253,9 @@ void gpu_allocator_tracking::CleanupCUDAEvents() noexcept
 #ifdef XSIGMA_ENABLE_CUDA
     if (cuda_events_initialized_)
     {
-        try
-        {
-            cudaEventDestroy(start_event_);
-            cudaEventDestroy(end_event_);
-            cuda_events_initialized_ = false;
-        }
-        catch (...)
-        {
-            // Suppress exceptions in destructor
-        }
+        cudaEventDestroy(start_event_);
+        cudaEventDestroy(end_event_);
+        cuda_events_initialized_ = false;
     }
 #endif
 }

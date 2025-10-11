@@ -14,7 +14,7 @@ The `XSIGMA_UNLIKELY` macro is used for branch prediction optimization. It expan
 #if __cplusplus >= 202002L
 #define XSIGMA_UNLIKELY(expr) (expr) [[unlikely]]
 #elif defined(__GNUC__) || defined(__clang__)
-#define XSIGMA_UNLIKELY(expr) (__builtin_expect(static_cast<bool>(expr), 0))
+#define XSIGMA_UNLIKELY(expr) (__builtin_expect(static_cast<bool>((expr)), 0))
 #else
 #define XSIGMA_UNLIKELY(expr) (expr)
 #endif

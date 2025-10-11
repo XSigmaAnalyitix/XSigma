@@ -183,7 +183,7 @@ void process_state::AddCPUAllocVisitor(sub_allocator::Visitor visitor)
     XSIGMA_LOG_INFO("AddCPUAllocVisitor");
     std::lock_guard<std::mutex> lock(mu_);
     XSIGMA_CHECK(
-        0 == cpu_allocators_.size(),
+        cpu_allocators_.empty(),
         "AddCPUAllocVisitor must be called prior to first call to "
         "process_state::GetCPUAllocator");
     cpu_alloc_visitors_.push_back(std::move(visitor));
@@ -193,7 +193,7 @@ void process_state::AddCPUFreeVisitor(sub_allocator::Visitor visitor)
 {
     std::lock_guard<std::mutex> lock(mu_);
     XSIGMA_CHECK(
-        0 == cpu_allocators_.size(),
+        cpu_allocators_.empty(),
         "AddCPUFreeVisitor must be called prior to first call to "
         "process_state::GetCPUAllocator");
 

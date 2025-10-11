@@ -38,6 +38,7 @@ readability-*,\
 -readability-static-accessed-through-instance,\
 -readability-uppercase-literal-suffix,\
 -readability-math-missing-parentheses,\
+-readability-simplify-boolean-expr,\
 misc-*,\
 -misc-include-cleaner,\
 -misc-use-anonymous-namespace,\
