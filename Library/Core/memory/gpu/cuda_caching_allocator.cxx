@@ -498,6 +498,7 @@ cuda_caching_allocator& cuda_caching_allocator::operator=(cuda_caching_allocator
 
 void* cuda_caching_allocator::allocate(size_t size, stream_type stream)
 {
+    //cppcheck-suppress syntaxError
     if XSIGMA_UNLIKELY (size == 0)
     {
         return nullptr;

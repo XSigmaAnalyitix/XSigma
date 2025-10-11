@@ -2,5 +2,7 @@
 *:ThirdParty/*
 *:Library/*/Testing/Cxx/*
 *:Library/Core/experimental/*
-unknownMacro:*XSIGMA_UNLIKELY*
-unknownMacro:*XSIGMA_LIKELY*
+unknownMacro:XSIGMA_UNLIKELY
+unknownMacro:XSIGMA_LIKELY
+missingIncludeSystem:*
+missingInclude:*

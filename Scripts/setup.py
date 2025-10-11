@@ -1138,6 +1138,7 @@ class XsigmaConfiguration:
             "--library=windows",
             "--check-level=exhaustive",
             "--template={id},{file}:{line},{severity},{message}",
+            "--suppress=missingInclude",
             f"-j{parallel_jobs}",
             "-I", "Library",
             f"--output-file={output_file}"
