@@ -198,7 +198,6 @@ public:
  *
  * **Use Cases**:
  * - Temporary buffer allocation in computational loops
- * - Tensor memory management in machine learning
  * - Frequent allocation/deallocation patterns
  * - Memory-intensive applications requiring predictable performance
  *

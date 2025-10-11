@@ -44,8 +44,8 @@ limitations under the License.
 #include <utility>
 
 #include "common/macros.h"
-#include "experimental/profiler/no_init.h"
 #include "logging/logger.h"
+#include "util/no_init.h"
 #include "util/exception.h"
 
 namespace xsigma

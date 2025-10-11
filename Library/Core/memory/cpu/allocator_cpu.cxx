@@ -36,8 +36,8 @@
 #include <string_view>
 
 #include "experimental/profiler/scoped_memory_debug_annotation.h"
-#include "experimental/profiler/traceme.h"
 #include "logging/logger.h"
+#include "logging/tracing/traceme.h"
 #include "memory/cpu/helper/memory_allocator.h"
 #include "memory/cpu/helper/memory_info.h"
 
@@ -309,7 +309,7 @@ void allocator_cpu::AddTraceMe(
     std::size_t      req_bytes,
     std::size_t      alloc_bytes)
 {
-    xsigma::trace_me::instant_activity(
+    xsigma::traceme::instant_activity(
         [this, traceme_name, chunk_ptr, req_bytes, alloc_bytes]()
             XSIGMA_NO_THREAD_SAFETY_ANALYSIS -> std::string
         {
@@ -317,7 +317,7 @@ void allocator_cpu::AddTraceMe(
             const auto& annotation = xsigma::scoped_memory_debug_annotation::current_annotation();
 
             // Create comprehensive trace with current allocator state
-            return xsigma::trace_me_encode(
+            return xsigma::traceme_encode(
                 std::string(traceme_name),
                 {{"allocator_name", Name()},
                  {"bytes_reserved", stats_.bytes_reserved.load(std::memory_order_relaxed)},
@@ -332,7 +332,7 @@ void allocator_cpu::AddTraceMe(
                  {"data_type", annotation.pending_data_type},
                  {"shape", annotation.pending_shape_func()}});
         },
-        static_cast<int>(xsigma::trace_me_level_enum::INFO));
+        static_cast<int>(xsigma::traceme_level_enum::INFO));
 }
 
 }  // namespace xsigma

@@ -49,7 +49,7 @@ struct python_tracer_options
     // NOTE: Runtime overhead ensues if enabled.
     bool enable_trace_python_function = false;
 
-    // Whether to enable python trace_me instrumentation.
+    // Whether to enable python traceme instrumentation.
     bool enable_python_traceme = true;
 
     // Whether profiling stops within an atexit handler.

@@ -37,12 +37,6 @@
 
 namespace xsigma
 {
-
-// Note: allocator_stats::debug_string() is now implemented in unified_memory_stats.cxx
-// since allocator_stats is a type alias for unified_resource_stats
-
-//constexpr size_t Allocator::kAllocatorAlignment;
-
 // If true, cpu allocator collects full stats.
 static bool cpu_allocator_collect_full_stats = false;
 
@@ -57,14 +51,11 @@ bool CPUAllocatorFullStatsEnabled()
 
 std::string allocator_attributes::debug_string() const
 {
-    return xsigma::strings::str_cat(
-        "allocator_attributes(on_host=",
+    return fmt::format(
+        "allocator_attributes(on_host={} nic_compatible={} gpu_compatible={})",
         on_host(),
-        " nic_compatible=",
         nic_compatible(),
-        " gpu_compatible=",
-        gpu_compatible(),
-        ")");
+        gpu_compatible());
 }
 
 Allocator* allocator_cpu_base()

@@ -38,27 +38,21 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-//#include "absl/log/log.h"
-//#include "absl/status/status.h"
-//#include "experimental/profiler/cpu/host_tracer_utils.h"
-//#include "xla/tsl/profiler/backends/cpu/threadpool_listener.h"
-#include "experimental/profiler/traceme_recorder.h"
-//#include "experimental/profiler/time_utils.h"
-#include "experimental/profiler/xplane/xplane_schema.h"
-#include "experimental/profiler/xplane/xplane_utils.h"
-//#include "tsl/platform/errors.h"
 #include "experimental/profiler/profiler_collection.h"
 #include "experimental/profiler/profiler_interface.h"
-#include "experimental/profiler/traceme.h"
 #include "experimental/profiler/xplane/xplane.h"
+#include "experimental/profiler/xplane/xplane_schema.h"
+#include "experimental/profiler/xplane/xplane_utils.h"
 #include "logging/logger.h"
+#include "logging/tracing/traceme.h"
+#include "logging/tracing/traceme_recorder.h"
 
 namespace xsigma::profiler
 {
 namespace
 {
 
-// Controls trace_me_recorder and converts trace_me_recorder::Events into xevents.
+// Controls traceme_recorder and converts traceme_recorder::Events into xevents.
 //
 // Thread-safety: This class is go/thread-compatible.
 class host_tracer : public profiler_interface
@@ -84,7 +78,7 @@ private:
     uint64_t start_timestamp_ns_ = 0;
 
     // Container of all traced events.
-    trace_me_recorder::Events events_;
+    traceme_recorder::Events events_;
 };
 
 host_tracer::host_tracer(int host_trace_level) : host_trace_level_(host_trace_level) {}
@@ -102,14 +96,14 @@ bool host_tracer::start()
         return false;
     }
 
-    // All trace_me captured should have a timestamp greater or equal to
+    // All traceme captured should have a timestamp greater or equal to
     // start_timestamp_ns_ to prevent timestamp underflow in xplane.
-    // Therefore this have to be done before trace_me_recorder::start.
+    // Therefore this have to be done before traceme_recorder::start.
     start_timestamp_ns_ = get_current_time_nanos();
-    recording_          = trace_me_recorder::start(host_trace_level_);
+    recording_          = traceme_recorder::start(host_trace_level_);
     if (!recording_)
     {
-        XSIGMA_LOG_ERROR("Failed to start trace_me_recorder");
+        XSIGMA_LOG_ERROR("Failed to start traceme_recorder");
         return false;
     }
     return true;
@@ -119,10 +113,10 @@ bool host_tracer::stop()
 {  // XSIGMA_STATUS_OK
     if (!recording_)
     {
-        XSIGMA_LOG_ERROR("trace_me_recorder not started");
+        XSIGMA_LOG_ERROR("traceme_recorder not started");
         return false;
     }
-    events_    = trace_me_recorder::stop();
+    events_    = traceme_recorder::stop();
     recording_ = false;
     return true;
 }
@@ -132,7 +126,7 @@ bool host_tracer::collect_data(x_space* space)
     XSIGMA_LOG_INFO("Collecting data to x_space from host_tracer.");  // NOLINT
     if (recording_)
     {
-        XSIGMA_LOG_ERROR("trace_me_recorder not stopped");
+        XSIGMA_LOG_ERROR("traceme_recorder not stopped");
         return false;
     }
     if (events_.empty())

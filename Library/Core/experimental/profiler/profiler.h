@@ -55,7 +55,7 @@
 #include <vector>
 
 #include "experimental/profiler/profiler_interface.h"
-#include "experimental/profiler/traceme.h"
+#include "logging/tracing/traceme.h"
 
 namespace xsigma
 {

@@ -47,7 +47,7 @@
 #include <vector>
 
 #include "experimental/profiler/scoped_memory_debug_annotation.h"
-#include "experimental/profiler/traceme.h"
+#include "logging/tracing/traceme.h"
 #include "util/exception.h"
 #include "util/flat_hash.h"
 #include "util/string_util.h"
@@ -795,7 +795,7 @@ void allocator_bfc::AddTraceMe(
     XSIGMA_UNUSED int64_t          req_bytes,
     XSIGMA_UNUSED int64_t          alloc_bytes)
 {
-    xsigma::trace_me::instant_activity(
+    xsigma::traceme::instant_activity(
         [this, traceme_name, chunk_ptr, req_bytes, alloc_bytes]() XSIGMA_NO_THREAD_SAFETY_ANALYSIS
         {
             int64_t bytes_available = memory_limit_ -
@@ -806,7 +806,7 @@ void allocator_bfc::AddTraceMe(
                 annotation.pending_op_name ? annotation.pending_op_name : "(null)";
             const auto* const region_type =
                 annotation.pending_region_type ? annotation.pending_region_type : "(null)";
-            return xsigma::trace_me_encode(
+            return xsigma::traceme_encode(
                 std::string(traceme_name),
                 {{"allocator_name", name_},
                  {"bytes_reserved", stats_.bytes_reserved.load(std::memory_order_relaxed)},
@@ -823,7 +823,7 @@ void allocator_bfc::AddTraceMe(
                  {"data_type", annotation.pending_data_type},
                  {"shape", annotation.pending_shape_func()}});
         },
-        /*level=*/static_cast<int>(xsigma::trace_me_level_enum::INFO));
+        /*level=*/static_cast<int>(xsigma::traceme_level_enum::INFO));
 }
 
 void* allocator_bfc::FindChunkPtr(
