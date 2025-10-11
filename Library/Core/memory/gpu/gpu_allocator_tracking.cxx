@@ -345,9 +345,6 @@ void* gpu_allocator_tracking::allocate_raw(
         }
 #endif
 
-        // cppcheck-suppress syntaxError
-        // Explanation: False positive. Cppcheck incorrectly flags this line due to the preceding
-        // conditional compilation block (#ifdef XSIGMA_ENABLE_CUDA). The syntax is valid C++.
         if (current_log_level >= gpu_tracking_log_level::ERROR)
         {
             XSIGMA_LOG_ERROR(
