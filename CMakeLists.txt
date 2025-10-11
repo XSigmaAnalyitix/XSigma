@@ -226,7 +226,7 @@ endif()
 add_subdirectory(ThirdParty)
 
 # Add subdirectories
-add_subdirectory(Library)
+add_subdirectory(Library/Core)
 
 # Apply Valgrind timeout multiplier to all tests (if Valgrind is enabled)
 # This must be called after all tests are registered
