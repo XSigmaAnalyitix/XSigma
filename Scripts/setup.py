@@ -5,6 +5,9 @@ import shutil
 import re
 import sys
 from typing import List, Dict, Optional
+from pathlib import Path
+from datetime import datetime
+import glob
 import colorama
 from colorama import Fore, Style
 
@@ -12,6 +15,290 @@ from colorama import Fore, Style
 colorama.init()
 
 DEBUG_FLAG = False
+
+class ErrorLogger:
+    """Centralized error logging system for comprehensive error tracking."""
+
+    def __init__(self, log_dir: str = "logs"):
+        self.log_dir = Path(log_dir)
+        self.log_dir.mkdir(exist_ok=True)
+        self.log_file = self.log_dir / f"xsigma_build_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+        self.errors = []
+
+    def log_error(self, command: str, error_output: str, context: str = "", suggestions: List[str] = None):
+        """Log a comprehensive error with context and suggestions."""
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        error_entry = {
+            'timestamp': timestamp,
+            'command': command,
+            'error_output': error_output,
+            'context': context,
+            'suggestions': suggestions or []
+        }
+
+        self.errors.append(error_entry)
+
+        # Write to log file immediately
+        with open(self.log_file, 'a', encoding='utf-8') as f:
+            f.write(f"\n{'='*80}\n")
+            f.write(f"ERROR LOG ENTRY - {timestamp}\n")
+            f.write(f"{'='*80}\n")
+            f.write(f"Context: {context}\n")
+            f.write(f"Command: {command}\n")
+            f.write(f"Error Output:\n{error_output}\n")
+            if suggestions:
+                f.write(f"Troubleshooting Suggestions:\n")
+                for i, suggestion in enumerate(suggestions, 1):
+                    f.write(f"  {i}. {suggestion}\n")
+            f.write(f"{'='*80}\n\n")
+
+    def get_log_file_path(self) -> str:
+        """Get the path to the current log file."""
+        return str(self.log_file)
+
+    def has_errors(self) -> bool:
+        """Check if any errors have been logged."""
+        return len(self.errors) > 0
+
+class BuildDirectoryDetector:
+    """Utility to detect build directories dynamically, independent of naming conventions."""
+
+    @staticmethod
+    def find_build_directories(source_path: str) -> List[Path]:
+        """Find all potential build directories in the project root."""
+        source_root = Path(source_path)
+        build_dirs = set()  # Use set to avoid duplicates
+
+        # Common build directory patterns
+        patterns = [
+            "build*",
+            "*build*",
+        ]
+
+        for pattern in patterns:
+            matches = list(source_root.glob(pattern))
+            for match in matches:
+                if match.is_dir() and BuildDirectoryDetector._is_build_directory(match):
+                    build_dirs.add(match)
+
+        # Convert back to list and sort by modification time (most recent first)
+        build_dirs_list = list(build_dirs)
+        build_dirs_list.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+        return build_dirs_list
+
+    @staticmethod
+    def _is_build_directory(path: Path) -> bool:
+        """Check if a directory looks like a CMake build directory."""
+        # Look for CMake artifacts
+        cmake_indicators = [
+            "CMakeCache.txt",
+            "cmake_install.cmake",
+            "CMakeFiles",
+            "Makefile",
+            "build.ninja"
+        ]
+
+        return any((path / indicator).exists() for indicator in cmake_indicators)
+
+    @staticmethod
+    def find_best_build_directory(source_path: str, preferred_name: str = None) -> Optional[Path]:
+        """Find the best build directory, optionally preferring a specific name."""
+        build_dirs = BuildDirectoryDetector.find_build_directories(source_path)
+
+        if not build_dirs:
+            return None
+
+        # If a preferred name is specified, look for it first
+        if preferred_name:
+            for build_dir in build_dirs:
+                if preferred_name in build_dir.name:
+                    return build_dir
+
+        # Return the most recently modified build directory
+        return build_dirs[0]
+
+class SummaryReporter:
+    """Generate and display summary reports for various analysis tools."""
+
+    def __init__(self):
+        self.reports = {}
+
+    def add_cppcheck_report(self, log_file: str, exit_code: int):
+        """Add cppcheck analysis results to the summary."""
+        if not os.path.exists(log_file):
+            self.reports['cppcheck'] = {
+                'status': 'not_run',
+                'message': 'Cppcheck was not executed'
+            }
+            return
+
+        try:
+            with open(log_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # Count issues by severity
+            issues = {
+                'error': len(re.findall(r',error,', content)),
+                'warning': len(re.findall(r',warning,', content)),
+                'style': len(re.findall(r',style,', content)),
+                'performance': len(re.findall(r',performance,', content)),
+                'portability': len(re.findall(r',portability,', content)),
+                'information': len(re.findall(r',information,', content))
+            }
+
+            total_issues = sum(issues.values())
+
+            self.reports['cppcheck'] = {
+                'status': 'completed',
+                'exit_code': exit_code,
+                'total_issues': total_issues,
+                'issues_by_type': issues,
+                'log_file': log_file
+            }
+        except Exception as e:
+            self.reports['cppcheck'] = {
+                'status': 'error',
+                'message': f'Failed to parse cppcheck results: {e}'
+            }
+
+    def add_valgrind_report(self, build_path: str, exit_code: int):
+        """Add valgrind analysis results to the summary."""
+        valgrind_logs = glob.glob(os.path.join(build_path, "Testing", "Temporary", "MemoryChecker.*.log"))
+
+        if not valgrind_logs:
+            self.reports['valgrind'] = {
+                'status': 'not_run',
+                'message': 'Valgrind was not executed or no logs found'
+            }
+            return
+
+        try:
+            memory_leaks = 0
+            memory_errors = 0
+
+            for log_file in valgrind_logs:
+                with open(log_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+
+                # Count memory issues
+                leak_matches = re.findall(r'definitely lost: (\d+)', content)
+                memory_leaks += sum(int(match) for match in leak_matches if int(match) > 0)
+
+                error_matches = re.findall(r'ERROR SUMMARY: (\d+) errors', content)
+                memory_errors += sum(int(match) for match in error_matches if int(match) > 0)
+
+            self.reports['valgrind'] = {
+                'status': 'completed',
+                'exit_code': exit_code,
+                'memory_leaks': memory_leaks,
+                'memory_errors': memory_errors,
+                'log_files': valgrind_logs
+            }
+        except Exception as e:
+            self.reports['valgrind'] = {
+                'status': 'error',
+                'message': f'Failed to parse valgrind results: {e}'
+            }
+
+    def add_coverage_report(self, build_path: str, exit_code: int):
+        """Add coverage analysis results to the summary."""
+        # Look for coverage report files
+        coverage_report_paths = [
+            os.path.join(build_path, "coverage_report", "coverage_summary.txt"),
+            os.path.join(build_path, "coverage.txt")
+        ]
+
+        coverage_file = None
+        for path in coverage_report_paths:
+            if os.path.exists(path):
+                coverage_file = path
+                break
+
+        if not coverage_file:
+            self.reports['coverage'] = {
+                'status': 'not_run',
+                'message': 'Coverage report not found'
+            }
+            return
+
+        try:
+            with open(coverage_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # Extract coverage percentage (this is a simplified parser)
+            coverage_match = re.search(r'TOTAL.*?(\d+\.\d+)%', content)
+            coverage_percentage = float(coverage_match.group(1)) if coverage_match else 0.0
+
+            self.reports['coverage'] = {
+                'status': 'completed',
+                'exit_code': exit_code,
+                'coverage_percentage': coverage_percentage,
+                'report_file': coverage_file
+            }
+        except Exception as e:
+            self.reports['coverage'] = {
+                'status': 'error',
+                'message': f'Failed to parse coverage results: {e}'
+            }
+
+    def display_summary(self):
+        """Display a comprehensive summary of all analysis results."""
+        if not self.reports:
+            return
+
+        print_status("\n" + "="*80, "INFO")
+        print_status("BUILD AND ANALYSIS SUMMARY REPORT", "INFO")
+        print_status("="*80, "INFO")
+
+        for tool, report in self.reports.items():
+            self._display_tool_summary(tool, report)
+
+        print_status("="*80, "INFO")
+
+    def _display_tool_summary(self, tool: str, report: Dict):
+        """Display summary for a specific tool."""
+        tool_name = tool.upper()
+
+        if report['status'] == 'not_run':
+            print_status(f"{tool_name}: Not executed", "INFO")
+            return
+
+        if report['status'] == 'error':
+            print_status(f"{tool_name}: Error - {report['message']}", "ERROR")
+            return
+
+        if tool == 'cppcheck':
+            total = report['total_issues']
+            if total == 0:
+                print_status(f"{tool_name}: ✓ No issues found", "SUCCESS")
+            else:
+                print_status(f"{tool_name}: Found {total} issues", "WARNING")
+                for issue_type, count in report['issues_by_type'].items():
+                    if count > 0:
+                        print_status(f"  - {issue_type}: {count}", "INFO")
+                print_status(f"  Log file: {report['log_file']}", "INFO")
+
+        elif tool == 'valgrind':
+            leaks = report['memory_leaks']
+            errors = report['memory_errors']
+            if leaks == 0 and errors == 0:
+                print_status(f"{tool_name}: ✓ No memory issues found", "SUCCESS")
+            else:
+                if leaks > 0:
+                    print_status(f"{tool_name}: Found {leaks} memory leaks", "ERROR")
+                if errors > 0:
+                    print_status(f"{tool_name}: Found {errors} memory errors", "ERROR")
+
+        elif tool == 'coverage':
+            percentage = report['coverage_percentage']
+            if percentage >= 95.0:
+                print_status(f"{tool_name}: ✓ {percentage:.1f}% coverage (excellent)", "SUCCESS")
+            elif percentage >= 80.0:
+                print_status(f"{tool_name}: {percentage:.1f}% coverage (good)", "WARNING")
+            else:
+                print_status(f"{tool_name}: {percentage:.1f}% coverage (needs improvement)", "ERROR")
+            print_status(f"  Report file: {report['report_file']}", "INFO")
 
 def check_dependencies() -> List[str]:
     """Check if required dependencies are installed."""
@@ -343,7 +630,7 @@ class XsigmaFlags:
             elif arg in sanitizer_list:
                 self.__value["sanitizer"] = self.ON
                 self.__value["sanitizer_enum"] = arg
-                self.builder_suffix += f"_sanitizer_{arg}"
+                self.builder_suffix += f"_{arg}"
             elif arg == "pythondebug":
                 self.__value["python"] = self.ON
                 self.__value["pythondebug"] = self.ON
@@ -376,14 +663,11 @@ class XsigmaFlags:
                     self.__value[arg] = self.ON
 
                 # Special handling for specific flags
-                if arg == "benchmark":
-                    # Add benchmark to builder suffix for clarity
-                    self.builder_suffix += "_benchmark"
-                elif arg == "mkl":
+                if arg == "mkl":
                     self.__value["dist"] = "mkl"
 
                 # Add to builder suffix (except for certain flags)
-                if arg not in ["test", "build"]:
+                if arg not in ["test", "build", "benchmark"]:
                     self.builder_suffix += f"_{arg}"
 
     def __validate_flags(self):
@@ -506,7 +790,11 @@ class XsigmaConfiguration:
                 print_status(f"  - {dep}", "ERROR")
             print_status("Please install missing dependencies and try again.", "ERROR")
             sys.exit(1)
-        
+
+        # Initialize utilities
+        self.error_logger = ErrorLogger()
+        self.summary_reporter = SummaryReporter()
+
         self.__initialize_values()
         self.__xsigma_flags = XsigmaFlags(args_list)
         self.__fill_compilation_flags(args_list)
@@ -680,7 +968,21 @@ class XsigmaConfiguration:
                 self.__handle_xcode_project_opening()
 
         except subprocess.CalledProcessError as e:
+            cmake_cmd_str = ' '.join(cmake_cmd)
+            suggestions = [
+                "Check if CMake is properly installed",
+                "Verify all required dependencies are available",
+                "Check if the generator is supported on your system",
+                "Try a different build generator (e.g., ninja instead of make)"
+            ]
+            self.error_logger.log_error(
+                cmake_cmd_str,
+                str(e),
+                "Configuring the build system",
+                suggestions
+            )
             print_status(f"Configuration failed: {e}", "ERROR")
+            print_status(f"Detailed error log saved to: {self.error_logger.get_log_file_path()}", "INFO")
             sys.exit(1)
 
     def build(self):
@@ -721,58 +1023,66 @@ class XsigmaConfiguration:
             )
             print_status("Build completed successfully", "SUCCESS")
         except subprocess.CalledProcessError as e:
+            build_cmd_str = ' '.join(cmake_cmd_build)
+            suggestions = [
+                "Check if all dependencies are installed",
+                "Verify the build configuration is correct",
+                "Try cleaning the build directory and reconfiguring",
+                "Check for compiler errors in the output above"
+            ]
+            self.error_logger.log_error(
+                build_cmd_str,
+                str(e),
+                "Building the project",
+                suggestions
+            )
             print_status(f"Build failed: {e}", "ERROR")
+            print_status(f"Detailed error log saved to: {self.error_logger.get_log_file_path()}", "INFO")
             sys.exit(1)
 
     def cppcheck(self, source_path, build_path):
-        """Run cppcheck static analysis on the codebase."""
+        """Run cppcheck static analysis with user-friendly interface."""
         if self.__value["build"] != "build" or not self.__xsigma_flags.is_cppcheck():
             return 0
 
-        print_status("Running cppcheck static analysis...", "INFO")
+        print_status("Starting static code analysis with cppcheck...", "INFO")
 
         # Check if cppcheck is installed
         try:
-            subprocess.run(["cppcheck", "--version"], capture_output=True, check=True)
+            version_result = subprocess.run(["cppcheck", "--version"], capture_output=True, check=True, text=True)
+            print_status(f"Found cppcheck: {version_result.stdout.strip()}", "SUCCESS")
         except (subprocess.CalledProcessError, FileNotFoundError):
+            suggestions = [
+                "Ubuntu/Debian: sudo apt-get install cppcheck",
+                "CentOS/RHEL/Fedora: sudo dnf install cppcheck",
+                "macOS: brew install cppcheck",
+                "Windows: choco install cppcheck or winget install cppcheck"
+            ]
+            self.error_logger.log_error(
+                "cppcheck --version",
+                "cppcheck command not found",
+                "Checking for cppcheck installation",
+                suggestions
+            )
             print_status("cppcheck not found. Please install cppcheck:", "ERROR")
-            print_status("  - Ubuntu/Debian: sudo apt-get install cppcheck", "INFO")
-            print_status("  - CentOS/RHEL/Fedora: sudo dnf install cppcheck", "INFO")
-            print_status("  - macOS: brew install cppcheck", "INFO")
-            print_status("  - Windows: choco install cppcheck or winget install cppcheck", "INFO")
+            for suggestion in suggestions:
+                print_status(f"  - {suggestion}", "INFO")
             return 1
-        
+
+        # Prepare output directory and file
         os.makedirs(build_path, exist_ok=True)
         output_file = os.path.join(build_path, "cppcheck_output.log")
-        # Build cppcheck command with exact parameters as specified
-        cppcheck_cmd = [
-            "cppcheck",
-            ".",
-            "--platform=unspecified",
-            "--enable=style",
-"--inline-suppr", 
-            "-q",
-            "--library=qt",
-            "--library=posix",
-            "--library=gnu",
-            "--library=bsd",
-            "--library=windows",
-            "--check-level=exhaustive",
-            "--template={id},{file}:{line},{severity},{message}",
-            f"--suppressions-list=Scripts/cppcheck_suppressions.txt",
-            "-j8",
-            "-I",
-            "Library",
-            f"--output-file={output_file}"
-        ]
+
+        # Build cppcheck command with optimized settings
+        cppcheck_cmd = self._build_cppcheck_command(source_path, output_file)
 
         try:
             # Change to project root directory to run cppcheck
             original_dir = os.getcwd()
             os.chdir(source_path)
 
-            print_status(f"Running cppcheck from: {source_path}", "INFO")
-            print_status(f"Command: {' '.join(cppcheck_cmd)}", "INFO")
+            print_status("Analyzing source code for potential issues...", "INFO")
+            print_status("This may take a few minutes for large codebases", "INFO")
 
             result = subprocess.run(
                 cppcheck_cmd,
@@ -784,26 +1094,118 @@ class XsigmaConfiguration:
             # Change back to build directory
             os.chdir(original_dir)
 
-            # Display cppcheck output
-            if result.stdout:
-                print(result.stdout)
-            if result.stderr:
-                print(result.stderr)
+            # Process and display results
+            exit_code = self._process_cppcheck_results(result, output_file, source_path)
 
-            if result.returncode == 0:
-                print_status("Cppcheck analysis completed successfully", "SUCCESS")
-            else:
-                print_status(f"Cppcheck analysis completed with warnings (exit code: {result.returncode})", "WARNING")
+            # Add to summary report
+            self.summary_reporter.add_cppcheck_report(output_file, exit_code)
 
-            return result.returncode
+            return exit_code
 
         except Exception as e:
-            print_status(f"Error running cppcheck: {e}", "ERROR")
+            error_msg = f"Unexpected error during cppcheck execution: {e}"
+            self.error_logger.log_error(
+                ' '.join(cppcheck_cmd),
+                str(e),
+                "Running cppcheck static analysis",
+                ["Check if the source directory is accessible", "Verify cppcheck installation"]
+            )
+            print_status(error_msg, "ERROR")
             # Change back to build directory in case of error
             try:
                 os.chdir(original_dir)
             except:
                 pass
+            return 1
+
+    def _build_cppcheck_command(self, source_path: str, output_file: str) -> List[str]:
+        """Build the cppcheck command with appropriate settings."""
+        # Get the number of CPU cores for parallel processing
+        cpu_count = get_logical_processor_count()
+        parallel_jobs = min(cpu_count, 8)  # Cap at 8 to avoid overwhelming the system
+
+        cmd = [
+            "cppcheck",
+            ".",
+            "--platform=unspecified",
+            "--enable=style,performance,portability,information",
+            "--inline-suppr",
+            "-q",  # Quiet mode - only show errors
+            "--library=qt",
+            "--library=posix",
+            "--library=gnu",
+            "--library=bsd",
+            "--library=windows",
+            "--check-level=exhaustive",
+            "--template={id},{file}:{line},{severity},{message}",
+            f"-j{parallel_jobs}",
+            "-I", "Library",
+            f"--output-file={output_file}"
+        ]
+
+        # Add suppressions file if it exists
+        suppressions_file = os.path.join(source_path, "Scripts", "cppcheck_suppressions.txt")
+        if os.path.exists(suppressions_file):
+            cmd.append(f"--suppressions-list={suppressions_file}")
+
+        return cmd
+
+    def _process_cppcheck_results(self, result: subprocess.CompletedProcess, output_file: str, source_path: str) -> int:
+        """Process cppcheck results and provide user-friendly feedback."""
+
+        # Check if output file was created and has content
+        if not os.path.exists(output_file):
+            print_status("No cppcheck output file generated", "WARNING")
+            return 1
+
+        try:
+            with open(output_file, 'r', encoding='utf-8') as f:
+                content = f.read().strip()
+
+            if not content:
+                print_status("✓ No static analysis issues found!", "SUCCESS")
+                print_status(f"Analysis results saved to: {output_file}", "INFO")
+                return 0
+
+            # Count issues by type
+            lines = content.split('\n')
+            issue_counts = {}
+            for line in lines:
+                if ',' in line:
+                    parts = line.split(',')
+                    if len(parts) >= 3:
+                        severity = parts[2]
+                        issue_counts[severity] = issue_counts.get(severity, 0) + 1
+
+            total_issues = len(lines)
+            print_status(f"Found {total_issues} potential issues:", "WARNING")
+
+            # Display issue breakdown
+            for severity, count in sorted(issue_counts.items()):
+                if severity in ['error', 'warning']:
+                    status_type = "ERROR" if severity == 'error' else "WARNING"
+                else:
+                    status_type = "INFO"
+                print_status(f"  - {severity}: {count}", status_type)
+
+            print_status(f"Detailed results saved to: {output_file}", "INFO")
+            print_status("Review the output file for specific issues and locations", "INFO")
+
+            # Return appropriate exit code
+            if any(severity in ['error'] for severity in issue_counts.keys()):
+                return 1
+            else:
+                return 0
+
+        except Exception as e:
+            error_msg = f"Failed to process cppcheck results: {e}"
+            self.error_logger.log_error(
+                "Processing cppcheck output",
+                str(e),
+                f"Reading results from {output_file}",
+                ["Check if the output file is readable", "Verify file permissions"]
+            )
+            print_status(error_msg, "ERROR")
             return 1
 
 
@@ -813,7 +1215,10 @@ class XsigmaConfiguration:
             return 0
 
         if self.__xsigma_flags.is_valgrind():
-            return self.__run_valgrind_test(source_path, build_path)
+            exit_code = self.__run_valgrind_test(source_path, build_path)
+            # Add valgrind results to summary
+            self.summary_reporter.add_valgrind_report(build_path, exit_code)
+            return exit_code
 
         return self.__run_ctest()
 
@@ -823,6 +1228,17 @@ class XsigmaConfiguration:
 
         # Check if script exists
         if not os.path.exists(script_full_path):
+            suggestions = [
+                "Ensure the Scripts/valgrind_ctest.sh file exists in the project",
+                "Check if the project was cloned completely",
+                "Verify file permissions allow reading the script"
+            ]
+            self.error_logger.log_error(
+                f"ls {script_full_path}",
+                "Valgrind test script not found",
+                "Looking for valgrind test script",
+                suggestions
+            )
             print_status(f"Valgrind test script not found: {script_full_path}", "ERROR")
             print_status("The script should have been created during setup", "ERROR")
             return 1
@@ -931,7 +1347,12 @@ class XsigmaConfiguration:
         if result == 0:
             print_status("Coverage data collection completed successfully", "SUCCESS")
             print_status("Running automatic coverage analysis...", "INFO")
-            self.analyze(source_path, build_path)
+            analyze_result = self.analyze(source_path, build_path)
+            # Add coverage results to summary
+            self.summary_reporter.add_coverage_report(build_path, analyze_result)
+        else:
+            # Add failed coverage to summary
+            self.summary_reporter.add_coverage_report(build_path, result)
 
         return result
 
@@ -1055,6 +1476,20 @@ class XsigmaConfiguration:
 
         os.chdir(build_folder)
         return os.getcwd()
+
+    def find_build_directory_for_analysis(self, source_path: str) -> Optional[str]:
+        """Find the most appropriate build directory for analysis tools."""
+        # First try the current build folder if it exists
+        current_build = self.__value.get("build_folder")
+        if current_build and os.path.isdir(os.path.join(source_path, current_build)):
+            return os.path.join(source_path, current_build)
+
+        # Use the build directory detector to find alternatives
+        build_dir = BuildDirectoryDetector.find_best_build_directory(source_path, current_build)
+        if build_dir:
+            return str(build_dir)
+
+        return None
 
 
 def parse_args(args):
@@ -1196,20 +1631,52 @@ def main():
         build_path = compilation_calc.move_to_build_folder()
 
         print_status(f"Build directory: {build_path}", "INFO")
-        compilation_calc.config(source_path, build_path)
-        compilation_calc.build()
-        compilation_calc.cppcheck(source_path, build_path)
-        compilation_calc.test(source_path, build_path)
-        compilation_calc.coverage(source_path, build_path)
-        compilation_calc.analyze(source_path, build_path)
 
-        print_status("Build process completed successfully!", "SUCCESS")
+        # Execute build pipeline
+        try:
+            compilation_calc.config(source_path, build_path)
+            compilation_calc.build()
+            compilation_calc.cppcheck(source_path, build_path)
+            compilation_calc.test(source_path, build_path)
+            compilation_calc.coverage(source_path, build_path)
+            compilation_calc.analyze(source_path, build_path)
+
+            print_status("Build process completed successfully!", "SUCCESS")
+
+            # Display comprehensive summary report
+            compilation_calc.summary_reporter.display_summary()
+
+            # Show error log location if there were any errors
+            if compilation_calc.error_logger.has_errors():
+                print_status(f"Error log available at: {compilation_calc.error_logger.get_log_file_path()}", "INFO")
+                print_status("Review the error log for detailed troubleshooting information", "INFO")
+
+        except SystemExit:
+            # Re-raise SystemExit to preserve exit codes from subprocess failures
+            compilation_calc.summary_reporter.display_summary()
+            if compilation_calc.error_logger.has_errors():
+                print_status(f"Error log available at: {compilation_calc.error_logger.get_log_file_path()}", "ERROR")
+            raise
         
     except KeyboardInterrupt:
         print_status("\nBuild process interrupted by user", "WARNING")
+        # Try to display summary even if interrupted
+        try:
+            if 'compilation_calc' in locals():
+                compilation_calc.summary_reporter.display_summary()
+        except:
+            pass
         sys.exit(1)
     except Exception as e:
         print_status(f"An unexpected error occurred: {e}", "ERROR")
+        # Try to display summary and error log info even on unexpected errors
+        try:
+            if 'compilation_calc' in locals():
+                compilation_calc.summary_reporter.display_summary()
+                if compilation_calc.error_logger.has_errors():
+                    print_status(f"Error log available at: {compilation_calc.error_logger.get_log_file_path()}", "ERROR")
+        except:
+            pass
         if DEBUG_FLAG:
             raise
         sys.exit(1)
