@@ -132,10 +132,6 @@ endif()
 # Create alias for consistent naming
 add_library(XSigma::Core ALIAS Core)
 
-# Link to xsigmabuild to inherit build flags
-# This ensures Core library gets all compiler/linker flags from the build configuration
-target_link_libraries(Core PUBLIC XSigma::build)
-
 # Apply IWYU to the Core target (if available)
 if(COMMAND xsigma_apply_iwyu)
     xsigma_apply_iwyu(Core)
@@ -165,12 +161,9 @@ target_include_directories(Core
 
 # Link with build interface target
 target_link_libraries(Core PUBLIC XSigma::build)
-#xsigma_target_clang_tidy(Core)
-
-set_target_properties(Core PROPERTIES
-    C_CLANG_TIDY "${CLANG_TIDY_PATH};-warnings-as-errors=*"
-    CXX_CLANG_TIDY "${CLANG_TIDY_PATH};-warnings-as-errors=*"
-  )
+if(COMMAND xsigma_target_clang_tidy)
+    xsigma_target_clang_tidy(Core)
+endif()
 
 # Link with third-party dependencies
 # Mandatory core dependencies (always linked)
@@ -273,5 +266,5 @@ install(FILES
 
 # Configure testing
 if(XSIGMA_BUILD_TESTING STREQUAL "ON" OR XSIGMA_BUILD_TESTING STREQUAL "WANT")
-    add_subdirectory(Testing)
+    add_subdirectory(Testing/Cxx)
 endif()
