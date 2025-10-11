@@ -97,35 +97,29 @@ bool read_int64_from_env_var(std::string_view env_var_name, int64_t default_val,
     }
 
     // Inline safe string to int64 conversion
-    try
-    {
-        std::string str(tf_env_var_val);
-        // Trim whitespace
-        size_t start = str.find_first_not_of(" \t\n\r");
-        size_t end   = str.find_last_not_of(" \t\n\r");
-        if (start == std::string::npos)
-        {
-            XSIGMA_LOG_ERROR(
-                "InvalidArgument Failed to parse the env-var {} into int64: {}. Use the default "
-                "value: {}",
-                env_var_name,
-                tf_env_var_val,
-                default_val);
-            return false;
-        }
-        str = str.substr(start, end - start + 1);
 
-        size_t  pos = 0;
-        int64_t val = std::stoll(str, &pos);
-        if (pos == str.length())
-        {
-            *value = val;
-            return true;
-        }
-    }
-    catch (...)
+    std::string str(tf_env_var_val);
+    // Trim whitespace
+    size_t start = str.find_first_not_of(" \t\n\r");
+    size_t end   = str.find_last_not_of(" \t\n\r");
+    if (start == std::string::npos)
     {
-        // Conversion failed
+        XSIGMA_LOG_ERROR(
+            "InvalidArgument Failed to parse the env-var {} into int64: {}. Use the default "
+            "value: {}",
+            env_var_name,
+            tf_env_var_val,
+            default_val);
+        return false;
+    }
+    str = str.substr(start, end - start + 1);
+
+    size_t  pos = 0;
+    int64_t val = std::stoll(str, &pos);
+    if (pos == str.length())
+    {
+        *value = val;
+        return true;
     }
 
     XSIGMA_LOG_ERROR(
@@ -147,35 +141,29 @@ bool read_float_from_env_var(std::string_view env_var_name, float default_val, f
     }
 
     // Inline safe string to float conversion
-    try
-    {
-        std::string str(tf_env_var_val);
-        // Trim whitespace
-        size_t start = str.find_first_not_of(" \t\n\r");
-        size_t end   = str.find_last_not_of(" \t\n\r");
-        if (start == std::string::npos)
-        {
-            XSIGMA_LOG_ERROR(
-                "InvalidArgument Failed to parse the env-var {} into float: {}. Use the default "
-                "value: {}",
-                env_var_name,
-                tf_env_var_val,
-                default_val);
-            return false;
-        }
-        str = str.substr(start, end - start + 1);
 
-        size_t pos = 0;
-        float  val = std::stof(str, &pos);
-        if (pos == str.length())
-        {
-            *value = val;
-            return true;
-        }
-    }
-    catch (...)
+    std::string str(tf_env_var_val);
+    // Trim whitespace
+    size_t start = str.find_first_not_of(" \t\n\r");
+    size_t end   = str.find_last_not_of(" \t\n\r");
+    if (start == std::string::npos)
     {
-        // Conversion failed
+        XSIGMA_LOG_ERROR(
+            "InvalidArgument Failed to parse the env-var {} into float: {}. Use the default "
+            "value: {}",
+            env_var_name,
+            tf_env_var_val,
+            default_val);
+        return false;
+    }
+    str = str.substr(start, end - start + 1);
+
+    size_t pos = 0;
+    float  val = std::stof(str, &pos);
+    if (pos == str.length())
+    {
+        *value = val;
+        return true;
     }
 
     XSIGMA_LOG_ERROR(

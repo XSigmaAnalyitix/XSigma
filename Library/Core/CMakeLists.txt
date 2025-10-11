@@ -165,6 +165,7 @@ target_include_directories(Core
 
 # Link with build interface target
 target_link_libraries(Core PUBLIC XSigma::build)
+xsigma_target_clang_tidy(Core)
 
 # Link with third-party dependencies
 # Mandatory core dependencies (always linked)

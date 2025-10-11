@@ -116,11 +116,11 @@ void* allocate(std::size_t nbytes, std::size_t alignment, init_policy_enum init)
     case init_policy_enum::ZERO:
         std::memset(ptr, 0, nbytes);
         break;
-    case init_policy_enum::PATTERN:
 #ifndef NDEBUG
+    case init_policy_enum::PATTERN:
         std::memset(ptr, 0xCC, nbytes);
-#endif
         break;
+#endif
     case init_policy_enum::UNINITIALIZED:
     default:
         // Do nothing - fastest option

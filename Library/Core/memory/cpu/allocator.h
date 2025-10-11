@@ -28,10 +28,10 @@
 
 #pragma once
 
-#include <stdint.h>  // for uint32_t, uint64_t, int64_t, int32_t, uint8_t
 #include <stdlib.h>  // for size_t
 
 #include <cassert>     // for assert
+#include <cstdint>     // for uint32_t, uint64_t, int64_t, int32_t, uint8_t
 #include <functional>  // for function
 #include <optional>    // for optional, nullopt
 #include <string>      // for string

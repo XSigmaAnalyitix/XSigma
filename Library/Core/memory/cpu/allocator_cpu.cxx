@@ -263,7 +263,7 @@ void allocator_cpu::deallocate_raw(void* ptr)
     cpu::memory_allocator::free(ptr);
 }
 
-void allocator_cpu::deallocate_raw(void* ptr, size_t alignment, size_t num_bytes)
+void allocator_cpu::deallocate_raw(void* ptr, size_t /*alignment*/, size_t /*num_bytes*/)
 {
     // Currently identical to single-parameter version
     // Future optimization could use num_bytes hint to avoid GetAllocatedSize call

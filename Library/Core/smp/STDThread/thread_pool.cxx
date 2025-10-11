@@ -79,27 +79,7 @@ void thread_pool::RunJob(ThreadData& data, std::size_t jobIndex, std::unique_loc
     auto function            = std::move(data.Jobs[data.RunningJob].Function);
     lock.unlock();  // MSVC: warning C26110 is a false positive
 
-    try
-    {
-        function();  // run the function
-    }
-    catch (const std::exception& e)
-    {
-        XSIGMA_CHECK(
-            false,
-            "Function called by ",
-            thread_pool::GetInstance().GetThreadId(),
-            " has thrown an exception. The exception is ignored. what():\n",
-            e.what());
-    }
-    catch (...)
-    {
-        XSIGMA_CHECK(
-            false,
-            "Function called by ",
-            thread_pool::GetInstance().GetThreadId(),
-            " has thrown an unknown exception. The exception is ignored.");
-    }
+    function();  // run the function
 
     lock.lock();
     data.Jobs[data.RunningJob].Promise.set_value();

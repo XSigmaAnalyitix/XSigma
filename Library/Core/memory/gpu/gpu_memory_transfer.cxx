@@ -357,16 +357,7 @@ public:
                 // Call callback if provided
                 if (op_ptr->callback)
                 {
-                    try
-                    {
-                        op_ptr->callback(op_ptr->info);
-                    }
-                    catch (...)
-                    {
-                        XSIGMA_LOG_ERROR(
-                            "GPU transfer callback threw an exception; suppressing to keep "
-                            "processing");
-                    }
+                    op_ptr->callback(op_ptr->info);
                 }
 
                 // Set promise value
@@ -507,15 +498,7 @@ public:
         // Wait for all operations to complete
         for (const auto& op : operations)
         {
-            try
-            {
-                op->promise.get_future().wait();
-            }
-            catch (...)
-            {
-                XSIGMA_LOG_WARNING(
-                    "Exception while waiting for GPU transfer completion; continuing shutdown");
-            }
+            op->promise.get_future().wait();
         }
     }
 
@@ -527,14 +510,8 @@ public:
         {
             op->info.status        = transfer_status::CANCELLED;
             op->info.error_message = "Transfer cancelled";
-            try
-            {
-                op->promise.set_value(op->info);
-            }
-            catch (...)
-            {
-                XSIGMA_LOG_WARNING("GPU transfer promise already satisfied during cancellation");
-            }
+
+            op->promise.set_value(op->info);
         }
 
         active_transfers_.clear();

@@ -74,33 +74,24 @@ void init_exception_mode_from_env() noexcept
         return;
     }
 
-    try
+    const char* env_mode = std::getenv("XSIGMA_EXCEPTION_MODE");
+    if (env_mode != nullptr)
     {
-        const char* env_mode = std::getenv("XSIGMA_EXCEPTION_MODE");
-        if (env_mode != nullptr)
+        std::string mode_str(env_mode);
+        if (mode_str == "LOG_FATAL" || mode_str == "log_fatal")
         {
-            std::string mode_str(env_mode);
-            if (mode_str == "LOG_FATAL" || mode_str == "log_fatal")
-            {
-                g_exception_mode_.store(exception_mode::LOG_FATAL, std::memory_order_relaxed);
-                XSIGMA_LOG_INFO("Exception mode set to LOG_FATAL from environment");
-            }
-            else if (mode_str == "THROW" || mode_str == "throw")
-            {
-                g_exception_mode_.store(exception_mode::THROW, std::memory_order_relaxed);
-                XSIGMA_LOG_INFO("Exception mode set to THROW from environment");
-            }
-            else
-            {
-                XSIGMA_LOG_WARNING(
-                    "Invalid XSIGMA_EXCEPTION_MODE value: {}. Using default.", mode_str);
-            }
+            g_exception_mode_.store(exception_mode::LOG_FATAL, std::memory_order_relaxed);
+            XSIGMA_LOG_INFO("Exception mode set to LOG_FATAL from environment");
         }
-    }
-    catch (...)
-    {
-        // Ignore any errors during initialization
-        // Keep the default mode
+        else if (mode_str == "THROW" || mode_str == "throw")
+        {
+            g_exception_mode_.store(exception_mode::THROW, std::memory_order_relaxed);
+            XSIGMA_LOG_INFO("Exception mode set to THROW from environment");
+        }
+        else
+        {
+            XSIGMA_LOG_WARNING("Invalid XSIGMA_EXCEPTION_MODE value: {}. Using default.", mode_str);
+        }
     }
 
     g_exception_mode_initialized_.store(true, std::memory_order_release);

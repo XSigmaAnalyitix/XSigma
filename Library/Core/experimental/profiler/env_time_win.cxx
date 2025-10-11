@@ -32,10 +32,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 #ifdef _WIN32
-#include <stdint.h>   // for int64_t, uint64_t
 #include <windows.h>  // for GetModuleHandleW, GetProcAddress, FILETIME
 
-#include <chrono>  // for duration_cast, duration, nanoseconds, system...
+#include <chrono>   // for duration_cast, duration, nanoseconds, system...
+#include <cstdint>  // for int64_t, uint64_t
 
 #include "experimental/profiler/env_time.h"  // for env_time
 
