@@ -140,7 +140,7 @@ class XSIGMA_VISIBILITY exception : public std::exception
     const void* caller_;
 
     // Nested exception for exception chaining
-    std::shared_ptr<exception> nested_exception_;
+    std::shared_ptr<exception> nested_exception_ = nullptr;
 
     // Error category for better error classification
     exception_category category_;

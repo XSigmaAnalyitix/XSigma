@@ -106,11 +106,7 @@ exception::~exception() = default;
 //-----------------------------------------------------------------------------
 exception::exception(
     std::string msg, std::string backtrace, const void* caller, exception_category category)
-    : msg_(std::move(msg)),
-      backtrace_(std::move(backtrace)),
-      caller_(caller),
-      nested_exception_(nullptr),
-      category_(category)
+    : msg_(std::move(msg)), backtrace_(std::move(backtrace)), caller_(caller), category_(category)
 {
     refresh_what();
 }
