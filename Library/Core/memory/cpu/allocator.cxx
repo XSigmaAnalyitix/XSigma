@@ -62,7 +62,7 @@ Allocator* allocator_cpu_base()
 {
     static Allocator* cpu_alloc = new allocator_cpu();
 
-    if (cpu_allocator_collect_full_stats && !cpu_alloc->TracksAllocationSizes())
+    if (cpu_allocator_collect_full_stats && !cpu_alloc->tracks_allocation_sizes())
     {
         cpu_alloc = new allocator_tracking(cpu_alloc, true);
     }

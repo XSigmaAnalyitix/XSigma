@@ -319,7 +319,7 @@ public:
      * **Local Tracking**: Provides tracking even for non-tracking allocators
      * **Thread Safety**: Thread-safe (returns constant)
      */
-    bool TracksAllocationSizes() const noexcept override;
+    bool tracks_allocation_sizes() const noexcept override;
 
     /**
      * @brief Returns originally requested size for allocation.
