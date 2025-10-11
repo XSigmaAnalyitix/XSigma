@@ -17,7 +17,7 @@
  * Website: https://www.xsigma.co.uk
  */
 
-#include "experimental/profiler/traceme_recorder.h"
+#include "logging/tracing/traceme_recorder.h"
 
 #include <algorithm>
 #include <atomic>
@@ -33,8 +33,8 @@
 #include <utility>
 #include <vector>
 
-#include "experimental/profiler/lock_free_queue.h"
-#include "experimental/profiler/per_thread.h"
+#include "util/lock_free_queue.h"
+#include "util/per_thread.h"
 #include "util/exception.h"
 #include "util/flat_hash.h"
 
@@ -80,7 +80,7 @@ namespace internal
 
 // DLL imported variables cannot be initialized on Windows. This file is
 // included only on DLL exports.
-XSIGMA_API std::atomic<int> g_trace_level(trace_me_recorder::kTracingDisabled);
+XSIGMA_API std::atomic<int> g_trace_level(traceme_recorder::kTracingDisabled);
 
 // g_trace_level implementation must be lock-free for faster execution of the
 // TraceMe API. This can be commented (if compilation is failing) but execution
@@ -103,13 +103,13 @@ namespace
 class SplitEventTracker
 {
 public:
-    void AddStart(trace_me_recorder::Event&& event)
+    void AddStart(traceme_recorder::Event&& event)
     {
         XSIGMA_CHECK(event.is_start(), "event is not a start event");
         start_events_.emplace(event.activity_id(), std::move(event));
     }
 
-    void AddEnd(trace_me_recorder::Event* event)
+    void AddEnd(traceme_recorder::Event* event)
     {
         XSIGMA_CHECK(event->is_end(), "event is not an end event");
         if (!FindStartAndMerge(event))
@@ -128,7 +128,7 @@ public:
 
 private:
     // Finds the start of the given event and merges data into it.
-    bool FindStartAndMerge(trace_me_recorder::Event* event)
+    bool FindStartAndMerge(traceme_recorder::Event* event)
     {
         auto iter = start_events_.find(event->activity_id());
         if (iter == start_events_.end())
@@ -142,10 +142,10 @@ private:
 
     // Start events are collected from each ThreadLocalRecorder::Consume() call.
     // Their data is merged into end_events.
-    xsigma_map<int64_t, trace_me_recorder::Event> start_events_;
+    xsigma_map<int64_t, traceme_recorder::Event> start_events_;
 
     // End events are stored in the output of TraceMeRecorder::Consume().
-    std::vector<trace_me_recorder::Event*> end_events_;
+    std::vector<traceme_recorder::Event*> end_events_;
 };
 
 // To avoid unnecessary synchronization between threads, each thread has a
@@ -165,21 +165,21 @@ public:
         info_.name = get_thread_name();
     }
 
-    const trace_me_recorder::ThreadInfo& Info() const { return info_; }
+    const traceme_recorder::ThreadInfo& Info() const { return info_; }
 
     // Record is only called from the producer thread.
-    void Record(trace_me_recorder::Event&& event) { queue_.push(std::move(event)); }
+    void Record(traceme_recorder::Event&& event) { queue_.push(std::move(event)); }
 
     // Clear is called from the control thread when tracing starts to remove any
     // elements added due to Record racing with Consume.
     void Clear() { queue_.clear(); }
 
     // Consume is called from the control thread when tracing stops.
-    XSIGMA_NODISCARD std::deque<trace_me_recorder::Event> Consume(
+    XSIGMA_NODISCARD std::deque<traceme_recorder::Event> Consume(
         SplitEventTracker* split_event_tracker)
     {
-        std::deque<trace_me_recorder::Event>    events;
-        std::optional<trace_me_recorder::Event> event;
+        std::deque<traceme_recorder::Event>    events;
+        std::optional<traceme_recorder::Event> event;
         while ((event = queue_.pop()))
         {
             if (event->is_start())
@@ -197,15 +197,15 @@ public:
     }
 
 private:
-    trace_me_recorder::ThreadInfo           info_;
-    LockFreeQueue<trace_me_recorder::Event> queue_;
+    traceme_recorder::ThreadInfo           info_;
+    LockFreeQueue<traceme_recorder::Event> queue_;
 };
 
 }  // namespace
 
 // This method is performance critical and should be kept fast. It is called
 // when tracing starts.
-/* static */ void trace_me_recorder::clear()
+/* static */ void traceme_recorder::clear()
 {
     auto recorders = PerThread<ThreadLocalRecorder>::StartRecording();
     for (auto& recorder : recorders)
@@ -216,9 +216,9 @@ private:
 
 // This method is performance critical and should be kept fast. It is called
 // when tracing stops.
-/* static */ trace_me_recorder::Events trace_me_recorder::consume()
+/* static */ traceme_recorder::Events traceme_recorder::consume()
 {
-    trace_me_recorder::Events result;
+    traceme_recorder::Events result;
     SplitEventTracker         split_event_tracker;
     auto                      recorders = PerThread<ThreadLocalRecorder>::StopRecording();
     for (auto& recorder : recorders)
@@ -233,7 +233,7 @@ private:
     return result;
 }
 
-/* static */ bool trace_me_recorder::start(int level)
+/* static */ bool traceme_recorder::start(int level)
 {
     level = level > 0 ? level : 0;
     //std::max(0, level);
@@ -248,14 +248,14 @@ private:
     return started;
 }
 
-/* static */ void trace_me_recorder::record(Event&& event)
+/* static */ void traceme_recorder::record(Event&& event)
 {
     PerThread<ThreadLocalRecorder>::Get().Record(std::move(event));
 }
 
-/* static */ trace_me_recorder::Events trace_me_recorder::stop()
+/* static */ traceme_recorder::Events traceme_recorder::stop()
 {
-    trace_me_recorder::Events events;
+    traceme_recorder::Events events;
     if (internal::g_trace_level.exchange(kTracingDisabled, std::memory_order_acq_rel) !=
         kTracingDisabled)
     {
@@ -264,7 +264,7 @@ private:
     return events;
 }
 
-/*static*/ int64_t trace_me_recorder::new_activity_id()
+/*static*/ int64_t traceme_recorder::new_activity_id()
 {
     // Activity IDs: To avoid contention over a counter, the top 32 bits identify
     // the originating thread, the bottom 32 bits name the event within a thread.

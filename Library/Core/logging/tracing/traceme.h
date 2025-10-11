@@ -39,15 +39,10 @@ limitations under the License.
 #include <type_traits>
 #include <utility>
 
-#include "experimental/profiler/no_init.h"
-#include "experimental/profiler/traceme_encode.h"
-#include "experimental/profiler/traceme_encode.h"  // IWYU pragma: export
 #include "logging/logger.h"
-
-#if !defined(IS_MOBILE_PLATFORM)
-#include "experimental/profiler/traceme_recorder.h"
-//#include "experimental/profiler/time_utils.h"
-#endif
+#include "util/no_init.h"
+#include "logging/tracing/traceme_encode.h"
+#include "logging/tracing/traceme_recorder.h"
 
 namespace xsigma
 {
@@ -66,7 +61,7 @@ XSIGMA_FORCE_INLINE int64_t get_current_time_nanos()
 //   execution details (expensive TF ops, XLA ops, etc).
 // - Level 3 (VERBOSE) is also used by profiler to instrument more verbose
 //   (low-level) program execution details (cheap TF ops, etc).
-enum class trace_me_level_enum
+enum class traceme_level_enum
 {
     CRITICAL = 1,
     INFO     = 2,
@@ -74,14 +69,14 @@ enum class trace_me_level_enum
 };
 
 // This is specifically used for instrumenting Tensorflow ops.
-// Takes input as whether a TF op is expensive or not and returns the trace_me
+// Takes input as whether a TF op is expensive or not and returns the traceme
 // level to be assigned to trace that particular op. Assigns level 2 for
 // expensive ops (these are high-level details and shown by default in profiler
 // UI). Assigns level 3 for cheap ops (low-level details not shown by default).
-inline int get_tf_trace_me_level(bool is_expensive)
+inline int get_tf_traceme_level(bool is_expensive)
 {
-    return is_expensive ? static_cast<int>(trace_me_level_enum::INFO)
-                        : static_cast<int>(trace_me_level_enum::VERBOSE);
+    return is_expensive ? static_cast<int>(traceme_level_enum::INFO)
+                        : static_cast<int>(traceme_level_enum::VERBOSE);
 }
 
 // This class permits user-specified (CPU) tracing activities. A trace activity
@@ -92,37 +87,37 @@ inline int get_tf_trace_me_level(bool is_expensive)
 // computation (e.g., kernels and memcpy) correspond to higher level activities
 // in the overall program. For instance, a collection of kernels maybe
 // performing one "step" of a program that is better visualized together than
-// interspersed with kernels from other "steps". Therefore, a trace_me object
+// interspersed with kernels from other "steps". Therefore, a traceme object
 // can be created at each "step".
 //
 // Two APIs are provided:
-//   (1) Scoped object: a trace_me object starts tracing on construction, and
+//   (1) Scoped object: a traceme object starts tracing on construction, and
 //       stops tracing when it goes out of scope.
 //          {
-//            trace_me trace("step");
+//            traceme trace("step");
 //            ... do some work ...
 //          }
-//       trace_me objects can be members of a class, or allocated on the heap.
+//       traceme objects can be members of a class, or allocated on the heap.
 //   (2) Static methods: activity_start and activity_end may be called in pairs.
 //          auto id = activity_start("step");
 //          ... do some work ...
 //          activity_end(id);
 //       The two static methods should be called within the same thread.
-class trace_me
+class XSIGMA_VISIBILITY traceme
 {
 public:
     // Constructor that traces a user-defined activity labeled with name
-    // in the UI. Level defines the trace priority, used for filtering trace_me
-    // events. By default, traces with trace_me level <= 2 are recorded. Levels:
+    // in the UI. Level defines the trace priority, used for filtering traceme
+    // events. By default, traces with traceme level <= 2 are recorded. Levels:
     // - Must be a positive integer.
-    // - Can be a value in enum trace_me_level_enum.
+    // - Can be a value in enum traceme_level_enum.
     // Users are welcome to use level > 3 in their code, if they wish to filter
     // out their host traces based on verbosity.
-    explicit trace_me(std::string_view name, int level = 1)
+    explicit traceme(std::string_view name, int level = 1)
     {
         XSIGMA_CHECK_DEBUG(level >= 1, "level is less than 1");
 #if !defined(IS_MOBILE_PLATFORM)
-        if XSIGMA_UNLIKELY (trace_me_recorder::active(level))
+        if XSIGMA_UNLIKELY (traceme_recorder::active(level))
         {
             name_.Emplace(std::string(name));
             start_time_ = get_current_time_nanos();
@@ -134,18 +129,18 @@ public:
     // string should only be incurred when tracing is enabled. Wrap the temporary
     // string generation (e.g., StrCat) in a lambda and use the name_generator
     // template instead.
-    explicit trace_me(std::string&& name, int level = 1) = delete;
+    explicit traceme(std::string&& name, int level = 1) = delete;
 
     // Do not allow passing strings by reference or value since the caller
     // may unintentionally maintain ownership of the name.
     // Explicitly wrap the name in a string_view if you really wish to maintain
     // ownership of a string already generated for other purposes. For temporary
     // strings (e.g., result of StrCat) use the name_generator template.
-    explicit trace_me(const std::string& name, int level = 1) = delete;
+    explicit traceme(const std::string& name, int level = 1) = delete;
 
-    // This overload is necessary to make trace_me's with string literals work.
+    // This overload is necessary to make traceme's with string literals work.
     // Otherwise, the name_generator template would be used.
-    explicit trace_me(const char* raw, int level = 1) : trace_me(std::string_view(raw), level) {}
+    explicit traceme(const char* raw, int level = 1) : traceme(std::string_view(raw), level) {}
 
     // This overload only generates the name (and possibly metadata) if tracing is
     // enabled. Useful for avoiding expensive operations (e.g., string
@@ -155,23 +150,23 @@ public:
     // name_generator is templated, rather than a std::function to avoid
     // allocations std::function might make even if never called.
     // Example Usage:
-    //   TraceMe trace_me([&]() {
+    //   TraceMe traceme([&]() {
     //     return StrCat("my_trace", id);
     //   }
-    //   TraceMe op_trace_me([&]() {
+    //   TraceMe op_traceme([&]() {
     //     return TraceMeOp(op_name, op_type);
     //   }
-    //   TraceMe trace_me_with_metadata([&value1]() {
+    //   TraceMe traceme_with_metadata([&value1]() {
     //     return TraceMeEncode("my_trace", {{"key1", value1}, {"key2", 42}});
     //   });
     template <
         typename NameGeneratorT,
         std::enable_if_t<std::is_invocable_v<NameGeneratorT>, bool> = true>
-    explicit trace_me(NameGeneratorT&& name_generator, int level = 1)
+    explicit traceme(NameGeneratorT&& name_generator, int level = 1)
     {
         XSIGMA_CHECK_DEBUG(level >= 1, "level is less than 1");
 #if !defined(IS_MOBILE_PLATFORM)
-        if XSIGMA_UNLIKELY (trace_me_recorder::active(level))
+        if XSIGMA_UNLIKELY (traceme_recorder::active(level))
         {
             name_.Emplace(std::forward<NameGeneratorT>(name_generator)());
             start_time_ = get_current_time_nanos();
@@ -180,8 +175,8 @@ public:
     }
 
     // Movable.
-    trace_me(trace_me&& other) noexcept { *this = std::move(other); }
-    trace_me& operator=(trace_me&& other) noexcept
+    traceme(traceme&& other) noexcept { *this = std::move(other); }
+    traceme& operator=(traceme&& other) noexcept
     {
 #if !defined(IS_MOBILE_PLATFORM)
         if XSIGMA_UNLIKELY (other.start_time_ != kUntracedActivity)
@@ -193,7 +188,7 @@ public:
         return *this;
     }
 
-    ~trace_me() { stop(); }
+    ~traceme() { stop(); }
 
     // Stop tracing the activity. Called by the destructor, but exposed to allow
     // stopping tracing before the object goes out of scope. Only has an effect
@@ -203,7 +198,7 @@ public:
         // We do not need to check the trace level again here.
         // - If tracing wasn't active to start with, we have kUntracedActivity.
         // - If tracing was active and was stopped, we have
-        //   trace_me_recorder::active().
+        //   traceme_recorder::active().
         // - If tracing was active and was restarted at a lower level, we may
         //   spuriously record the event. This is extremely rare, and acceptable as
         //   event will be discarded when its start timestamp fall outside of the
@@ -211,9 +206,9 @@ public:
 #if !defined(IS_MOBILE_PLATFORM)
         if XSIGMA_UNLIKELY (start_time_ != kUntracedActivity)
         {
-            if XSIGMA_LIKELY (trace_me_recorder::active())
+            if XSIGMA_LIKELY (traceme_recorder::active())
             {
-                trace_me_recorder::record(
+                traceme_recorder::record(
                     {std::move(name_.value), start_time_, get_current_time_nanos()});
             }
             name_.Destroy();
@@ -229,8 +224,8 @@ public:
     // metadata_generator is templated, rather than a std::function to avoid
     // allocations std::function might make even if never called.
     // Example Usage:
-    //   trace_me.append_metadata([&value1]() {
-    //     return trace_me_encode({{"key1", value1}, {"key2", 42}});
+    //   traceme.append_metadata([&value1]() {
+    //     return traceme_encode({{"key1", value1}, {"key2", 42}});
     //   });
     template <
         typename MetadataGeneratorT,
@@ -240,7 +235,7 @@ public:
 #if !defined(IS_MOBILE_PLATFORM)
         if XSIGMA_UNLIKELY (start_time_ != kUntracedActivity)
         {
-            if XSIGMA_LIKELY (trace_me_recorder::active())
+            if XSIGMA_LIKELY (traceme_recorder::active())
             {
                 traceme_internal::append_metadata(
                     &name_.value, std::forward<MetadataGeneratorT>(metadata_generator)());
@@ -260,10 +255,10 @@ public:
     static int64_t activity_start(NameGeneratorT&& name_generator, int level = 1)
     {
 #if !defined(IS_MOBILE_PLATFORM)
-        if XSIGMA_UNLIKELY (trace_me_recorder::active(level))
+        if XSIGMA_UNLIKELY (traceme_recorder::active(level))
         {
-            int64_t activity_id = trace_me_recorder::new_activity_id();
-            trace_me_recorder::record(
+            int64_t activity_id = traceme_recorder::new_activity_id();
+            traceme_recorder::record(
                 {std::forward<NameGeneratorT>(name_generator)(),
                  get_current_time_nanos(),
                  -activity_id});
@@ -278,10 +273,10 @@ public:
     static int64_t activity_start(std::string_view name, int level = 1)
     {
 #if !defined(IS_MOBILE_PLATFORM)
-        if XSIGMA_UNLIKELY (trace_me_recorder::active(level))
+        if XSIGMA_UNLIKELY (traceme_recorder::active(level))
         {
-            int64_t activity_id = trace_me_recorder::new_activity_id();
-            trace_me_recorder::record({std::string(name), get_current_time_nanos(), -activity_id});
+            int64_t activity_id = traceme_recorder::new_activity_id();
+            traceme_recorder::record({std::string(name), get_current_time_nanos(), -activity_id});
             return activity_id;
         }
 #endif
@@ -304,12 +299,12 @@ public:
     static void activity_end(int64_t activity_id)
     {
 #if !defined(IS_MOBILE_PLATFORM)
-        // We don't check the level again (see trace_me::stop()).
+        // We don't check the level again (see traceme::stop()).
         if XSIGMA_UNLIKELY (activity_id != kUntracedActivity)
         {
-            if XSIGMA_LIKELY (trace_me_recorder::active())
+            if XSIGMA_LIKELY (traceme_recorder::active())
             {
-                trace_me_recorder::record({std::string(), -activity_id, get_current_time_nanos()});
+                traceme_recorder::record({std::string(), -activity_id, get_current_time_nanos()});
             }
         }
 #endif
@@ -322,10 +317,10 @@ public:
     static void instant_activity(NameGeneratorT&& name_generator, int level = 1)
     {
 #if !defined(IS_MOBILE_PLATFORM)
-        if XSIGMA_UNLIKELY (trace_me_recorder::active(level))
+        if XSIGMA_UNLIKELY (traceme_recorder::active(level))
         {
             int64_t now = get_current_time_nanos();
-            trace_me_recorder::record(
+            traceme_recorder::record(
                 {std::forward<NameGeneratorT>(name_generator)(),
                  /*start_time=*/now,
                  /*end_time=*/now});
@@ -336,7 +331,7 @@ public:
     static bool active(int level = 1)
     {
 #if !defined(IS_MOBILE_PLATFORM)
-        return trace_me_recorder::active(level);
+        return traceme_recorder::active(level);
 #else
         return false;
 #endif
@@ -345,7 +340,7 @@ public:
     static int64_t new_activity_id()
     {
 #if !defined(IS_MOBILE_PLATFORM)
-        return trace_me_recorder::new_activity_id();
+        return traceme_recorder::new_activity_id();
 #else
         return 0;
 #endif
@@ -355,8 +350,8 @@ private:
     // Start time used when tracing is disabled.
     constexpr static int64_t kUntracedActivity = 0;
 
-    trace_me(const trace_me&)       = delete;
-    void operator=(const trace_me&) = delete;
+    traceme(const traceme&)        = delete;
+    void operator=(const traceme&) = delete;
 
     no_init<std::string> name_;
 
@@ -367,7 +362,7 @@ private:
 // profiler, such as tensor shapes.
 inline bool tf_op_details_enabled()
 {
-    return trace_me::active(static_cast<int>(trace_me_level_enum::VERBOSE));
+    return traceme::active(static_cast<int>(traceme_level_enum::VERBOSE));
 }
 
 }  // namespace xsigma

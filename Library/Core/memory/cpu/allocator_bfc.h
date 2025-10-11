@@ -397,7 +397,7 @@ public:
      * - Average case: O(log n) - bin search and chunk management
      * - Worst case: O(n) - full scan during fragmentation or retry
      *
-     * **Memory Layout**: Returns memory aligned to max(alignment, kAllocatorAlignment)
+     * **Memory Layout**: Returns memory aligned to max(alignment, Allocator_Alignment)
      * **Thread Safety**: Thread-safe with internal mutex protection
      * **Retry Behavior**: Controlled by allocation_attr.retry_on_failure and opts
      *

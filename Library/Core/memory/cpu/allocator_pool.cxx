@@ -38,8 +38,8 @@
 #include <map>
 #include <utility>
 
-#include "experimental/profiler/traceme.h"
 #include "logging/logger.h"
+#include "logging/tracing/traceme.h"
 #include "memory/cpu/helper/memory_allocator.h"
 #include "memory/numa.h"
 #include "util/exception.h"
@@ -339,7 +339,7 @@ basic_cpu_allocator::~basic_cpu_allocator() = default;
 
 void* basic_cpu_allocator::Alloc(size_t alignment, size_t num_bytes, size_t* bytes_received)
 {
-    xsigma::trace_me traceme("basic_cpu_allocator::Alloc");
+    xsigma::traceme traceme("basic_cpu_allocator::Alloc");
 
     void* ptr       = nullptr;
     *bytes_received = num_bytes;
@@ -354,7 +354,7 @@ void* basic_cpu_allocator::Alloc(size_t alignment, size_t num_bytes, size_t* byt
 
 void basic_cpu_allocator::Free(void* ptr, size_t num_bytes)
 {
-    xsigma::trace_me traceme("basic_cpu_allocator::Free");
+    xsigma::traceme traceme("basic_cpu_allocator::Free");
 
     if (num_bytes > 0)
     {

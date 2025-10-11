@@ -41,7 +41,6 @@ limitations under the License.
 #include "common/macros.h"
 #include "logging/logger.h"
 #include "util/exception.h"
-//#include "util/strcat.h"
 #include "util/string_util.h"
 
 namespace xsigma
@@ -97,7 +96,7 @@ XSIGMA_FORCE_INLINE char* append(char* out, std::string_view str)
 {
     XSIGMA_CHECK_DEBUG(
         !strings::str_contains(str, '#'),
-        "'#' is not a valid character in trace_me_encode {}",
+        "'#' is not a valid character in traceme_encode {}",
         str);
 
     const size_t str_size = str.size();
@@ -109,7 +108,7 @@ XSIGMA_FORCE_INLINE char* append(char* out, std::string_view str)
     return out;
 }
 
-// Appends args encoded as trace_me metadata to name.
+// Appends args encoded as traceme metadata to name.
 XSIGMA_FORCE_INLINE std::string append_args(
     std::string name, std::initializer_list<TraceMeArg> args)
 {
@@ -162,66 +161,66 @@ XSIGMA_FORCE_INLINE void append_metadata(std::string* name, std::string_view new
 
 }  // namespace traceme_internal
 
-// Encodes an event name and arguments into trace_me metadata.
+// Encodes an event name and arguments into traceme metadata.
 // Use within a lambda to avoid expensive operations when tracing is disabled.
 // Example Usage:
-//   trace_me trace_me([value1]() {
-//     return trace_me_encode("my_trace", {{"key1", value1}, {"key2", 42}});
+//   traceme traceme([value1]() {
+//     return traceme_encode("my_trace", {{"key1", value1}, {"key2", 42}});
 //   });
-XSIGMA_FORCE_INLINE std::string trace_me_encode(
+XSIGMA_FORCE_INLINE std::string traceme_encode(
     std::string name, std::initializer_list<TraceMeArg> args)
 {
     return traceme_internal::append_args(std::move(name), args);
 }
-XSIGMA_FORCE_INLINE std::string trace_me_encode(
+XSIGMA_FORCE_INLINE std::string traceme_encode(
     std::string_view name, std::initializer_list<TraceMeArg> args)
 {
     return traceme_internal::append_args(std::string(name), args);
 }
-XSIGMA_FORCE_INLINE std::string trace_me_encode(
+XSIGMA_FORCE_INLINE std::string traceme_encode(
     const char* name, std::initializer_list<TraceMeArg> args)
 {
     return traceme_internal::append_args(std::string(name), args);
 }
 
-// Encodes arguments into trace_me metadata.
+// Encodes arguments into traceme metadata.
 // Use within a lambda to avoid expensive operations when tracing is disabled.
 // Example Usage:
-//   trace_me trace_me("my_trace");
+//   traceme traceme("my_trace");
 //   ...
-//   trace_me.append_metadata([value1]() {
-//     return trace_me_encode({{"key1", value1}, {"key2", 42}});
+//   traceme.append_metadata([value1]() {
+//     return traceme_encode({{"key1", value1}, {"key2", 42}});
 //   });
-XSIGMA_FORCE_INLINE std::string trace_me_encode(std::initializer_list<TraceMeArg> args)
+XSIGMA_FORCE_INLINE std::string traceme_encode(std::initializer_list<TraceMeArg> args)
 {
     return traceme_internal::append_args(std::string(), args);
 }
 
 // Concatenates op_name and op_type.
-XSIGMA_FORCE_INLINE std::string trace_me_op(std::string_view op_name, std::string_view op_type)
+XSIGMA_FORCE_INLINE std::string traceme_op(std::string_view op_name, std::string_view op_type)
 {
     return strings::str_cat(op_name, ":", op_type);
 }
 
-XSIGMA_FORCE_INLINE std::string trace_me_op(const char* op_name, const char* op_type)
+XSIGMA_FORCE_INLINE std::string traceme_op(const char* op_name, const char* op_type)
 {
     return strings::str_cat(op_name, ":", op_type);
 }
 
-XSIGMA_FORCE_INLINE std::string trace_me_op(std::string&& op_name, std::string_view op_type)
+XSIGMA_FORCE_INLINE std::string traceme_op(std::string&& op_name, std::string_view op_type)
 {
     strings::str_append(&op_name, ":", op_type);
     return op_name;
 }
 
 // Concatenates op_name and op_type.
-XSIGMA_FORCE_INLINE std::string trace_me_op_override(
+XSIGMA_FORCE_INLINE std::string traceme_op_override(
     std::string_view op_name, std::string_view op_type)
 {
     return strings::str_cat("#tf_op=", op_name, ":", op_type, "#");
 }
 
-XSIGMA_FORCE_INLINE std::string trace_me_op_override(const char* op_name, const char* op_type)
+XSIGMA_FORCE_INLINE std::string traceme_op_override(const char* op_name, const char* op_type)
 {
     return strings::str_cat("#tf_op=", op_name, ":", op_type, "#");
 }

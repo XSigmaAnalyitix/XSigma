@@ -71,7 +71,6 @@ struct allocation_attributes
     /**
      * @brief Constructs allocation attributes with specific behavior settings.
      *
-     * @param retry_on_failure Whether to retry allocation on initial failure
      * @param allocation_will_be_logged Whether this allocation should be logged for tracking
      * @param freed_by_func Optional function providing timing constraints for memory reuse
      *
@@ -88,8 +87,8 @@ struct allocation_attributes
         bool                       retry_on_failure,
         bool                       allocation_will_be_logged,
         std::function<uint64_t()>* freed_by_func) noexcept
-        : retry_on_failure(retry_on_failure),
-          allocation_will_be_logged(allocation_will_be_logged),
+        : allocation_will_be_logged(allocation_will_be_logged),
+          retry_on_failure(retry_on_failure),
           freed_by_func(freed_by_func)
     {
     }
@@ -105,18 +104,6 @@ struct allocation_attributes
     allocation_attributes& operator=(allocation_attributes&&) noexcept = default;
 
     /**
-     * @brief Controls retry behavior on allocation failure.
-     *
-     * If true, the allocator will wait and retry allocation with exponential backoff
-     * when the initial attempt fails. Set to false for optional allocations where
-     * failure has only performance impact (e.g., scratch space allocation).
-     *
-     * **Default**: true (retry enabled)
-     * **Performance Impact**: Retries can add significant latency but improve success rate
-     */
-    bool retry_on_failure = true;
-
-    /**
      * @brief Controls whether allocation is tracked in execution logs.
      *
      * When true, this allocation will be properly attributed to the executing operation
@@ -127,6 +114,18 @@ struct allocation_attributes
      * **Performance Impact**: Minimal overhead for tracking metadata
      */
     bool allocation_will_be_logged = false;
+
+    /**
+     * @brief Controls whether allocation should retry on failure.
+     *
+     * When true, the allocator will attempt to retry failed allocations,
+     * potentially waiting for memory to become available. When false,
+     * the allocator will fail immediately on memory exhaustion.
+     *
+     * **Default**: true (retry enabled)
+     * **Performance Impact**: Retries add latency but improve success rate
+     */
+    bool retry_on_failure = true;
 
     /**
      * @brief Optional timing constraint function for memory reuse policies.
@@ -232,7 +231,7 @@ enum class allocator_memory_enum : uint8_t
  * - deallocate_raw(): O(1) to O(log n) depending on implementation
  * - Statistics collection adds minimal overhead when enabled
  *
- * **Memory Alignment**: All allocations are aligned to kAllocatorAlignment (64 bytes)
+ * **Memory Alignment**: All allocations are aligned to Allocator_Alignment (64 bytes)
  * for optimal cache performance and SIMD instruction compatibility.
  *
  * @note Implementations must be thread-safe unless explicitly documented otherwise.
@@ -250,7 +249,7 @@ public:
      *
      * **Compile-time constant**: Can be used in constexpr contexts
      */
-    static constexpr size_t kAllocatorAlignment = 64;
+    static constexpr size_t Allocator_Alignment = 64;
 
     /**
      * @brief Virtual destructor ensuring proper cleanup of derived classes.
@@ -710,134 +709,6 @@ public:
     {
         return allocator_memory_enum::UNKNOWN;
     }
-};
-
-/**
- * @brief Decorator pattern implementation for extending allocator functionality.
- *
- * allocator_wrapper provides a base class for implementing the decorator pattern
- * with allocators. It delegates all calls to a wrapped allocator while allowing
- * derived classes to override specific methods to add functionality like logging,
- * statistics collection, or access control.
- *
- * **Design Pattern**: Decorator - adds behavior without altering the interface
- * **Performance**: Zero overhead delegation - all calls are simple forwards
- * **Thread Safety**: Inherits thread safety from wrapped allocator
- *
- * **Common Use Cases**:
- * - Adding logging to existing allocators
- * - Implementing access control or quotas
- * - Collecting additional statistics
- * - Adding debugging instrumentation
- *
- * **Example Usage**:
- * ```cpp
- * class LoggingAllocator : public allocator_wrapper {
- * public:
- *     LoggingAllocator(Allocator* wrapped) : allocator_wrapper(wrapped) {}
- *
- *     void* allocate_raw(size_t alignment, size_t num_bytes) override {
- *         std::cout << "Allocating " << num_bytes << " bytes\n";
- *         return allocator_wrapper::allocate_raw(alignment, num_bytes);
- *     }
- * };
- * ```
- */
-class allocator_wrapper : public Allocator
-{
-public:
-    /**
-     * @brief Constructs wrapper around an existing allocator.
-     *
-     * @param wrapped Pointer to allocator to wrap (must not be nullptr)
-     *
-     * **Ownership**: Does not take ownership of wrapped allocator
-     * **Lifetime**: Wrapped allocator must outlive this wrapper
-     * **Thread Safety**: Safe if wrapped allocator is thread-safe
-     */
-    explicit allocator_wrapper(Allocator* wrapped) noexcept : wrapped_(wrapped)
-    {
-        assert(wrapped != nullptr && "Wrapped allocator cannot be nullptr");
-    }
-
-    /**
-     * @brief Virtual destructor for proper cleanup of derived classes.
-     *
-     * **Note**: Does not delete the wrapped allocator - caller retains ownership
-     */
-    ~allocator_wrapper() override = default;
-
-    /**
-     * @brief Returns the wrapped allocator instance.
-     *
-     * Provides access to the underlying allocator for direct manipulation
-     * or unwrapping in decorator chains.
-     *
-     * @return Pointer to wrapped allocator (never nullptr)
-     *
-     * **Thread Safety**: Safe to call concurrently
-     * **Performance**: O(1) - simple pointer access
-     */
-    Allocator* wrapped() const noexcept { return wrapped_; }
-
-    // Delegated interface methods - all forward to wrapped allocator
-    std::string Name() override { return wrapped_->Name(); }
-
-    void* allocate_raw(size_t alignment, size_t num_bytes) override
-    {
-        return wrapped_->allocate_raw(alignment, num_bytes);
-    }
-
-    void* allocate_raw(
-        size_t alignment, size_t num_bytes, const allocation_attributes& allocation_attr) override
-    {
-        return wrapped_->allocate_raw(alignment, num_bytes, allocation_attr);
-    }
-
-    void deallocate_raw(void* ptr) override { wrapped_->deallocate_raw(ptr); }
-
-    void deallocate_raw(void* ptr, size_t alignment, size_t num_bytes) override
-    {
-        wrapped_->deallocate_raw(ptr, alignment, num_bytes);
-    }
-
-    bool TracksAllocationSizes() const noexcept override
-    {
-        return wrapped_->TracksAllocationSizes();
-    }
-
-    bool AllocatesOpaqueHandle() const noexcept override
-    {
-        return wrapped_->AllocatesOpaqueHandle();
-    }
-
-    size_t RequestedSize(const void* ptr) const override { return wrapped_->RequestedSize(ptr); }
-
-    size_t AllocatedSize(const void* ptr) const override { return wrapped_->AllocatedSize(ptr); }
-
-    int64_t AllocationId(const void* ptr) const noexcept override
-    {
-        return wrapped_->AllocationId(ptr);
-    }
-
-    size_t AllocatedSizeSlow(const void* ptr) const override
-    {
-        return wrapped_->AllocatedSizeSlow(ptr);
-    }
-
-    std::optional<allocator_stats> GetStats() override { return wrapped_->GetStats(); }
-
-    bool ClearStats() override { return wrapped_->ClearStats(); }
-
-    void SetSafeFrontier(uint64_t count) noexcept override { wrapped_->SetSafeFrontier(count); }
-
-    allocator_memory_enum GetMemoryType() const noexcept override
-    {
-        return wrapped_->GetMemoryType();
-    }
-
-private:
-    Allocator* const wrapped_;  ///< Wrapped allocator instance (not owned)
 };
 
 /**

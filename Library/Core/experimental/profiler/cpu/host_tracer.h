@@ -47,11 +47,11 @@ struct host_tracer_options
 {
     // Levels of host tracing:
     // - Level 0 is used to disable host traces.
-    // - Level 1 enables tracing of only user instrumented (or default) trace_me.
-    // - Level 2 enables tracing of all level 1 trace_me(s) and instrumented high
+    // - Level 1 enables tracing of only user instrumented (or default) traceme.
+    // - Level 2 enables tracing of all level 1 traceme(s) and instrumented high
     //           level program execution details (expensive TF ops, XLA ops, etc).
     //           This is the default.
-    // - Level 3 enables tracing of all level 2 trace_me(s) and more verbose
+    // - Level 3 enables tracing of all level 2 traceme(s) and more verbose
     //           (low-level) program execution details (cheap TF ops, etc).
     int trace_level = 2;
 };

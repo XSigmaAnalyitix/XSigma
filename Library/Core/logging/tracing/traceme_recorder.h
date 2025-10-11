@@ -33,27 +33,27 @@ namespace internal
 {
 
 // Current trace level.
-// Static atomic so trace_me_recorder::active can be fast and non-blocking.
-// Modified by trace_me_recorder singleton when tracing starts/stops.
+// Static atomic so traceme_recorder::active can be fast and non-blocking.
+// Modified by traceme_recorder singleton when tracing starts/stops.
 XSIGMA_API extern std::atomic<int> g_trace_level;
 
 }  // namespace internal
 
-// trace_me_recorder is a singleton repository of trace_me events.
+// traceme_recorder is a singleton repository of traceme events.
 // It can be safely and cheaply appended to by multiple threads.
 //
 // start() and stop() must be called in pairs, stop() returns the events added
 // since the previous start().
 //
-// This is the backend for trace_me instrumentation.
-// The profiler starts the recorder, the trace_me destructor records complete
-// events. trace_me::activity_start records start events, and trace_me::activity_end
+// This is the backend for traceme instrumentation.
+// The profiler starts the recorder, the traceme destructor records complete
+// events. traceme::activity_start records start events, and traceme::activity_end
 // records end events. The profiler then stops the recorder and finds start/end
 // pairs. (Unpaired start/end events are discarded at that point).
-class trace_me_recorder
+class XSIGMA_VISIBILITY traceme_recorder
 {
 public:
-    // An Event is either the start of a trace_me, the end of a trace_me, or both.
+    // An Event is either the start of a traceme, the end of a traceme, or both.
     // Times are in ns since the Unix epoch.
     // A negative time encodes the activity_id used to pair up the start of an
     // event with its end.
@@ -88,14 +88,14 @@ public:
     };
     using Events = std::vector<ThreadEvents>;
 
-    // Starts recording of trace_me().
+    // Starts recording of traceme().
     // Only traces <= level will be recorded.
     // Level must be >= 0. If level is 0, no traces will be recorded.
-    static bool start(int level);
+    XSIGMA_API static bool start(int level);
 
     // Stops recording and returns events recorded since start().
     // Events passed to record after stop has started will be dropped.
-    static Events stop();
+    XSIGMA_API static Events stop();
 
     // Returns whether we're currently recording. Racy, but cheap!
     static inline bool active(int level = 1)
@@ -107,21 +107,21 @@ public:
     static constexpr int kTracingDisabled = -1;
 
     // Records an event. Non-blocking.
-    static void record(Event&& event);
+    XSIGMA_API static void record(Event&& event);
 
-    // Returns an activity_id for trace_me::activity_start.
-    static int64_t new_activity_id();
+    // Returns an activity_id for traceme::activity_start.
+    XSIGMA_API static int64_t new_activity_id();
 
 private:
-    trace_me_recorder()  = delete;
-    ~trace_me_recorder() = delete;
+    traceme_recorder()  = delete;
+    ~traceme_recorder() = delete;
 
     // Clears events from all active threads that were added due to record
     // racing with stop.
-    static void clear();
+    XSIGMA_API static void clear();
 
     // Gathers events from all active threads, and clears their buffers.
-    static Events consume();
+    XSIGMA_API static Events consume();
 };
 
 }  // namespace xsigma
