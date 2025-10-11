@@ -165,7 +165,12 @@ target_include_directories(Core
 
 # Link with build interface target
 target_link_libraries(Core PUBLIC XSigma::build)
-xsigma_target_clang_tidy(Core)
+#xsigma_target_clang_tidy(Core)
+
+set_target_properties(Core PROPERTIES
+    C_CLANG_TIDY "${CLANG_TIDY_PATH};-warnings-as-errors=*"
+    CXX_CLANG_TIDY "${CLANG_TIDY_PATH};-warnings-as-errors=*"
+  )
 
 # Link with third-party dependencies
 # Mandatory core dependencies (always linked)
