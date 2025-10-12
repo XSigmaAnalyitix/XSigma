@@ -19,24 +19,13 @@
 
 #include "memory_tracker.h"
 
-#include <processthreadsapi.h>
-#include <sysinfoapi.h>
-
-#include <cstddef>
-#include <cstdint>
-#include <mutex>
-#include <thread>
-#include <utility>
-#include <vector>
-
-#include "experimental/profiler/profiler.h"
-
 // Prevent Windows min/max macros from interfering
 #ifdef _WIN32
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
 #include <psapi.h>
+#include <windows.h>
 #pragma comment(lib, "psapi.lib")
 #else
 #include <sys/resource.h>
@@ -45,19 +34,19 @@
 #include <fstream>
 
 #ifdef __APPLE__
-#include <mach/mach.h>
-#include <mach/mach_host.h>
-#include <mach/mach_init.h>
-#include <mach/mach_types.h>
-#include <mach/vm_statistics.h>
 #include <sys/sysctl.h>
+#include <mach/mach.h>
+#include <mach/vm_statistics.h>
+#include <mach/mach_types.h>
+#include <mach/mach_init.h>
+#include <mach/mach_host.h>
 #endif
 
 #endif
 
 #include <algorithm>
 #include <chrono>
-
+#include <iostream>
 namespace xsigma
 {
 
@@ -228,8 +217,8 @@ size_t memory_tracker::get_available_system_memory() const
     return 0;
 #else
     // Linux and other Unix systems
-    long pages     = sysconf(_SC_AVPHYS_PAGES);
-    long page_size = sysconf(_SC_PAGE_SIZE);
+    long const pages     = sysconf(_SC_AVPHYS_PAGES);
+    long const page_size = sysconf(_SC_PAGE_SIZE);
     if (pages > 0 && page_size > 0)
     {
         return static_cast<size_t>(pages * page_size);

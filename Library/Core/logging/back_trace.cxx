@@ -159,7 +159,7 @@ std::vector<stack_frame> back_trace::capture(const backtrace_options& options)
 
 #if SUPPORTS_BACKTRACE
     // Skip this frame (capture) plus user-requested frames
-    size_t const frames_to_skip = options.frames_to_skip + 1;
+    size_t  frames_to_skip = options.frames_to_skip + 1ULL;//NOLINT
 
 #ifdef _WIN32
     // Windows implementation using CaptureStackBackTrace
@@ -256,7 +256,7 @@ std::vector<stack_frame> back_trace::capture(const backtrace_options& options)
     callstack.resize(static_cast<size_t>(number_of_frames));
 
     // Get symbol information
-    std::unique_ptr<char*, std::function<void(char**)> > raw_symbols(
+    std::unique_ptr<char*, std::function<void(char**)> > const raw_symbols(
         ::backtrace_symbols(callstack.data(), static_cast<int>(callstack.size())), free);
 
     if (!raw_symbols)

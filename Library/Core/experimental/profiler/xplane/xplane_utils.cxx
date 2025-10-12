@@ -555,35 +555,35 @@ void AddFlowsToXplane(int32_t host_id, bool is_host_plane, bool connect_traceme,
                     event.ForEachStat(
                         [&](xstat* stat)
                         {
-                            if (correlation_id_stats_metadata &&
+                            if ((correlation_id_stats_metadata != nullptr) &&
                                 stat->metadata_id() == correlation_id_stats_metadata->id())
                             {
                                 correlation_id = stat->uint64_value();
                             }
                             else if (connect_traceme)
                             {
-                                if (producer_type_stats_metadata &&
+                                if ((producer_type_stats_metadata != nullptr) &&
                                     stat->metadata_id() == producer_type_stats_metadata->id())
                                 {
                                     producer_type =
                                         xstats_builder<xsigma::xplane>::IntOrUintValue(*stat);
                                 }
                                 else if (
-                                    consumer_type_stats_metadata &&
+                                    (consumer_type_stats_metadata != nullptr) &&
                                     stat->metadata_id() == consumer_type_stats_metadata->id())
                                 {
                                     consumer_type =
                                         xstats_builder<xsigma::xplane>::IntOrUintValue(*stat);
                                 }
                                 else if (
-                                    producer_id_stats_metadata &&
+                                    (producer_id_stats_metadata != nullptr) &&
                                     stat->metadata_id() == producer_id_stats_metadata->id())
                                 {
                                     producer_id =
                                         xstats_builder<xsigma::xplane>::IntOrUintValue(*stat);
                                 }
                                 else if (
-                                    consumer_id_stats_metadata &&
+                                    (consumer_id_stats_metadata != nullptr) &&
                                     stat->metadata_id() == consumer_id_stats_metadata->id())
                                 {
                                     consumer_id =

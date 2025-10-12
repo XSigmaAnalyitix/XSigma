@@ -135,7 +135,7 @@ exception::exception(
           std::string(source_location.file) + ":" + std::to_string(source_location.line) +
           " (most recent call first):\n" + (*GetFetchStackTrace())()),
       caller_(nullptr),
-      nested_exception_(std::move(nested)),
+      nested_exception_(std::move(nested)),//NOLINT
       category_(category)
 {
     refresh_what();

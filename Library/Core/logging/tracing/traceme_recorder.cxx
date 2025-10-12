@@ -166,7 +166,7 @@ public:
         info_.name = get_thread_name();
     }
 
-    const traceme_recorder::ThreadInfo& Info() const { return info_; }
+    [[nodiscard]] const traceme_recorder::ThreadInfo& Info() const { return info_; }
 
     // Record is only called from the producer thread.
     void Record(traceme_recorder::Event&& event) { queue_.push(std::move(event)); }
