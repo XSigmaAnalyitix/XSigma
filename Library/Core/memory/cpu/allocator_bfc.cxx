@@ -804,9 +804,9 @@ void allocator_bfc::AddTraceMe(
                                       stats_.bytes_in_use.load(std::memory_order_relaxed);
             const auto& annotation = xsigma::scoped_memory_debug_annotation::current_annotation();
             const auto* const op_name =
-                annotation.pending_op_name ? annotation.pending_op_name : "(null)";
+                (annotation.pending_op_name != nullptr) ? annotation.pending_op_name : "(null)";
             const auto* const region_type =
-                annotation.pending_region_type ? annotation.pending_region_type : "(null)";
+                (annotation.pending_region_type != nullptr) ? annotation.pending_region_type : "(null)";
             return xsigma::traceme_encode(
                 std::string(traceme_name),
                 {{"allocator_name", name_},

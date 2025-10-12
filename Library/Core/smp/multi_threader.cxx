@@ -3,18 +3,9 @@
 
 #include "multi_threader.h"
 
-#include <handleapi.h>
-#include <minwindef.h>
-#include <processthreadsapi.h>
-#include <synchapi.h>
-#include <sysinfoapi.h>
-#include <winbase.h>
-#include <winnt.h>
-
 #include <algorithm>  // for clamp, min
-#include <mutex>
 
-#include "common/macros.h"
+#include "logging/logger.h"
 #include "util/exception.h"  // for XSIGMA_CHECK
 #include "xsigma_threads.h"
 
@@ -39,6 +30,7 @@ using xsigmaExternCThreadFunctionType = xsigmaThreadFunctionType;
 #endif
 
 #ifdef _WIN32
+#include <windows.h>
 #endif
 
 #ifdef min
@@ -315,7 +307,7 @@ void multi_threader::SingleMethodExecute()
         this->ThreadInfoArray[thread_loop].UserData        = this->SingleData;
         this->ThreadInfoArray[thread_loop].NumberOfThreads = this->NumberOfThreads;
 
-        int threadError = pthread_create(
+        int const threadError = pthread_create(
             &(process_id[thread_loop]),
             &attr,
             reinterpret_cast<xsigmaExternCThreadFunctionType>(this->SingleMethod),

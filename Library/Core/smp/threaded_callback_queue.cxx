@@ -176,7 +176,7 @@ void threaded_callback_queue::SetNumberOfThreads(int numberOfThreads)
                     std::unique_lock<std::mutex> lock(this->ThreadIdToIndexMutex);
                     std::atomic_int&             threadIndex =
                         *this->ThreadIdToIndex.at(std::this_thread::get_id());
-                    if (threadIndex && threadIndex >= numberOfThreads)
+                    if ((threadIndex != 0) && threadIndex >= numberOfThreads)
                     {
                         std::atomic_int& thread0Index =
                             *this->ThreadIdToIndex.at(this->Threads[0].get_id());
