@@ -43,9 +43,9 @@
 #include "common/macros.h"
 #include "logging/logger.h"
 #include "memory/cpu/allocator.h"
+#include "memory/cpu/allocator_retry.h"
 #include "util/flat_hash.h"
 #include "util/string_util.h"
-
 namespace xsigma
 {
 /**
@@ -377,7 +377,8 @@ public:
      */
     void* allocate_raw(size_t alignment, size_t num_bytes) override
     {
-        return allocate_raw(alignment, num_bytes, allocation_attributes{});
+        return num_bytes == 0 ? nullptr
+                              : allocate_raw(alignment, num_bytes, allocation_attributes{});
     }
 
     /**
@@ -2126,6 +2127,13 @@ private:
     std::array<BinDebugInfo, kNumBins> get_bin_debug_info() XSIGMA_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
     // ========== Immutable Configuration (Set During Construction) ==========
+    /**
+     * @brief Retry helper for handling allocation failures with backoff.
+     *
+     * Manages retry logic, exponential backoff, and condition variable
+     * coordination for failed allocation attempts.
+     */
+    allocator_retry retry_helper_;
 
     /**
      * @brief Maximum memory limit in bytes (0 = unlimited).

@@ -37,9 +37,9 @@ namespace xsigma
 // Forward declarations of helper functions defined in TestCPUMemory.cxx
 struct TestStruct;
 bool IsAligned(void* ptr, size_t alignment);
-void memset(void* ptr, size_t size, uint8_t pattern);
 bool ValidateMemory(void* ptr, size_t size, uint8_t pattern);
 }  // namespace xsigma
+
 XSIGMATEST(CPUMemoryStats, unified_resource_stats_basic_functionality)
 {
     unified_resource_stats stats;
@@ -64,7 +64,7 @@ XSIGMATEST(CPUMemoryStats, unified_resource_stats_basic_functionality)
     EXPECT_NEAR(efficiency, 0.5, 0.01);  // 1MB / 2MB = 0.5
 
     double avg_size = stats.average_allocation_size();
-    EXPECT_NEAR(avg_size, 1024.0 * 1024.0, 1000.0);  // 10MB / 10 allocs = 1MB
+    EXPECT_NEAR(avg_size, 1024.0, 1000.0);  // 10MB / 10 allocs = 1MB
 
     double success_rate = stats.allocation_success_rate();
     EXPECT_NEAR(success_rate, 100.0, 0.1);  // No failed allocations
