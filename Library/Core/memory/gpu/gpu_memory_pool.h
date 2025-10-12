@@ -52,13 +52,13 @@ struct XSIGMA_VISIBILITY gpu_memory_pool_config
     size_t min_block_size = 1024;
 
     /** @brief Maximum block size in bytes (default: 64MB) */
-    size_t max_block_size = 64 * 1024 * 1024;
+    size_t max_block_size = 64ULL * 1024ULL;
 
     /** @brief Block size growth factor (default: 2.0) */
     double block_growth_factor = 2.0;
 
     /** @brief Maximum total pool size in bytes (default: 1GB) */
-    size_t max_pool_size = 1024 * 1024 * 1024;
+    size_t max_pool_size = 1024ULL * 1024;
 
     /** @brief Maximum number of cached blocks per size class (default: 16) */
     size_t max_cached_blocks = 16;
@@ -66,8 +66,8 @@ struct XSIGMA_VISIBILITY gpu_memory_pool_config
     /** @brief Enable memory alignment for SIMD operations (default: true) */
     bool enable_alignment = true;
 
-    /** @brief Memory alignment boundary in bytes (default: 256 for GPU coalescing) */
-    size_t alignment_boundary = 256;
+    /** @brief Memory alignment boundary in bytes (default: 256ULL for GPU coalescing) */
+    size_t alignment_boundary = 256ULL;
 
     /** @brief Enable memory usage tracking (default: true) */
     bool enable_tracking = true;
@@ -215,13 +215,13 @@ struct XSIGMA_VISIBILITY gpu_memory_block
  * // Configure memory pool for Monte Carlo simulations
  * gpu_memory_pool_config config;
  * config.min_block_size = 4096;        // 4KB minimum
- * config.max_block_size = 128 * 1024 * 1024;  // 128MB maximum
+ * config.max_block_size = 128 * 1024ULL;  // 128MB maximum
  * config.block_growth_factor = 1.5;    // Moderate growth
  * 
  * auto pool = gpu_memory_pool::create(config);
  * 
  * // Allocate memory for simulation data
- * auto block = pool->allocate(1024 * 1024, device_enum::CUDA);
+ * auto block = pool->allocate(1024ULL, device_enum::CUDA);
  * // ... use memory for computations ...
  * pool->deallocate(block);
  * ```

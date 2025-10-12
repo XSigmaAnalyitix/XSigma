@@ -112,7 +112,7 @@ public:
 
         // Simulate GPU memory operations with timing
         void*  gpu_ptr    = nullptr;
-        size_t alloc_size = 1024 * 1024;  // 1MB
+        size_t alloc_size = 1024ULL;  // 1MB
 
         auto        start_time = std::chrono::steady_clock::now();
         cudaError_t error      = cudaMalloc(&gpu_ptr, alloc_size);
@@ -298,8 +298,8 @@ public:
         cache_stats.cache_hits.store(150);
         cache_stats.cache_misses.store(50);
         cache_stats.cache_evictions.store(10);
-        cache_stats.bytes_cached.store(2 * 1024 * 1024);       // 2MB cached
-        cache_stats.peak_bytes_cached.store(3 * 1024 * 1024);  // 3MB peak
+        cache_stats.bytes_cached.store(2 * 1024ULL);       // 2MB cached
+        cache_stats.peak_bytes_cached.store(3 * 1024ULL);  // 3MB peak
         cache_stats.cache_blocks.store(25);
         cache_stats.driver_allocations.store(60);  // Actual cudaMalloc calls
         cache_stats.driver_frees.store(50);        // Actual cudaFree calls
@@ -350,8 +350,8 @@ public:
         gpu_stats.resource_stats.num_allocs.store(500);
         gpu_stats.resource_stats.num_deallocs.store(450);
         gpu_stats.resource_stats.active_allocations.store(50);
-        gpu_stats.resource_stats.bytes_in_use.store(64 * 1024 * 1024);        // 64MB
-        gpu_stats.resource_stats.peak_bytes_in_use.store(128 * 1024 * 1024);  // 128MB
+        gpu_stats.resource_stats.bytes_in_use.store(64 * 1024ULL);        // 64MB
+        gpu_stats.resource_stats.peak_bytes_in_use.store(128 * 1024ULL);  // 128MB
 
         gpu_stats.timing_stats.total_allocations.store(500);
         gpu_stats.timing_stats.total_alloc_time_us.store(250000);     // 250ms total
@@ -360,7 +360,7 @@ public:
 
         gpu_stats.cache_stats.cache_hits.store(400);
         gpu_stats.cache_stats.cache_misses.store(100);
-        gpu_stats.cache_stats.bytes_cached.store(32 * 1024 * 1024);  // 32MB cached
+        gpu_stats.cache_stats.bytes_cached.store(32 * 1024ULL);  // 32MB cached
 
         // Test overall efficiency
         double efficiency = gpu_stats.overall_efficiency();

@@ -35,7 +35,7 @@ inline void throw_on_cuda_error(cudaError_t result, const char* what)
 {
     if (result != cudaSuccess)
     {
-        std::string message = std::string(what) + ": " + cudaGetErrorString(result);
+        std::string const message = std::string(what) + ": " + cudaGetErrorString(result);
         // Log error (simplified for build compatibility)
         throw std::runtime_error(message);
     }
@@ -55,7 +55,7 @@ inline void throw_on_cuda_error(int result, const char* what)
 class DeviceGuard
 {
 public:
-    explicit DeviceGuard(int device) : prev_(0), changed_(false)
+    explicit DeviceGuard(int device)
     {
         int current = 0;
         throw_on_cuda_error(cudaGetDevice(&current), "cudaGetDevice");
@@ -79,8 +79,8 @@ public:
     }
 
 private:
-    int  prev_;
-    bool changed_;
+    int  prev_{0};
+    bool changed_{false};
 };
 
 }  // namespace
@@ -104,8 +104,7 @@ struct cuda_caching_allocator::Impl
         bool in_deferred_list = false;
     };
 
-    Impl(int device, size_t max_cached_bytes)
-        : device_(device), max_cached_bytes_(max_cached_bytes), cached_bytes_(0), bytes_in_use_(0)
+    Impl(int device, size_t max_cached_bytes) : device_(device), max_cached_bytes_(max_cached_bytes)
     {
         // Log info (simplified for build compatibility)
 
@@ -113,7 +112,7 @@ struct cuda_caching_allocator::Impl
 #ifdef XSIGMA_ENABLE_CUDA
         int device_count = 0;
         throw_on_cuda_error(cudaGetDeviceCount(&device_count), "cudaGetDeviceCount");
-        XSIGMA_CHECK(
+        XSIGMA_CHECK(  //NOLINT
             device >= 0 && device < device_count,
             "Invalid CUDA device index: " + std::to_string(device) + " (available: 0-" +
                 std::to_string(device_count - 1) + ")");
@@ -122,7 +121,7 @@ struct cuda_caching_allocator::Impl
 
     ~Impl()
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
         release_all_blocks_noexcept();
     }
 
@@ -132,7 +131,7 @@ struct cuda_caching_allocator::Impl
 
         // Debug log (simplified for build compatibility)
 
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
         reclaim_deferred_blocks_locked();
 
         Block* block = find_suitable_block_locked(size);
@@ -175,8 +174,8 @@ struct cuda_caching_allocator::Impl
 
         // Debug log (simplified for build compatibility)
 
-        std::lock_guard<std::mutex> lock(mutex_);
-        auto                        it = blocks_.find(ptr);
+        std::lock_guard<std::mutex> const lock(mutex_);
+        auto                              it = blocks_.find(ptr);
 
         XSIGMA_CHECK(
             it != blocks_.end(), "cuda_caching_allocator does not own the provided pointer");
@@ -201,7 +200,7 @@ struct cuda_caching_allocator::Impl
         cached_bytes_ += block->size;
         stats_.bytes_cached = cached_bytes_;
 
-        auto effective_stream = stream != nullptr ? stream : block->last_stream;
+        auto* effective_stream = stream != nullptr ? stream : block->last_stream;
 
         if (effective_stream == nullptr || effective_stream == block->last_stream)
         {
@@ -220,8 +219,8 @@ struct cuda_caching_allocator::Impl
 
     void empty_cache()
     {
-        std::lock_guard<std::mutex> lock(mutex_);
-        DeviceGuard                 guard(device_);
+        std::lock_guard<std::mutex> const lock(mutex_);
+        DeviceGuard const                 guard(device_);
         reclaim_deferred_blocks_locked(true);
 
         while (!free_blocks_.empty())
@@ -250,22 +249,22 @@ struct cuda_caching_allocator::Impl
 
     void set_max_cached_bytes(size_t bytes)
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
         max_cached_bytes_ = bytes;
         trim_cache_locked();
     }
 
     size_t max_cached_bytes() const
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
         return max_cached_bytes_;
     }
 
     unified_cache_stats stats() const
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
         // Create a copy of the atomic stats structure
-        unified_cache_stats stats_copy(stats_);
+        unified_cache_stats const stats_copy(stats_);
         return stats_copy;
     }
 
@@ -295,9 +294,9 @@ private:
 
     Block* create_block_locked(size_t size)
     {
-        DeviceGuard guard(device_);
-        void*       ptr    = nullptr;
-        cudaError_t result = cudaMalloc(&ptr, size);
+        DeviceGuard const guard(device_);
+        void*             ptr    = nullptr;
+        cudaError_t const result = cudaMalloc(&ptr, size);
         if (result != cudaSuccess)
         {
             throw std::bad_alloc();
@@ -328,7 +327,7 @@ private:
 
     void record_event_locked(Block* block, cudaStream_t stream)
     {
-        DeviceGuard guard(device_);
+        DeviceGuard const guard(device_);
         if (block->event == nullptr)
         {
             throw_on_cuda_error(
@@ -352,8 +351,8 @@ private:
             return;
         }
 
-        DeviceGuard guard(device_);
-        size_t      index = 0;
+        DeviceGuard const guard(device_);
+        size_t            index = 0;
         while (index < deferred_blocks_.size())
         {
             Block* block = deferred_blocks_[index];
@@ -370,7 +369,7 @@ private:
             }
             else
             {
-                cudaError_t status = cudaEventQuery(block->event);
+                cudaError_t const status = cudaEventQuery(block->event);
                 if (status == cudaSuccess)
                 {
                     ready = true;
@@ -404,7 +403,7 @@ private:
             return;
         }
 
-        DeviceGuard guard(device_);
+        DeviceGuard const guard(device_);
         while (cached_bytes_ > max_cached_bytes_ && !free_blocks_.empty())
         {
             auto   it    = std::prev(free_blocks_.end());
@@ -423,7 +422,7 @@ private:
     {
         Block* block = it->second.get();
 
-        DeviceGuard guard(device_);
+        DeviceGuard const guard(device_);
         destroy_event(block);
         throw_on_cuda_error(cudaFree(block->ptr), "cudaFree");
         stats_.driver_frees++;
@@ -431,7 +430,7 @@ private:
         blocks_.erase(it);
     }
 
-    void destroy_event(Block* block)
+    static void destroy_event(Block* block)
     {
         if (block->event != nullptr)
         {
@@ -444,7 +443,7 @@ private:
 
     void release_all_blocks_noexcept()
     {
-        DeviceGuard guard(device_);
+        DeviceGuard const guard(device_);
         for (auto& entry : blocks_)
         {
             Block* block = entry.second.get();
@@ -467,8 +466,8 @@ private:
 
     int    device_;
     size_t max_cached_bytes_;
-    size_t cached_bytes_;
-    size_t bytes_in_use_;
+    size_t cached_bytes_{0};
+    size_t bytes_in_use_{0};
 
     mutable std::mutex  mutex_;
     BlockMap            blocks_;

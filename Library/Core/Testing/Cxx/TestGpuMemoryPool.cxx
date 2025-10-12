@@ -52,9 +52,9 @@ XSIGMATEST(GpuMemoryPool, validates_configuration_parameters)
     // Test custom configuration
     gpu_memory_pool_config custom_config;
     custom_config.min_block_size      = 2048;
-    custom_config.max_block_size      = 32 * 1024 * 1024;
+    custom_config.max_block_size      = 32 * 1024ULL;
     custom_config.block_growth_factor = 1.5;
-    custom_config.max_pool_size       = 128 * 1024 * 1024;
+    custom_config.max_pool_size       = 128 * 1024ULL;
     custom_config.max_cached_blocks   = 8;
     custom_config.alignment_boundary  = 512;
     custom_config.enable_alignment    = true;
@@ -62,7 +62,7 @@ XSIGMATEST(GpuMemoryPool, validates_configuration_parameters)
     custom_config.debug_mode          = false;
 
     EXPECT_EQ(2048, custom_config.min_block_size);
-    EXPECT_EQ(32 * 1024 * 1024, custom_config.max_block_size);
+    EXPECT_EQ(32 * 1024ULL, custom_config.max_block_size);
     EXPECT_EQ(1.5, custom_config.block_growth_factor);
 
     XSIGMA_LOG_INFO("GPU memory pool configuration validation test passed");
@@ -76,9 +76,9 @@ XSIGMATEST(GpuMemoryPool, creates_pool_successfully)
     // Test pool creation with default configuration
     gpu_memory_pool_config config;
     config.min_block_size      = 1024;
-    config.max_block_size      = 16 * 1024 * 1024;
+    config.max_block_size      = 16 * 1024ULL;
     config.block_growth_factor = 2.0;
-    config.max_pool_size       = 256 * 1024 * 1024;
+    config.max_pool_size       = 256 * 1024ULL;
     config.max_cached_blocks   = 8;
     config.enable_alignment    = true;
     config.alignment_boundary  = 256;
@@ -142,8 +142,8 @@ XSIGMATEST(GpuMemoryPool, allocates_and_deallocates_memory)
 {
     gpu_memory_pool_config config;
     config.min_block_size = 1024;
-    config.max_block_size = 8 * 1024 * 1024;
-    config.max_pool_size  = 64 * 1024 * 1024;
+    config.max_block_size = 8 * 1024ULL;
+    config.max_pool_size  = 64 * 1024ULL;
 
     auto pool = gpu_memory_pool::create(config);
     EXPECT_NE(nullptr, pool.get());
@@ -178,7 +178,7 @@ XSIGMATEST(GpuMemoryPool, handles_multiple_allocations)
 {
     gpu_memory_pool_config config;
     config.min_block_size    = 512;
-    config.max_block_size    = 4 * 1024 * 1024;
+    config.max_block_size    = 4 * 1024ULL;
     config.max_cached_blocks = 16;
 
     auto pool = gpu_memory_pool::create(config);
@@ -230,7 +230,7 @@ XSIGMATEST(GpuMemoryPool, provides_accurate_statistics)
 {
     gpu_memory_pool_config config;
     config.min_block_size  = 1024;
-    config.max_block_size  = 2 * 1024 * 1024;
+    config.max_block_size  = 2 * 1024ULL;
     config.enable_tracking = true;
 
     auto pool = gpu_memory_pool::create(config);
@@ -322,7 +322,7 @@ XSIGMATEST(GpuMemoryPool, supports_different_device_types)
 {
     gpu_memory_pool_config config;
     config.min_block_size = 1024;
-    config.max_block_size = 1024 * 1024;
+    config.max_block_size = 1024ULL;
 
     auto pool = gpu_memory_pool::create(config);
     EXPECT_NE(nullptr, pool.get());
@@ -363,7 +363,7 @@ XSIGMATEST(GpuMemoryPool, handles_errors_gracefully)
 {
     gpu_memory_pool_config config;
     config.min_block_size = 1024;
-    config.max_block_size = 1024 * 1024;
+    config.max_block_size = 1024ULL;
 
     auto pool = gpu_memory_pool::create(config);
     EXPECT_NE(nullptr, pool.get());

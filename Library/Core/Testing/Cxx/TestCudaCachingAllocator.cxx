@@ -39,13 +39,13 @@ using namespace xsigma::gpu;
 XSIGMATEST(CudaCachingAllocator, constructs_with_valid_parameters)
 {
     // Test basic construction
-    cuda_caching_allocator allocator(0, 64 * 1024 * 1024);  // 64MB cache
+    cuda_caching_allocator allocator(0, 64 * 1024ULL);  // 64MB cache
 
     // Verify device index
     EXPECT_EQ(0, allocator.device());
 
     // Verify cache size
-    EXPECT_EQ(64 * 1024 * 1024, allocator.max_cached_bytes());
+    EXPECT_EQ(64 * 1024ULL, allocator.max_cached_bytes());
 
     XSIGMA_LOG_INFO("CUDA caching allocator construction test passed");
 }
@@ -55,7 +55,7 @@ XSIGMATEST(CudaCachingAllocator, constructs_with_valid_parameters)
  */
 XSIGMATEST(CudaCachingAllocator, allocates_and_deallocates_memory)
 {
-    cuda_caching_allocator allocator(0, 32 * 1024 * 1024);  // 32MB cache
+    cuda_caching_allocator allocator(0, 32 * 1024ULL);  // 32MB cache
 
     // Test basic allocation
     void* ptr1 = allocator.allocate(1024);
@@ -87,7 +87,7 @@ XSIGMATEST(CudaCachingAllocator, allocates_and_deallocates_memory)
  */
 XSIGMATEST(CudaCachingAllocator, manages_cache_correctly)
 {
-    cuda_caching_allocator allocator(0, 16 * 1024 * 1024);  // 16MB cache
+    cuda_caching_allocator allocator(0, 16 * 1024ULL);  // 16MB cache
 
     // Allocate and deallocate to populate cache
     void* ptr1 = allocator.allocate(1024);
@@ -112,11 +112,11 @@ XSIGMATEST(CudaCachingAllocator, manages_cache_correctly)
  */
 XSIGMATEST(CudaCachingAllocator, respects_cache_size_limits)
 {
-    cuda_caching_allocator allocator(0, 8 * 1024 * 1024);  // 8MB cache
+    cuda_caching_allocator allocator(0, 8 * 1024ULL);  // 8MB cache
 
     // Test setting new cache size
-    allocator.set_max_cached_bytes(16 * 1024 * 1024);
-    EXPECT_EQ(16 * 1024 * 1024, allocator.max_cached_bytes());
+    allocator.set_max_cached_bytes(16 * 1024ULL);
+    EXPECT_EQ(16 * 1024ULL, allocator.max_cached_bytes());
 
     // Test disabling cache
     allocator.set_max_cached_bytes(0);
@@ -130,7 +130,7 @@ XSIGMATEST(CudaCachingAllocator, respects_cache_size_limits)
  */
 XSIGMATEST(CudaCachingAllocator, provides_accurate_statistics)
 {
-    cuda_caching_allocator allocator(0, 32 * 1024 * 1024);  // 32MB cache
+    cuda_caching_allocator allocator(0, 32 * 1024ULL);  // 32MB cache
 
     // Get initial stats
     auto initial_stats = allocator.stats();
@@ -158,7 +158,7 @@ XSIGMATEST(CudaCachingAllocator, provides_accurate_statistics)
 XSIGMATEST(CudaCachingAllocator, supports_move_semantics)
 {
     // Create allocator
-    cuda_caching_allocator allocator1(0, 16 * 1024 * 1024);
+    cuda_caching_allocator allocator1(0, 16 * 1024ULL);
 
     // Allocate some memory
     void* ptr = allocator1.allocate(1024);
@@ -180,7 +180,7 @@ XSIGMATEST(CudaCachingAllocator, supports_move_semantics)
  */
 XSIGMATEST(CudaCachingAllocator, handles_errors_gracefully)
 {
-    cuda_caching_allocator allocator(0, 16 * 1024 * 1024);
+    cuda_caching_allocator allocator(0, 16 * 1024ULL);
 
     // Test zero-size allocation
     void* ptr_zero = allocator.allocate(0);
@@ -199,9 +199,9 @@ XSIGMATEST(CudaCachingAllocator, handles_errors_gracefully)
 XSIGMATEST(CudaCachingAllocatorTemplate, constructs_with_different_types)
 {
     // Test template allocator for different types
-    cuda_caching_allocator_template<float, 256>  float_allocator(0, 32 * 1024 * 1024);
-    cuda_caching_allocator_template<double, 256> double_allocator(0, 32 * 1024 * 1024);
-    cuda_caching_allocator_template<int, 128>    int_allocator(0, 16 * 1024 * 1024);
+    cuda_caching_allocator_template<float, 256>  float_allocator(0, 32 * 1024ULL);
+    cuda_caching_allocator_template<double, 256> double_allocator(0, 32 * 1024ULL);
+    cuda_caching_allocator_template<int, 128>    int_allocator(0, 16 * 1024ULL);
 
     // Verify device indices
     EXPECT_EQ(0, float_allocator.device());
@@ -216,7 +216,7 @@ XSIGMATEST(CudaCachingAllocatorTemplate, constructs_with_different_types)
  */
 XSIGMATEST(CudaCachingAllocatorTemplate, allocates_typed_memory_safely)
 {
-    cuda_caching_allocator_template<float, 256> allocator(0, 16 * 1024 * 1024);
+    cuda_caching_allocator_template<float, 256> allocator(0, 16 * 1024ULL);
 
     // Test typed allocation
     float* ptr1 = allocator.allocate(100);
@@ -238,7 +238,7 @@ XSIGMATEST(CudaCachingAllocatorTemplate, allocates_typed_memory_safely)
  */
 XSIGMATEST(CudaCachingAllocatorTemplate, respects_alignment_requirements)
 {
-    cuda_caching_allocator_template<double, 512> allocator(0, 16 * 1024 * 1024);
+    cuda_caching_allocator_template<double, 512> allocator(0, 16 * 1024ULL);
 
     // Allocate memory and check alignment
     double* ptr = allocator.allocate(50);
@@ -258,7 +258,7 @@ XSIGMATEST(CudaCachingAllocatorTemplate, respects_alignment_requirements)
  */
 XSIGMATEST(CudaCachingAllocatorTemplate, provides_statistics_and_cache_control)
 {
-    cuda_caching_allocator_template<int, 256> allocator(0, 8 * 1024 * 1024);
+    cuda_caching_allocator_template<int, 256> allocator(0, 8 * 1024ULL);
 
     // Get initial stats
     auto initial_stats = allocator.stats();

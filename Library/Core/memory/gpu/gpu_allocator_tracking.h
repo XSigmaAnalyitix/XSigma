@@ -181,18 +181,18 @@ struct XSIGMA_API enhanced_gpu_alloc_record
      * @brief Constructs enhanced GPU allocation record with comprehensive metadata.
      */
     enhanced_gpu_alloc_record(
-        size_t             requested_size,
-        size_t             actual_size,
-        size_t             align,
-        device_enum        dev_type,
-        int                dev_index,
-        int64_t            alloc_time,
-        int64_t            alloc_id,
-        const std::string& allocation_tag = "",
-        const char*        file           = nullptr,
-        int                line           = 0,
-        const char*        func           = nullptr,
-        void*              stream         = nullptr) noexcept;
+        size_t      requested_size,
+        size_t      actual_size,
+        size_t      align,
+        device_enum dev_type,
+        int         dev_index,
+        int64_t     alloc_time,
+        int64_t     alloc_id,
+        std::string allocation_tag = "",
+        const char* file           = nullptr,
+        int         line           = 0,
+        const char* func           = nullptr,
+        void*       stream         = nullptr) noexcept;
 };
 
 /**
@@ -275,7 +275,7 @@ public:
      *
      * @tparam T Element type to allocate
      * @param count Number of elements to allocate
-     * @param alignment Memory alignment requirement (default: 256 bytes for GPU coalescing)
+     * @param alignment Memory alignment requirement (default: 256ULL bytes for GPU coalescing)
      * @param pool Optional memory pool to use
      * @param tag Optional allocation tag for categorization
      * @param stream Optional CUDA stream for asynchronous operations
@@ -299,7 +299,7 @@ public:
     template <typename T>
     T* allocate(
         size_t                           count,
-        size_t                           alignment     = 256,
+        size_t                           alignment     = 256ULL,
         std::shared_ptr<gpu_memory_pool> pool          = nullptr,
         const std::string&               tag           = "",
         void*                            stream        = nullptr,
@@ -342,7 +342,7 @@ public:
      */
     void* allocate_raw(
         size_t                           bytes,
-        size_t                           alignment = 256,
+        size_t                           alignment = 256ULL,
         std::shared_ptr<gpu_memory_pool> pool      = nullptr,
         const std::string&               tag       = "",
         void*                            stream    = nullptr);

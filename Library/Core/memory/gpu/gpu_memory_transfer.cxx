@@ -7,6 +7,7 @@
 #include <queue>
 #include <sstream>
 #include <thread>
+#include <utility>
 
 #include "common/configure.h"
 #include "common/macros.h"
@@ -57,7 +58,7 @@ public:
 
         if (priority == 0)
         {
-            cudaError_t result = cudaStreamCreate(&stream_);
+            cudaError_t const result = cudaStreamCreate(&stream_);
             if (result != cudaSuccess)
             {
                 XSIGMA_THROW(
@@ -67,11 +68,13 @@ public:
         else
         {
             // Create stream with priority
-            int least_priority, greatest_priority;
+            int least_priority;
+            int greatest_priority;
             cudaDeviceGetStreamPriorityRange(&least_priority, &greatest_priority);
-            int actual_priority = std::max(greatest_priority, std::min(least_priority, priority));
+            int const actual_priority =
+                std::max(greatest_priority, std::min(least_priority, priority));
 
-            cudaError_t result =
+            cudaError_t const result =
                 cudaStreamCreateWithPriority(&stream_, cudaStreamDefault, actual_priority);
             if (result != cudaSuccess)
             {
@@ -84,17 +87,17 @@ public:
 
     ~cuda_stream_impl() override
     {
-        if (stream_)
+        if (stream_ != nullptr)
         {
             cudaStreamDestroy(stream_);
         }
     }
 
-    device_option get_device() const override { return device_; }
+    [[nodiscard]] device_option get_device() const override { return device_; }
 
     void synchronize() override
     {
-        cudaError_t result = cudaStreamSynchronize(stream_);
+        cudaError_t const result = cudaStreamSynchronize(stream_);
         if (result != cudaSuccess)
         {
             XSIGMA_THROW(
@@ -102,13 +105,13 @@ public:
         }
     }
 
-    bool is_idle() const override
+    [[nodiscard]] bool is_idle() const override
     {
-        cudaError_t result = cudaStreamQuery(stream_);
+        cudaError_t const result = cudaStreamQuery(stream_);
         return (result == cudaSuccess);
     }
 
-    void* get_native_handle() const override { return static_cast<void*>(stream_); }
+    [[nodiscard]] void* get_native_handle() const override { return static_cast<void*>(stream_); }
 };
 #endif
 
@@ -135,7 +138,13 @@ struct transfer_operation
         transfer_direction dir,
         gpu_stream*        stream_,
         transfer_callback  cb)
-        : id(id_), src(src_), dst(dst_), size(size_), direction(dir), stream(stream_), callback(cb)
+        : id(id_),
+          src(src_),
+          dst(dst_),
+          size(size_),
+          direction(dir),
+          stream(stream_),
+          callback(std::move(cb))
     {
         info.transfer_id       = id;
         info.direction         = direction;
@@ -177,7 +186,7 @@ private:
      */
     gpu_stream* get_default_stream(device_enum device_type, int device_index)
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         auto key = std::make_pair(device_type, device_index);
         auto it  = default_streams_.find(key);
@@ -227,7 +236,7 @@ private:
                 }
 
                 cudaStream_t cuda_stream = nullptr;
-                if (op.stream)
+                if (op.stream != nullptr)
                 {
                     cuda_stream = static_cast<cudaStream_t>(op.stream->get_native_handle());
                 }
@@ -243,7 +252,7 @@ private:
                 }
 
                 // Synchronize to ensure transfer completion for timing
-                if (cuda_stream)
+                if (cuda_stream != nullptr)
                 {
                     result = cudaStreamSynchronize(cuda_stream);
                 }
@@ -280,7 +289,7 @@ private:
             op.info.status   = transfer_status::COMPLETED;
 
             // Calculate bandwidth
-            double duration_ms = op.info.get_duration_ms();
+            double const duration_ms = op.info.get_duration_ms();
             if (duration_ms > 0.0)
             {
                 op.info.bandwidth_gbps =
@@ -293,7 +302,9 @@ private:
             // Atomic add for double (C++20 feature, use compare_exchange for compatibility)
             double expected = total_transfer_time_ms_.load();
             while (!total_transfer_time_ms_.compare_exchange_weak(expected, expected + duration_ms))
+            {
                 ;
+            }
         }
         catch (const std::exception& e)
         {
@@ -316,12 +327,12 @@ public:
         transfer_direction direction,
         gpu_stream*        stream) override
     {
-        if (!src || !dst || size == 0)
+        if ((src == nullptr) || (dst == nullptr) || size == 0)
         {
             XSIGMA_THROW("Invalid transfer parameters");
         }
 
-        size_t             transfer_id = next_transfer_id_.fetch_add(1);
+        size_t const       transfer_id = next_transfer_id_.fetch_add(1);
         transfer_operation op(transfer_id, src, dst, size, direction, stream, nullptr);
 
         perform_transfer(op);
@@ -337,13 +348,13 @@ public:
         gpu_stream*        stream,
         transfer_callback  callback) override
     {
-        if (!src || !dst || size == 0)
+        if ((src == nullptr) || (dst == nullptr) || size == 0)
         {
             XSIGMA_THROW("Invalid transfer parameters");
         }
 
-        size_t transfer_id = next_transfer_id_.fetch_add(1);
-        auto   op          = std::make_unique<transfer_operation>(
+        size_t const transfer_id = next_transfer_id_.fetch_add(1);
+        auto         op          = std::make_unique<transfer_operation>(
             transfer_id, src, dst, size, direction, stream, callback);
 
         auto future = op->promise.get_future();
@@ -364,14 +375,14 @@ public:
                 op_ptr->promise.set_value(op_ptr->info);
 
                 // Remove from active transfers
-                std::lock_guard<std::mutex> lock(mutex_);
+                std::lock_guard<std::mutex> const lock(mutex_);
                 active_transfers_.erase(op_ptr->id);
             })
             .detach();
 
         // Store operation
         {
-            std::lock_guard<std::mutex> lock(mutex_);
+            std::lock_guard<std::mutex> const lock(mutex_);
             active_transfers_[transfer_id] = std::move(op);
         }
 
@@ -397,17 +408,17 @@ public:
         size_t total_size, transfer_direction direction, device_enum device_type) const override
     {
         // Base chunk size recommendations
-        size_t base_chunk_size = size_t{64} * 1024 * 1024;  // 64MB default
+        size_t base_chunk_size = size_t{64ULL} * 1024ULL;  // 64MB default
 
         switch (device_type)
         {
         case device_enum::CUDA:
             // CUDA typically performs well with larger chunks
-            base_chunk_size = size_t{128} * 1024 * 1024;  // 128MB
+            base_chunk_size = size_t{128} * 1024ULL;  // 128MB
             break;
         case device_enum::HIP:  // HIP (placeholder)
             // HIP may prefer smaller chunks
-            base_chunk_size = size_t{32} * 1024 * 1024;  // 32MB
+            base_chunk_size = size_t{32} * 1024ULL;  // 32MB
             break;
         default:
             break;
@@ -421,11 +432,11 @@ public:
             break;
         case transfer_direction::DEVICE_TO_HOST:
             // Device to host may benefit from smaller chunks
-            base_chunk_size = std::min(base_chunk_size, static_cast<size_t>(64 * 1024 * 1024));
+            base_chunk_size = std::min(base_chunk_size, static_cast<size_t>(64ULL * 1024ULL));
             break;
         case transfer_direction::DEVICE_TO_DEVICE:
             // Device to device can use very large chunks
-            base_chunk_size = std::max(base_chunk_size, static_cast<size_t>(256 * 1024 * 1024));
+            base_chunk_size = std::max(base_chunk_size, static_cast<size_t>(256ULL * 1024ULL));
             break;
         default:
             break;
@@ -441,10 +452,10 @@ public:
         oss << "GPU Memory Transfer Statistics:\n";
         oss << "==============================\n";
 
-        size_t total   = total_transfers_.load();
-        size_t failed  = failed_transfers_.load();
-        size_t bytes   = total_bytes_transferred_.load();
-        double time_ms = total_transfer_time_ms_.load();
+        size_t const total   = total_transfers_.load();
+        size_t const failed  = failed_transfers_.load();
+        size_t const bytes   = total_bytes_transferred_.load();
+        double const time_ms = total_transfer_time_ms_.load();
 
         oss << "Total transfers: " << total << "\n";
         oss << "Successful transfers: " << (total - failed) << "\n";
@@ -460,13 +471,13 @@ public:
 
         if (time_ms > 0.0)
         {
-            double avg_bandwidth = (bytes / 1024.0 / 1024.0 / 1024.0) / (time_ms / 1000.0);
+            double const avg_bandwidth = (bytes / 1024.0 / 1024.0 / 1024.0) / (time_ms / 1000.0);
             oss << "Average bandwidth: " << std::fixed << std::setprecision(2) << avg_bandwidth
                 << " GB/s\n";
         }
 
         {
-            std::lock_guard<std::mutex> lock(mutex_);
+            std::lock_guard<std::mutex> const lock(mutex_);
             oss << "Active transfers: " << active_transfers_.size() << "\n";
         }
 
@@ -486,7 +497,7 @@ public:
         std::vector<std::unique_ptr<transfer_operation>> operations;
 
         {
-            std::lock_guard<std::mutex> lock(mutex_);
+            std::lock_guard<std::mutex> const lock(mutex_);
             operations.reserve(active_transfers_.size());
             for (auto& [id, op] : active_transfers_)
             {
@@ -504,7 +515,7 @@ public:
 
     void cancel_all_transfers() override
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         for (auto& [id, op] : active_transfers_)
         {

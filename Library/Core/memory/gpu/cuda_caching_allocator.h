@@ -145,9 +145,9 @@ private:
  * while leveraging the high-performance caching allocator underneath.
  *
  * @tparam T Element type
- * @tparam alignment Memory alignment requirement (default: 256 bytes)
+ * @tparam alignment Memory alignment requirement (default: 256ULL bytes)
  */
-template <typename T, std::size_t alignment = 256>
+template <typename T, std::size_t alignment = 256ULL>
 class cuda_caching_allocator_template
 {
 public:

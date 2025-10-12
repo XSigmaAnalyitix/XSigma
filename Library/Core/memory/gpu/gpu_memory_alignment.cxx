@@ -62,7 +62,7 @@ alignment_config gpu_memory_alignment::get_optimal_config(
 
     case memory_access_pattern::STRIDED:
         // Strided access may need larger alignment
-        config.base_alignment       = std::max(config.base_alignment, size_t(256));
+        config.base_alignment       = std::max(config.base_alignment, size_t(256ULL));
         config.enable_coalescing    = true;
         config.avoid_bank_conflicts = true;
         break;
@@ -88,7 +88,7 @@ alignment_config gpu_memory_alignment::get_optimal_config(
 
     case memory_access_pattern::TRANSPOSE:
         // Matrix transpose needs careful alignment
-        config.base_alignment       = std::max(config.base_alignment, size_t(256));
+        config.base_alignment       = std::max(config.base_alignment, size_t(256ULL));
         config.avoid_bank_conflicts = true;
         config.enable_coalescing    = true;
         break;
@@ -105,30 +105,46 @@ alignment_config gpu_memory_alignment::get_optimal_config(
 }
 
 gpu_architecture gpu_memory_alignment::detect_architecture(
-    device_enum device_type, int compute_major, int compute_minor, const std::string& vendor_name)
+    device_enum device_type,
+    int         compute_major,
+    int         compute_minor,
+    const std::string& /*vendor_name*/)
 {
     switch (device_type)
     {
     case device_enum::CUDA:
     {
-        int compute_capability = compute_major * 10 + compute_minor;
+        int const compute_capability = compute_major * 10 + compute_minor;
 
         if (compute_capability >= 90)
+        {
             return gpu_architecture::CUDA_COMPUTE_90;
-        else if (compute_capability >= 80)
+        }
+        if (compute_capability >= 80)
+        {
             return gpu_architecture::CUDA_COMPUTE_80;
-        else if (compute_capability >= 75)
+        }
+        if (compute_capability >= 75)
+        {
             return gpu_architecture::CUDA_COMPUTE_75;
-        else if (compute_capability >= 70)
+        }
+        if (compute_capability >= 70)
+        {
             return gpu_architecture::CUDA_COMPUTE_70;
-        else if (compute_capability >= 60)
+        }
+        if (compute_capability >= 60)
+        {
             return gpu_architecture::CUDA_COMPUTE_60;
-        else if (compute_capability >= 50)
+        }
+        if (compute_capability >= 50)
+        {
             return gpu_architecture::CUDA_COMPUTE_50;
-        else if (compute_capability >= 35)
+        }
+        if (compute_capability >= 35)
+        {
             return gpu_architecture::CUDA_COMPUTE_35;
-        else
-            return gpu_architecture::CUDA_COMPUTE_30;
+        }
+        return gpu_architecture::CUDA_COMPUTE_30;
     }
 
     case device_enum::HIP:
@@ -155,19 +171,29 @@ bool gpu_memory_alignment::validate_config(const alignment_config& config) noexc
 
     // Check reasonable bounds
     if (config.base_alignment < 32 || config.base_alignment > 4096)
+    {
         return false;
+    }
 
     if (config.vector_alignment < 16 || config.vector_alignment > 512)
+    {
         return false;
+    }
 
-    if (config.texture_alignment < 64 || config.texture_alignment > 4096)
+    if (config.texture_alignment < 64ULL || config.texture_alignment > 4096)
+    {
         return false;
+    }
 
     if (config.work_group_size < 16 || config.work_group_size > 1024)
+    {
         return false;
+    }
 
     if (config.bank_conflict_stride < 16 || config.bank_conflict_stride > 128)
+    {
         return false;
+    }
 
     return true;
 }

@@ -67,15 +67,15 @@ XSIGMATEST(AllocatorDevice, basic_allocation)
     }
 
     // Test large allocation
-    void* ptr_large = allocator->allocate_raw(64, 1024 * 1024);  // 1MB
+    void* ptr_large = allocator->allocate_raw(64, 1024ULL);  // 1MB
     EXPECT_NE(nullptr, ptr_large);
 
     if (ptr_large)
     {
         // Verify memory is writable
-        std::memset(ptr_large, 0x55, 1024 * 1024);
+        std::memset(ptr_large, 0x55, 1024ULL);
         EXPECT_EQ(static_cast<unsigned char*>(ptr_large)[0], 0x55);
-        EXPECT_EQ(static_cast<unsigned char*>(ptr_large)[1024 * 1024 - 1], 0x55);
+        EXPECT_EQ(static_cast<unsigned char*>(ptr_large)[1024ULL - 1], 0x55);
         allocator->deallocate_raw(ptr_large);
     }
 
@@ -605,7 +605,7 @@ XSIGMATEST(AllocatorTracking, AllocationTracking)
     allocator_bfc::Options opts;
     opts.allow_growth = false;
     xsigma::allocator_bfc underlying_alloc(
-        std::move(sub_allocator), 1024 * 1024, "test_tracking_bfc", opts);
+        std::move(sub_allocator), 1024ULL, "test_tracking_bfc", opts);
 
     // Create tracking allocator with size tracking enabled (use pointer due to protected destructor)
     auto tracker = new xsigma::allocator_tracking(&underlying_alloc, true);
@@ -655,7 +655,7 @@ XSIGMATEST(AllocatorTracking, StatisticsCollection)
     allocator_bfc::Options opts;
     opts.allow_growth = false;
     xsigma::allocator_bfc underlying_alloc(
-        std::move(sub_allocator), 1024 * 1024, "test_stats_bfc", opts);
+        std::move(sub_allocator), 1024ULL, "test_stats_bfc", opts);
 
     // Create tracking allocator (use pointer due to protected destructor)
     auto tracker = new xsigma::allocator_tracking(&underlying_alloc, true);
@@ -713,7 +713,7 @@ XSIGMATEST(AllocatorTracking, MemoryUsageMonitoring)
     allocator_bfc::Options opts;
     opts.allow_growth = false;
     xsigma::allocator_bfc underlying_alloc(
-        std::move(sub_allocator), 1024 * 1024, "test_monitoring_bfc", opts);
+        std::move(sub_allocator), 1024ULL, "test_monitoring_bfc", opts);
 
     // Create tracking allocator (use pointer due to protected destructor)
     auto tracker = new xsigma::allocator_tracking(&underlying_alloc, true);
@@ -776,7 +776,7 @@ XSIGMATEST(AllocatorTracking, UnderlyingAllocatorIntegration)
     allocator_bfc::Options opts;
     opts.allow_growth = false;
     xsigma::allocator_bfc bfc_alloc(
-        std::move(sub_allocator), 1024 * 1024, "test_integration_bfc", opts);
+        std::move(sub_allocator), 1024ULL, "test_integration_bfc", opts);
     auto bfc_tracker = new xsigma::allocator_tracking(&bfc_alloc, true);
 
     // Test name delegation
@@ -832,7 +832,7 @@ XSIGMATEST(AllocatorTracking, EnhancedTrackingAnalytics)
     allocator_bfc::Options opts;
     opts.allow_growth = false;
     xsigma::allocator_bfc underlying_alloc(
-        std::move(sub_allocator), 2 * 1024 * 1024, "test_enhanced_bfc", opts);
+        std::move(sub_allocator), 2 * 1024ULL, "test_enhanced_bfc", opts);
 
     // Create tracking allocator with enhanced tracking enabled
     auto tracker =
@@ -939,7 +939,7 @@ XSIGMATEST(AllocatorTracking, LoggingAndReporting)
     allocator_bfc::Options opts;
     opts.allow_growth = false;
     xsigma::allocator_bfc underlying_alloc(
-        std::move(sub_allocator), 1024 * 1024, "test_logging_bfc", opts);
+        std::move(sub_allocator), 1024ULL, "test_logging_bfc", opts);
 
     // Create tracking allocator with enhanced tracking
     auto tracker = new xsigma::allocator_tracking(&underlying_alloc, true, true);

@@ -51,7 +51,7 @@ void* allocator_device::allocate_raw(size_t alignment, size_t num_bytes)
     void* ptr = nullptr;
 
 #ifdef XSIGMA_ENABLE_CUDA
-    cudaError_t result = cudaMallocHost(&ptr, num_bytes);
+    cudaError_t const result = cudaMallocHost(&ptr, num_bytes);
     if (result != cudaSuccess)
     {
         XSIGMA_THROW("CUDA error in allocator_device::allocate_raw: {}", std::to_string(result));
@@ -71,7 +71,7 @@ void allocator_device::deallocate_raw(void* ptr)
     }
 
 #ifdef XSIGMA_ENABLE_CUDA
-    cudaError_t result = cudaFreeHost(ptr);
+    cudaError_t const result = cudaFreeHost(ptr);
     if (result != cudaSuccess)
     {
         // Log error but don't throw from free

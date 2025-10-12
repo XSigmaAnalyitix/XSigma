@@ -22,7 +22,6 @@
 #include <memory>
 #include <string>
 
-
 #include "memory/device.h"
 #include "memory/gpu/cuda_caching_allocator.h"
 
@@ -59,13 +58,13 @@ struct XSIGMA_API gpu_allocator_config
     gpu_allocation_strategy strategy     = gpu_allocation_strategy::DIRECT;
     device_enum             device_type  = device_enum::CUDA;
     int                     device_index = 0;
-    size_t                  alignment    = 256;  ///< Memory alignment in bytes
+    size_t                  alignment    = 256ULL;  ///< Memory alignment in bytes
 
     // Pool-specific configuration
-    size_t pool_min_block_size = 1024;                       ///< Minimum pool block size
-    size_t pool_max_block_size = 64 * 1024 * 1024;           ///< Maximum pool block size
-    double pool_growth_factor  = 1.5;                        ///< Pool growth factor
-    size_t pool_max_size       = 1ULL * 1024 * 1024 * 1024;  ///< Maximum pool size
+    size_t pool_min_block_size = 1024;                   ///< Minimum pool block size
+    size_t pool_max_block_size = 64ULL * 1024ULL;        ///< Maximum pool block size
+    double pool_growth_factor  = 1.5;                    ///< Pool growth factor
+    size_t pool_max_size       = 1ULL * 1024ULL * 1024;  ///< Maximum pool size
 
     // Caching-specific configuration
     size_t cache_max_bytes = std::numeric_limits<size_t>::max();  ///< Maximum cache size
@@ -134,7 +133,7 @@ public:
      * @param config Allocator configuration
      * @return Unique pointer to caching allocator
      */
-    template <typename T, std::size_t alignment = 256>
+    template <typename T, std::size_t alignment = 256ULL>
     static std::unique_ptr<cuda_caching_allocator_template<T, alignment>> create_caching_allocator(
         const gpu_allocator_config& config)
     {

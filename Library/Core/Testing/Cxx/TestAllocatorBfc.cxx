@@ -81,7 +81,7 @@ std::unique_ptr<allocator_bfc> create_test_bfc_allocator()
 
     return std::make_unique<allocator_bfc>(
         std::move(sub_alloc),
-        1024 * 1024,  // 1MB initial size
+        1024ULL,  // 1MB initial size
         "test_bfc",
         opts);
 }
@@ -289,7 +289,7 @@ XSIGMATEST(AllocatorBFC, large_allocations)
     auto allocator = create_test_bfc_allocator();
 
     // Test allocation larger than initial pool size
-    void* large_ptr = allocator->allocate_raw(64, 2 * 1024 * 1024);  // 2MB
+    void* large_ptr = allocator->allocate_raw(64, 2 * 1024ULL);  // 2MB
 
     if (large_ptr != nullptr)
     {
@@ -426,7 +426,7 @@ XSIGMATEST(AllocatorBFC, thread_safety)
 
     auto allocator = std::make_unique<allocator_bfc>(
         std::move(sub_alloc),
-        1024 * 1024,  // 1MB
+        1024ULL,  // 1MB
         "test_bfc_concurrent",
         opts);
 
@@ -495,7 +495,7 @@ XSIGMATEST(AllocatorBFC, allocation_timing)
 
     auto allocator = std::make_unique<allocator_bfc>(
         std::move(sub_alloc),
-        2 * 1024 * 1024,  // 2MB
+        2 * 1024ULL,  // 2MB
         "test_bfc_perf",
         opts);
 
@@ -538,7 +538,7 @@ XSIGMATEST(AllocatorBFC, allocation_timing)
 XSIGMATEST(AllocatorBFC, basic_allocation)
 {
     // Create a BFC allocator with 1MB memory limit
-    const size_t memory_limit  = 1024 * 1024;  // 1MB
+    const size_t memory_limit  = 1024ULL;  // 1MB
     auto         sub_allocator = std::make_unique<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
 
@@ -575,7 +575,7 @@ XSIGMATEST(AllocatorBFC, basic_allocation)
 // Test allocator_bfc edge cases
 XSIGMATEST(AllocatorBFC, EdgeCases)
 {
-    const size_t memory_limit  = 1024 * 1024;  // 1MB
+    const size_t memory_limit  = 1024ULL;  // 1MB
     auto         sub_allocator = std::make_unique<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
 
@@ -611,7 +611,7 @@ XSIGMATEST(AllocatorBFC, EdgeCases)
 // Test allocator_bfc memory tracking
 XSIGMATEST(AllocatorBFC, MemoryTracking)
 {
-    const size_t memory_limit  = 1024 * 1024;  // 1MB
+    const size_t memory_limit  = 1024ULL;  // 1MB
     auto         sub_allocator = std::make_unique<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
 

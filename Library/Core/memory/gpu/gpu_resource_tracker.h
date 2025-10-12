@@ -26,7 +26,6 @@
 #include <unordered_map>
 #include <vector>
 
-
 #include "common/macros.h"
 #include "memory/device.h"
 #include "memory/unified_memory_stats.h"
@@ -170,8 +169,8 @@ struct XSIGMA_VISIBILITY leak_detection_config
  * tracker.configure_leak_detection(config);
  * 
  * // Track allocation
- * void* ptr = allocate_gpu_memory(1024 * 1024);
- * tracker.track_allocation(ptr, 1024 * 1024, device_enum::CUDA, 0, "simulation_data");
+ * void* ptr = allocate_gpu_memory(1024ULL);
+ * tracker.track_allocation(ptr, 1024ULL, device_enum::CUDA, 0, "simulation_data");
  * 
  * // ... use memory ...
  * 
@@ -244,7 +243,8 @@ public:
      * @param ptr Pointer to query
      * @return Allocation information, or nullptr if not found
      */
-    XSIGMA_API virtual std::shared_ptr<gpu_allocation_info> get_allocation_info(void* ptr) const = 0;
+    XSIGMA_API virtual std::shared_ptr<gpu_allocation_info> get_allocation_info(
+        void* ptr) const = 0;
 
     /**
      * @brief Get current resource usage statistics

@@ -48,12 +48,12 @@ XSIGMATEST(GpuAllocatorFactory, recommends_appropriate_strategies)
         strategy1 == gpu_allocation_strategy::POOL);
 
     // Large, infrequent allocations should prefer direct
-    auto strategy2 = gpu_allocator_factory::recommend_strategy(64 * 1024 * 1024, 1.0, 10.0);
+    auto strategy2 = gpu_allocator_factory::recommend_strategy(64 * 1024ULL, 1.0, 10.0);
     EXPECT_TRUE(
         strategy2 == gpu_allocation_strategy::DIRECT || strategy2 == gpu_allocation_strategy::POOL);
 
     // Medium allocations with moderate frequency
-    auto strategy3 = gpu_allocator_factory::recommend_strategy(1024 * 1024, 50.0, 2.0);
+    auto strategy3 = gpu_allocator_factory::recommend_strategy(1024ULL, 50.0, 2.0);
     EXPECT_TRUE(
         strategy3 == gpu_allocation_strategy::POOL || strategy3 == gpu_allocation_strategy::DIRECT);
 
@@ -158,7 +158,7 @@ XSIGMATEST(GpuAllocatorFactory, creates_caching_allocators)
     config.strategy        = gpu_allocation_strategy::CACHING;
     config.device_type     = device_enum::CUDA;
     config.device_index    = 0;
-    config.cache_max_bytes = 32 * 1024 * 1024;  // 32MB
+    config.cache_max_bytes = 32 * 1024ULL;  // 32MB
 
     try
     {
@@ -217,7 +217,7 @@ XSIGMATEST(GpuAllocatorFactory, supports_different_template_parameters)
     config.strategy        = gpu_allocation_strategy::CACHING;
     config.device_type     = device_enum::CUDA;
     config.device_index    = 0;
-    config.cache_max_bytes = 16 * 1024 * 1024;  // 16MB
+    config.cache_max_bytes = 16 * 1024ULL;  // 16MB
 
     try
     {

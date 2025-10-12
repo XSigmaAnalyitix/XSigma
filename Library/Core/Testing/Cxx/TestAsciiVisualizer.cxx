@@ -250,9 +250,9 @@ XSIGMATEST(AsciiVisualizer, create_fragmentation_map)
 XSIGMATEST(AsciiVisualizer, create_usage_bars)
 {
     auto   visualizer    = create_test_visualizer();
-    size_t current_usage = 512 * 1024 * 1024;      // 512 MB
-    size_t peak_usage    = 1024 * 1024 * 1024;     // 1 GB
-    size_t limit_usage   = 2048ULL * 1024 * 1024;  // 2 GB
+    size_t current_usage = 512 * 1024ULL;      // 512 MB
+    size_t peak_usage    = 1024ULL * 1024;     // 1 GB
+    size_t limit_usage   = 2048ULL * 1024ULL;  // 2 GB
 
     // Create usage bars with limit
     std::string usage_bars_with_limit =
@@ -472,9 +472,9 @@ TEST(AsciiVisualizerDemo, comprehensive_demonstration)
     // Demonstrate usage bars
     std::cout << "\n4. MEMORY USAGE BARS:\n";
     std::cout << visualizer.create_usage_bars(
-        768 * 1024 * 1024,     // 768 MB current
-        1536 * 1024 * 1024,    // 1.5 GB peak
-        2048ULL * 1024 * 1024  // 2 GB limit
+        768 * 1024ULL,     // 768 MB current
+        1536 * 1024ULL,    // 1.5 GB peak
+        2048ULL * 1024ULL  // 2 GB limit
     );
 
     // Demonstrate performance summary

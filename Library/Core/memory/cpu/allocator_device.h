@@ -58,7 +58,7 @@ namespace xsigma
  * auto allocator = std::make_unique<allocator_device>();
  * 
  * // Allocate 1MB of pinned memory
- * void* ptr = allocator->allocate_raw(64, 1024 * 1024);
+ * void* ptr = allocator->allocate_raw(64, 1024ULL);
  * if (ptr) {
  *     // Use memory for GPU transfers...
  *     allocator->deallocate_raw(ptr);

@@ -54,10 +54,10 @@ XSIGMATEST(CPUMemoryStats, unified_resource_stats_basic_functionality)
     // Test basic operations
     stats.num_allocs.fetch_add(10);
     stats.num_deallocs.fetch_add(5);
-    stats.bytes_in_use.store(1024 * 1024);           // 1MB
-    stats.peak_bytes_in_use.store(2 * 1024 * 1024);  // 2MB
+    stats.bytes_in_use.store(1024ULL);           // 1MB
+    stats.peak_bytes_in_use.store(2 * 1024ULL);  // 2MB
     stats.active_allocations.store(5);
-    stats.total_bytes_allocated.store(10 * 1024 * 1024);  // 10MB
+    stats.total_bytes_allocated.store(10 * 1024ULL);  // 10MB
 
     // Test derived metrics
     double efficiency = stats.memory_efficiency();
@@ -154,9 +154,9 @@ XSIGMATEST(CPUMemoryStats, unified_cache_stats_functionality)
     // Simulate cache activity
     stats.cache_hits.store(80);
     stats.cache_misses.store(20);
-    stats.bytes_cached.store(4 * 1024 * 1024);  // 4MB cached
-    stats.driver_allocations.store(25);         // 25 driver calls
-    stats.driver_frees.store(20);               // 20 driver frees
+    stats.bytes_cached.store(4 * 1024ULL);  // 4MB cached
+    stats.driver_allocations.store(25);     // 25 driver calls
+    stats.driver_frees.store(20);           // 20 driver frees
 
     // Test cache hit rate
     double hit_rate = stats.cache_hit_rate();
@@ -235,8 +235,8 @@ static void test_comprehensive_memory_stats()
     // Populate resource statistics
     stats.resource_stats.num_allocs.store(1000);
     stats.resource_stats.num_deallocs.store(800);
-    stats.resource_stats.bytes_in_use.store(5 * 1024 * 1024);       // 5MB
-    stats.resource_stats.peak_bytes_in_use.store(8 * 1024 * 1024);  // 8MB
+    stats.resource_stats.bytes_in_use.store(5 * 1024ULL);       // 5MB
+    stats.resource_stats.peak_bytes_in_use.store(8 * 1024ULL);  // 8MB
 
     // Populate timing statistics
     stats.timing_stats.total_allocations.store(1000);
