@@ -2,13 +2,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug",
-            "type": "cppdbg",
+            "name": "Debug (WSL)",
+            "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/../build_vs22/bin/CoreCxxTests",
-            "args": ["--gtest_filter=Core.hash_util_edge_cases"],
+            "program": "${workspaceFolder}/../build_ninja_cppcheck_valgrind_tbb_clangtidy_fix/bin/CoreCxxTests",
+            "args": ["--gtest_filter=AllocatorBFC.basic_allocation_deallocation"],
             "cwd": "${workspaceFolder}",
-            "MIMode": "lldb"
+            "stopOnEntry": false,
+            "console": "integratedTerminal",
+            "sourceLanguages": ["cpp"]
         }
     ]
 }

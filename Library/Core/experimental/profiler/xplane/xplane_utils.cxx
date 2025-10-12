@@ -755,8 +755,7 @@ void AggregateXPlane(const xplane& full_trace, xplane& aggregated_trace)
                 xline_builder aggregated_line = aggregated_plane.get_or_create_line(line.id());
                 aggregated_line.SetName(kStepLineName);
                 line.for_each_event(
-                    [&](const xevent_visitor& event)
-                    {
+                    [&](const xevent_visitor& event) {
                         CopyEvent(event, plane, full_trace, 0LL, aggregated_plane, aggregated_line);
                     });
             }
@@ -786,7 +785,8 @@ void AggregateXPlane(const xplane& full_trace, xplane& aggregated_trace)
 
                     StatByEvent& line_stats = stats[line.id()][group_id];
                     line_stats[event.id()].stat.update_stat(timespan.duration_ps());
-                    XSIGMA_CHECK_DEBUG(event_stack.empty() || !(event < event_stack.back()));
+                    XSIGMA_CHECK_DEBUG(                                         //NOLINT
+                        event_stack.empty() || !(event < event_stack.back()));  //NOLINT
                     while (!event_stack.empty() &&
                            !GetEventTimespan(event_stack.back()).includes(timespan))
                     {

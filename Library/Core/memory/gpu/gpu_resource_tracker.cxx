@@ -295,7 +295,6 @@ public:
         info->deallocation_time = std::chrono::high_resolution_clock::now();
         info->is_active         = false;
 
-        double const lifetime_ms = info->get_lifetime_ms();
         update_statistics_on_deallocation(info->size);
 
         active_allocations_.erase(it);
