@@ -17,10 +17,16 @@ set(CLANG_TIDY_FOUND
 mark_as_advanced(CLANG_TIDY_FOUND)
 
 function(xsigma_target_clang_tidy target_name)
-  set_target_properties(${target_name} PROPERTIES
+  if(XSIGMA_ENABLE_FIX)
+    message(WARNING "Applying clang-tidy fix to target: ${target_name}")
+    set_target_properties(${target_name} PROPERTIES
     C_CLANG_TIDY "${CLANG_TIDY_PATH};-fix-errors;-fix;-warnings-as-errors=*"
-    CXX_CLANG_TIDY "${CLANG_TIDY_PATH};-fix-errors;-fix;-warnings-as-errors=*"
-  )
+    CXX_CLANG_TIDY "${CLANG_TIDY_PATH};-fix-errors;-fix;-warnings-as-errors=*")
+  else()
+    set_target_properties(${target_name} PROPERTIES
+    C_CLANG_TIDY "${CLANG_TIDY_PATH};-warnings-as-errors=*"
+    CXX_CLANG_TIDY "${CLANG_TIDY_PATH};-warnings-as-errors=*")
+  endif()
 endfunction()
 
 function(disable_clang_tidy_for_target target_name)

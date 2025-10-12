@@ -255,12 +255,12 @@ private:
 allocator_bfc::allocator_bfc(
     std::unique_ptr<xsigma::sub_allocator> sub_allocator,
     size_t                                 total_memory,
-    const std::string&                     name,
+    std::string                            name,
     const Options&                         opts)
     : opts_(opts),
       coalesce_regions_(sub_allocator->SupportsCoalescing()),
       sub_allocator_(std::move(sub_allocator)),
-      name_(name),
+      name_(std::move(name)),
       free_chunks_list_(kInvalidChunkHandle)
 {
     if (opts.allow_growth)
@@ -805,8 +805,9 @@ void allocator_bfc::AddTraceMe(
             const auto& annotation = xsigma::scoped_memory_debug_annotation::current_annotation();
             const auto* const op_name =
                 (annotation.pending_op_name != nullptr) ? annotation.pending_op_name : "(null)";
-            const auto* const region_type =
-                (annotation.pending_region_type != nullptr) ? annotation.pending_region_type : "(null)";
+            const auto* const region_type = (annotation.pending_region_type != nullptr)
+                                                ? annotation.pending_region_type
+                                                : "(null)";
             return xsigma::traceme_encode(
                 std::string(traceme_name),
                 {{"allocator_name", name_},
@@ -1133,7 +1134,9 @@ allocator_bfc::ChunkHandle allocator_bfc::TryToCoalesce(ChunkHandle h, bool igno
 {
     Chunk* c = ChunkFromHandle(h);
     if ((!ignore_freed_at) && c->freed_at_count > 0)
+    {
         return h;
+    }
     ChunkHandle coalesced_chunk = h;
 
     // If the next chunk is free, merge it into c and delete it.
@@ -1242,7 +1245,9 @@ bool allocator_bfc::MergeTimestampedChunks(size_t required_bytes)
         // retest.
         ChunkHandle const h = region_manager_.get_handle(ptr);
         if (h == kInvalidChunkHandle)
+        {
             continue;
+        }
         if (required_bytes == 0 || !satisfied)
         {
             Chunk* c = ChunkFromHandle(h);

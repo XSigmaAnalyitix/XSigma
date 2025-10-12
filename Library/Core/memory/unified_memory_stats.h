@@ -27,7 +27,6 @@
 #include <string>
 #include <vector>
 
-
 #include "common/macros.h"
 
 namespace xsigma
@@ -217,7 +216,7 @@ struct XSIGMA_VISIBILITY comprehensive_memory_stats
     unified_cache_stats    cache_stats;
     std::string            allocator_name;
 
-    XSIGMA_API comprehensive_memory_stats(const std::string& name = "Unknown");
+    XSIGMA_API comprehensive_memory_stats(std::string name = "Unknown");
 
     /**
      * @brief Calculate overall efficiency combining resource and cache efficiency

@@ -18,6 +18,7 @@
 #include <numeric>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace xsigma
@@ -96,7 +97,9 @@ double atomic_timing_stats::average_alloc_time_us() const noexcept
 {
     uint64_t const allocs = total_allocations.load(std::memory_order_relaxed);
     if (allocs == 0)
+    {
         return 0.0;
+    }
     return static_cast<double>(total_alloc_time_us.load(std::memory_order_relaxed)) / allocs;
 }
 
@@ -104,7 +107,9 @@ double atomic_timing_stats::average_dealloc_time_us() const noexcept
 {
     uint64_t const deallocs = total_deallocations.load(std::memory_order_relaxed);
     if (deallocs == 0)
+    {
         return 0.0;
+    }
     return static_cast<double>(total_dealloc_time_us.load(std::memory_order_relaxed)) / deallocs;
 }
 
@@ -204,7 +209,9 @@ double unified_resource_stats::average_allocation_size() const noexcept
 {
     int64_t const allocs = num_allocs.load(std::memory_order_relaxed);
     if (allocs == 0)
+    {
         return 0.0;
+    }
     return static_cast<double>(total_bytes_allocated.load(std::memory_order_relaxed)) / allocs;
 }
 
@@ -212,7 +219,9 @@ double unified_resource_stats::memory_efficiency() const noexcept
 {
     int64_t const peak = peak_bytes_in_use.load(std::memory_order_relaxed);
     if (peak == 0)
+    {
         return 1.0;
+    }
     return average_allocation_size() / peak;
 }
 
@@ -221,7 +230,9 @@ double unified_resource_stats::allocation_success_rate() const noexcept
     int64_t const total_attempts = num_allocs.load(std::memory_order_relaxed) +
                                    failed_allocations.load(std::memory_order_relaxed);
     if (total_attempts == 0)
+    {
         return 100.0;
+    }
     return (static_cast<double>(num_allocs.load(std::memory_order_relaxed)) / total_attempts) *
            100.0;
 }
@@ -333,7 +344,9 @@ double unified_cache_stats::cache_efficiency_percent() const noexcept
     size_t const misses = cache_misses.load(std::memory_order_relaxed);
     size_t const total  = hits + misses;
     if (total == 0)
+    {
         return 0.0;
+    }
     return (static_cast<double>(hits) / total) * 100.0;
 }
 
@@ -344,7 +357,9 @@ double unified_cache_stats::driver_call_reduction() const noexcept
     size_t const driver_calls      = driver_allocations.load(std::memory_order_relaxed) +
                                 driver_frees.load(std::memory_order_relaxed);
     if (driver_calls == 0)
+    {
         return 1.0;
+    }
     return static_cast<double>(hits + driver_calls_free) / driver_calls;
 }
 
@@ -353,8 +368,8 @@ double unified_cache_stats::driver_call_reduction() const noexcept
 // ============================================================================
 
 // Constructor
-comprehensive_memory_stats::comprehensive_memory_stats(const std::string& name)
-    : allocator_name(name)
+comprehensive_memory_stats::comprehensive_memory_stats(std::string name)
+    : allocator_name(std::move(name))
 {
 }
 
@@ -371,7 +386,9 @@ double comprehensive_memory_stats::operations_per_second() const noexcept
     uint64_t const total_ops     = timing_stats.total_allocations.load(std::memory_order_relaxed);
     uint64_t const total_time_us = timing_stats.total_alloc_time_us.load(std::memory_order_relaxed);
     if (total_time_us == 0)
+    {
         return 0.0;
+    }
     return (static_cast<double>(total_ops) * 1000000.0) / total_time_us;
 }
 

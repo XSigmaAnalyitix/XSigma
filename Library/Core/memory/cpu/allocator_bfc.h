@@ -339,7 +339,7 @@ public:
     allocator_bfc(
         std::unique_ptr<xsigma::sub_allocator> sub_allocator,
         size_t                                 total_memory,
-        const std::string&                     name,
+        std::string                            name,
         const Options&                         opts);
 
     /**

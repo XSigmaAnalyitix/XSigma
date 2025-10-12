@@ -125,7 +125,9 @@ void xplane_visitor::build_event_type_map(
     const xplane* plane, const TypeGetterList& event_type_getter_list)
 {
     if (event_type_getter_list.empty())
+    {
         return;
+    }
     for (const auto& event_metadata : plane->event_metadata())
     {
         uint64_t const metadata_id = event_metadata.first;
@@ -148,7 +150,9 @@ const xevent_metadata* xplane_visitor::get_event_metadata(int64_t event_metadata
     const auto& event_metadata_by_id = plane_->event_metadata();
     const auto  it                   = event_metadata_by_id.find(event_metadata_id);
     if (it != event_metadata_by_id.end())
+    {
         return &it->second;
+    }
     return &xevent_metadata::default_instance();
 }
 
@@ -156,7 +160,9 @@ std::optional<int64_t> xplane_visitor::get_event_type(int64_t event_metadata_id)
 {
     const auto it = event_type_by_id_.find(event_metadata_id);
     if (it != event_type_by_id_.end())
+    {
         return it->second;
+    }
     return std::nullopt;
 }
 
@@ -164,7 +170,9 @@ void xplane_visitor::build_stat_type_map(
     const xplane* plane, const TypeGetterList& stat_type_getter_list)
 {
     if (stat_type_getter_list.empty())
+    {
         return;
+    }
     for (const auto& stat_metadata : plane->stat_metadata())
     {
         uint64_t const metadata_id = stat_metadata.first;
@@ -206,7 +214,9 @@ std::optional<int64_t> xplane_visitor::get_stat_type(int64_t stat_metadata_id) c
 {
     const auto it = stat_type_by_id_.find(stat_metadata_id);
     if (it != stat_type_by_id_.end())
+    {
         return it->second;
+    }
     return std::nullopt;
 }
 
@@ -214,7 +224,9 @@ const x_stat_metadata* xplane_visitor::get_stat_metadata_by_type(int64_t stat_ty
 {
     const auto it = stat_metadata_by_type_.find(stat_type);
     if (it != stat_metadata_by_type_.end())
+    {
         return it->second;
+    }
     return nullptr;
 }
 }  // namespace xsigma

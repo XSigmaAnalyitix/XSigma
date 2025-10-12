@@ -77,7 +77,9 @@ void timing_stats::add_sample(double time_ms)
 void timing_stats::calculate_statistics()
 {
     if (sample_count_ == 0)
+    {
         return;
+    }
 
     mean_time_ = total_time_ / sample_count_;
 
@@ -129,7 +131,7 @@ double profiler_scope_data::get_duration_ns() const
 // profiler_session Implementation
 //=============================================================================
 
-profiler_session::profiler_session(const xsigma::profiler_options& options) : options_(options)
+profiler_session::profiler_session(xsigma::profiler_options options) : options_(std::move(options))
 {
     initialize_components();
 }
@@ -269,7 +271,9 @@ void profiler_session::cleanup_components()
 void profiler_session::register_scope_start(xsigma::profiler_scope* scope)
 {
     if (!options_.enable_hierarchical_profiling_ || !active_.load())
+    {
         return;
+    }
 
     std::lock_guard<std::mutex> const lock(scope_mutex_);
 
@@ -301,7 +305,9 @@ void profiler_session::register_scope_start(xsigma::profiler_scope* scope)
 void profiler_session::register_scope_end(xsigma::profiler_scope* scope)
 {
     if (!options_.enable_hierarchical_profiling_ || !active_.load())
+    {
         return;
+    }
 
     std::lock_guard<std::mutex> const lock(scope_mutex_);
 
@@ -345,7 +351,9 @@ profiler_scope::~profiler_scope()
 void profiler_scope::start()
 {
     if (started_)
+    {
         return;
+    }
 
     started_           = true;
     data_->start_time_ = std::chrono::high_resolution_clock::now();
@@ -366,7 +374,9 @@ void profiler_scope::start()
 void profiler_scope::stop()
 {
     if (!started_ || stopped_)
+    {
         return;
+    }
 
     stopped_         = true;
     data_->end_time_ = std::chrono::high_resolution_clock::now();

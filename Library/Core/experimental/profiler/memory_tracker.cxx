@@ -34,12 +34,12 @@
 #include <fstream>
 
 #ifdef __APPLE__
-#include <sys/sysctl.h>
 #include <mach/mach.h>
-#include <mach/vm_statistics.h>
-#include <mach/mach_types.h>
-#include <mach/mach_init.h>
 #include <mach/mach_host.h>
+#include <mach/mach_init.h>
+#include <mach/mach_types.h>
+#include <mach/vm_statistics.h>
+#include <sys/sysctl.h>
 #endif
 
 #endif
@@ -47,6 +47,7 @@
 #include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <utility>
 namespace xsigma
 {
 
@@ -102,7 +103,9 @@ void memory_tracker::stop_tracking()
 void memory_tracker::track_allocation(void* ptr, size_t size, const std::string& context)
 {
     if (!tracking_.load() || (ptr == nullptr))
+    {
         return;
+    }
 
     xsigma::memory_allocation allocation;
     allocation.address_   = ptr;
@@ -127,7 +130,9 @@ void memory_tracker::track_allocation(void* ptr, size_t size, const std::string&
 void memory_tracker::track_deallocation(void* ptr)
 {
     if (!tracking_.load() || (ptr == nullptr))
+    {
         return;
+    }
 
     size_t deallocated_size = 0;
 
@@ -179,17 +184,17 @@ size_t memory_tracker::get_total_deallocated() const
     return total_deallocated_.load();
 }
 
-size_t memory_tracker::get_system_memory_usage() const
+size_t memory_tracker::get_system_memory_usage()
 {
     return get_process_memory_usage();
 }
 
-size_t memory_tracker::get_system_peak_memory_usage() const
+size_t memory_tracker::get_system_peak_memory_usage()
 {
     return get_process_peak_memory_usage();
 }
 
-size_t memory_tracker::get_available_system_memory() const
+size_t memory_tracker::get_available_system_memory()
 {
 #ifdef _WIN32
     MEMORYSTATUSEX memInfo;
@@ -279,7 +284,7 @@ std::vector<std::pair<std::string, xsigma::memory_stats>> memory_tracker::get_sn
     return snapshots_;
 }
 
-size_t memory_tracker::get_process_memory_usage() const
+size_t memory_tracker::get_process_memory_usage()
 {
 #ifdef _WIN32
     PROCESS_MEMORY_COUNTERS pmc;
@@ -312,7 +317,7 @@ size_t memory_tracker::get_process_memory_usage() const
 #endif
 }
 
-size_t memory_tracker::get_process_peak_memory_usage() const
+size_t memory_tracker::get_process_peak_memory_usage()
 {
 #ifdef _WIN32
     PROCESS_MEMORY_COUNTERS pmc;
@@ -358,9 +363,8 @@ void memory_tracker::update_peak_usage(size_t current)
 // memory_tracking_scope Implementation
 //=============================================================================
 
-memory_tracking_scope::memory_tracking_scope(
-    xsigma::memory_tracker& tracker, const std::string& label)
-    : tracker_(tracker), label_(label)
+memory_tracking_scope::memory_tracking_scope(xsigma::memory_tracker& tracker, std::string label)
+    : tracker_(tracker), label_(std::move(label))
 {
     start_stats_ = tracker_.get_current_stats();
     tracker_.take_snapshot("start_" + label_);

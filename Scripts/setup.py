@@ -471,6 +471,7 @@ class XsigmaFlags:
             "cxxstd",
             "cppcheck",
             "spell",
+            "fix",
         ]
         self.__description = [
             # Valid CMake options
@@ -499,6 +500,7 @@ class XsigmaFlags:
             "C++ standard: cxx17, cxx20, cxx23",
             "enable cppcheck static analysis",
             "enable spell checking with automatic corrections",
+            "enable clang-tidy fix-errors and fix options",
         ]
 
     def __build_cmake_flag(self):
@@ -531,6 +533,7 @@ class XsigmaFlags:
             "cxxstd": "XSIGMA_CXX_STANDARD",
             "cppcheck": "XSIGMA_ENABLE_CPPCHECK",
             "spell": "XSIGMA_ENABLE_SPELL",
+            "fix": "XSIGMA_ENABLE_FIX",
 
             # Non-CMake flags (for internal use, not passed to CMake)
             "mkl_threading": "MKL_THREADING",
@@ -1567,6 +1570,7 @@ def main():
         print("  analyze   - Re-analyze existing coverage data (standalone)")
         print("\nSpecial flags:")
         print("  spell                      Enable spell checking with automatic corrections (WARNING: modifies source files)")
+        print("  fix                        Enable clang-tidy fix-errors and fix options")
         print("\nLogging backend flags:")
         print("  --logging=BACKEND  Set logging backend")
         print("                             Options: NATIVE, LOGURU, GLOG")

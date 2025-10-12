@@ -174,7 +174,9 @@ std::string ascii_visualizer::create_usage_bars(
 
     size_t max_value = std::max({current_usage, peak_usage, limit_usage});
     if (max_value == 0)
+    {
         max_value = 1;  // Avoid division by zero
+    }
 
     bars << "Current: " << std::setw(10) << format_bytes(current_usage) << " | "
          << create_bar(current_usage, max_value, config_.chart_width) << "\n";
@@ -238,7 +240,7 @@ std::string ascii_visualizer::create_performance_summary(
 }
 
 std::vector<ascii_visualizer::timeline_point> ascii_visualizer::convert_records_to_timeline(
-    const std::vector<alloc_record>& records) const
+    const std::vector<alloc_record>& records)
 {
     std::vector<timeline_point> timeline_data;
     timeline_data.reserve(records.size());
@@ -274,7 +276,7 @@ std::vector<ascii_visualizer::timeline_point> ascii_visualizer::convert_records_
 }
 
 std::vector<ascii_visualizer::size_bucket> ascii_visualizer::create_size_buckets(
-    const std::vector<size_t>& allocation_sizes, size_t num_buckets) const
+    const std::vector<size_t>& allocation_sizes, size_t num_buckets)
 {
     if (allocation_sizes.empty())
     {
@@ -374,7 +376,7 @@ std::string ascii_visualizer::create_bar(size_t value, size_t max_value, size_t 
            std::string(empty_length, config_.empty_char);
 }
 
-std::string ascii_visualizer::format_bytes(size_t bytes) const
+std::string ascii_visualizer::format_bytes(size_t bytes)
 {
     const char* units[]    = {"B", "KB", "MB", "GB", "TB"};
     size_t      unit_index = 0;
@@ -399,13 +401,13 @@ std::string ascii_visualizer::format_bytes(size_t bytes) const
     return formatted.str();
 }
 
-std::string ascii_visualizer::format_size_range(size_t min_size, size_t max_size) const
+std::string ascii_visualizer::format_size_range(size_t min_size, size_t max_size)
 {
     return format_bytes(min_size) + " - " + format_bytes(max_size);
 }
 
 std::vector<size_t> ascii_visualizer::calculate_bucket_boundaries(
-    size_t min_size, size_t max_size, size_t num_buckets) const
+    size_t min_size, size_t max_size, size_t num_buckets)
 {
     std::vector<size_t> boundaries;
     boundaries.reserve(num_buckets + 1);

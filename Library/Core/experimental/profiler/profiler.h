@@ -280,7 +280,7 @@ public:
      * @brief Construct a new enhanced profiler session
      * @param options Configuration options for the profiler
      */
-    explicit profiler_session(const xsigma::profiler_options& options);
+    explicit profiler_session(xsigma::profiler_options options);
 
     /**
      * @brief Destructor - automatically stops profiling if active
