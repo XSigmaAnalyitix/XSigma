@@ -321,16 +321,12 @@ inline std::string format_check_msg(const char* cond_str)
  * XSIGMA_CHECK(!empty());  // Simple check without message
  * ```
  */
-#define XSIGMA_CHECK(cond, ...)                                                               \
-    do                                                                                        \
-    {                                                                                         \
-        if XSIGMA_UNLIKELY (!(cond))                                                          \
-        {                                                                                     \
-            std::string msg = xsigma::details::format_check_msg(#cond, ##__VA_ARGS__);        \
-            XSIGMA_LOG_WARNING("{}", msg);                                                    \
-            xsigma::details::check_fail(__func__, __FILE__, static_cast<int>(__LINE__), msg); \
-        }                                                                                     \
-    } while (0)
+#define XSIGMA_CHECK(cond, ...)                                                    \
+    if XSIGMA_UNLIKELY (!(cond))                                                   \
+    {                                                                              \
+        std::string msg = xsigma::details::format_check_msg(#cond, ##__VA_ARGS__); \
+        XSIGMA_THROW("{}", msg);                                                   \
+    }
 
 #define XSIGMA_CHECK_ALL_POSITIVE(V)                                   \
     XSIGMA_CHECK(                                                      \

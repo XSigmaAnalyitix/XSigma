@@ -265,7 +265,7 @@ void* allocator_tracking::allocate_raw(
 void allocator_tracking::deallocate_raw(void* ptr)
 {
     // freeing a null ptr is a no-op
-    if (nullptr == ptr)
+    if (ptr == nullptr)
     {
         return;
     }

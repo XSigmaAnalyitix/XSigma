@@ -160,6 +160,7 @@ std::string allocator_cpu::Name()
 
 void* allocator_cpu::allocate_raw(size_t alignment, size_t num_bytes)
 {
+#ifndef NDEBUG
     // Check for large allocation warning (rate-limited)
     // cppcheck-suppress syntaxError
     // Explanation: XSIGMA_UNLIKELY is a branch prediction macro that expands to compiler-specific
@@ -182,6 +183,7 @@ void* allocator_cpu::allocate_raw(size_t alignment, size_t num_bytes)
             }
         }
     }
+#endif
 
     // Perform the actual allocation
     void* p = cpu::memory_allocator::allocate(num_bytes, alignment);

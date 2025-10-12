@@ -38,8 +38,10 @@ void* allocator_device::allocate_raw(size_t alignment, size_t num_bytes)
 {
     // Delegate to static allocate method for consistency
     (void)alignment;  // Alignment is handled internally
-    if (num_bytes == 0)
-        return nullptr;
+    if XSIGMA_UNLIKELY (num_bytes == 0 || static_cast<std::ptrdiff_t>(num_bytes) < 0)
+    {
+        XSIGMA_THROW("allocating {} bytes", num_bytes);
+    }
 
     void* ptr = nullptr;
 
@@ -47,10 +49,7 @@ void* allocator_device::allocate_raw(size_t alignment, size_t num_bytes)
     cudaError_t result = cudaMallocHost(&ptr, num_bytes);
     if (result != cudaSuccess)
     {
-        XSIGMA_LOG_WARNING(
-            "CUDA error in allocator_device::allocate_raw: {}", std::to_string(result));
-
-        return nullptr;
+        XSIGMA_THROW("CUDA error in allocator_device::allocate_raw: {}", std::to_string(result));
     }
 #else
     ptr = cpu::memory_allocator::allocate(num_bytes, 64);

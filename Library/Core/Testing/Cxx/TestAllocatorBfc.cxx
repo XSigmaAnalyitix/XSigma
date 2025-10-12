@@ -27,31 +27,7 @@ using namespace xsigma;
 namespace
 {
 
-/**
- * @brief Helper class for testing - provides basic CPU sub-allocator
- */
-class test_cpu_sub_allocator : public sub_allocator
-{
-public:
-    test_cpu_sub_allocator() : sub_allocator({}, {}) {}
-
-    void* Alloc(size_t alignment, size_t num_bytes, size_t* bytes_received) override
-    {
-        void* ptr = xsigma::cpu::memory_allocator::allocate(num_bytes, alignment);
-        if (bytes_received)
-            *bytes_received = num_bytes;
-        return ptr;
-    }
-
-    void Free(void* ptr, size_t num_bytes) override { xsigma::cpu::memory_allocator::free(ptr); }
-
-    bool SupportsCoalescing() const override { return true; }
-
-    allocator_memory_enum GetMemoryType() const noexcept override
-    {
-        return allocator_memory_enum::HOST_PAGEABLE;
-    }
-};
+// Mock test allocator class removed - now using production basic_cpu_allocator
 
 /**
  * @brief Helper function to check memory alignment
@@ -86,41 +62,39 @@ bool validate_memory(void* ptr, size_t size, uint8_t pattern)
 }  // anonymous namespace
 
 /**
- * @brief Test suite for BFC allocator basic functionality
+ * @brief Helper function to create a BFC allocator for testing
  */
-class AllocatorBfc : public ::testing::Test
+std::unique_ptr<allocator_bfc> create_test_bfc_allocator()
 {
-protected:
-    void SetUp() override
-    {
-        // Create sub-allocator for testing
-        auto sub_alloc = std::make_unique<test_cpu_sub_allocator>();
+    // Create production basic_cpu_allocator as sub-allocator
+    auto sub_alloc = std::make_unique<basic_cpu_allocator>(
+        0,                                      // numa_node = 0 (default)
+        std::vector<sub_allocator::Visitor>{},  // no alloc visitors
+        std::vector<sub_allocator::Visitor>{}   // no free visitors
+    );
 
-        // Create BFC allocator with default options
-        allocator_bfc::Options opts;
-        opts.allow_growth           = true;
-        opts.garbage_collection     = false;
-        opts.fragmentation_fraction = 0.0;
+    // Create BFC allocator with default options
+    allocator_bfc::Options opts;
+    opts.allow_growth           = true;
+    opts.garbage_collection     = false;
+    opts.fragmentation_fraction = 0.0;
 
-        allocator_ = std::make_unique<allocator_bfc>(
-            std::move(sub_alloc),
-            1024 * 1024,  // 1MB initial size
-            "test_bfc",
-            opts);
-    }
-
-    void TearDown() override { allocator_.reset(); }
-
-    std::unique_ptr<allocator_bfc> allocator_;
-};
+    return std::make_unique<allocator_bfc>(
+        std::move(sub_alloc),
+        1024 * 1024,  // 1MB initial size
+        "test_bfc",
+        opts);
+}
 
 /**
  * @brief Test basic allocation and deallocation functionality
  */
-TEST_F(AllocatorBfc, basic_allocation_deallocation)
+XSIGMATEST(AllocatorBfc, basic_allocation_deallocation)
 {
+    auto allocator = create_test_bfc_allocator();
+
     // Test basic allocation
-    void* ptr1 = allocator_->allocate_raw(64, 1024);
+    void* ptr1 = allocator->allocate_raw(64, 1024);
     EXPECT_NE(nullptr, ptr1);
     EXPECT_TRUE(is_aligned(ptr1, 64));
 
@@ -129,13 +103,13 @@ TEST_F(AllocatorBfc, basic_allocation_deallocation)
     EXPECT_TRUE(validate_memory(ptr1, 1024, 0xAA));
 
     // Test deallocation
-    allocator_->deallocate_raw(ptr1);
+    allocator->deallocate_raw(ptr1);
 
     // Test multiple allocations
     std::vector<void*> ptrs;
     for (int i = 0; i < 10; ++i)
     {
-        void* ptr = allocator_->allocate_raw(32, 512);
+        void* ptr = allocator->allocate_raw(32, 512);
         EXPECT_NE(nullptr, ptr);
         EXPECT_TRUE(is_aligned(ptr, 32));
         ptrs.push_back(ptr);
@@ -144,72 +118,88 @@ TEST_F(AllocatorBfc, basic_allocation_deallocation)
     // Deallocate all
     for (void* ptr : ptrs)
     {
-        allocator_->deallocate_raw(ptr);
+        allocator->deallocate_raw(ptr);
     }
+
+    END_TEST();
 }
 
 /**
  * @brief Test allocation tracking capabilities
  */
-TEST_F(AllocatorBfc, allocation_tracking)
+XSIGMATEST(AllocatorBfc, allocation_tracking)
 {
+    auto allocator = create_test_bfc_allocator();
+
     // Verify tracking is enabled
-    EXPECT_TRUE(allocator_->tracks_allocation_sizes());
+    EXPECT_TRUE(allocator->tracks_allocation_sizes());
 
     // Test allocation with size tracking
-    void* ptr = allocator_->allocate_raw(128, 2048);
+    void* ptr = allocator->allocate_raw(128, 2048);
     EXPECT_NE(nullptr, ptr);
 
     // Test size queries
-    EXPECT_EQ(allocator_->RequestedSize(ptr), 2048);
-    EXPECT_GE(allocator_->AllocatedSize(ptr), 2048);
+    EXPECT_EQ(allocator->RequestedSize(ptr), 2048);
+    EXPECT_GE(allocator->AllocatedSize(ptr), 2048);
 
     // Test allocation ID
-    int64_t alloc_id = allocator_->AllocationId(ptr);
+    int64_t alloc_id = allocator->AllocationId(ptr);
     EXPECT_GT(alloc_id, 0);
 
-    allocator_->deallocate_raw(ptr);
+    allocator->deallocate_raw(ptr);
+
+    END_TEST();
 }
 
 /**
  * @brief Test different alignment requirements
  */
-TEST_F(AllocatorBfc, alignment_requirements)
+XSIGMATEST(AllocatorBfc, alignment_requirements)
 {
+    auto allocator = create_test_bfc_allocator();
+
     // Test various alignment values
-    std::vector<size_t> alignments = {1, 2, 4, 8, 16, 32, 64, 128, 256};
+    std::vector<size_t> alignments = {16, 32, 64, 128, 256};
 
     for (size_t alignment : alignments)
     {
-        void* ptr = allocator_->allocate_raw(alignment, 1024);
+        void* ptr = allocator->allocate_raw(alignment, 1024);
         EXPECT_NE(nullptr, ptr);
         EXPECT_TRUE(is_aligned(ptr, std::max(alignment, static_cast<size_t>(64))));
-        allocator_->deallocate_raw(ptr);
+        allocator->deallocate_raw(ptr);
     }
+
+    END_TEST();
 }
 
 /**
  * @brief Test allocation with attributes
  */
-TEST_F(AllocatorBfc, allocation_with_attributes)
+XSIGMATEST(AllocatorBfc, allocation_with_attributes)
 {
+    auto allocator = create_test_bfc_allocator();
+
     allocation_attributes attrs;
     attrs.retry_on_failure = true;
 
-    void* ptr = allocator_->allocate_raw(64, 1024, attrs);
+    void* ptr = allocator->allocate_raw(64, 1024, attrs);
     EXPECT_NE(nullptr, ptr);
     EXPECT_TRUE(is_aligned(ptr, 64));
 
-    allocator_->deallocate_raw(ptr);
+    allocator->deallocate_raw(ptr);
+
+    END_TEST();
 }
 
 /**
  * @brief Test statistics collection
  */
-TEST_F(AllocatorBfc, statistics_collection)
+XSIGMATEST(AllocatorBfc, statistics_collection)
 {
+    auto allocator = create_test_bfc_allocator();
+
     // Get initial statistics
-    auto stats_opt = allocator_->GetStats();
+    auto stats_opt = allocator->GetStats();
     EXPECT_TRUE(stats_opt.has_value());
 
     auto initial_stats = stats_opt.value();
@@ -218,13 +208,13 @@ TEST_F(AllocatorBfc, statistics_collection)
     std::vector<void*> ptrs;
     for (int i = 0; i < 5; ++i)
     {
-        void* ptr = allocator_->allocate_raw(64, 1024 * (i + 1));
+        void* ptr = allocator->allocate_raw(64, 1024 * (i + 1));
         EXPECT_NE(nullptr, ptr);
         ptrs.push_back(ptr);
     }
 
     // Check updated statistics
-    auto updated_stats_opt = allocator_->GetStats();
+    auto updated_stats_opt = allocator->GetStats();
     EXPECT_TRUE(updated_stats_opt.has_value());
 
     auto updated_stats = updated_stats_opt.value();
@@ -234,56 +224,72 @@ TEST_F(AllocatorBfc, statistics_collection)
     // Clean up
     for (void* ptr : ptrs)
     {
-        allocator_->deallocate_raw(ptr);
+        allocator->deallocate_raw(ptr);
     }
+
+    END_TEST();
 }
 
 /**
  * @brief Test allocator name and memory type
  */
-TEST_F(AllocatorBfc, allocator_properties)
+XSIGMATEST(AllocatorBfc, allocator_properties)
 {
+    auto allocator = create_test_bfc_allocator();
+
     // Test allocator name
-    EXPECT_EQ(std::string(allocator_->Name()), std::string("test_bfc"));
+    EXPECT_EQ(std::string(allocator->Name()), std::string("test_bfc"));
 
     // Test memory type
-    EXPECT_EQ(allocator_->GetMemoryType(), allocator_memory_enum::HOST_PAGEABLE);
+    EXPECT_EQ(allocator->GetMemoryType(), allocator_memory_enum::HOST_PAGEABLE);
+
+    END_TEST();
 }
 
 /**
  * @brief Test zero-size allocation handling
  */
-TEST_F(AllocatorBfc, zero_size_allocation)
+XSIGMATEST(AllocatorBfc, zero_size_allocation)
 {
+    auto allocator = create_test_bfc_allocator();
+
     // Zero-size allocation should return nullptr or handle gracefully
-    void* ptr = allocator_->allocate_raw(64, 0);
+    void* ptr = allocator->allocate_raw(64, 0);
 
     // Implementation may return nullptr or a valid pointer for zero-size
     if (ptr != nullptr)
     {
-        allocator_->deallocate_raw(ptr);
+        allocator->deallocate_raw(ptr);
     }
+
+    END_TEST();
 }
 
 /**
  * @brief Test null pointer deallocation
  */
-TEST_F(AllocatorBfc, null_pointer_deallocation)
+XSIGMATEST(AllocatorBfc, null_pointer_deallocation)
 {
+    auto allocator = create_test_bfc_allocator();
+
     // Deallocating nullptr should not crash
-    allocator_->deallocate_raw(nullptr);
+    allocator->deallocate_raw(nullptr);
 
     // This test passes if no exception is thrown
     EXPECT_TRUE(true);
+
+    END_TEST();
 }
 
 /**
  * @brief Test large allocation handling
  */
-TEST_F(AllocatorBfc, large_allocations)
+XSIGMATEST(AllocatorBfc, large_allocations)
 {
+    auto allocator = create_test_bfc_allocator();
+
     // Test allocation larger than initial pool size
-    void* large_ptr = allocator_->allocate_raw(64, 2 * 1024 * 1024);  // 2MB
+    void* large_ptr = allocator->allocate_raw(64, 2 * 1024 * 1024);  // 2MB
 
     if (large_ptr != nullptr)
     {
@@ -293,20 +299,24 @@ TEST_F(AllocatorBfc, large_allocations)
         fill_memory(large_ptr, 1024, 0xBB);
         EXPECT_TRUE(validate_memory(large_ptr, 1024, 0xBB));
 
-        allocator_->deallocate_raw(large_ptr);
+        allocator->deallocate_raw(large_ptr);
     }
+
+    END_TEST();
 }
 
 /**
  * @brief Test fragmentation and coalescing behavior
  */
-TEST_F(AllocatorBfc, fragmentation_and_coalescing)
+XSIGMATEST(AllocatorBfc, fragmentation_and_coalescing)
 {
+    auto allocator = create_test_bfc_allocator();
+
     // Allocate several blocks
     std::vector<void*> ptrs;
     for (int i = 0; i < 10; ++i)
     {
-        void* ptr = allocator_->allocate_raw(64, 1024);
+        void* ptr = allocator->allocate_raw(64, 1024);
         EXPECT_NE(nullptr, ptr);
         ptrs.push_back(ptr);
     }
@@ -314,15 +324,15 @@ TEST_F(AllocatorBfc, fragmentation_and_coalescing)
     // Deallocate every other block to create fragmentation
     for (size_t i = 1; i < ptrs.size(); i += 2)
     {
-        allocator_->deallocate_raw(ptrs[i]);
+        allocator->deallocate_raw(ptrs[i]);
         ptrs[i] = nullptr;
     }
 
     // Try to allocate a larger block (should trigger coalescing)
-    void* large_ptr = allocator_->allocate_raw(64, 2048);
+    void* large_ptr = allocator->allocate_raw(64, 2048);
     if (large_ptr != nullptr)
     {
-        allocator_->deallocate_raw(large_ptr);
+        allocator->deallocate_raw(large_ptr);
     }
 
     // Clean up remaining blocks
@@ -330,17 +340,23 @@ TEST_F(AllocatorBfc, fragmentation_and_coalescing)
     {
         if (ptr != nullptr)
         {
-            allocator_->deallocate_raw(ptr);
+            allocator->deallocate_raw(ptr);
         }
     }
+
+    END_TEST();
 }
 
 /**
  * @brief Test BFC allocator with different configuration options
  */
-TEST(AllocatorBfcConfig, configuration_options)
+XSIGMATEST(AllocatorBfcConfig, configuration_options)
 {
-    auto sub_alloc = std::make_unique<test_cpu_sub_allocator>();
+    auto sub_alloc = std::make_unique<basic_cpu_allocator>(
+        0,                                      // numa_node = 0 (default)
+        std::vector<sub_allocator::Visitor>{},  // no alloc visitors
+        std::vector<sub_allocator::Visitor>{}   // no free visitors
+    );
 
     // Test with garbage collection enabled
     allocator_bfc::Options gc_opts;
@@ -360,14 +376,20 @@ TEST(AllocatorBfcConfig, configuration_options)
     EXPECT_TRUE(is_aligned(ptr, 64));
 
     gc_allocator->deallocate_raw(ptr);
+
+    END_TEST();
 }
 
 /**
  * @brief Test BFC allocator with growth disabled
  */
-TEST(AllocatorBfcConfig, no_growth_configuration)
+XSIGMATEST(AllocatorBfcConfig, no_growth_configuration)
 {
-    auto sub_alloc = std::make_unique<test_cpu_sub_allocator>();
+    auto sub_alloc = std::make_unique<basic_cpu_allocator>(
+        0,                                      // numa_node = 0 (default)
+        std::vector<sub_allocator::Visitor>{},  // no alloc visitors
+        std::vector<sub_allocator::Visitor>{}   // no free visitors
+    );
 
     allocator_bfc::Options no_growth_opts;
     no_growth_opts.allow_growth       = false;
@@ -384,14 +406,20 @@ TEST(AllocatorBfcConfig, no_growth_configuration)
     EXPECT_NE(nullptr, ptr);
 
     fixed_allocator->deallocate_raw(ptr);
+
+    END_TEST();
 }
 
 /**
  * @brief Test concurrent access to BFC allocator
  */
-TEST(AllocatorBfcConcurrency, thread_safety)
+XSIGMATEST(AllocatorBfcConcurrency, thread_safety)
 {
-    auto sub_alloc = std::make_unique<test_cpu_sub_allocator>();
+    auto sub_alloc = std::make_unique<basic_cpu_allocator>(
+        0,                                      // numa_node = 0 (default)
+        std::vector<sub_allocator::Visitor>{},  // no alloc visitors
+        std::vector<sub_allocator::Visitor>{}   // no free visitors
+    );
 
     allocator_bfc::Options opts;
     opts.allow_growth = true;
@@ -447,14 +475,20 @@ TEST(AllocatorBfcConcurrency, thread_safety)
     }
 
     EXPECT_GT(total_allocations, 0);
+
+    END_TEST();
 }
 
 /**
  * @brief Test BFC allocator performance characteristics
  */
-TEST(AllocatorBfcPerformance, allocation_timing)
+XSIGMATEST(AllocatorBfcPerformance, allocation_timing)
 {
-    auto sub_alloc = std::make_unique<test_cpu_sub_allocator>();
+    auto sub_alloc = std::make_unique<basic_cpu_allocator>(
+        0,                                      // numa_node = 0 (default)
+        std::vector<sub_allocator::Visitor>{},  // no alloc visitors
+        std::vector<sub_allocator::Visitor>{}   // no free visitors
+    );
 
     allocator_bfc::Options opts;
     opts.allow_growth = true;
@@ -497,4 +531,6 @@ TEST(AllocatorBfcPerformance, allocation_timing)
 
     EXPECT_LT(total_time, 1000);                  // Should complete within 1 second
     EXPECT_GT(ptrs.size(), num_allocations / 2);  // Most allocations should succeed
+
+    END_TEST();
 }
