@@ -251,9 +251,9 @@ if(TBB_FROM_SOURCE)
             foreach(config Debug Release RelWithDebInfo MinSizeRel)
                 string(TOUPPER ${config} config_upper)
                 set_target_properties(${_tbb_target} PROPERTIES
-                    RUNTIME_OUTPUT_DIRECTORY_${config_upper} "${XSIGMA_BINARY_DIR}/bin"
-                    ARCHIVE_OUTPUT_DIRECTORY_${config_upper} "${XSIGMA_BINARY_DIR}/lib"
-                    LIBRARY_OUTPUT_DIRECTORY_${config_upper} "${XSIGMA_BINARY_DIR}/lib"
+                    RUNTIME_OUTPUT_DIRECTORY_${config_upper} "${XSIGMA_BINARY_DIR}/bin/${config_upper}"
+                    ARCHIVE_OUTPUT_DIRECTORY_${config_upper} "${XSIGMA_BINARY_DIR}/lib/${config_upper}"
+                    LIBRARY_OUTPUT_DIRECTORY_${config_upper} "${XSIGMA_BINARY_DIR}/lib/${config_upper}"
                 )
             endforeach()
 
@@ -265,6 +265,7 @@ if(TBB_FROM_SOURCE)
             )
 
             message(STATUS "Configured output directories for TBB target '${_tbb_target}'")
+            set_target_properties("${_tbb_target}" PROPERTIES FOLDER "ThirdParty/tbb")
         endif()
     endforeach()
 endif()

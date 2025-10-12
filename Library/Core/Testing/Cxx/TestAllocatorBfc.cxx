@@ -76,12 +76,13 @@ std::unique_ptr<allocator_bfc> create_test_bfc_allocator()
     // Create BFC allocator with default options
     allocator_bfc::Options opts;
     opts.allow_growth           = true;
-    opts.garbage_collection     = false;
+    opts.garbage_collection     = true;
+    opts.allow_retry_on_failure = false;
     opts.fragmentation_fraction = 0.0;
 
     return std::make_unique<allocator_bfc>(
         std::move(sub_alloc),
-        1024ULL,  // 1MB initial size
+        64ULL * 1024ULL,  // 1MB initial size
         "test_bfc",
         opts);
 }
@@ -426,7 +427,7 @@ XSIGMATEST(AllocatorBFC, thread_safety)
 
     auto allocator = std::make_unique<allocator_bfc>(
         std::move(sub_alloc),
-        1024ULL,  // 1MB
+        64ULL * 1024ULL,  // 1MB
         "test_bfc_concurrent",
         opts);
 
@@ -491,11 +492,12 @@ XSIGMATEST(AllocatorBFC, allocation_timing)
     );
 
     allocator_bfc::Options opts;
-    opts.allow_growth = true;
+    opts.allow_growth           = true;
+    opts.allow_retry_on_failure = false;
 
     auto allocator = std::make_unique<allocator_bfc>(
         std::move(sub_alloc),
-        2 * 1024ULL,  // 2MB
+        2 * 1024ULL * 1024ULL,  // 2MB
         "test_bfc_perf",
         opts);
 
@@ -538,7 +540,7 @@ XSIGMATEST(AllocatorBFC, allocation_timing)
 XSIGMATEST(AllocatorBFC, basic_allocation)
 {
     // Create a BFC allocator with 1MB memory limit
-    const size_t memory_limit  = 1024ULL;  // 1MB
+    const size_t memory_limit  = 1024ULL * 1024ULL;  // 1MB
     auto         sub_allocator = std::make_unique<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
 
@@ -575,7 +577,7 @@ XSIGMATEST(AllocatorBFC, basic_allocation)
 // Test allocator_bfc edge cases
 XSIGMATEST(AllocatorBFC, EdgeCases)
 {
-    const size_t memory_limit  = 1024ULL;  // 1MB
+    const size_t memory_limit  = 1024ULL * 1024ULL;  // 1MB
     auto         sub_allocator = std::make_unique<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
 

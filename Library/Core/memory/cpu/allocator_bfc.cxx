@@ -492,8 +492,27 @@ void* allocator_bfc::AllocateRawInternalWithRetry(
     {
         freed_by_count = (*allocation_attr.freed_by_func)();
     }
-
     void* r = AllocateRawInternal(unused_alignment, num_bytes, false, freed_by_count);
+
+    if (r != nullptr)
+    {
+        return r;
+    }
+    static const int64_t kMaxMillisToWait = 10000;  // 10 seconds
+
+    r = retry_helper_.allocate_raw(
+        [this, &allocation_attr](size_t a, size_t nb, bool v)
+        {
+            uint64_t freed_by_count = 0;
+            if (allocation_attr.freed_by_func != nullptr)
+            {
+                freed_by_count = (*allocation_attr.freed_by_func)();
+            }
+            return AllocateRawInternal(a, nb, v, freed_by_count);
+        },
+        kMaxMillisToWait,
+        unused_alignment,
+        num_bytes);
 
     return r;
 }
@@ -990,6 +1009,7 @@ void allocator_bfc::deallocate_raw(void* ptr)
         ptr);
 
     DeallocateRawInternal(ptr);
+    retry_helper_.NotifyDealloc();
 }
 
 void allocator_bfc::DeallocateRawInternal(void* ptr)
@@ -1174,6 +1194,7 @@ void allocator_bfc::SetSafeFrontier(uint64_t count) noexcept
     {
         if (safe_frontier_.compare_exchange_strong(current, count))
         {
+            retry_helper_.NotifyDealloc();
             return;
         }
 
