@@ -35,7 +35,7 @@ public:
     BackendType GetBackendType();
 
     //--------------------------------------------------------------------------------
-    const char* GetBackend();
+    static const char* GetBackend();
 
     //--------------------------------------------------------------------------------
     bool SetBackend(const char* type);

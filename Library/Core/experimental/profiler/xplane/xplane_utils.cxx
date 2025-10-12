@@ -476,13 +476,17 @@ bool xevents_comparator::operator()(const xevent& a, const xevent& b) const
 static void SortXSpace(x_space* space)
 {
     for (xplane& plane : *space->mutable_planes())
+    {
         SortXPlane(&plane);
+    }
 }
 
 int64_t GetStartTimestampNs(const xplane& plane)
 {
     if (plane.lines().empty())
+    {
         return 0LL;
+    }
     int64_t plane_timestamp = std::numeric_limits<int64_t>::max();
     for (const auto& line : plane.lines())
     {
@@ -516,7 +520,9 @@ bool IsXSpaceGrouped(const x_space& space)
         xplane_visitor const   xplane        = CreateTfXPlaneVisitor(&plane);
         const x_stat_metadata* group_id_stat = xplane.get_stat_metadata_by_type(StatType::kGroupId);
         if (group_id_stat != nullptr)
+        {
             return true;
+        }
     }
     return false;
 }
@@ -524,7 +530,9 @@ bool IsXSpaceGrouped(const x_space& space)
 void AddFlowsToXplane(int32_t host_id, bool is_host_plane, bool connect_traceme, xplane* xplane)
 {
     if (xplane == nullptr)
+    {
         return;
+    }
     xplane_builder   plane(xplane);
     x_stat_metadata* correlation_id_stats_metadata =
         plane.stat_metadata(GetStatTypeStr(StatType::kCorrelationId));
@@ -628,7 +636,9 @@ uint64_t GetDevicePlaneFingerprint(const xplane& plane)
 {
     const xline* xla_module_line = find_line_with_name(plane, kXlaModuleLineName);
     if (xla_module_line == nullptr)
+    {
         return 0ULL;
+    }
 
     xplane_visitor const xplane(&plane);
     xline_visitor const  xline(&xplane, xla_module_line);
@@ -636,7 +646,9 @@ uint64_t GetDevicePlaneFingerprint(const xplane& plane)
     xline.for_each_event([&](XSIGMA_UNUSED const xevent_visitor& xevent)
                          { ordered_module_fps.insert(/*Fingerprint64(xevent.Name())*/ 0); });
     if (ordered_module_fps.empty())
+    {
         return 0ULL;
+    }
     uint64_t output = 0ULL;
     for (XSIGMA_UNUSED const auto& fp : ordered_module_fps)
     {
@@ -649,7 +661,9 @@ uint64_t GetDevicePlaneFingerprint(const xplane& plane)
 std::optional<xevent_visitor> XEventContextTracker::GetContainingEvent(const timespan& event)
 {
     if (line_ == nullptr)
+    {
         return std::nullopt;
+    }
     if (current_index_ != -1)
     {
         xevent_visitor current_event(plane_, line_, &line_->events(current_index_));
@@ -662,9 +676,13 @@ std::optional<xevent_visitor> XEventContextTracker::GetContainingEvent(const tim
     {
         xevent_visitor current_event(plane_, line_, &line_->events(i));
         if (static_cast<uint64_t>(current_event.timestamp_ps()) > event.end_ps())
+        {
             break;
+        }
         if (static_cast<uint64_t>(current_event.end_timestamp_ps()) < event.begin_ps())
+        {
             continue;
+        }
         current_index_ = i;
         if (current_event.get_timespan().includes(event))
         {
@@ -678,7 +696,9 @@ std::optional<xevent_visitor> XEventContextTracker::GetContainingEvent(const tim
 std::optional<xevent_visitor> XEventContextTracker::GetOverlappingEvent(const timespan& event)
 {
     if (line_ == nullptr)
+    {
         return std::nullopt;
+    }
     if (current_index_ != -1)
     {
         xevent_visitor current_event(plane_, line_, &line_->events(current_index_));
@@ -691,9 +711,13 @@ std::optional<xevent_visitor> XEventContextTracker::GetOverlappingEvent(const ti
     {
         xevent_visitor current_event(plane_, line_, &line_->events(i));
         if (static_cast<uint64_t>(current_event.timestamp_ps()) > event.end_ps())
+        {
             break;
+        }
         if (static_cast<uint64_t>(current_event.end_timestamp_ps()) < event.begin_ps())
+        {
             continue;
+        }
         current_index_ = i;
         if (current_event.get_timespan().overlaps(event))
         {
@@ -737,7 +761,9 @@ void AggregateXPlane(const xplane& full_trace, xplane& aggregated_trace)
                     });
             }
             if (!IsOpLineName(line.name()))
+            {
                 return;
+            }
             xline_builder aggregated_line = aggregated_plane.get_or_create_line(line.id());
             aggregated_line.SetName(line.name());
             std::vector<xevent_visitor> event_stack;
@@ -843,7 +869,9 @@ bool IsDevicePlane(const xplane& plane)
 {
     // Device and host planes should be mutually exclusive.
     if (IsHostPlane(plane))
+    {
         return false;
+    }
     return StartsWith(plane.name(), "/device") ||
            StartsWith(plane.name(), kTpuNonCorePlaneNamePrefix) || IsCustomPlane(plane);
 }

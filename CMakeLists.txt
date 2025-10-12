@@ -49,6 +49,8 @@ option(XSIGMA_ENABLE_MEMKIND "Build support for extended memory" OFF)
 
 option(XSIGMA_ENABLE_IWYU "Enable include-what-you-use (iwyu) support." OFF)
 option(XSIGMA_ENABLE_CLANGTIDY "enable clangtidy check" OFF)
+option(XSIGMA_ENABLE_FIX "Enable clang-tidy fix-errors and fix options" OFF)
+mark_as_advanced(XSIGMA_ENABLE_FIX)
 
 option(XSIGMA_SOBOL_1111 "Build support sobol with 1111 dimension" ON)
 option(XSIGMA_LU_PIVOTING "Enable LU PIVOTING" OFF)

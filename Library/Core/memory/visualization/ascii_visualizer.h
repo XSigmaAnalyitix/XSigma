@@ -182,8 +182,8 @@ public:
      * Helper function to convert allocator tracking records into
      * timeline visualization format.
      */
-    XSIGMA_API std::vector<timeline_point> convert_records_to_timeline(
-        const std::vector<alloc_record>& records) const;
+    static XSIGMA_API std::vector<timeline_point> convert_records_to_timeline(
+        const std::vector<alloc_record>& records);
 
     /**
      * @brief Create size buckets from allocation sizes
@@ -193,8 +193,8 @@ public:
      * 
      * Creates logarithmic size buckets for histogram visualization.
      */
-    XSIGMA_API std::vector<size_bucket> create_size_buckets(
-        const std::vector<size_t>& allocation_sizes, size_t num_buckets = 0) const;
+    static XSIGMA_API std::vector<size_bucket> create_size_buckets(
+        const std::vector<size_t>& allocation_sizes, size_t num_buckets = 0);
 
     /**
      * @brief Set visualization configuration
@@ -225,7 +225,7 @@ private:
      * @param bytes Size in bytes
      * @return Formatted string (e.g., "1.5 MB")
      */
-    std::string format_bytes(size_t bytes) const;
+    static std::string format_bytes(size_t bytes);
 
     /**
      * @brief Format size range for histogram buckets
@@ -233,7 +233,7 @@ private:
      * @param max_size Maximum size in bucket
      * @return Formatted range string
      */
-    std::string format_size_range(size_t min_size, size_t max_size) const;
+    static std::string format_size_range(size_t min_size, size_t max_size);
 
     /**
      * @brief Calculate logarithmic bucket boundaries
@@ -242,8 +242,8 @@ private:
      * @param num_buckets Number of buckets to create
      * @return Vector of bucket boundaries
      */
-    std::vector<size_t> calculate_bucket_boundaries(
-        size_t min_size, size_t max_size, size_t num_buckets) const;
+    static std::vector<size_t> calculate_bucket_boundaries(
+        size_t min_size, size_t max_size, size_t num_buckets);
 
     /**
      * @brief Create memory layout visualization string

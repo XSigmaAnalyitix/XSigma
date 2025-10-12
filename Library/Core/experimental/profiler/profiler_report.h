@@ -25,7 +25,6 @@
 #include <string>
 #include <vector>
 
-
 #include "memory_tracker.h"
 #include "profiler.h"
 #include "statistical_analyzer.h"
@@ -115,11 +114,11 @@ public:
     bool export_xml_report(const std::string& filename) const;
 
     // Print to console
-    void print_summary() const;
-    void print_detailed_report() const;
-    void print_memory_report() const;
-    void print_timing_report() const;
-    void print_statistical_report() const;
+    static void print_summary();
+    void        print_detailed_report() const;
+    static void print_memory_report();
+    static void print_timing_report();
+    static void print_statistical_report();
 
     // Report customization
     void set_precision(int precision) { precision_ = precision; }
@@ -139,42 +138,42 @@ private:
     bool        include_hierarchical_data_ = true;
 
     // Helper methods for report generation
-    std::string format_duration(double duration_ns) const;
-    std::string format_memory_size(size_t bytes) const;
-    std::string format_percentage(double value) const;
-    std::string format_thread_id(const std::thread::id& thread_id) const;
+    std::string        format_duration(double duration_ns) const;
+    std::string        format_memory_size(size_t bytes) const;
+    static std::string format_percentage(double value);
+    static std::string format_thread_id(const std::thread::id& thread_id);
 
     // Section generators
-    std::string generate_header_section() const;
-    std::string generate_summary_section() const;
-    std::string generate_timing_section() const;
-    std::string generate_memory_section() const;
-    std::string generate_hierarchical_section() const;
-    std::string generate_statistical_section() const;
-    std::string generate_thread_section() const;
+    static std::string generate_header_section();
+    static std::string generate_summary_section();
+    static std::string generate_timing_section();
+    static std::string generate_memory_section();
+    static std::string generate_hierarchical_section();
+    static std::string generate_statistical_section();
+    static std::string generate_thread_section();
 
     // JSON helpers
-    std::string escape_json_string(const std::string& str) const;
-    std::string generate_json_object(const std::string& content) const;
-    std::string generate_json_array(const std::vector<std::string>& items) const;
+    static std::string escape_json_string(const std::string& str);
+    static std::string generate_json_object(const std::string& content);
+    static std::string generate_json_array(const std::vector<std::string>& items);
 
     // CSV helpers
-    std::string escape_csv_field(const std::string& field) const;
-    std::string generate_csv_header() const;
-    std::string generate_csv_row(const std::vector<std::string>& fields) const;
+    static std::string escape_csv_field(const std::string& field);
+    static std::string generate_csv_header();
+    static std::string generate_csv_row(const std::vector<std::string>& fields);
 
     // XML helpers
-    std::string escape_xml_string(const std::string& str) const;
-    std::string generate_xml_element(const std::string& tag, const std::string& content) const;
-    std::string generate_xml_attribute(const std::string& name, const std::string& value) const;
+    static std::string escape_xml_string(const std::string& str);
+    static std::string generate_xml_element(const std::string& tag, const std::string& content);
+    static std::string generate_xml_attribute(const std::string& name, const std::string& value);
 
     // Hierarchical data processing
-    void process_scope_data_recursive(
-        const xsigma::profiler_scope_data& scope, std::stringstream& ss, int indent = 0) const;
-    void process_scope_data_json_recursive(
-        const xsigma::profiler_scope_data& scope, std::stringstream& ss, int indent = 0) const;
-    void process_scope_data_csv_recursive(
-        const xsigma::profiler_scope_data& scope, std::vector<std::string>& rows) const;
+    static void process_scope_data_recursive(
+        const xsigma::profiler_scope_data& scope, std::stringstream& ss, int indent = 0);
+    static void process_scope_data_json_recursive(
+        const xsigma::profiler_scope_data& scope, std::stringstream& ss, int indent = 0);
+    static void process_scope_data_csv_recursive(
+        const xsigma::profiler_scope_data& scope, std::vector<std::string>& rows);
 };
 
 // Report builder with fluent interface

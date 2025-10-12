@@ -295,7 +295,7 @@ private:
      * @param allocator Pointer to allocator
      * @return String representation of allocator type
      */
-    std::string get_allocator_type_name(Allocator* allocator) const;
+    static std::string get_allocator_type_name(Allocator* allocator);
 
     /**
      * @brief Create JSON string from allocator stats

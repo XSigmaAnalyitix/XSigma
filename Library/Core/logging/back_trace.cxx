@@ -17,9 +17,12 @@
 #include "util/string_util.h"
 
 // Platform-specific includes
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #ifdef _WIN32
 #include <dbghelp.h>
-#include <windows.h>
 #pragma comment(lib, "Dbghelp.lib")
 #define SUPPORTS_BACKTRACE 1
 #elif defined(__unix__) || defined(__APPLE__)
@@ -159,7 +162,7 @@ std::vector<stack_frame> back_trace::capture(const backtrace_options& options)
 
 #if SUPPORTS_BACKTRACE
     // Skip this frame (capture) plus user-requested frames
-    size_t  frames_to_skip = options.frames_to_skip + 1ULL;//NOLINT
+    size_t frames_to_skip = options.frames_to_skip + 1ULL;  //NOLINT
 
 #ifdef _WIN32
     // Windows implementation using CaptureStackBackTrace

@@ -178,19 +178,19 @@ public:
      * @brief Get current system memory usage
      * @return System memory usage in bytes
      */
-    size_t get_system_memory_usage() const;
+    static size_t get_system_memory_usage();
 
     /**
      * @brief Get peak system memory usage
      * @return Peak system memory usage in bytes
      */
-    size_t get_system_peak_memory_usage() const;
+    static size_t get_system_peak_memory_usage();
 
     /**
      * @brief Get available system memory
      * @return Available system memory in bytes
      */
-    size_t get_available_system_memory() const;
+    static size_t get_available_system_memory();
 
     /**
      * @brief Reset all tracking data and statistics
@@ -253,13 +253,13 @@ private:
      * @brief Get current process memory usage (platform-specific)
      * @return Process memory usage in bytes
      */
-    size_t get_process_memory_usage() const;
+    static size_t get_process_memory_usage();
 
     /**
      * @brief Get peak process memory usage (platform-specific)
      * @return Peak process memory usage in bytes
      */
-    size_t get_process_peak_memory_usage() const;
+    static size_t get_process_peak_memory_usage();
 
     /**
      * @brief Update peak usage if current usage is higher
@@ -283,7 +283,7 @@ public:
      * @param tracker Reference to the memory tracker to use
      * @param label Optional label for this tracking scope
      */
-    explicit memory_tracking_scope(xsigma::memory_tracker& tracker, const std::string& label = "");
+    explicit memory_tracking_scope(xsigma::memory_tracker& tracker, std::string label = "");
 
     /**
      * @brief Destructor - automatically captures final memory statistics

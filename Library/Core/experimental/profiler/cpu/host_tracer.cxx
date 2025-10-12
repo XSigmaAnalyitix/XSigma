@@ -146,7 +146,9 @@ bool host_tracer::collect_data(x_space* space)
 std::unique_ptr<profiler_interface> create_host_tracer(const host_tracer_options& options)
 {
     if (options.trace_level == 0)
+    {
         return nullptr;
+    }
     std::vector<std::unique_ptr<profiler_interface>> profilers;
     profilers.push_back(std::make_unique<host_tracer>(options.trace_level));
     //profilers.push_back(std::make_unique<threadpool_profiler_interface>());

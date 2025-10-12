@@ -446,7 +446,7 @@ void web_dashboard::broadcast_metrics_update(const std::string& /*metrics_json*/
     }
 }
 
-std::string web_dashboard::get_allocator_type_name(Allocator* allocator) const
+std::string web_dashboard::get_allocator_type_name(Allocator* allocator)
 {
     if (allocator == nullptr)
     {

@@ -133,7 +133,9 @@ private:
     {
         auto iter = start_events_.find(event->activity_id());
         if (iter == start_events_.end())
+        {
             return false;
+        }
         auto& start_event = iter->second;
         event->name       = std::move(start_event.name);
         event->start_time = start_event.start_time;

@@ -124,7 +124,9 @@ xevent_metadata* xplane_builder::GetEventMetadata(std::string_view name) const
 {
     auto result = event_metadata_by_name_.find(std::string(name));
     if (result == event_metadata_by_name_.end())
+    {
         return nullptr;
+    }
     return result->second;
 }
 
@@ -132,7 +134,9 @@ x_stat_metadata* xplane_builder::stat_metadata(std::string_view name) const
 {
     auto result = stat_metadata_by_name_.find(std::string(name));
     if (result == stat_metadata_by_name_.end())
+    {
         return nullptr;
+    }
     return result->second;
 }
 
@@ -147,7 +151,9 @@ const x_stat_metadata* xplane_builder::stat_metadata(int64_t metadata_id) const
 {
     auto result = plane_->stat_metadata().find(metadata_id);
     if (result == plane_->stat_metadata().end())
+    {
         return nullptr;
+    }
     return &(result->second);
 }
 

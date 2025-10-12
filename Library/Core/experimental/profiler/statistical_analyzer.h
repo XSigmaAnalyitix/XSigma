@@ -152,10 +152,10 @@ private:
     std::vector<double> percentiles_            = {25.0, 50.0, 75.0, 90.0, 95.0, 99.0};
 
     // Helper methods
-    std::vector<double> calculate_percentiles(
-        std::vector<double> data, const std::vector<double>& percentiles) const;
-    std::vector<double> detect_outliers(const std::vector<double>& data, double threshold) const;
-    void                trim_series_if_needed(std::vector<double>& series) const;
+    static std::vector<double> calculate_percentiles(
+        std::vector<double> data, const std::vector<double>& percentiles);
+    static std::vector<double> detect_outliers(const std::vector<double>& data, double threshold);
+    void                       trim_series_if_needed(std::vector<double>& series) const;
     void trim_time_series_if_needed(std::vector<xsigma::time_series_point>& series) const;
 };
 
@@ -163,8 +163,7 @@ private:
 class XSIGMA_API statistical_analysis_scope
 {
 public:
-    explicit statistical_analysis_scope(
-        xsigma::statistical_analyzer& analyzer, const std::string& name);
+    explicit statistical_analysis_scope(xsigma::statistical_analyzer& analyzer, std::string name);
     ~statistical_analysis_scope();
 
     void                        add_checkpoint(const std::string& label);

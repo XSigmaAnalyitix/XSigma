@@ -24,6 +24,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 // Include hash compatibility layer for libc++ versions that don't export __hash_memory
@@ -99,7 +100,9 @@ void statistical_analyzer::stop_analysis()
 void statistical_analyzer::add_timing_sample(const std::string& name, double time_ms)
 {
     if (!analyzing_.load())
+    {
         return;
+    }
 
     std::lock_guard<std::mutex> const lock(timing_mutex_);
     auto&                             series = timing_data_[name];
@@ -110,7 +113,9 @@ void statistical_analyzer::add_timing_sample(const std::string& name, double tim
 void statistical_analyzer::add_memory_sample(const std::string& name, size_t memory_bytes)
 {
     if (!analyzing_.load())
+    {
         return;
+    }
 
     std::lock_guard<std::mutex> const lock(memory_mutex_);
     auto&                             series = memory_data_[name];
@@ -121,7 +126,9 @@ void statistical_analyzer::add_memory_sample(const std::string& name, size_t mem
 void statistical_analyzer::add_custom_sample(const std::string& name, double value)
 {
     if (!analyzing_.load())
+    {
         return;
+    }
 
     std::lock_guard<std::mutex> const lock(custom_mutex_);
     auto&                             series = custom_data_[name];
@@ -133,7 +140,9 @@ void statistical_analyzer::add_time_series_point(
     const std::string& series_name, double value, const std::string& label)
 {
     if (!analyzing_.load())
+    {
         return;
+    }
 
     xsigma::time_series_point point;
     point.timestamp_ = std::chrono::high_resolution_clock::now();
@@ -321,7 +330,9 @@ double statistical_analyzer::calculate_correlation(
 
     size_t const min_size = std::min(s1.size(), s2.size());
     if (min_size < 2)
+    {
         return 0.0;
+    }
 
     // Calculate Pearson correlation coefficient
     double sum_x  = 0.0;
@@ -355,7 +366,9 @@ bool statistical_analyzer::detect_performance_regression(
 {
     auto stats = calculate_timing_stats(name);
     if (!stats.is_valid())
+    {
         return false;
+    }
 
     double const performance_change = (stats.mean - baseline_mean) / baseline_mean;
     return performance_change > threshold;
@@ -504,7 +517,7 @@ xsigma::statistical_metrics statistical_analyzer::calculate_metrics(
 }
 
 std::vector<double> statistical_analyzer::calculate_percentiles(
-    std::vector<double> data, const std::vector<double>& percentiles) const
+    std::vector<double> data, const std::vector<double>& percentiles)
 {
     if (data.empty() || percentiles.empty())
     {
@@ -518,7 +531,9 @@ std::vector<double> statistical_analyzer::calculate_percentiles(
     for (double const p : percentiles)
     {
         if (p < 0.0 || p > 100.0)
+        {
             continue;
+        }
 
         double const index = (p / 100.0) * (data.size() - 1);
         auto const   lower = static_cast<size_t>(std::floor(index));
@@ -539,7 +554,7 @@ std::vector<double> statistical_analyzer::calculate_percentiles(
 }
 
 std::vector<double> statistical_analyzer::detect_outliers(
-    const std::vector<double>& data, double threshold) const
+    const std::vector<double>& data, double threshold)
 {
     if (data.size() < 3)
     {
@@ -598,8 +613,8 @@ void statistical_analyzer::trim_time_series_if_needed(
 //=============================================================================
 
 statistical_analysis_scope::statistical_analysis_scope(
-    xsigma::statistical_analyzer& analyzer, const std::string& name)
-    : analyzer_(analyzer), name_(name)
+    xsigma::statistical_analyzer& analyzer, std::string name)
+    : analyzer_(analyzer), name_(std::move(name))
 {
     start_time_ = std::chrono::high_resolution_clock::now();
 }

@@ -201,7 +201,7 @@ bool profiler_report::export_xml_report(const std::string& filename) const
     return export_to_file(filename, xsigma::profiler_options::output_format_enum::STRUCTURED);
 }
 
-void profiler_report::print_summary() const
+void profiler_report::print_summary()
 {
     XSIGMA_LOG_INFO("{}", generate_header_section());
     XSIGMA_LOG_INFO("{}", generate_summary_section());
@@ -212,19 +212,19 @@ void profiler_report::print_detailed_report() const
     XSIGMA_LOG_INFO("{}", generate_console_report());
 }
 
-void profiler_report::print_memory_report() const
+void profiler_report::print_memory_report()
 {
     XSIGMA_LOG_INFO("{}", generate_header_section());
     XSIGMA_LOG_INFO("{}", generate_memory_section());
 }
 
-void profiler_report::print_timing_report() const
+void profiler_report::print_timing_report()
 {
     XSIGMA_LOG_INFO("{}", generate_header_section());
     XSIGMA_LOG_INFO("{}", generate_timing_section());
 }
 
-void profiler_report::print_statistical_report() const
+void profiler_report::print_statistical_report()
 {
     XSIGMA_LOG_INFO("{}", generate_header_section());
     XSIGMA_LOG_INFO("{}", generate_statistical_section());
@@ -259,12 +259,12 @@ std::string profiler_report::format_memory_size(size_t bytes) const
     return std::to_string(bytes) + " bytes";
 }
 
-std::string profiler_report::format_percentage(double value) const
+std::string profiler_report::format_percentage(double value)
 {
     return std::to_string(value * 100.0) + "%";
 }
 
-std::string profiler_report::format_thread_id(const std::thread::id& thread_id) const
+std::string profiler_report::format_thread_id(const std::thread::id& thread_id)
 {
     std::stringstream ss;
     ss << thread_id;
@@ -272,117 +272,121 @@ std::string profiler_report::format_thread_id(const std::thread::id& thread_id) 
 }
 
 // Section generators - simplified implementations
-std::string profiler_report::generate_header_section() const
+std::string profiler_report::generate_header_section()
 {
     return "=== Enhanced Profiler Report ===\n";
 }
 
-std::string profiler_report::generate_summary_section() const
+std::string profiler_report::generate_summary_section()
 {
     return "=== Summary ===\n";
 }
 
-std::string profiler_report::generate_timing_section() const
+std::string profiler_report::generate_timing_section()
 {
     return "=== Timing Analysis ===\n";
 }
 
-std::string profiler_report::generate_memory_section() const
+std::string profiler_report::generate_memory_section()
 {
     return "=== Memory Analysis ===\n";
 }
 
-std::string profiler_report::generate_hierarchical_section() const
+std::string profiler_report::generate_hierarchical_section()
 {
     return "=== Hierarchical Analysis ===\n";
 }
 
-std::string profiler_report::generate_statistical_section() const
+std::string profiler_report::generate_statistical_section()
 {
     return "=== Statistical Analysis ===\n";
 }
 
-std::string profiler_report::generate_thread_section() const
+std::string profiler_report::generate_thread_section()
 {
     return "=== Thread Analysis ===\n";
 }
 
 // JSON helpers
-std::string profiler_report::escape_json_string(const std::string& str) const
+std::string profiler_report::escape_json_string(const std::string& str)
 {
     return "\"" + str + "\"";
 }
 
-std::string profiler_report::generate_json_object(const std::string& content) const
+std::string profiler_report::generate_json_object(const std::string& content)
 {
     return R"({"content": ")" + content + R"("})";
 }
 
-std::string profiler_report::generate_json_array(const std::vector<std::string>& /*items*/) const
+std::string profiler_report::generate_json_array(const std::vector<std::string>& /*items*/)
 {
     return "[]";
 }
 
 // CSV helpers
-std::string profiler_report::escape_csv_field(const std::string& field) const
+std::string profiler_report::escape_csv_field(const std::string& field)
 {
     return "\"" + field + "\"";
 }
 
-std::string profiler_report::generate_csv_header() const
+std::string profiler_report::generate_csv_header()
 {
     return "Name,Duration,Memory,Thread";
 }
 
-std::string profiler_report::generate_csv_row(const std::vector<std::string>& fields) const
+std::string profiler_report::generate_csv_row(const std::vector<std::string>& fields)
 {
     std::string result;
     for (size_t i = 0; i < fields.size(); ++i)
     {
         if (i > 0)
+        {
             result += ",";
+        }
         result += escape_csv_field(fields[i]);
     }
     return result;
 }
 
 // XML helpers
-std::string profiler_report::escape_xml_string(const std::string& str) const
+std::string profiler_report::escape_xml_string(const std::string& str)
 {
     return str;  // Simplified
 }
 
 std::string profiler_report::generate_xml_element(
-    const std::string& tag, const std::string& content) const
+    const std::string& tag, const std::string& content)
 {
     return "<" + tag + ">" + content + "</" + tag + ">";
 }
 
 std::string profiler_report::generate_xml_attribute(
-    const std::string& name, const std::string& value) const
+    const std::string& name, const std::string& value)
 {
     return name + "=\"" + value + "\"";
 }
 
 // Hierarchical data processing - simplified implementations
 void profiler_report::process_scope_data_recursive(
-    const xsigma::profiler_scope_data& scope, std::stringstream& ss, int indent) const
+    const xsigma::profiler_scope_data& scope, std::stringstream& ss, int indent)
 {
     // Simplified implementation
     for (int i = 0; i < indent; ++i)
+    {
         ss << "  ";
+    }
     ss << scope.name_ << "\n";
 }
 
 void profiler_report::process_scope_data_json_recursive(
-    const xsigma::profiler_scope_data& scope, std::stringstream& ss, int /*indent*/) const
+    const xsigma::profiler_scope_data& scope, std::stringstream& ss, int /*indent*/)
 {
     // Simplified implementation
     ss << R"({"name": ")" << scope.name_ << R"("})";
 }
 
 void profiler_report::process_scope_data_csv_recursive(
-    const xsigma::profiler_scope_data& scope, std::vector<std::string>& rows) const
+    const xsigma::profiler_scope_data& scope, std::vector<std::string>& rows)
 {
     // Simplified implementation
     rows.push_back(generate_csv_row({scope.name_, "0", "0", "main"}));
