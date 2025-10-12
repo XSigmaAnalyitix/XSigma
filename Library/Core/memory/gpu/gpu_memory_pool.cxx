@@ -92,15 +92,19 @@ private:
     size_t calculate_size_class(size_t size) const
     {
         if (size <= config_.min_block_size)
+        {
             return config_.min_block_size;
+        }
 
         if (size >= config_.max_block_size)
+        {
             return config_.max_block_size;
+        }
 
         // Calculate the size class using geometric progression
-        double log_ratio = std::log(static_cast<double>(size) / config_.min_block_size) /
-                           std::log(config_.block_growth_factor);
-        size_t class_index = static_cast<size_t>(std::ceil(log_ratio));
+        double const log_ratio = std::log(static_cast<double>(size) / config_.min_block_size) /
+                                 std::log(config_.block_growth_factor);
+        auto const class_index = static_cast<size_t>(std::ceil(log_ratio));
 
         return static_cast<size_t>(
             config_.min_block_size * std::pow(config_.block_growth_factor, class_index));
@@ -115,8 +119,8 @@ private:
      */
     gpu_memory_block allocate_direct(size_t size, device_enum device_type, int device_index) const
     {
-        void*         ptr = nullptr;
-        device_option device(device_type, device_index);
+        void*               ptr = nullptr;
+        device_option const device(device_type, device_index);
 
         switch (device_type)
         {
@@ -129,10 +133,10 @@ private:
             // Allocate aligned memory if requested
             if (config_.enable_alignment)
             {
-                size_t aligned_size =
+                size_t const aligned_size =
                     ((size + config_.alignment_boundary - 1) / config_.alignment_boundary) *
                     config_.alignment_boundary;
-                cudaError_t result = cudaMalloc(&ptr, aligned_size);
+                cudaError_t const result = cudaMalloc(&ptr, aligned_size);
                 if (result != cudaSuccess)
                 {
                     XSIGMA_THROW(
@@ -143,7 +147,7 @@ private:
             }
             else
             {
-                cudaError_t result = cudaMalloc(&ptr, size);
+                cudaError_t const result = cudaMalloc(&ptr, size);
                 if (result != cudaSuccess)
                 {
                     XSIGMA_THROW(
@@ -172,8 +176,10 @@ private:
      */
     void deallocate_direct(const gpu_memory_block& block) const
     {
-        if (!block.ptr)
+        if (block.ptr == nullptr)
+        {
             return;
+        }
 
         switch (block.device.type())
         {
@@ -181,7 +187,7 @@ private:
         case device_enum::CUDA:
         {
             cudaSetDevice(block.device.index());
-            cudaError_t result = cudaFree(block.ptr);
+            cudaError_t const result = cudaFree(block.ptr);
             if (result != cudaSuccess && config_.debug_mode)
             {
                 XSIGMA_LOG_WARNING(
@@ -254,10 +260,10 @@ public:
             XSIGMA_THROW("Cannot allocate zero bytes");
         }
 
-        size_t size_class = calculate_size_class(size);
+        size_t const size_class = calculate_size_class(size);
         total_allocations_.fetch_add(1);
 
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         // Try to find a cached block of the appropriate size class
         auto cache_it = cached_blocks_.find(size_class);
@@ -308,7 +314,7 @@ public:
         active_allocations_.emplace(block.ptr, std::move(block));
 
         // Update statistics
-        size_t current_allocated =
+        size_t const current_allocated =
             allocated_bytes_.fetch_add(result_block.size) + result_block.size;
         total_bytes_allocated_.fetch_add(result_block.size);
         size_t current_peak = peak_allocated_bytes_.load();
@@ -323,12 +329,12 @@ public:
 
     void deallocate(const gpu_memory_block& block) override
     {
-        if (!block.ptr)
+        if (block.ptr == nullptr)
         {
             XSIGMA_THROW("Cannot deallocate null pointer");
         }
 
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         auto it = active_allocations_.find(block.ptr);
         if (it == active_allocations_.end())
@@ -368,13 +374,13 @@ public:
 
     size_t get_active_allocations() const override
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
         return active_allocations_.size();
     }
 
     void clear_cache() override
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         for (auto& [size_class, blocks] : cached_blocks_)
         {
@@ -394,7 +400,7 @@ public:
 
     std::string get_memory_report() const override
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         std::ostringstream oss;
         oss << "GPU Memory Pool Report:\n";
@@ -420,7 +426,7 @@ public:
 
     gpu_memory_pool_statistics get_statistics() const override
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         gpu_memory_pool_statistics stats;
 
@@ -433,7 +439,7 @@ public:
         stats.cache_misses = cache_misses_.load();
 
         // Calculate cache hit rate
-        size_t total_requests = stats.cache_hits + stats.cache_misses;
+        size_t const total_requests = stats.cache_hits + stats.cache_misses;
         if (total_requests > 0)
         {
             stats.cache_hit_rate = static_cast<double>(stats.cache_hits) / total_requests;

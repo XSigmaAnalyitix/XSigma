@@ -1,10 +1,10 @@
 #include "memory/gpu/gpu_resource_tracker.h"
 
-#include <numeric>
 #include <algorithm>
 #include <cstdint>
 #include <iomanip>
 #include <mutex>
+#include <numeric>
 #include <sstream>
 #include <thread>
 
@@ -94,12 +94,13 @@ private:
                 {
                     while (!stop_background_thread_.load())
                     {
-                        std::this_thread::sleep_for(
-                            std::chrono::milliseconds(
-                                static_cast<int>(leak_config_.scan_interval_ms)));
+                        std::this_thread::sleep_for(std::chrono::milliseconds(
+                            static_cast<int>(leak_config_.scan_interval_ms)));
 
                         if (stop_background_thread_.load())
+                        {
                             break;
+                        }
 
                         // Perform leak detection
                         auto leaks = detect_leaks();
@@ -153,8 +154,8 @@ private:
         statistics_.bytes_in_use.fetch_add(size, std::memory_order_relaxed);
 
         // Update peak bytes in use with compare-and-swap
-        int64_t current_bytes = statistics_.bytes_in_use.load(std::memory_order_relaxed);
-        int64_t peak_bytes    = statistics_.peak_bytes_in_use.load(std::memory_order_relaxed);
+        int64_t const current_bytes = statistics_.bytes_in_use.load(std::memory_order_relaxed);
+        int64_t       peak_bytes    = statistics_.peak_bytes_in_use.load(std::memory_order_relaxed);
         while (current_bytes > peak_bytes &&
                !statistics_.peak_bytes_in_use.compare_exchange_weak(
                    peak_bytes, current_bytes, std::memory_order_relaxed))
@@ -175,7 +176,7 @@ private:
     /**
      * @brief Update statistics after deallocation
      */
-    void update_statistics_on_deallocation(size_t size, double lifetime_ms)
+    void update_statistics_on_deallocation(size_t size)
     {
         statistics_.num_deallocs.fetch_add(1, std::memory_order_relaxed);
         statistics_.active_allocations.fetch_sub(1, std::memory_order_relaxed);
@@ -205,7 +206,7 @@ public:
         stop_leak_scan_thread();
 
         // Check for remaining allocations
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
         if (!active_allocations_.empty())
         {
             XSIGMA_LOG_WARNING(
@@ -217,10 +218,11 @@ public:
 
     void configure_leak_detection(const leak_detection_config& config) override
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
-        bool restart_thread = (config.enable_periodic_scan != leak_config_.enable_periodic_scan) ||
-                              (config.scan_interval_ms != leak_config_.scan_interval_ms);
+        bool const restart_thread =
+            (config.enable_periodic_scan != leak_config_.enable_periodic_scan) ||
+            (config.scan_interval_ms != leak_config_.scan_interval_ms);
 
         leak_config_ = config;
 
@@ -241,12 +243,14 @@ public:
         int                source_line,
         const char*        function_name) override
     {
-        if (!tracking_enabled_.load() || !ptr)
+        if (!tracking_enabled_.load() || (ptr == nullptr))
+        {
             return 0;
+        }
 
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
-        size_t allocation_id = next_allocation_id_.fetch_add(1);
+        size_t const allocation_id = next_allocation_id_.fetch_add(1);
 
         auto info              = std::make_shared<gpu_allocation_info>();
         info->allocation_id    = allocation_id;
@@ -256,9 +260,9 @@ public:
         info->allocation_time  = std::chrono::high_resolution_clock::now();
         info->last_access_time = info->allocation_time;
         info->is_active        = true;
-        info->source_file      = source_file ? source_file : "";
+        info->source_file      = (source_file != nullptr) ? source_file : "";
         info->source_line      = source_line;
-        info->function_name    = function_name ? function_name : "";
+        info->function_name    = (function_name != nullptr) ? function_name : "";
         info->tag              = tag;
 
         // TODO: Capture call stack if enabled
@@ -274,10 +278,12 @@ public:
 
     bool track_deallocation(void* ptr) override
     {
-        if (!tracking_enabled_.load() || !ptr)
+        if (!tracking_enabled_.load() || (ptr == nullptr))
+        {
             return false;
+        }
 
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         auto it = active_allocations_.find(ptr);
         if (it == active_allocations_.end())
@@ -289,8 +295,8 @@ public:
         info->deallocation_time = std::chrono::high_resolution_clock::now();
         info->is_active         = false;
 
-        double lifetime_ms = info->get_lifetime_ms();
-        update_statistics_on_deallocation(info->size, lifetime_ms);
+        double const lifetime_ms = info->get_lifetime_ms();
+        update_statistics_on_deallocation(info->size);
 
         active_allocations_.erase(it);
 
@@ -299,10 +305,12 @@ public:
 
     void record_access(void* ptr) override
     {
-        if (!tracking_enabled_.load() || !ptr)
+        if (!tracking_enabled_.load() || (ptr == nullptr))
+        {
             return;
+        }
 
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         auto it = active_allocations_.find(ptr);
         if (it != active_allocations_.end())
@@ -315,10 +323,12 @@ public:
 
     std::shared_ptr<gpu_allocation_info> get_allocation_info(void* ptr) const override
     {
-        if (!ptr)
+        if (ptr == nullptr)
+        {
             return nullptr;
+        }
 
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         auto it = active_allocations_.find(ptr);
         if (it != active_allocations_.end())
@@ -331,7 +341,7 @@ public:
 
     unified_resource_stats get_statistics() const override
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         // Update potential leaks count
         statistics_.potential_leaks.store(0, std::memory_order_relaxed);
@@ -353,13 +363,13 @@ public:
         }
 
         // Return a copy of the statistics
-        unified_resource_stats stats_copy(statistics_);
+        unified_resource_stats const stats_copy(statistics_);
         return stats_copy;
     }
 
     std::vector<std::shared_ptr<gpu_allocation_info>> get_active_allocations() const override
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         std::vector<std::shared_ptr<gpu_allocation_info>> result;
         result.reserve(active_allocations_.size());
@@ -379,7 +389,9 @@ private:
     std::vector<std::shared_ptr<gpu_allocation_info>> detect_leaks_unsafe() const
     {
         if (!leak_config_.enabled)
+        {
             return {};
+        }
 
         std::vector<std::shared_ptr<gpu_allocation_info>> leaks;
         auto now = std::chrono::high_resolution_clock::now();
@@ -407,14 +419,14 @@ private:
 public:
     std::vector<std::shared_ptr<gpu_allocation_info>> detect_leaks() const override
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
         return detect_leaks_unsafe();
     }
 
     std::vector<std::shared_ptr<gpu_allocation_info>> get_allocations_by_tag(
         const std::string& tag) const override
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         std::vector<std::shared_ptr<gpu_allocation_info>> result;
 
@@ -432,7 +444,7 @@ public:
     std::vector<std::shared_ptr<gpu_allocation_info>> get_allocations_by_device(
         device_enum device_type, int device_index) const override
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         std::vector<std::shared_ptr<gpu_allocation_info>> result;
 
@@ -449,7 +461,7 @@ public:
 
     void clear_all_data() override
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         active_allocations_.clear();
         all_allocations_.clear();
@@ -476,7 +488,7 @@ public:
 
     std::string generate_report(bool include_call_stacks) const override
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         std::ostringstream oss;
         oss << "GPU Resource Tracker Report:\n";
@@ -524,7 +536,7 @@ public:
         oss << "Active Allocations by Device:\n";
         for (const auto& [device_key, allocations] : by_device)
         {
-            size_t total_bytes = std::accumulate(
+            size_t const total_bytes = std::accumulate(
                 allocations.begin(),
                 allocations.end(),
                 size_t{0},

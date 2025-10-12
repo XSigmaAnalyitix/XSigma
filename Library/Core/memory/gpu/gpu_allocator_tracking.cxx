@@ -33,6 +33,7 @@
 #include <iomanip>
 #include <numeric>
 #include <sstream>
+#include <utility>
 
 #include "common/configure.h"
 #include "util/exception.h"
@@ -49,11 +50,10 @@ cuda_error_info::cuda_error_info(
     cudaError_t cuda_error, const char* function_name, size_t size, int device) noexcept
     : error_code(static_cast<int>(cuda_error)),
       error_message(cudaGetErrorString(cuda_error)),
-      cuda_function(function_name ? function_name : "unknown"),
-      timestamp_us(
-          std::chrono::duration_cast<std::chrono::microseconds>(
-              std::chrono::steady_clock::now().time_since_epoch())
-              .count()),
+      cuda_function((function_name != nullptr) ? function_name : "unknown"),
+      timestamp_us(std::chrono::duration_cast<std::chrono::microseconds>(
+                       std::chrono::steady_clock::now().time_since_epoch())
+                       .count()),
       attempted_size(size),
       device_index(device)
 {
@@ -66,18 +66,18 @@ cuda_error_info::cuda_error_info(
 // ========== Enhanced GPU Allocation Record Implementation ==========
 
 enhanced_gpu_alloc_record::enhanced_gpu_alloc_record(
-    size_t             requested_size,
-    size_t             actual_size,
-    size_t             align,
-    device_enum        dev_type,
-    int                dev_index,
-    int64_t            alloc_time,
-    int64_t            alloc_id,
-    const std::string& allocation_tag,
-    const char*        file,
-    int                line,
-    const char*        func,
-    void*              stream) noexcept
+    size_t      requested_size,
+    size_t      actual_size,
+    size_t      align,
+    device_enum dev_type,
+    int         dev_index,
+    int64_t     alloc_time,
+    int64_t     alloc_id,
+    std::string allocation_tag,
+    const char* file,
+    int         line,
+    const char* func,
+    void*       stream) noexcept
     : requested_bytes(requested_size),
       allocated_bytes(actual_size),
       alignment(align),
@@ -85,7 +85,7 @@ enhanced_gpu_alloc_record::enhanced_gpu_alloc_record(
       device_index(dev_index),
       allocation_id(alloc_id),
       alloc_timestamp_us(alloc_time),
-      tag(allocation_tag),
+      tag(std::move(allocation_tag)),
       source_file(file),
       source_line(line),
       function_name(func),
@@ -119,8 +119,9 @@ gpu_bandwidth_metrics gpu_bandwidth_metrics::calculate(
     // Calculate effective bandwidth
     if (metrics.total_transfer_time_us > 0)
     {
-        double total_time_seconds = static_cast<double>(metrics.total_transfer_time_us) / 1000000.0;
-        double total_gb =
+        double const total_time_seconds =
+            static_cast<double>(metrics.total_transfer_time_us) / 1000000.0;
+        double const total_gb =
             static_cast<double>(metrics.total_bytes_transferred) / (1024.0 * 1024.0 * 1024.0);
         metrics.effective_bandwidth_gbps = total_gb / total_time_seconds;
     }
@@ -270,7 +271,9 @@ void* gpu_allocator_tracking::allocate_raw(
     void*                            stream)
 {
     if (bytes == 0)
+    {
         return nullptr;
+    }
 
     // Start timing for performance analysis
     auto start_time = std::chrono::steady_clock::now();
@@ -289,7 +292,7 @@ void* gpu_allocator_tracking::allocate_raw(
 
 #ifdef XSIGMA_ENABLE_CUDA
     // Record CUDA event for GPU-side timing if available
-    if (cuda_events_initialized_ && stream)
+    if (cuda_events_initialized_ && (stream != nullptr))
     {
         cudaEventRecord(start_event_, static_cast<cudaStream_t>(stream));
     }
@@ -332,7 +335,7 @@ void* gpu_allocator_tracking::allocate_raw(
 #ifdef XSIGMA_ENABLE_CUDA
         if (device_type_ == device_enum::CUDA)
         {
-            cudaError_t cuda_error = cudaGetLastError();
+            cudaError_t const cuda_error = cudaGetLastError();
             error_info =
                 cuda_error_info(cuda_error, "gpu_allocator::allocate", bytes, device_index_);
         }
@@ -357,13 +360,13 @@ void* gpu_allocator_tracking::allocate_raw(
 
 #ifdef XSIGMA_ENABLE_CUDA
     // Get GPU-side timing if CUDA events are available
-    if (cuda_events_initialized_ && stream)
+    if (cuda_events_initialized_ && (stream != nullptr))
     {
         cudaEventRecord(end_event_, static_cast<cudaStream_t>(stream));
         cudaEventSynchronize(end_event_);
 
-        float       gpu_time_ms = 0.0f;
-        cudaError_t result      = cudaEventElapsedTime(&gpu_time_ms, start_event_, end_event_);
+        float             gpu_time_ms = 0.0f;
+        cudaError_t const result = cudaEventElapsedTime(&gpu_time_ms, start_event_, end_event_);
         if (result == cudaSuccess)
         {
             // Use GPU timing if available (more accurate for GPU operations)
@@ -395,10 +398,11 @@ void* gpu_allocator_tracking::allocate_raw(
     UpdateMemoryUsage(bytes, true);
 
     // Add enhanced record if enabled
-    if (enhanced_tracking_enabled_ && ptr)
+    if (enhanced_tracking_enabled_ && (ptr != nullptr))
     {
-        std::unique_lock<std::shared_mutex> enhanced_lock(gpu_shared_mu_);
-        int64_t allocation_id = next_gpu_allocation_id_.fetch_add(1, std::memory_order_relaxed);
+        std::unique_lock<std::shared_mutex> const enhanced_lock(gpu_shared_mu_);
+        int64_t const                             allocation_id =
+            next_gpu_allocation_id_.fetch_add(1, std::memory_order_relaxed);
 
         gpu_records_.emplace_back(
             bytes,          // requested_bytes
@@ -456,7 +460,7 @@ void gpu_allocator_tracking::deallocate_raw(void* ptr, size_t bytes, void* strea
 
 #ifdef XSIGMA_ENABLE_CUDA
     // Record CUDA event for GPU-side timing if available
-    if (cuda_events_initialized_ && stream)
+    if (cuda_events_initialized_ && (stream != nullptr))
     {
         cudaEventRecord(start_event_, static_cast<cudaStream_t>(stream));
     }
@@ -466,8 +470,8 @@ void gpu_allocator_tracking::deallocate_raw(void* ptr, size_t bytes, void* strea
     int64_t allocation_id = 0;
     if (enhanced_tracking_enabled_)
     {
-        std::shared_lock<std::shared_mutex> enhanced_lock(gpu_shared_mu_);
-        auto                                record_it = std::find_if(
+        std::shared_lock<std::shared_mutex> const enhanced_lock(gpu_shared_mu_);
+        auto                                      record_it = std::find_if(
             gpu_records_.begin(),
             gpu_records_.end(),
             [](const auto& record)
@@ -511,13 +515,13 @@ void gpu_allocator_tracking::deallocate_raw(void* ptr, size_t bytes, void* strea
 
 #ifdef XSIGMA_ENABLE_CUDA
     // Get GPU-side timing if CUDA events are available
-    if (cuda_events_initialized_ && stream)
+    if (cuda_events_initialized_ && (stream != nullptr))
     {
         cudaEventRecord(end_event_, static_cast<cudaStream_t>(stream));
         cudaEventSynchronize(end_event_);
 
-        float       gpu_time_ms = 0.0f;
-        cudaError_t result      = cudaEventElapsedTime(&gpu_time_ms, start_event_, end_event_);
+        float             gpu_time_ms = 0.0f;
+        cudaError_t const result = cudaEventElapsedTime(&gpu_time_ms, start_event_, end_event_);
         if (result == cudaSuccess)
         {
             duration_us = static_cast<uint64_t>(gpu_time_ms * 1000.0f);
@@ -552,8 +556,8 @@ void gpu_allocator_tracking::deallocate_raw(void* ptr, size_t bytes, void* strea
     // Update enhanced record with deallocation timing if enabled and allocation_id is valid
     if (enhanced_tracking_enabled_ && allocation_id > 0)
     {
-        std::unique_lock<std::shared_mutex> enhanced_lock(gpu_shared_mu_);
-        auto                                record_it = std::find_if(
+        std::unique_lock<std::shared_mutex> const enhanced_lock(gpu_shared_mu_);
+        auto                                      record_it = std::find_if(
             gpu_records_.begin(),
             gpu_records_.end(),
             [allocation_id](const auto& record)
@@ -580,7 +584,7 @@ void gpu_allocator_tracking::deallocate_raw(void* ptr, size_t bytes, void* strea
 
 gpu_bandwidth_metrics gpu_allocator_tracking::GetBandwidthMetrics() const
 {
-    std::shared_lock<std::shared_mutex> lock(gpu_shared_mu_);
+    std::shared_lock<std::shared_mutex> const lock(gpu_shared_mu_);
 
     // For now, return basic metrics - would need detailed transfer tracking for full implementation
     gpu_bandwidth_metrics metrics;
@@ -593,9 +597,9 @@ gpu_bandwidth_metrics gpu_allocator_tracking::GetBandwidthMetrics() const
     if (total_allocs > 0 && total_time_us > 0)
     {
         // Estimate based on allocation patterns (simplified)
-        size_t estimated_bytes    = total_device_memory_.load(std::memory_order_relaxed);
-        double total_time_seconds = static_cast<double>(total_time_us) / 1000000.0;
-        double total_gb = static_cast<double>(estimated_bytes) / (1024.0 * 1024.0 * 1024.0);
+        size_t const estimated_bytes    = total_device_memory_.load(std::memory_order_relaxed);
+        double const total_time_seconds = static_cast<double>(total_time_us) / 1000000.0;
+        double const total_gb = static_cast<double>(estimated_bytes) / (1024.0 * 1024.0 * 1024.0);
         metrics.effective_bandwidth_gbps = total_gb / total_time_seconds;
 
         if (metrics.peak_bandwidth_gbps > 0.0)
@@ -617,7 +621,7 @@ atomic_timing_stats gpu_allocator_tracking::GetGPUTimingStats() const noexcept
 
 std::vector<enhanced_gpu_alloc_record> gpu_allocator_tracking::GetEnhancedGPURecords() const
 {
-    std::shared_lock<std::shared_mutex> lock(gpu_shared_mu_);
+    std::shared_lock<std::shared_mutex> const lock(gpu_shared_mu_);
     return gpu_records_;  // Return copy
 }
 
@@ -638,15 +642,15 @@ void gpu_allocator_tracking::ResetGPUTimingStats() noexcept
 
 std::tuple<double, double, double> gpu_allocator_tracking::GetGPUEfficiencyMetrics() const
 {
-    std::shared_lock<std::shared_mutex> lock(gpu_shared_mu_);
+    std::shared_lock<std::shared_mutex> const lock(gpu_shared_mu_);
 
     // Calculate memory coalescing efficiency (simplified - would need detailed access pattern analysis)
-    double coalescing_efficiency = 0.85;  // Assume reasonable coalescing for now
+    double const coalescing_efficiency = 0.85;  // Assume reasonable coalescing for now
 
     // Calculate memory utilization
-    size_t total_allocated = total_device_memory_.load(std::memory_order_relaxed) +
-                             total_unified_memory_.load(std::memory_order_relaxed) +
-                             total_pinned_memory_.load(std::memory_order_relaxed);
+    size_t const total_allocated = total_device_memory_.load(std::memory_order_relaxed) +
+                                   total_unified_memory_.load(std::memory_order_relaxed) +
+                                   total_pinned_memory_.load(std::memory_order_relaxed);
 
     double memory_utilization = 0.0;
     if (device_info_.total_memory_bytes > 0)
@@ -657,7 +661,7 @@ std::tuple<double, double, double> gpu_allocator_tracking::GetGPUEfficiencyMetri
     }
 
     // Calculate overall GPU efficiency score
-    double gpu_efficiency_score = (coalescing_efficiency + memory_utilization) / 2.0;
+    double const gpu_efficiency_score = (coalescing_efficiency + memory_utilization) / 2.0;
 
     return std::make_tuple(coalescing_efficiency, memory_utilization, gpu_efficiency_score);
 }
@@ -665,8 +669,8 @@ std::tuple<double, double, double> gpu_allocator_tracking::GetGPUEfficiencyMetri
 std::string gpu_allocator_tracking::GenerateGPUReport(
     bool include_allocations, bool include_cuda_info) const
 {
-    std::shared_lock<std::shared_mutex> lock(gpu_shared_mu_);
-    std::ostringstream                  report;
+    std::shared_lock<std::shared_mutex> const lock(gpu_shared_mu_);
+    std::ostringstream                        report;
 
     report << "=== GPU Memory Allocation Tracking Report ===\n\n";
 
@@ -675,7 +679,7 @@ std::string gpu_allocator_tracking::GenerateGPUReport(
     report << "  Name: " << device_info_.name << "\n";
     report << "  Type: " << (device_type_ == device_enum::CUDA ? "CUDA" : "Other") << "\n";
     report << "  Index: " << device_index_ << "\n";
-    report << "  Total Memory: " << (device_info_.total_memory_bytes / (1024 * 1024)) << " MB\n";
+    report << "  Total Memory: " << (device_info_.total_memory_bytes / (1024ULL)) << " MB\n";
     report << "  Memory Bandwidth: " << device_info_.memory_bandwidth_gb_per_sec << " GB/s\n\n";
 
     // Memory Usage Summary
@@ -684,10 +688,10 @@ std::string gpu_allocator_tracking::GenerateGPUReport(
     auto pinned_mem  = total_pinned_memory_.load(std::memory_order_relaxed);
 
     report << "Memory Usage Summary:\n";
-    report << "  Device Memory: " << (device_mem / (1024 * 1024)) << " MB\n";
-    report << "  Unified Memory: " << (unified_mem / (1024 * 1024)) << " MB\n";
-    report << "  Pinned Memory: " << (pinned_mem / (1024 * 1024)) << " MB\n";
-    report << "  Total Allocated: " << ((device_mem + unified_mem + pinned_mem) / (1024 * 1024))
+    report << "  Device Memory: " << (device_mem / (1024ULL)) << " MB\n";
+    report << "  Unified Memory: " << (unified_mem / (1024ULL)) << " MB\n";
+    report << "  Pinned Memory: " << (pinned_mem / (1024ULL)) << " MB\n";
+    report << "  Total Allocated: " << ((device_mem + unified_mem + pinned_mem) / (1024ULL))
            << " MB\n\n";
 
     // Performance Statistics
@@ -793,7 +797,7 @@ void gpu_allocator_tracking::UpdateMemoryUsage(size_t bytes, bool is_allocation)
 }
 
 void gpu_allocator_tracking::LogGPUOperation(
-    const std::string& operation, const std::string& details) const
+    const std::string& /*operation*/, const std::string& /*details*/) const
 {
     auto current_log_level = gpu_log_level_.load(std::memory_order_relaxed);
     if (current_log_level >= gpu_tracking_log_level::DEBUG)

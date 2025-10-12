@@ -174,7 +174,7 @@ struct XSIGMA_VISIBILITY gpu_runtime_info
  * }
  * 
  * // Find best device for Monte Carlo simulation
- * auto device = manager.select_optimal_device_for_monte_carlo(1024 * 1024 * 1024); // 1GB
+ * auto device = manager.select_optimal_device_for_monte_carlo(1024ULL * 1024); // 1GB
  * if (device.device_index >= 0) {
  *     std::cout << "Selected device: " << device.name << "\n";
  * }

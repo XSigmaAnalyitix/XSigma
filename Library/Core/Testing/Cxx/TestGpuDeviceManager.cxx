@@ -122,7 +122,7 @@ XSIGMATEST(GpuDeviceManager, enumerates_available_devices)
             "Device {}: {} ({}MB)",
             device.device_index,
             device.name,
-            device.total_memory / (1024 * 1024));
+            device.total_memory / (1024ULL));
     }
 
     XSIGMA_LOG_INFO("GPU device manager device enumeration test passed");
@@ -151,9 +151,7 @@ XSIGMATEST(GpuDeviceManager, retrieves_specific_device_info)
             EXPECT_GT(device_info.total_memory, 0);
 
             XSIGMA_LOG_INFO(
-                "Device 0 info: {} ({}MB)",
-                device_info.name,
-                device_info.total_memory / (1024 * 1024));
+                "Device 0 info: {} ({}MB)", device_info.name, device_info.total_memory / (1024ULL));
 
             XSIGMA_LOG_INFO("GPU device manager specific device info test passed");
         }

@@ -24,7 +24,7 @@ gpu_allocator_config gpu_allocator_config::create_default(
     config.strategy     = strategy;
     config.device_type  = device_enum::CUDA;
     config.device_index = device_index;
-    config.alignment    = 256;  // Optimal for CUDA coalescing
+    config.alignment    = 256ULL;  // Optimal for CUDA coalescing
 
     switch (strategy)
     {
@@ -33,14 +33,14 @@ gpu_allocator_config gpu_allocator_config::create_default(
         break;
 
     case gpu_allocation_strategy::POOL:
-        config.pool_min_block_size = 4096;              // 4KB minimum
-        config.pool_max_block_size = 64 * 1024 * 1024;  // 64MB maximum
+        config.pool_min_block_size = 4096;             // 4KB minimum
+        config.pool_max_block_size = 64ULL * 1024ULL;  // 64MB maximum
         config.pool_growth_factor  = 1.5;
-        config.pool_max_size       = 512ULL * 1024 * 1024;  // 512MB pool
+        config.pool_max_size       = 512ULL * 1024ULL;  // 512MB pool
         break;
 
     case gpu_allocation_strategy::CACHING:
-        config.cache_max_bytes = 256ULL * 1024 * 1024;  // 256MB cache
+        config.cache_max_bytes = 256ULL * 1024ULL;  // 256MB cache
         break;
     }
 
@@ -52,8 +52,8 @@ gpu_allocator_config gpu_allocator_config::create_monte_carlo_optimized(int devi
     auto config = create_default(gpu_allocation_strategy::CACHING, device_index);
 
     // Monte Carlo simulations benefit from caching with larger cache
-    config.cache_max_bytes = 1ULL * 1024 * 1024 * 1024;  // 1GB cache
-    config.alignment       = 512;  // Larger alignment for vectorized operations
+    config.cache_max_bytes = 1ULL * 1024ULL * 1024;  // 1GB cache
+    config.alignment       = 512;                    // Larger alignment for vectorized operations
 
     // Log info (simplified for build compatibility)
     return config;
@@ -64,17 +64,18 @@ gpu_allocator_config gpu_allocator_config::create_pde_optimized(int device_index
     auto config = create_default(gpu_allocation_strategy::POOL, device_index);
 
     // PDE solvers typically use large, long-lived allocations
-    config.pool_min_block_size = 64 * 1024;                  // 64KB minimum
-    config.pool_max_block_size = 256 * 1024 * 1024;          // 256MB maximum
-    config.pool_max_size       = 2ULL * 1024 * 1024 * 1024;  // 2GB pool
-    config.alignment           = 1024;  // Large alignment for matrix operations
+    config.pool_min_block_size = 64ULL * 1024;           // 64KB minimum
+    config.pool_max_block_size = 256ULL * 1024ULL;       // 256MB maximum
+    config.pool_max_size       = 2ULL * 1024ULL * 1024;  // 2GB pool
+    config.alignment           = 1024;                   // Large alignment for matrix operations
 
     // Log info (simplified for build compatibility)
     return config;
 }
 
 template <typename T>
-std::unique_ptr<void> gpu_allocator_factory::create_allocator(const gpu_allocator_config& config)
+std::unique_ptr<void> gpu_allocator_factory::create_allocator(
+    const gpu_allocator_config& /*config*/)
 {
     // Note: gpu_allocator class has been removed. This factory method is deprecated.
     // Use direct CUDA allocation or cuda_caching_allocator instead.
@@ -89,9 +90,9 @@ gpu_allocation_strategy gpu_allocator_factory::recommend_strategy(
     size_t avg_allocation_size, double allocation_frequency, double allocation_lifetime)
 {
     // Simple heuristics for strategy recommendation
-    const size_t large_allocation_threshold = 1024 * 1024;  // 1MB
-    const double high_frequency_threshold   = 100.0;        // 100 allocs/sec
-    const double short_lifetime_threshold   = 1.0;          // 1 second
+    const size_t large_allocation_threshold = 1024ULL;  // 1MB
+    const double high_frequency_threshold   = 100.0;    // 100 allocs/sec
+    const double short_lifetime_threshold   = 1.0;      // 1 second
 
     if (allocation_frequency > high_frequency_threshold &&
         allocation_lifetime < short_lifetime_threshold)
@@ -111,7 +112,7 @@ gpu_allocation_strategy gpu_allocator_factory::recommend_strategy(
 }
 
 bool gpu_allocator_factory::validate_device_support(
-    gpu_allocation_strategy strategy, device_enum device_type, int device_index)
+    gpu_allocation_strategy /*strategy*/, device_enum device_type, int device_index)
 {
     // Only CUDA devices are supported currently
     if (device_type != device_enum::CUDA)
@@ -121,15 +122,11 @@ bool gpu_allocator_factory::validate_device_support(
 
 #ifdef XSIGMA_ENABLE_CUDA
     // Validate CUDA device exists
-    int         device_count = 0;
-    cudaError_t result       = cudaGetDeviceCount(&device_count);
-    if (result != cudaSuccess || device_index < 0 || device_index >= device_count)
-    {
-        return false;
-    }
+    int               device_count = 0;
+    cudaError_t const result       = cudaGetDeviceCount(&device_count);
 
-    // All strategies are supported on valid CUDA devices
-    return true;
+    return (result == cudaSuccess && device_index >= 0 && device_index < device_count);
+
 #else
     return false;
 #endif
@@ -155,42 +152,42 @@ std::string gpu_allocator_factory::strategy_name(gpu_allocation_strategy strateg
 // deprecated and throws an exception.
 
 // Caching allocator template instantiations for common alignments
-template std::unique_ptr<cuda_caching_allocator_template<float, 64>>
-gpu_allocator_factory::create_caching_allocator<float, 64>(const gpu_allocator_config&);
+template std::unique_ptr<cuda_caching_allocator_template<float, 64ULL>>
+gpu_allocator_factory::create_caching_allocator<float, 64ULL>(const gpu_allocator_config&);
 
 template std::unique_ptr<cuda_caching_allocator_template<float, 128>>
 gpu_allocator_factory::create_caching_allocator<float, 128>(const gpu_allocator_config&);
 
-template std::unique_ptr<cuda_caching_allocator_template<float, 256>>
-gpu_allocator_factory::create_caching_allocator<float, 256>(const gpu_allocator_config&);
+template std::unique_ptr<cuda_caching_allocator_template<float, 256ULL>>
+gpu_allocator_factory::create_caching_allocator<float, 256ULL>(const gpu_allocator_config&);
 
 template std::unique_ptr<cuda_caching_allocator_template<float, 512>>
 gpu_allocator_factory::create_caching_allocator<float, 512>(const gpu_allocator_config&);
 
-template std::unique_ptr<cuda_caching_allocator_template<double, 64>>
-gpu_allocator_factory::create_caching_allocator<double, 64>(const gpu_allocator_config&);
+template std::unique_ptr<cuda_caching_allocator_template<double, 64ULL>>
+gpu_allocator_factory::create_caching_allocator<double, 64ULL>(const gpu_allocator_config&);
 
 template std::unique_ptr<cuda_caching_allocator_template<double, 128>>
 gpu_allocator_factory::create_caching_allocator<double, 128>(const gpu_allocator_config&);
 
-template std::unique_ptr<cuda_caching_allocator_template<double, 256>>
-gpu_allocator_factory::create_caching_allocator<double, 256>(const gpu_allocator_config&);
+template std::unique_ptr<cuda_caching_allocator_template<double, 256ULL>>
+gpu_allocator_factory::create_caching_allocator<double, 256ULL>(const gpu_allocator_config&);
 
 template std::unique_ptr<cuda_caching_allocator_template<double, 512>>
 gpu_allocator_factory::create_caching_allocator<double, 512>(const gpu_allocator_config&);
 
 // Additional instantiations for Random library (uint64_t, uint32_t)
-template std::unique_ptr<cuda_caching_allocator_template<uint64_t, 64>>
-gpu_allocator_factory::create_caching_allocator<uint64_t, 64>(const gpu_allocator_config&);
+template std::unique_ptr<cuda_caching_allocator_template<uint64_t, 64ULL>>
+gpu_allocator_factory::create_caching_allocator<uint64_t, 64ULL>(const gpu_allocator_config&);
 
-template std::unique_ptr<cuda_caching_allocator_template<uint64_t, 256>>
-gpu_allocator_factory::create_caching_allocator<uint64_t, 256>(const gpu_allocator_config&);
+template std::unique_ptr<cuda_caching_allocator_template<uint64_t, 256ULL>>
+gpu_allocator_factory::create_caching_allocator<uint64_t, 256ULL>(const gpu_allocator_config&);
 
-template std::unique_ptr<cuda_caching_allocator_template<uint32_t, 64>>
-gpu_allocator_factory::create_caching_allocator<uint32_t, 64>(const gpu_allocator_config&);
+template std::unique_ptr<cuda_caching_allocator_template<uint32_t, 64ULL>>
+gpu_allocator_factory::create_caching_allocator<uint32_t, 64ULL>(const gpu_allocator_config&);
 
-template std::unique_ptr<cuda_caching_allocator_template<uint32_t, 256>>
-gpu_allocator_factory::create_caching_allocator<uint32_t, 256>(const gpu_allocator_config&);
+template std::unique_ptr<cuda_caching_allocator_template<uint32_t, 256ULL>>
+gpu_allocator_factory::create_caching_allocator<uint32_t, 256ULL>(const gpu_allocator_config&);
 
 }  // namespace gpu
 }  // namespace xsigma

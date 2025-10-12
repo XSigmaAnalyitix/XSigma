@@ -327,7 +327,7 @@ public:
         if (n == 0)
             return nullptr;
 
-        void* ptr =nullptr;// allocator_device::allocate(n * scalar_size);
+        void* ptr = nullptr;  // allocator_device::allocate(n * scalar_size);
         return static_cast<pointer>(ptr);
     }
 
@@ -358,7 +358,7 @@ public:
         device_enum device_type    = device_enum::CUDA,
         int         device_index   = 0,
         size_type   min_block_size = 1024,
-        size_type   max_pool_size  = 1024 * 1024 * 1024)
+        size_type   max_pool_size  = 1024ULL * 1024ULL)
     {
         // No-op: Direct CUDA allocation doesn't use pools
         (void)device_type;

@@ -25,7 +25,6 @@
 #include <type_traits>
 #include <vector>
 
-
 #include "common/macros.h"
 #include "memory/device.h"
 
@@ -52,11 +51,11 @@ constexpr size_t CUDA_COALESCING_BOUNDARY = 128;
 /** @brief CUDA texture alignment (512 bytes) */
 constexpr size_t CUDA_TEXTURE_ALIGNMENT = 512;
 
-/** @brief SIMD vector alignment for AVX-512 (64 bytes) */
-constexpr size_t SIMD_VECTOR_ALIGNMENT = 64;
+/** @brief SIMD vector alignment for AVX-512 (64ULL bytes) */
+constexpr size_t SIMD_VECTOR_ALIGNMENT = 64ULL;
 
-/** @brief Cache line size (64 bytes on most modern CPUs) */
-constexpr size_t CACHE_LINE_SIZE = 64;
+/** @brief Cache line size (64ULL bytes on most modern CPUs) */
+constexpr size_t CACHE_LINE_SIZE = 64ULL;
 
 /** @brief Page size (4KB on most systems) */
 constexpr size_t PAGE_SIZE = 4096;

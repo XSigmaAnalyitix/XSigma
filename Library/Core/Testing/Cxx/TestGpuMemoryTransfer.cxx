@@ -171,11 +171,11 @@ XSIGMATEST(GpuMemoryTransfer, calculates_optimal_chunk_sizes)
 
     // Test optimal chunk size calculation
     size_t chunk_size_h2d = transfer_manager.get_optimal_chunk_size(
-        1024 * 1024, transfer_direction::HOST_TO_DEVICE, device_enum::CUDA);
+        1024ULL, transfer_direction::HOST_TO_DEVICE, device_enum::CUDA);
     EXPECT_GT(chunk_size_h2d, 0);
 
     size_t chunk_size_d2h = transfer_manager.get_optimal_chunk_size(
-        2 * 1024 * 1024, transfer_direction::DEVICE_TO_HOST, device_enum::CUDA);
+        2 * 1024ULL, transfer_direction::DEVICE_TO_HOST, device_enum::CUDA);
     EXPECT_GT(chunk_size_d2h, 0);
 
     size_t chunk_size_d2d = transfer_manager.get_optimal_chunk_size(

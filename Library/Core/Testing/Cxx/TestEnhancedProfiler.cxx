@@ -1081,10 +1081,10 @@ bool test_memory_tracking_edge_cases()
         tracker.track_deallocation(nullptr);
 
         // Test very large allocations (boundary condition)
-        void* large_ptr = std::malloc(1024 * 1024 * 100);  // 100MB
+        void* large_ptr = std::malloc(1024ULL * 100);  // 100MB
         if (large_ptr)
         {
-            tracker.track_allocation(large_ptr, 1024 * 1024 * 100, "large_allocation");
+            tracker.track_allocation(large_ptr, 1024ULL * 100, "large_allocation");
             tracker.track_deallocation(large_ptr);
             std::free(large_ptr);
         }

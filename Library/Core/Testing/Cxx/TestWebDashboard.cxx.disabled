@@ -39,7 +39,7 @@ public:
     {
         allocator_stats stats;
         stats.num_allocs = 100;
-        stats.bytes_in_use = 1024 * 1024;
+        stats.bytes_in_use = 1024ULL;
         stats.peak_bytes_in_use = 2048 * 1024;
         stats.largest_alloc_size = 4096;
         return stats;
