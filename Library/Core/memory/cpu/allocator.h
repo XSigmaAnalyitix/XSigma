@@ -546,7 +546,7 @@ public:
      * assert(id1 != id2);  // IDs are unique
      * ```
      */
-    virtual int64_t AllocationId(XSIGMA_UNUSED const void* ptr) const noexcept { return 0; }
+    virtual int64_t AllocationId(XSIGMA_UNUSED const void* ptr) const { return 0; }
 
     /**
      * @brief Returns allocated size with potentially slow computation.

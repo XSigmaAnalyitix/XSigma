@@ -37,7 +37,7 @@ namespace xsigma
 // Forward declarations of helper functions defined in TestCPUMemory.cxx
 struct TestStruct;
 bool IsAligned(void* ptr, size_t alignment);
-void FillMemory(void* ptr, size_t size, uint8_t pattern);
+void memset(void* ptr, size_t size, uint8_t pattern);
 bool ValidateMemory(void* ptr, size_t size, uint8_t pattern);
 }  // namespace xsigma
 XSIGMATEST(CPUMemoryStats, unified_resource_stats_basic_functionality)

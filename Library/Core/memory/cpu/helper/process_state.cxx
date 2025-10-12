@@ -29,10 +29,15 @@
 #include "memory/cpu/helper/process_state.h"
 
 #include <atomic>
+#include <cstdint>
 #include <cstring>
+#include <memory>
 #include <mutex>
+#include <string>
+#include <utility>
 #include <vector>
 
+#include "common/macros.h"
 #include "experimental/profiler/env_var.h"
 #include "logging/logger.h"
 #include "memory/cpu/allocator.h"
@@ -90,7 +95,7 @@ Allocator* process_state::GetCPUAllocator(int numa_node)
         return cpu_allocators_cache_[numa_node];
     }
 
-    std::lock_guard<std::mutex> lock(mu_);
+    std::lock_guard<std::mutex> const lock(mu_);
     while (cpu_allocators_.size() <= static_cast<size_t>(numa_node))
     {
         // If visitors have been defined we need an Allocator built from
@@ -99,8 +104,8 @@ Allocator* process_state::GetCPUAllocator(int numa_node)
         const bool alloc_visitors_defined =
             (!cpu_alloc_visitors_.empty() || !cpu_free_visitors_.empty());
 
-        bool use_allocator_bfc      = false;
-        bool use_allocator_tracking = false;
+        bool       use_allocator_bfc      = false;
+        bool const use_allocator_tracking = false;
 
         XSIGMA_UNUSED auto status = read_bool_from_env_var(
             "CPU_ALLOCATOR_USE_BFC", alloc_visitors_defined, &use_allocator_bfc);
@@ -116,9 +121,9 @@ Allocator* process_state::GetCPUAllocator(int numa_node)
             // TODO(reedwm): evaluate whether 64GB by default is the best choice.
             int64_t cpu_mem_limit_in_mb = -1;
 
-            XSIGMA_UNUSED bool status = read_int64_from_env_var(
+            XSIGMA_UNUSED bool const status = read_int64_from_env_var(
                 "CPU_BFC_MEM_LIMIT_IN_MB", 1LL << 16 /*64GB max by default*/, &cpu_mem_limit_in_mb);
-            int64_t cpu_mem_limit = cpu_mem_limit_in_mb * (1LL << 20);
+            int64_t const cpu_mem_limit = cpu_mem_limit_in_mb * (1LL << 20);
             XSIGMA_CHECK_DEBUG(sub_allocator != nullptr);
 
             allocator_bfc::Options allocator_opts;
@@ -170,7 +175,7 @@ Allocator* process_state::GetCPUAllocator(int numa_node)
             cpu_allocators_cache_[cpu_allocators_.size() - 1] = allocator;
             cpu_allocators_cached_.fetch_add(1, std::memory_order_release);
         }
-        if (!sub_allocator)
+        if (sub_allocator == nullptr)
         {
             XSIGMA_CHECK_DEBUG(cpu_alloc_visitors_.empty() && cpu_free_visitors_.empty());
         }
@@ -181,7 +186,7 @@ Allocator* process_state::GetCPUAllocator(int numa_node)
 void process_state::AddCPUAllocVisitor(sub_allocator::Visitor visitor)
 {
     XSIGMA_LOG_INFO("AddCPUAllocVisitor");
-    std::lock_guard<std::mutex> lock(mu_);
+    std::lock_guard<std::mutex> const lock(mu_);
     XSIGMA_CHECK(
         cpu_allocators_.empty(),
         "AddCPUAllocVisitor must be called prior to first call to "
@@ -191,7 +196,7 @@ void process_state::AddCPUAllocVisitor(sub_allocator::Visitor visitor)
 
 void process_state::AddCPUFreeVisitor(sub_allocator::Visitor visitor)
 {
-    std::lock_guard<std::mutex> lock(mu_);
+    std::lock_guard<std::mutex> const lock(mu_);
     XSIGMA_CHECK(
         cpu_allocators_.empty(),
         "AddCPUFreeVisitor must be called prior to first call to "
@@ -202,7 +207,7 @@ void process_state::AddCPUFreeVisitor(sub_allocator::Visitor visitor)
 
 void process_state::TestOnlyReset()
 {
-    std::lock_guard<std::mutex> lock(mu_);
+    std::lock_guard<std::mutex> const lock(mu_);
     // Don't delete this value because it's static.
     Allocator* default_cpu_allocator = allocator_cpu_base();
     mem_desc_map_.clear();

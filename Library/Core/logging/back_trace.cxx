@@ -5,28 +5,28 @@
 
 #include "logging/back_trace.h"
 
-#include <string>
-#include <vector>
+#include <fmt/format.h>
+
 #include <cstdlib>
 #include <functional>
 #include <optional>
-
-#include <fmt/format.h>
+#include <string>
+#include <vector>
 
 #include "common/pointer.h"
 #include "util/string_util.h"
 
 // Platform-specific includes
 #ifdef _WIN32
-    #include <windows.h>
-    #include <dbghelp.h>
-    #pragma comment(lib, "Dbghelp.lib")
-    #define SUPPORTS_BACKTRACE 1
+#include <dbghelp.h>
+#include <windows.h>
+#pragma comment(lib, "Dbghelp.lib")
+#define SUPPORTS_BACKTRACE 1
 #elif defined(__unix__) || defined(__APPLE__)
-    #include <execinfo.h>
-    #define SUPPORTS_BACKTRACE 1
+#include <execinfo.h>
+#define SUPPORTS_BACKTRACE 1
 #else
-    #define SUPPORTS_BACKTRACE 0
+#define SUPPORTS_BACKTRACE 0
 #endif
 
 #if !defined(_WIN32)
@@ -159,15 +159,15 @@ std::vector<stack_frame> back_trace::capture(const backtrace_options& options)
 
 #if SUPPORTS_BACKTRACE
     // Skip this frame (capture) plus user-requested frames
-    size_t frames_to_skip = options.frames_to_skip + 1;
+    size_t const frames_to_skip = options.frames_to_skip + 1;
 
 #ifdef _WIN32
     // Windows implementation using CaptureStackBackTrace
-    const size_t max_frames = frames_to_skip + options.maximum_number_of_frames;
+    const size_t       max_frames = frames_to_skip + options.maximum_number_of_frames;
     std::vector<void*> callstack(max_frames, nullptr);
 
     // Capture stack frames
-    USHORT captured = CaptureStackBackTrace(
+    USHORT const captured = CaptureStackBackTrace(
         static_cast<DWORD>(frames_to_skip),
         static_cast<DWORD>(options.maximum_number_of_frames),
         callstack.data(),
@@ -185,36 +185,38 @@ std::vector<stack_frame> back_trace::capture(const backtrace_options& options)
     }
 
     // Resolve symbols
-    HANDLE process = GetCurrentProcess();
-    const size_t buffer_size = sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR);
+    HANDLE            process     = GetCurrentProcess();
+    const size_t      buffer_size = sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR);
     std::vector<char> buffer(buffer_size);
-    SYMBOL_INFO* symbol = reinterpret_cast<SYMBOL_INFO*>(buffer.data());
+    auto*             symbol = reinterpret_cast<SYMBOL_INFO*>(buffer.data());
 
     for (size_t i = 0; i < callstack.size(); ++i)
     {
         stack_frame frame;
-        frame.frame_number = i;
+        frame.frame_number   = i;
         frame.return_address = callstack[i];
 
         // Get symbol information
-        symbol->MaxNameLen = MAX_SYM_NAME;
+        symbol->MaxNameLen   = MAX_SYM_NAME;
         symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
         DWORD64 displacement = 0;
-        if (SymFromAddr(process, reinterpret_cast<DWORD64>(callstack[i]), &displacement, symbol))
+        if (SymFromAddr(process, reinterpret_cast<DWORD64>(callstack[i]), &displacement, symbol) !=
+            0)
         {
-            frame.function_name = symbol->Name;
+            frame.function_name        = symbol->Name;
             frame.offset_into_function = fmt::format("0x{:x}", displacement);
         }
         else
         {
-            frame.function_name = fmt::format("<unknown> [0x{:x}]", reinterpret_cast<uintptr_t>(callstack[i]));
+            frame.function_name =
+                fmt::format("<unknown> [0x{:x}]", reinterpret_cast<uintptr_t>(callstack[i]));
         }
 
         // Get module information
         IMAGEHLP_MODULE64 module_info;
         module_info.SizeOfStruct = sizeof(IMAGEHLP_MODULE64);
-        if (SymGetModuleInfo64(process, reinterpret_cast<DWORD64>(callstack[i]), &module_info))
+        if (SymGetModuleInfo64(process, reinterpret_cast<DWORD64>(callstack[i]), &module_info) != 0)
         {
             frame.object_file = module_info.ModuleName;
         }
@@ -223,9 +225,13 @@ std::vector<stack_frame> back_trace::capture(const backtrace_options& options)
         if (options.include_source_info)
         {
             IMAGEHLP_LINE64 line_info;
-            line_info.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+            line_info.SizeOfStruct  = sizeof(IMAGEHLP_LINE64);
             DWORD line_displacement = 0;
-            if (SymGetLineFromAddr64(process, reinterpret_cast<DWORD64>(callstack[i]), &line_displacement, &line_info))
+            if (SymGetLineFromAddr64(
+                    process,
+                    reinterpret_cast<DWORD64>(callstack[i]),
+                    &line_displacement,
+                    &line_info) != 0)
             {
                 frame.source_file = line_info.FileName;
                 frame.source_line = static_cast<int>(line_info.LineNumber);
@@ -235,7 +241,7 @@ std::vector<stack_frame> back_trace::capture(const backtrace_options& options)
         result.push_back(frame);
     }
 
-#else  // Unix/Linux/macOS implementation
+#else   // Unix/Linux/macOS implementation
     std::vector<void*> callstack(frames_to_skip + options.maximum_number_of_frames, nullptr);
 
     // Capture raw stack addresses
@@ -250,7 +256,7 @@ std::vector<stack_frame> back_trace::capture(const backtrace_options& options)
     callstack.resize(static_cast<size_t>(number_of_frames));
 
     // Get symbol information
-    std::unique_ptr<char*, std::function<void(char**)>> raw_symbols(
+    std::unique_ptr<char*, std::function<void(char**)> > raw_symbols(
         ::backtrace_symbols(callstack.data(), static_cast<int>(callstack.size())), free);
 
     if (!raw_symbols)
@@ -281,14 +287,14 @@ std::vector<stack_frame> back_trace::capture(const backtrace_options& options)
         }
 
         stack_frame frame;
-        frame.frame_number    = frame_number;
-        frame.return_address  = callstack[frame_number];
+        frame.frame_number   = frame_number;
+        frame.return_address = callstack[frame_number];
 
         if (frame_info)
         {
-            frame.function_name         = frame_info->function_name;
-            frame.object_file           = frame_info->object_file;
-            frame.offset_into_function  = frame_info->offset_into_function;
+            frame.function_name        = frame_info->function_name;
+            frame.object_file          = frame_info->object_file;
+            frame.offset_into_function = frame_info->offset_into_function;
         }
         else
         {
@@ -306,8 +312,7 @@ std::vector<stack_frame> back_trace::capture(const backtrace_options& options)
 }
 
 std::string back_trace::format(
-    const std::vector<stack_frame>& frames,
-    const backtrace_options&        options)
+    const std::vector<stack_frame>& frames, const backtrace_options& options)
 {
     if (frames.empty())
     {
@@ -334,7 +339,8 @@ std::string back_trace::format(
         // Detailed format
         for (const auto& frame : frames)
         {
-            std::string line = fmt::format("frame #{}: {}", frame.frame_number, frame.function_name);
+            std::string line =
+                fmt::format("frame #{}: {}", frame.frame_number, frame.function_name);
 
             if (options.include_offsets && !frame.offset_into_function.empty())
             {
@@ -344,13 +350,13 @@ std::string back_trace::format(
             if (options.include_addresses || !frame.object_file.empty())
             {
                 line += " (";
-                if (options.include_addresses && frame.return_address)
+                if (options.include_addresses && (frame.return_address != nullptr))
                 {
                     line += fmt::format("{}", frame.return_address);
                 }
                 if (!frame.object_file.empty())
                 {
-                    if (options.include_addresses && frame.return_address)
+                    if (options.include_addresses && (frame.return_address != nullptr))
                     {
                         line += " in ";
                     }

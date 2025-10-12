@@ -4,10 +4,9 @@
 
 #include "smp/STDThread/thread_local_backend.h"
 
-#include <algorithm>
-#include <cmath>       // For std::floor & std::log2
-#include <functional>  // For std::hash
-#include <thread>      // For std::thread
+#include <cmath>  // For std::floor & std::log2
+#include <cstddef>
+#include <mutex>
 
 #include "smp/STDThread/thread_pool.h"
 
@@ -20,7 +19,7 @@ static ThreadIdType GetThreadId()
 }
 
 // 32 bit FNV-1a hash function
-inline HashType GetHash(ThreadIdType id)
+static inline HashType GetHash(ThreadIdType id)
 {
     const HashType offset_basis = 2166136261U;
     const HashType FNV_prime    = 16777619U;

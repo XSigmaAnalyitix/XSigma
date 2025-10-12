@@ -249,7 +249,6 @@ private:
         {                                                                             \
             throw xsigma::exception(loc, msg, xsigma::exception_category::error_cat); \
         }                                                                             \
-        else                                                                          \
         {                                                                             \
             XSIGMA_LOG_FATAL("Fatal error ({}): {}", #error_cat, msg);                \
         }                                                                             \

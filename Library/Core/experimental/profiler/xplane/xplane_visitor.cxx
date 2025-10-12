@@ -33,15 +33,15 @@ limitations under the License.
 ==============================================================================*/
 #include "experimental/profiler/xplane/xplane_visitor.h"
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
 
 #include "experimental/profiler/xplane/xplane.h"
-#include "logging/logger.h"
+#include "util/exception.h"
 #include "util/flat_hash.h"
-#include "util/string_util.h"
 
 namespace xsigma
 {
@@ -128,8 +128,8 @@ void xplane_visitor::build_event_type_map(
         return;
     for (const auto& event_metadata : plane->event_metadata())
     {
-        uint64_t    metadata_id = event_metadata.first;
-        const auto& metadata    = event_metadata.second;
+        uint64_t const metadata_id = event_metadata.first;
+        const auto&    metadata    = event_metadata.second;
         for (const auto& event_type_getter : event_type_getter_list)
         {
             std::optional<int64_t> event_type = event_type_getter(metadata.name());
@@ -167,8 +167,8 @@ void xplane_visitor::build_stat_type_map(
         return;
     for (const auto& stat_metadata : plane->stat_metadata())
     {
-        uint64_t    metadata_id = stat_metadata.first;
-        const auto& metadata    = stat_metadata.second;
+        uint64_t const metadata_id = stat_metadata.first;
+        const auto&    metadata    = stat_metadata.second;
         for (const auto& stat_type_getter : stat_type_getter_list)
         {
             std::optional<int64_t> stat_type = stat_type_getter(metadata.name());
@@ -185,7 +185,7 @@ void xplane_visitor::build_stat_type_map(
 
 const x_stat_metadata* xplane_visitor::get_stat_metadata(int64_t stat_metadata_id) const
 {
-    if (!plane_)
+    if (plane_ == nullptr)
     {
         return &x_stat_metadata::default_instance();
     }

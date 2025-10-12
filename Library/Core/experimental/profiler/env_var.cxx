@@ -36,17 +36,19 @@ limitations under the License.
 
 #include <algorithm>  // for transform
 #include <cctype>     // for tolower
-#include <cstdlib>    // for getenv
-#include <memory>     // for _Simple_types
-#include <string>     // for char_traits, allocator, operator==, string, basic_string
+#include <cstdint>
+#include <cstdlib>  // for getenv
+#include <sstream>
+#include <string>  // for char_traits, allocator, operator==, string, basic_string
+#include <string_view>
+#include <vector>
 
-#include "logging/logger.h"    // for XSIGMA_LOG_ERROR
-#include "util/exception.h"    // for XSIGMA_CHECK
-#include "util/string_util.h"  // for safe_strto64, safe_strtof
+#include "logging/logger.h"  // for XSIGMA_LOG_ERROR
+#include "util/exception.h"  // for XSIGMA_CHECK
 
 namespace xsigma
 {
-std::string ascii_str_to_lower(std::string& result)
+static std::string ascii_str_to_lower(std::string& result)
 {
     std::transform(
         result.begin(),
@@ -73,7 +75,7 @@ bool read_bool_from_env_var(std::string_view env_var_name, bool default_val, boo
         *value = false;
         return true;
     }
-    else if (str_value == "1" || str_value == "true")
+    if (str_value == "1" || str_value == "true")
     {
         *value = true;
         return true;
@@ -100,8 +102,8 @@ bool read_int64_from_env_var(std::string_view env_var_name, int64_t default_val,
 
     std::string str(tf_env_var_val);
     // Trim whitespace
-    size_t start = str.find_first_not_of(" \t\n\r");
-    size_t end   = str.find_last_not_of(" \t\n\r");
+    size_t const start = str.find_first_not_of(" \t\n\r");
+    size_t const end   = str.find_last_not_of(" \t\n\r");
     if (start == std::string::npos)
     {
         XSIGMA_LOG_ERROR(
@@ -114,8 +116,8 @@ bool read_int64_from_env_var(std::string_view env_var_name, int64_t default_val,
     }
     str = str.substr(start, end - start + 1);
 
-    size_t  pos = 0;
-    int64_t val = std::stoll(str, &pos);
+    size_t        pos = 0;
+    int64_t const val = std::stoll(str, &pos);
     if (pos == str.length())
     {
         *value = val;
@@ -144,8 +146,8 @@ bool read_float_from_env_var(std::string_view env_var_name, float default_val, f
 
     std::string str(tf_env_var_val);
     // Trim whitespace
-    size_t start = str.find_first_not_of(" \t\n\r");
-    size_t end   = str.find_last_not_of(" \t\n\r");
+    size_t const start = str.find_first_not_of(" \t\n\r");
+    size_t const end   = str.find_last_not_of(" \t\n\r");
     if (start == std::string::npos)
     {
         XSIGMA_LOG_ERROR(
@@ -158,8 +160,8 @@ bool read_float_from_env_var(std::string_view env_var_name, float default_val, f
     }
     str = str.substr(start, end - start + 1);
 
-    size_t pos = 0;
-    float  val = std::stof(str, &pos);
+    size_t      pos = 0;
+    float const val = std::stof(str, &pos);
     if (pos == str.length())
     {
         *value = val;
@@ -207,8 +209,8 @@ bool read_strings_from_env_var(
         while (std::getline(iss, token, ','))
         {
             // Trim whitespace from token
-            size_t start = token.find_first_not_of(" \t\n\r");
-            size_t end   = token.find_last_not_of(" \t\n\r");
+            size_t const start = token.find_first_not_of(" \t\n\r");
+            size_t const end   = token.find_last_not_of(" \t\n\r");
             if (start != std::string::npos)
             {
                 value.push_back(token.substr(start, end - start + 1));

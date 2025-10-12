@@ -19,11 +19,11 @@
 
 #include "memory_allocator.h"
 
-#include <atomic>  // for allocation statistics
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>  // for std::memset
 
-#include "logging/logger.h"
+#include "common/macros.h"
 #include "util/exception.h"
 
 #if defined(XSIGMA_ENABLE_TBB)
@@ -51,7 +51,7 @@
 namespace xsigma::cpu::memory_allocator
 {
 
-void* allocate(std::size_t nbytes, std::size_t alignment, init_policy_enum init) noexcept
+void* allocate(std::size_t nbytes, std::size_t alignment, init_policy_enum init)
 {
     XSIGMA_CHECK(
         static_cast<std::ptrdiff_t>(nbytes) > 0,

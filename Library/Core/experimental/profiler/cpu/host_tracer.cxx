@@ -33,11 +33,12 @@ limitations under the License.
 ==============================================================================*/
 #include "experimental/profiler/cpu/host_tracer.h"
 
+#include <cstdint>
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
+#include "common/macros.h"
 #include "experimental/profiler/profiler_collection.h"
 #include "experimental/profiler/profiler_interface.h"
 #include "experimental/profiler/xplane/xplane.h"

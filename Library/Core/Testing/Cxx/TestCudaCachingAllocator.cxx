@@ -36,7 +36,7 @@ using namespace xsigma::gpu;
 /**
  * @brief Test basic CUDA caching allocator construction and destruction
  */
-XSIGMATEST_VOID(CudaCachingAllocator, constructs_with_valid_parameters)
+XSIGMATEST(CudaCachingAllocator, constructs_with_valid_parameters)
 {
     // Test basic construction
     cuda_caching_allocator allocator(0, 64 * 1024 * 1024);  // 64MB cache
@@ -53,7 +53,7 @@ XSIGMATEST_VOID(CudaCachingAllocator, constructs_with_valid_parameters)
 /**
  * @brief Test basic allocation and deallocation functionality
  */
-XSIGMATEST_VOID(CudaCachingAllocator, allocates_and_deallocates_memory)
+XSIGMATEST(CudaCachingAllocator, allocates_and_deallocates_memory)
 {
     cuda_caching_allocator allocator(0, 32 * 1024 * 1024);  // 32MB cache
 
@@ -85,7 +85,7 @@ XSIGMATEST_VOID(CudaCachingAllocator, allocates_and_deallocates_memory)
 /**
  * @brief Test cache management functionality
  */
-XSIGMATEST_VOID(CudaCachingAllocator, manages_cache_correctly)
+XSIGMATEST(CudaCachingAllocator, manages_cache_correctly)
 {
     cuda_caching_allocator allocator(0, 16 * 1024 * 1024);  // 16MB cache
 
@@ -110,7 +110,7 @@ XSIGMATEST_VOID(CudaCachingAllocator, manages_cache_correctly)
 /**
  * @brief Test cache size limits and configuration
  */
-XSIGMATEST_VOID(CudaCachingAllocator, respects_cache_size_limits)
+XSIGMATEST(CudaCachingAllocator, respects_cache_size_limits)
 {
     cuda_caching_allocator allocator(0, 8 * 1024 * 1024);  // 8MB cache
 
@@ -128,7 +128,7 @@ XSIGMATEST_VOID(CudaCachingAllocator, respects_cache_size_limits)
 /**
  * @brief Test statistics collection and reporting
  */
-XSIGMATEST_VOID(CudaCachingAllocator, provides_accurate_statistics)
+XSIGMATEST(CudaCachingAllocator, provides_accurate_statistics)
 {
     cuda_caching_allocator allocator(0, 32 * 1024 * 1024);  // 32MB cache
 
@@ -155,7 +155,7 @@ XSIGMATEST_VOID(CudaCachingAllocator, provides_accurate_statistics)
 /**
  * @brief Test move semantics and resource transfer
  */
-XSIGMATEST_VOID(CudaCachingAllocator, supports_move_semantics)
+XSIGMATEST(CudaCachingAllocator, supports_move_semantics)
 {
     // Create allocator
     cuda_caching_allocator allocator1(0, 16 * 1024 * 1024);
@@ -178,7 +178,7 @@ XSIGMATEST_VOID(CudaCachingAllocator, supports_move_semantics)
 /**
  * @brief Test error handling for invalid operations
  */
-XSIGMATEST_VOID(CudaCachingAllocator, handles_errors_gracefully)
+XSIGMATEST(CudaCachingAllocator, handles_errors_gracefully)
 {
     cuda_caching_allocator allocator(0, 16 * 1024 * 1024);
 
@@ -196,7 +196,7 @@ XSIGMATEST_VOID(CudaCachingAllocator, handles_errors_gracefully)
 /**
  * @brief Test template allocator construction and basic operations
  */
-XSIGMATEST_VOID(CudaCachingAllocatorTemplate, constructs_with_different_types)
+XSIGMATEST(CudaCachingAllocatorTemplate, constructs_with_different_types)
 {
     // Test template allocator for different types
     cuda_caching_allocator_template<float, 256>  float_allocator(0, 32 * 1024 * 1024);
@@ -214,7 +214,7 @@ XSIGMATEST_VOID(CudaCachingAllocatorTemplate, constructs_with_different_types)
 /**
  * @brief Test template allocator type-safe allocation
  */
-XSIGMATEST_VOID(CudaCachingAllocatorTemplate, allocates_typed_memory_safely)
+XSIGMATEST(CudaCachingAllocatorTemplate, allocates_typed_memory_safely)
 {
     cuda_caching_allocator_template<float, 256> allocator(0, 16 * 1024 * 1024);
 
@@ -236,7 +236,7 @@ XSIGMATEST_VOID(CudaCachingAllocatorTemplate, allocates_typed_memory_safely)
 /**
  * @brief Test template allocator alignment requirements
  */
-XSIGMATEST_VOID(CudaCachingAllocatorTemplate, respects_alignment_requirements)
+XSIGMATEST(CudaCachingAllocatorTemplate, respects_alignment_requirements)
 {
     cuda_caching_allocator_template<double, 512> allocator(0, 16 * 1024 * 1024);
 
@@ -256,7 +256,7 @@ XSIGMATEST_VOID(CudaCachingAllocatorTemplate, respects_alignment_requirements)
 /**
  * @brief Test template allocator statistics and cache operations
  */
-XSIGMATEST_VOID(CudaCachingAllocatorTemplate, provides_statistics_and_cache_control)
+XSIGMATEST(CudaCachingAllocatorTemplate, provides_statistics_and_cache_control)
 {
     cuda_caching_allocator_template<int, 256> allocator(0, 8 * 1024 * 1024);
 

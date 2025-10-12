@@ -5,11 +5,10 @@
 #include <algorithm>  // For std::toupper
 #include <cctype>     // For std::toupper
 #include <cstdlib>    // For std::getenv
-#include <iostream>   // For std::cerr
-#include <string>     // For std::string
-#include <vector>
+#include <memory>
+#include <string>  // For std::string
 
-#include "common/configure.h"
+#include "smp/Common/tools_impl.h"
 
 namespace xsigma::detail::smp
 {
@@ -34,7 +33,7 @@ tools_api::tools_api()
 
 //------------------------------------------------------------------------------
 // Must NOT be initialized. Default initialization to zero is necessary.
-tools_api* toolsAPIInstanceAsPointer = nullptr;
+static tools_api* toolsAPIInstanceAsPointer = nullptr;
 
 //------------------------------------------------------------------------------
 tools_api& tools_api::GetInstance()
@@ -77,7 +76,7 @@ const char* tools_api::GetBackend()
 //------------------------------------------------------------------------------
 bool tools_api::SetBackend(const char* type)
 {
-    std::string backend(type ? type : "");
+    std::string backend((type != nullptr) ? type : "");
     std::transform(backend.cbegin(), backend.cend(), backend.begin(), ::toupper);
 
 #if defined(XSIGMA_ENABLE_TBB)
@@ -171,7 +170,7 @@ bool tools_api::GetSingleThread()
 
 //------------------------------------------------------------------------------
 // Must NOT be initialized. Default initialization to zero is necessary.
-unsigned int toolsAPIInitializeCount = 0;
+static unsigned int toolsAPIInitializeCount = 0;
 
 //------------------------------------------------------------------------------
 toolsAPIInitialize::toolsAPIInitialize()

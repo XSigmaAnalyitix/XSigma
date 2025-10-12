@@ -64,11 +64,11 @@ XSIGMA_FORCE_INLINE XSIGMA_FUNCTION_CONSTEXPR std::size_t default_alignment() no
 XSIGMA_API void* allocate(
     std::size_t      nbytes,
     std::size_t      alignment = default_alignment(),
-    init_policy_enum init      = init_policy_enum::UNINITIALIZED) noexcept;
+    init_policy_enum init      = init_policy_enum::UNINITIALIZED);
 
 // Zero-initialized allocation
 XSIGMA_FORCE_INLINE void* allocate_zero(
-    std::size_t nbytes, std::size_t alignment = default_alignment()) noexcept
+    std::size_t nbytes, std::size_t alignment = default_alignment())
 {
     return allocate(nbytes, alignment, init_policy_enum::ZERO);
 }

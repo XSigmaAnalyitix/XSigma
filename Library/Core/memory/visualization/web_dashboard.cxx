@@ -1,11 +1,19 @@
 #include "memory/visualization/web_dashboard.h"
 
 #include <algorithm>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <iomanip>
+#include <ios>
+#include <mutex>
 #include <sstream>
-#include <typeinfo>
+#include <string>
+#include <thread>
+#include <vector>
 
 #include "logging/logger.h"
+#include "memory/cpu/allocator.h"
 
 namespace xsigma
 {
@@ -67,7 +75,7 @@ void web_dashboard::stop_dashboard()
 
     // Clear WebSocket clients
     {
-        std::lock_guard<std::mutex> lock(clients_mutex_);
+        std::lock_guard<std::mutex> const lock(clients_mutex_);
         websocket_clients_.clear();
     }
 
@@ -76,13 +84,13 @@ void web_dashboard::stop_dashboard()
 
 bool web_dashboard::register_allocator(const std::string& name, Allocator* allocator)
 {
-    if (!allocator)
+    if (allocator == nullptr)
     {
         XSIGMA_LOG_ERROR("Cannot register null allocator: {}", name);
         return false;
     }
 
-    std::lock_guard<std::mutex> lock(allocators_mutex_);
+    std::lock_guard<std::mutex> const lock(allocators_mutex_);
 
     if (registered_allocators_.find(name) != registered_allocators_.end())
     {
@@ -105,7 +113,7 @@ bool web_dashboard::register_allocator(const std::string& name, Allocator* alloc
 
 bool web_dashboard::unregister_allocator(const std::string& name)
 {
-    std::lock_guard<std::mutex> lock(allocators_mutex_);
+    std::lock_guard<std::mutex> const lock(allocators_mutex_);
 
     auto it = registered_allocators_.find(name);
     if (it == registered_allocators_.end())
@@ -118,7 +126,7 @@ bool web_dashboard::unregister_allocator(const std::string& name)
 
     // Also remove history
     {
-        std::lock_guard<std::mutex> history_lock(history_mutex_);
+        std::lock_guard<std::mutex> const history_lock(history_mutex_);
         metrics_history_.erase(name);
     }
 
@@ -128,7 +136,7 @@ bool web_dashboard::unregister_allocator(const std::string& name)
 
 std::vector<std::string> web_dashboard::get_registered_allocators() const
 {
-    std::lock_guard<std::mutex> lock(allocators_mutex_);
+    std::lock_guard<std::mutex> const lock(allocators_mutex_);
 
     std::vector<std::string> names;
     names.reserve(registered_allocators_.size());
@@ -143,7 +151,7 @@ std::vector<std::string> web_dashboard::get_registered_allocators() const
 
 std::string web_dashboard::get_allocator_metrics_json(const std::string& allocator_name) const
 {
-    std::lock_guard<std::mutex> lock(allocators_mutex_);
+    std::lock_guard<std::mutex> const lock(allocators_mutex_);
 
     auto it = registered_allocators_.find(allocator_name);
     if (it == registered_allocators_.end())
@@ -194,7 +202,7 @@ std::string web_dashboard::get_allocator_metrics_json(const std::string& allocat
 std::string web_dashboard::get_allocator_history_json(
     const std::string& allocator_name, size_t max_points) const
 {
-    std::lock_guard<std::mutex> lock(history_mutex_);
+    std::lock_guard<std::mutex> const lock(history_mutex_);
 
     auto it = metrics_history_.find(allocator_name);
     if (it == metrics_history_.end())
@@ -257,7 +265,7 @@ std::string web_dashboard::get_allocator_history_json(
 
 std::string web_dashboard::get_all_allocators_summary_json() const
 {
-    std::lock_guard<std::mutex> lock(allocators_mutex_);
+    std::lock_guard<std::mutex> const lock(allocators_mutex_);
 
     std::ostringstream json;
     json << "{\n";
@@ -293,7 +301,7 @@ std::string web_dashboard::get_all_allocators_summary_json() const
 
 std::string web_dashboard::export_prometheus_metrics() const
 {
-    std::lock_guard<std::mutex> lock(allocators_mutex_);
+    std::lock_guard<std::mutex> const lock(allocators_mutex_);
 
     std::ostringstream prometheus;
 
@@ -336,7 +344,7 @@ std::string web_dashboard::export_prometheus_metrics() const
 
 size_t web_dashboard::get_connected_clients_count() const
 {
-    std::lock_guard<std::mutex> lock(clients_mutex_);
+    std::lock_guard<std::mutex> const lock(clients_mutex_);
     return std::count_if(
         websocket_clients_.begin(),
         websocket_clients_.end(),
@@ -382,8 +390,8 @@ void web_dashboard::metrics_thread_main()
 
 void web_dashboard::collect_metrics()
 {
-    std::lock_guard<std::mutex> allocators_lock(allocators_mutex_);
-    std::lock_guard<std::mutex> history_lock(history_mutex_);
+    std::lock_guard<std::mutex> const allocators_lock(allocators_mutex_);
+    std::lock_guard<std::mutex> const history_lock(history_mutex_);
 
     auto now = std::chrono::steady_clock::now();
 
@@ -420,14 +428,14 @@ void web_dashboard::collect_metrics()
     // Broadcast update to WebSocket clients
     if (config_.enable_websocket && get_connected_clients_count() > 0)
     {
-        std::string metrics_json = get_all_allocators_summary_json();
+        std::string const metrics_json = get_all_allocators_summary_json();
         broadcast_metrics_update(metrics_json);
     }
 }
 
 void web_dashboard::broadcast_metrics_update(const std::string& /*metrics_json*/)
 {
-    std::lock_guard<std::mutex> lock(clients_mutex_);
+    std::lock_guard<std::mutex> const lock(clients_mutex_);
 
     // In a real implementation, this would send WebSocket messages to all connected clients
     // For now, just log that we would broadcast
@@ -440,7 +448,7 @@ void web_dashboard::broadcast_metrics_update(const std::string& /*metrics_json*/
 
 std::string web_dashboard::get_allocator_type_name(Allocator* allocator) const
 {
-    if (!allocator)
+    if (allocator == nullptr)
     {
         return "Unknown";
     }
@@ -453,26 +461,23 @@ std::string web_dashboard::get_allocator_type_name(Allocator* allocator) const
     {
         return "BFC";
     }
-    else if (type_name.find("allocator_pool") != std::string::npos)
+    if (type_name.find("allocator_pool") != std::string::npos)
     {
         return "Pool";
     }
-    else if (type_name.find("allocator_cpu") != std::string::npos)
+    if (type_name.find("allocator_cpu") != std::string::npos)
     {
         return "CPU";
     }
-    else if (type_name.find("allocator_tracking") != std::string::npos)
+    if (type_name.find("allocator_tracking") != std::string::npos)
     {
         return "Tracking";
     }
-    else if (type_name.find("allocator_device") != std::string::npos)
+    if (type_name.find("allocator_device") != std::string::npos)
     {
         return "Device";
     }
-    else
-    {
-        return "Custom";
-    }
+    return "Custom";
 }
 
 void web_dashboard::cleanup_old_history(const std::string& allocator_name)
@@ -517,7 +522,7 @@ double web_dashboard::calculate_allocation_rate(const std::string& allocator_nam
         return 0.0;
     }
 
-    int64_t alloc_diff =
+    int64_t const alloc_diff =
         static_cast<int64_t>(latest.num_allocs) - static_cast<int64_t>(previous.num_allocs);
     return static_cast<double>(alloc_diff) / time_diff;
 }

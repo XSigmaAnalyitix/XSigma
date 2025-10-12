@@ -37,7 +37,7 @@ using namespace xsigma::gpu;
 /**
  * @brief Test strategy recommendation functionality
  */
-XSIGMATEST_VOID(GpuAllocatorFactory, recommends_appropriate_strategies)
+XSIGMATEST(GpuAllocatorFactory, recommends_appropriate_strategies)
 {
     // Test strategy recommendation for different scenarios
 
@@ -63,7 +63,7 @@ XSIGMATEST_VOID(GpuAllocatorFactory, recommends_appropriate_strategies)
 /**
  * @brief Test device validation functionality
  */
-XSIGMATEST_VOID(GpuAllocatorFactory, validates_device_support_correctly)
+XSIGMATEST(GpuAllocatorFactory, validates_device_support_correctly)
 {
     // Test CUDA device validation
     bool cuda_direct_support = gpu_allocator_factory::validate_device_support(
@@ -92,7 +92,7 @@ XSIGMATEST_VOID(GpuAllocatorFactory, validates_device_support_correctly)
 /**
  * @brief Test strategy name conversion
  */
-XSIGMATEST_VOID(GpuAllocatorFactory, provides_readable_strategy_names)
+XSIGMATEST(GpuAllocatorFactory, provides_readable_strategy_names)
 {
     // Test strategy name conversion
     std::string direct_name = gpu_allocator_factory::strategy_name(gpu_allocation_strategy::DIRECT);
@@ -122,7 +122,7 @@ XSIGMATEST_VOID(GpuAllocatorFactory, provides_readable_strategy_names)
 /**
  * @brief Test configuration creation for different use cases
  */
-XSIGMATEST_VOID(GpuAllocatorFactory, creates_optimized_configurations)
+XSIGMATEST(GpuAllocatorFactory, creates_optimized_configurations)
 {
     // Test default configuration creation
     auto default_config = gpu_allocator_config::create_default(gpu_allocation_strategy::DIRECT, 0);
@@ -151,7 +151,7 @@ XSIGMATEST_VOID(GpuAllocatorFactory, creates_optimized_configurations)
 /**
  * @brief Test caching allocator creation
  */
-XSIGMATEST_VOID(GpuAllocatorFactory, creates_caching_allocators)
+XSIGMATEST(GpuAllocatorFactory, creates_caching_allocators)
 {
     // Test caching allocator creation
     gpu_allocator_config config;
@@ -184,7 +184,7 @@ XSIGMATEST_VOID(GpuAllocatorFactory, creates_caching_allocators)
 /**
  * @brief Test factory error handling
  */
-XSIGMATEST_VOID(GpuAllocatorFactory, handles_invalid_configurations)
+XSIGMATEST(GpuAllocatorFactory, handles_invalid_configurations)
 {
     // Test invalid device configuration
     gpu_allocator_config invalid_config;
@@ -211,7 +211,7 @@ XSIGMATEST_VOID(GpuAllocatorFactory, handles_invalid_configurations)
 /**
  * @brief Test factory with different template parameters
  */
-XSIGMATEST_VOID(GpuAllocatorFactory, supports_different_template_parameters)
+XSIGMATEST(GpuAllocatorFactory, supports_different_template_parameters)
 {
     gpu_allocator_config config;
     config.strategy        = gpu_allocation_strategy::CACHING;

@@ -34,13 +34,18 @@ limitations under the License.
 
 #include "experimental/profiler/stats_calculator.h"
 
+#include <algorithm>
+#include <cstdint>
 #include <iomanip>   // for operator<<, setprecision, setw
 #include <iostream>  // for endl
 #include <map>       // for map, _Tree_iterator, _Tree_const_iterator, _Tree_simple_types
-#include <memory>    // for _Simple_types
 #include <queue>     // for priority_queue
 #include <sstream>   // for basic_ostream, operator<<, stringstream, fixed, ostream, right
 #include <string>    // for char_traits, operator<<, operator<, string, allocator, basic_string
+#include <utility>
+#include <vector>
+
+#include "experimental/profiler/stat_summarizer_options.h"
 
 namespace xsigma
 {
@@ -64,7 +69,7 @@ std::string stats_calculator::get_short_summary() const
     return stream.str();
 }
 
-std::ostream& init_field(std::ostream& stream, int width)
+static std::ostream& init_field(std::ostream& stream, int width)
 {
     stream << "\t" << std::right << std::setw(width) << std::fixed << std::setprecision(3);
     return stream;
@@ -181,17 +186,17 @@ void stats_calculator::compute_stats_by_type(
     std::map<std::string, int64_t>* node_type_map_times_called,
     int64_t*                        accumulated_us) const
 {
-    int64_t run_count = run_total_us_.count();
+    int64_t const run_count = run_total_us_.count();
 
     for (const auto& det : details_)
     {
         //const std::string node_name = det.first;
         const detail& detail = det.second;
 
-        int64_t curr_time_val = static_cast<int64_t>(detail.elapsed_time.sum() / run_count);
+        auto const curr_time_val = static_cast<int64_t>(detail.elapsed_time.sum() / run_count);
         *accumulated_us += curr_time_val;
 
-        int64_t curr_memory_val = detail.mem_used.newest();
+        int64_t const curr_memory_val = detail.mem_used.newest();
 
         const std::string& node_type = detail.type;
 

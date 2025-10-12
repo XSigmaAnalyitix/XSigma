@@ -37,7 +37,7 @@ using namespace xsigma::gpu;
 /**
  * @brief Test GPU memory transfer manager singleton access
  */
-XSIGMATEST_VOID(GpuMemoryTransfer, provides_singleton_instance)
+XSIGMATEST(GpuMemoryTransfer, provides_singleton_instance)
 {
     // Test singleton access
     auto& manager1 = gpu_memory_transfer::instance();
@@ -52,7 +52,7 @@ XSIGMATEST_VOID(GpuMemoryTransfer, provides_singleton_instance)
 /**
  * @brief Test transfer direction enumeration
  */
-XSIGMATEST_VOID(GpuMemoryTransfer, supports_all_transfer_directions)
+XSIGMATEST(GpuMemoryTransfer, supports_all_transfer_directions)
 {
     // Test transfer direction enum values
     transfer_direction directions[] = {
@@ -77,7 +77,7 @@ XSIGMATEST_VOID(GpuMemoryTransfer, supports_all_transfer_directions)
 /**
  * @brief Test transfer status enumeration
  */
-XSIGMATEST_VOID(GpuMemoryTransfer, tracks_transfer_status)
+XSIGMATEST(GpuMemoryTransfer, tracks_transfer_status)
 {
     // Test transfer status enum values
     transfer_status statuses[] = {
@@ -102,7 +102,7 @@ XSIGMATEST_VOID(GpuMemoryTransfer, tracks_transfer_status)
 /**
  * @brief Test GPU transfer info structure
  */
-XSIGMATEST_VOID(GpuTransferInfo, manages_transfer_metadata)
+XSIGMATEST(GpuTransferInfo, manages_transfer_metadata)
 {
     gpu_transfer_info info;
 
@@ -125,7 +125,7 @@ XSIGMATEST_VOID(GpuTransferInfo, manages_transfer_metadata)
 /**
  * @brief Test GPU stream creation and management
  */
-XSIGMATEST_VOID(GpuStream, creates_and_manages_streams)
+XSIGMATEST(GpuStream, creates_and_manages_streams)
 {
     try
     {
@@ -165,7 +165,7 @@ XSIGMATEST_VOID(GpuStream, creates_and_manages_streams)
 /**
  * @brief Test optimal chunk size calculation
  */
-XSIGMATEST_VOID(GpuMemoryTransfer, calculates_optimal_chunk_sizes)
+XSIGMATEST(GpuMemoryTransfer, calculates_optimal_chunk_sizes)
 {
     auto& transfer_manager = gpu_memory_transfer::instance();
 
@@ -194,7 +194,7 @@ XSIGMATEST_VOID(GpuMemoryTransfer, calculates_optimal_chunk_sizes)
 /**
  * @brief Test transfer statistics and reporting
  */
-XSIGMATEST_VOID(GpuMemoryTransfer, provides_transfer_statistics)
+XSIGMATEST(GpuMemoryTransfer, provides_transfer_statistics)
 {
     auto& transfer_manager = gpu_memory_transfer::instance();
 
@@ -215,7 +215,7 @@ XSIGMATEST_VOID(GpuMemoryTransfer, provides_transfer_statistics)
 /**
  * @brief Test transfer queue management
  */
-XSIGMATEST_VOID(GpuMemoryTransfer, manages_transfer_queue)
+XSIGMATEST(GpuMemoryTransfer, manages_transfer_queue)
 {
     auto& transfer_manager = gpu_memory_transfer::instance();
 
@@ -238,7 +238,7 @@ XSIGMATEST_VOID(GpuMemoryTransfer, manages_transfer_queue)
 /**
  * @brief Test synchronous memory transfer (basic validation)
  */
-XSIGMATEST_VOID(GpuMemoryTransfer, performs_synchronous_transfers)
+XSIGMATEST(GpuMemoryTransfer, performs_synchronous_transfers)
 {
     auto& transfer_manager = gpu_memory_transfer::instance();
 
@@ -276,7 +276,7 @@ XSIGMATEST_VOID(GpuMemoryTransfer, performs_synchronous_transfers)
 /**
  * @brief Test asynchronous memory transfer (basic validation)
  */
-XSIGMATEST_VOID(GpuMemoryTransfer, performs_asynchronous_transfers)
+XSIGMATEST(GpuMemoryTransfer, performs_asynchronous_transfers)
 {
     auto& transfer_manager = gpu_memory_transfer::instance();
 
@@ -325,7 +325,7 @@ XSIGMATEST_VOID(GpuMemoryTransfer, performs_asynchronous_transfers)
 /**
  * @brief Test batch memory transfers
  */
-XSIGMATEST_VOID(GpuMemoryTransfer, performs_batch_transfers)
+XSIGMATEST(GpuMemoryTransfer, performs_batch_transfers)
 {
     auto& transfer_manager = gpu_memory_transfer::instance();
 
@@ -373,7 +373,7 @@ XSIGMATEST_VOID(GpuMemoryTransfer, performs_batch_transfers)
 /**
  * @brief Test transfer error handling
  */
-XSIGMATEST_VOID(GpuMemoryTransfer, handles_transfer_errors)
+XSIGMATEST(GpuMemoryTransfer, handles_transfer_errors)
 {
     auto& transfer_manager = gpu_memory_transfer::instance();
 

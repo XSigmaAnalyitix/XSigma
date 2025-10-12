@@ -43,6 +43,7 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "common/macros.h"
 #include "experimental/profiler/stats_calculator.h"
 #include "experimental/profiler/timespan.h"
 #include "experimental/profiler/xplane/tf_xplane_visitor.h"
@@ -50,6 +51,8 @@ limitations under the License.
 #include "experimental/profiler/xplane/xplane_builder.h"
 #include "experimental/profiler/xplane/xplane_schema.h"
 #include "experimental/profiler/xplane/xplane_visitor.h"
+#include "logging/logger.h"
+#include "util/exception.h"
 #include "util/flat_hash.h"
 
 namespace xsigma
@@ -135,7 +138,7 @@ void RemoveAt(std::vector<T>* array, const std::vector<int>& indices)
 template <typename T>
 void Remove(std::vector<T>* array, const T* elem)
 {
-    int index = Find(*array, [elem](const T* e) { return elem == e; });
+    int const index = Find(*array, [elem](const T* e) { return elem == e; });
     if (index != -1)
     {
         RemoveAt(array, {index});
@@ -146,7 +149,7 @@ void Remove(std::vector<T>* array, const T* elem)
 template <typename T, typename Pred>
 void RemoveIf(std::vector<T>* array, Pred&& pred)
 {
-    std::vector<int> indices = FindAll(*array, pred);
+    std::vector<int> const indices = FindAll(*array, pred);
     RemoveAt(array, indices);
 }
 
@@ -173,16 +176,17 @@ void CopyEventMetadata(
 
     if (dst_event_metadata.stats().empty() && !src_event_metadata.stats().empty())
     {
-        xevent_metadata_visitor src_event_metadata_visitor(&src_plane, &src_event_metadata);
+        xevent_metadata_visitor const src_event_metadata_visitor(&src_plane, &src_event_metadata);
         src_event_metadata_visitor.for_each_stat(
             [&](const x_stat_visitor& src_stat)
             {
-                x_stat_metadata& metadata = *dst_plane.get_or_create_stat_metadata(src_stat.name());
-                xstat&           dst_stat = *dst_event_metadata.add_stats();
-                dst_stat                  = src_stat.raw_stat();
+                x_stat_metadata const& metadata =
+                    *dst_plane.get_or_create_stat_metadata(src_stat.name());
+                xstat& dst_stat = *dst_event_metadata.add_stats();
+                dst_stat        = src_stat.raw_stat();
                 if (src_stat.value_case() == xstat::value_case_type::kRefValue)
                 {
-                    x_stat_metadata& value_metadata =
+                    x_stat_metadata const& value_metadata =
                         *dst_plane.get_or_create_stat_metadata(src_stat.str_or_ref_value());
                     dst_stat.set_ref_value(value_metadata.id());
                 }
@@ -247,23 +251,24 @@ timespan GetEventTimespan(const xevent_visitor& event)
 
 }  // namespace
 
-const xplane* FindPlaneWithName(const x_space& space, std::string_view name)
+static const xplane* FindPlaneWithName(const x_space& space, std::string_view name)
 {
-    int i = Find(space.planes(), [name](const xplane* plane) { return plane->name() == name; });
+    int const i =
+        Find(space.planes(), [name](const xplane* plane) { return plane->name() == name; });
     return (i != -1) ? &space.planes(i) : nullptr;
 }
 
-std::vector<const xplane*> FindPlanesWithNames(
+static std::vector<const xplane*> FindPlanesWithNames(
     const x_space& space, const std::vector<std::string_view>& names)
 {
     flat_hash_set<std::string_view> names_set(names.begin(), names.end());
-    std::vector<int>                indices = FindAll(
+    std::vector<int> const          indices = FindAll(
         space.planes(),
         [&names_set](const xplane* plane)
         { return names_set.find(plane->name()) != names_set.end(); });
     std::vector<const xplane*> planes;
     planes.reserve(indices.size());
-    for (int i : indices)
+    for (int const i : indices)
     {
         planes.push_back(&space.planes(i));
     }
@@ -272,7 +277,8 @@ std::vector<const xplane*> FindPlanesWithNames(
 
 xplane* find_mutable_plane_with_name(x_space* space, std::string_view name)
 {
-    int i = Find(space->planes(), [name](const xplane* plane) { return plane->name() == name; });
+    int const i =
+        Find(space->planes(), [name](const xplane* plane) { return plane->name() == name; });
     return (i != -1) ? space->mutable_planes(i) : nullptr;
 }
 
@@ -287,7 +293,8 @@ xplane* find_or_add_mutable_plane_with_name(x_space* space, std::string_view nam
     return plane;
 }
 
-std::vector<const xplane*> FindPlanesWithPrefix(const x_space& space, std::string_view prefix)
+static std::vector<const xplane*> FindPlanesWithPrefix(
+    const x_space& space, std::string_view prefix)
 {
     return find_planes(
         space, [&](const xplane& plane) { return StartsWith(plane.name(), prefix); });
@@ -301,16 +308,16 @@ std::vector<xplane*> find_mutable_planes_with_prefix(x_space* space, std::string
 
 const xline* find_line_with_id(const xplane& plane, int64_t id)
 {
-    int i = Find(plane.lines(), [id](const xline* line) { return line->id() == id; });
+    int const i = Find(plane.lines(), [id](const xline* line) { return line->id() == id; });
     return (i != -1) ? &plane.lines(i) : nullptr;
 }
 std::vector<const xline*> find_lines_with_id(const xplane& plane, int64_t id)
 {
-    std::vector<int> indices =
+    std::vector<int> const indices =
         FindAll(plane.lines(), [id](const xline* line) { return line->id() == id; });
     std::vector<const xline*> lines;
     lines.reserve(indices.size());
-    for (int index : indices)
+    for (int const index : indices)
     {
         lines.push_back(&plane.lines(index));
     }
@@ -319,7 +326,7 @@ std::vector<const xline*> find_lines_with_id(const xplane& plane, int64_t id)
 
 const xline* find_line_with_name(const xplane& plane, std::string_view name)
 {
-    int i = Find(plane.lines(), [name](const xline* line) { return line->name() == name; });
+    int const i = Find(plane.lines(), [name](const xline* line) { return line->name() == name; });
     return (i != -1) ? &plane.lines(i) : nullptr;
 }
 
@@ -337,13 +344,13 @@ xstat* find_or_add_mutable_stat(const x_stat_metadata& stat_metadata, xevent* ev
     return stat;
 }
 
-void RemovePlane(x_space* space, const xplane* plane)
+static void RemovePlane(x_space* space, const xplane* plane)
 {
     XSIGMA_CHECK_DEBUG(plane != nullptr);
     Remove(space->mutable_planes(), plane);
 }
 
-void RemovePlanes(x_space* space, const std::vector<const xplane*>& planes)
+static void RemovePlanes(x_space* space, const std::vector<const xplane*>& planes)
 {
     flat_hash_set<const xplane*> planes_set(planes.begin(), planes.end());
     RemoveIf(
@@ -351,12 +358,12 @@ void RemovePlanes(x_space* space, const std::vector<const xplane*>& planes)
         [&planes_set](const xplane* plane) { return planes_set.find(plane) != planes_set.end(); });
 }
 
-void RemoveEmptyLines(xplane* plane)
+static void RemoveEmptyLines(xplane* plane)
 {
     RemoveIf(plane->mutable_lines(), [&](const xline* line) { return line->events().empty(); });
 }
 
-void SortXPlane(xplane* plane)
+static void SortXPlane(xplane* plane)
 {
     for (xline& line : *plane->mutable_lines())
     {
@@ -443,20 +450,20 @@ void MergePlanes(const std::vector<const xplane*>& src_planes, xplane* dst_plane
     }
 }
 
-void RemoveLine(xplane* plane, const xline* line)
+static void RemoveLine(xplane* plane, const xline* line)
 {
     XSIGMA_CHECK_DEBUG(line != nullptr);
     Remove(plane->mutable_lines(), line);
 }
 
-void RemoveEvents(xline* line, const flat_hash_set<const xevent*>& events)
+static void RemoveEvents(xline* line, const flat_hash_set<const xevent*>& events)
 {
     RemoveIf(
         line->mutable_events(),
         [&](const xevent* event) { return events.find(event) != events.end(); });
 }
 
-void RemoveEmptyPlanes(x_space* space)
+static void RemoveEmptyPlanes(x_space* space)
 {
     RemoveIf(space->mutable_planes(), [&](const xplane* plane) { return plane->lines().empty(); });
 }
@@ -466,7 +473,7 @@ bool xevents_comparator::operator()(const xevent& a, const xevent& b) const
     return xevent_timespan(a) < xevent_timespan(b);
 }
 
-void SortXSpace(x_space* space)
+static void SortXSpace(x_space* space)
 {
     for (xplane& plane : *space->mutable_planes())
         SortXPlane(&plane);
@@ -506,9 +513,9 @@ bool IsXSpaceGrouped(const x_space& space)
         // If any plane has been grouped, consider space as grouped.
         // CreateTfXPlaneVisitor is necessary because we need check "group_id" stat
         // by its type StatType::kGroupId.
-        xplane_visitor         xplane        = CreateTfXPlaneVisitor(&plane);
+        xplane_visitor const   xplane        = CreateTfXPlaneVisitor(&plane);
         const x_stat_metadata* group_id_stat = xplane.get_stat_metadata_by_type(StatType::kGroupId);
-        if (group_id_stat)
+        if (group_id_stat != nullptr)
             return true;
     }
     return false;
@@ -516,7 +523,7 @@ bool IsXSpaceGrouped(const x_space& space)
 
 void AddFlowsToXplane(int32_t host_id, bool is_host_plane, bool connect_traceme, xplane* xplane)
 {
-    if (!xplane)
+    if (xplane == nullptr)
         return;
     xplane_builder   plane(xplane);
     x_stat_metadata* correlation_id_stats_metadata =
@@ -586,7 +593,7 @@ void AddFlowsToXplane(int32_t host_id, bool is_host_plane, bool connect_traceme,
                         });
                     if (correlation_id)
                     {
-                        XFlow flow(
+                        XFlow const flow(
                             XFlow::GetFlowId(host_id, *correlation_id),
                             direction,
                             ContextType::kGpuLaunch);
@@ -596,8 +603,8 @@ void AddFlowsToXplane(int32_t host_id, bool is_host_plane, bool connect_traceme,
                     {
                         if (producer_type && producer_id)
                         {
-                            auto  context_type = GetSafeContextType(*producer_type);
-                            XFlow flow(
+                            auto        context_type = GetSafeContextType(*producer_type);
+                            XFlow const flow(
                                 XFlow::GetFlowId(host_id, *producer_id, context_type),
                                 XFlow::FlowDirection::kFlowOut,
                                 context_type);
@@ -605,8 +612,8 @@ void AddFlowsToXplane(int32_t host_id, bool is_host_plane, bool connect_traceme,
                         }
                         if (consumer_type && consumer_id)
                         {
-                            auto  context_type = GetSafeContextType(*consumer_type);
-                            XFlow flow(
+                            auto        context_type = GetSafeContextType(*consumer_type);
+                            XFlow const flow(
                                 XFlow::GetFlowId(host_id, *consumer_id, context_type),
                                 XFlow::FlowDirection::kFlowIn,
                                 context_type);
@@ -620,12 +627,12 @@ void AddFlowsToXplane(int32_t host_id, bool is_host_plane, bool connect_traceme,
 uint64_t GetDevicePlaneFingerprint(const xplane& plane)
 {
     const xline* xla_module_line = find_line_with_name(plane, kXlaModuleLineName);
-    if (!xla_module_line)
+    if (xla_module_line == nullptr)
         return 0ULL;
 
-    xplane_visitor     xplane(&plane);
-    xline_visitor      xline(&xplane, xla_module_line);
-    std::set<uint64_t> ordered_module_fps;
+    xplane_visitor const xplane(&plane);
+    xline_visitor const  xline(&xplane, xla_module_line);
+    std::set<uint64_t>   ordered_module_fps;
     xline.for_each_event([&](XSIGMA_UNUSED const xevent_visitor& xevent)
                          { ordered_module_fps.insert(/*Fingerprint64(xevent.Name())*/ 0); });
     if (ordered_module_fps.empty())
@@ -641,7 +648,7 @@ uint64_t GetDevicePlaneFingerprint(const xplane& plane)
 
 std::optional<xevent_visitor> XEventContextTracker::GetContainingEvent(const timespan& event)
 {
-    if (!line_)
+    if (line_ == nullptr)
         return std::nullopt;
     if (current_index_ != -1)
     {
@@ -670,7 +677,7 @@ std::optional<xevent_visitor> XEventContextTracker::GetContainingEvent(const tim
 
 std::optional<xevent_visitor> XEventContextTracker::GetOverlappingEvent(const timespan& event)
 {
-    if (!line_)
+    if (line_ == nullptr)
         return std::nullopt;
     if (current_index_ != -1)
     {
@@ -702,7 +709,7 @@ void AggregateXPlane(const xplane& full_trace, xplane& aggregated_trace)
     struct EventStat
     {
         xsigma::stat<int64_t> stat;
-        int64_t       children_duration;
+        int64_t               children_duration;
     };
     using StatByEvent = flat_hash_map<int64_t /*event_id*/, EventStat>;
     using StatByGroup = flat_hash_map<int64_t /*group_id*/, StatByEvent>;
@@ -737,7 +744,7 @@ void AggregateXPlane(const xplane& full_trace, xplane& aggregated_trace)
             line.for_each_event(
                 [&](xevent_visitor event)
                 {
-                    timespan timespan = GetEventTimespan(event);
+                    timespan const timespan = GetEventTimespan(event);
                     first_op_start_ps =
                         first_op_start_ps <= static_cast<uint64_t>(event.timestamp_ps())
                             ? first_op_start_ps
@@ -746,10 +753,10 @@ void AggregateXPlane(const xplane& full_trace, xplane& aggregated_trace)
                         last_op_end_ps >= static_cast<uint64_t>(event.end_timestamp_ps())
                             ? last_op_end_ps
                             : timespan.end_ps();
-                    const auto& group_stat = event.get_stat(StatType::kGroupId);
-                    int64_t     group_id   = group_stat.has_value()
-                                                 ? group_stat->int_or_uint_value()
-                                                 : std::numeric_limits<uint64_t>::max();
+                    const auto&   group_stat = event.get_stat(StatType::kGroupId);
+                    int64_t const group_id   = group_stat.has_value()
+                                                   ? group_stat->int_or_uint_value()
+                                                   : std::numeric_limits<uint64_t>::max();
 
                     StatByEvent& line_stats = stats[line.id()][group_id];
                     line_stats[event.id()].stat.update_stat(timespan.duration_ps());
@@ -768,9 +775,9 @@ void AggregateXPlane(const xplane& full_trace, xplane& aggregated_trace)
                 });
         });
 
-    uint64_t total_time_ps = (last_op_end_ps && last_op_end_ps > first_op_start_ps)
-                                 ? last_op_end_ps - first_op_start_ps
-                                 : 0;
+    uint64_t const total_time_ps = ((last_op_end_ps != 0u) && last_op_end_ps > first_op_start_ps)
+                                       ? last_op_end_ps - first_op_start_ps
+                                       : 0;
 
     aggregated_plane.add_stat_value(
         *aggregated_plane.get_or_create_stat_metadata(

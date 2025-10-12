@@ -33,10 +33,10 @@
 #include <utility>
 #include <vector>
 
-#include "util/lock_free_queue.h"
-#include "util/per_thread.h"
 #include "util/exception.h"
 #include "util/flat_hash.h"
+#include "util/lock_free_queue.h"
+#include "util/per_thread.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -46,16 +46,17 @@
 
 namespace xsigma
 {
-inline std::string get_thread_name()
+static inline std::string get_thread_name()
 {
     std::string name;
 
 #ifdef _WIN32
-    PWSTR   threadName = nullptr;
-    HRESULT hr         = GetThreadDescription(GetCurrentThread(), &threadName);
-    if (SUCCEEDED(hr) && threadName)
+    PWSTR         threadName = nullptr;
+    HRESULT const hr         = GetThreadDescription(GetCurrentThread(), &threadName);
+    if (SUCCEEDED(hr) && (threadName != nullptr))
     {
-        int size = WideCharToMultiByte(CP_UTF8, 0, threadName, -1, nullptr, 0, nullptr, nullptr);
+        int const size =
+            WideCharToMultiByte(CP_UTF8, 0, threadName, -1, nullptr, 0, nullptr, nullptr);
         if (size > 0)
         {
             std::string result(size - 1, '\0');
@@ -219,8 +220,8 @@ private:
 /* static */ traceme_recorder::Events traceme_recorder::consume()
 {
     traceme_recorder::Events result;
-    SplitEventTracker         split_event_tracker;
-    auto                      recorders = PerThread<ThreadLocalRecorder>::StopRecording();
+    SplitEventTracker        split_event_tracker;
+    auto                     recorders = PerThread<ThreadLocalRecorder>::StopRecording();
     for (auto& recorder : recorders)
     {
         auto events = recorder->Consume(&split_event_tracker);
@@ -237,8 +238,8 @@ private:
 {
     level = level > 0 ? level : 0;
     //std::max(0, level);
-    int  expected = kTracingDisabled;
-    bool started =
+    int        expected = kTracingDisabled;
+    bool const started =
         internal::g_trace_level.compare_exchange_strong(expected, level, std::memory_order_acq_rel);
     if (started)
     {

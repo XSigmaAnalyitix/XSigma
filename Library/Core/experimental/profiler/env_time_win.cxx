@@ -62,10 +62,8 @@ uint64_t env_time::now_nanos()
             return (FnGetSystemTimePreciseAsFileTime)GetProcAddress(
                 module, "GetSystemTimePreciseAsFileTime");
         }
-        else
-        {
-            return nullptr;
-        }
+
+        return nullptr;
     }();
 
     if (precise_time_function != nullptr)

@@ -19,8 +19,13 @@
 
 #include "memory/cpu/allocator_device.h"
 
-#include "common/configure.h"
+#include <cstddef>
+#include <string>
+
+#include "common/macros.h"
+#include "memory/cpu/allocator.h"
 #include "memory/cpu/helper/memory_allocator.h"  // for allocate, free
+#include "util/exception.h"
 
 #ifdef XSIGMA_ENABLE_CUDA
 #include <cuda_runtime.h>
@@ -60,7 +65,7 @@ void* allocator_device::allocate_raw(size_t alignment, size_t num_bytes)
 
 void allocator_device::deallocate_raw(void* ptr)
 {
-    if (!ptr)
+    if (ptr == nullptr)
     {
         return;
     }

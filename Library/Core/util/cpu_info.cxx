@@ -2,18 +2,17 @@
 
 #include <cpuinfo.h>
 #include <fmt/core.h>
-#include <fmt/ranges.h>
 
-#include "common/configure.h"
-#include "logging/logger.h"
-#include "xsigma_features.h"
+#include <cstddef>
+
+#include "fmt/base.h"
 namespace xsigma
 {
 void cpu_info::info()
 {
     cpuinfo_initialize();
     const struct cpuinfo_package* package = cpuinfo_get_package(0);
-    if (package)
+    if (package != nullptr)
     {
         fmt::print("-- Running on {} CPU", package->name);
     }
@@ -40,7 +39,7 @@ void cpu_info::info()
     fmt::print("==================================================\n");
 
     const struct cpuinfo_cache* l1d_cache = cpuinfo_get_l1d_caches();
-    if (l1d_cache)
+    if (l1d_cache != nullptr)
     {
         fmt::print(
             "-- Cache L1d:\n size={},\n associativity={},\n sets={},\n partitions={},\n  "
@@ -61,7 +60,7 @@ void cpu_info::info()
     }
 
     const struct cpuinfo_cache* l1i_cache = cpuinfo_get_l1i_caches();
-    if (l1i_cache)
+    if (l1i_cache != nullptr)
     {
         fmt::print(
             "-- Cache L1i:\n size={},\n associativity={},\n sets={},\n partitions={},  "
@@ -82,7 +81,7 @@ void cpu_info::info()
     }
 
     const struct cpuinfo_cache* l2_cache = cpuinfo_get_l2_caches();
-    if (l2_cache)
+    if (l2_cache != nullptr)
     {
         fmt::print(
             "-- Cache L2:\n size={},\n associativity={},\n sets={},\n partitions={},\n  "
@@ -103,7 +102,7 @@ void cpu_info::info()
     }
 
     const struct cpuinfo_cache* l3_cache = cpuinfo_get_l3_caches();
-    if (l3_cache)
+    if (l3_cache != nullptr)
     {
         fmt::print(
             "-- Cache L3:\n size={},\n associativity={},\n sets={},\n partitions={},\n  "
@@ -146,10 +145,10 @@ void cpu_info::cpuinfo_cach(
     const struct cpuinfo_cache* l2_cache  = cpuinfo_get_l2_caches();
     const struct cpuinfo_cache* l3_cache  = cpuinfo_get_l3_caches();
 
-    l1       = l1d_cache ? l1d_cache->size : 0;
-    l2       = l2_cache ? l2_cache->size : 0;
-    l3       = l3_cache ? l3_cache->size : 0;
-    l3_count = l3_cache ? l3_cache->processor_count : 0;
+    l1       = (l1d_cache != nullptr) ? l1d_cache->size : 0;
+    l2       = (l2_cache != nullptr) ? l2_cache->size : 0;
+    l3       = (l3_cache != nullptr) ? l3_cache->size : 0;
+    l3_count = (l3_cache != nullptr) ? l3_cache->processor_count : 0;
 
     cpuinfo_deinitialize();
 }

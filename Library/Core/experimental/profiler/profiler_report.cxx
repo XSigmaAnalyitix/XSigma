@@ -19,12 +19,15 @@
 
 #include "profiler_report.h"
 
-#include <algorithm>
-#include <chrono>
-#include <iomanip>
-#include <iostream>
+#include <cstddef>
+#include <fstream>
+#include <memory>
 #include <sstream>
+#include <string>
+#include <thread>
+#include <vector>
 
+#include "experimental/profiler/profiler.h"
 #include "logging/logger.h"
 
 namespace xsigma
@@ -99,7 +102,7 @@ std::string profiler_report::generate_csv_report() const
 
     // Process hierarchical data into CSV rows
     std::vector<std::string> rows;
-    if (include_hierarchical_data_ && session_.get_root_scope())
+    if (include_hierarchical_data_ && (session_.get_root_scope() != nullptr))
     {
         process_scope_data_csv_recursive(*session_.get_root_scope(), rows);
     }
@@ -234,14 +237,12 @@ std::string profiler_report::format_duration(double duration_ns) const
     {
         return std::to_string(duration_ns / 1000000.0) + " ms";
     }
-    else if (time_unit_ == "us")
+    if (time_unit_ == "us")
     {
         return std::to_string(duration_ns / 1000.0) + " us";
     }
-    else
-    {
-        return std::to_string(duration_ns) + " ns";
-    }
+
+    return std::to_string(duration_ns) + " ns";
 }
 
 std::string profiler_report::format_memory_size(size_t bytes) const
@@ -250,14 +251,12 @@ std::string profiler_report::format_memory_size(size_t bytes) const
     {
         return std::to_string(bytes / (1024.0 * 1024.0)) + " MB";
     }
-    else if (memory_unit_ == "KB")
+    if (memory_unit_ == "KB")
     {
         return std::to_string(bytes / 1024.0) + " KB";
     }
-    else
-    {
-        return std::to_string(bytes) + " bytes";
-    }
+
+    return std::to_string(bytes) + " bytes";
 }
 
 std::string profiler_report::format_percentage(double value) const

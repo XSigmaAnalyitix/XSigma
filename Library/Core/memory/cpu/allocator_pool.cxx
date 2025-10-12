@@ -28,7 +28,14 @@
 
 #include "memory/cpu/allocator_pool.h"
 
-#include <cerrno>
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <mutex>
+#include <string>
+
+#include "memory/cpu/allocator.h"
 
 #if !defined(_WIN32) && !defined(_MSC_VER)
 #include <strings.h>
@@ -41,7 +48,6 @@
 #include "logging/logger.h"
 #include "logging/tracing/traceme.h"
 #include "memory/cpu/helper/memory_allocator.h"
-#include "memory/numa.h"
 #include "util/exception.h"
 
 namespace xsigma
@@ -98,16 +104,16 @@ void* PrepareChunk(void* chunk, size_t alignment, size_t num_bytes)
     {
         return nullptr;
     }
-    ChunkPrefix* cp = reinterpret_cast<ChunkPrefix*>(chunk);
-    cp->num_bytes   = num_bytes;
-    cp->chunk_ptr   = chunk;
-    void* user_ptr  = reinterpret_cast<void*>(cp + 1);
+    auto* cp       = reinterpret_cast<ChunkPrefix*>(chunk);
+    cp->num_bytes  = num_bytes;
+    cp->chunk_ptr  = chunk;
+    void* user_ptr = reinterpret_cast<void*>(cp + 1);
     if (alignment > kPoolAlignment)
     {
         // Move user_ptr forward to the first satisfying offset, and write
         // chunk_ptr just before it.
-        size_t aligned_ptr = reinterpret_cast<size_t>(user_ptr) + alignment;
-        user_ptr           = reinterpret_cast<void*>(aligned_ptr & ~(alignment - 1));
+        size_t const aligned_ptr = reinterpret_cast<size_t>(user_ptr) + alignment;
+        user_ptr                 = reinterpret_cast<void*>(aligned_ptr & ~(alignment - 1));
         (reinterpret_cast<ChunkPrefix*>(user_ptr) - 1)->chunk_ptr = chunk;
     }
     // Safety check that user_ptr is always past the ChunkPrefix.
@@ -140,8 +146,8 @@ void* allocator_pool::allocate_raw(size_t alignment, size_t num_bytes)
     if (has_size_limit_)
     {
         {
-            std::lock_guard<std::mutex> lock(mutex_);
-            auto                        iter = pool_.find(num_bytes);
+            std::lock_guard<std::mutex> const lock(mutex_);
+            auto                              iter = pool_.find(num_bytes);
             if (iter == pool_.end())
             {
                 allocated_count_++;
@@ -165,12 +171,10 @@ void* allocator_pool::allocate_raw(size_t alignment, size_t num_bytes)
         delete pr;
         return PrepareChunk(r, alignment, num_bytes);
     }
-    else
-    {
-        size_t bytes_received;
-        void*  ptr = allocator_->Alloc(kPoolAlignment, num_bytes, &bytes_received);
-        return PrepareChunk(ptr, alignment, bytes_received);
-    }
+
+    size_t bytes_received;
+    void*  ptr = allocator_->Alloc(kPoolAlignment, num_bytes, &bytes_received);
+    return PrepareChunk(ptr, alignment, bytes_received);
 }
 
 void allocator_pool::deallocate_raw(void* ptr)
@@ -185,7 +189,7 @@ void allocator_pool::deallocate_raw(void* ptr)
     }
     else
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
 
         // Check for double-free: search if this pointer is already in the pool
         if (std::any_of(
@@ -202,7 +206,7 @@ void allocator_pool::deallocate_raw(void* ptr)
         {
             EvictOne();
         }
-        PtrRecord* pr = new PtrRecord;
+        auto* pr      = new PtrRecord;
         pr->num_bytes = cp->num_bytes;
         pr->ptr       = cp;
         AddToList(pr);
@@ -214,7 +218,7 @@ void allocator_pool::Clear()
 {
     if (has_size_limit_)
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> const lock(mutex_);
         for (auto iter : pool_)
         {
             PtrRecord* pr = iter.second;
@@ -339,7 +343,7 @@ basic_cpu_allocator::~basic_cpu_allocator() = default;
 
 void* basic_cpu_allocator::Alloc(size_t alignment, size_t num_bytes, size_t* bytes_received)
 {
-    xsigma::traceme traceme("basic_cpu_allocator::Alloc");
+    xsigma::traceme const traceme("basic_cpu_allocator::Alloc");
 
     void* ptr       = nullptr;
     *bytes_received = num_bytes;
@@ -354,7 +358,7 @@ void* basic_cpu_allocator::Alloc(size_t alignment, size_t num_bytes, size_t* byt
 
 void basic_cpu_allocator::Free(void* ptr, size_t num_bytes)
 {
-    xsigma::traceme traceme("basic_cpu_allocator::Free");
+    xsigma::traceme const traceme("basic_cpu_allocator::Free");
 
     if (num_bytes > 0)
     {

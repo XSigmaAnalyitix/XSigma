@@ -34,10 +34,10 @@ limitations under the License.
 #include "experimental/profiler/profiler_lock.h"
 
 #include <atomic>  // for atomic, memory_order, ATOMIC_INT_LOCK_FREE, ATOMIC_VAR_INIT
+#include <optional>
 
 #include "common/macros.h"                  // for XSIGMA_UNLIKELY
 #include "experimental/profiler/env_var.h"  // for read_bool_from_env_var
-#include "fmt/format.h"                     // for compile_string_to_view
 #include "logging/logger.h"                 // for XSIGMA_LOG_ERROR
 
 namespace xsigma
@@ -66,7 +66,7 @@ static_assert(ATOMIC_INT_LOCK_FREE == 2, "Assumed atomic<int> was lock free");
     // Use environment variable to permanently lock the profiler.
     // This allows running TensorFlow under an external profiling tool with all
     // built-in profiling disabled.
-    static bool tf_profiler_disabled = []
+    static bool const tf_profiler_disabled = []
     {
         bool disabled = false;
         read_bool_from_env_var("XSIGMA_DISABLE_PROFILING", false, &disabled);
@@ -79,8 +79,8 @@ static_assert(ATOMIC_INT_LOCK_FREE == 2, "Assumed atomic<int> was lock free");
 
         return std::nullopt;
     }
-    int already_active = g_session_active.exchange(1, std::memory_order_acq_rel);
-    if (already_active)
+    int const already_active = g_session_active.exchange(1, std::memory_order_acq_rel);
+    if (already_active != 0)
     {
         XSIGMA_LOG_ERROR(kProfilerLockContention);
         return std::nullopt;

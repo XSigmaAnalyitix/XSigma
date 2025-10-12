@@ -28,16 +28,20 @@
 
 #include "memory/cpu/allocator_cpu.h"
 
-#include <algorithm>
 #include <atomic>
+#include <cstddef>
+#include <cstdint>
 #include <mutex>
 #include <optional>
 #include <string>
 #include <string_view>
 
+#include "common/macros.h"
 #include "experimental/profiler/scoped_memory_debug_annotation.h"
 #include "logging/logger.h"
 #include "logging/tracing/traceme.h"
+#include "logging/tracing/traceme_encode.h"
+#include "memory/cpu/allocator.h"
 #include "memory/cpu/helper/memory_allocator.h"
 #include "memory/cpu/helper/memory_info.h"
 
@@ -123,7 +127,7 @@ static constexpr double kLargeAllocationWarningThreshold = 0.1;
  */
 static int64_t LargeAllocationWarningBytes() noexcept
 {
-    static const int64_t value =
+    static const auto value =
         static_cast<int64_t>(port::available_ram() * kLargeAllocationWarningThreshold);
     return value;
 }
@@ -139,7 +143,7 @@ static int64_t LargeAllocationWarningBytes() noexcept
  */
 static int64_t TotalAllocationWarningBytes() noexcept
 {
-    static const int64_t value =
+    static const auto value =
         static_cast<int64_t>(port::available_ram() * kTotalAllocationWarningThreshold);
     return value;
 }
@@ -195,15 +199,15 @@ void* allocator_cpu::allocate_raw(size_t alignment, size_t num_bytes)
 
         // Use scoped lock for statistics update
         {
-            std::lock_guard<std::mutex> lock(mu_);
+            std::lock_guard<std::mutex> const lock(mu_);
 
             // Update core statistics
             stats_.num_allocs.fetch_add(1, std::memory_order_relaxed);
             stats_.bytes_in_use.fetch_add(alloc_size, std::memory_order_relaxed);
 
             // Update peak bytes in use atomically
-            int64_t current_bytes = stats_.bytes_in_use.load(std::memory_order_relaxed);
-            int64_t peak_bytes    = stats_.peak_bytes_in_use.load(std::memory_order_relaxed);
+            int64_t const current_bytes = stats_.bytes_in_use.load(std::memory_order_relaxed);
+            int64_t       peak_bytes    = stats_.peak_bytes_in_use.load(std::memory_order_relaxed);
             while (current_bytes > peak_bytes &&
                    !stats_.peak_bytes_in_use.compare_exchange_weak(
                        peak_bytes, current_bytes, std::memory_order_relaxed))
@@ -212,8 +216,8 @@ void* allocator_cpu::allocate_raw(size_t alignment, size_t num_bytes)
             }
 
             // Update largest allocation size atomically
-            int64_t alloc_size_int64 = static_cast<int64_t>(alloc_size);
-            int64_t largest_size     = stats_.largest_alloc_size.load(std::memory_order_relaxed);
+            auto const alloc_size_int64 = static_cast<int64_t>(alloc_size);
+            int64_t    largest_size     = stats_.largest_alloc_size.load(std::memory_order_relaxed);
             while (alloc_size_int64 > largest_size &&
                    !stats_.largest_alloc_size.compare_exchange_weak(
                        largest_size, alloc_size_int64, std::memory_order_relaxed))
@@ -253,7 +257,7 @@ void allocator_cpu::deallocate_raw(void* ptr)
 
         // Update statistics under lock
         {
-            std::lock_guard<std::mutex> lock(mu_);
+            std::lock_guard<std::mutex> const lock(mu_);
             stats_.bytes_in_use -= alloc_size;
         }
 
@@ -279,7 +283,7 @@ std::optional<allocator_stats> allocator_cpu::GetStats()
         return std::nullopt;
     }
 
-    std::lock_guard<std::mutex> lock(mu_);
+    std::lock_guard<std::mutex> const lock(mu_);
     // Create a copy of the atomic stats structure
     allocator_stats stats_copy(stats_);
     return stats_copy;
@@ -292,7 +296,7 @@ bool allocator_cpu::ClearStats()
         return false;
     }
 
-    std::lock_guard<std::mutex> lock(mu_);
+    std::lock_guard<std::mutex> const lock(mu_);
     stats_.num_allocs.store(0, std::memory_order_relaxed);
     stats_.peak_bytes_in_use.store(
         stats_.bytes_in_use.load(std::memory_order_relaxed), std::memory_order_relaxed);

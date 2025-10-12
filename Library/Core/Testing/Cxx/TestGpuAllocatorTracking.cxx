@@ -39,7 +39,7 @@ using namespace xsigma::gpu;
 /**
  * @brief Test basic GPU allocator tracking construction
  */
-XSIGMATEST_VOID(GpuAllocatorTracking, constructs_with_valid_parameters)
+XSIGMATEST(GpuAllocatorTracking, constructs_with_valid_parameters)
 {
     // Check if CUDA is available
     auto& device_manager = gpu_device_manager::instance();
@@ -67,7 +67,7 @@ XSIGMATEST_VOID(GpuAllocatorTracking, constructs_with_valid_parameters)
 /**
  * @brief Test basic allocation and deallocation tracking
  */
-XSIGMATEST_VOID(GpuAllocatorTracking, tracks_allocations_and_deallocations)
+XSIGMATEST(GpuAllocatorTracking, tracks_allocations_and_deallocations)
 {
     auto& device_manager = gpu_device_manager::instance();
     device_manager.initialize();
@@ -103,7 +103,7 @@ XSIGMATEST_VOID(GpuAllocatorTracking, tracks_allocations_and_deallocations)
 /**
  * @brief Test typed allocation tracking
  */
-XSIGMATEST_VOID(GpuAllocatorTracking, tracks_typed_allocations)
+XSIGMATEST(GpuAllocatorTracking, tracks_typed_allocations)
 {
     auto& device_manager = gpu_device_manager::instance();
     device_manager.initialize();
@@ -142,7 +142,7 @@ XSIGMATEST_VOID(GpuAllocatorTracking, tracks_typed_allocations)
 /**
  * @brief Test GPU timing statistics
  */
-XSIGMATEST_VOID(GpuAllocatorTracking, provides_timing_statistics)
+XSIGMATEST(GpuAllocatorTracking, provides_timing_statistics)
 {
     auto& device_manager = gpu_device_manager::instance();
     device_manager.initialize();
@@ -196,7 +196,7 @@ XSIGMATEST_VOID(GpuAllocatorTracking, provides_timing_statistics)
 /**
  * @brief Test GPU logging levels
  */
-XSIGMATEST_VOID(GpuAllocatorTracking, manages_logging_levels)
+XSIGMATEST(GpuAllocatorTracking, manages_logging_levels)
 {
     auto& device_manager = gpu_device_manager::instance();
     device_manager.initialize();
@@ -229,7 +229,7 @@ XSIGMATEST_VOID(GpuAllocatorTracking, manages_logging_levels)
 /**
  * @brief Test GPU efficiency metrics calculation
  */
-XSIGMATEST_VOID(GpuAllocatorTracking, calculates_efficiency_metrics)
+XSIGMATEST(GpuAllocatorTracking, calculates_efficiency_metrics)
 {
     auto& device_manager = gpu_device_manager::instance();
     device_manager.initialize();
@@ -276,7 +276,7 @@ XSIGMATEST_VOID(GpuAllocatorTracking, calculates_efficiency_metrics)
 /**
  * @brief Test GPU report generation
  */
-XSIGMATEST_VOID(GpuAllocatorTracking, generates_comprehensive_reports)
+XSIGMATEST(GpuAllocatorTracking, generates_comprehensive_reports)
 {
     auto& device_manager = gpu_device_manager::instance();
     device_manager.initialize();

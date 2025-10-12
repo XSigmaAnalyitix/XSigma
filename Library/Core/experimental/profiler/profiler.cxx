@@ -31,6 +31,14 @@
 
 #include "profiler.h"
 
+#include <atomic>
+#include <chrono>
+#include <cstdint>
+#include <memory>
+#include <mutex>
+#include <thread>
+#include <utility>
+
 #include "memory_tracker.h"
 #include "profiler_report.h"
 #include "statistical_analyzer.h"
@@ -40,12 +48,9 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-#include <windows.h>
 #endif
 
 #include <algorithm>
-#include <cmath>
-#include <iostream>
 #include <limits>
 
 namespace xsigma
@@ -63,10 +68,8 @@ static std::atomic<xsigma::profiler_session*> g_current_session{nullptr};
 
 void timing_stats::add_sample(double time_ms)
 {
-    if (time_ms < min_time_)
-        min_time_ = time_ms;
-    if (time_ms > max_time_)
-        max_time_ = time_ms;
+    min_time_ = std::min(time_ms, min_time_);
+    max_time_ = std::max(time_ms, max_time_);
     total_time_ += time_ms;
     ++sample_count_;
 }
@@ -152,7 +155,7 @@ bool profiler_session::start()
     // Initialize root scope for hierarchical profiling
     if (options_.enable_hierarchical_profiling_)
     {
-        std::lock_guard<std::mutex> lock(scope_mutex_);
+        std::lock_guard<std::mutex> const lock(scope_mutex_);
         root_scope_               = std::make_unique<xsigma::profiler_scope_data>();
         root_scope_->name_        = "ROOT";
         root_scope_->start_time_  = start_time_;
@@ -189,7 +192,7 @@ bool profiler_session::stop()
     // Finalize root scope
     if (options_.enable_hierarchical_profiling_ && root_scope_)
     {
-        std::lock_guard<std::mutex> lock(scope_mutex_);
+        std::lock_guard<std::mutex> const lock(scope_mutex_);
         root_scope_->end_time_ = end_time_;
         thread_current_scope_  = nullptr;
     }
@@ -259,7 +262,7 @@ void profiler_session::cleanup_components()
     memory_tracker_.reset();
     statistical_analyzer_.reset();
 
-    std::lock_guard<std::mutex> lock(scope_mutex_);
+    std::lock_guard<std::mutex> const lock(scope_mutex_);
     root_scope_.reset();
     current_scope_ = nullptr;
 }
@@ -268,16 +271,16 @@ void profiler_session::register_scope_start(xsigma::profiler_scope* scope)
     if (!options_.enable_hierarchical_profiling_ || !active_.load())
         return;
 
-    std::lock_guard<std::mutex> lock(scope_mutex_);
+    std::lock_guard<std::mutex> const lock(scope_mutex_);
 
     // Find the current scope for this thread
     xsigma::profiler_scope_data* parent_scope = thread_current_scope_;
-    if (!parent_scope)
+    if (parent_scope == nullptr)
     {
         parent_scope = root_scope_.get();
     }
 
-    if (parent_scope)
+    if (parent_scope != nullptr)
     {
         // Add as child to current scope
         auto child_scope          = std::make_unique<xsigma::profiler_scope_data>();
@@ -300,9 +303,9 @@ void profiler_session::register_scope_end(xsigma::profiler_scope* scope)
     if (!options_.enable_hierarchical_profiling_ || !active_.load())
         return;
 
-    std::lock_guard<std::mutex> lock(scope_mutex_);
+    std::lock_guard<std::mutex> const lock(scope_mutex_);
 
-    if (thread_current_scope_)
+    if (thread_current_scope_ != nullptr)
     {
         thread_current_scope_->end_time_     = scope->data().end_time_;
         thread_current_scope_->memory_stats_ = scope->data().memory_stats_;
@@ -318,14 +321,14 @@ void profiler_session::register_scope_end(xsigma::profiler_scope* scope)
 //=============================================================================
 
 profiler_scope::profiler_scope(const std::string& name, xsigma::profiler_session* session)
-    : session_(session ? session : xsigma::profiler_session::current_session())
+    : session_((session != nullptr) ? session : xsigma::profiler_session::current_session())
 {
     data_             = std::make_unique<xsigma::profiler_scope_data>();
     data_->name_      = name;
     data_->thread_id_ = std::this_thread::get_id();
 
     // Auto-start if session is active
-    if (session_ && session_->is_active())
+    if ((session_ != nullptr) && session_->is_active())
     {
         start();
     }
@@ -348,7 +351,7 @@ void profiler_scope::start()
     data_->start_time_ = std::chrono::high_resolution_clock::now();
 
     // Register with session for hierarchical tracking
-    if (session_)
+    if (session_ != nullptr)
     {
         session_->register_scope_start(this);
 
@@ -369,12 +372,12 @@ void profiler_scope::stop()
     data_->end_time_ = std::chrono::high_resolution_clock::now();
 
     // Calculate timing statistics
-    double duration_ms = data_->get_duration_ms();
+    double const duration_ms = data_->get_duration_ms();
     data_->timing_stats_.add_sample(duration_ms);
     data_->timing_stats_.calculate_statistics();
 
     // Update memory statistics
-    if (session_)
+    if (session_ != nullptr)
     {
         if (session_->options_.enable_memory_tracking_ && session_->memory_tracker_)
         {
