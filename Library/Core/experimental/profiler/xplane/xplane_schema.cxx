@@ -38,8 +38,11 @@ limitations under the License.
 #include <cstdint>
 #include <optional>
 #include <string_view>
+#include <type_traits>
+#include <utility>
 
-#include "logging/logger.h"  // For XSIGMA_CHECK_DEBUG macros
+#include "common/macros.h"
+#include "util/exception.h"
 #include "util/flat_hash.h"
 
 namespace xsigma
@@ -49,7 +52,7 @@ namespace
 template <class Collection>
 bool InsertOrUpdate(Collection* const collection, const typename Collection::value_type& vt)
 {
-    std::pair<typename Collection::iterator, bool> ret = collection->insert(vt);
+    std::pair<typename Collection::iterator, bool> const ret = collection->insert(vt);
     if (!ret.second)
     {
         // update
@@ -96,7 +99,7 @@ template <class Collection>
 const typename Collection::value_type::second_type* FindOrNull(
     const Collection& collection, const typename Collection::value_type::first_type& key)
 {
-    typename Collection::const_iterator it = collection.find(key);
+    typename Collection::const_iterator const it = collection.find(key);
     if (it == collection.end())
     {
         return nullptr;
@@ -556,7 +559,7 @@ std::optional<int64_t> FindTaskEnvStatType(std::string_view stat_name)
     return std::nullopt;
 }
 
-std::string_view GetLineIdTypeStr(LineIdType line_id_type)
+static std::string_view GetLineIdTypeStr(LineIdType line_id_type)
 {
     return GetLineIdTypeStrMap().at(line_id_type);
 }

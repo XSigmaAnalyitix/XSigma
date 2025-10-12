@@ -5,13 +5,20 @@
 #include "smp/STDThread/thread_pool.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cassert>
 #include <condition_variable>
+#include <cstddef>
+#include <exception>
+#include <functional>
 #include <future>
-#include <iostream>
+#include <iterator>
+#include <limits>
+#include <memory>
+#include <mutex>
+#include <thread>
 #include <utility>
-
-#include "util/exception.h"
+#include <vector>
 
 namespace xsigma::detail::smp
 {
@@ -93,7 +100,6 @@ thread_pool::Proxy::~Proxy()
 {
     if (!this->Data->JobsFutures.empty())
     {
-        XSIGMA_CHECK(false, "Proxy not joined. Terminating.");
         std::terminate();
     }
 }
@@ -155,7 +161,7 @@ void thread_pool::Proxy::DoJob(std::function<void()> job)
     {
         assert(std::this_thread::get_id() == proxyThread.Thread->SystemThread.get_id());
 
-        std::unique_lock<std::mutex> lock{proxyThread.Thread->Mutex};
+        std::unique_lock<std::mutex> const lock{proxyThread.Thread->Mutex};
         proxyThread.Thread->Jobs.emplace_back(this->Data.get(), std::move(job));
     }
     else
@@ -256,7 +262,7 @@ std::size_t thread_pool::GetThreadId() const
 {
     auto* threadData = this->GetCallerThreadData();
 
-    if (threadData)
+    if (threadData != nullptr)
     {
         std::unique_lock<std::mutex> lock{threadData->Mutex};  // protect threadData->Jobs access
         assert(threadData->RunningJob != NoRunningJob && "Invalid state");
@@ -289,9 +295,9 @@ bool thread_pool::GetSingleThread() const
     // Return true if the caller is the thread[0] of the current running proxy
 
     auto* threadData = GetCallerThreadData();
-    if (threadData)
+    if (threadData != nullptr)
     {
-        std::lock_guard<std::mutex> lock{threadData->Mutex};
+        std::lock_guard<std::mutex> const lock{threadData->Mutex};
         assert(threadData->RunningJob != NoRunningJob && "Invalid state");
         return threadData->Jobs[threadData->RunningJob].Proxy->Threads[0].Thread == threadData;
     }
@@ -370,7 +376,7 @@ void thread_pool::FillThreadsForNestedProxy(ProxyData* proxy, std::size_t maxCou
     {
         for (auto* parent = proxy->Parent; parent != nullptr; parent = parent->Parent)
         {
-            bool found = std::any_of(
+            bool const found = std::any_of(
                 parent->Threads.begin(),
                 parent->Threads.end(),
                 [threadData](const auto& proxyThread) { return proxyThread.Thread == threadData; });

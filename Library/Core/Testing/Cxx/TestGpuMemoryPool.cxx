@@ -36,7 +36,7 @@ using namespace xsigma::gpu;
 /**
  * @brief Test GPU memory pool configuration validation
  */
-XSIGMATEST_VOID(GpuMemoryPool, validates_configuration_parameters)
+XSIGMATEST(GpuMemoryPool, validates_configuration_parameters)
 {
     // Test default configuration
     gpu_memory_pool_config default_config;
@@ -71,7 +71,7 @@ XSIGMATEST_VOID(GpuMemoryPool, validates_configuration_parameters)
 /**
  * @brief Test GPU memory pool creation
  */
-XSIGMATEST_VOID(GpuMemoryPool, creates_pool_successfully)
+XSIGMATEST(GpuMemoryPool, creates_pool_successfully)
 {
     // Test pool creation with default configuration
     gpu_memory_pool_config config;
@@ -100,7 +100,7 @@ XSIGMATEST_VOID(GpuMemoryPool, creates_pool_successfully)
 /**
  * @brief Test GPU memory block structure and operations
  */
-XSIGMATEST_VOID(GpuMemoryBlock, manages_block_metadata_correctly)
+XSIGMATEST(GpuMemoryBlock, manages_block_metadata_correctly)
 {
     // Test default construction
     gpu_memory_block default_block;
@@ -138,7 +138,7 @@ XSIGMATEST_VOID(GpuMemoryBlock, manages_block_metadata_correctly)
 /**
  * @brief Test basic memory allocation and deallocation
  */
-XSIGMATEST_VOID(GpuMemoryPool, allocates_and_deallocates_memory)
+XSIGMATEST(GpuMemoryPool, allocates_and_deallocates_memory)
 {
     gpu_memory_pool_config config;
     config.min_block_size = 1024;
@@ -174,7 +174,7 @@ XSIGMATEST_VOID(GpuMemoryPool, allocates_and_deallocates_memory)
 /**
  * @brief Test multiple allocations and memory reuse
  */
-XSIGMATEST_VOID(GpuMemoryPool, handles_multiple_allocations)
+XSIGMATEST(GpuMemoryPool, handles_multiple_allocations)
 {
     gpu_memory_pool_config config;
     config.min_block_size    = 512;
@@ -226,7 +226,7 @@ XSIGMATEST_VOID(GpuMemoryPool, handles_multiple_allocations)
 /**
  * @brief Test memory pool statistics and reporting
  */
-XSIGMATEST_VOID(GpuMemoryPool, provides_accurate_statistics)
+XSIGMATEST(GpuMemoryPool, provides_accurate_statistics)
 {
     gpu_memory_pool_config config;
     config.min_block_size  = 1024;
@@ -276,7 +276,7 @@ XSIGMATEST_VOID(GpuMemoryPool, provides_accurate_statistics)
 /**
  * @brief Test cache management functionality
  */
-XSIGMATEST_VOID(GpuMemoryPool, manages_cache_effectively)
+XSIGMATEST(GpuMemoryPool, manages_cache_effectively)
 {
     gpu_memory_pool_config config;
     config.min_block_size    = 1024;
@@ -318,7 +318,7 @@ XSIGMATEST_VOID(GpuMemoryPool, manages_cache_effectively)
 /**
  * @brief Test memory pool with different device types
  */
-XSIGMATEST_VOID(GpuMemoryPool, supports_different_device_types)
+XSIGMATEST(GpuMemoryPool, supports_different_device_types)
 {
     gpu_memory_pool_config config;
     config.min_block_size = 1024;
@@ -359,7 +359,7 @@ XSIGMATEST_VOID(GpuMemoryPool, supports_different_device_types)
 /**
  * @brief Test memory pool error handling
  */
-XSIGMATEST_VOID(GpuMemoryPool, handles_errors_gracefully)
+XSIGMATEST(GpuMemoryPool, handles_errors_gracefully)
 {
     gpu_memory_pool_config config;
     config.min_block_size = 1024;

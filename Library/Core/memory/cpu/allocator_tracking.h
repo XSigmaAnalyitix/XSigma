@@ -355,7 +355,7 @@ public:
      * **Performance**: O(1) - hash table lookup or delegation
      * **Thread Safety**: Thread-safe with internal synchronization
      */
-    int64_t AllocationId(const void* ptr) const noexcept override;
+    int64_t AllocationId(const void* ptr) const override;
 
     /**
      * @brief Retrieves comprehensive tracking statistics.

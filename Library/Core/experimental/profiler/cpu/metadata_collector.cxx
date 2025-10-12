@@ -105,7 +105,7 @@ std::unique_ptr<profiler_interface> CreatMetadataCollector(const profile_options
 
 }  // namespace
 
-auto register_metadata_collector_factory = []
+static auto register_metadata_collector_factory = []
 {
     register_profiler_factory(&CreatMetadataCollector);
     return 0;

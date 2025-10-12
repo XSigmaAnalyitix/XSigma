@@ -34,6 +34,7 @@ limitations under the License.
 #include "experimental/profiler/xplane/xplane_builder.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -112,7 +113,7 @@ std::vector<xevent_metadata*> xplane_builder::get_or_create_events_metadata(
 {
     std::vector<xevent_metadata*> metadata;
     metadata.reserve(names.size());
-    for (std::string_view name : names)
+    for (std::string_view const name : names)
     {
         metadata.push_back(get_or_create_event_metadata(name));
     }
@@ -214,9 +215,9 @@ xevent_builder xline_builder::add_event(const xevent& event)
 
 void xline_builder::set_time_stamp_ns_and_adjust_event_offsets(int64_t timestamp_ns)
 {
-    int64_t offset_ps = xevent_builder::NanoToPico(line_->timestamp_ns() - timestamp_ns);
+    int64_t const offset_ps = xevent_builder::NanoToPico(line_->timestamp_ns() - timestamp_ns);
     line_->set_timestamp_ns(timestamp_ns);
-    if (offset_ps)
+    if (offset_ps != 0)
     {
         for (auto& event : *line_->mutable_events())
         {

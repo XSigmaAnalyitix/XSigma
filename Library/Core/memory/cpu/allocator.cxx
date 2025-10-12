@@ -28,12 +28,14 @@
 
 #include "memory/cpu/allocator.h"
 
-#include <memory>
+#include <cstddef>
+#include <string>
+#include <vector>
 
+#include "fmt/format.h"
 #include "memory/cpu/allocator_cpu.h"
 #include "memory/cpu/allocator_tracking.h"
 #include "memory/cpu/helper/process_state.h"
-#include "util/string_util.h"
 
 namespace xsigma
 {
@@ -77,10 +79,8 @@ Allocator* cpu_allocator(int numa_node)
     {
         return ps->GetCPUAllocator(numa_node);
     }
-    else
-    {
-        return allocator_cpu_base();
-    }
+
+    return allocator_cpu_base();
 }
 
 sub_allocator::sub_allocator(

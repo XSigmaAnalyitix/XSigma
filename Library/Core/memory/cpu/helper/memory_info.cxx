@@ -87,7 +87,7 @@ memory_info GetMemoryInfo()
 #ifdef _WIN32
     MEMORYSTATUSEX statex;
     statex.dwLength = sizeof(statex);
-    if (GlobalMemoryStatusEx(&statex))
+    if (GlobalMemoryStatusEx(&statex) != 0)
     {
         mem_info.free  = statex.ullAvailPhys;
         mem_info.total = statex.ullTotalPhys;

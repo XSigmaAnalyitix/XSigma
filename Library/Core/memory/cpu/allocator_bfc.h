@@ -487,7 +487,7 @@ public:
      * **Thread Safety**: Thread-safe with internal synchronization
      * **Uniqueness**: Each allocation gets a different positive ID
      */
-    int64_t AllocationId(const void* ptr) const noexcept override;
+    int64_t AllocationId(const void* ptr) const override;
 
     /**
      * @brief Retrieves comprehensive allocator statistics.

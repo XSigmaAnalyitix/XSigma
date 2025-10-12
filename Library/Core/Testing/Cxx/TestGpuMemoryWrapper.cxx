@@ -37,7 +37,7 @@ using namespace xsigma::gpu;
 /**
  * @brief Test GPU memory wrapper default construction
  */
-XSIGMATEST_VOID(GpuMemoryWrapper, constructs_empty_wrapper)
+XSIGMATEST(GpuMemoryWrapper, constructs_empty_wrapper)
 {
     // Test default construction
     gpu_memory_wrapper<float> wrapper;
@@ -54,7 +54,7 @@ XSIGMATEST_VOID(GpuMemoryWrapper, constructs_empty_wrapper)
 /**
  * @brief Test GPU memory wrapper allocation
  */
-XSIGMATEST_VOID(GpuMemoryWrapper, allocates_typed_memory)
+XSIGMATEST(GpuMemoryWrapper, allocates_typed_memory)
 {
     try
     {
@@ -87,7 +87,7 @@ XSIGMATEST_VOID(GpuMemoryWrapper, allocates_typed_memory)
 /**
  * @brief Test GPU memory wrapper void specialization
  */
-XSIGMATEST_VOID(GpuMemoryWrapper, handles_void_specialization)
+XSIGMATEST(GpuMemoryWrapper, handles_void_specialization)
 {
     try
     {
@@ -120,7 +120,7 @@ XSIGMATEST_VOID(GpuMemoryWrapper, handles_void_specialization)
 /**
  * @brief Test non-owning wrapper creation
  */
-XSIGMATEST_VOID(GpuMemoryWrapper, creates_non_owning_wrapper)
+XSIGMATEST(GpuMemoryWrapper, creates_non_owning_wrapper)
 {
     // Test non-owning wrapper with host memory
     float* raw_ptr = static_cast<float*>(malloc(100 * sizeof(float)));
@@ -144,7 +144,7 @@ XSIGMATEST_VOID(GpuMemoryWrapper, creates_non_owning_wrapper)
 /**
  * @brief Test wrapper with custom deleter
  */
-XSIGMATEST_VOID(GpuMemoryWrapper, supports_custom_deleter)
+XSIGMATEST(GpuMemoryWrapper, supports_custom_deleter)
 {
     bool deleter_called = false;
 
@@ -178,7 +178,7 @@ XSIGMATEST_VOID(GpuMemoryWrapper, supports_custom_deleter)
 /**
  * @brief Test move semantics
  */
-XSIGMATEST_VOID(GpuMemoryWrapper, supports_move_semantics)
+XSIGMATEST(GpuMemoryWrapper, supports_move_semantics)
 {
     try
     {
@@ -219,7 +219,7 @@ XSIGMATEST_VOID(GpuMemoryWrapper, supports_move_semantics)
 /**
  * @brief Test copy semantics (non-owning copy)
  */
-XSIGMATEST_VOID(GpuMemoryWrapper, supports_copy_semantics)
+XSIGMATEST(GpuMemoryWrapper, supports_copy_semantics)
 {
     try
     {
@@ -259,7 +259,7 @@ XSIGMATEST_VOID(GpuMemoryWrapper, supports_copy_semantics)
 /**
  * @brief Test memory release functionality
  */
-XSIGMATEST_VOID(GpuMemoryWrapper, releases_memory_ownership)
+XSIGMATEST(GpuMemoryWrapper, releases_memory_ownership)
 {
     try
     {
@@ -300,7 +300,7 @@ XSIGMATEST_VOID(GpuMemoryWrapper, releases_memory_ownership)
 /**
  * @brief Test reset functionality
  */
-XSIGMATEST_VOID(GpuMemoryWrapper, resets_wrapper_state)
+XSIGMATEST(GpuMemoryWrapper, resets_wrapper_state)
 {
     try
     {
@@ -337,7 +337,7 @@ XSIGMATEST_VOID(GpuMemoryWrapper, resets_wrapper_state)
 /**
  * @brief Test wrapper comparison operators
  */
-XSIGMATEST_VOID(GpuMemoryWrapper, supports_comparison_operators)
+XSIGMATEST(GpuMemoryWrapper, supports_comparison_operators)
 {
     try
     {
@@ -374,7 +374,7 @@ XSIGMATEST_VOID(GpuMemoryWrapper, supports_comparison_operators)
 /**
  * @brief Test convenience function for creating GPU memory
  */
-XSIGMATEST_VOID(GpuMemoryWrapper, provides_convenience_functions)
+XSIGMATEST(GpuMemoryWrapper, provides_convenience_functions)
 {
     try
     {
@@ -405,7 +405,7 @@ XSIGMATEST_VOID(GpuMemoryWrapper, provides_convenience_functions)
 /**
  * @brief Test wrapper swap functionality
  */
-XSIGMATEST_VOID(GpuMemoryWrapper, supports_swap_operation)
+XSIGMATEST(GpuMemoryWrapper, supports_swap_operation)
 {
     try
     {

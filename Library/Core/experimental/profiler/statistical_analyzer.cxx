@@ -19,6 +19,13 @@
 
 #include "statistical_analyzer.h"
 
+#include <chrono>
+#include <cstddef>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
+
 // Include hash compatibility layer for libc++ versions that don't export __hash_memory
 
 #include "util/flat_hash.h"
@@ -28,7 +35,6 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-#include <windows.h>
 #endif
 
 #include <algorithm>
@@ -95,8 +101,8 @@ void statistical_analyzer::add_timing_sample(const std::string& name, double tim
     if (!analyzing_.load())
         return;
 
-    std::lock_guard<std::mutex> lock(timing_mutex_);
-    auto&                       series = timing_data_[name];
+    std::lock_guard<std::mutex> const lock(timing_mutex_);
+    auto&                             series = timing_data_[name];
     series.push_back(time_ms);
     trim_series_if_needed(series);
 }
@@ -106,8 +112,8 @@ void statistical_analyzer::add_memory_sample(const std::string& name, size_t mem
     if (!analyzing_.load())
         return;
 
-    std::lock_guard<std::mutex> lock(memory_mutex_);
-    auto&                       series = memory_data_[name];
+    std::lock_guard<std::mutex> const lock(memory_mutex_);
+    auto&                             series = memory_data_[name];
     series.push_back(static_cast<double>(memory_bytes));
     trim_series_if_needed(series);
 }
@@ -117,8 +123,8 @@ void statistical_analyzer::add_custom_sample(const std::string& name, double val
     if (!analyzing_.load())
         return;
 
-    std::lock_guard<std::mutex> lock(custom_mutex_);
-    auto&                       series = custom_data_[name];
+    std::lock_guard<std::mutex> const lock(custom_mutex_);
+    auto&                             series = custom_data_[name];
     series.push_back(value);
     trim_series_if_needed(series);
 }
@@ -135,8 +141,8 @@ void statistical_analyzer::add_time_series_point(
     point.label_     = label;
     point.thread_id_ = std::this_thread::get_id();
 
-    std::lock_guard<std::mutex> lock(time_series_mutex_);
-    auto&                       series = time_series_data_[series_name];
+    std::lock_guard<std::mutex> const lock(time_series_mutex_);
+    auto&                             series = time_series_data_[series_name];
     series.push_back(point);
     trim_time_series_if_needed(series);
 }
@@ -144,8 +150,8 @@ void statistical_analyzer::add_time_series_point(
 xsigma::statistical_metrics statistical_analyzer::calculate_timing_stats(
     const std::string& name) const
 {
-    std::lock_guard<std::mutex> lock(timing_mutex_);
-    auto                        it = timing_data_.find(name);
+    std::lock_guard<std::mutex> const lock(timing_mutex_);
+    auto                              it = timing_data_.find(name);
     if (it == timing_data_.end())
     {
         return xsigma::statistical_metrics{};
@@ -156,8 +162,8 @@ xsigma::statistical_metrics statistical_analyzer::calculate_timing_stats(
 xsigma::statistical_metrics statistical_analyzer::calculate_memory_stats(
     const std::string& name) const
 {
-    std::lock_guard<std::mutex> lock(memory_mutex_);
-    auto                        it = memory_data_.find(name);
+    std::lock_guard<std::mutex> const lock(memory_mutex_);
+    auto                              it = memory_data_.find(name);
     if (it == memory_data_.end())
     {
         return xsigma::statistical_metrics{};
@@ -168,8 +174,8 @@ xsigma::statistical_metrics statistical_analyzer::calculate_memory_stats(
 xsigma::statistical_metrics statistical_analyzer::calculate_custom_stats(
     const std::string& name) const
 {
-    std::lock_guard<std::mutex> lock(custom_mutex_);
-    auto                        it = custom_data_.find(name);
+    std::lock_guard<std::mutex> const lock(custom_mutex_);
+    auto                              it = custom_data_.find(name);
     if (it == custom_data_.end())
     {
         return xsigma::statistical_metrics{};
@@ -180,7 +186,7 @@ xsigma::statistical_metrics statistical_analyzer::calculate_custom_stats(
 xsigma_map<std::string, xsigma::statistical_metrics>
 statistical_analyzer::calculate_all_timing_stats() const
 {
-    std::lock_guard<std::mutex>                          lock(timing_mutex_);
+    std::lock_guard<std::mutex> const                    lock(timing_mutex_);
     xsigma_map<std::string, xsigma::statistical_metrics> results;
 
     for (const auto& pair : timing_data_)
@@ -194,7 +200,7 @@ statistical_analyzer::calculate_all_timing_stats() const
 xsigma_map<std::string, xsigma::statistical_metrics>
 statistical_analyzer::calculate_all_memory_stats() const
 {
-    std::lock_guard<std::mutex>                          lock(memory_mutex_);
+    std::lock_guard<std::mutex> const                    lock(memory_mutex_);
     xsigma_map<std::string, xsigma::statistical_metrics> results;
 
     for (const auto& pair : memory_data_)
@@ -208,7 +214,7 @@ statistical_analyzer::calculate_all_memory_stats() const
 xsigma_map<std::string, xsigma::statistical_metrics>
 statistical_analyzer::calculate_all_custom_stats() const
 {
-    std::lock_guard<std::mutex>                          lock(custom_mutex_);
+    std::lock_guard<std::mutex> const                    lock(custom_mutex_);
     xsigma_map<std::string, xsigma::statistical_metrics> results;
 
     for (const auto& pair : custom_data_)
@@ -222,8 +228,8 @@ statistical_analyzer::calculate_all_custom_stats() const
 std::vector<xsigma::time_series_point> statistical_analyzer::get_time_series(
     const std::string& series_name) const
 {
-    std::lock_guard<std::mutex> lock(time_series_mutex_);
-    auto                        it = time_series_data_.find(series_name);
+    std::lock_guard<std::mutex> const lock(time_series_mutex_);
+    auto                              it = time_series_data_.find(series_name);
 
     if (it == time_series_data_.end())
     {
@@ -235,8 +241,8 @@ std::vector<xsigma::time_series_point> statistical_analyzer::get_time_series(
 xsigma::statistical_metrics statistical_analyzer::analyze_time_series(
     const std::string& series_name) const
 {
-    std::lock_guard<std::mutex> lock(time_series_mutex_);
-    auto                        it = time_series_data_.find(series_name);
+    std::lock_guard<std::mutex> const lock(time_series_mutex_);
+    auto                              it = time_series_data_.find(series_name);
     if (it == time_series_data_.end())
     {
         return xsigma::statistical_metrics{};
@@ -254,15 +260,15 @@ xsigma::statistical_metrics statistical_analyzer::analyze_time_series(
 
 double statistical_analyzer::calculate_trend_slope(const std::string& series_name) const
 {
-    std::lock_guard<std::mutex> lock(time_series_mutex_);
-    auto                        it = time_series_data_.find(series_name);
+    std::lock_guard<std::mutex> const lock(time_series_mutex_);
+    auto                              it = time_series_data_.find(series_name);
     if (it == time_series_data_.end() || it->second.size() < 2)
     {
         return 0.0;
     }
 
-    const auto& series = it->second;
-    size_t      n      = series.size();
+    const auto&  series = it->second;
+    size_t const n      = series.size();
 
     // Calculate linear regression slope using least squares
     double sum_x  = 0.0;
@@ -272,8 +278,8 @@ double statistical_analyzer::calculate_trend_slope(const std::string& series_nam
 
     for (size_t i = 0; i < n; ++i)
     {
-        double x = static_cast<double>(i);
-        double y = series[i].value_;
+        auto const   x = static_cast<double>(i);
+        double const y = series[i].value_;
 
         sum_x += x;
         sum_y += y;
@@ -281,26 +287,26 @@ double statistical_analyzer::calculate_trend_slope(const std::string& series_nam
         sum_x2 += x * x;
     }
 
-    double slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x);
+    double const slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x);
     return slope;
 }
 
 bool statistical_analyzer::is_trending_up(const std::string& series_name, double threshold) const
 {
-    double slope = calculate_trend_slope(series_name);
+    double const slope = calculate_trend_slope(series_name);
     return slope > threshold;
 }
 
 bool statistical_analyzer::is_trending_down(const std::string& series_name, double threshold) const
 {
-    double slope = calculate_trend_slope(series_name);
+    double const slope = calculate_trend_slope(series_name);
     return slope < -threshold;
 }
 
 double statistical_analyzer::calculate_correlation(
     const std::string& series1, const std::string& series2) const
 {
-    std::lock_guard<std::mutex> lock(time_series_mutex_);
+    std::lock_guard<std::mutex> const lock(time_series_mutex_);
 
     auto it1 = time_series_data_.find(series1);
     auto it2 = time_series_data_.find(series2);
@@ -313,7 +319,7 @@ double statistical_analyzer::calculate_correlation(
     const auto& s1 = it1->second;
     const auto& s2 = it2->second;
 
-    size_t min_size = std::min(s1.size(), s2.size());
+    size_t const min_size = std::min(s1.size(), s2.size());
     if (min_size < 2)
         return 0.0;
 
@@ -326,8 +332,8 @@ double statistical_analyzer::calculate_correlation(
 
     for (size_t i = 0; i < min_size; ++i)
     {
-        double x = s1[i].value_;
-        double y = s2[i].value_;
+        double const x = s1[i].value_;
+        double const y = s2[i].value_;
 
         sum_x += x;
         sum_y += y;
@@ -336,9 +342,10 @@ double statistical_analyzer::calculate_correlation(
         sum_y2 += y * y;
     }
 
-    double n           = static_cast<double>(min_size);
-    double numerator   = n * sum_xy - sum_x * sum_y;
-    double denominator = std::sqrt((n * sum_x2 - sum_x * sum_x) * (n * sum_y2 - sum_y * sum_y));
+    auto const   n         = static_cast<double>(min_size);
+    double const numerator = (n * sum_xy) - (sum_x * sum_y);
+    double const denominator =
+        std::sqrt((n * sum_x2 - sum_x * sum_x) * (n * sum_y2 - sum_y * sum_y));
 
     return (denominator != 0.0) ? numerator / denominator : 0.0;
 }
@@ -350,26 +357,26 @@ bool statistical_analyzer::detect_performance_regression(
     if (!stats.is_valid())
         return false;
 
-    double performance_change = (stats.mean - baseline_mean) / baseline_mean;
+    double const performance_change = (stats.mean - baseline_mean) / baseline_mean;
     return performance_change > threshold;
 }
 
 void statistical_analyzer::clear_data()
 {
     {
-        std::lock_guard<std::mutex> lock(timing_mutex_);
+        std::lock_guard<std::mutex> const lock(timing_mutex_);
         timing_data_.clear();
     }
     {
-        std::lock_guard<std::mutex> lock(memory_mutex_);
+        std::lock_guard<std::mutex> const lock(memory_mutex_);
         memory_data_.clear();
     }
     {
-        std::lock_guard<std::mutex> lock(custom_mutex_);
+        std::lock_guard<std::mutex> const lock(custom_mutex_);
         custom_data_.clear();
     }
     {
-        std::lock_guard<std::mutex> lock(time_series_mutex_);
+        std::lock_guard<std::mutex> const lock(time_series_mutex_);
         time_series_data_.clear();
     }
 }
@@ -377,19 +384,19 @@ void statistical_analyzer::clear_data()
 void statistical_analyzer::clear_series(const std::string& name)
 {
     {
-        std::lock_guard<std::mutex> lock(timing_mutex_);
+        std::lock_guard<std::mutex> const lock(timing_mutex_);
         timing_data_.erase(name);
     }
     {
-        std::lock_guard<std::mutex> lock(memory_mutex_);
+        std::lock_guard<std::mutex> const lock(memory_mutex_);
         memory_data_.erase(name);
     }
     {
-        std::lock_guard<std::mutex> lock(custom_mutex_);
+        std::lock_guard<std::mutex> const lock(custom_mutex_);
         custom_data_.erase(name);
     }
     {
-        std::lock_guard<std::mutex> lock(time_series_mutex_);
+        std::lock_guard<std::mutex> const lock(time_series_mutex_);
         time_series_data_.erase(name);
     }
 }
@@ -397,8 +404,8 @@ void statistical_analyzer::clear_series(const std::string& name)
 size_t statistical_analyzer::get_sample_count(const std::string& name) const
 {
     {
-        std::lock_guard<std::mutex> lock(timing_mutex_);
-        auto                        it = timing_data_.find(name);
+        std::lock_guard<std::mutex> const lock(timing_mutex_);
+        auto                              it = timing_data_.find(name);
 
         if (it != timing_data_.end())
         {
@@ -406,8 +413,8 @@ size_t statistical_analyzer::get_sample_count(const std::string& name) const
         }
     }
     {
-        std::lock_guard<std::mutex> lock(memory_mutex_);
-        auto                        it = memory_data_.find(name);
+        std::lock_guard<std::mutex> const lock(memory_mutex_);
+        auto                              it = memory_data_.find(name);
 
         if (it != memory_data_.end())
         {
@@ -415,8 +422,8 @@ size_t statistical_analyzer::get_sample_count(const std::string& name) const
         }
     }
     {
-        std::lock_guard<std::mutex> lock(custom_mutex_);
-        auto                        it = custom_data_.find(name);
+        std::lock_guard<std::mutex> const lock(custom_mutex_);
+        auto                              it = custom_data_.find(name);
 
         if (it != custom_data_.end())
         {
@@ -463,9 +470,9 @@ xsigma::statistical_metrics statistical_analyzer::calculate_metrics(
     // Calculate variance and standard deviation
     double variance_sum = 0.0;
 
-    for (double value : data)
+    for (double const value : data)
     {
-        double diff = value - metrics.mean;
+        double const diff = value - metrics.mean;
         variance_sum += diff * diff;
     }
     metrics.variance      = variance_sum / metrics.count;
@@ -475,7 +482,7 @@ xsigma::statistical_metrics statistical_analyzer::calculate_metrics(
     std::vector<double> sorted_data = data;
     std::sort(sorted_data.begin(), sorted_data.end());
 
-    size_t mid = sorted_data.size() / 2;
+    size_t const mid = sorted_data.size() / 2;
 
     if (sorted_data.size() % 2 == 0)
     {
@@ -508,14 +515,14 @@ std::vector<double> statistical_analyzer::calculate_percentiles(
     std::vector<double> results;
     results.reserve(percentiles.size());
 
-    for (double p : percentiles)
+    for (double const p : percentiles)
     {
         if (p < 0.0 || p > 100.0)
             continue;
 
-        double index = (p / 100.0) * (data.size() - 1);
-        size_t lower = static_cast<size_t>(std::floor(index));
-        size_t upper = static_cast<size_t>(std::ceil(index));
+        double const index = (p / 100.0) * (data.size() - 1);
+        auto const   lower = static_cast<size_t>(std::floor(index));
+        auto const   upper = static_cast<size_t>(std::ceil(index));
 
         if (lower == upper)
         {
@@ -523,8 +530,8 @@ std::vector<double> statistical_analyzer::calculate_percentiles(
         }
         else
         {
-            double weight = index - lower;
-            results.push_back(data[lower] * (1.0 - weight) + data[upper] * weight);
+            double const weight = index - lower;
+            results.push_back((data[lower] * (1.0 - weight)) + (data[upper] * weight));
         }
     }
 
@@ -540,22 +547,22 @@ std::vector<double> statistical_analyzer::detect_outliers(
     }
 
     // Calculate mean and standard deviation
-    double sum  = std::accumulate(data.begin(), data.end(), 0.0);
-    double mean = sum / data.size();
+    double const sum  = std::accumulate(data.begin(), data.end(), 0.0);
+    double const mean = sum / data.size();
 
     double variance_sum = 0.0;
-    for (double value : data)
+    for (double const value : data)
     {
-        double diff = value - mean;
+        double const diff = value - mean;
         variance_sum += diff * diff;
     }
-    double std_dev = std::sqrt(variance_sum / data.size());
+    double const std_dev = std::sqrt(variance_sum / data.size());
 
     // Find outliers using z-score method
     std::vector<double> outliers;
-    for (double value : data)
+    for (double const value : data)
     {
-        double z_score = std::abs(value - mean) / std_dev;
+        double const z_score = std::abs(value - mean) / std_dev;
         if (z_score > threshold)
         {
             outliers.push_back(value);
@@ -570,7 +577,7 @@ void statistical_analyzer::trim_series_if_needed(std::vector<double>& series) co
     if (series.size() > max_samples_per_series_)
     {
         // Remove oldest samples (from the beginning)
-        size_t excess = series.size() - max_samples_per_series_;
+        size_t const excess = series.size() - max_samples_per_series_;
         series.erase(series.begin(), series.begin() + excess);
     }
 }
@@ -581,7 +588,7 @@ void statistical_analyzer::trim_time_series_if_needed(
     if (series.size() > max_samples_per_series_)
     {
         // Remove oldest samples (from the beginning)
-        size_t excess = series.size() - max_samples_per_series_;
+        size_t const excess = series.size() - max_samples_per_series_;
         series.erase(series.begin(), series.begin() + excess);
     }
 }
@@ -604,7 +611,7 @@ statistical_analysis_scope::~statistical_analysis_scope()
         auto end_time = std::chrono::high_resolution_clock::now();
         auto duration =
             std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time_);
-        double duration_ms = duration.count() / 1000.0;
+        double const duration_ms = duration.count() / 1000.0;
 
         analyzer_.add_timing_sample(name_, duration_ms);
     }
@@ -618,7 +625,7 @@ void statistical_analysis_scope::add_checkpoint(const std::string& label)
     // Add timing sample for this checkpoint
     auto duration =
         std::chrono::duration_cast<std::chrono::microseconds>(checkpoint_time - start_time_);
-    double duration_ms = duration.count() / 1000.0;
+    double const duration_ms = duration.count() / 1000.0;
     analyzer_.add_timing_sample(name_ + "_" + label, duration_ms);
 }
 
@@ -636,7 +643,7 @@ xsigma::statistical_metrics statistical_analysis_scope::get_checkpoint_stats() c
     {
         auto duration =
             std::chrono::duration_cast<std::chrono::microseconds>(checkpoint.second - start_time_);
-        double duration_ms = duration.count() / 1000.0;
+        double const duration_ms = duration.count() / 1000.0;
         checkpoint_times.push_back(duration_ms);
     }
 

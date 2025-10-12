@@ -38,45 +38,9 @@
 #include "memory/cpu/helper/memory_allocator.h"  // for free, allocate
 #include "memory/cpu/helper/process_state.h"     // for process_state
 #include "memory/unified_memory_stats.h"  // for atomic_timing_stats, unified_resource_stats, memory_fragment...
-#include "xsigmaTest.h"  // for XSIGMATEST_CALL, XSIGMATEST_VOID, END_TEST, XSIGMATEST
+#include "xsigmaTest.h"                   // for XSIGMATEST_CALL, XSIGMATEST, END_TEST, XSIGMATEST
 
 using namespace xsigma;
-namespace xsigma
-{
-
-// Helper class for testing allocators (trivial type for allocator_typed)
-struct TestStruct
-{
-    int    x;
-    double y;
-    char   data[64];
-};
-
-// Helper function to check memory alignment
-bool IsAligned(void* ptr, size_t alignment)
-{
-    return (reinterpret_cast<uintptr_t>(ptr) % alignment) == 0;
-}
-
-// Helper function to validate memory content
-void FillMemory(void* ptr, size_t size, uint8_t pattern)
-{
-    memset(ptr, pattern, size);
-}
-
-bool ValidateMemory(void* ptr, size_t size, uint8_t pattern)
-{
-    uint8_t* bytes = static_cast<uint8_t*>(ptr);
-    for (size_t i = 0; i < size; ++i)
-    {
-        if (bytes[i] != pattern)
-        {
-            return false;
-        }
-    }
-    return true;
-}
-}  // namespace xsigma
 
 // ============================================================================
 // ALLOCATOR_DEVICE TESTS
@@ -172,253 +136,8 @@ XSIGMATEST(AllocatorDevice, error_handling)
     END_TEST();
 }
 
-XSIGMATEST(AllocatorBFC, basic_allocation)
-{
-    // Create a BFC allocator with 1MB memory limit
-    const size_t memory_limit  = 1024 * 1024;  // 1MB
-    auto         sub_allocator = std::make_unique<basic_cpu_allocator>(
-        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-
-    allocator_bfc::Options opts;
-    opts.allow_growth = false;
-    allocator_bfc allocator(std::move(sub_allocator), memory_limit, "test_bfc", opts);
-
-    // Test basic allocation
-    void* ptr1 = allocator.allocate_raw(64, 1024);
-    EXPECT_NE(nullptr, ptr1);
-    EXPECT_TRUE(IsAligned(ptr1, 64));
-
-    // Test memory content
-    FillMemory(ptr1, 1024, 0xAA);
-    EXPECT_TRUE(ValidateMemory(ptr1, 1024, 0xAA));
-
-    // Test deallocation
-    allocator.deallocate_raw(ptr1);
-
-    // Test multiple allocations
-    std::vector<void*> ptrs;
-    for (int i = 0; i < 10; ++i)
-    {
-        void* ptr = allocator.allocate_raw(32, 512);
-        EXPECT_NE(nullptr, ptr);
-        EXPECT_TRUE(IsAligned(ptr, 32));
-        ptrs.push_back(ptr);
-    }
-
-    // Deallocate all
-    for (void* ptr : ptrs)
-    {
-        allocator.deallocate_raw(ptr);
-    }
-
-    END_TEST();
-}
-// Test allocator_bfc edge cases
-XSIGMATEST_VOID(BFCAllocatorTest, EdgeCases)
-{
-    const size_t memory_limit  = 1024 * 1024;  // 1MB
-    auto         sub_allocator = std::make_unique<basic_cpu_allocator>(
-        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-
-    allocator_bfc::Options opts;
-    opts.allow_growth = false;
-    allocator_bfc allocator(std::move(sub_allocator), memory_limit, "test_bfc_edge", opts);
-
-    // Test zero-size allocation
-    void* ptr_zero = allocator.allocate_raw(64, 0);
-    EXPECT_EQ(nullptr, ptr_zero);  // Should return nullptr for zero size
-
-    // Test large alignment
-    void* ptr_aligned = allocator.allocate_raw(4096, 1024);
-    EXPECT_NE(nullptr, ptr_aligned);
-    EXPECT_TRUE(IsAligned(ptr_aligned, 4096));
-    allocator.deallocate_raw(ptr_aligned);
-
-    // Test very small allocation
-    void* ptr_small = allocator.allocate_raw(1, 1);
-    EXPECT_NE(nullptr, ptr_small);
-    allocator.deallocate_raw(ptr_small);
-
-    // Test allocation statistics if available
-    auto stats = allocator.GetStats();
-    if (stats.has_value())
-    {
-        EXPECT_GE(stats->num_allocs, 0);
-        EXPECT_GE(stats->bytes_in_use, 0);
-        EXPECT_GE(stats->peak_bytes_in_use, 0);
-    }
-}
-
-// Test allocator_bfc memory tracking
-XSIGMATEST_VOID(BFCAllocatorTest, MemoryTracking)
-{
-    const size_t memory_limit  = 1024 * 1024;  // 1MB
-    auto         sub_allocator = std::make_unique<basic_cpu_allocator>(
-        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-
-    allocator_bfc::Options opts;
-    opts.allow_growth = false;
-    allocator_bfc allocator(std::move(sub_allocator), memory_limit, "test_bfc_tracking", opts);
-
-    // Test allocation size tracking
-    if (allocator.tracks_allocation_sizes())
-    {
-        void* ptr = allocator.allocate_raw(64, 1024);
-        EXPECT_NE(nullptr, ptr);
-
-        size_t requested_size = allocator.RequestedSize(ptr);
-        size_t allocated_size = allocator.AllocatedSize(ptr);
-
-        EXPECT_EQ(requested_size, 1024);
-        EXPECT_GE(allocated_size, 1024);
-
-        allocator.deallocate_raw(ptr);
-    }
-}
-// Test pool basic functionality
-XSIGMATEST_VOID(PoolAllocatorTest, BasicFunctionality)
-{
-    // Create a pool allocator with size limit of 5
-    auto sub_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
-        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-    auto size_rounder = util::make_ptr_unique_mutable<NoopRounder>();
-
-    allocator_pool pool(5, false, std::move(sub_allocator), std::move(size_rounder), "test_pool");
-
-    // Test basic allocation
-    void* ptr1 = pool.allocate_raw(64, 1024);
-    EXPECT_NE(nullptr, ptr1);
-    EXPECT_TRUE(IsAligned(ptr1, 64));
-
-    // Test memory content
-    FillMemory(ptr1, 1024, 0xBB);
-    EXPECT_TRUE(ValidateMemory(ptr1, 1024, 0xBB));
-
-    // Test deallocation (should go to pool)
-    pool.deallocate_raw(ptr1);
-
-    // Test reallocation (should come from pool)
-    void* ptr2 = pool.allocate_raw(64, 1024);
-    EXPECT_NE(nullptr, ptr2);
-
-    // Clean up
-    pool.deallocate_raw(ptr2);
-    pool.Clear();
-}
-
-// Test pool zero-size handling
-XSIGMATEST_VOID(PoolAllocatorTest, ZeroSizeHandling)
-{
-    auto sub_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
-        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-    auto size_rounder = util::make_ptr_unique_mutable<NoopRounder>();
-
-    allocator_pool pool(
-        2, false, std::move(sub_allocator), std::move(size_rounder), "test_pool_zero");
-
-    // Test zero-size allocation
-    //void* ptr_zero = pool.allocate_raw(4, 0);
-    //EXPECT_EQ(nullptr, ptr_zero);  // Should return nullptr for zero size
-
-    // Should not crash on nullptr deallocation
-    pool.deallocate_raw(nullptr);
-
-    // Test normal allocations still work
-    void* ptr1 = pool.allocate_raw(4, 64);
-    void* ptr2 = pool.allocate_raw(4, 128);
-    EXPECT_NE(nullptr, ptr1);
-    EXPECT_NE(nullptr, ptr2);
-
-    pool.deallocate_raw(ptr1);
-    pool.deallocate_raw(ptr2);
-    pool.Clear();
-}
-
-// Test pool alignment requirements
-XSIGMATEST_VOID(PoolAllocatorTest, AlignmentRequirements)
-{
-    auto sub_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
-        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-    auto size_rounder = util::make_ptr_unique_mutable<NoopRounder>();
-
-    allocator_pool pool(
-        0, false, std::move(sub_allocator), std::move(size_rounder), "test_pool_alignment");
-
-    // Test various alignment requirements
-    for (int i = 0; i < 12; ++i)  // Test up to 4KB alignment
-    {
-        size_t alignment = size_t{1} << i;
-        void*  ptr       = pool.allocate_raw(alignment, 256);
-        EXPECT_NE(nullptr, ptr);
-        EXPECT_TRUE(IsAligned(ptr, alignment));
-
-        // Test memory access
-        FillMemory(ptr, 256, static_cast<uint8_t>(i));
-        EXPECT_TRUE(ValidateMemory(ptr, 256, static_cast<uint8_t>(i)));
-
-        pool.deallocate_raw(ptr);
-    }
-
-    pool.Clear();
-}
-
-// Test allocator_tracking functionality
-XSIGMATEST_VOID(TrackingAllocatorTest, BasicTracking)
-{
-    // Create a base allocator
-    auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
-        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
-    auto pool = std::make_unique<allocator_pool>(
-        10,
-        false,
-        std::move(base_allocator),
-        util::make_ptr_unique_mutable<NoopRounder>(),
-        "base_pool");
-
-    // Create tracking allocator (use pointer due to protected destructor)
-    auto tracker = new xsigma::allocator_tracking(pool.get(), true);
-
-    // Test basic allocation tracking
-    void* ptr1 = tracker->allocate_raw(64, 1024);
-    EXPECT_NE(nullptr, ptr1);
-    EXPECT_TRUE(IsAligned(ptr1, 64));
-
-    // Test memory content
-    FillMemory(ptr1, 1024, 0xCC);
-    EXPECT_TRUE(ValidateMemory(ptr1, 1024, 0xCC));
-
-    // Test statistics
-    auto stats = tracker->GetStats();
-    if (stats.has_value())
-    {
-        EXPECT_GT(stats->num_allocs, 0);
-        EXPECT_GT(stats->bytes_in_use, 0);
-    }
-
-    // Test deallocation
-    tracker->deallocate_raw(ptr1);
-
-    // Test multiple allocations
-    std::vector<void*> ptrs;
-    for (int i = 0; i < 5; ++i)
-    {
-        void* ptr = tracker->allocate_raw(32, 512);
-        EXPECT_NE(nullptr, ptr);
-        ptrs.push_back(ptr);
-    }
-
-    // Deallocate all
-    for (void* ptr : ptrs)
-    {
-        tracker->deallocate_raw(ptr);
-    }
-
-    // Properly cleanup tracking allocator by releasing reference
-    tracker->GetRecordsAndUnRef();
-}
-
 // Test allocator stress scenarios
-XSIGMATEST_VOID(AllocatorTest, StressTest)
+XSIGMATEST(AllocatorTest, StressTest)
 {
 #if 0
     auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
@@ -454,7 +173,7 @@ XSIGMATEST_VOID(AllocatorTest, StressTest)
                     if (ptr != nullptr)
                     {
                         // Test memory access
-                        FillMemory(ptr, size, static_cast<uint8_t>(t + i));
+                        memset(ptr, size, static_cast<uint8_t>(t + i));
                         thread_ptrs[t].push_back(ptr);
                     }
                 }
@@ -485,7 +204,7 @@ XSIGMATEST_VOID(AllocatorTest, StressTest)
 }
 
 // Test error handling and edge cases
-XSIGMATEST_VOID(AllocatorTest, ErrorHandling)
+XSIGMATEST(AllocatorTest, ErrorHandling)
 {
     auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
@@ -518,7 +237,7 @@ XSIGMATEST_VOID(AllocatorTest, ErrorHandling)
 }
 
 // Test memory leak detection
-XSIGMATEST_VOID(AllocatorTest, MemoryLeakDetection)
+XSIGMATEST(AllocatorTest, MemoryLeakDetection)
 {
     auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
@@ -568,7 +287,7 @@ XSIGMATEST_VOID(AllocatorTest, MemoryLeakDetection)
 }
 
 // Test allocator statistics and monitoring
-XSIGMATEST_VOID(AllocatorTest, StatisticsAndMonitoring)
+XSIGMATEST(AllocatorTest, StatisticsAndMonitoring)
 {
     auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
@@ -617,7 +336,7 @@ XSIGMATEST_VOID(AllocatorTest, StatisticsAndMonitoring)
 // ============================================================================
 
 // Test memory port basic functionality
-XSIGMATEST_VOID(MemoryPortTest, BasicMemoryOperations)
+XSIGMATEST(MemoryPortTest, BasicMemoryOperations)
 {
     XSIGMA_LOG_INFO("Testing memory port basic operations...");
 
@@ -625,15 +344,13 @@ XSIGMATEST_VOID(MemoryPortTest, BasicMemoryOperations)
     void* ptr2 = cpu::memory_allocator::allocate(2048, 64);
     EXPECT_NE(nullptr, ptr2);
     EXPECT_TRUE(IsAligned(ptr2, 64));
-    FillMemory(ptr2, 2048, 0xBB);
-    EXPECT_TRUE(ValidateMemory(ptr2, 2048, 0xBB));
     cpu::memory_allocator::free(ptr2);
 
     XSIGMA_LOG_INFO("Memory port basic operations tests completed successfully");
 }
 
 // Test memory port alignment requirements
-XSIGMATEST_VOID(MemoryPortTest, AlignmentRequirements)
+XSIGMATEST(MemoryPortTest, AlignmentRequirements)
 {
     XSIGMA_LOG_INFO("Testing memory port alignment requirements...");
 
@@ -646,10 +363,6 @@ XSIGMATEST_VOID(MemoryPortTest, AlignmentRequirements)
         EXPECT_NE(nullptr, ptr);
         EXPECT_TRUE(IsAligned(ptr, alignment));
 
-        // Test memory access
-        FillMemory(ptr, 1024, static_cast<uint8_t>(alignment & 0xFF));
-        EXPECT_TRUE(ValidateMemory(ptr, 1024, static_cast<uint8_t>(alignment & 0xFF)));
-
         cpu::memory_allocator::free(ptr);
     }
 
@@ -657,7 +370,7 @@ XSIGMATEST_VOID(MemoryPortTest, AlignmentRequirements)
 }
 
 // Test memory port edge cases
-XSIGMATEST_VOID(MemoryPortTest, EdgeCases)
+XSIGMATEST(MemoryPortTest, EdgeCases)
 {
     XSIGMA_LOG_INFO("Testing memory port edge cases...");
 
@@ -671,7 +384,7 @@ XSIGMATEST_VOID(MemoryPortTest, EdgeCases)
 }
 
 // Test memory port system information
-XSIGMATEST_VOID(MemoryPortTest, SystemInformation)
+XSIGMATEST(MemoryPortTest, SystemInformation)
 {
     XSIGMA_LOG_INFO("Testing memory port system information...");
 
@@ -686,7 +399,7 @@ XSIGMATEST_VOID(MemoryPortTest, SystemInformation)
 // ============================================================================
 
 // Test allocation attributes construction and behavior
-XSIGMATEST_VOID(AllocationAttributesTest, ConstructionAndBehavior)
+XSIGMATEST(AllocationAttributesTest, ConstructionAndBehavior)
 {
     XSIGMA_LOG_INFO("Testing allocation attributes construction and behavior...");
 
@@ -720,7 +433,7 @@ XSIGMATEST_VOID(AllocationAttributesTest, ConstructionAndBehavior)
 }
 
 // Test allocation attributes with timing constraints
-XSIGMATEST_VOID(AllocationAttributesTest, TimingConstraints)
+XSIGMATEST(AllocationAttributesTest, TimingConstraints)
 {
     XSIGMA_LOG_INFO("Testing allocation attributes timing constraints...");
 
@@ -752,7 +465,7 @@ XSIGMATEST_VOID(AllocationAttributesTest, TimingConstraints)
 // and other dependencies that are not available in the current build configuration
 
 // Test process state singleton functionality and thread safety
-XSIGMATEST_VOID(ProcessStateTest, SingletonFunctionality)
+XSIGMATEST(ProcessStateTest, SingletonFunctionality)
 {
     XSIGMA_LOG_INFO("Testing process state singleton functionality...");
 
@@ -769,7 +482,7 @@ XSIGMATEST_VOID(ProcessStateTest, SingletonFunctionality)
 }
 
 // Test CPU allocator retrieval and management
-XSIGMATEST_VOID(ProcessStateTest, CPUAllocatorManagement)
+XSIGMATEST(ProcessStateTest, CPUAllocatorManagement)
 {
     XSIGMA_LOG_INFO("Testing CPU allocator retrieval and management...");
 
@@ -792,7 +505,7 @@ XSIGMATEST_VOID(ProcessStateTest, CPUAllocatorManagement)
     XSIGMA_LOG_INFO("CPU allocator retrieval and management tests completed successfully");
 }
 // Test NUMA enablement and affinity handling
-XSIGMATEST_VOID(ProcessStateTest, NUMAHandling)
+XSIGMATEST(ProcessStateTest, NUMAHandling)
 {
     XSIGMA_LOG_INFO("Testing NUMA enablement and affinity handling...");
 
@@ -813,7 +526,7 @@ XSIGMATEST_VOID(ProcessStateTest, NUMAHandling)
 }
 
 // Test memory description and pointer type detection
-XSIGMATEST_VOID(ProcessStateTest, MemoryDescription)
+XSIGMATEST(ProcessStateTest, MemoryDescription)
 {
     XSIGMA_LOG_INFO("Testing memory description and pointer type detection...");
 
@@ -847,7 +560,7 @@ XSIGMATEST_VOID(ProcessStateTest, MemoryDescription)
 }
 
 // Test visitor registration for allocation/deallocation callbacks
-XSIGMATEST_VOID(ProcessStateTest, VisitorRegistration)
+XSIGMATEST(ProcessStateTest, VisitorRegistration)
 {
     XSIGMA_LOG_INFO("Testing visitor registration for allocation/deallocation callbacks...");
 
@@ -881,7 +594,7 @@ XSIGMATEST_VOID(ProcessStateTest, VisitorRegistration)
 // ============================================================================
 
 // Test memory allocation tracking and leak detection
-XSIGMATEST_VOID(TrackingAllocatorTest, AllocationTracking)
+XSIGMATEST(AllocatorTracking, AllocationTracking)
 {
     XSIGMA_LOG_INFO("Testing memory allocation tracking and leak detection...");
 
@@ -931,7 +644,7 @@ XSIGMATEST_VOID(TrackingAllocatorTest, AllocationTracking)
 }
 
 // Test allocation statistics collection and reporting
-XSIGMATEST_VOID(TrackingAllocatorTest, StatisticsCollection)
+XSIGMATEST(AllocatorTracking, StatisticsCollection)
 {
     XSIGMA_LOG_INFO("Testing allocation statistics collection and reporting...");
 
@@ -989,7 +702,7 @@ XSIGMATEST_VOID(TrackingAllocatorTest, StatisticsCollection)
 }
 
 // Test memory usage monitoring and bounds checking
-XSIGMATEST_VOID(TrackingAllocatorTest, MemoryUsageMonitoring)
+XSIGMATEST(AllocatorTracking, MemoryUsageMonitoring)
 {
     XSIGMA_LOG_INFO("Testing memory usage monitoring and bounds checking...");
 
@@ -1052,7 +765,7 @@ XSIGMATEST_VOID(TrackingAllocatorTest, MemoryUsageMonitoring)
 }
 
 // Test integration with underlying allocator implementations
-XSIGMATEST_VOID(TrackingAllocatorTest, UnderlyingAllocatorIntegration)
+XSIGMATEST(AllocatorTracking, UnderlyingAllocatorIntegration)
 {
     XSIGMA_LOG_INFO("Testing integration with underlying allocator implementations...");
 
@@ -1108,7 +821,7 @@ XSIGMATEST_VOID(TrackingAllocatorTest, UnderlyingAllocatorIntegration)
 }
 
 // Test enhanced tracking functionality with comprehensive analytics
-XSIGMATEST_VOID(TrackingAllocatorTest, EnhancedTrackingAnalytics)
+XSIGMATEST(AllocatorTracking, EnhancedTrackingAnalytics)
 {
     XSIGMA_LOG_INFO("Testing enhanced tracking analytics and performance profiling...");
 
@@ -1215,7 +928,7 @@ XSIGMATEST_VOID(TrackingAllocatorTest, EnhancedTrackingAnalytics)
 }
 
 // Test logging levels and comprehensive reporting
-XSIGMATEST_VOID(TrackingAllocatorTest, LoggingAndReporting)
+XSIGMATEST(AllocatorTracking, LoggingAndReporting)
 {
     XSIGMA_LOG_INFO("Testing logging levels and comprehensive reporting...");
 

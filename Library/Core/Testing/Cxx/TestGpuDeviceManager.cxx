@@ -36,7 +36,7 @@ using namespace xsigma::gpu;
 /**
  * @brief Test GPU device manager singleton access
  */
-XSIGMATEST_VOID(GpuDeviceManager, provides_singleton_instance)
+XSIGMATEST(GpuDeviceManager, provides_singleton_instance)
 {
     // Test singleton access
     auto& manager1 = gpu_device_manager::instance();
@@ -51,7 +51,7 @@ XSIGMATEST_VOID(GpuDeviceManager, provides_singleton_instance)
 /**
  * @brief Test GPU device manager initialization
  */
-XSIGMATEST_VOID(GpuDeviceManager, initializes_successfully)
+XSIGMATEST(GpuDeviceManager, initializes_successfully)
 {
     auto& manager = gpu_device_manager::instance();
 
@@ -72,7 +72,7 @@ XSIGMATEST_VOID(GpuDeviceManager, initializes_successfully)
 /**
  * @brief Test runtime information retrieval
  */
-XSIGMATEST_VOID(GpuDeviceManager, provides_runtime_information)
+XSIGMATEST(GpuDeviceManager, provides_runtime_information)
 {
     auto& manager = gpu_device_manager::instance();
     manager.initialize();
@@ -100,7 +100,7 @@ XSIGMATEST_VOID(GpuDeviceManager, provides_runtime_information)
 /**
  * @brief Test available devices enumeration
  */
-XSIGMATEST_VOID(GpuDeviceManager, enumerates_available_devices)
+XSIGMATEST(GpuDeviceManager, enumerates_available_devices)
 {
     auto& manager = gpu_device_manager::instance();
     manager.initialize();
@@ -131,7 +131,7 @@ XSIGMATEST_VOID(GpuDeviceManager, enumerates_available_devices)
 /**
  * @brief Test device information retrieval for specific devices
  */
-XSIGMATEST_VOID(GpuDeviceManager, retrieves_specific_device_info)
+XSIGMATEST(GpuDeviceManager, retrieves_specific_device_info)
 {
     auto& manager = gpu_device_manager::instance();
     manager.initialize();
@@ -171,7 +171,7 @@ XSIGMATEST_VOID(GpuDeviceManager, retrieves_specific_device_info)
 /**
  * @brief Test device availability checking
  */
-XSIGMATEST_VOID(GpuDeviceManager, checks_device_availability)
+XSIGMATEST(GpuDeviceManager, checks_device_availability)
 {
     auto& manager = gpu_device_manager::instance();
     manager.initialize();
@@ -197,7 +197,7 @@ XSIGMATEST_VOID(GpuDeviceManager, checks_device_availability)
 /**
  * @brief Test device context management
  */
-XSIGMATEST_VOID(GpuDeviceManager, manages_device_context)
+XSIGMATEST(GpuDeviceManager, manages_device_context)
 {
     auto& manager = gpu_device_manager::instance();
     manager.initialize();
@@ -235,7 +235,7 @@ XSIGMATEST_VOID(GpuDeviceManager, manages_device_context)
 /**
  * @brief Test device information refresh
  */
-XSIGMATEST_VOID(GpuDeviceManager, refreshes_device_information)
+XSIGMATEST(GpuDeviceManager, refreshes_device_information)
 {
     auto& manager = gpu_device_manager::instance();
     manager.initialize();
@@ -257,7 +257,7 @@ XSIGMATEST_VOID(GpuDeviceManager, refreshes_device_information)
 /**
  * @brief Test system report generation
  */
-XSIGMATEST_VOID(GpuDeviceManager, generates_system_report)
+XSIGMATEST(GpuDeviceManager, generates_system_report)
 {
     auto& manager = gpu_device_manager::instance();
     manager.initialize();
@@ -280,7 +280,7 @@ XSIGMATEST_VOID(GpuDeviceManager, generates_system_report)
 /**
  * @brief Test error handling for invalid operations
  */
-XSIGMATEST_VOID(GpuDeviceManager, handles_invalid_operations)
+XSIGMATEST(GpuDeviceManager, handles_invalid_operations)
 {
     auto& manager = gpu_device_manager::instance();
     manager.initialize();

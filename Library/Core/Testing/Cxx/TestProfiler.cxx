@@ -43,13 +43,13 @@
 //using namespace xsigma::profiler;
 //using namespace xsigma;
 //
-//XSIGMATEST_VOID(ProfilerLockTest, DefaultConstructorCreatesInactiveInstance)
+//XSIGMATEST(ProfilerLockTest, DefaultConstructorCreatesInactiveInstance)
 //{
 //    ProfilerLock profiler_lock;
 //    EXPECT_FALSE(profiler_lock.Active());
 //}
 //
-//XSIGMATEST_VOID(ProfilerLockTest, AcquireAndReleaseExplicitly)
+//XSIGMATEST(ProfilerLockTest, AcquireAndReleaseExplicitly)
 //{
 //    std::optional<ProfilerLock> profiler_lock = ProfilerLock::Acquire();
 //    EXPECT_TRUE(profiler_lock.has_value());
@@ -58,14 +58,14 @@
 //    EXPECT_FALSE(profiler_lock->Active());
 //}
 //
-//XSIGMATEST_VOID(ProfilerLockTest, AcquireAndReleaseOnDestruction)
+//XSIGMATEST(ProfilerLockTest, AcquireAndReleaseOnDestruction)
 //{
 //    std::optional<ProfilerLock> profiler_lock = ProfilerLock::Acquire();
 //    EXPECT_TRUE(profiler_lock.has_value());
 //    EXPECT_TRUE(profiler_lock->Active());
 //}
 //
-//XSIGMATEST_VOID(ProfilerLockTest, ReacquireWithoutReleaseFails)
+//XSIGMATEST(ProfilerLockTest, ReacquireWithoutReleaseFails)
 //{
 //    std::optional<ProfilerLock> profiler_lock_1 = ProfilerLock::Acquire();
 //    std::optional<ProfilerLock> profiler_lock_2 = ProfilerLock::Acquire();
@@ -74,7 +74,7 @@
 //    EXPECT_FALSE(profiler_lock_2.has_value());
 //}
 //
-//XSIGMATEST_VOID(ProfilerLockTest, ReacquireAfterReleaseSucceeds)
+//XSIGMATEST(ProfilerLockTest, ReacquireAfterReleaseSucceeds)
 //{
 //    auto profiler_lock_1 = ProfilerLock::Acquire();
 //    EXPECT_TRUE(profiler_lock_1.has_value());
@@ -86,7 +86,7 @@
 //    EXPECT_TRUE(profiler_lock_2->Active());
 //}
 //
-//XSIGMATEST_VOID(ProfilerLockTest, InactiveAfterMove)
+//XSIGMATEST(ProfilerLockTest, InactiveAfterMove)
 //{
 //    std::optional<ProfilerLock> profiler_lock_1 = ProfilerLock::Acquire();
 //    EXPECT_TRUE(profiler_lock_1.has_value());
@@ -132,7 +132,7 @@
 //}
 //}  // namespace xsigma::profiler
 //*/
-//XSIGMATEST_VOID(ProfilerFactoryTest, FactoryFunctionPointer)
+//XSIGMATEST(ProfilerFactoryTest, FactoryFunctionPointer)
 //{
 //    /*ClearRegisteredProfilersForTest();
 //    RegisterProfilerFactory(&TestFactoryFunction);
@@ -140,7 +140,7 @@
 //    EXPECT_EQ(profilers.size(), 1);*/
 //}
 //
-//XSIGMATEST_VOID(ProfilerFactoryTest, FactoryLambda)
+//XSIGMATEST(ProfilerFactoryTest, FactoryLambda)
 //{
 //    /*ClearRegisteredProfilersForTest();
 //    RegisterProfilerFactory([](const xsigma::ProfileOptions& options)
@@ -149,7 +149,7 @@
 //    EXPECT_EQ(profilers.size(), 1);*/
 //}
 //
-//XSIGMATEST_VOID(ProfilerFactoryTest, FactoryReturnsNull)
+//XSIGMATEST(ProfilerFactoryTest, FactoryReturnsNull)
 //{
 //    /* ClearRegisteredProfilersForTest();
 //    RegisterProfilerFactory(&NullFactoryFunction);
@@ -157,7 +157,7 @@
 //    EXPECT_TRUE(profilers.empty());*/
 //}
 //
-//XSIGMATEST_VOID(ProfilerFactoryTest, FactoryClassCapturedByLambda)
+//XSIGMATEST(ProfilerFactoryTest, FactoryClassCapturedByLambda)
 //{
 //    /*   ClearRegisteredProfilersForTest();
 //    static int   token = 42;
@@ -167,24 +167,24 @@
 //    auto profilers = CreateProfilers(xsigma::ProfileOptions());
 //    EXPECT_EQ(profilers.size(), 1);*/
 //}
-//XSIGMATEST_VOID(TraceMeEncodeTest, NoArgTest)
+//XSIGMATEST(TraceMeEncodeTest, NoArgTest)
 //{
 //    EXPECT_EQ(TraceMeEncode("Hello!", {}), "Hello!");
 //}
 //
-//XSIGMATEST_VOID(TraceMeEncodeTest, OneArgTest)
+//XSIGMATEST(TraceMeEncodeTest, OneArgTest)
 //{
 //    EXPECT_EQ(TraceMeEncode("Hello", {{"context", "World"}}), "Hello#context=World#");
 //}
 //
-//XSIGMATEST_VOID(TraceMeEncodeTest, TwoArgsTest)
+//XSIGMATEST(TraceMeEncodeTest, TwoArgsTest)
 //{
 //    EXPECT_EQ(
 //        TraceMeEncode("Hello", {{"context", "World"}, {"request_id", 42}}),
 //        "Hello#context=World,request_id=42#");
 //}
 //
-//XSIGMATEST_VOID(TraceMeEncodeTest, ThreeArgsTest)
+//XSIGMATEST(TraceMeEncodeTest, ThreeArgsTest)
 //{
 //    std::stringstream ss;
 //    ss << std::uppercase << std::hex << 0xdeadbeef;
@@ -194,20 +194,20 @@
 //        "Hello#context=World,request_id=42,addr=DEADBEEF#");
 //}
 //
-//XSIGMATEST_VOID(TraceMeEncodeTest, TemporaryStringTest)
+//XSIGMATEST(TraceMeEncodeTest, TemporaryStringTest)
 //{
 //    EXPECT_EQ(
 //        TraceMeEncode("Hello", {{std::string("context"), xsigma::strings::StrCat("World:", 2020)}}),
 //        "Hello#context=World:2020#");
 //}
 //
-//XSIGMATEST_VOID(TraceMeEncodeTest, NoNameTest)
+//XSIGMATEST(TraceMeEncodeTest, NoNameTest)
 //{
 //    EXPECT_EQ(
 //        TraceMeEncode({{"context", "World"}, {"request_id", 42}}), "#context=World,request_id=42#");
 //}
 //
-//XSIGMATEST_VOID(ProfilerSessionTest, run)
+//XSIGMATEST(ProfilerSessionTest, run)
 //{
 //    // Custom computation class to profile
 //    class ComputationLoop

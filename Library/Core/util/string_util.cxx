@@ -18,18 +18,11 @@
 
 #include "util/string_util.h"
 
-#include <array>          // for array
-#include <cmath>          // for signbit, HUGE_VAL
-#include <cstdarg>        // for va_end, va_list, va_copy, va_start
-#include <cstdio>         // for snprintf, vsnprintf
-#include <cstdlib>        // for strtod, strtof, abs, strtol
-#include <cstring>        // for strlen, memcpy
-#include <limits>         // for numeric_limits
-#include <locale>         // for ctype_base::space, locale, ctype, tolower, ctype_base
-#include <memory>         // for _Simple_types
-#include <string>         // for char_traits, string, operator<<, allocator, operator==, oper...
-#include <unordered_map>  // for unordered_map
-#include <utility>        // for reverse, find_if
+#include <cstdio>   // for snprintf, vsnprintf
+#include <cstdlib>  // for strtod, strtof, abs, strtol
+#include <cstring>  // for strlen, memcpy
+#include <string>   // for char_traits, string, operator<<, allocator, operator==, oper...
+#include <string_view>
 
 #include "common/macros.h"   // for XSIGMA_UNUSED, XSIGMA_HAS_CXA_DEMANGLE
 #include "util/exception.h"  // for XSIGMA_CHECK_DEBUG, XSIGMA_CHECK, XSIGMA_CHECK_VALUE
@@ -61,7 +54,7 @@ constexpr std::string_view SPACE_LIB1 = "__1::";   ///< libstdc++ namespace to r
 std::string demangle(const char* name)
 {
     // Handle null or empty input
-    if (!name || *name == '\0')
+    if ((name == nullptr) || *name == '\0')
     {
         return "<unknown>";
     }

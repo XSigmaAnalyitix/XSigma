@@ -341,7 +341,7 @@ XSIGMATEST(AllocatorTracking, null_pointer_deallocation)
 /**
  * @brief Test tracking allocator with non-tracking underlying allocator
  */
-TEST(AllocatorTrackingNonTracking, local_size_tracking)
+TEST(AllocatorTracking, local_size_tracking)
 {
     // Create a simple allocator that doesn't track sizes
     class non_tracking_allocator : public Allocator
@@ -364,7 +364,7 @@ TEST(AllocatorTrackingNonTracking, local_size_tracking)
 
         size_t  RequestedSize(const void* ptr) const noexcept override { return 0; }
         size_t  AllocatedSize(const void* ptr) const noexcept override { return 0; }
-        int64_t AllocationId(const void* ptr) const noexcept override { return 0; }
+        int64_t AllocationId(const void* ptr) const override { return 0; }
 
         std::optional<allocator_stats> GetStats() override { return std::nullopt; }
         std::string                    Name() override { return "non_tracking_allocator"; }
@@ -400,7 +400,7 @@ TEST(AllocatorTrackingNonTracking, local_size_tracking)
 /**
  * @brief Test concurrent access to tracking allocator
  */
-TEST(AllocatorTrackingConcurrency, thread_safety)
+TEST(AllocatorTracking, thread_safety)
 {
     auto underlying     = std::make_unique<allocator_cpu>();
     auto underlying_ptr = underlying.get();
@@ -461,7 +461,7 @@ TEST(AllocatorTrackingConcurrency, thread_safety)
 /**
  * @brief Test tracking allocator performance characteristics
  */
-TEST(AllocatorTrackingPerformance, allocation_timing)
+TEST(AllocatorTracking, allocation_timing)
 {
     auto underlying     = std::make_unique<allocator_cpu>();
     auto underlying_ptr = underlying.get();
@@ -514,7 +514,7 @@ TEST(AllocatorTrackingPerformance, allocation_timing)
 /**
  * @brief Test reference counting and lifecycle management
  */
-TEST(AllocatorTrackingLifecycle, reference_counting)
+TEST(AllocatorTracking, reference_counting)
 {
     auto underlying     = std::make_unique<allocator_cpu>();
     auto underlying_ptr = underlying.get();
@@ -548,4 +548,55 @@ TEST(AllocatorTrackingLifecycle, reference_counting)
 
     // tracker is now invalid - test passes if no crash occurred
     EXPECT_TRUE(true);
+}
+
+// Test allocator_tracking functionality
+XSIGMATEST(AllocatorTracking, BasicTracking)
+{
+    // Create a base allocator
+    auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
+        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
+    auto pool = std::make_unique<allocator_pool>(
+        10,
+        false,
+        std::move(base_allocator),
+        util::make_ptr_unique_mutable<NoopRounder>(),
+        "base_pool");
+
+    // Create tracking allocator (use pointer due to protected destructor)
+    auto tracker = new xsigma::allocator_tracking(pool.get(), true);
+
+    // Test basic allocation tracking
+    void* ptr1 = tracker->allocate_raw(64, 1024);
+    EXPECT_NE(nullptr, ptr1);
+    EXPECT_TRUE(IsAligned(ptr1, 64));
+
+    // Test statistics
+    auto stats = tracker->GetStats();
+    if (stats.has_value())
+    {
+        EXPECT_GT(stats->num_allocs, 0);
+        EXPECT_GT(stats->bytes_in_use, 0);
+    }
+
+    // Test deallocation
+    tracker->deallocate_raw(ptr1);
+
+    // Test multiple allocations
+    std::vector<void*> ptrs;
+    for (int i = 0; i < 5; ++i)
+    {
+        void* ptr = tracker->allocate_raw(32, 512);
+        EXPECT_NE(nullptr, ptr);
+        ptrs.push_back(ptr);
+    }
+
+    // Deallocate all
+    for (void* ptr : ptrs)
+    {
+        tracker->deallocate_raw(ptr);
+    }
+
+    // Properly cleanup tracking allocator by releasing reference
+    tracker->GetRecordsAndUnRef();
 }

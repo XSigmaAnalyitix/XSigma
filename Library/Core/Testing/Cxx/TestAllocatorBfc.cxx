@@ -89,7 +89,7 @@ std::unique_ptr<allocator_bfc> create_test_bfc_allocator()
 /**
  * @brief Test basic allocation and deallocation functionality
  */
-XSIGMATEST(AllocatorBfc, basic_allocation_deallocation)
+XSIGMATEST(AllocatorBFC, basic_allocation_deallocation)
 {
     auto allocator = create_test_bfc_allocator();
 
@@ -127,7 +127,7 @@ XSIGMATEST(AllocatorBfc, basic_allocation_deallocation)
 /**
  * @brief Test allocation tracking capabilities
  */
-XSIGMATEST(AllocatorBfc, allocation_tracking)
+XSIGMATEST(AllocatorBFC, allocation_tracking)
 {
     auto allocator = create_test_bfc_allocator();
 
@@ -154,7 +154,7 @@ XSIGMATEST(AllocatorBfc, allocation_tracking)
 /**
  * @brief Test different alignment requirements
  */
-XSIGMATEST(AllocatorBfc, alignment_requirements)
+XSIGMATEST(AllocatorBFC, alignment_requirements)
 {
     auto allocator = create_test_bfc_allocator();
 
@@ -175,7 +175,7 @@ XSIGMATEST(AllocatorBfc, alignment_requirements)
 /**
  * @brief Test allocation with attributes
  */
-XSIGMATEST(AllocatorBfc, allocation_with_attributes)
+XSIGMATEST(AllocatorBFC, allocation_with_attributes)
 {
     auto allocator = create_test_bfc_allocator();
 
@@ -194,7 +194,7 @@ XSIGMATEST(AllocatorBfc, allocation_with_attributes)
 /**
  * @brief Test statistics collection
  */
-XSIGMATEST(AllocatorBfc, statistics_collection)
+XSIGMATEST(AllocatorBFC, statistics_collection)
 {
     auto allocator = create_test_bfc_allocator();
 
@@ -233,7 +233,7 @@ XSIGMATEST(AllocatorBfc, statistics_collection)
 /**
  * @brief Test allocator name and memory type
  */
-XSIGMATEST(AllocatorBfc, allocator_properties)
+XSIGMATEST(AllocatorBFC, allocator_properties)
 {
     auto allocator = create_test_bfc_allocator();
 
@@ -249,7 +249,7 @@ XSIGMATEST(AllocatorBfc, allocator_properties)
 /**
  * @brief Test zero-size allocation handling
  */
-XSIGMATEST(AllocatorBfc, zero_size_allocation)
+XSIGMATEST(AllocatorBFC, zero_size_allocation)
 {
     auto allocator = create_test_bfc_allocator();
 
@@ -268,7 +268,7 @@ XSIGMATEST(AllocatorBfc, zero_size_allocation)
 /**
  * @brief Test null pointer deallocation
  */
-XSIGMATEST(AllocatorBfc, null_pointer_deallocation)
+XSIGMATEST(AllocatorBFC, null_pointer_deallocation)
 {
     auto allocator = create_test_bfc_allocator();
 
@@ -284,7 +284,7 @@ XSIGMATEST(AllocatorBfc, null_pointer_deallocation)
 /**
  * @brief Test large allocation handling
  */
-XSIGMATEST(AllocatorBfc, large_allocations)
+XSIGMATEST(AllocatorBFC, large_allocations)
 {
     auto allocator = create_test_bfc_allocator();
 
@@ -308,7 +308,7 @@ XSIGMATEST(AllocatorBfc, large_allocations)
 /**
  * @brief Test fragmentation and coalescing behavior
  */
-XSIGMATEST(AllocatorBfc, fragmentation_and_coalescing)
+XSIGMATEST(AllocatorBFC, fragmentation_and_coalescing)
 {
     auto allocator = create_test_bfc_allocator();
 
@@ -350,7 +350,7 @@ XSIGMATEST(AllocatorBfc, fragmentation_and_coalescing)
 /**
  * @brief Test BFC allocator with different configuration options
  */
-XSIGMATEST(AllocatorBfcConfig, configuration_options)
+XSIGMATEST(AllocatorBFC, configuration_options)
 {
     auto sub_alloc = std::make_unique<basic_cpu_allocator>(
         0,                                      // numa_node = 0 (default)
@@ -383,7 +383,7 @@ XSIGMATEST(AllocatorBfcConfig, configuration_options)
 /**
  * @brief Test BFC allocator with growth disabled
  */
-XSIGMATEST(AllocatorBfcConfig, no_growth_configuration)
+XSIGMATEST(AllocatorBFC, no_growth_configuration)
 {
     auto sub_alloc = std::make_unique<basic_cpu_allocator>(
         0,                                      // numa_node = 0 (default)
@@ -413,7 +413,7 @@ XSIGMATEST(AllocatorBfcConfig, no_growth_configuration)
 /**
  * @brief Test concurrent access to BFC allocator
  */
-XSIGMATEST(AllocatorBfcConcurrency, thread_safety)
+XSIGMATEST(AllocatorBFC, thread_safety)
 {
     auto sub_alloc = std::make_unique<basic_cpu_allocator>(
         0,                                      // numa_node = 0 (default)
@@ -482,7 +482,7 @@ XSIGMATEST(AllocatorBfcConcurrency, thread_safety)
 /**
  * @brief Test BFC allocator performance characteristics
  */
-XSIGMATEST(AllocatorBfcPerformance, allocation_timing)
+XSIGMATEST(AllocatorBFC, allocation_timing)
 {
     auto sub_alloc = std::make_unique<basic_cpu_allocator>(
         0,                                      // numa_node = 0 (default)
@@ -533,4 +533,104 @@ XSIGMATEST(AllocatorBfcPerformance, allocation_timing)
     EXPECT_GT(ptrs.size(), num_allocations / 2);  // Most allocations should succeed
 
     END_TEST();
+}
+
+XSIGMATEST(AllocatorBFC, basic_allocation)
+{
+    // Create a BFC allocator with 1MB memory limit
+    const size_t memory_limit  = 1024 * 1024;  // 1MB
+    auto         sub_allocator = std::make_unique<basic_cpu_allocator>(
+        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
+
+    allocator_bfc::Options opts;
+    opts.allow_growth = false;
+    allocator_bfc allocator(std::move(sub_allocator), memory_limit, "test_bfc", opts);
+
+    // Test basic allocation
+    void* ptr1 = allocator.allocate_raw(64, 1024);
+    EXPECT_NE(nullptr, ptr1);
+    EXPECT_TRUE(IsAligned(ptr1, 64));
+
+    // Test deallocation
+    allocator.deallocate_raw(ptr1);
+
+    // Test multiple allocations
+    std::vector<void*> ptrs;
+    for (int i = 0; i < 10; ++i)
+    {
+        void* ptr = allocator.allocate_raw(32, 512);
+        EXPECT_NE(nullptr, ptr);
+        EXPECT_TRUE(IsAligned(ptr, 32));
+        ptrs.push_back(ptr);
+    }
+
+    // Deallocate all
+    for (void* ptr : ptrs)
+    {
+        allocator.deallocate_raw(ptr);
+    }
+
+    END_TEST();
+}
+// Test allocator_bfc edge cases
+XSIGMATEST(AllocatorBFC, EdgeCases)
+{
+    const size_t memory_limit  = 1024 * 1024;  // 1MB
+    auto         sub_allocator = std::make_unique<basic_cpu_allocator>(
+        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
+
+    allocator_bfc::Options opts;
+    opts.allow_growth = false;
+    allocator_bfc allocator(std::move(sub_allocator), memory_limit, "test_bfc_edge", opts);
+
+    // Test zero-size allocation
+    void* ptr_zero = allocator.allocate_raw(64, 0);
+    EXPECT_EQ(nullptr, ptr_zero);  // Should return nullptr for zero size
+
+    // Test large alignment
+    void* ptr_aligned = allocator.allocate_raw(4096, 1024);
+    EXPECT_NE(nullptr, ptr_aligned);
+    EXPECT_TRUE(IsAligned(ptr_aligned, 4096));
+    allocator.deallocate_raw(ptr_aligned);
+
+    // Test very small allocation
+    void* ptr_small = allocator.allocate_raw(1, 1);
+    EXPECT_NE(nullptr, ptr_small);
+    allocator.deallocate_raw(ptr_small);
+
+    // Test allocation statistics if available
+    auto stats = allocator.GetStats();
+    if (stats.has_value())
+    {
+        EXPECT_GE(stats->num_allocs, 0);
+        EXPECT_GE(stats->bytes_in_use, 0);
+        EXPECT_GE(stats->peak_bytes_in_use, 0);
+    }
+}
+
+// Test allocator_bfc memory tracking
+XSIGMATEST(AllocatorBFC, MemoryTracking)
+{
+    const size_t memory_limit  = 1024 * 1024;  // 1MB
+    auto         sub_allocator = std::make_unique<basic_cpu_allocator>(
+        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
+
+    allocator_bfc::Options opts;
+    opts.allow_growth = false;
+    allocator_bfc allocator(std::move(sub_allocator), memory_limit, "test_bfc_tracking", opts);
+
+    // Test allocation size tracking
+    if (allocator.tracks_allocation_sizes())
+    {
+        void* ptr = allocator.allocate_raw(64, 1024);
+        EXPECT_NE(nullptr, ptr);
+
+        size_t requested_size = allocator.RequestedSize(ptr);
+        size_t allocated_size = allocator.AllocatedSize(ptr);
+
+        EXPECT_EQ(requested_size, 1024);
+        EXPECT_GE(allocated_size, 1024);
+
+        allocator.deallocate_raw(ptr);
+    }
 }

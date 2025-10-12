@@ -1,9 +1,18 @@
 #include "memory/visualization/ascii_visualizer.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <iomanip>
+#include <ios>
 #include <sstream>
+#include <string>
+#include <vector>
+
+#include "memory/cpu/allocator_tracking.h"
+#include "memory/unified_memory_stats.h"
 
 namespace xsigma
 {
@@ -34,11 +43,11 @@ std::string ascii_visualizer::create_histogram(const std::vector<size_t>& alloca
     }
 
     // Find maximum count for scaling
-    size_t max_count = std::max_element(
-                           buckets.begin(),
-                           buckets.end(),
-                           [](const auto& a, const auto& b) { return a.count < b.count; })
-                           ->count;
+    size_t const max_count = std::max_element(
+                                 buckets.begin(),
+                                 buckets.end(),
+                                 [](const auto& a, const auto& b) { return a.count < b.count; })
+                                 ->count;
 
     for (const auto& bucket : buckets)
     {
@@ -78,8 +87,8 @@ std::string ascii_visualizer::create_timeline(
 
     for (const auto& point : timeline_data)
     {
-        double time_sec  = std::chrono::duration<double>(point.timestamp - start_time).count();
-        double memory_mb = static_cast<double>(point.total_usage) / (1024.0 * 1024.0);
+        double const time_sec = std::chrono::duration<double>(point.timestamp - start_time).count();
+        double const memory_mb = static_cast<double>(point.total_usage) / (1024.0 * 1024.0);
 
         timeline << std::fixed << std::setprecision(2) << std::setw(8) << time_sec << " | "
                  << std::setw(11) << std::setprecision(2) << memory_mb << " | "
@@ -111,20 +120,20 @@ std::string ascii_visualizer::create_fragmentation_map(
     memory_layout layout;
     // Since the actual memory sizes aren't available in fragmentation metrics,
     // we'll use the available data to create a representative layout
-    size_t estimated_total = metrics.largest_free_block * 10;  // Rough estimate
-    layout.total_size      = estimated_total;
-    layout.used_size       = estimated_total - metrics.wasted_bytes;
-    layout.free_size       = metrics.largest_free_block;
-    layout.fragmented_size = metrics.wasted_bytes;
-    layout.block_size      = std::max(size_t{1024}, estimated_total / config_.chart_width);
+    size_t const estimated_total = metrics.largest_free_block * 10;  // Rough estimate
+    layout.total_size            = estimated_total;
+    layout.used_size             = estimated_total - metrics.wasted_bytes;
+    layout.free_size             = metrics.largest_free_block;
+    layout.fragmented_size       = metrics.wasted_bytes;
+    layout.block_size            = std::max(size_t{1024}, estimated_total / config_.chart_width);
 
     // Create usage map based on fragmentation data
-    size_t num_blocks = config_.chart_width;
+    size_t const num_blocks = config_.chart_width;
     layout.usage_map.resize(num_blocks);
 
     // Simulate memory layout based on fragmentation metrics
-    size_t used_blocks       = (layout.used_size * num_blocks) / layout.total_size;
-    size_t fragmented_blocks = (layout.fragmented_size * num_blocks) / layout.total_size;
+    size_t const used_blocks       = (layout.used_size * num_blocks) / layout.total_size;
+    size_t const fragmented_blocks = (layout.fragmented_size * num_blocks) / layout.total_size;
 
     // Fill usage map with pattern that reflects fragmentation
     for (size_t i = 0; i < num_blocks; ++i)
@@ -180,7 +189,7 @@ std::string ascii_visualizer::create_usage_bars(
 
         if (config_.show_percentages)
         {
-            double usage_percent = (static_cast<double>(current_usage) / limit_usage) * 100.0;
+            double const usage_percent = (static_cast<double>(current_usage) / limit_usage) * 100.0;
             bars << "Usage: " << std::fixed << std::setprecision(1) << usage_percent
                  << "% of limit\n";
         }
@@ -205,13 +214,13 @@ std::string ascii_visualizer::create_performance_summary(
     summary << "Total Deallocations       | " << timing_stats.total_deallocations.load() << "\n";
 
     // Calculate average times
-    uint64_t total_allocs   = timing_stats.total_allocations.load();
-    uint64_t total_deallocs = timing_stats.total_deallocations.load();
-    double   avg_alloc_time =
+    uint64_t const total_allocs   = timing_stats.total_allocations.load();
+    uint64_t const total_deallocs = timing_stats.total_deallocations.load();
+    double const   avg_alloc_time =
         (total_allocs > 0)
               ? static_cast<double>(timing_stats.total_alloc_time_us.load()) / total_allocs
               : 0.0;
-    double avg_dealloc_time =
+    double const avg_dealloc_time =
         (total_deallocs > 0)
             ? static_cast<double>(timing_stats.total_dealloc_time_us.load()) / total_deallocs
             : 0.0;
@@ -272,9 +281,9 @@ std::vector<ascii_visualizer::size_bucket> ascii_visualizer::create_size_buckets
         return {};
     }
 
-    auto   min_max  = std::minmax_element(allocation_sizes.begin(), allocation_sizes.end());
-    size_t min_size = *min_max.first;
-    size_t max_size = *min_max.second;
+    auto         min_max  = std::minmax_element(allocation_sizes.begin(), allocation_sizes.end());
+    size_t const min_size = *min_max.first;
+    size_t const max_size = *min_max.second;
 
     if (min_size == max_size)
     {
@@ -334,7 +343,7 @@ std::vector<ascii_visualizer::size_bucket> ascii_visualizer::create_size_buckets
     }
 
     // Calculate percentages
-    size_t total_count = allocation_sizes.size();
+    size_t const total_count = allocation_sizes.size();
     for (auto& bucket : buckets)
     {
         bucket.percentage = (static_cast<double>(bucket.count) / total_count) * 100.0;
@@ -358,8 +367,8 @@ std::string ascii_visualizer::create_bar(size_t value, size_t max_value, size_t 
         return std::string(width, config_.empty_char);  // NOLINT(modernize-return-braced-init-list)
     }
 
-    size_t filled_length = (value * width) / max_value;
-    size_t empty_length  = width - filled_length;
+    size_t const filled_length = (value * width) / max_value;
+    size_t const empty_length  = width - filled_length;
 
     return std::string(filled_length, config_.filled_char) +
            std::string(empty_length, config_.empty_char);
@@ -369,7 +378,7 @@ std::string ascii_visualizer::format_bytes(size_t bytes) const
 {
     const char* units[]    = {"B", "KB", "MB", "GB", "TB"};
     size_t      unit_index = 0;
-    double      size       = static_cast<double>(bytes);
+    auto        size       = static_cast<double>(bytes);
 
     while (size >= 1024.0 && unit_index < 4)
     {
@@ -402,14 +411,14 @@ std::vector<size_t> ascii_visualizer::calculate_bucket_boundaries(
     boundaries.reserve(num_buckets + 1);
 
     // Use logarithmic scale for better distribution
-    double log_min  = std::log2(static_cast<double>(min_size));
-    double log_max  = std::log2(static_cast<double>(max_size));
-    double log_step = (log_max - log_min) / num_buckets;
+    double const log_min  = std::log2(static_cast<double>(min_size));
+    double const log_max  = std::log2(static_cast<double>(max_size));
+    double const log_step = (log_max - log_min) / num_buckets;
 
     for (size_t i = 0; i <= num_buckets; ++i)
     {
-        double log_value = log_min + i * log_step;
-        size_t boundary  = static_cast<size_t>(std::pow(2.0, log_value));
+        double const log_value = log_min + (i * log_step);
+        auto const   boundary  = static_cast<size_t>(std::pow(2.0, log_value));
         boundaries.push_back(boundary);
     }
 

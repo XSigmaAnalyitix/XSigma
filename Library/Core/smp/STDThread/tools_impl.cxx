@@ -4,12 +4,10 @@
 
 #include "smp/STDThread/tools_impl.hxx"
 
+#include <algorithm>
 #include <cstdlib>  // for atoi, std::getenv
-#include <mutex>    // for mutex
-#include <stack>    // for stack
 #include <thread>   // for thread::id, thread, get_id
 
-#include "common/pointer.h"  // for operator==
 #include "smp/Common/tools_impl.h"
 
 namespace xsigma::detail::smp

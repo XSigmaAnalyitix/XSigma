@@ -38,7 +38,7 @@ using namespace xsigma::gpu;
 /**
  * @brief Test GPU resource tracker singleton access
  */
-XSIGMATEST_VOID(GpuResourceTracker, provides_singleton_instance)
+XSIGMATEST(GpuResourceTracker, provides_singleton_instance)
 {
     // Test singleton access
     auto& tracker1 = gpu_resource_tracker::instance();
@@ -53,7 +53,7 @@ XSIGMATEST_VOID(GpuResourceTracker, provides_singleton_instance)
 /**
  * @brief Test leak detection configuration
  */
-XSIGMATEST_VOID(GpuResourceTracker, configures_leak_detection)
+XSIGMATEST(GpuResourceTracker, configures_leak_detection)
 {
     auto& tracker = gpu_resource_tracker::instance();
     
@@ -81,7 +81,7 @@ XSIGMATEST_VOID(GpuResourceTracker, configures_leak_detection)
 /**
  * @brief Test allocation tracking functionality
  */
-XSIGMATEST_VOID(GpuResourceTracker, tracks_allocations)
+XSIGMATEST(GpuResourceTracker, tracks_allocations)
 {
     auto& tracker = gpu_resource_tracker::instance();
     
@@ -123,7 +123,7 @@ XSIGMATEST_VOID(GpuResourceTracker, tracks_allocations)
 /**
  * @brief Test memory access recording
  */
-XSIGMATEST_VOID(GpuResourceTracker, records_memory_access)
+XSIGMATEST(GpuResourceTracker, records_memory_access)
 {
     auto& tracker = gpu_resource_tracker::instance();
     
@@ -154,7 +154,7 @@ XSIGMATEST_VOID(GpuResourceTracker, records_memory_access)
 /**
  * @brief Test statistics collection
  */
-XSIGMATEST_VOID(GpuResourceTracker, provides_resource_statistics)
+XSIGMATEST(GpuResourceTracker, provides_resource_statistics)
 {
     auto& tracker = gpu_resource_tracker::instance();
     
@@ -194,7 +194,7 @@ XSIGMATEST_VOID(GpuResourceTracker, provides_resource_statistics)
 /**
  * @brief Test active allocations retrieval
  */
-XSIGMATEST_VOID(GpuResourceTracker, retrieves_active_allocations)
+XSIGMATEST(GpuResourceTracker, retrieves_active_allocations)
 {
     auto& tracker = gpu_resource_tracker::instance();
     
@@ -234,7 +234,7 @@ XSIGMATEST_VOID(GpuResourceTracker, retrieves_active_allocations)
 /**
  * @brief Test allocations by tag retrieval
  */
-XSIGMATEST_VOID(GpuResourceTracker, retrieves_allocations_by_tag)
+XSIGMATEST(GpuResourceTracker, retrieves_allocations_by_tag)
 {
     auto& tracker = gpu_resource_tracker::instance();
     
@@ -279,7 +279,7 @@ XSIGMATEST_VOID(GpuResourceTracker, retrieves_allocations_by_tag)
 /**
  * @brief Test allocations by device retrieval
  */
-XSIGMATEST_VOID(GpuResourceTracker, retrieves_allocations_by_device)
+XSIGMATEST(GpuResourceTracker, retrieves_allocations_by_device)
 {
     auto& tracker = gpu_resource_tracker::instance();
     
@@ -337,7 +337,7 @@ XSIGMATEST_VOID(GpuResourceTracker, retrieves_allocations_by_device)
 /**
  * @brief Test leak detection functionality
  */
-XSIGMATEST_VOID(GpuResourceTracker, detects_memory_leaks)
+XSIGMATEST(GpuResourceTracker, detects_memory_leaks)
 {
     auto& tracker = gpu_resource_tracker::instance();
     
@@ -385,7 +385,7 @@ XSIGMATEST_VOID(GpuResourceTracker, detects_memory_leaks)
 /**
  * @brief Test report generation
  */
-XSIGMATEST_VOID(GpuResourceTracker, generates_resource_reports)
+XSIGMATEST(GpuResourceTracker, generates_resource_reports)
 {
     auto& tracker = gpu_resource_tracker::instance();
     
@@ -424,7 +424,7 @@ XSIGMATEST_VOID(GpuResourceTracker, generates_resource_reports)
 /**
  * @brief Test tracking enable/disable functionality
  */
-XSIGMATEST_VOID(GpuResourceTracker, controls_tracking_state)
+XSIGMATEST(GpuResourceTracker, controls_tracking_state)
 {
     auto& tracker = gpu_resource_tracker::instance();
     
@@ -446,7 +446,7 @@ XSIGMATEST_VOID(GpuResourceTracker, controls_tracking_state)
 /**
  * @brief Test data clearing functionality
  */
-XSIGMATEST_VOID(GpuResourceTracker, clears_tracking_data)
+XSIGMATEST(GpuResourceTracker, clears_tracking_data)
 {
     auto& tracker = gpu_resource_tracker::instance();
     

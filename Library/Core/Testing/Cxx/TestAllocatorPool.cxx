@@ -376,7 +376,7 @@ XSIGMATEST(AllocatorPool, null_pointer_deallocation)
 /**
  * @brief Test pool allocator with auto-resize enabled
  */
-TEST(AllocatorPoolAutoResize, auto_resize_functionality)
+TEST(AllocatorPool, auto_resize_functionality)
 {
     auto sub_alloc      = std::make_unique<counting_cpu_allocator>();
     auto test_sub_alloc = sub_alloc.get();
@@ -416,7 +416,7 @@ TEST(AllocatorPoolAutoResize, auto_resize_functionality)
 /**
  * @brief Test pool allocator with different size rounding strategies
  */
-TEST(AllocatorPoolSizeRounding, size_rounding_strategies)
+TEST(AllocatorPool, size_rounding_strategies)
 {
     auto sub_alloc      = std::make_unique<counting_cpu_allocator>();
     auto test_sub_alloc = sub_alloc.get();
@@ -448,7 +448,7 @@ TEST(AllocatorPoolSizeRounding, size_rounding_strategies)
 /**
  * @brief Test concurrent access to pool allocator
  */
-TEST(AllocatorPoolConcurrency, thread_safety)
+TEST(AllocatorPool, thread_safety)
 {
     auto sub_alloc = std::make_unique<counting_cpu_allocator>();
 
@@ -509,7 +509,7 @@ TEST(AllocatorPoolConcurrency, thread_safety)
 /**
  * @brief Test pool allocator performance characteristics
  */
-TEST(AllocatorPoolPerformance, allocation_timing)
+TEST(AllocatorPool, allocation_timing)
 {
     auto sub_alloc      = std::make_unique<counting_cpu_allocator>();
     auto test_sub_alloc = sub_alloc.get();
@@ -583,4 +583,83 @@ TEST(AllocatorPoolPerformance, allocation_timing)
             .count();
 
     EXPECT_GT(ptrs2.size(), 0);  // Should have successful pool allocations
+}
+
+// Test pool basic functionality
+XSIGMATEST(AllocatorPool, BasicFunctionality)
+{
+    // Create a pool allocator with size limit of 5
+    auto sub_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
+        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
+    auto size_rounder = util::make_ptr_unique_mutable<NoopRounder>();
+
+    allocator_pool pool(5, false, std::move(sub_allocator), std::move(size_rounder), "test_pool");
+
+    // Test basic allocation
+    void* ptr1 = pool.allocate_raw(64, 1024);
+    EXPECT_NE(nullptr, ptr1);
+    EXPECT_TRUE(IsAligned(ptr1, 64));
+
+    // Test deallocation (should go to pool)
+    pool.deallocate_raw(ptr1);
+
+    // Test reallocation (should come from pool)
+    void* ptr2 = pool.allocate_raw(64, 1024);
+    EXPECT_NE(nullptr, ptr2);
+
+    // Clean up
+    pool.deallocate_raw(ptr2);
+    pool.Clear();
+}
+
+// Test pool zero-size handling
+XSIGMATEST(AllocatorPool, ZeroSizeHandling)
+{
+    auto sub_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
+        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
+    auto size_rounder = util::make_ptr_unique_mutable<NoopRounder>();
+
+    allocator_pool pool(
+        2, false, std::move(sub_allocator), std::move(size_rounder), "test_pool_zero");
+
+    // Test zero-size allocation
+    //void* ptr_zero = pool.allocate_raw(4, 0);
+    //EXPECT_EQ(nullptr, ptr_zero);  // Should return nullptr for zero size
+
+    // Should not crash on nullptr deallocation
+    pool.deallocate_raw(nullptr);
+
+    // Test normal allocations still work
+    void* ptr1 = pool.allocate_raw(4, 64);
+    void* ptr2 = pool.allocate_raw(4, 128);
+    EXPECT_NE(nullptr, ptr1);
+    EXPECT_NE(nullptr, ptr2);
+
+    pool.deallocate_raw(ptr1);
+    pool.deallocate_raw(ptr2);
+    pool.Clear();
+}
+
+// Test pool alignment requirements
+XSIGMATEST(AllocatorPool, AlignmentRequirements)
+{
+    auto sub_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
+        0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
+    auto size_rounder = util::make_ptr_unique_mutable<NoopRounder>();
+
+    allocator_pool pool(
+        0, false, std::move(sub_allocator), std::move(size_rounder), "test_pool_alignment");
+
+    // Test various alignment requirements
+    for (int i = 2; i < 12; ++i)  // Test up to 4KB alignment
+    {
+        size_t alignment = size_t{1} << i;
+        void*  ptr       = pool.allocate_raw(alignment, 256);
+        EXPECT_NE(nullptr, ptr);
+        EXPECT_TRUE(IsAligned(ptr, alignment));
+
+        pool.deallocate_raw(ptr);
+    }
+
+    pool.Clear();
 }

@@ -19,13 +19,24 @@
 
 #include "memory_tracker.h"
 
+#include <processthreadsapi.h>
+#include <sysinfoapi.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <mutex>
+#include <thread>
+#include <utility>
+#include <vector>
+
+#include "experimental/profiler/profiler.h"
+
 // Prevent Windows min/max macros from interfering
 #ifdef _WIN32
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
 #include <psapi.h>
-#include <windows.h>
 #pragma comment(lib, "psapi.lib")
 #else
 #include <sys/resource.h>
@@ -34,19 +45,18 @@
 #include <fstream>
 
 #ifdef __APPLE__
-#include <sys/sysctl.h>
 #include <mach/mach.h>
-#include <mach/vm_statistics.h>
-#include <mach/mach_types.h>
-#include <mach/mach_init.h>
 #include <mach/mach_host.h>
+#include <mach/mach_init.h>
+#include <mach/mach_types.h>
+#include <mach/vm_statistics.h>
+#include <sys/sysctl.h>
 #endif
 
 #endif
 
 #include <algorithm>
 #include <chrono>
-#include <iostream>
 
 namespace xsigma
 {
@@ -79,12 +89,12 @@ void memory_tracker::start_tracking()
     total_deallocated_.store(0);
 
     {
-        std::lock_guard<std::mutex> lock(allocations_mutex_);
+        std::lock_guard<std::mutex> const lock(allocations_mutex_);
         active_allocations_.clear();
     }
 
     {
-        std::lock_guard<std::mutex> lock(snapshots_mutex_);
+        std::lock_guard<std::mutex> const lock(snapshots_mutex_);
         snapshots_.clear();
     }
 }
@@ -102,7 +112,7 @@ void memory_tracker::stop_tracking()
 
 void memory_tracker::track_allocation(void* ptr, size_t size, const std::string& context)
 {
-    if (!tracking_.load() || !ptr)
+    if (!tracking_.load() || (ptr == nullptr))
         return;
 
     xsigma::memory_allocation allocation;
@@ -113,12 +123,12 @@ void memory_tracker::track_allocation(void* ptr, size_t size, const std::string&
     allocation.thread_id_ = std::this_thread::get_id();
 
     {
-        std::lock_guard<std::mutex> lock(allocations_mutex_);
+        std::lock_guard<std::mutex> const lock(allocations_mutex_);
         active_allocations_[ptr] = allocation;
     }
 
     // Update statistics atomically
-    size_t new_current = current_usage_.fetch_add(size) + size;
+    size_t const new_current = current_usage_.fetch_add(size) + size;
     total_allocated_.fetch_add(size);
 
     // Update peak usage
@@ -127,14 +137,14 @@ void memory_tracker::track_allocation(void* ptr, size_t size, const std::string&
 
 void memory_tracker::track_deallocation(void* ptr)
 {
-    if (!tracking_.load() || !ptr)
+    if (!tracking_.load() || (ptr == nullptr))
         return;
 
     size_t deallocated_size = 0;
 
     {
-        std::lock_guard<std::mutex> lock(allocations_mutex_);
-        auto                        it = active_allocations_.find(ptr);
+        std::lock_guard<std::mutex> const lock(allocations_mutex_);
+        auto                              it = active_allocations_.find(ptr);
         if (it != active_allocations_.end())
         {
             deallocated_size = it->second.size_;
@@ -195,22 +205,24 @@ size_t memory_tracker::get_available_system_memory() const
 #ifdef _WIN32
     MEMORYSTATUSEX memInfo;
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);
-    if (GlobalMemoryStatusEx(&memInfo))
+    if (GlobalMemoryStatusEx(&memInfo) != 0)
     {
         return static_cast<size_t>(memInfo.ullAvailPhys);
     }
     return 0;
 #elif defined(__APPLE__)
     // On macOS, use mach API to get available memory
-    vm_size_t page_size;
+    vm_size_t              page_size;
     vm_statistics64_data_t vm_stat;
     mach_msg_type_number_t host_size = sizeof(vm_statistics64_data_t) / sizeof(natural_t);
 
     if (host_page_size(mach_host_self(), &page_size) == KERN_SUCCESS &&
-        host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&vm_stat, &host_size) == KERN_SUCCESS)
+        host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&vm_stat, &host_size) ==
+            KERN_SUCCESS)
     {
         // Available memory = free pages + inactive pages + purgeable pages
-        uint64_t available_pages = vm_stat.free_count + vm_stat.inactive_count + vm_stat.purgeable_count;
+        uint64_t available_pages =
+            vm_stat.free_count + vm_stat.inactive_count + vm_stat.purgeable_count;
         return static_cast<size_t>(available_pages * page_size);
     }
     return 0;
@@ -234,19 +246,19 @@ void memory_tracker::reset()
     total_deallocated_.store(0);
 
     {
-        std::lock_guard<std::mutex> lock(allocations_mutex_);
+        std::lock_guard<std::mutex> const lock(allocations_mutex_);
         active_allocations_.clear();
     }
 
     {
-        std::lock_guard<std::mutex> lock(snapshots_mutex_);
+        std::lock_guard<std::mutex> const lock(snapshots_mutex_);
         snapshots_.clear();
     }
 }
 
 std::vector<xsigma::memory_allocation> memory_tracker::get_active_allocations() const
 {
-    std::lock_guard<std::mutex>            lock(allocations_mutex_);
+    std::lock_guard<std::mutex> const      lock(allocations_mutex_);
     std::vector<xsigma::memory_allocation> allocations;
     allocations.reserve(active_allocations_.size());
 
@@ -260,21 +272,21 @@ std::vector<xsigma::memory_allocation> memory_tracker::get_active_allocations() 
 
 size_t memory_tracker::get_allocation_count() const
 {
-    std::lock_guard<std::mutex> lock(allocations_mutex_);
+    std::lock_guard<std::mutex> const lock(allocations_mutex_);
     return active_allocations_.size();
 }
 
 void memory_tracker::take_snapshot(const std::string& label)
 {
-    xsigma::memory_stats stats = get_current_stats();
+    xsigma::memory_stats const stats = get_current_stats();
 
-    std::lock_guard<std::mutex> lock(snapshots_mutex_);
+    std::lock_guard<std::mutex> const lock(snapshots_mutex_);
     snapshots_.emplace_back(label, stats);
 }
 
 std::vector<std::pair<std::string, xsigma::memory_stats>> memory_tracker::get_snapshots() const
 {
-    std::lock_guard<std::mutex> lock(snapshots_mutex_);
+    std::lock_guard<std::mutex> const lock(snapshots_mutex_);
     return snapshots_;
 }
 
@@ -375,8 +387,8 @@ memory_tracking_scope::~memory_tracking_scope()
 
 xsigma::memory_stats memory_tracking_scope::get_delta_stats() const
 {
-    xsigma::memory_stats current_stats = tracker_.get_current_stats();
-    xsigma::memory_stats delta_stats;
+    xsigma::memory_stats const current_stats = tracker_.get_current_stats();
+    xsigma::memory_stats       delta_stats;
 
     delta_stats.current_usage_   = current_stats.current_usage_;
     delta_stats.peak_usage_      = (std::max)(current_stats.peak_usage_, start_stats_.peak_usage_);

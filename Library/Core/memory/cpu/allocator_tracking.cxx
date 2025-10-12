@@ -29,10 +29,26 @@
 #include "memory/cpu/allocator_tracking.h"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <iomanip>
-#include <numeric>
+#include <ios>
+#include <iterator>
+#include <mutex>
+#include <optional>
+#include <shared_mutex>
 #include <sstream>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+
+#include "logging/logger.h"
+#include "memory/cpu/allocator.h"
+#include "memory/unified_memory_stats.h"
+#include "util/exception.h"
 
 namespace xsigma
 {
@@ -134,18 +150,18 @@ void* allocator_tracking::allocate_raw(
     }
     if (allocator_->tracks_allocation_sizes())
     {
-        size_t  allocated_bytes = allocator_->AllocatedSize(ptr);
-        int64_t allocation_id   = 0;
+        size_t const allocated_bytes = allocator_->AllocatedSize(ptr);
+        int64_t      allocation_id   = 0;
 
         {
-            std::unique_lock<std::mutex> lock(mu_);
+            std::unique_lock<std::mutex> const lock(mu_);
             allocated_ += allocated_bytes;
             high_watermark_ = std::max(high_watermark_, allocated_);
             total_bytes_ += allocated_bytes;
 
-            int64_t tmp = std::chrono::duration_cast<std::chrono::microseconds>(
-                              std::chrono::steady_clock::now().time_since_epoch())
-                              .count();
+            int64_t const tmp = std::chrono::duration_cast<std::chrono::microseconds>(
+                                    std::chrono::steady_clock::now().time_since_epoch())
+                                    .count();
             allocations_.emplace_back(allocated_bytes, tmp);
 
             // Generate allocation ID for enhanced tracking
@@ -155,7 +171,7 @@ void* allocator_tracking::allocate_raw(
             // Populate in_use_ map if we're tracking sizes locally (needed for RequestedSize)
             if (track_sizes_locally_)
             {
-                Chunk chunk = {num_bytes, allocated_bytes, allocation_id};
+                Chunk const chunk = {num_bytes, allocated_bytes, allocation_id};
                 in_use_.emplace(std::make_pair(ptr, chunk));
             }
 
@@ -165,7 +181,7 @@ void* allocator_tracking::allocate_raw(
         // Add enhanced record if enabled
         if (enhanced_tracking_enabled_)
         {
-            std::unique_lock<std::shared_mutex> enhanced_lock(shared_mu_);
+            std::unique_lock<std::shared_mutex> const enhanced_lock(shared_mu_);
             enhanced_records_.emplace_back(
                 num_bytes,        // requested_size
                 allocated_bytes,  // actual_size
@@ -191,17 +207,17 @@ void* allocator_tracking::allocate_raw(
         int64_t allocation_id  = 0;
 
         {
-            std::unique_lock<std::mutex> lock(mu_);
+            std::unique_lock<std::mutex> const lock(mu_);
             next_allocation_id_ += 1;
-            allocation_id = next_allocation_id_;
-            Chunk chunk   = {num_bytes, allocated_bytes, allocation_id};
+            allocation_id     = next_allocation_id_;
+            Chunk const chunk = {num_bytes, allocated_bytes, allocation_id};
             in_use_.emplace(std::make_pair(ptr, chunk));
             allocated_ += allocated_bytes;
             high_watermark_ = std::max(high_watermark_, allocated_);
             total_bytes_ += allocated_bytes;
-            int64_t tmp = std::chrono::duration_cast<std::chrono::microseconds>(
-                              std::chrono::steady_clock::now().time_since_epoch())
-                              .count();
+            int64_t const tmp = std::chrono::duration_cast<std::chrono::microseconds>(
+                                    std::chrono::steady_clock::now().time_since_epoch())
+                                    .count();
             allocations_.emplace_back(allocated_bytes, tmp);
             ++ref_;
         }
@@ -209,7 +225,7 @@ void* allocator_tracking::allocate_raw(
         // Add enhanced record if enabled
         if (enhanced_tracking_enabled_)
         {
-            std::unique_lock<std::shared_mutex> enhanced_lock(shared_mu_);
+            std::unique_lock<std::shared_mutex> const enhanced_lock(shared_mu_);
             enhanced_records_.emplace_back(
                 num_bytes,        // requested_size
                 allocated_bytes,  // actual_size
@@ -229,11 +245,11 @@ void* allocator_tracking::allocate_raw(
     {
         int64_t allocation_id = 0;
         {
-            std::unique_lock<std::mutex> lock(mu_);
+            std::unique_lock<std::mutex> const lock(mu_);
             total_bytes_ += num_bytes;
-            int64_t tmp = std::chrono::duration_cast<std::chrono::microseconds>(
-                              std::chrono::steady_clock::now().time_since_epoch())
-                              .count();
+            int64_t const tmp = std::chrono::duration_cast<std::chrono::microseconds>(
+                                    std::chrono::steady_clock::now().time_since_epoch())
+                                    .count();
             allocations_.emplace_back(num_bytes, tmp);
             next_allocation_id_ += 1;
             allocation_id = next_allocation_id_;
@@ -243,7 +259,7 @@ void* allocator_tracking::allocate_raw(
         // Add enhanced record if enabled (even without size tracking)
         if (enhanced_tracking_enabled_)
         {
-            std::unique_lock<std::shared_mutex> enhanced_lock(shared_mu_);
+            std::unique_lock<std::shared_mutex> const enhanced_lock(shared_mu_);
             enhanced_records_.emplace_back(
                 num_bytes,  // requested_size
                 num_bytes,  // actual_size (estimate)
@@ -292,8 +308,8 @@ void allocator_tracking::deallocate_raw(void* ptr)
     // Always check local tracking for allocation_id when enhanced tracking is enabled
     if (track_sizes_locally_)
     {
-        std::unique_lock<std::mutex> lock(mu_);
-        auto                         itr = in_use_.find(ptr);
+        std::unique_lock<std::mutex> const lock(mu_);
+        auto                               itr = in_use_.find(ptr);
         if (itr != in_use_.end())
         {
             allocated_bytes         = (*itr).second.allocated_size;
@@ -308,14 +324,14 @@ void allocator_tracking::deallocate_raw(void* ptr)
     }
     Allocator* allocator = allocator_;
     {
-        std::unique_lock<std::mutex> lock(mu_);
+        std::unique_lock<std::mutex> const lock(mu_);
         if (tracks_allocation_sizes)
         {
             XSIGMA_CHECK_DEBUG(allocated_ >= allocated_bytes);
             allocated_ -= allocated_bytes;
-            int64_t tmp = std::chrono::duration_cast<std::chrono::microseconds>(
-                              std::chrono::steady_clock::now().time_since_epoch())
-                              .count();
+            int64_t const tmp = std::chrono::duration_cast<std::chrono::microseconds>(
+                                    std::chrono::steady_clock::now().time_since_epoch())
+                                    .count();
             allocations_.emplace_back(-static_cast<int64_t>(allocated_bytes), tmp);
         }
         should_delete = UnRef();
@@ -354,7 +370,7 @@ void allocator_tracking::deallocate_raw(void* ptr)
     // Update enhanced record with deallocation timing if enabled and allocation_id is valid
     if (enhanced_tracking_enabled_ && allocation_id > 0)
     {
-        std::unique_lock<std::shared_mutex> enhanced_lock(shared_mu_);
+        std::unique_lock<std::shared_mutex> const enhanced_lock(shared_mu_);
         // Find the corresponding allocation record and update deallocation time
         auto record_it = std::find_if(
             enhanced_records_.begin(),
@@ -395,54 +411,48 @@ size_t allocator_tracking::RequestedSize(const void* ptr) const
 {
     if (track_sizes_locally_)
     {
-        std::unique_lock<std::mutex> lock(mu_);
-        auto                         it = in_use_.find(ptr);
+        std::unique_lock<std::mutex> const lock(mu_);
+        auto                               it = in_use_.find(ptr);
         if (it != in_use_.end())
         {
             return (*it).second.requested_size;
         }
         return 0;
     }
-    else
-    {
-        return allocator_->RequestedSize(ptr);
-    }
+
+    return allocator_->RequestedSize(ptr);
 }
 
 size_t allocator_tracking::AllocatedSize(const void* ptr) const
 {
     if (track_sizes_locally_)
     {
-        std::unique_lock<std::mutex> lock(mu_);
-        auto                         it = in_use_.find(ptr);
+        std::unique_lock<std::mutex> const lock(mu_);
+        auto                               it = in_use_.find(ptr);
         if (it != in_use_.end())
         {
             return (*it).second.allocated_size;
         }
         return 0;
     }
-    else
-    {
-        return allocator_->AllocatedSize(ptr);
-    }
+
+    return allocator_->AllocatedSize(ptr);
 }
 
-int64_t allocator_tracking::AllocationId(const void* ptr) const noexcept
+int64_t allocator_tracking::AllocationId(const void* ptr) const
 {
     if (track_sizes_locally_)
     {
-        std::unique_lock<std::mutex> lock(mu_);
-        auto                         it = in_use_.find(ptr);
+        std::unique_lock<std::mutex> const lock(mu_);
+        auto                               it = in_use_.find(ptr);
         if (it != in_use_.end())
         {
             return (*it).second.allocation_id;
         }
         return 0;
     }
-    else
-    {
-        return allocator_->AllocationId(ptr);
-    }
+
+    return allocator_->AllocationId(ptr);
 }
 
 std::optional<allocator_stats> allocator_tracking::GetStats()
@@ -461,7 +471,7 @@ std::tuple<size_t, size_t, size_t> allocator_tracking::GetSizes() const
     size_t total_bytes;
     size_t still_live_bytes;
     {
-        std::unique_lock<std::mutex> lock(mu_);
+        std::unique_lock<std::mutex> const lock(mu_);
         high_watermark   = high_watermark_;
         total_bytes      = total_bytes_;
         still_live_bytes = allocated_;
@@ -474,7 +484,7 @@ std::vector<alloc_record> allocator_tracking::GetRecordsAndUnRef()
     bool                      should_delete;
     std::vector<alloc_record> allocations;
     {
-        std::unique_lock<std::mutex> lock(mu_);
+        std::unique_lock<std::mutex> const lock(mu_);
         allocations.swap(allocations_);
         should_delete = UnRef();
     }
@@ -489,7 +499,7 @@ std::vector<alloc_record> allocator_tracking::GetCurrentRecords()
 {
     std::vector<alloc_record> allocations;
     {
-        std::unique_lock<std::mutex> lock(mu_);
+        std::unique_lock<std::mutex> const lock(mu_);
 
         std::copy(allocations_.begin(), allocations_.end(), std::back_inserter(allocations));
     }
@@ -521,7 +531,7 @@ memory_fragmentation_metrics allocator_tracking::GetFragmentationMetrics() const
 
     // Need to recalculate - upgrade to exclusive lock
     lock.unlock();
-    std::unique_lock<std::shared_mutex> exclusive_lock(shared_mu_);
+    std::unique_lock<std::shared_mutex> const exclusive_lock(shared_mu_);
 
     // Double-check pattern - another thread might have updated while we waited
     if (now - last_fragmentation_update_.load(std::memory_order_relaxed) < 5000000)
@@ -533,7 +543,7 @@ memory_fragmentation_metrics allocator_tracking::GetFragmentationMetrics() const
     size_t total_allocated;
     size_t total_requested;
     {
-        std::lock_guard<std::mutex> stats_lock(mu_);
+        std::lock_guard<std::mutex> const stats_lock(mu_);
         total_allocated = allocated_;
         total_requested = 0;
 
@@ -553,7 +563,7 @@ memory_fragmentation_metrics allocator_tracking::GetFragmentationMetrics() const
 
     // For now, we can't get free block information from the underlying allocator
     // This would require extending the Allocator interface
-    std::vector<size_t> free_blocks;  // Empty for now
+    std::vector<size_t> const free_blocks;  // Empty for now
 
     cached_fragmentation_ =
         memory_fragmentation_metrics::calculate(total_allocated, total_requested, free_blocks);
@@ -574,7 +584,7 @@ std::vector<enhanced_alloc_record> allocator_tracking::GetEnhancedRecords() cons
         return {};  // Return empty vector if enhanced tracking is disabled
     }
 
-    std::shared_lock<std::shared_mutex> lock(shared_mu_);
+    std::shared_lock<std::shared_mutex> const lock(shared_mu_);
     return enhanced_records_;  // Return copy
 }
 
@@ -605,7 +615,7 @@ void allocator_tracking::ResetTimingStats() noexcept
 
 std::tuple<double, double, double> allocator_tracking::GetEfficiencyMetrics() const
 {
-    std::lock_guard<std::mutex> lock(mu_);
+    std::lock_guard<std::mutex> const lock(mu_);
 
     if (allocated_ == 0)
     {
@@ -632,7 +642,7 @@ std::tuple<double, double, double> allocator_tracking::GetEfficiencyMetrics() co
     }
 
     // Calculate efficiency score (weighted combination of metrics)
-    double efficiency_score = utilization_ratio * 0.7 + (1.0 - overhead_ratio) * 0.3;
+    double const efficiency_score = (utilization_ratio * 0.7) + ((1.0 - overhead_ratio) * 0.3);
 
     return std::make_tuple(utilization_ratio, overhead_ratio, efficiency_score);
 }
@@ -736,7 +746,7 @@ std::string allocator_tracking::GenerateReport(bool include_allocations) const
         if (!records.empty())
         {
             report << "Recent Allocations (last 10):\n";
-            size_t start = records.size() > 10 ? records.size() - 10 : 0;
+            size_t const start = records.size() > 10 ? records.size() - 10 : 0;
 
             for (size_t i = start; i < records.size(); ++i)
             {
@@ -751,7 +761,7 @@ std::string allocator_tracking::GenerateReport(bool include_allocations) const
                     report << ", tag=" << record.tag;
                 }
 
-                if (record.source_file)
+                if (record.source_file != nullptr)
                 {
                     report << ", " << record.source_file << ":" << record.source_line;
                 }

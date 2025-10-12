@@ -7,10 +7,13 @@
 #include <cstring>  // for strcmp, strlen, strncpy
 #include <memory>   // for make_shared, shared_ptr, make_unique, unique_ptr
 #include <mutex>    // for mutex, lock_guard
+#include <string>
 #include <thread>   // for get_id, operator==, thread
 #include <utility>  // for pair
 #include <vector>   // for vector
 
+#include "common/macros.h"
+#include "logging/logger_verbosity_enum.h"
 #include "util/flat_hash.h"
 
 // Include appropriate logging backend headers
@@ -490,7 +493,7 @@ void loguru_callback_bridge_close(void* user_data)
 {
     auto* data = reinterpret_cast<CallbackBridgeData*>(user_data);
 
-    if (data->close)
+    if (data->close != nullptr)
     {
         data->close(data->inner_data);
         data->inner_data = nullptr;
@@ -503,7 +506,7 @@ void loguru_callback_bridge_flush(void* user_data)
 {
     auto* data = reinterpret_cast<CallbackBridgeData*>(user_data);
 
-    if (data->flush)
+    if (data->flush != nullptr)
     {
         data->flush(data->inner_data);
     }
@@ -739,27 +742,27 @@ logger_verbosity_enum logger::ConvertToVerbosity(const char* text)
         {
             return logger::ConvertToVerbosity(ivalue);
         }
-        if (!strcmp(text, "OFF"))
+        if (strcmp(text, "OFF") == 0)
         {
             return logger_verbosity_enum::VERBOSITY_OFF;
         }
-        if (!strcmp(text, "ERROR"))
+        if (strcmp(text, "ERROR") == 0)
         {
             return logger_verbosity_enum::VERBOSITY_ERROR;
         }
-        if (!strcmp(text, "WARNING"))
+        if (strcmp(text, "WARNING") == 0)
         {
             return logger_verbosity_enum::VERBOSITY_WARNING;
         }
-        if (!strcmp(text, "INFO"))
+        if (strcmp(text, "INFO") == 0)
         {
             return logger_verbosity_enum::VERBOSITY_INFO;
         }
-        if (!strcmp(text, "TRACE"))
+        if (strcmp(text, "TRACE") == 0)
         {
             return logger_verbosity_enum::VERBOSITY_TRACE;
         }
-        if (!strcmp(text, "MAX"))
+        if (strcmp(text, "MAX") == 0)
         {
             return logger_verbosity_enum::VERBOSITY_MAX;
         }

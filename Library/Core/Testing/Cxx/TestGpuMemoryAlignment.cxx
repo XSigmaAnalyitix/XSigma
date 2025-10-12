@@ -36,7 +36,7 @@ using namespace xsigma::gpu;
 /**
  * @brief Test alignment configuration validation
  */
-XSIGMATEST_VOID(GpuMemoryAlignment, validates_alignment_configuration)
+XSIGMATEST(GpuMemoryAlignment, validates_alignment_configuration)
 {
     // Test valid configuration
     alignment_config valid_config;
@@ -60,7 +60,7 @@ XSIGMATEST_VOID(GpuMemoryAlignment, validates_alignment_configuration)
 /**
  * @brief Test basic size alignment functionality
  */
-XSIGMATEST_VOID(GpuMemoryAlignment, aligns_sizes_correctly)
+XSIGMATEST(GpuMemoryAlignment, aligns_sizes_correctly)
 {
     // Test size alignment
     size_t size         = 100;
@@ -86,7 +86,7 @@ XSIGMATEST_VOID(GpuMemoryAlignment, aligns_sizes_correctly)
 /**
  * @brief Test pointer alignment functionality
  */
-XSIGMATEST_VOID(GpuMemoryAlignment, aligns_pointers_correctly)
+XSIGMATEST(GpuMemoryAlignment, aligns_pointers_correctly)
 {
     // Test pointer alignment
     char  buffer[256];
@@ -113,7 +113,7 @@ XSIGMATEST_VOID(GpuMemoryAlignment, aligns_pointers_correctly)
 /**
  * @brief Test coalesced memory access alignment
  */
-XSIGMATEST_VOID(GpuMemoryAlignment, optimizes_for_coalesced_access)
+XSIGMATEST(GpuMemoryAlignment, optimizes_for_coalesced_access)
 {
     alignment_config config;
     config.base_alignment    = 128;
@@ -147,7 +147,7 @@ XSIGMATEST_VOID(GpuMemoryAlignment, optimizes_for_coalesced_access)
 /**
  * @brief Test optimal stride calculation for 2D arrays
  */
-XSIGMATEST_VOID(GpuMemoryAlignment, calculates_optimal_strides)
+XSIGMATEST(GpuMemoryAlignment, calculates_optimal_strides)
 {
     alignment_config config;
     config.base_alignment       = 128;
@@ -176,7 +176,7 @@ XSIGMATEST_VOID(GpuMemoryAlignment, calculates_optimal_strides)
 /**
  * @brief Test padded width calculation for bank conflict avoidance
  */
-XSIGMATEST_VOID(GpuMemoryAlignment, calculates_padded_widths)
+XSIGMATEST(GpuMemoryAlignment, calculates_padded_widths)
 {
     alignment_config config;
     config.base_alignment       = 128;
@@ -204,7 +204,7 @@ XSIGMATEST_VOID(GpuMemoryAlignment, calculates_padded_widths)
 /**
  * @brief Test SIMD alignment requirements
  */
-XSIGMATEST_VOID(GpuMemoryAlignment, provides_simd_alignment)
+XSIGMATEST(GpuMemoryAlignment, provides_simd_alignment)
 {
     // Test SIMD alignment for different vector sizes
     size_t float_simd_8 = gpu_memory_alignment::get_simd_alignment<float>(8);
@@ -226,7 +226,7 @@ XSIGMATEST_VOID(GpuMemoryAlignment, provides_simd_alignment)
 /**
  * @brief Test optimal memory layout calculation for multi-dimensional arrays
  */
-XSIGMATEST_VOID(GpuMemoryAlignment, calculates_optimal_layouts)
+XSIGMATEST(GpuMemoryAlignment, calculates_optimal_layouts)
 {
     alignment_config config;
     config.base_alignment       = 128;
@@ -261,7 +261,7 @@ XSIGMATEST_VOID(GpuMemoryAlignment, calculates_optimal_layouts)
 /**
  * @brief Test GPU architecture detection
  */
-XSIGMATEST_VOID(GpuMemoryAlignment, detects_gpu_architecture)
+XSIGMATEST(GpuMemoryAlignment, detects_gpu_architecture)
 {
     // Test CUDA architecture detection
     auto arch_75 = gpu_memory_alignment::detect_architecture(device_enum::CUDA, 7, 5, "");
@@ -283,7 +283,7 @@ XSIGMATEST_VOID(GpuMemoryAlignment, detects_gpu_architecture)
 /**
  * @brief Test optimal configuration for different architectures and access patterns
  */
-XSIGMATEST_VOID(GpuMemoryAlignment, provides_optimal_configurations)
+XSIGMATEST(GpuMemoryAlignment, provides_optimal_configurations)
 {
     // Test configuration for different architectures and access patterns
     auto sequential_config = gpu_memory_alignment::get_optimal_config(
@@ -309,7 +309,7 @@ XSIGMATEST_VOID(GpuMemoryAlignment, provides_optimal_configurations)
 /**
  * @brief Test alignment report generation
  */
-XSIGMATEST_VOID(GpuMemoryAlignment, generates_alignment_reports)
+XSIGMATEST(GpuMemoryAlignment, generates_alignment_reports)
 {
     alignment_config config;
     config.base_alignment       = 128;

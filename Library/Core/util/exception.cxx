@@ -1,9 +1,9 @@
 #include "util/exception.h"
 
-#include <algorithm>
 #include <atomic>
 #include <cstdlib>  // for getenv
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <sstream>
 #include <utility>
@@ -66,7 +66,7 @@ void set_exception_mode(exception_mode mode) noexcept
 
 void init_exception_mode_from_env() noexcept
 {
-    std::lock_guard<std::mutex> lock(g_exception_mode_init_mutex_);
+    std::lock_guard<std::mutex> const lock(g_exception_mode_init_mutex_);
 
     // Double-check after acquiring lock
     if (g_exception_mode_initialized_.load(std::memory_order_acquire))

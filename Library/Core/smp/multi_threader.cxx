@@ -3,9 +3,18 @@
 
 #include "multi_threader.h"
 
-#include <algorithm>  // for clamp, min
+#include <handleapi.h>
+#include <minwindef.h>
+#include <processthreadsapi.h>
+#include <synchapi.h>
+#include <sysinfoapi.h>
+#include <winbase.h>
+#include <winnt.h>
 
-#include "logging/logger.h"
+#include <algorithm>  // for clamp, min
+#include <mutex>
+
+#include "common/macros.h"
 #include "util/exception.h"  // for XSIGMA_CHECK
 #include "xsigma_threads.h"
 
@@ -30,7 +39,6 @@ using xsigmaExternCThreadFunctionType = xsigmaThreadFunctionType;
 #endif
 
 #ifdef _WIN32
-#include <windows.h>
 #endif
 
 #ifdef min
@@ -122,10 +130,7 @@ int multi_threader::GetGlobalDefaultNumberOfThreads()
 #endif
 
         // Lets limit the number of threads to XSIGMA_MAX_THREADS
-        if (num > XSIGMA_MAX_THREADS)
-        {
-            num = XSIGMA_MAX_THREADS;
-        }
+        num = std::min(num, XSIGMA_MAX_THREADS);
 
         xsigmaMultiThreaderGlobalDefaultNumberOfThreads = num;
     }
@@ -236,7 +241,7 @@ void multi_threader::SingleMethodExecute()
 #endif
     XSIGMA_CHECK(this->SingleMethod, "No single method set!");
     // obey the global maximum number of threads limit
-    if (xsigmaMultiThreaderGlobalMaximumNumberOfThreads &&
+    if ((xsigmaMultiThreaderGlobalMaximumNumberOfThreads != 0) &&
         this->NumberOfThreads > xsigmaMultiThreaderGlobalMaximumNumberOfThreads)
     {
         this->NumberOfThreads = xsigmaMultiThreaderGlobalMaximumNumberOfThreads;
@@ -359,7 +364,7 @@ void multi_threader::MultipleMethodExecute()
 #endif
 
     // obey the global maximum number of threads limit
-    if (xsigmaMultiThreaderGlobalMaximumNumberOfThreads &&
+    if ((xsigmaMultiThreaderGlobalMaximumNumberOfThreads != 0) &&
         this->NumberOfThreads > xsigmaMultiThreaderGlobalMaximumNumberOfThreads)
     {
         this->NumberOfThreads = xsigmaMultiThreaderGlobalMaximumNumberOfThreads;
@@ -482,7 +487,8 @@ int multi_threader::SpawnThread(const xsigmaThreadFunctionType f, void* userdata
         {
             this->SpawnedThreadActiveFlagLock[id] = new std::mutex;
         }
-        XSIGMA_UNUSED std::lock_guard<std::mutex> lockGuard(*this->SpawnedThreadActiveFlagLock[id]);
+        XSIGMA_UNUSED std::lock_guard<std::mutex> const lockGuard(
+            *this->SpawnedThreadActiveFlagLock[id]);
         if (this->SpawnedThreadActiveFlag[id] == 0)
         {
             // We've got a usable thread id, so grab it
@@ -546,7 +552,7 @@ void multi_threader::TerminateThread(int threadId)
         XSIGMA_MAX_THREADS);
 
     // If we don't have a lock, then this thread is definitely not active
-    if (!this->SpawnedThreadActiveFlag[threadId])
+    if (this->SpawnedThreadActiveFlag[threadId] == 0)
     {
         return;
     }
@@ -554,7 +560,7 @@ void multi_threader::TerminateThread(int threadId)
     // If we do have a lock, use it and find out the status of the active flag
     int val = 0;
     {
-        XSIGMA_UNUSED std::lock_guard<std::mutex> lockGuard(
+        XSIGMA_UNUSED std::lock_guard<std::mutex> const lockGuard(
             *this->SpawnedThreadActiveFlagLock[threadId]);
         val = this->SpawnedThreadActiveFlag[threadId];
     }
@@ -568,7 +574,7 @@ void multi_threader::TerminateThread(int threadId)
     // OK - now we know we have an active thread - set the active flag to 0
     // to indicate to the thread that it should terminate itself
     {
-        XSIGMA_UNUSED std::lock_guard<std::mutex> lockGuard(
+        XSIGMA_UNUSED std::lock_guard<std::mutex> const lockGuard(
             *this->SpawnedThreadActiveFlagLock[threadId]);
         this->SpawnedThreadActiveFlag[threadId] = 0;
     }
@@ -625,7 +631,7 @@ bool multi_threader::IsThreadActive(int threadId)
     // We have a lock - use it to get the active flag value
     int val = 0;
     {
-        XSIGMA_UNUSED std::lock_guard<std::mutex> lockGuard(
+        XSIGMA_UNUSED std::lock_guard<std::mutex> const lockGuard(
             *this->SpawnedThreadActiveFlagLock[threadId]);
         val = this->SpawnedThreadActiveFlag[threadId];
     }
