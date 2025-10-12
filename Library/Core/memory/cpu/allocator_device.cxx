@@ -43,6 +43,7 @@ void* allocator_device::allocate_raw(size_t alignment, size_t num_bytes)
 {
     // Delegate to static allocate method for consistency
     (void)alignment;  // Alignment is handled internally
+    //cppcheck-suppress syntaxError
     if XSIGMA_UNLIKELY (num_bytes == 0 || static_cast<std::ptrdiff_t>(num_bytes) < 0)
     {
         XSIGMA_THROW("allocating {} bytes", num_bytes);

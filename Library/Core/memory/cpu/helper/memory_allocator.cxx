@@ -83,13 +83,14 @@ void* allocate(std::size_t nbytes, std::size_t alignment, init_policy_enum init)
     }
     else
     {
+        // cppcheck-suppress syntaxError
         if XSIGMA_UNLIKELY (posix_memalign(&ptr, alignment, nbytes) != 0)
         {
             return nullptr;
         }
     }
 #endif
-
+    // cppcheck-suppress syntaxError
     if XSIGMA_UNLIKELY (ptr == nullptr)
     {
         return nullptr;

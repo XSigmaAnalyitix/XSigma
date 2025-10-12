@@ -28,6 +28,7 @@
 
 #include "memory/cpu/allocator_retry.h"
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <functional>
