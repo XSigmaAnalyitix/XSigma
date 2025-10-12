@@ -88,3 +88,7 @@ leak:*allocator*registry*
 # Suppress leaks in thread pool infrastructure (threads may not be cleanly shut down)
 leak:*thread_pool*
 leak:*ThreadPool*
+
+# Suppress leaks in logging infrastructure (often acceptable)
+leak:loguru::set_thread_name
+leak:loguru::init
