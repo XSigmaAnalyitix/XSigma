@@ -53,26 +53,16 @@ namespace xsigma::cpu::memory_allocator
 
 void* allocate(std::size_t nbytes, std::size_t alignment, init_policy_enum init) noexcept
 {
-    // Input validation
-    // cppcheck-suppress syntaxError
-    // Explanation: XSIGMA_UNLIKELY is a branch prediction macro that expands to compiler-specific
-    // attributes (__builtin_expect or [[unlikely]]). Cppcheck doesn't understand this macro syntax.
-    if XSIGMA_UNLIKELY (nbytes == 0 || static_cast<std::ptrdiff_t>(nbytes) < 0)
-    {
-        XSIGMA_LOG_WARNING("cpu allocate() called with negative or zero size: {}", nbytes);
-        return nullptr;
-    }
+    XSIGMA_CHECK(
+        static_cast<std::ptrdiff_t>(nbytes) > 0,
+        "cpu allocate() called with negative or zero size: {}",
+        nbytes);
 
-#ifndef NDEBUG
-    if XSIGMA_UNLIKELY (!is_valid_alignment(alignment))
-    {
-        XSIGMA_LOG_WARNING(
-            "cpu allocate() called with invalid alignment: {} (must be power of 2 >= {})",
-            alignment,
-            sizeof(void*));
-        return nullptr;
-    }
-#endif
+    XSIGMA_CHECK_DEBUG(
+        is_valid_alignment(alignment),
+        "cpu allocate() called with invalid alignment: {} (must be power of 2 >= {})",
+        alignment,
+        sizeof(void*));
 
     void* ptr = nullptr;
 

@@ -124,8 +124,8 @@ ChunkPrefix* FindPrefix(void* user_ptr)
 
 void* allocator_pool::allocate_raw(size_t alignment, size_t num_bytes)
 {
-    if (num_bytes == 0)
-        return nullptr;
+    XSIGMA_CHECK(
+        static_cast<std::ptrdiff_t>(num_bytes) > 0, "Cannot allocate {} bytes.", num_bytes);
 
     // If alignment is larger than kPoolAlignment, increase num_bytes so that we
     // are guaranteed to be able to return an aligned ptr by advancing user_ptr

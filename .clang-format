@@ -18,6 +18,5 @@ FixNamespaceComments: true
 IndentCaseLabels: false
 IndentWidth: 4
 UseTab: Never
-#BreakBeforeBraces: Linux
 ReflowComments: false
 PenaltyBreakComment: 100

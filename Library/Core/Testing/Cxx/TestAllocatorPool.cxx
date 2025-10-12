@@ -29,33 +29,40 @@ namespace
 {
 
 /**
- * @brief Test implementation of sub_allocator for pool testing
+ * @brief Counting wrapper around production basic_cpu_allocator for pool testing
  */
-class test_pool_sub_allocator : public sub_allocator
+class counting_cpu_allocator : public sub_allocator
 {
 public:
-    test_pool_sub_allocator() : sub_allocator({}, {}), alloc_count_(0), free_count_(0) {}
+    counting_cpu_allocator()
+        : sub_allocator({}, {}),
+          alloc_count_(0),
+          free_count_(0),
+          underlying_allocator_(
+              0,                                      // numa_node = 0 (default)
+              std::vector<sub_allocator::Visitor>{},  // no alloc visitors
+              std::vector<sub_allocator::Visitor>{}   // no free visitors
+          )
+    {
+    }
 
     void* Alloc(size_t alignment, size_t num_bytes, size_t* bytes_received) override
     {
         alloc_count_++;
-        void* ptr = xsigma::cpu::memory_allocator::allocate(num_bytes, alignment);
-        if (bytes_received)
-            *bytes_received = num_bytes;
-        return ptr;
+        return underlying_allocator_.Alloc(alignment, num_bytes, bytes_received);
     }
 
     void Free(void* ptr, size_t num_bytes) override
     {
         free_count_++;
-        xsigma::cpu::memory_allocator::free(ptr);
+        underlying_allocator_.Free(ptr, num_bytes);
     }
 
-    bool SupportsCoalescing() const override { return false; }
+    bool SupportsCoalescing() const override { return underlying_allocator_.SupportsCoalescing(); }
 
     allocator_memory_enum GetMemoryType() const noexcept override
     {
-        return allocator_memory_enum::HOST_PAGEABLE;
+        return underlying_allocator_.GetMemoryType();
     }
 
     // Test helpers
@@ -68,8 +75,9 @@ public:
     }
 
 private:
-    std::atomic<int> alloc_count_;
-    std::atomic<int> free_count_;
+    std::atomic<int>    alloc_count_;
+    std::atomic<int>    free_count_;
+    basic_cpu_allocator underlying_allocator_;
 };
 
 /**
@@ -137,156 +145,159 @@ bool validate_memory(void* ptr, size_t size, uint8_t pattern)
 }  // anonymous namespace
 
 /**
- * @brief Test suite for Pool allocator basic functionality
+ * @brief Helper function to create a pool allocator for testing
  */
-class AllocatorPool : public ::testing::Test
+std::pair<std::unique_ptr<allocator_pool>, counting_cpu_allocator*> create_test_pool_allocator()
 {
-protected:
-    void SetUp() override
-    {
-        // Create test sub-allocator
-        auto sub_alloc     = std::make_unique<test_pool_sub_allocator>();
-        sub_allocator_ptr_ = sub_alloc.get();  // Keep reference for testing
+    // Create counting wrapper around production allocator
+    auto                    sub_alloc         = std::make_unique<counting_cpu_allocator>();
+    counting_cpu_allocator* sub_allocator_ptr = sub_alloc.get();  // Keep reference for testing
 
-        // Create size rounder
-        auto size_rounder = std::make_unique<noop_size_rounder>();
+    // Create size rounder
+    auto size_rounder = std::make_unique<noop_size_rounder>();
 
-        // Create pool allocator with size limit of 5
-        pool_allocator_ = std::make_unique<allocator_pool>(
-            5,      // pool_size_limit
-            false,  // auto_resize
-            std::move(sub_alloc),
-            std::move(size_rounder),
-            "test_pool");
-    }
+    // Create pool allocator with size limit of 5
+    auto pool_allocator = std::make_unique<allocator_pool>(
+        5,      // pool_size_limit
+        false,  // auto_resize
+        std::move(sub_alloc),
+        std::move(size_rounder),
+        "test_pool");
 
-    void TearDown() override
-    {
-        pool_allocator_.reset();
-        sub_allocator_ptr_ = nullptr;
-    }
-
-    std::unique_ptr<allocator_pool> pool_allocator_;
-    test_pool_sub_allocator*        sub_allocator_ptr_;  // Non-owning reference for testing
-};
+    return std::make_pair(std::move(pool_allocator), sub_allocator_ptr);
+}
 
 /**
  * @brief Test basic allocation and deallocation with pooling
  */
-TEST_F(AllocatorPool, basic_allocation_deallocation)
+XSIGMATEST(AllocatorPool, basic_allocation_deallocation)
 {
-    sub_allocator_ptr_->reset_counters();
+    auto [pool_allocator, sub_allocator_ptr] = create_test_pool_allocator();
+
+    sub_allocator_ptr->reset_counters();
 
     // First allocation should go to underlying allocator
-    void* ptr1 = pool_allocator_->allocate_raw(64, 1024);
+    void* ptr1 = pool_allocator->allocate_raw(64, 1024);
     EXPECT_NE(nullptr, ptr1);
     EXPECT_TRUE(is_aligned(ptr1, 64));
-    EXPECT_EQ(sub_allocator_ptr_->get_alloc_count(), 1);
+    EXPECT_EQ(sub_allocator_ptr->get_alloc_count(), 1);
 
     // Test memory content
     fill_memory(ptr1, 1024, 0xAA);
     EXPECT_TRUE(validate_memory(ptr1, 1024, 0xAA));
 
     // Deallocation should put memory in pool (not free to underlying allocator)
-    pool_allocator_->deallocate_raw(ptr1);
-    EXPECT_EQ(sub_allocator_ptr_->get_free_count(), 0);  // Should be 0 (in pool)
+    pool_allocator->deallocate_raw(ptr1);
+    EXPECT_EQ(sub_allocator_ptr->get_free_count(), 0);  // Should be 0 (in pool)
 
     // Second allocation of same size should come from pool
-    void* ptr2 = pool_allocator_->allocate_raw(64, 1024);
+    void* ptr2 = pool_allocator->allocate_raw(64, 1024);
     EXPECT_NE(nullptr, ptr2);
-    EXPECT_EQ(sub_allocator_ptr_->get_alloc_count(), 1);  // Still 1 (from pool)
+    EXPECT_EQ(sub_allocator_ptr->get_alloc_count(), 1);  // Still 1 (from pool)
 
-    pool_allocator_->deallocate_raw(ptr2);
+    pool_allocator->deallocate_raw(ptr2);
+
+    END_TEST();
 }
 
 /**
  * @brief Test pool size limits and LRU eviction
  */
-TEST_F(AllocatorPool, pool_size_limits_and_lru)
+XSIGMATEST(AllocatorPool, pool_size_limits_and_lru)
 {
-    sub_allocator_ptr_->reset_counters();
+    auto [pool_allocator, sub_allocator_ptr] = create_test_pool_allocator();
+
+    sub_allocator_ptr->reset_counters();
 
     // Fill pool to capacity (5 items)
     std::vector<void*> ptrs;
     for (int i = 0; i < 5; ++i)
     {
-        void* ptr = pool_allocator_->allocate_raw(64, 1024);
+        void* ptr = pool_allocator->allocate_raw(64, 1024);
         EXPECT_NE(nullptr, ptr);
         ptrs.push_back(ptr);
     }
 
-    EXPECT_EQ(sub_allocator_ptr_->get_alloc_count(), 5);
+    EXPECT_EQ(sub_allocator_ptr->get_alloc_count(), 5);
 
     // Return all to pool
     for (void* ptr : ptrs)
     {
-        pool_allocator_->deallocate_raw(ptr);
+        pool_allocator->deallocate_raw(ptr);
     }
 
-    EXPECT_EQ(sub_allocator_ptr_->get_free_count(), 0);  // All in pool
+    EXPECT_EQ(sub_allocator_ptr->get_free_count(), 0);  // All in pool
 
     // Allocate one more item of same size - should come from pool
-    void* ptr_from_pool = pool_allocator_->allocate_raw(64, 1024);
+    void* ptr_from_pool = pool_allocator->allocate_raw(64, 1024);
     EXPECT_NE(nullptr, ptr_from_pool);
-    EXPECT_EQ(sub_allocator_ptr_->get_alloc_count(), 5);  // No new allocation
+    EXPECT_EQ(sub_allocator_ptr->get_alloc_count(), 5);  // No new allocation
 
-    pool_allocator_->deallocate_raw(ptr_from_pool);
+    pool_allocator->deallocate_raw(ptr_from_pool);
 
     // Now add one more item to pool (6th item) - should trigger LRU eviction
-    void* ptr6 = pool_allocator_->allocate_raw(64, 1024);
+    void* ptr6 = pool_allocator->allocate_raw(64, 1024);
     EXPECT_NE(nullptr, ptr6);
-    pool_allocator_->deallocate_raw(ptr6);
+    pool_allocator->deallocate_raw(ptr6);
 
     // Pool should still have 5 items, oldest should be evicted
-    EXPECT_EQ(sub_allocator_ptr_->get_free_count(), 0);  // One evicted
+    EXPECT_EQ(sub_allocator_ptr->get_free_count(), 0);  // One evicted
+
+    END_TEST();
 }
 
 /**
  * @brief Test pool statistics and monitoring
  */
-TEST_F(AllocatorPool, pool_statistics)
+XSIGMATEST(AllocatorPool, pool_statistics)
 {
+    auto [pool_allocator, sub_allocator_ptr] = create_test_pool_allocator();
+
     // Check initial statistics
-    EXPECT_EQ(pool_allocator_->get_from_pool_count(), 0);
-    EXPECT_EQ(pool_allocator_->put_count(), 0);
-    EXPECT_EQ(pool_allocator_->allocated_count(), 0);
-    EXPECT_EQ(pool_allocator_->evicted_count(), 0);
-    EXPECT_EQ(pool_allocator_->size_limit(), 5);
+    EXPECT_EQ(pool_allocator->get_from_pool_count(), 0);
+    EXPECT_EQ(pool_allocator->put_count(), 0);
+    EXPECT_EQ(pool_allocator->allocated_count(), 0);
+    EXPECT_EQ(pool_allocator->evicted_count(), 0);
+    EXPECT_EQ(pool_allocator->size_limit(), 5);
 
     // Perform allocation and deallocation
-    void* ptr = pool_allocator_->allocate_raw(64, 1024);
+    void* ptr = pool_allocator->allocate_raw(64, 1024);
     EXPECT_NE(nullptr, ptr);
 
     // Should show one allocation
-    EXPECT_EQ(pool_allocator_->allocated_count(), 1);
+    EXPECT_EQ(pool_allocator->allocated_count(), 1);
 
-    pool_allocator_->deallocate_raw(ptr);
+    pool_allocator->deallocate_raw(ptr);
 
     // Should show one put to pool
-    EXPECT_EQ(pool_allocator_->put_count(), 1);
+    EXPECT_EQ(pool_allocator->put_count(), 1);
 
     // Allocate same size again - should come from pool
-    void* ptr2 = pool_allocator_->allocate_raw(64, 1024);
+    void* ptr2 = pool_allocator->allocate_raw(64, 1024);
     EXPECT_NE(nullptr, ptr2);
 
     // Should show one get from pool
-    EXPECT_EQ(pool_allocator_->get_from_pool_count(), 1);
+    EXPECT_EQ(pool_allocator->get_from_pool_count(), 1);
 
-    pool_allocator_->deallocate_raw(ptr2);
+    pool_allocator->deallocate_raw(ptr2);
+
+    END_TEST();
 }
 
 /**
  * @brief Test Clear() functionality
  */
-TEST_F(AllocatorPool, clear_functionality)
+XSIGMATEST(AllocatorPool, clear_functionality)
 {
-    sub_allocator_ptr_->reset_counters();
+    auto [pool_allocator, sub_allocator_ptr] = create_test_pool_allocator();
+
+    sub_allocator_ptr->reset_counters();
 
     // Fill pool with items
     std::vector<void*> ptrs;
     for (int i = 0; i < 3; ++i)
     {
-        void* ptr = pool_allocator_->allocate_raw(64, 1024);
+        void* ptr = pool_allocator->allocate_raw(64, 1024);
         EXPECT_NE(nullptr, ptr);
         ptrs.push_back(ptr);
     }
@@ -294,67 +305,72 @@ TEST_F(AllocatorPool, clear_functionality)
     // Return to pool
     for (void* ptr : ptrs)
     {
-        pool_allocator_->deallocate_raw(ptr);
+        pool_allocator->deallocate_raw(ptr);
     }
 
-    EXPECT_EQ(sub_allocator_ptr_->get_free_count(), 0);  // All in pool
+    EXPECT_EQ(sub_allocator_ptr->get_free_count(), 0);  // All in pool
 
     // Clear pool - should free all cached items
-    pool_allocator_->Clear();
+    pool_allocator->Clear();
 
-    EXPECT_EQ(sub_allocator_ptr_->get_free_count(), 3);  // All freed
+    EXPECT_EQ(sub_allocator_ptr->get_free_count(), 3);  // All freed
 
     // Next allocation should go to underlying allocator
-    void* new_ptr = pool_allocator_->allocate_raw(64, 1024);
+    void* new_ptr = pool_allocator->allocate_raw(64, 1024);
     EXPECT_NE(nullptr, new_ptr);
-    EXPECT_EQ(sub_allocator_ptr_->get_alloc_count(), 4);  // New allocation
+    EXPECT_EQ(sub_allocator_ptr->get_alloc_count(), 4);  // New allocation
 
-    pool_allocator_->deallocate_raw(new_ptr);
+    pool_allocator->deallocate_raw(new_ptr);
+
+    END_TEST();
 }
 
 /**
  * @brief Test allocator properties
  */
-TEST_F(AllocatorPool, allocator_properties)
+XSIGMATEST(AllocatorPool, allocator_properties)
 {
+    auto [pool_allocator, sub_allocator_ptr] = create_test_pool_allocator();
+
     // Test allocator name
-    EXPECT_EQ(std::string(pool_allocator_->Name()), std::string("test_pool"));
+    EXPECT_EQ(std::string(pool_allocator->Name()), std::string("test_pool"));
 
     // Test memory type (should delegate to underlying allocator)
-    EXPECT_EQ(pool_allocator_->GetMemoryType(), allocator_memory_enum::HOST_PAGEABLE);
+    EXPECT_EQ(pool_allocator->GetMemoryType(), allocator_memory_enum::HOST_PAGEABLE);
 
     // Test allocation size tracking (pool allocator doesn't track sizes by default)
-    EXPECT_FALSE(pool_allocator_->tracks_allocation_sizes());
+    EXPECT_FALSE(pool_allocator->tracks_allocation_sizes());
+
+    END_TEST();
 }
 
 /**
  * @brief Test zero-size allocation handling
  */
-TEST_F(AllocatorPool, zero_size_allocation)
+XSIGMATEST(AllocatorPool, zero_size_allocation)
 {
+    auto [pool_allocator, sub_allocator_ptr] = create_test_pool_allocator();
+
     // Zero-size allocation should be handled gracefully
-    void* ptr = pool_allocator_->allocate_raw(64, 0);
+    ASSERT_ANY_THROW({ pool_allocator->allocate_raw(64, 0); });
 
-    // Implementation may return nullptr or valid pointer
-    if (ptr != nullptr)
-    {
-        pool_allocator_->deallocate_raw(ptr);
-    }
-
-    // Test passes if no crash occurs
-    EXPECT_TRUE(true);
+    END_TEST();
 }
 
 /**
  * @brief Test null pointer deallocation
  */
-TEST_F(AllocatorPool, null_pointer_deallocation)
+XSIGMATEST(AllocatorPool, null_pointer_deallocation)
 {
+    auto [pool_allocator, sub_allocator_ptr] = create_test_pool_allocator();
+
     // Deallocating nullptr should not crash
-    pool_allocator_->deallocate_raw(nullptr);
+    pool_allocator->deallocate_raw(nullptr);
 
     // Test passes if no exception is thrown
     EXPECT_TRUE(true);
+
+    END_TEST();
 }
 
 /**
@@ -362,7 +378,7 @@ TEST_F(AllocatorPool, null_pointer_deallocation)
  */
 TEST(AllocatorPoolAutoResize, auto_resize_functionality)
 {
-    auto sub_alloc      = std::make_unique<test_pool_sub_allocator>();
+    auto sub_alloc      = std::make_unique<counting_cpu_allocator>();
     auto test_sub_alloc = sub_alloc.get();
 
     // Create pool with auto-resize enabled
@@ -402,7 +418,7 @@ TEST(AllocatorPoolAutoResize, auto_resize_functionality)
  */
 TEST(AllocatorPoolSizeRounding, size_rounding_strategies)
 {
-    auto sub_alloc      = std::make_unique<test_pool_sub_allocator>();
+    auto sub_alloc      = std::make_unique<counting_cpu_allocator>();
     auto test_sub_alloc = sub_alloc.get();
 
     // Create pool with power-of-2 size rounder
@@ -434,7 +450,7 @@ TEST(AllocatorPoolSizeRounding, size_rounding_strategies)
  */
 TEST(AllocatorPoolConcurrency, thread_safety)
 {
-    auto sub_alloc = std::make_unique<test_pool_sub_allocator>();
+    auto sub_alloc = std::make_unique<counting_cpu_allocator>();
 
     auto pool = std::make_unique<allocator_pool>(
         10,  // larger pool for concurrency
@@ -495,7 +511,7 @@ TEST(AllocatorPoolConcurrency, thread_safety)
  */
 TEST(AllocatorPoolPerformance, allocation_timing)
 {
-    auto sub_alloc      = std::make_unique<test_pool_sub_allocator>();
+    auto sub_alloc      = std::make_unique<counting_cpu_allocator>();
     auto test_sub_alloc = sub_alloc.get();
 
     auto pool = std::make_unique<allocator_pool>(

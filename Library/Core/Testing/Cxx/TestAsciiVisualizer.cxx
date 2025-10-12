@@ -119,48 +119,41 @@ allocation_timing_stats create_sample_timing_stats()
 }  // anonymous namespace
 
 /**
- * @brief Test suite for ASCII visualizer basic functionality
+ * @brief Helper function to create a default ASCII visualizer for testing
  */
-class AsciiVisualizer : public ::testing::Test
+std::unique_ptr<ascii_visualizer> create_test_visualizer()
 {
-protected:
-    void SetUp() override
-    {
-        // Create visualizer with default configuration
-        visualizer_ = std::make_unique<ascii_visualizer>();
+    return std::make_unique<ascii_visualizer>();
+}
 
-        // Create visualizer with custom configuration for some tests
-        ascii_visualizer::visualization_config custom_config;
-        custom_config.chart_width          = 40;
-        custom_config.max_histogram_height = 15;
-        custom_config.filled_char          = '#';
-        custom_config.empty_char           = '.';
-        custom_config.fragmented_char      = 'X';
-        custom_config.show_percentages     = true;
-        custom_config.show_legends         = true;
+/**
+ * @brief Helper function to create a custom ASCII visualizer for testing
+ */
+std::unique_ptr<ascii_visualizer> create_custom_test_visualizer()
+{
+    ascii_visualizer::visualization_config custom_config;
+    custom_config.chart_width          = 40;
+    custom_config.max_histogram_height = 15;
+    custom_config.filled_char          = '#';
+    custom_config.empty_char           = '.';
+    custom_config.fragmented_char      = 'X';
+    custom_config.show_percentages     = true;
+    custom_config.show_legends         = true;
 
-        custom_visualizer_ = std::make_unique<ascii_visualizer>(custom_config);
-    }
-
-    void TearDown() override
-    {
-        visualizer_.reset();
-        custom_visualizer_.reset();
-    }
-
-    std::unique_ptr<ascii_visualizer> visualizer_;
-    std::unique_ptr<ascii_visualizer> custom_visualizer_;
-};
+    return std::make_unique<ascii_visualizer>(custom_config);
+}
 
 /**
  * @brief Test histogram creation with allocation size distribution
  */
-TEST_F(AsciiVisualizer, create_histogram)
+XSIGMATEST(AsciiVisualizer, create_histogram)
 {
-    auto allocation_sizes = create_sample_allocation_sizes();
+    auto visualizer        = create_test_visualizer();
+    auto custom_visualizer = create_custom_test_visualizer();
+    auto allocation_sizes  = create_sample_allocation_sizes();
 
     // Create histogram
-    std::string histogram = visualizer_->create_histogram(allocation_sizes);
+    std::string histogram = visualizer->create_histogram(allocation_sizes);
 
     // Verify histogram is not empty
     EXPECT_FALSE(histogram.empty());
@@ -176,22 +169,25 @@ TEST_F(AsciiVisualizer, create_histogram)
     std::cout << histogram << std::endl;
 
     // Test with custom configuration
-    std::string custom_histogram = custom_visualizer_->create_histogram(allocation_sizes);
+    std::string custom_histogram = custom_visualizer->create_histogram(allocation_sizes);
     EXPECT_FALSE(custom_histogram.empty());
 
     std::cout << "\n=== CUSTOM HISTOGRAM DEMONSTRATION ===\n";
     std::cout << custom_histogram << std::endl;
+
+    END_TEST();
 }
 
 /**
  * @brief Test timeline visualization of memory usage over time
  */
-TEST_F(AsciiVisualizer, create_timeline)
+XSIGMATEST(AsciiVisualizer, create_timeline)
 {
+    auto visualizer    = create_test_visualizer();
     auto timeline_data = create_sample_timeline();
 
     // Create timeline visualization
-    std::string timeline = visualizer_->create_timeline(timeline_data);
+    std::string timeline = visualizer->create_timeline(timeline_data);
 
     // Verify timeline is not empty
     EXPECT_FALSE(timeline.empty());
@@ -207,17 +203,21 @@ TEST_F(AsciiVisualizer, create_timeline)
     // Display timeline for visual inspection
     std::cout << "\n=== TIMELINE DEMONSTRATION ===\n";
     std::cout << timeline << std::endl;
+
+    END_TEST();
 }
 
 /**
  * @brief Test fragmentation analysis and memory layout visualization
  */
-TEST_F(AsciiVisualizer, create_fragmentation_map)
+XSIGMATEST(AsciiVisualizer, create_fragmentation_map)
 {
+    auto visualizer            = create_test_visualizer();
+    auto custom_visualizer     = create_custom_test_visualizer();
     auto fragmentation_metrics = create_sample_fragmentation_metrics();
 
     // Create fragmentation map
-    std::string fragmentation_map = visualizer_->create_fragmentation_map(fragmentation_metrics);
+    std::string fragmentation_map = visualizer->create_fragmentation_map(fragmentation_metrics);
 
     // Verify fragmentation map is not empty
     EXPECT_FALSE(fragmentation_map.empty());
@@ -235,25 +235,28 @@ TEST_F(AsciiVisualizer, create_fragmentation_map)
 
     // Test with custom configuration
     std::string custom_fragmentation_map =
-        custom_visualizer_->create_fragmentation_map(fragmentation_metrics);
+        custom_visualizer->create_fragmentation_map(fragmentation_metrics);
     EXPECT_FALSE(custom_fragmentation_map.empty());
 
     std::cout << "\n=== CUSTOM FRAGMENTATION MAP DEMONSTRATION ===\n";
     std::cout << custom_fragmentation_map << std::endl;
+
+    END_TEST();
 }
 
 /**
  * @brief Test memory usage bar charts
  */
-TEST_F(AsciiVisualizer, create_usage_bars)
+XSIGMATEST(AsciiVisualizer, create_usage_bars)
 {
+    auto   visualizer    = create_test_visualizer();
     size_t current_usage = 512 * 1024 * 1024;      // 512 MB
     size_t peak_usage    = 1024 * 1024 * 1024;     // 1 GB
     size_t limit_usage   = 2048ULL * 1024 * 1024;  // 2 GB
 
     // Create usage bars with limit
     std::string usage_bars_with_limit =
-        visualizer_->create_usage_bars(current_usage, peak_usage, limit_usage);
+        visualizer->create_usage_bars(current_usage, peak_usage, limit_usage);
 
     // Verify usage bars are not empty
     EXPECT_FALSE(usage_bars_with_limit.empty());
@@ -269,7 +272,7 @@ TEST_F(AsciiVisualizer, create_usage_bars)
     std::cout << usage_bars_with_limit << std::endl;
 
     // Create usage bars without limit
-    std::string usage_bars_no_limit = visualizer_->create_usage_bars(current_usage, peak_usage);
+    std::string usage_bars_no_limit = visualizer->create_usage_bars(current_usage, peak_usage);
 
     EXPECT_FALSE(usage_bars_no_limit.empty());
     EXPECT_NE(usage_bars_no_limit.find("Current"), std::string::npos);
@@ -277,17 +280,20 @@ TEST_F(AsciiVisualizer, create_usage_bars)
 
     std::cout << "\n=== USAGE BARS WITHOUT LIMIT DEMONSTRATION ===\n";
     std::cout << usage_bars_no_limit << std::endl;
+
+    END_TEST();
 }
 
 /**
  * @brief Test performance summary display
  */
-TEST_F(AsciiVisualizer, create_performance_summary)
+XSIGMATEST(AsciiVisualizer, create_performance_summary)
 {
+    auto visualizer   = create_test_visualizer();
     auto timing_stats = create_sample_timing_stats();
 
     // Create performance summary
-    std::string performance_summary = visualizer_->create_performance_summary(timing_stats);
+    std::string performance_summary = visualizer->create_performance_summary(timing_stats);
 
     // Verify performance summary is not empty
     EXPECT_FALSE(performance_summary.empty());
@@ -303,17 +309,20 @@ TEST_F(AsciiVisualizer, create_performance_summary)
     // Display performance summary for visual inspection
     std::cout << "\n=== PERFORMANCE SUMMARY DEMONSTRATION ===\n";
     std::cout << performance_summary << std::endl;
+
+    END_TEST();
 }
 
 /**
  * @brief Test size bucket creation for histograms
  */
-TEST_F(AsciiVisualizer, create_size_buckets)
+XSIGMATEST(AsciiVisualizer, create_size_buckets)
 {
+    auto visualizer       = create_test_visualizer();
     auto allocation_sizes = create_sample_allocation_sizes();
 
     // Create size buckets with default number
-    auto buckets = visualizer_->create_size_buckets(allocation_sizes);
+    auto buckets = visualizer->create_size_buckets(allocation_sizes);
 
     // Verify buckets were created
     EXPECT_FALSE(buckets.empty());
@@ -329,7 +338,7 @@ TEST_F(AsciiVisualizer, create_size_buckets)
     }
 
     // Test with specific number of buckets
-    auto custom_buckets = visualizer_->create_size_buckets(allocation_sizes, 5);
+    auto custom_buckets = visualizer->create_size_buckets(allocation_sizes, 5);
     EXPECT_EQ(custom_buckets.size(), 5);
 
     // Display bucket information
@@ -340,15 +349,19 @@ TEST_F(AsciiVisualizer, create_size_buckets)
                   << " bytes, count=" << bucket.count << ", percentage=" << bucket.percentage
                   << "%\n";
     }
+
+    END_TEST();
 }
 
 /**
  * @brief Test configuration management
  */
-TEST_F(AsciiVisualizer, configuration_management)
+XSIGMATEST(AsciiVisualizer, configuration_management)
 {
+    auto visualizer = create_test_visualizer();
+
     // Test getting default configuration
-    auto default_config = visualizer_->get_config();
+    auto default_config = visualizer->get_config();
     EXPECT_EQ(default_config.chart_width, 60);
     EXPECT_EQ(default_config.max_histogram_height, 20);
     EXPECT_EQ(default_config.filled_char, '#');
@@ -367,10 +380,10 @@ TEST_F(AsciiVisualizer, configuration_management)
     new_config.show_percentages     = false;
     new_config.show_legends         = false;
 
-    visualizer_->set_config(new_config);
+    visualizer->set_config(new_config);
 
     // Verify configuration was updated
-    auto updated_config = visualizer_->get_config();
+    auto updated_config = visualizer->get_config();
     EXPECT_EQ(updated_config.chart_width, 80);
     EXPECT_EQ(updated_config.max_histogram_height, 25);
     EXPECT_EQ(updated_config.filled_char, '*');
@@ -378,30 +391,34 @@ TEST_F(AsciiVisualizer, configuration_management)
     EXPECT_EQ(updated_config.fragmented_char, '?');
     EXPECT_FALSE(updated_config.show_percentages);
     EXPECT_FALSE(updated_config.show_legends);
+
+    END_TEST();
 }
 
 /**
  * @brief Test edge cases and error handling
  */
-TEST_F(AsciiVisualizer, edge_cases_and_error_handling)
+XSIGMATEST(AsciiVisualizer, edge_cases_and_error_handling)
 {
+    auto visualizer = create_test_visualizer();
+
     // Test with empty allocation sizes
     std::vector<size_t> empty_sizes;
-    std::string         empty_histogram = visualizer_->create_histogram(empty_sizes);
+    std::string         empty_histogram = visualizer->create_histogram(empty_sizes);
     EXPECT_FALSE(empty_histogram.empty());  // Should handle gracefully
 
     // Test with single allocation size
     std::vector<size_t> single_size      = {1024};
-    std::string         single_histogram = visualizer_->create_histogram(single_size);
+    std::string         single_histogram = visualizer->create_histogram(single_size);
     EXPECT_FALSE(single_histogram.empty());
 
     // Test with empty timeline
     std::vector<ascii_visualizer::timeline_point> empty_timeline;
-    std::string empty_timeline_str = visualizer_->create_timeline(empty_timeline);
+    std::string empty_timeline_str = visualizer->create_timeline(empty_timeline);
     EXPECT_FALSE(empty_timeline_str.empty());  // Should handle gracefully
 
     // Test with zero usage values
-    std::string zero_usage_bars = visualizer_->create_usage_bars(0, 0, 0);
+    std::string zero_usage_bars = visualizer->create_usage_bars(0, 0, 0);
     EXPECT_FALSE(zero_usage_bars.empty());
 
     // Test with zero timing stats
@@ -415,8 +432,10 @@ TEST_F(AsciiVisualizer, edge_cases_and_error_handling)
     zero_stats.min_dealloc_time_us.store(0);
     zero_stats.max_dealloc_time_us.store(0);
 
-    std::string zero_performance = visualizer_->create_performance_summary(zero_stats);
+    std::string zero_performance = visualizer->create_performance_summary(zero_stats);
     EXPECT_FALSE(zero_performance.empty());
+
+    END_TEST();
 }
 
 /**
