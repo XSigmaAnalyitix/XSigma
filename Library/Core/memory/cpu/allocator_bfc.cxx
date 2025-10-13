@@ -48,7 +48,7 @@
 #include <vector>
 
 #include "common/macros.h"
-#include "experimental/profiler/scoped_memory_debug_annotation.h"
+#include "experimental/profiler/memory/scoped_memory_debug_annotation.h"
 #include "logging/logger.h"
 #include "logging/tracing/traceme.h"
 #include "logging/tracing/traceme_encode.h"

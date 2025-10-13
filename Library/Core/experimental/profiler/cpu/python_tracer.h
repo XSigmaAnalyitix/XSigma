@@ -36,7 +36,7 @@ limitations under the License.
 #if 0
 #include <memory>
 
-#include "experimental/profiler/profiler_interface.h"
+#include "experimental/profiler/core/profiler_interface.h"
 
 namespace xsigma
 {

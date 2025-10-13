@@ -51,9 +51,10 @@ cuda_error_info::cuda_error_info(
     : error_code(static_cast<int>(cuda_error)),
       error_message(cudaGetErrorString(cuda_error)),
       cuda_function((function_name != nullptr) ? function_name : "unknown"),
-      timestamp_us(std::chrono::duration_cast<std::chrono::microseconds>(
-                       std::chrono::steady_clock::now().time_since_epoch())
-                       .count()),
+      timestamp_us(
+          std::chrono::duration_cast<std::chrono::microseconds>(
+              std::chrono::steady_clock::now().time_since_epoch())
+              .count()),
       attempted_size(size),
       device_index(device)
 {
@@ -797,7 +798,7 @@ void gpu_allocator_tracking::UpdateMemoryUsage(size_t bytes, bool is_allocation)
 }
 
 void gpu_allocator_tracking::LogGPUOperation(
-    const std::string& /*operation*/, const std::string& /*details*/) const
+    XSIGMA_UNUSED const std::string& operation, XSIGMA_UNUSED const std::string& details) const
 {
     auto current_log_level = gpu_log_level_.load(std::memory_order_relaxed);
     if (current_log_level >= gpu_tracking_log_level::DEBUG)

@@ -51,7 +51,7 @@ The Enhanced Profiler is a comprehensive performance analysis system for the XSi
 ### Basic Usage
 
 ```cpp
-#include "experimental/profiler/profiler.h"
+#include "experimental/profiler/core/profiler.h"
 
 using namespace xsigma::profiler;
 

@@ -451,3 +451,268 @@ XSIGMATEST(TracemeTest, recorder_with_different_levels)
     (void)events;
     END_TEST();
 }
+
+// ============================================================================
+// Enhanced Documentation Example Tests
+// ============================================================================
+
+XSIGMATEST(TracemeTest, documentation_example_basic_usage)
+{
+    // Test the basic usage example from documentation
+    auto example_function = []()
+    {
+        traceme trace("example_function");
+        // Simulate some work
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
+    };
+
+    traceme_recorder::start(1);
+    example_function();
+    auto events = traceme_recorder::stop();
+
+    // Should have recorded at least one event
+    bool found_example = false;
+    for (const auto& thread_events : events)
+    {
+        for (const auto& event : thread_events.events)
+        {
+            if (event.name == "example_function")
+            {
+                found_example = true;
+                break;
+            }
+        }
+    }
+    XSIGMA_CHECK(found_example, "Should have recorded example_function event");
+    END_TEST();
+}
+
+XSIGMATEST(TracemeTest, documentation_example_with_metadata)
+{
+    // Test the metadata example from documentation
+    auto process_data = [](const std::vector<int>& data)
+    {
+        traceme trace(
+            [&]()
+            {
+                return traceme_encode(
+                    "process_data",
+                    {{"size", data.size()},
+                     {"type", "vector<int>"},
+                     {"memory_mb", data.size() * sizeof(int) / 1024 / 1024}});
+            });
+        // Simulate processing
+        std::this_thread::sleep_for(std::chrono::microseconds(5));
+    };
+
+    traceme_recorder::start(1);
+    std::vector<int> test_data(1000, 42);
+    process_data(test_data);
+    auto events = traceme_recorder::stop();
+
+    // Should have recorded the process_data event with metadata
+    bool found_process_data = false;
+    for (const auto& thread_events : events)
+    {
+        for (const auto& event : thread_events.events)
+        {
+            if (event.name.find("process_data") != std::string::npos)
+            {
+                // Check that metadata is present
+                XSIGMA_CHECK(
+                    event.name.find("size=1000") != std::string::npos,
+                    "Should contain size metadata");
+                XSIGMA_CHECK(
+                    event.name.find("type=vector<int>") != std::string::npos,
+                    "Should contain type metadata");
+                found_process_data = true;
+                break;
+            }
+        }
+    }
+    XSIGMA_CHECK(found_process_data, "Should have recorded process_data event");
+    END_TEST();
+}
+
+XSIGMATEST(TracemeTest, documentation_example_manual_activity)
+{
+    // Test the manual activity management example from documentation
+    traceme_recorder::start(1);
+
+    auto activity_id = traceme::activity_start("async_operation");
+
+    // Simulate asynchronous work
+    std::this_thread::sleep_for(std::chrono::microseconds(10));
+
+    traceme::activity_end(activity_id);
+
+    auto events = traceme_recorder::stop();
+
+    // Should have recorded the async operation
+    bool found_async = false;
+    for (const auto& thread_events : events)
+    {
+        for (const auto& event : thread_events.events)
+        {
+            if (event.name == "async_operation")
+            {
+                found_async = true;
+                break;
+            }
+        }
+    }
+    XSIGMA_CHECK(found_async, "Should have recorded async_operation event");
+    END_TEST();
+}
+
+// ============================================================================
+// Edge Case and Robustness Tests
+// ============================================================================
+
+XSIGMATEST(TracemeTest, empty_name_handling)
+{
+    // Test handling of empty names
+    bool started = traceme_recorder::start(1);
+    XSIGMA_CHECK(started, "Should be able to start tracing");
+
+    {
+        traceme trace("");  // Empty name
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
+    }
+
+    auto events = traceme_recorder::stop();
+
+    // Should handle empty names gracefully
+    bool found_empty = false;
+    for (const auto& thread_events : events)
+    {
+        for (const auto& event : thread_events.events)
+        {
+            if (event.name.empty())
+            {
+                found_empty = true;
+                break;
+            }
+        }
+    }
+    XSIGMA_CHECK(found_empty, "Should handle empty names");
+    END_TEST();
+}
+
+XSIGMATEST(TracemeTest, very_long_name_handling)
+{
+    // Test that the system can handle very long names without crashing
+    // This test focuses on graceful handling rather than recording
+    std::string long_name(500, 'a');  // 500 character name
+
+    // Test that we can create and destroy traceme objects with long names
+    // without causing crashes - no try/catch needed per XSigma coding standards
+    {
+        traceme trace(long_name.c_str());
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
+    }  // Trace object destroyed here
+
+    // Test with string_view as well
+    {
+        std::string_view long_name_view{long_name};
+        traceme          trace(long_name_view);
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
+    }
+
+    // Test with lambda name generator
+    {
+        traceme trace([&long_name]() { return long_name; });
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
+    }
+
+    // Test that static methods also handle long names gracefully
+    auto activity_id = traceme::activity_start(long_name.c_str());
+    std::this_thread::sleep_for(std::chrono::microseconds(10));
+    traceme::activity_end(activity_id);
+
+    // Test instant activity with long name using lambda
+    traceme::instant_activity([&long_name]() { return long_name; });
+
+    // If we get here without crashing, the test passes
+    XSIGMA_CHECK(true, "Successfully handled very long names in all scenarios");
+    END_TEST();
+}
+
+XSIGMATEST(TracemeTest, metadata_with_special_characters)
+{
+    // Test metadata encoding with special characters
+    bool started = traceme_recorder::start(1);
+    XSIGMA_CHECK(started, "Should be able to start tracing");
+
+    {
+        traceme trace(
+            [&]()
+            {
+                return traceme_encode(
+                    "special_chars_test",
+                    {{"key_with_spaces", "value with spaces"},
+                     {"key=with=equals", "value=with=equals"},
+                     {"key,with,commas", "value,with,commas"},
+                     {"unicode_key", "value_with_unicode_🚀"}});
+            });
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
+    }
+
+    auto events = traceme_recorder::stop();
+
+    // Should handle special characters in metadata
+    bool found_special = false;
+    for (const auto& thread_events : events)
+    {
+        for (const auto& event : thread_events.events)
+        {
+            if (event.name.find("special_chars_test") != std::string::npos)
+            {
+                found_special = true;
+                break;
+            }
+        }
+    }
+    XSIGMA_CHECK(found_special, "Should handle special characters in metadata");
+    END_TEST();
+}
+
+XSIGMATEST(TracemeTest, zero_duration_traces)
+{
+    // Test traces with potentially zero duration
+    bool started = traceme_recorder::start(1);
+    XSIGMA_CHECK(started, "Should be able to start tracing");
+
+    for (int i = 0; i < 100; ++i)
+    {
+        traceme trace("zero_duration_test");
+        // No sleep - might result in zero duration
+    }
+
+    auto events = traceme_recorder::stop();
+
+    // Should have recorded some events
+    size_t total_events        = 0;
+    size_t zero_duration_count = 0;
+    for (const auto& thread_events : events)
+    {
+        for (const auto& event : thread_events.events)
+        {
+            if (event.name == "zero_duration_test")
+            {
+                total_events++;
+                if (event.is_complete() && event.end_time == event.start_time)
+                {
+                    zero_duration_count++;
+                }
+            }
+        }
+    }
+
+    // Should have recorded at least some events
+    XSIGMA_CHECK(total_events > 0, "Should have recorded some zero_duration_test events");
+
+    // It's okay to have zero-duration traces
+    XSIGMA_CHECK(true, "Zero duration traces should be handled gracefully");
+    END_TEST();
+}

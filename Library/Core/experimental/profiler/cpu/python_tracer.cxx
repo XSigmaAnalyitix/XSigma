@@ -38,8 +38,8 @@ limitations under the License.
 //#include "absl/status/status.h"
 //#include "xla/python/profiler/internal/python_hooks.h"
 //#include "tsl/platform/errors.h"
-#include "experimental/profiler/profiler_interface.h"
-#include "experimental/profiler/xplane/xplane.h"
+#include "experimental/profiler/core/profiler_interface.h"
+#include "experimental/profiler/exporters/xplane/xplane.h"
 #include "logging/logger.h"
 
 namespace xsigma

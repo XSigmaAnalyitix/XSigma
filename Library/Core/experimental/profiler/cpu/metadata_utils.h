@@ -35,11 +35,11 @@ limitations under the License.
 #ifndef XLA_BACKENDS_PROFILER_CPU_METADATA_UTILS_H_
 #define XLA_BACKENDS_PROFILER_CPU_METADATA_UTILS_H_
 
-#include "experimental/profiler/xplane/xplane.h"
+#include "experimental/profiler/exporters/xplane/xplane.h"
 //#include "xla/service/hlo.pb.h"
 //#include "xla/tsl/profiler/convert/xla_op_utils.h"
-#include "experimental/profiler/xplane/xplane_builder.h"
-#include "experimental/profiler/xplane/xplane_schema.h"
+#include "experimental/profiler/exporters/xplane/xplane_builder.h"
+#include "experimental/profiler/exporters/xplane/xplane_schema.h"
 
 namespace xsigma
 {

@@ -53,12 +53,12 @@
 #include <utility>        // for max, pair
 #include <vector>         // for vector, _Vector_const_iterator, _Vector_iterato
 
-#include "experimental/profiler/memory_tracker.h"  // for memory_tracker
-#include "experimental/profiler/profiler.h"  // for profiler_session, profiler_session_builder, profiler...
-#include "experimental/profiler/profiler_report.h"  // for profiler_report
-#include "experimental/profiler/statistical_analyzer.h"  // for statistical_analyzer, statistical_metrics, time_seri...
-#include "logging/logger.h"                              // for XSIGMA_LOG_INFO, XSIGMA_LOG_IF
-#include "xsigmaTest.h"                                  // for END_TEST, XSIGMATEST
+#include "experimental/profiler/analysis/statistical_analyzer.h"  // for statistical_analyzer, statistical_metrics, time_seri...
+#include "experimental/profiler/memory/memory_tracker.h"  // for memory_tracker
+#include "experimental/profiler/session/profiler.h"  // for profiler_session, profiler_session_builder, profiler...
+#include "experimental/profiler/session/profiler_report.h"  // for profiler_report
+#include "logging/logger.h"                                 // for XSIGMA_LOG_INFO, XSIGMA_LOG_IF
+#include "xsigmaTest.h"                                     // for END_TEST, XSIGMATEST
 
 using namespace xsigma;
 
