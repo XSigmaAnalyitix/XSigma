@@ -359,7 +359,7 @@ public:
      * **Thread Safety**: Thread-safe (returns const reference to immutable string)
      * **Performance**: O(1) - returns cached string
      */
-    std::string Name() override { return name_; }
+    std::string Name() const override { return name_; }
 
     /**
      * @brief Allocates memory with default allocation attributes.
@@ -500,7 +500,7 @@ public:
      * **Statistics**: Includes allocation counts, memory usage, fragmentation metrics
      * **Consistency**: Statistics represent atomic snapshot of allocator state
      */
-    std::optional<allocator_stats> GetStats() override;
+    std::optional<allocator_stats> GetStats() const override;
 
     /**
      * @brief Resets statistics counters while preserving current memory state.

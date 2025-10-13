@@ -279,7 +279,7 @@ public:
      * // Output: "Using: allocator_bfc"
      * ```
      */
-    virtual std::string Name() = 0;
+    virtual std::string Name() const = 0;
 
     /**
      * @brief Allocates an uninitialized memory block with specified alignment.
@@ -617,7 +617,7 @@ public:
      * }
      * ```
      */
-    virtual std::optional<allocator_stats> GetStats() { return std::nullopt; }
+    virtual std::optional<allocator_stats> GetStats() const { return std::nullopt; }
 
     /**
      * @brief Resets allocator statistics to initial state.

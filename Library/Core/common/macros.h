@@ -295,9 +295,14 @@ using void_t = std::void_t<>;
 //----------------------------------------------------------------------------
 #if __cplusplus >= 202002L
 #define XSIGMA_FUNCTION_CONSTEXPR constexpr
-#define XSIGMA_NODISCARD [[nodiscard]]
 #else
 #define XSIGMA_FUNCTION_CONSTEXPR
+#endif
+
+//----------------------------------------------------------------------------
+#if __cplusplus >= 201703L
+#define XSIGMA_NODISCARD [[nodiscard]]
+#else
 #define XSIGMA_NODISCARD
 #endif
 

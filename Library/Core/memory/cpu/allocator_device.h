@@ -97,7 +97,7 @@ public:
      * **Thread Safety**: Thread-safe
      * **Exception Safety**: noexcept
      */
-    std::string Name() override;
+    std::string Name() const override;
 
     /**
      * @brief Allocates pinned CPU memory with specified alignment.

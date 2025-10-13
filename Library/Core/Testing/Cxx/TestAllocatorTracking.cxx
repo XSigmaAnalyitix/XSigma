@@ -366,8 +366,8 @@ TEST(AllocatorTracking, local_size_tracking)
         size_t  AllocatedSize(const void* ptr) const noexcept override { return 0; }
         int64_t AllocationId(const void* ptr) const override { return 0; }
 
-        std::optional<allocator_stats> GetStats() override { return std::nullopt; }
-        std::string                    Name() override { return "non_tracking_allocator"; }
+        std::optional<allocator_stats> GetStats() const override { return std::nullopt; }
+        std::string                    Name() const override { return "non_tracking_allocator"; }
         allocator_memory_enum          GetMemoryType() const noexcept override
         {
             return allocator_memory_enum::HOST_PAGEABLE;

@@ -97,11 +97,11 @@ class MemAllocatorStats
 {
 public:
     // Getters
-    [[nodiscard]] int64_t num_allocs() const { return num_allocs_; }
-    [[nodiscard]] int64_t bytes_in_use() const { return bytes_in_use_; }
-    [[nodiscard]] int64_t peak_bytes_in_use() const { return peak_bytes_in_use_; }
-    [[nodiscard]] int64_t largest_alloc_size() const { return largest_alloc_size_; }
-    [[nodiscard]] float   fragmentation_metric() const { return fragmentation_metric_; }
+    XSIGMA_NODISCARD int64_t num_allocs() const { return num_allocs_; }
+    XSIGMA_NODISCARD int64_t bytes_in_use() const { return bytes_in_use_; }
+    XSIGMA_NODISCARD int64_t peak_bytes_in_use() const { return peak_bytes_in_use_; }
+    XSIGMA_NODISCARD int64_t largest_alloc_size() const { return largest_alloc_size_; }
+    XSIGMA_NODISCARD float   fragmentation_metric() const { return fragmentation_metric_; }
 
     // Setters
     void set_num_allocs(int64_t value) { num_allocs_ = value; }
@@ -122,15 +122,15 @@ class MemChunk
 {
 public:
     // Getters
-    [[nodiscard]] uint64_t           address() const { return address_; }
-    [[nodiscard]] int64_t            size() const { return size_; }
-    [[nodiscard]] int64_t            requested_size() const { return requested_size_; }
-    [[nodiscard]] int32_t            bin() const { return bin_; }
-    [[nodiscard]] const std::string& op_name() const { return op_name_; }
-    [[nodiscard]] uint64_t           freed_at_count() const { return freed_at_count_; }
-    [[nodiscard]] uint64_t           action_count() const { return action_count_; }
-    [[nodiscard]] bool               in_use() const { return in_use_; }
-    [[nodiscard]] uint64_t           step_id() const { return step_id_; }
+    XSIGMA_NODISCARD uint64_t address() const { return address_; }
+    XSIGMA_NODISCARD int64_t  size() const { return size_; }
+    XSIGMA_NODISCARD int64_t  requested_size() const { return requested_size_; }
+    XSIGMA_NODISCARD int32_t  bin() const { return bin_; }
+    XSIGMA_NODISCARD const std::string& op_name() const { return op_name_; }
+    XSIGMA_NODISCARD uint64_t           freed_at_count() const { return freed_at_count_; }
+    XSIGMA_NODISCARD uint64_t           action_count() const { return action_count_; }
+    XSIGMA_NODISCARD bool               in_use() const { return in_use_; }
+    XSIGMA_NODISCARD uint64_t           step_id() const { return step_id_; }
 
     // Setters
     void set_address(uint64_t value) { address_ = value; }
@@ -160,11 +160,11 @@ class BinSummary
 {
 public:
     // Getters
-    [[nodiscard]] int32_t bin() const { return bin_; }
-    [[nodiscard]] int64_t total_bytes_in_use() const { return total_bytes_in_use_; }
-    [[nodiscard]] int64_t total_bytes_in_bin() const { return total_bytes_in_bin_; }
-    [[nodiscard]] int64_t total_chunks_in_use() const { return total_chunks_in_use_; }
-    [[nodiscard]] int64_t total_chunks_in_bin() const { return total_chunks_in_bin_; }
+    XSIGMA_NODISCARD int32_t bin() const { return bin_; }
+    XSIGMA_NODISCARD int64_t total_bytes_in_use() const { return total_bytes_in_use_; }
+    XSIGMA_NODISCARD int64_t total_bytes_in_bin() const { return total_bytes_in_bin_; }
+    XSIGMA_NODISCARD int64_t total_chunks_in_use() const { return total_chunks_in_use_; }
+    XSIGMA_NODISCARD int64_t total_chunks_in_bin() const { return total_chunks_in_bin_; }
 
     // Setters
     void set_bin(int32_t value) { bin_ = value; }
@@ -185,8 +185,8 @@ class SnapShot
 {
 public:
     // Getters
-    [[nodiscard]] uint64_t action_count() const { return action_count_; }
-    [[nodiscard]] int64_t  size() const { return size_; }
+    XSIGMA_NODISCARD uint64_t action_count() const { return action_count_; }
+    XSIGMA_NODISCARD int64_t  size() const { return size_; }
 
     // Setters
     void set_action_count(uint64_t value) { action_count_ = value; }
@@ -201,11 +201,11 @@ class memory_dump
 {
 public:
     // Getters
-    [[nodiscard]] const std::string&             allocator_name() const { return allocator_name_; }
-    [[nodiscard]] const std::vector<BinSummary>& bin_summary() const { return bin_summary_; }
-    [[nodiscard]] const std::vector<MemChunk>&   chunk() const { return chunk_; }
-    [[nodiscard]] const std::vector<SnapShot>&   snap_shot() const { return snap_shot_; }
-    [[nodiscard]] const MemAllocatorStats&       stats() const { return stats_; }
+    XSIGMA_NODISCARD const std::string& allocator_name() const { return allocator_name_; }
+    XSIGMA_NODISCARD const std::vector<BinSummary>& bin_summary() const { return bin_summary_; }
+    XSIGMA_NODISCARD const std::vector<MemChunk>& chunk() const { return chunk_; }
+    XSIGMA_NODISCARD const std::vector<SnapShot>& snap_shot() const { return snap_shot_; }
+    XSIGMA_NODISCARD const MemAllocatorStats&     stats() const { return stats_; }
 
     // Mutable accessors
     MemAllocatorStats* stats() { return &stats_; }
@@ -1646,7 +1646,7 @@ memory_dump allocator_bfc::RecordMemoryMapInternal()
     return md;
 }
 
-std::optional<allocator_stats> allocator_bfc::GetStats()
+std::optional<allocator_stats> allocator_bfc::GetStats() const
 {
     std::lock_guard<std::mutex> const lock(mutex_);
     // Create a copy of the atomic stats structure

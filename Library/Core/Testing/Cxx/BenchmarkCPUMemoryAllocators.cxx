@@ -614,5 +614,3 @@ BENCHMARK_TEMPLATE(benchmark_fragmentation_pattern, tbb_scalable_benchmark_alloc
 
 }  // namespace benchmarks
 }  // namespace xsigma
-
-BENCHMARK_MAIN();

@@ -83,7 +83,7 @@ private:
    * Thread is on hold if its thread id is not out of bounds, while the queue is not calling
    * its destructor, while the queue is running, while the queue is empty.
    */
-    [[nodiscard]] bool OnHold() const
+    XSIGMA_NODISCARD bool OnHold() const
     {
         return *this->ThreadIndex < this->Queue->NumberOfThreads &&
                !this->Queue->Destroying.load(std::memory_order_acquire) &&
@@ -94,7 +94,7 @@ private:
    * We can continue popping elements if the thread id is not out of bounds while
    * the queue is running and the queue is not empty.
    */
-    [[nodiscard]] bool Continue() const
+    XSIGMA_NODISCARD bool Continue() const
     {
         return *this->ThreadIndex < this->Queue->NumberOfThreads &&
                !this->Queue->InvokerQueue.empty();

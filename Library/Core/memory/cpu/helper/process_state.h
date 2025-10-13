@@ -140,7 +140,7 @@ public:
     {
     }
 
-    std::string Name() override { return a_->Name(); }
+    std::string Name() const override { return a_->Name(); }
     void*       allocate_raw(size_t alignment, size_t num_bytes) override
     {
         void*                       p = a_->allocate_raw(alignment, num_bytes);
@@ -158,7 +158,7 @@ public:
     bool tracks_allocation_sizes() const noexcept override { return a_->tracks_allocation_sizes(); }
     size_t RequestedSize(const void* p) const override { return a_->RequestedSize(p); }
     size_t AllocatedSize(const void* p) const override { return a_->AllocatedSize(p); }
-    std::optional<allocator_stats> GetStats() override { return a_->GetStats(); }
+    std::optional<allocator_stats> GetStats() const override { return a_->GetStats(); }
     bool                           ClearStats() override { return a_->ClearStats(); }
 
     allocator_memory_enum GetMemoryType() const noexcept override { return a_->GetMemoryType(); }

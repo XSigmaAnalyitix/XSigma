@@ -34,7 +34,7 @@
 namespace xsigma
 {
 
-std::string allocator_device::Name()
+std::string allocator_device::Name() const
 {
     return "allocator_device";
 }

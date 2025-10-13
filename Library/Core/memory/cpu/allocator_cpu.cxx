@@ -157,7 +157,7 @@ allocator_cpu::allocator_cpu()
 
 allocator_cpu::~allocator_cpu() = default;
 
-std::string allocator_cpu::Name()
+std::string allocator_cpu::Name() const
 {
     return "cpu";
 }
@@ -276,7 +276,7 @@ void allocator_cpu::deallocate_raw(void* ptr, size_t /*alignment*/, size_t /*num
     deallocate_raw(ptr);
 }
 
-std::optional<allocator_stats> allocator_cpu::GetStats()
+std::optional<allocator_stats> allocator_cpu::GetStats() const
 {
     if (!cpu_allocator_collect_stats.load(std::memory_order_relaxed))
     {
