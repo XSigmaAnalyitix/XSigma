@@ -5,7 +5,6 @@ bugprone-*,\
 -bugprone-unchecked-optional-access,\
 -bugprone-exception-escape,\
 -bugprone-narrowing-conversions,\
--bugprone-suspicious-stringview-data-usage,\
 -bugprone-easily-swappable-parameters,\
 modernize-*,\
 -modernize-use-ranges,\

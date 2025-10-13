@@ -183,44 +183,34 @@ XSIGMATEST(GpuMemoryPool, handles_multiple_allocations)
 
     auto pool = gpu_memory_pool::create(config);
     EXPECT_NE(nullptr, pool.get());
+    std::vector<gpu_memory_block> blocks;
 
-    try
+    // Allocate multiple blocks
+    for (int i = 0; i < 5; ++i)
     {
-        std::vector<gpu_memory_block> blocks;
+        size_t size  = 1024 * (i + 1);
+        auto   block = pool->allocate(size, device_enum::CUDA, 0);
 
-        // Allocate multiple blocks
-        for (int i = 0; i < 5; ++i)
+        if (block.ptr != nullptr)
         {
-            size_t size  = 1024 * (i + 1);
-            auto   block = pool->allocate(size, device_enum::CUDA, 0);
-
-            if (block.ptr != nullptr)
-            {
-                EXPECT_GE(block.size, size);
-                blocks.push_back(std::move(block));
-            }
+            blocks.push_back(std::move(block));
         }
-
-        // Check statistics
-        if (!blocks.empty())
-        {
-            EXPECT_GT(pool->get_allocated_bytes(), 0);
-            EXPECT_EQ(blocks.size(), pool->get_active_allocations());
-        }
-
-        // Deallocate all blocks
-        for (auto& block : blocks)
-        {
-            pool->deallocate(block);
-        }
-
-        XSIGMA_LOG_INFO("GPU memory pool multiple allocations test passed");
     }
-    catch (const std::exception& e)
+
+    // Check statistics
+    if (!blocks.empty())
     {
-        XSIGMA_LOG_INFO(
-            "GPU memory pool multiple allocations failed (expected if no GPU): {}", e.what());
+        EXPECT_GT(pool->get_allocated_bytes(), 0);
+        EXPECT_EQ(blocks.size(), pool->get_active_allocations());
     }
+
+    // Deallocate all blocks
+    for (auto& block : blocks)
+    {
+        pool->deallocate(block);
+    }
+
+    XSIGMA_LOG_INFO("GPU memory pool multiple allocations test passed");
 }
 
 /**

@@ -33,10 +33,10 @@ limitations under the License.
 ==============================================================================*/
 #include <memory>  // for unique_ptr
 
-#include "common/macros.h"                             // for XSIGMA_UNUSED
-#include "experimental/profiler/profiler_factory.h"    // for register_profiler_factory
-#include "experimental/profiler/profiler_interface.h"  // for profiler_interface
-#include "experimental/profiler/profiler_options.h"    // for profile_options
+#include "common/macros.h"                                  // for XSIGMA_UNUSED
+#include "experimental/profiler/core/profiler_factory.h"    // for register_profiler_factory
+#include "experimental/profiler/core/profiler_interface.h"  // for profiler_interface
+#include "experimental/profiler/core/profiler_options.h"    // for profile_options
 
 namespace xsigma
 {

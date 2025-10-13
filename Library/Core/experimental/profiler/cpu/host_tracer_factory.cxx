@@ -33,10 +33,10 @@ limitations under the License.
 ==============================================================================*/
 #include <memory>
 
+#include "experimental/profiler/core/profiler_factory.h"
+#include "experimental/profiler/core/profiler_interface.h"
+#include "experimental/profiler/core/profiler_options.h"
 #include "experimental/profiler/cpu/host_tracer.h"
-#include "experimental/profiler/profiler_factory.h"
-#include "experimental/profiler/profiler_interface.h"
-#include "experimental/profiler/profiler_options.h"
 
 namespace xsigma
 {

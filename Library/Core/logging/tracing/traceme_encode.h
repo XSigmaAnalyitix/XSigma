@@ -46,21 +46,59 @@ limitations under the License.
 namespace xsigma
 {
 
-// An argument passed to TraceMeEncode.
+/**
+ * @brief Key-value argument for structured trace metadata encoding.
+ *
+ * Represents a single key-value pair that will be encoded into trace metadata.
+ * Supports various value types including strings, numbers, and booleans with
+ * automatic type conversion and lifetime management.
+ *
+ * **Supported Value Types**:
+ * - String types: string_view, const char*, std::string
+ * - Numeric types: int, long, uint64_t, double, float, etc.
+ * - Boolean: bool (converted to "true"/"false")
+ *
+ * **Lifetime Management**: For numeric and boolean types, the converted string
+ * is stored internally to ensure it remains valid for the encoding process.
+ *
+ * **Usage**: Typically used in initializer lists with traceme_encode():
+ * ```cpp
+ * traceme_encode("operation", {{"param1", 42}, {"param2", "value"}, {"success", true}})
+ * ```
+ */
 struct TraceMeArg
 {
-    // String conversions of value types are supported via string_view.
-    // The string_view must remain valid for the lifetime of this object.
+    /**
+     * @brief Constructs an argument from string_view key and value.
+     * @param k Argument key (must remain valid during encoding)
+     * @param v Argument value (must remain valid during encoding)
+     */
     TraceMeArg(std::string_view k, std::string_view v) : key(k), value(v) {}
 
-    // Constructor for string literals and const char*
+    /**
+     * @brief Constructs an argument from string_view key and C-string value.
+     * @param k Argument key
+     * @param v C-string value (null pointer becomes empty string)
+     */
     TraceMeArg(std::string_view k, const char* v) : key(k), value(v ? v : "") {}
 
-    // Constructor for std::string
+    /**
+     * @brief Constructs an argument from string_view key and std::string value.
+     * @param k Argument key
+     * @param v String value (must remain valid during encoding)
+     */
     TraceMeArg(std::string_view k, XSIGMA_LIFETIME_BOUND const std::string& v) : key(k), value(v) {}
 
-    // Constructor for numeric types (int, long, uint64_t, double, etc.)
-    // We store the converted string in a member variable to ensure it remains valid
+    /**
+     * @brief Constructs an argument from string_view key and numeric value.
+     *
+     * Automatically converts numeric types to string representation using std::to_string().
+     * The converted string is stored internally to ensure proper lifetime management.
+     *
+     * @tparam T Arithmetic type (int, long, double, etc.) excluding bool
+     * @param k Argument key
+     * @param v Numeric value to convert
+     */
     template <typename T>
     TraceMeArg(
         std::string_view k,
@@ -71,33 +109,56 @@ struct TraceMeArg
     {
     }
 
-    // Constructor for bool
+    /**
+     * @brief Constructs an argument from string_view key and boolean value.
+     * @param k Argument key
+     * @param v Boolean value (converted to "true" or "false")
+     */
     TraceMeArg(std::string_view k, bool v)
         : key(k), value_storage_(v ? "true" : "false"), value(value_storage_)
     {
     }
 
-    TraceMeArg(const TraceMeArg&)     = delete;
+    /// Deleted copy constructor to prevent accidental copying
+    TraceMeArg(const TraceMeArg&) = delete;
+
+    /// Deleted copy assignment to prevent accidental copying
     void operator=(const TraceMeArg&) = delete;
 
-    std::string_view key;
-    // Storage for converted numeric values (must be declared before 'value')
-    std::string      value_storage_;
-    std::string_view value;
+    std::string_view key;        ///< Argument key (metadata field name)
+    std::string value_storage_;  ///< Internal storage for converted values (must precede 'value')
+    std::string_view value;      ///< Argument value (points to value_storage_ or external string)
 };
 
+/**
+ * @brief Internal implementation details for trace metadata encoding.
+ *
+ * This namespace contains low-level functions for efficient string manipulation
+ * and metadata formatting. These functions are optimized for performance and
+ * are not intended for direct use outside the encoding system.
+ */
 namespace traceme_internal
 {
 
-// Copies the contents of str to the address pointed by out.
-// Returns the address after the copy.
-// REQUIRED: The address range [out, out + str.size()] must have been allocated.
+/**
+ * @brief Fast string copy with metadata format validation.
+ *
+ * Copies string content to a pre-allocated buffer with validation to ensure
+ * the string doesn't contain reserved characters that would break the metadata format.
+ *
+ * @param out Destination buffer pointer (must have sufficient space allocated)
+ * @param str Source string to copy
+ * @return Pointer to the position after the copied content
+ *
+ * **Performance**: Optimized for speed using memcpy for bulk copying
+ * **Validation**: Debug builds check for invalid '#' characters in metadata
+ * **Safety**: Requires pre-allocated buffer with sufficient space
+ * **Format**: Metadata uses '#' as delimiter, so it's forbidden in content
+ */
 XSIGMA_FORCE_INLINE char* append(char* out, std::string_view str)
 {
     XSIGMA_CHECK_DEBUG(
-        !strings::str_contains(str, '#'),
-        "'#' is not a valid character in traceme_encode {}",
-        str);
+        !strings::str_contains(str, '#'), "'#' is not a valid character in traceme_encode {}", str);
 
     const size_t str_size = str.size();
     if XSIGMA_LIKELY (str_size > 0)
@@ -108,14 +169,36 @@ XSIGMA_FORCE_INLINE char* append(char* out, std::string_view str)
     return out;
 }
 
-// Appends args encoded as traceme metadata to name.
+/**
+ * @brief Efficiently encodes key-value arguments into trace metadata format.
+ *
+ * Appends structured metadata to a trace name using the format:
+ * `original_name#key1=value1,key2=value2,key3=value3#`
+ *
+ * This function is optimized for performance with single-pass string construction
+ * and pre-calculated buffer sizing to minimize allocations.
+ *
+ * @param name Base trace name to append metadata to
+ * @param args Collection of key-value pairs to encode
+ * @return Complete trace name with encoded metadata
+ *
+ * **Format**: `#key1=value1,key2=value2#` appended to name
+ * **Performance**: Single allocation with pre-calculated size
+ * **Validation**: Debug builds verify buffer calculations are correct
+ * **Empty Args**: No-op if args is empty (no metadata appended)
+ *
+ * **Example**:
+ * - Input: name="matrix_op", args={{"rows", 100}, {"cols", 50}}
+ * - Output: "matrix_op#rows=100,cols=50#"
+ */
 XSIGMA_FORCE_INLINE std::string append_args(
     std::string name, std::initializer_list<TraceMeArg> args)
 {
     if XSIGMA_LIKELY (args.size() > 0)
     {
         const auto old_size = name.size();
-        auto       new_size = old_size + args.size() * 2 + 1;
+        auto       new_size =
+            old_size + args.size() * 2 + 1;  // +1 for opening '#', +1 per arg for '=' and ','
         for (const auto& arg : args)
         {
             new_size += arg.key.size() + arg.value.size();
@@ -123,15 +206,15 @@ XSIGMA_FORCE_INLINE std::string append_args(
         name.resize(new_size);
         char* const begin = &name[0];
         char*       out   = begin + old_size;
-        *out++            = '#';
+        *out++            = '#';  // Start metadata section
         for (const auto& arg : args)
         {
             out    = append(out, arg.key);
             *out++ = '=';
             out    = append(out, arg.value);
-            *out++ = ',';
+            *out++ = ',';  // Separator (will be replaced with '#' for last arg)
         }
-        *(out - 1) = '#';
+        *(out - 1) = '#';  // Replace final ',' with closing '#'
         XSIGMA_CHECK_DEBUG(
             out == begin + new_size,
             "out={} is not equal to begin={} + new_size={}",
@@ -142,84 +225,202 @@ XSIGMA_FORCE_INLINE std::string append_args(
     return name;
 }
 
-// Appends new_metadata to the metadata part of name.
+/**
+ * @brief Appends additional metadata to an existing trace name with metadata.
+ *
+ * Extends the metadata section of a trace name that already contains encoded
+ * metadata. Handles proper formatting to maintain the metadata structure.
+ *
+ * @param name Pointer to trace name string (modified in-place)
+ * @param new_metadata Additional metadata to append (typically from traceme_encode)
+ *
+ * **Format Handling**:
+ * - If name ends with '#', replaces it with ',' and appends new metadata
+ * - If new_metadata starts with '#', strips the leading '#' to avoid duplication
+ * - Maintains proper `#key=value,key=value#` format structure
+ *
+ * **Performance**: Minimal overhead - single string append operation
+ * **Thread Safety**: Not thread-safe - caller must ensure exclusive access
+ * **Empty Metadata**: No-op if new_metadata is empty
+ *
+ * **Example**:
+ * - Before: name="op#param1=value1#", new_metadata="#param2=value2#"
+ * - After: name="op#param1=value1,param2=value2#"
+ */
 XSIGMA_FORCE_INLINE void append_metadata(std::string* name, std::string_view new_metadata)
 {
     if XSIGMA_UNLIKELY (new_metadata.empty())
     {
-        if (!name->empty() && name->back() == '#')
-        {  // name already has metadata
-            name->back() = ',';
-            if XSIGMA_LIKELY (new_metadata.front() == '#')
-            {
-                new_metadata.remove_prefix(1);
-            }
-        }
-        name->append(new_metadata.data(), new_metadata.size());
+        return;  // No metadata to append
     }
+
+    if (!name->empty() && name->back() == '#')
+    {                        // name already has metadata - merge it
+        name->back() = ',';  // Replace closing '#' with separator ','
+        if XSIGMA_LIKELY (new_metadata.front() == '#')
+        {
+            new_metadata.remove_prefix(1);  // Skip leading '#' to avoid duplication
+        }
+    }
+    name->append(new_metadata.data(), new_metadata.size());
 }
 
 }  // namespace traceme_internal
 
-// Encodes an event name and arguments into traceme metadata.
-// Use within a lambda to avoid expensive operations when tracing is disabled.
-// Example Usage:
-//   traceme traceme([value1]() {
-//     return traceme_encode("my_trace", {{"key1", value1}, {"key2", 42}});
-//   });
+/**
+ * @brief Encodes a trace event name with structured metadata arguments.
+ *
+ * Creates a formatted trace name with embedded key-value metadata using the format:
+ * `event_name#key1=value1,key2=value2#`. This is the primary function for creating
+ * rich trace events with contextual information.
+ *
+ * @param name Base event name (moved to avoid copying)
+ * @param args Key-value pairs to encode as metadata
+ * @return Formatted trace name with embedded metadata
+ *
+ * **Performance**: Optimized for minimal allocations and fast string construction
+ * **Usage Pattern**: Typically used within lambda expressions to defer expensive
+ *                    operations until tracing is confirmed active
+ *
+ * **Example**:
+ * ```cpp
+ * traceme trace([&]() {
+ *     return traceme_encode("matrix_multiply", {
+ *         {"rows", matrix.rows()},
+ *         {"cols", matrix.cols()},
+ *         {"dtype", matrix.dtype_name()}
+ *     });
+ * });
+ * ```
+ */
 XSIGMA_FORCE_INLINE std::string traceme_encode(
     std::string name, std::initializer_list<TraceMeArg> args)
 {
     return traceme_internal::append_args(std::move(name), args);
 }
+
+/**
+ * @brief Encodes a trace event name from string_view with metadata arguments.
+ * @param name Base event name as string_view
+ * @param args Key-value pairs to encode as metadata
+ * @return Formatted trace name with embedded metadata
+ */
 XSIGMA_FORCE_INLINE std::string traceme_encode(
     std::string_view name, std::initializer_list<TraceMeArg> args)
 {
     return traceme_internal::append_args(std::string(name), args);
 }
+
+/**
+ * @brief Encodes a trace event name from C-string with metadata arguments.
+ * @param name Base event name as C-string literal
+ * @param args Key-value pairs to encode as metadata
+ * @return Formatted trace name with embedded metadata
+ */
 XSIGMA_FORCE_INLINE std::string traceme_encode(
     const char* name, std::initializer_list<TraceMeArg> args)
 {
     return traceme_internal::append_args(std::string(name), args);
 }
 
-// Encodes arguments into traceme metadata.
-// Use within a lambda to avoid expensive operations when tracing is disabled.
-// Example Usage:
-//   traceme traceme("my_trace");
-//   ...
-//   traceme.append_metadata([value1]() {
-//     return traceme_encode({{"key1", value1}, {"key2", 42}});
-//   });
+/**
+ * @brief Encodes metadata arguments without a base name for appending to existing traces.
+ *
+ * Creates formatted metadata that can be appended to existing trace events using
+ * the append_metadata() method. This allows dynamic addition of contextual information
+ * during trace execution.
+ *
+ * @param args Key-value pairs to encode as metadata
+ * @return Formatted metadata string in `#key1=value1,key2=value2#` format
+ *
+ * **Use Case**: Adding runtime-computed metadata to existing trace events
+ * **Performance**: Deferred evaluation - only called when tracing is active
+ *
+ * **Example**:
+ * ```cpp
+ * traceme trace("data_processing");
+ * // ... do some work ...
+ * trace.append_metadata([&]() {
+ *     return traceme_encode({
+ *         {"items_processed", item_count},
+ *         {"memory_used", get_memory_usage()},
+ *         {"success", operation_succeeded}
+ *     });
+ * });
+ * ```
+ */
 XSIGMA_FORCE_INLINE std::string traceme_encode(std::initializer_list<TraceMeArg> args)
 {
     return traceme_internal::append_args(std::string(), args);
 }
 
-// Concatenates op_name and op_type.
+/**
+ * @brief Creates a standardized operation trace name by combining operation name and type.
+ *
+ * Formats operation information using the standard `operation_name:operation_type` pattern.
+ * This provides consistent naming for operations across the codebase and enables better
+ * grouping and filtering in profiling tools.
+ *
+ * @param op_name Name of the operation (e.g., "MatMul", "Conv2D", "Reduce")
+ * @param op_type Type or variant of the operation (e.g., "Forward", "Backward", "CPU", "GPU")
+ * @return Formatted operation name in `op_name:op_type` format
+ *
+ * **Example**: `traceme_op("MatMul", "GPU")` returns `"MatMul:GPU"`
+ */
 XSIGMA_FORCE_INLINE std::string traceme_op(std::string_view op_name, std::string_view op_type)
 {
     return strings::str_cat(op_name, ":", op_type);
 }
 
+/**
+ * @brief Creates operation trace name from C-string arguments.
+ * @param op_name Operation name as C-string
+ * @param op_type Operation type as C-string
+ * @return Formatted operation name
+ */
 XSIGMA_FORCE_INLINE std::string traceme_op(const char* op_name, const char* op_type)
 {
     return strings::str_cat(op_name, ":", op_type);
 }
 
+/**
+ * @brief Creates operation trace name by appending to existing string (move optimization).
+ * @param op_name Operation name as movable string (modified in-place)
+ * @param op_type Operation type to append
+ * @return Modified op_name with appended type
+ */
 XSIGMA_FORCE_INLINE std::string traceme_op(std::string&& op_name, std::string_view op_type)
 {
     strings::str_append(&op_name, ":", op_type);
     return op_name;
 }
 
-// Concatenates op_name and op_type.
+/**
+ * @brief Creates TensorFlow operation override metadata for trace name replacement.
+ *
+ * Generates metadata that instructs profiling tools to override the displayed
+ * operation name with the specified TensorFlow operation information. This is
+ * used for TensorFlow-specific profiling integration.
+ *
+ * @param op_name TensorFlow operation name
+ * @param op_type TensorFlow operation type
+ * @return Metadata string in `#tf_op=op_name:op_type#` format
+ *
+ * **Use Case**: TensorFlow kernel profiling where the actual kernel name should
+ * be replaced with the high-level TF operation name for better user understanding.
+ */
 XSIGMA_FORCE_INLINE std::string traceme_op_override(
     std::string_view op_name, std::string_view op_type)
 {
     return strings::str_cat("#tf_op=", op_name, ":", op_type, "#");
 }
 
+/**
+ * @brief Creates TensorFlow operation override metadata from C-strings.
+ * @param op_name TensorFlow operation name as C-string
+ * @param op_type TensorFlow operation type as C-string
+ * @return TensorFlow operation override metadata
+ */
 XSIGMA_FORCE_INLINE std::string traceme_op_override(const char* op_name, const char* op_type)
 {
     return strings::str_cat("#tf_op=", op_name, ":", op_type, "#");

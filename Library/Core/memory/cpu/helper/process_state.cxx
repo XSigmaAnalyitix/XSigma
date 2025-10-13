@@ -38,7 +38,7 @@
 #include <vector>
 
 #include "common/macros.h"
-#include "experimental/profiler/env_var.h"
+#include "experimental/profiler/platform/env_var.h"
 #include "logging/logger.h"
 #include "memory/cpu/allocator.h"
 #include "memory/cpu/allocator_bfc.h"

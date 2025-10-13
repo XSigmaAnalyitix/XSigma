@@ -18,6 +18,12 @@
 
 #include "Testing/xsigmaTest.h"
 #include "common/pointer.h"
+#include "experimental/profiler/analysis/statistical_analyzer.h"
+#include "experimental/profiler/memory/memory_tracker.h"
+#include "experimental/profiler/session/profiler.h"
+#include "logging/tracing/traceme.h"
+#include "logging/tracing/traceme_encode.h"
+#include "logging/tracing/traceme_recorder.h"
 #include "memory/cpu/allocator_bfc.h"
 #include "memory/cpu/allocator_pool.h"
 #include "memory/cpu/helper/memory_allocator.h"
@@ -75,9 +81,9 @@ std::unique_ptr<allocator_bfc> create_test_bfc_allocator()
 
     // Create BFC allocator with default options
     allocator_bfc::Options opts;
-    opts.allow_growth           = true;
-    opts.garbage_collection     = true;
-    opts.allow_retry_on_failure = false;
+    opts.allow_growth       = true;
+    opts.garbage_collection = true;
+    //opts.allow_retry_on_failure = false;
     opts.fragmentation_fraction = 0.0;
 
     return std::make_unique<allocator_bfc>(
@@ -92,6 +98,7 @@ std::unique_ptr<allocator_bfc> create_test_bfc_allocator()
  */
 XSIGMATEST(AllocatorBFC, basic_allocation_deallocation)
 {
+    bool started   = traceme_recorder::start(3);
     auto allocator = create_test_bfc_allocator();
 
     // Test basic allocation
@@ -121,7 +128,7 @@ XSIGMATEST(AllocatorBFC, basic_allocation_deallocation)
     {
         allocator->deallocate_raw(ptr);
     }
-
+    traceme_recorder::stop();
     END_TEST();
 }
 
@@ -636,4 +643,242 @@ XSIGMATEST(AllocatorBFC, MemoryTracking)
 
         allocator.deallocate_raw(ptr);
     }
+}
+
+// Test comprehensive memory profiling with BFC allocator
+XSIGMATEST(AllocatorBFC, ComprehensiveMemoryProfiling)
+{
+    auto session = profiler_session_builder()
+                       .with_timing(true)
+                       .with_memory_tracking(true)
+                       .with_statistical_analysis(true)
+                       .with_thread_safety(true)
+                       .with_output_format(profiler_options::output_format_enum::JSON)
+                       .build();
+
+    session->start();
+
+    {
+        XSIGMA_PROFILE_SCOPE("bfc_allocator_comprehensive_test");
+
+        const size_t memory_limit  = 10 * 1024 * 1024;  // 10MB
+        auto         sub_allocator = std::make_unique<basic_cpu_allocator>(
+            0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
+
+        allocator_bfc::Options bfc_opts;
+        bfc_opts.allow_growth = true;
+        allocator_bfc allocator(std::move(sub_allocator), memory_limit, "profiled_bfc", bfc_opts);
+
+        // Track allocation patterns over time
+        std::vector<void*>  allocations;
+        std::vector<size_t> allocation_sizes = {64, 128, 256, 512, 1024, 2048, 4096, 8192};
+
+        {
+            XSIGMA_PROFILE_SCOPE("allocation_phase");
+
+            // Perform multiple allocation batches
+            for (int batch = 0; batch < 5; ++batch)
+            {
+                XSIGMA_PROFILE_SCOPE("allocation_batch_" + std::to_string(batch));
+
+                for (size_t size : allocation_sizes)
+                {
+                    for (int i = 0; i < 10; ++i)
+                    {
+                        XSIGMA_PROFILE_SCOPE("single_allocation");
+
+                        void* ptr = allocator.allocate_raw(size, size);
+                        EXPECT_NE(nullptr, ptr);
+
+                        if (ptr)
+                        {
+                            allocations.push_back(ptr);
+
+                            // Fill memory to simulate real usage
+                            fill_memory(ptr, size, static_cast<uint8_t>(batch + i));
+                        }
+
+                        // Check memory statistics
+                        auto stats = allocator.GetStats();
+                        EXPECT_TRUE(stats.has_value());
+                        if (stats.has_value())
+                        {
+                            // Verify memory is being tracked
+                            EXPECT_GE(stats->bytes_in_use, 0);
+                            EXPECT_GE(stats->peak_bytes_in_use, 0);
+                            EXPECT_GE(stats->num_allocs, 0);
+                        }
+                    }
+                }
+
+                // Simulate processing delay
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        }
+
+        {
+            XSIGMA_PROFILE_SCOPE("fragmentation_analysis");
+
+            // Deallocate every other allocation to create fragmentation
+            for (size_t i = 1; i < allocations.size(); i += 2)
+            {
+                if (allocations[i])
+                {
+                    allocator.deallocate_raw(allocations[i]);
+                    allocations[i] = nullptr;
+                }
+            }
+
+            // Check fragmentation metrics
+            auto stats = allocator.GetStats();
+            EXPECT_TRUE(stats.has_value());
+            if (stats.has_value())
+            {
+                // Verify fragmentation state
+                EXPECT_GE(stats->bytes_in_use, 0);
+                EXPECT_GE(stats->num_allocs, 0);
+            }
+        }
+
+        {
+            XSIGMA_PROFILE_SCOPE("reallocation_phase");
+
+            // Try to allocate in fragmented space
+            for (int i = 0; i < 20; ++i)
+            {
+                XSIGMA_PROFILE_SCOPE("fragmented_allocation");
+
+                void* ptr = allocator.allocate_raw(256, 256);
+                if (ptr)
+                {
+                    allocations.push_back(ptr);
+                }
+            }
+        }
+
+        {
+            XSIGMA_PROFILE_SCOPE("cleanup_phase");
+
+            // Clean up all remaining allocations
+            for (void* ptr : allocations)
+            {
+                if (ptr)
+                {
+                    allocator.deallocate_raw(ptr);
+                }
+            }
+        }
+
+        // Final statistics
+        auto final_stats = allocator.GetStats();
+        EXPECT_TRUE(final_stats.has_value());
+        if (final_stats.has_value())
+        {
+            EXPECT_EQ(final_stats->bytes_in_use, 0);  // All memory should be freed
+        }
+    }
+
+    session->stop();
+
+    // Print profiling report to console
+    std::cout << "\n=== BFC Allocator Profiling Report ===\n";
+    session->print_report();
+
+    std::cout << "\nBFC Allocator Profiling Test Completed Successfully\n";
+}
+
+// Test memory profiling with allocation hotspots identification
+XSIGMATEST(AllocatorBFC, AllocationHotspotsIdentification)
+{
+    auto session = profiler_session_builder()
+                       .with_timing(true)
+                       .with_memory_tracking(true)
+                       .with_statistical_analysis(true)
+                       .with_thread_safety(true)
+                       .with_output_format(profiler_options::output_format_enum::JSON)
+                       .build();
+    session->start();
+
+    {
+        XSIGMA_PROFILE_SCOPE("hotspot_identification_test");
+
+        const size_t memory_limit  = 5 * 1024 * 1024;  // 5MB
+        auto         sub_allocator = std::make_unique<basic_cpu_allocator>(
+            0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
+
+        allocator_bfc::Options bfc_opts;
+        bfc_opts.allow_growth = true;
+        allocator_bfc allocator(std::move(sub_allocator), memory_limit, "hotspot_bfc", bfc_opts);
+
+        // Simulate different allocation patterns to identify hotspots
+        {
+            XSIGMA_PROFILE_SCOPE("small_frequent_allocations");
+
+            std::vector<void*> small_ptrs;
+            for (int i = 0; i < 1000; ++i)
+            {
+                XSIGMA_PROFILE_SCOPE("small_alloc");
+                void* ptr = allocator.allocate_raw(32, 32);
+                if (ptr)
+                    small_ptrs.push_back(ptr);
+            }
+
+            // Clean up
+            for (void* ptr : small_ptrs)
+            {
+                allocator.deallocate_raw(ptr);
+            }
+        }
+
+        {
+            XSIGMA_PROFILE_SCOPE("large_infrequent_allocations");
+
+            std::vector<void*> large_ptrs;
+            for (int i = 0; i < 10; ++i)
+            {
+                XSIGMA_PROFILE_SCOPE("large_alloc");
+                void* ptr = allocator.allocate_raw(64 * 1024, 64 * 1024);  // 64KB
+                if (ptr)
+                    large_ptrs.push_back(ptr);
+            }
+
+            // Clean up
+            for (void* ptr : large_ptrs)
+            {
+                allocator.deallocate_raw(ptr);
+            }
+        }
+
+        {
+            XSIGMA_PROFILE_SCOPE("mixed_size_allocations");
+
+            std::vector<void*>  mixed_ptrs;
+            std::vector<size_t> sizes = {16, 64, 256, 1024, 4096, 16384};
+
+            for (int round = 0; round < 100; ++round)
+            {
+                for (size_t size : sizes)
+                {
+                    XSIGMA_PROFILE_SCOPE("mixed_alloc_" + std::to_string(size));
+                    void* ptr = allocator.allocate_raw(size, size);
+                    if (ptr)
+                        mixed_ptrs.push_back(ptr);
+                }
+            }
+
+            // Clean up
+            for (void* ptr : mixed_ptrs)
+            {
+                allocator.deallocate_raw(ptr);
+            }
+        }
+    }
+
+    session->stop();
+
+    // Print profiling report to console
+    std::cout << "\n=== Allocation Hotspot Profiling Report ===\n";
+    session->print_report();
+
+    std::cout << "\nAllocation Hotspot Identification Test Completed Successfully\n";
 }

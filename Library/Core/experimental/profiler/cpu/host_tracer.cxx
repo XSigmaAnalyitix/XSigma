@@ -39,11 +39,11 @@ limitations under the License.
 #include <vector>
 
 #include "common/macros.h"
-#include "experimental/profiler/profiler_collection.h"
-#include "experimental/profiler/profiler_interface.h"
-#include "experimental/profiler/xplane/xplane.h"
-#include "experimental/profiler/xplane/xplane_schema.h"
-#include "experimental/profiler/xplane/xplane_utils.h"
+#include "experimental/profiler/core/profiler_collection.h"
+#include "experimental/profiler/core/profiler_interface.h"
+#include "experimental/profiler/exporters/xplane/xplane.h"
+#include "experimental/profiler/exporters/xplane/xplane_schema.h"
+#include "experimental/profiler/exporters/xplane/xplane_utils.h"
 #include "logging/logger.h"
 #include "logging/tracing/traceme.h"
 #include "logging/tracing/traceme_recorder.h"
