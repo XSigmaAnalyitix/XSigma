@@ -326,7 +326,7 @@ std::string allocator_selector::generate_configuration(
     }
     else if (allocator_type == "allocator_bfc")
     {
-        size_t pool_size = std::max(ctx.allocation_size * 100, 10ULL * 1024ULL * 1024ULL);
+        size_t pool_size = std::max<size_t>(ctx.allocation_size * 100, 10ULL * 1024ULL * 1024ULL);
 
         config << "total_memory: " << pool_size << " bytes\n";
         config << "allow_growth: " << (!ctx.memory_constrained ? "true" : "false") << "\n";
