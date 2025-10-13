@@ -252,7 +252,7 @@ public:
      * **Thread Safety**: Thread-safe (returns immutable string)
      * **Use Cases**: Debugging, logging, performance monitoring
      */
-    std::string Name() override { return name_; }
+    std::string Name() const override { return name_; }
 
     /**
      * @brief Allocates memory with alignment requirements through pool.

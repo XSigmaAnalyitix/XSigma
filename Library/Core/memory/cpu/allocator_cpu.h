@@ -136,7 +136,7 @@ public:
      * **Performance**: O(1) - returns static string
      * **Use Cases**: Logging, debugging, allocator identification
      */
-    XSIGMA_API std::string Name() override;
+    XSIGMA_API std::string Name() const override;
 
     /**
      * @brief Allocates aligned memory block with comprehensive monitoring.
@@ -226,7 +226,7 @@ public:
      * - Largest single allocation size
      * - Reserved bytes (always 0 for CPU allocator)
      */
-    XSIGMA_API std::optional<allocator_stats> GetStats() override;
+    XSIGMA_API std::optional<allocator_stats> GetStats() const override;
 
     /**
      * @brief Resets statistics counters while preserving current state.

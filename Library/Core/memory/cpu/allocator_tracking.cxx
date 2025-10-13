@@ -455,7 +455,7 @@ int64_t allocator_tracking::AllocationId(const void* ptr) const
     return allocator_->AllocationId(ptr);
 }
 
-std::optional<allocator_stats> allocator_tracking::GetStats()
+std::optional<allocator_stats> allocator_tracking::GetStats() const
 {
     return allocator_->GetStats();
 }

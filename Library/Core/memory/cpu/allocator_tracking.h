@@ -252,7 +252,7 @@ public:
      * **Thread Safety**: Thread-safe if underlying allocator is thread-safe
      * **Performance**: O(1) - simple delegation
      */
-    std::string Name() override { return allocator_->Name(); }
+    std::string Name() const override { return allocator_->Name(); }
 
     /**
      * @brief Allocates memory with default allocation attributes.
@@ -366,7 +366,7 @@ public:
      * **Performance**: O(1) - returns cached statistics
      * **Thread Safety**: Thread-safe with internal synchronization
      */
-    std::optional<allocator_stats> GetStats() override;
+    std::optional<allocator_stats> GetStats() const override;
 
     /**
      * @brief Resets tracking statistics while preserving allocations.
