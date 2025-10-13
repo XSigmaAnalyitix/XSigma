@@ -49,7 +49,7 @@ uint64_t env_time::now_nanos()
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     return (
-        static_cast<uint64_t>(ts.tv_sec) * k_seconds_to_nanos_ + static_cast<uint64_t>(ts.tv_nsec));
+        (static_cast<uint64_t>(ts.tv_sec) * k_seconds_to_nanos_) + static_cast<uint64_t>(ts.tv_nsec));
 }
 
 }  // namespace xsigma

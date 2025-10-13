@@ -32,7 +32,7 @@ static int              specifiedNumThreadsTBB;  // Default initialized to zero
 
 //------------------------------------------------------------------------------
 // Must NOT be initialized. Default initialization to zero is necessary.
-unsigned int tools_implTBBInitializeCount;
+static unsigned int tools_implTBBInitializeCount;
 
 //------------------------------------------------------------------------------
 tools_implTBBInitialize::tools_implTBBInitialize()
