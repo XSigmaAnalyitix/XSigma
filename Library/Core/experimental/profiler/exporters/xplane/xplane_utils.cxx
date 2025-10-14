@@ -251,29 +251,29 @@ timespan GetEventTimespan(const xevent_visitor& event)
 
 }  // namespace
 
-static const xplane* FindPlaneWithName(const x_space& space, std::string_view name)
-{
-    int const i =
-        Find(space.planes(), [name](const xplane* plane) { return plane->name() == name; });
-    return (i != -1) ? &space.planes(i) : nullptr;
-}
+//static const xplane* FindPlaneWithName(const x_space& space, std::string_view name)
+//{
+//    int const i =
+//        Find(space.planes(), [name](const xplane* plane) { return plane->name() == name; });
+//    return (i != -1) ? &space.planes(i) : nullptr;
+//}
 
-static std::vector<const xplane*> FindPlanesWithNames(
-    const x_space& space, const std::vector<std::string_view>& names)
-{
-    flat_hash_set<std::string_view> names_set(names.begin(), names.end());
-    std::vector<int> const          indices = FindAll(
-        space.planes(),
-        [&names_set](const xplane* plane)
-        { return names_set.find(plane->name()) != names_set.end(); });
-    std::vector<const xplane*> planes;
-    planes.reserve(indices.size());
-    for (int const i : indices)
-    {
-        planes.push_back(&space.planes(i));
-    }
-    return planes;
-}
+//static std::vector<const xplane*> FindPlanesWithNames(
+//    const x_space& space, const std::vector<std::string_view>& names)
+//{
+//    flat_hash_set<std::string_view> names_set(names.begin(), names.end());
+//    std::vector<int> const          indices = FindAll(
+//        space.planes(),
+//        [&names_set](const xplane* plane)
+//        { return names_set.find(plane->name()) != names_set.end(); });
+//    std::vector<const xplane*> planes;
+//    planes.reserve(indices.size());
+//    for (int const i : indices)
+//    {
+//        planes.push_back(&space.planes(i));
+//    }
+//    return planes;
+//}
 
 xplane* find_mutable_plane_with_name(x_space* space, std::string_view name)
 {
@@ -293,12 +293,12 @@ xplane* find_or_add_mutable_plane_with_name(x_space* space, std::string_view nam
     return plane;
 }
 
-static std::vector<const xplane*> FindPlanesWithPrefix(
-    const x_space& space, std::string_view prefix)
-{
-    return find_planes(
-        space, [&](const xplane& plane) { return StartsWith(plane.name(), prefix); });
-}
+//static std::vector<const xplane*> FindPlanesWithPrefix(
+//    const x_space& space, std::string_view prefix)
+//{
+//    return find_planes(
+//        space, [&](const xplane& plane) { return StartsWith(plane.name(), prefix); });
+//}
 
 std::vector<xplane*> find_mutable_planes_with_prefix(x_space* space, std::string_view prefix)
 {
@@ -344,33 +344,33 @@ xstat* find_or_add_mutable_stat(const x_stat_metadata& stat_metadata, xevent* ev
     return stat;
 }
 
-static void RemovePlane(x_space* space, const xplane* plane)
-{
-    XSIGMA_CHECK_DEBUG(plane != nullptr);
-    Remove(space->mutable_planes(), plane);
-}
+//static void RemovePlane(x_space* space, const xplane* plane)
+//{
+//    XSIGMA_CHECK_DEBUG(plane != nullptr);
+//    Remove(space->mutable_planes(), plane);
+//}
 
-static void RemovePlanes(x_space* space, const std::vector<const xplane*>& planes)
-{
-    flat_hash_set<const xplane*> planes_set(planes.begin(), planes.end());
-    RemoveIf(
-        space->mutable_planes(),
-        [&planes_set](const xplane* plane) { return planes_set.find(plane) != planes_set.end(); });
-}
+//static void RemovePlanes(x_space* space, const std::vector<const xplane*>& planes)
+//{
+//    flat_hash_set<const xplane*> planes_set(planes.begin(), planes.end());
+//    RemoveIf(
+//        space->mutable_planes(),
+//        [&planes_set](const xplane* plane) { return planes_set.find(plane) != planes_set.end(); });
+//}
 
 static void RemoveEmptyLines(xplane* plane)
 {
     RemoveIf(plane->mutable_lines(), [&](const xline* line) { return line->events().empty(); });
 }
 
-static void SortXPlane(xplane* plane)
-{
-    for (xline& line : *plane->mutable_lines())
-    {
-        auto& events = *line.mutable_events();
-        std::sort(events.begin(), events.end(), xevents_comparator());
-    }
-}
+//static void SortXPlane(xplane* plane)
+//{
+//    for (xline& line : *plane->mutable_lines())
+//    {
+//        auto& events = *line.mutable_events();
+//        std::sort(events.begin(), events.end(), xevents_comparator());
+//    }
+//}
 // Normalize the line's timestamp in this XPlane.
 // NOTE: This can be called multiple times on the same plane. Only the first
 // call will do the normalization, subsequent calls will do nothing.
@@ -450,36 +450,36 @@ void MergePlanes(const std::vector<const xplane*>& src_planes, xplane* dst_plane
     }
 }
 
-static void RemoveLine(xplane* plane, const xline* line)
-{
-    XSIGMA_CHECK_DEBUG(line != nullptr);
-    Remove(plane->mutable_lines(), line);
-}
+//static void RemoveLine(xplane* plane, const xline* line)
+//{
+//    XSIGMA_CHECK_DEBUG(line != nullptr);
+//    Remove(plane->mutable_lines(), line);
+//}
 
-static void RemoveEvents(xline* line, const flat_hash_set<const xevent*>& events)
-{
-    RemoveIf(
-        line->mutable_events(),
-        [&](const xevent* event) { return events.find(event) != events.end(); });
-}
+//static void RemoveEvents(xline* line, const flat_hash_set<const xevent*>& events)
+//{
+//    RemoveIf(
+//        line->mutable_events(),
+//        [&](const xevent* event) { return events.find(event) != events.end(); });
+//}
 
-static void RemoveEmptyPlanes(x_space* space)
-{
-    RemoveIf(space->mutable_planes(), [&](const xplane* plane) { return plane->lines().empty(); });
-}
+//static void RemoveEmptyPlanes(x_space* space)
+//{
+//    RemoveIf(space->mutable_planes(), [&](const xplane* plane) { return plane->lines().empty(); });
+//}
 
 bool xevents_comparator::operator()(const xevent& a, const xevent& b) const
 {
     return xevent_timespan(a) < xevent_timespan(b);
 }
 
-static void SortXSpace(x_space* space)
-{
-    for (xplane& plane : *space->mutable_planes())
-    {
-        SortXPlane(&plane);
-    }
-}
+//static void SortXSpace(x_space* space)
+//{
+//    for (xplane& plane : *space->mutable_planes())
+//    {
+//        SortXPlane(&plane);
+//    }
+//}
 
 int64_t GetStartTimestampNs(const xplane& plane)
 {

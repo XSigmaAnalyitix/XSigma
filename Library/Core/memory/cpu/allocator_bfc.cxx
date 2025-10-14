@@ -583,7 +583,6 @@ size_t allocator_bfc::RoundedBytes(size_t bytes) noexcept
 {
     size_t const rounded_bytes =
         (kMinAllocationSize * ((bytes + kMinAllocationSize - 1) / kMinAllocationSize));
-    XSIGMA_CHECK_DEBUG(size_t{0} == rounded_bytes % kMinAllocationSize);
     return rounded_bytes;
 }
 

@@ -46,7 +46,7 @@ constexpr std::string_view kProfilerLockContention = "Another profiling session 
 
 // Handle for the profiler lock. At most one instance of this class, the
 // "active" instance, owns the profiler lock.
-class XSIGMA_API ProfilerLock
+class XSIGMA_VISIBILITY ProfilerLock
 {
 public:
     // Returns true if the process has active profiling session.

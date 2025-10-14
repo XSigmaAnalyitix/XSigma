@@ -171,6 +171,13 @@ if(MSVC)
   else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
   endif()
+  # Enable C++20 support: /Zc:__cplusplus
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:__cplusplus")
+  # Treat warnings as errors
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")
+  # Disable C4244: conversion warnings
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4267 /wd4715 /wd4018")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4244 /wd4267 /wd4715 /wd4018")
 endif()
 
 # Disable deprecation warnings for standard C and STL functions in VS2015+

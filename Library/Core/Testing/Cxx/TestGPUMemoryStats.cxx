@@ -62,7 +62,7 @@ namespace xsigma
  * This test suite validates the unified memory statistics system for GPU allocators,
  * including CUDA-specific timing, resource tracking, and cache performance metrics.
  */
-class TestGPUMemoryStats
+class test_gpu_memory_stats
 {
 public:
     /**
@@ -458,27 +458,27 @@ public:
 // Test execution functions
 void TestGPUTimingStats()
 {
-    TestGPUMemoryStats::test_gpu_timing_stats();
+    test_gpu_memory_stats::test_gpu_timing_stats();
 }
 
 void TestGPUResourceStats()
 {
-    TestGPUMemoryStats::test_gpu_resource_stats();
+    test_gpu_memory_stats::test_gpu_resource_stats();
 }
 
 void TestCUDACachingStats()
 {
-    TestGPUMemoryStats::test_cuda_caching_stats();
+    test_gpu_memory_stats::test_cuda_caching_stats();
 }
 
 void TestComprehensiveGPUStats()
 {
-    TestGPUMemoryStats::test_comprehensive_gpu_stats();
+    test_gpu_memory_stats::test_comprehensive_gpu_stats();
 }
 
 void TestGPUStatsThreadSafety()
 {
-    TestGPUMemoryStats::test_gpu_stats_thread_safety();
+    test_gpu_memory_stats::test_gpu_stats_thread_safety();
 }
 
 #else  // !XSIGMA_ENABLE_CUDA
@@ -512,7 +512,7 @@ void TestGPUStatsThreadSafety()
 #endif  // XSIGMA_ENABLE_CUDA
 
 // Main test function expected by the test framework
-int TestGPUMemoryStats(int argc, char** const argv)
+XSIGMATEST(TestGPUMemoryStats, test)
 {
     XSIGMA_LOG_INFO("Starting GPU Memory Statistics Tests...");
 
@@ -523,5 +523,5 @@ int TestGPUMemoryStats(int argc, char** const argv)
     TestGPUStatsThreadSafety();
 
     XSIGMA_LOG_INFO("All GPU Memory Statistics Tests completed successfully!");
-    return 0;
+    END_TEST();
 }

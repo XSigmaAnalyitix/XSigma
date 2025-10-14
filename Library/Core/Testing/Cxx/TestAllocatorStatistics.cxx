@@ -123,8 +123,8 @@ void display_allocator_stats(const std::string& allocator_name, const allocator_
     }
 
     // Efficiency metrics
-    int64_t total_allocs   = stats.num_allocs.load();
-    int64_t total_deallocs = stats.num_deallocs.load();
+    int64_t               total_allocs   = stats.num_allocs.load();
+    XSIGMA_UNUSED int64_t total_deallocs = stats.num_deallocs.load();
     if (total_allocs > 0)
     {
         double avg_alloc_size =

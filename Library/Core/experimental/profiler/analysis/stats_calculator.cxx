@@ -138,7 +138,8 @@ void stats_calculator::order_nodes_by_metric(
     sorting_metric_enum metric, std::vector<const detail*>* details) const
 {
     std::priority_queue<std::pair<std::string, const detail*>> sorted_list;
-    const int                                                  num_nodes = details_.size();
+
+    const auto num_nodes = details_.size();
 
     for (const auto& det : details_)
     {
@@ -312,8 +313,9 @@ std::string stats_calculator::get_stats_by_metric(
         }
 
         // TODO(andrewharp): Make this keep track of the particular metric for cdf.
-        cumulative_stat_on_node += detail->elapsed_time.sum();
-        stream << column_string(*detail, cumulative_stat_on_node, run_total_us_) << std::endl;
+        cumulative_stat_on_node += (double)detail->elapsed_time.sum();
+        stream << column_string(*detail, (int64_t)cumulative_stat_on_node, run_total_us_)
+               << std::endl;
     }
     stream << std::endl;
     return stream.str();

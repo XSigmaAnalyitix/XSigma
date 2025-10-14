@@ -164,7 +164,8 @@ inline timespan pico_span(uint64_t start_ps, uint64_t end_ps)
 // Creates a timespan from endpoints in milliseconds.
 inline timespan milli_span(double start_ms, double end_ms)
 {
-    return pico_span(timespan::milli_to_pico(start_ms), timespan::milli_to_pico(end_ms));
+    return pico_span(
+        timespan::milli_to_pico((int64_t)start_ms), timespan::milli_to_pico((int64_t)end_ms));
 }
 
 }  // namespace xsigma

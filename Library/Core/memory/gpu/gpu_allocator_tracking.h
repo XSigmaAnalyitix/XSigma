@@ -78,7 +78,7 @@ enum class gpu_tracking_log_level : int
  * Captures detailed CUDA error information including error codes, messages,
  * and context information for debugging GPU memory allocation issues.
  */
-struct XSIGMA_API cuda_error_info
+struct XSIGMA_VISIBILITY cuda_error_info
 {
     int         error_code{0};      ///< CUDA error code (cudaError_t)
     std::string error_message;      ///< Human-readable error message
@@ -120,7 +120,7 @@ struct XSIGMA_API cuda_error_info
  *
  * **Performance Impact**: O(1) for basic metrics, O(n) for detailed analysis
  */
-struct XSIGMA_API gpu_bandwidth_metrics
+struct XSIGMA_VISIBILITY gpu_bandwidth_metrics
 {
     double   peak_bandwidth_gbps{0.0};       ///< Peak theoretical bandwidth (GB/s)
     double   effective_bandwidth_gbps{0.0};  ///< Measured effective bandwidth (GB/s)
@@ -152,7 +152,7 @@ struct XSIGMA_API gpu_bandwidth_metrics
  * Extended allocation record that includes GPU-specific metadata for detailed
  * memory usage analysis, performance profiling, and CUDA debugging.
  */
-struct XSIGMA_API enhanced_gpu_alloc_record
+struct XSIGMA_VISIBILITY enhanced_gpu_alloc_record
 {
     size_t          requested_bytes{0};              ///< Originally requested size
     size_t          allocated_bytes{0};              ///< Actual allocated size
@@ -231,7 +231,7 @@ struct XSIGMA_API enhanced_gpu_alloc_record
  * **Memory Overhead**: Small fixed overhead plus tracking data structures
  * **CUDA Integration**: Full integration with CUDA runtime and events
  */
-class XSIGMA_API gpu_allocator_tracking
+class XSIGMA_VISIBILITY gpu_allocator_tracking
 {
 public:
     /**
@@ -249,7 +249,7 @@ public:
      * **Performance Impact**: Enhanced tracking adds minimal overhead (~5-10%)
      * **CUDA Integration**: Automatically detects and integrates with CUDA runtime
      */
-    explicit gpu_allocator_tracking(
+    XSIGMA_API explicit gpu_allocator_tracking(
         device_enum device_type               = device_enum::CUDA,
         int         device_index              = 0,
         bool        enable_enhanced_tracking  = true,
@@ -262,7 +262,7 @@ public:
      * **Resource Management**: Cleans up tracking data structures
      * **Thread Safety**: Destructor assumes no concurrent access
      */
-    ~gpu_allocator_tracking();
+    XSIGMA_API ~gpu_allocator_tracking();
 
     // ========== Core GPU Allocation Interface ==========
 
@@ -340,7 +340,7 @@ public:
      * @param stream Optional CUDA stream for asynchronous operations
      * @return Pointer to allocated GPU memory, or nullptr on failure
      */
-    void* allocate_raw(
+    XSIGMA_API void* allocate_raw(
         size_t                           bytes,
         size_t                           alignment = 256ULL,
         std::shared_ptr<gpu_memory_pool> pool      = nullptr,
@@ -354,7 +354,7 @@ public:
      * @param bytes Number of bytes being deallocated
      * @param stream Optional CUDA stream for asynchronous operations
      */
-    void deallocate_raw(void* ptr, size_t bytes, void* stream = nullptr);
+    XSIGMA_API void deallocate_raw(void* ptr, size_t bytes, void* stream = nullptr);
 
     // ========== GPU-Specific Analytics and Metrics ==========
 
@@ -377,7 +377,7 @@ public:
      * - Memory coalescing analysis
      * - GPU cluster resource planning
      */
-    gpu_bandwidth_metrics GetBandwidthMetrics() const;
+    XSIGMA_API gpu_bandwidth_metrics GetBandwidthMetrics() const;
 
     /**
      * @brief Retrieves detailed GPU performance timing statistics.
@@ -398,7 +398,7 @@ public:
      * - Total operation counts and cumulative timing data
      * - CUDA synchronization overhead analysis
      */
-    atomic_timing_stats GetGPUTimingStats() const noexcept;
+    XSIGMA_API atomic_timing_stats GetGPUTimingStats() const noexcept;
 
     /**
      * @brief Retrieves enhanced GPU allocation records with comprehensive metadata.
@@ -419,7 +419,7 @@ public:
      * - Memory bandwidth utilization per allocation
      * - CUDA error information for failed allocations
      */
-    std::vector<enhanced_gpu_alloc_record> GetEnhancedGPURecords() const;
+    XSIGMA_API std::vector<enhanced_gpu_alloc_record> GetEnhancedGPURecords() const;
 
     /**
      * @brief Configures logging verbosity for GPU tracking operations.
@@ -435,7 +435,7 @@ public:
      * **Default**: INFO level logging
      * **CUDA Integration**: TRACE level includes detailed CUDA API call logging
      */
-    void SetGPULoggingLevel(gpu_tracking_log_level level) noexcept;
+    XSIGMA_API void SetGPULoggingLevel(gpu_tracking_log_level level) noexcept;
 
     /**
      * @brief Gets current GPU logging verbosity level.
@@ -445,7 +445,7 @@ public:
      * **Performance**: O(1) atomic read
      * **Thread Safety**: Thread-safe atomic operation
      */
-    gpu_tracking_log_level GetGPULoggingLevel() const noexcept;
+    XSIGMA_API gpu_tracking_log_level GetGPULoggingLevel() const noexcept;
 
     /**
      * @brief Resets all GPU performance timing statistics.
@@ -459,7 +459,7 @@ public:
      * **Preservation**: Keeps GPU allocation records and memory statistics
      * **CUDA Integration**: Resets CUDA event timing data
      */
-    void ResetGPUTimingStats() noexcept;
+    XSIGMA_API void ResetGPUTimingStats() noexcept;
 
     /**
      * @brief Calculates current GPU memory efficiency metrics.
@@ -479,7 +479,7 @@ public:
      * **Performance**: O(1) for cached metrics, O(n) for detailed analysis
      * **CUDA Integration**: Uses CUDA memory info APIs for accurate metrics
      */
-    std::tuple<double, double, double> GetGPUEfficiencyMetrics() const;
+    XSIGMA_API std::tuple<double, double, double> GetGPUEfficiencyMetrics() const;
 
     /**
      * @brief Generates comprehensive GPU memory usage report.
@@ -504,7 +504,7 @@ public:
      * - GPU efficiency recommendations
      * - Optional detailed allocation history
      */
-    std::string GenerateGPUReport(
+    XSIGMA_API std::string GenerateGPUReport(
         bool include_allocations = false, bool include_cuda_info = true) const;
 
     /**
@@ -515,7 +515,7 @@ public:
      * **Thread Safety**: Thread-safe read operation
      * **CUDA Integration**: Queries current CUDA device properties
      */
-    gpu_device_info GetDeviceInfo() const noexcept;
+    XSIGMA_API gpu_device_info GetDeviceInfo() const noexcept;
 
     /**
      * @brief Gets total GPU memory usage across all memory types.
@@ -525,7 +525,7 @@ public:
      * **Thread Safety**: Thread-safe with shared lock
      * **CUDA Integration**: Queries CUDA memory info APIs
      */
-    std::tuple<size_t, size_t, size_t> GetGPUMemoryUsage() const;
+    XSIGMA_API std::tuple<size_t, size_t, size_t> GetGPUMemoryUsage() const;
 
 private:
     // ========== Core Configuration ==========
@@ -588,9 +588,9 @@ T* gpu_allocator_tracking::allocate(
     std::shared_ptr<gpu_memory_pool> pool,
     const std::string&               tag,
     void*                            stream,
-    const char*                      source_file,
-    int                              source_line,
-    const char*                      function_name)
+    XSIGMA_UNUSED const char*        source_file,
+    XSIGMA_UNUSED int                source_line,
+    XSIGMA_UNUSED const char*        function_name)
 {
     if (count == 0)
         return nullptr;

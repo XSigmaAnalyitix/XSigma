@@ -65,7 +65,7 @@ namespace xsigma
  * }
  * ```
  */
-class XSIGMA_API allocator_device : public Allocator
+class XSIGMA_VISIBILITY allocator_device : public Allocator
 {
 public:
     /**
@@ -97,7 +97,7 @@ public:
      * **Thread Safety**: Thread-safe
      * **Exception Safety**: noexcept
      */
-    std::string Name() const override;
+    XSIGMA_API std::string Name() const override;
 
     /**
      * @brief Allocates pinned CPU memory with specified alignment.
@@ -127,7 +127,7 @@ public:
      * void* ptr = allocator->allocate_raw(64, 4096);  // 4KB pinned memory
      * ```
      */
-    void* allocate_raw(size_t alignment, size_t num_bytes) override;
+    XSIGMA_API void* allocate_raw(size_t alignment, size_t num_bytes) override;
 
     /**
      * @brief Deallocates previously allocated pinned memory.
@@ -149,7 +149,7 @@ public:
      * **Error Handling**: Logs errors but continues execution to maintain
      * exception safety in destructors and cleanup code.
      */
-    void deallocate_raw(void* ptr) override;
+    XSIGMA_API void deallocate_raw(void* ptr) override;
 
     /**
      * @brief Returns the memory type managed by this allocator.
@@ -160,7 +160,7 @@ public:
      * **Thread Safety**: Thread-safe
      * **Exception Safety**: noexcept
      */
-    allocator_memory_enum GetMemoryType() const noexcept override;
+    XSIGMA_API allocator_memory_enum GetMemoryType() const noexcept override;
 };
 
 }  // namespace xsigma

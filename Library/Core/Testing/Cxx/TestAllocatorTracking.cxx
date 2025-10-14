@@ -353,7 +353,9 @@ TEST(AllocatorTracking, local_size_tracking)
         }
 
         void* allocate_raw(
-            size_t alignment, size_t num_bytes, const allocation_attributes& attrs) override
+            size_t                                     alignment,
+            size_t                                     num_bytes,
+            XSIGMA_UNUSED const allocation_attributes& attrs) override
         {
             return allocate_raw(alignment, num_bytes);
         }
@@ -362,9 +364,9 @@ TEST(AllocatorTracking, local_size_tracking)
 
         bool tracks_allocation_sizes() const noexcept override { return false; }
 
-        size_t  RequestedSize(const void* ptr) const noexcept override { return 0; }
-        size_t  AllocatedSize(const void* ptr) const noexcept override { return 0; }
-        int64_t AllocationId(const void* ptr) const override { return 0; }
+        size_t  RequestedSize(XSIGMA_UNUSED const void* ptr) const noexcept override { return 0; }
+        size_t  AllocatedSize(XSIGMA_UNUSED const void* ptr) const noexcept override { return 0; }
+        int64_t AllocationId(XSIGMA_UNUSED const void* ptr) const override { return 0; }
 
         std::optional<allocator_stats> GetStats() const override { return std::nullopt; }
         std::string                    Name() const override { return "non_tracking_allocator"; }

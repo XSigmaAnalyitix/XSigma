@@ -25,7 +25,7 @@
 
 namespace xsigma
 {
-class XSIGMA_API logger
+class XSIGMA_VISIBILITY logger
 {
 public:
     /**
@@ -63,8 +63,8 @@ public:
    * should be set to `false`.
    * @{
    */
-    static void Init(int& argc, char* argv[], const char* verbosity_flag = "-v");
-    static void Init();
+    XSIGMA_API static void Init(int& argc, char* argv[], const char* verbosity_flag = "-v");
+    XSIGMA_API static void Init();
     /** @} */
 
     /**
@@ -73,7 +73,7 @@ public:
    * stderr. Set to `VERBOSITY_OFF` to write nothing to stderr.
    * Default is 0.
    */
-    static void SetStderrVerbosity(logger_verbosity_enum level);
+    XSIGMA_API static void SetStderrVerbosity(logger_verbosity_enum level);
 
     /**
    * Set internal messages verbosity level. The library used by XSIGMA, `loguru`
@@ -81,7 +81,7 @@ public:
    * as log level VERBOSITY_1, by default. One can change that using this
    * method. Typically, you want to call this before `logger::Init`.
    */
-    static void SetInternalVerbosityLevel(logger_verbosity_enum level);
+    XSIGMA_API static void SetInternalVerbosityLevel(logger_verbosity_enum level);
 
     /**
    * Support log file modes: `TRUNCATE` truncates the file clearing any existing
@@ -99,19 +99,20 @@ public:
    * will be included. This method will create all directories in the 'path' if
    * needed. To stop the file logging, call `EndLogToFile` with the same path.
    */
-    static void LogToFile(const char* path, FileMode filemode, logger_verbosity_enum verbosity);
+    XSIGMA_API static void LogToFile(
+        const char* path, FileMode filemode, logger_verbosity_enum verbosity);
 
     /**
    * Stop logging to a file at the given path.
    */
-    static void EndLogToFile(const char* path);
+    XSIGMA_API static void EndLogToFile(const char* path);
 
     ///@{
     /**
    * Get/Set the name to identify the current thread in the log output.
    */
-    static void        SetThreadName(const std::string& name);
-    static std::string GetThreadName();
+    XSIGMA_API static void        SetThreadName(const std::string& name);
+    XSIGMA_API static std::string GetThreadName();
     ///@}
 
     /**
@@ -151,7 +152,7 @@ public:
    */
 #if !defined(__WRAP__)
 
-    static void AddCallback(
+    XSIGMA_API static void AddCallback(
         const char*           id,
         LogHandlerCallbackT   callback,
         void*                 user_data,
@@ -165,19 +166,19 @@ public:
    * Remove a callback using the id specified.
    * Returns true if and only if the callback was found (and removed).
    */
-    static bool RemoveCallback(const char* id);
+    XSIGMA_API static bool RemoveCallback(const char* id);
 
     /**
    * Returns true if XSIGMA is built with logging support enabled.
    */
-    static bool IsEnabled();
+    XSIGMA_API static bool IsEnabled();
 
     /**
    * Returns the maximum verbosity of all log outputs. A log item for a
    * verbosity higher than this will not be generated in any of the currently
    * active outputs.
    */
-    static logger_verbosity_enum GetCurrentVerbosityCutoff();
+    XSIGMA_API static logger_verbosity_enum GetCurrentVerbosityCutoff();
 
     /**
    * Convenience function to convert an integer to matching verbosity level. If
@@ -185,7 +186,7 @@ public:
    * logger::VERBOSITY_INVALID is returned. If value is greater than
    * logger::VERBOSITY_MAX, then logger::VERBOSITY_MAX is returned.
    */
-    static logger_verbosity_enum ConvertToVerbosity(int value);
+    XSIGMA_API static logger_verbosity_enum ConvertToVerbosity(int value);
 
     /**
    * Convenience function to convert a string to matching verbosity level.
@@ -193,7 +194,7 @@ public:
    * Accepted string values are OFF, ERROR, WARNING, INFO, TRACE, MAX, INVALID or ASCII
    * representation for an integer in the range [-9,9].
    */
-    static logger_verbosity_enum ConvertToVerbosity(const char* text);
+    XSIGMA_API static logger_verbosity_enum ConvertToVerbosity(const char* text);
 
     ///@{
     /**
@@ -201,25 +202,25 @@ public:
    *
    * Not intended for public use, please use the logging macros instead.
    */
-    static void Log(
+    XSIGMA_API static void Log(
         logger_verbosity_enum       verbosity,
         XSIGMA_FILEPATH const char* fname,
         unsigned int                lineno,
         const char*                 txt);
-    static void StartScope(
+    XSIGMA_API static void StartScope(
         logger_verbosity_enum       verbosity,
         const char*                 id,
         XSIGMA_FILEPATH const char* fname,
         unsigned int                lineno);
-    static void EndScope(const char* id);
+    XSIGMA_API static void EndScope(const char* id);
 #if !defined(__WRAP__)
-    static void LogF(
+    XSIGMA_API static void LogF(
         logger_verbosity_enum       verbosity,
         XSIGMA_FILEPATH const char* fname,
         unsigned int                lineno,
         XSIGMA_FORMAT_STRING_TYPE   format,
         ...) XSIGMA_PRINTF_LIKE(4, 5);
-    static void StartScopeF(
+    XSIGMA_API static void StartScopeF(
         logger_verbosity_enum       verbosity,
         const char*                 id,
         XSIGMA_FILEPATH const char* fname,
@@ -227,17 +228,17 @@ public:
         XSIGMA_FORMAT_STRING_TYPE   format,
         ...) XSIGMA_PRINTF_LIKE(5, 6);
 
-    class XSIGMA_API LogScopeRAII
+    class XSIGMA_VISIBILITY LogScopeRAII
     {
     public:
-        LogScopeRAII();
-        LogScopeRAII(
+        XSIGMA_API LogScopeRAII();
+        XSIGMA_API LogScopeRAII(
             logger_verbosity_enum     verbosity,
             const char*               fname,
             unsigned int              lineno,
             XSIGMA_FORMAT_STRING_TYPE format,
             ...) XSIGMA_PRINTF_LIKE(5, 6);
-        ~LogScopeRAII();
+        XSIGMA_API ~LogScopeRAII();
 #if defined(_MSC_VER) && _MSC_VER > 1800
         // see loguru.hpp for the reason why this is needed on MSVC
         LogScopeRAII(LogScopeRAII&& other) : Internals(other.Internals)

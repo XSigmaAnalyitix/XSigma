@@ -181,7 +181,7 @@ XSIGMATEST(CPUMemoryStats, unified_cache_stats_functionality)
 /**
      * @brief Test memory fragmentation metrics calculation
      */
-static void test_memory_fragmentation_metrics()
+XSIGMATEST(CPUMemoryStats, test_memory_fragmentation_metrics)
 {
     XSIGMA_LOG_INFO("Testing memory_fragmentation_metrics calculation...");
 
@@ -226,7 +226,7 @@ static void test_memory_fragmentation_metrics()
 /**
      * @brief Test comprehensive memory statistics integration
      */
-static void test_comprehensive_memory_stats()
+XSIGMATEST(CPUMemoryStats, test_comprehensive_memory_stats)
 {
     XSIGMA_LOG_INFO("Testing comprehensive_memory_stats integration...");
 

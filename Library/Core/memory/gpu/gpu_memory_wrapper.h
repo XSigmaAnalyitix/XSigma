@@ -219,7 +219,9 @@ private:
      * @return True if compatible
      */
     static bool is_pool_compatible_with_device(
-        std::shared_ptr<gpu_memory_pool> pool, device_enum device_type, int device_index)
+        std::shared_ptr<gpu_memory_pool> pool,
+        XSIGMA_UNUSED device_enum        device_type,
+        XSIGMA_UNUSED int                device_index)
     {
         if (!pool)
             return false;
@@ -514,7 +516,7 @@ public:
         device_enum                      device_type,
         int                              device_index = 0,
         std::shared_ptr<gpu_memory_pool> pool         = nullptr,
-        const std::string&               tag          = "")
+        XSIGMA_UNUSED const std::string& tag          = "")
     {
         if (count == 0)
         {
@@ -603,12 +605,12 @@ public:
      * @return GPU memory wrapper managing the existing memory
      */
     XSIGMA_NODISCARD static gpu_memory_wrapper wrap(
-        pointer            ptr,
-        size_type          count,
-        device_enum        device_type,
-        int                device_index = 0,
-        deleter_type       deleter      = nullptr,
-        const std::string& tag          = "")
+        pointer             ptr,
+        size_type           count,
+        device_enum         device_type,
+        int                 device_index     = 0,
+        deleter_type        deleter          = nullptr,
+        XSIGMA_UNUSED const std::string& tag = "")
     {
         device_option device(device_type, device_index);
         return gpu_memory_wrapper(ptr, count, device, nullptr, gpu_memory_block{}, deleter, true);

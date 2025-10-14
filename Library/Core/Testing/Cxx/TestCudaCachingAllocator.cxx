@@ -183,7 +183,7 @@ XSIGMATEST(CudaCachingAllocator, handles_errors_gracefully)
     cuda_caching_allocator allocator(0, 16 * 1024ULL);
 
     // Test zero-size allocation
-    void* ptr_zero = allocator.allocate(0);
+    XSIGMA_UNUSED void* ptr_zero = allocator.allocate(0);
     // Should handle gracefully (implementation-defined behavior)
 
     // Test null pointer deallocation

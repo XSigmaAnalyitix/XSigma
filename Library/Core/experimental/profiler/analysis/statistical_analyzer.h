@@ -79,64 +79,70 @@ struct time_series_point
  * This component provides statistical analysis capabilities but is not required
  * for basic profiling functionality. Can be disabled to reduce binary size.
  */
-class XSIGMA_API statistical_analyzer
+class XSIGMA_VISIBILITY statistical_analyzer
 {
 public:
-    statistical_analyzer();
-    ~statistical_analyzer();
+    XSIGMA_API statistical_analyzer();
+    XSIGMA_API ~statistical_analyzer();
 
     // Core interface
-    void start_analysis();
-    void stop_analysis();
-    bool is_analyzing() const { return analyzing_.load(); }
+    XSIGMA_API void start_analysis();
+    XSIGMA_API void stop_analysis();
+    bool            is_analyzing() const { return analyzing_.load(); }
 
     // Data collection
-    void add_timing_sample(const std::string& name, double time_ms);
-    void add_memory_sample(const std::string& name, size_t memory_bytes);
-    void add_custom_sample(const std::string& name, double value);
+    XSIGMA_API void add_timing_sample(const std::string& name, double time_ms);
+    XSIGMA_API void add_memory_sample(const std::string& name, size_t memory_bytes);
+    XSIGMA_API void add_custom_sample(const std::string& name, double value);
 
     // Time series data
-    void add_time_series_point(
+    XSIGMA_API void add_time_series_point(
         const std::string& series_name, double value, const std::string& label = "");
 
     // Statistical analysis
-    xsigma::statistical_metrics calculate_timing_stats(const std::string& name) const;
-    xsigma::statistical_metrics calculate_memory_stats(const std::string& name) const;
-    xsigma::statistical_metrics calculate_custom_stats(const std::string& name) const;
+    XSIGMA_API xsigma::statistical_metrics calculate_timing_stats(const std::string& name) const;
+    XSIGMA_API xsigma::statistical_metrics calculate_memory_stats(const std::string& name) const;
+    XSIGMA_API xsigma::statistical_metrics calculate_custom_stats(const std::string& name) const;
 
     // Batch analysis
-    xsigma_map<std::string, xsigma::statistical_metrics> calculate_all_timing_stats() const;
-    xsigma_map<std::string, xsigma::statistical_metrics> calculate_all_memory_stats() const;
-    xsigma_map<std::string, xsigma::statistical_metrics> calculate_all_custom_stats() const;
+    XSIGMA_API xsigma_map<std::string, xsigma::statistical_metrics> calculate_all_timing_stats()
+        const;
+    XSIGMA_API xsigma_map<std::string, xsigma::statistical_metrics> calculate_all_memory_stats()
+        const;
+    XSIGMA_API xsigma_map<std::string, xsigma::statistical_metrics> calculate_all_custom_stats()
+        const;
 
     // Time series analysis
-    std::vector<xsigma::time_series_point> get_time_series(const std::string& series_name) const;
-    xsigma::statistical_metrics analyze_time_series(const std::string& series_name) const;
+    XSIGMA_API std::vector<xsigma::time_series_point> get_time_series(
+        const std::string& series_name) const;
+    XSIGMA_API xsigma::statistical_metrics analyze_time_series(
+        const std::string& series_name) const;
 
     // Trend analysis
-    double calculate_trend_slope(const std::string& series_name) const;
-    bool   is_trending_up(const std::string& series_name, double threshold = 0.1) const;
-    bool   is_trending_down(const std::string& series_name, double threshold = 0.1) const;
+    XSIGMA_API double calculate_trend_slope(const std::string& series_name) const;
+    XSIGMA_API bool   is_trending_up(const std::string& series_name, double threshold = 0.1) const;
+    XSIGMA_API bool is_trending_down(const std::string& series_name, double threshold = 0.1) const;
 
     // Correlation analysis
-    double calculate_correlation(const std::string& series1, const std::string& series2) const;
+    XSIGMA_API double calculate_correlation(
+        const std::string& series1, const std::string& series2) const;
 
     // Performance regression detection
-    bool detect_performance_regression(
+    XSIGMA_API bool detect_performance_regression(
         const std::string& name, double baseline_mean, double threshold = 0.1) const;
 
     // Data management
-    void   clear_data();
-    void   clear_series(const std::string& name);
-    size_t get_sample_count(const std::string& name) const;
+    XSIGMA_API void   clear_data();
+    XSIGMA_API void   clear_series(const std::string& name);
+    XSIGMA_API size_t get_sample_count(const std::string& name) const;
 
     // Configuration
-    void set_max_samples_per_series(size_t max_samples);
-    void set_outlier_threshold(double threshold);
-    void set_percentiles(const std::vector<double>& percentiles);
+    XSIGMA_API void set_max_samples_per_series(size_t max_samples);
+    XSIGMA_API void set_outlier_threshold(double threshold);
+    XSIGMA_API void set_percentiles(const std::vector<double>& percentiles);
 
     // Public helper for external use
-    xsigma::statistical_metrics calculate_metrics(const std::vector<double>& data) const;
+    XSIGMA_API xsigma::statistical_metrics calculate_metrics(const std::vector<double>& data) const;
 
 private:
     std::atomic<bool> analyzing_{false};
@@ -166,14 +172,15 @@ private:
 };
 
 // RAII statistical analysis scope
-class XSIGMA_API statistical_analysis_scope
+class XSIGMA_VISIBILITY statistical_analysis_scope
 {
 public:
-    explicit statistical_analysis_scope(xsigma::statistical_analyzer& analyzer, std::string name);
-    ~statistical_analysis_scope();
+    XSIGMA_API explicit statistical_analysis_scope(
+        xsigma::statistical_analyzer& analyzer, std::string name);
+    XSIGMA_API ~statistical_analysis_scope();
 
-    void                        add_checkpoint(const std::string& label);
-    xsigma::statistical_metrics get_checkpoint_stats() const;
+    XSIGMA_API void add_checkpoint(const std::string& label);
+    XSIGMA_API xsigma::statistical_metrics get_checkpoint_stats() const;
 
 private:
     xsigma::statistical_analyzer&                  analyzer_;

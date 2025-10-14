@@ -28,7 +28,7 @@
 #include <cstdint>  // for uint_fast32_t
 #include <mutex>    // for mutex
 
-  #include "common/macros.h"
+#include "common/macros.h"
 
 namespace xsigma
 {
@@ -74,7 +74,7 @@ private:
     void operator=(const HashTableArray&);
 };
 
-class XSIGMA_API ThreadSpecific final
+class XSIGMA_VISIBILITY ThreadSpecific final
 {
 public:
     explicit ThreadSpecific(unsigned numThreads);

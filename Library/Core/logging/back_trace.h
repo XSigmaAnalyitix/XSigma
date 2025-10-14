@@ -61,7 +61,7 @@ struct XSIGMA_VISIBILITY backtrace_options
  *
  * **Thread Safety**: All methods are thread-safe
  */
-class XSIGMA_API back_trace
+class XSIGMA_VISIBILITY back_trace
 {
 public:
     XSIGMA_DELETE_CLASS(back_trace);
@@ -81,7 +81,7 @@ public:
      * frame #2: main + 0x12 (0x400512 in app.exe)
      * ```
      */
-    static std::string print(
+    XSIGMA_API static std::string print(
         size_t frames_to_skip           = 0,
         size_t maximum_number_of_frames = 64,
         bool   skip_python_frames       = true);
@@ -92,7 +92,7 @@ public:
      * @param options Configuration for trace capture and formatting
      * @return Formatted stack trace string
      */
-    static std::string print(const backtrace_options& options);
+    XSIGMA_API static std::string print(const backtrace_options& options);
 
     /**
      * @brief Capture raw stack frames without formatting
@@ -105,7 +105,8 @@ public:
      * - Programmatic analysis
      * - Caching for later formatting
      */
-    static std::vector<stack_frame> capture(const backtrace_options& options = backtrace_options());
+    XSIGMA_API static std::vector<stack_frame> capture(
+        const backtrace_options& options = backtrace_options());
 
     /**
      * @brief Format captured stack frames to string
@@ -114,7 +115,7 @@ public:
      * @param options Formatting options
      * @return Formatted stack trace string
      */
-    static std::string format(
+    XSIGMA_API static std::string format(
         const std::vector<stack_frame>& frames,
         const backtrace_options&        options = backtrace_options());
 
@@ -126,7 +127,7 @@ public:
      *
      * **Example**: `"main -> allocate_raw -> malloc -> __libc_start_main"`
      */
-    static std::string compact(size_t max_frames = 5);
+    XSIGMA_API static std::string compact(size_t max_frames = 5);
 
     /**
      * @brief Enable/disable automatic stack trace on errors
@@ -135,13 +136,13 @@ public:
      *
      * **Note**: Currently a no-op placeholder for future implementation
      */
-    static void set_stack_trace_on_error(int enable);
+    XSIGMA_API static void set_stack_trace_on_error(int enable);
 
     /**
      * @brief Check if stack trace capture is supported on this platform
      *
      * @return true if backtrace is available, false otherwise
      */
-    static bool is_supported();
+    XSIGMA_API static bool is_supported();
 };
 }  // namespace xsigma

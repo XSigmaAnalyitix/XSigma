@@ -22,6 +22,7 @@
 #include <queue>               // For std::queue
 #include <thread>              // For std::thread
 #include <vector>              // For std::vector
+
 #include "common/macros.h"
 
 namespace xsigma
@@ -39,7 +40,7 @@ namespace smp
  * the pool, which enable support for smp local scopes.
  * You need to have a Proxy to submit job to the pool.
  */
-class XSIGMA_API thread_pool
+class XSIGMA_VISIBILITY thread_pool
 {
     // Internal data structures
     struct ThreadJob;
@@ -58,7 +59,7 @@ public:
    * the creating thread or in a thread that does not belong to the pool, otherwise it may create a
    * deadlock when joining.
    */
-    class XSIGMA_API Proxy final
+    class XSIGMA_VISIBILITY Proxy final
     {
     public:
         /**

@@ -122,7 +122,7 @@ bool host_tracer::stop()
     return true;
 }
 
-bool host_tracer::collect_data(x_space* space)
+bool host_tracer::collect_data(XSIGMA_UNUSED x_space* space)
 {
     XSIGMA_LOG_INFO("Collecting data to x_space from host_tracer.");  // NOLINT
     if (recording_)
@@ -134,7 +134,7 @@ bool host_tracer::collect_data(x_space* space)
     {
         return true;
     }
-    XSIGMA_UNUSED xplane* plane = find_or_add_mutable_plane_with_name(space, kHostThreadsPlaneName);
+    //XSIGMA_UNUSED xplane* plane = find_or_add_mutable_plane_with_name(space, kHostThreadsPlaneName);
 
     //convert_complete_events_to_xplane(start_timestamp_ns_, std::exchange(events_, {}), plane);
 

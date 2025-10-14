@@ -240,7 +240,7 @@ class memory_dump;
  * allocator->deallocate_raw(ptr);
  * ```
  */
-class XSIGMA_API allocator_bfc : public Allocator
+class XSIGMA_VISIBILITY allocator_bfc : public Allocator
 {
 public:
     /**
@@ -336,7 +336,7 @@ public:
      *     std::move(sub_alloc), 2ULL << 30, "GPU_Memory", opts);
      * ```
      */
-    allocator_bfc(
+    XSIGMA_API allocator_bfc(
         std::unique_ptr<xsigma::sub_allocator> sub_allocator,
         size_t                                 total_memory,
         std::string                            name,
@@ -349,7 +349,7 @@ public:
      * **Resource Cleanup**: Returns all memory regions to sub_allocator
      * **Exception Safety**: noexcept - logs errors but doesn't throw
      */
-    ~allocator_bfc() override;
+    XSIGMA_API ~allocator_bfc() override;
 
     /**
      * @brief Returns the human-readable name of this allocator instance.
@@ -410,7 +410,7 @@ public:
      * 5. Extend memory pool if no suitable chunk found
      * 6. Retry with exponential backoff if enabled
      */
-    void* allocate_raw(
+    XSIGMA_API void* allocate_raw(
         size_t alignment, size_t num_bytes, const allocation_attributes& allocation_attr) override;
 
     /**
@@ -438,7 +438,7 @@ public:
      * 4. Insert final chunk into appropriate free bin
      * 5. Consider garbage collection if enabled
      */
-    void deallocate_raw(void* ptr) override;
+    XSIGMA_API void deallocate_raw(void* ptr) override;
 
     /**
      * @brief Indicates that this allocator tracks detailed allocation metadata.
@@ -449,7 +449,7 @@ public:
      * **Performance**: O(1) - simple constant return
      * **Capabilities**: Enables RequestedSize(), AllocatedSize(), AllocationId()
      */
-    bool tracks_allocation_sizes() const noexcept override;
+    XSIGMA_API bool tracks_allocation_sizes() const noexcept override;
 
     /**
      * @brief Returns the original size requested for an allocation.
@@ -462,7 +462,7 @@ public:
      * **Thread Safety**: Thread-safe with internal synchronization
      * **Exception Safety**: May throw if ptr is invalid
      */
-    size_t RequestedSize(const void* ptr) const override;
+    XSIGMA_API size_t RequestedSize(const void* ptr) const override;
 
     /**
      * @brief Returns the actual allocated size for a memory block.
@@ -475,7 +475,7 @@ public:
      * **Thread Safety**: Thread-safe with internal synchronization
      * **Guarantee**: AllocatedSize(ptr) >= RequestedSize(ptr)
      */
-    size_t AllocatedSize(const void* ptr) const override;
+    XSIGMA_API size_t AllocatedSize(const void* ptr) const override;
 
     /**
      * @brief Returns unique identifier for an allocation.
@@ -488,7 +488,7 @@ public:
      * **Thread Safety**: Thread-safe with internal synchronization
      * **Uniqueness**: Each allocation gets a different positive ID
      */
-    int64_t AllocationId(const void* ptr) const override;
+    XSIGMA_API int64_t AllocationId(const void* ptr) const override;
 
     /**
      * @brief Retrieves comprehensive allocator statistics.
@@ -500,7 +500,7 @@ public:
      * **Statistics**: Includes allocation counts, memory usage, fragmentation metrics
      * **Consistency**: Statistics represent atomic snapshot of allocator state
      */
-    std::optional<allocator_stats> GetStats() const override;
+    XSIGMA_API std::optional<allocator_stats> GetStats() const override;
 
     /**
      * @brief Resets statistics counters while preserving current memory state.
@@ -511,7 +511,7 @@ public:
      * **Thread Safety**: Thread-safe with internal synchronization
      * **Behavior**: Resets counters but preserves current memory allocations
      */
-    bool ClearStats() override;
+    XSIGMA_API bool ClearStats() override;
 
     /**
      * @brief Sets timing counter for temporal memory management.
@@ -533,7 +533,7 @@ public:
      * **Performance**: O(1) - atomic store operation
      * **Memory Safety**: Prevents reuse of memory freed after this timestamp
      */
-    void SetSafeFrontier(uint64_t count) noexcept override;
+    XSIGMA_API void SetSafeFrontier(uint64_t count) noexcept override;
 
     /**
      * @brief Returns memory type managed by underlying sub_allocator.
@@ -543,7 +543,7 @@ public:
      * **Thread Safety**: Thread-safe (delegates to sub_allocator)
      * **Performance**: O(1) - simple delegation
      */
-    allocator_memory_enum GetMemoryType() const noexcept override;
+    XSIGMA_API allocator_memory_enum GetMemoryType() const noexcept override;
 
     /**
      * @brief Indicates whether operation names should be recorded for debugging.
@@ -566,7 +566,7 @@ public:
      * **Use Cases**: Debugging, memory analysis, fragmentation visualization
      * **Memory**: Creates temporary copy of allocator state
      */
-    memory_dump RecordMemoryMap();
+    XSIGMA_API memory_dump RecordMemoryMap();
 
 private:
     struct Bin;  ///< Forward declaration of bin structure

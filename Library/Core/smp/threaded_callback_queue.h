@@ -40,7 +40,7 @@
 namespace xsigma
 {
 
-class XSIGMA_API threaded_callback_queue
+class XSIGMA_VISIBILITY threaded_callback_queue
 {
 private:
     /**
