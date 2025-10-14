@@ -408,6 +408,9 @@ XSIGMATEST(AllocatorStatistics, TrackingAllocatorStats)
         tracking->deallocate_raw(ptr);
     }
 
+    // Properly release the tracking allocator using reference counting
+    tracking->GetRecordsAndUnRef();
+
     XSIGMA_LOG_INFO("Tracking allocator statistics test completed successfully");
 #endif
 }
@@ -526,6 +529,9 @@ XSIGMATEST(AllocatorStatistics, AllocationSizeDistribution)
         tracking->deallocate_raw(ptr);
     }
 
+    // Properly release the tracking allocator using reference counting
+    tracking->GetRecordsAndUnRef();
+
     XSIGMA_LOG_INFO("Allocation size distribution test completed successfully");
 }
 
@@ -620,6 +626,9 @@ XSIGMATEST(AllocatorStatistics, ComprehensiveVisualization)
     {
         tracking->deallocate_raw(ptr);
     }
+
+    // Properly release the tracking allocator using reference counting
+    tracking->GetRecordsAndUnRef();
 
     XSIGMA_LOG_INFO("Comprehensive visualization test completed successfully");
 }

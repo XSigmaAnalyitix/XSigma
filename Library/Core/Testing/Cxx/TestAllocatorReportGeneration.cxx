@@ -89,6 +89,9 @@ XSIGMATEST(AllocatorReportGeneration, BasicReport)
         tracking->deallocate_raw(ptr);
     }
 
+    // Properly release the tracking allocator using reference counting
+    tracking->GetRecordsAndUnRef();
+
     XSIGMA_LOG_INFO("Basic report generation test completed successfully");
 }
 
@@ -149,6 +152,9 @@ XSIGMATEST(AllocatorReportGeneration, LeakDetection)
     }
     XSIGMA_LOG_INFO("\n{}", tracking->GenerateReport(true));
 
+    // Properly release the tracking allocator using reference counting
+    tracking->GetRecordsAndUnRef();
+
     XSIGMA_LOG_INFO("Leak detection test completed successfully");
 }
 
@@ -203,6 +209,9 @@ XSIGMATEST(AllocatorReportGeneration, PerformanceAnalysis)
     {
         tracking->deallocate_raw(ptrs[i]);
     }
+
+    // Properly release the tracking allocator using reference counting
+    tracking->GetRecordsAndUnRef();
 
     XSIGMA_LOG_INFO("Performance analysis test completed successfully");
 }
@@ -259,6 +268,9 @@ XSIGMATEST(AllocatorReportGeneration, ReportBuilder)
         tracking->deallocate_raw(ptr);
     }
 
+    // Properly release the tracking allocator using reference counting
+    tracking->GetRecordsAndUnRef();
+
     XSIGMA_LOG_INFO("Report builder test completed successfully");
 }
 
@@ -312,6 +324,9 @@ XSIGMATEST(AllocatorReportGeneration, SizeDistribution)
         tracking->deallocate_raw(ptr);
     }
 
+    // Properly release the tracking allocator using reference counting
+    tracking->GetRecordsAndUnRef();
+
     XSIGMA_LOG_INFO("Size distribution test completed successfully");
 }
 
@@ -356,6 +371,9 @@ XSIGMATEST(AllocatorReportGeneration, Recommendations)
     {
         tracking->deallocate_raw(ptr);
     }
+
+    // Properly release the tracking allocator using reference counting
+    tracking->GetRecordsAndUnRef();
 
     XSIGMA_LOG_INFO("Recommendations test completed successfully");
 }
