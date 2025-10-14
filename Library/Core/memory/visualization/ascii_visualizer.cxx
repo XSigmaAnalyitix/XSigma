@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "memory/cpu/allocator_tracking.h"
+#include "memory/backend/allocator_tracking.h"
 #include "memory/unified_memory_stats.h"
 
 namespace xsigma

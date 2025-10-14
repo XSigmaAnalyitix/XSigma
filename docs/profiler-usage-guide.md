@@ -475,7 +475,7 @@ void fine_profiling() {
 
 ```cpp
 #include "experimental/profiler/session/profiler.h"
-#include "memory/cpu/allocator_bfc.h"
+#include "memory/backend/allocator_bfc.h"
 
 class MyApplication {
 public:

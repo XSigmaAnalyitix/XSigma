@@ -33,8 +33,8 @@
 #include <vector>
 
 #include "fmt/format.h"
+#include "memory/backend/allocator_tracking.h"
 #include "memory/cpu/allocator_cpu.h"
-#include "memory/cpu/allocator_tracking.h"
 #include "memory/cpu/helper/process_state.h"
 
 namespace xsigma

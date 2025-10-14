@@ -29,11 +29,11 @@
 #include "common/macros.h"
 #include "common/pointer.h"
 #include "logging/logger.h"
+#include "memory/backend/allocator_bfc.h"
+#include "memory/backend/allocator_pool.h"
+#include "memory/backend/allocator_tracking.h"
 #include "memory/cpu/allocator.h"
-#include "memory/cpu/allocator_bfc.h"
 #include "memory/cpu/allocator_cpu.h"
-#include "memory/cpu/allocator_pool.h"
-#include "memory/cpu/allocator_tracking.h"
 
 using namespace xsigma;
 
