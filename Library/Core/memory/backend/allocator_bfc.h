@@ -42,8 +42,8 @@
 
 #include "common/macros.h"
 #include "logging/logger.h"
+#include "memory/backend/allocator_retry.h"
 #include "memory/cpu/allocator.h"
-#include "memory/cpu/allocator_retry.h"
 #include "util/flat_hash.h"
 #include "util/string_util.h"
 namespace xsigma

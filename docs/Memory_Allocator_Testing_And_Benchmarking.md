@@ -423,7 +423,7 @@ No significant issues detected. Allocator performance is good.
 
 ```cpp
 #include "memory/cpu/allocator.h"
-#include "memory/cpu/allocator_tracking.h"
+#include "memory/backend/allocator_tracking.h"
 
 // Enable statistics
 EnableCPUAllocatorStats();

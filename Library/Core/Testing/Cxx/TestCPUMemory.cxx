@@ -29,12 +29,12 @@
 #include <utility>      // for move, min, max, max_element, min_element
 #include <vector>       // for vector, _Vector_iterator, _Vector_const_iterator
 
-#include "common/pointer.h"        // for make_ptr_unique_mutable
+#include "common/pointer.h"                // for make_ptr_unique_mutable
+#include "memory/backend/allocator_bfc.h"  // for allocator_bfc
+#include "memory/backend/allocator_pool.h"  // for basic_cpu_allocator, allocator_pool, NoopRounder, round_up_i...
+#include "memory/backend/allocator_tracking.h"  // for allocator_tracking, enhanced_alloc_record, tracking_log_level
 #include "memory/cpu/allocator.h"  // for sub_allocator, allocation_attributes, Allocator, allocator_m...
-#include "memory/cpu/allocator_bfc.h"     // for allocator_bfc
-#include "memory/cpu/allocator_device.h"  // for allocator_device
-#include "memory/cpu/allocator_pool.h"  // for basic_cpu_allocator, allocator_pool, NoopRounder, round_up_i...
-#include "memory/cpu/allocator_tracking.h"  // for allocator_tracking, enhanced_alloc_record, tracking_log_level
+#include "memory/cpu/allocator_device.h"         // for allocator_device
 #include "memory/cpu/helper/memory_allocator.h"  // for free, allocate
 #include "memory/cpu/helper/process_state.h"     // for process_state
 #include "memory/unified_memory_stats.h"  // for atomic_timing_stats, unified_resource_stats, memory_fragment...
@@ -1001,7 +1001,7 @@ XSIGMATEST(AllocatorTracking, LoggingAndReporting)
 // MEMORY ALLOCATOR PERFORMANCE BENCHMARK
 // ============================================================================
 
-#ifndef NDEBUG
+#ifndef DEBUG
 // Structure to hold benchmark results for comparison
 struct BenchmarkResult
 {

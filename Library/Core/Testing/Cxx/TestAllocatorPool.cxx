@@ -19,8 +19,8 @@
 
 #include "Testing/xsigmaTest.h"
 #include "common/pointer.h"
+#include "memory/backend/allocator_pool.h"
 #include "memory/cpu/allocator.h"
-#include "memory/cpu/allocator_pool.h"
 #include "memory/cpu/helper/memory_allocator.h"
 
 using namespace xsigma;

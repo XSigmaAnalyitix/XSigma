@@ -67,23 +67,20 @@ public:
 class mimalloc_benchmark_allocator : public allocator_benchmark_interface
 {
 public:
-    void* allocate(std::size_t size, std::size_t alignment = 64) noexcept override
+    void* allocate(
+        XSIGMA_UNUSED std::size_t size, XSIGMA_UNUSED std::size_t alignment = 64) noexcept override
     {
 #ifdef XSIGMA_ENABLE_MIMALLOC
         return mi_malloc_aligned(size, alignment);
 #else
-        XSIGMA_UNUSED(size);
-        XSIGMA_UNUSED(alignment);
         return nullptr;
 #endif
     }
 
-    void deallocate(void* ptr, XSIGMA_UNUSED std::size_t size = 0) noexcept override
+    void deallocate(XSIGMA_UNUSED void* ptr, XSIGMA_UNUSED std::size_t size = 0) noexcept override
     {
 #ifdef XSIGMA_ENABLE_MIMALLOC
         mi_free(ptr);
-#else
-        XSIGMA_UNUSED(ptr);
 #endif
     }
 

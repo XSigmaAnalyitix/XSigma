@@ -26,7 +26,7 @@
  * Website: https://www.xsigma.co.uk
  */
 
-#include "memory/cpu/allocator_bfc.h"
+#include "memory/backend/allocator_bfc.h"
 
 #include <algorithm>
 #include <array>

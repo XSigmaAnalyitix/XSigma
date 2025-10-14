@@ -19,9 +19,9 @@
 #include <vector>
 
 #include "common/pointer.h"
+#include "memory/backend/allocator_pool.h"
+#include "memory/backend/allocator_tracking.h"
 #include "memory/cpu/allocator_cpu.h"
-#include "memory/cpu/allocator_pool.h"
-#include "memory/cpu/allocator_tracking.h"
 #include "memory/cpu/helper/memory_allocator.h"
 #include "xsigmaTest.h"
 
