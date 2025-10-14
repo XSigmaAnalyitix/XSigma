@@ -198,7 +198,7 @@ using resolvedNotInt = typename std::enable_if<!std::is_integral<T>::value, void
 
 namespace xsigma
 {
-class XSIGMA_API tools
+class XSIGMA_VISIBILITY tools
 {
 public:
     ///@{

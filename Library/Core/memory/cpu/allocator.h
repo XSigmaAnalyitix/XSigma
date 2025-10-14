@@ -236,7 +236,7 @@ enum class allocator_memory_enum : uint8_t
  *
  * @note Implementations must be thread-safe unless explicitly documented otherwise.
  */
-class XSIGMA_API Allocator
+class XSIGMA_VISIBILITY Allocator
 {
 public:
     /**

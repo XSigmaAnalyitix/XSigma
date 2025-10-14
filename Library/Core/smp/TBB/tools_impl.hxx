@@ -7,7 +7,7 @@
 #include <atomic>    // for atomic
 #include <iterator>  // for distance
 
-  // For export macro
+// For export macro
 #include "smp/Common/tools_impl.h"
 #include "smp/Common/tools_internal.h"  // For common xsigma smp class
 
@@ -37,7 +37,7 @@ void XSIGMA_API tools_implForTBB(
 //------------------------------------------------------------------------------
 // Address the static initialization order 'fiasco' by implementing
 // the schwarz counter idiom.
-class XSIGMA_API tools_implTBBInitialize
+class XSIGMA_VISIBILITY tools_implTBBInitialize
 {
 public:
     tools_implTBBInitialize();

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * XSigma: High-Performance Quantitative Library
  *
  * SPDX-License-Identifier: GPL-3.0-or-later OR Commercial
@@ -51,7 +51,7 @@ XSIGMATEST(AllocatorDevice, basic_allocation)
     auto allocator = std::make_unique<allocator_device>();
 
     // Test zero allocation
-    ASSERT_ANY_THROW({ void* ptr_zero = allocator->allocate_raw(64, 0); });
+    ASSERT_ANY_THROW({ allocator->allocate_raw(64, 0); });
 
     // Test small allocation
     void* ptr_small = allocator->allocate_raw(64, 1024);
@@ -128,10 +128,10 @@ XSIGMATEST(AllocatorDevice, error_handling)
     allocator->deallocate_raw(nullptr);
 
     // Test zero allocation
-    ASSERT_ANY_THROW({ void* ptr_zero = allocator->allocate_raw(64, 0); });
+    ASSERT_ANY_THROW({ allocator->allocate_raw(64, 0); });
 
     // Test very large allocation (may fail gracefully)
-    ASSERT_ANY_THROW({ void* ptr_huge = allocator->allocate_raw(64, SIZE_MAX); });
+    ASSERT_ANY_THROW({ allocator->allocate_raw(64, SIZE_MAX); });
 
     END_TEST();
 }
@@ -570,10 +570,14 @@ XSIGMATEST(ProcessStateTest, VisitorRegistration)
     bool alloc_visitor_called = false;
     bool free_visitor_called  = false;
 
-    auto alloc_visitor = [&alloc_visitor_called](void* ptr, int index, size_t num_bytes)
+    auto alloc_visitor =
+        [&alloc_visitor_called](
+            XSIGMA_UNUSED void* ptr, XSIGMA_UNUSED int index, XSIGMA_UNUSED size_t num_bytes)
     { alloc_visitor_called = true; };
 
-    auto free_visitor = [&free_visitor_called](void* ptr, int index, size_t num_bytes)
+    auto free_visitor =
+        [&free_visitor_called](
+            XSIGMA_UNUSED void* ptr, XSIGMA_UNUSED int index, XSIGMA_UNUSED size_t num_bytes)
     { free_visitor_called = true; };
 
     // Note: These must be called before GetCPUAllocator according to the API
@@ -992,3 +996,424 @@ XSIGMATEST(AllocatorTracking, LoggingAndReporting)
 
     XSIGMA_LOG_INFO("Logging levels and comprehensive reporting tests completed successfully");
 }
+
+// ============================================================================
+// MEMORY ALLOCATOR PERFORMANCE BENCHMARK
+// ============================================================================
+
+#ifndef NDEBUG
+// Structure to hold benchmark results for comparison
+struct BenchmarkResult
+{
+    std::string allocator_name;
+    size_t      allocation_size;
+    size_t      iterations;
+    double      total_time_us;
+    double      avg_time_per_op_us;
+    double      throughput_ops_sec;
+    size_t      peak_memory_bytes;
+    double      relative_performance;  // Relative to malloc baseline
+};
+
+XSIGMATEST(AllocatorBenchmark, PerformanceBenchmark)
+{
+    XSIGMA_LOG_INFO("Running Comprehensive Memory Allocator Performance Benchmark...");
+
+    // Test parameters - multiple allocation sizes for comprehensive testing
+    const std::vector<size_t> test_sizes = {
+        64, 1024, 65536};                // Small, Medium, Large (reduced from 65536)
+    const size_t num_iterations = 2000;  // Reduced from 2000 for faster execution
+
+    std::vector<BenchmarkResult> all_results;
+
+    for (size_t alloc_size : test_sizes)
+    {
+        XSIGMA_LOG_INFO("Testing allocation size: {}  bytes", std::to_string(alloc_size));
+
+        std::vector<BenchmarkResult> size_results;
+
+        // ========== BASELINE: Standard malloc/free ==========
+        {
+            std::vector<void*> ptrs;
+            ptrs.reserve(num_iterations);
+
+            auto start = std::chrono::high_resolution_clock::now();
+
+            // Allocation phase
+            for (size_t i = 0; i < num_iterations; ++i)
+            {
+                void* ptr = xsigma::cpu::memory_allocator::allocate(alloc_size);
+                if (ptr)
+                {
+                    ptrs.push_back(ptr);
+                    memset(ptr, 0xAA, std::min(alloc_size, size_t(64)));  // Touch memory
+                }
+            }
+
+            // Deallocation phase
+            for (void* ptr : ptrs)
+            {
+                xsigma::cpu::memory_allocator::free(ptr);
+            }
+
+            auto end      = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+            BenchmarkResult result;
+            result.allocator_name       = "malloc/free";
+            result.allocation_size      = alloc_size;
+            result.iterations           = num_iterations;
+            result.total_time_us        = duration.count();
+            result.avg_time_per_op_us   = duration.count() / (num_iterations * 2.0);
+            result.throughput_ops_sec   = (num_iterations * 2.0) / (duration.count() / 1e6);
+            result.peak_memory_bytes    = alloc_size * num_iterations;  // Approximate
+            result.relative_performance = 1.0;                          // Baseline
+
+            size_results.push_back(result);
+            EXPECT_EQ(ptrs.size(), num_iterations);
+        }
+
+        // ========== BFC ALLOCATOR ==========
+        {
+            std::vector<sub_allocator::Visitor> empty_visitors;
+            auto                                sub_allocator =
+                std::make_unique<basic_cpu_allocator>(0, empty_visitors, empty_visitors);
+
+            allocator_bfc::Options opts;
+            opts.allow_growth = true;
+
+            size_t total_memory = std::max(
+                static_cast<size_t>(64ULL << 20),
+                alloc_size * num_iterations * 2);  // Adjust based on test size
+            auto bfc_alloc = std::make_unique<xsigma::allocator_bfc>(
+                std::unique_ptr<xsigma::sub_allocator>(sub_allocator.release()),
+                total_memory,
+                "benchmark_bfc_" + std::to_string(alloc_size),
+                opts);
+
+            std::vector<void*> ptrs;
+            ptrs.reserve(num_iterations);
+
+            auto start = std::chrono::high_resolution_clock::now();
+
+            // Allocation phase
+            for (size_t i = 0; i < num_iterations; ++i)
+            {
+                void* ptr = bfc_alloc->allocate_raw(64, alloc_size);
+                if (ptr)
+                {
+                    ptrs.push_back(ptr);
+                    memset(ptr, 0xBB, std::min(alloc_size, size_t(64)));  // Touch memory
+                }
+            }
+
+            // Deallocation phase
+            for (void* ptr : ptrs)
+            {
+                bfc_alloc->deallocate_raw(ptr);
+            }
+
+            auto end      = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+            BenchmarkResult result;
+            result.allocator_name     = "BFC Allocator";
+            result.allocation_size    = alloc_size;
+            result.iterations         = num_iterations;
+            result.total_time_us      = duration.count();
+            result.avg_time_per_op_us = duration.count() / (num_iterations * 2.0);
+            result.throughput_ops_sec = (num_iterations * 2.0) / (duration.count() / 1e6);
+            result.peak_memory_bytes  = alloc_size * num_iterations;  // Approximate
+            result.relative_performance =
+                size_results[0].avg_time_per_op_us / result.avg_time_per_op_us;
+
+            size_results.push_back(result);
+            EXPECT_EQ(ptrs.size(), num_iterations);
+        }
+
+        // ========== POOL ALLOCATOR ==========
+        {
+            std::vector<sub_allocator::Visitor> empty_visitors;
+            auto                                sub_allocator =
+                std::make_unique<basic_cpu_allocator>(0, empty_visitors, empty_visitors);
+            auto size_rounder = std::make_unique<Pow2Rounder>();
+            auto pool         = std::make_unique<allocator_pool>(
+                std::max(
+                    size_t(2048), alloc_size * 4),  // Adjust pool size based on allocation size
+                true,                               // auto_resize
+                std::move(sub_allocator),
+                std::move(size_rounder),
+                "benchmark_pool_" + std::to_string(alloc_size));
+
+            std::vector<void*> ptrs;
+            ptrs.reserve(num_iterations);
+
+            auto start = std::chrono::high_resolution_clock::now();
+
+            // Allocation phase
+            for (size_t i = 0; i < num_iterations; ++i)
+            {
+                void* ptr = pool->allocate_raw(64, alloc_size);
+                if (ptr)
+                {
+                    ptrs.push_back(ptr);
+                    memset(ptr, 0xCC, std::min(alloc_size, size_t(64)));  // Touch memory
+                }
+            }
+
+            // Deallocation phase
+            for (void* ptr : ptrs)
+            {
+                pool->deallocate_raw(ptr);
+            }
+
+            auto end      = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+            BenchmarkResult result;
+            result.allocator_name     = "Pool Allocator";
+            result.allocation_size    = alloc_size;
+            result.iterations         = num_iterations;
+            result.total_time_us      = duration.count();
+            result.avg_time_per_op_us = duration.count() / (num_iterations * 2.0);
+            result.throughput_ops_sec = (num_iterations * 2.0) / (duration.count() / 1e6);
+            result.peak_memory_bytes  = alloc_size * num_iterations;  // Approximate
+            result.relative_performance =
+                size_results[0].avg_time_per_op_us / result.avg_time_per_op_us;
+
+            size_results.push_back(result);
+            EXPECT_EQ(ptrs.size(), num_iterations);
+        }
+
+        // ========== TRACKING ALLOCATOR (wrapping BFC) ==========
+        {
+            std::vector<sub_allocator::Visitor> empty_visitors;
+            auto                                sub_allocator =
+                std::make_unique<basic_cpu_allocator>(0, empty_visitors, empty_visitors);
+
+            allocator_bfc::Options opts;
+            opts.allow_growth = true;
+
+            size_t total_memory = std::max(
+                static_cast<size_t>(64ULL << 20),
+                alloc_size * num_iterations * 2);  // Adjust based on test size
+            auto underlying_bfc = std::make_unique<xsigma::allocator_bfc>(
+                std::unique_ptr<xsigma::sub_allocator>(sub_allocator.release()),
+                total_memory,
+                "tracking_bfc_" + std::to_string(alloc_size),
+                opts);
+
+            // Create tracking allocator wrapping the BFC allocator
+            auto tracker = new xsigma::allocator_tracking(underlying_bfc.get(), true);
+
+            std::vector<void*> ptrs;
+            ptrs.reserve(num_iterations);
+
+            auto start = std::chrono::high_resolution_clock::now();
+
+            // Allocation phase
+            for (size_t i = 0; i < num_iterations; ++i)
+            {
+                void* ptr = tracker->allocate_raw(64, alloc_size);
+                if (ptr)
+                {
+                    ptrs.push_back(ptr);
+                    memset(ptr, 0xDD, std::min(alloc_size, size_t(64)));  // Touch memory
+                }
+            }
+
+            // Deallocation phase
+            for (void* ptr : ptrs)
+            {
+                tracker->deallocate_raw(ptr);
+            }
+
+            auto end      = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+            BenchmarkResult result;
+            result.allocator_name     = "Tracking Allocator";
+            result.allocation_size    = alloc_size;
+            result.iterations         = num_iterations;
+            result.total_time_us      = duration.count();
+            result.avg_time_per_op_us = duration.count() / (num_iterations * 2.0);
+            result.throughput_ops_sec = (num_iterations * 2.0) / (duration.count() / 1e6);
+            result.peak_memory_bytes  = alloc_size * num_iterations;  // Approximate
+            result.relative_performance =
+                size_results[0].avg_time_per_op_us / result.avg_time_per_op_us;
+
+            size_results.push_back(result);
+            EXPECT_EQ(ptrs.size(), num_iterations);
+
+            // Properly cleanup tracking allocator by releasing reference
+            tracker->GetRecordsAndUnRef();
+        }
+
+        // ========== ALLOCATOR_DEVICE ==========
+        {
+            auto               device_allocator = std::make_unique<allocator_device>();
+            std::vector<void*> ptrs;
+            ptrs.reserve(num_iterations);
+
+            auto start = std::chrono::high_resolution_clock::now();
+
+            // Allocation phase
+            for (size_t i = 0; i < num_iterations; ++i)
+            {
+                void* ptr = device_allocator->allocate_raw(64, alloc_size);
+                if (ptr)
+                {
+                    ptrs.push_back(ptr);
+                    memset(ptr, 0xFF, std::min(alloc_size, size_t(64)));  // Touch memory
+                }
+            }
+
+            // Deallocation phase
+            for (void* ptr : ptrs)
+            {
+                device_allocator->deallocate_raw(ptr);
+            }
+
+            auto end      = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+            BenchmarkResult result;
+            result.allocator_name     = "Device Allocator";
+            result.allocation_size    = alloc_size;
+            result.iterations         = num_iterations;
+            result.total_time_us      = duration.count();
+            result.avg_time_per_op_us = duration.count() / (num_iterations * 2.0);
+            result.throughput_ops_sec = (num_iterations * 2.0) / (duration.count() / 1e6);
+            result.peak_memory_bytes  = alloc_size * num_iterations;  // Approximate
+            result.relative_performance =
+                size_results[0].avg_time_per_op_us / result.avg_time_per_op_us;
+
+            size_results.push_back(result);
+            EXPECT_EQ(ptrs.size(), num_iterations);
+        }
+
+        // Store results for this allocation size
+        all_results.insert(all_results.end(), size_results.begin(), size_results.end());
+    }
+
+    // ========== COMPREHENSIVE RESULTS PRESENTATION ==========
+    XSIGMA_LOG_INFO("Generating comprehensive performance comparison report...");
+
+    std::cout << "\n" << std::string(120, '=') << "\n";
+    std::cout << "                    COMPREHENSIVE MEMORY ALLOCATOR PERFORMANCE BENCHMARK\n";
+    std::cout << std::string(120, '=') << "\n\n";
+
+    // Group results by allocation size for better presentation
+    for (size_t test_size : test_sizes)
+    {
+        std::cout << "ALLOCATION SIZE: " << test_size << " bytes (" << num_iterations
+                  << " iterations)\n";
+        std::cout << std::string(120, '-') << "\n";
+
+        // Header
+        std::cout << std::left << std::setw(20) << "Allocator" << std::setw(15) << "Total Time (μs)"
+                  << std::setw(18) << "Avg Time/Op (μs)" << std::setw(18) << "Throughput (ops/s)"
+                  << std::setw(18) << "Peak Memory (MB)" << std::setw(15) << "Relative Perf"
+                  << std::setw(10) << "vs malloc" << "\n";
+        std::cout << std::string(120, '-') << "\n";
+
+        // Find results for this allocation size
+        std::vector<BenchmarkResult> size_specific_results;
+        for (const auto& result : all_results)
+        {
+            if (result.allocation_size == test_size)
+            {
+                size_specific_results.push_back(result);
+            }
+        }
+
+        // Display results
+        for (const auto& result : size_specific_results)
+        {
+            double      peak_memory_mb = result.peak_memory_bytes / (1024.0 * 1024.0);
+            double      perf_vs_malloc = result.relative_performance;
+            std::string perf_indicator = (perf_vs_malloc > 1.0)   ? "FASTER"
+                                         : (perf_vs_malloc < 1.0) ? "SLOWER"
+                                                                  : "SAME";
+
+            // Log the results to ensure they appear in test output
+            std::ostringstream result_line;
+            result_line << std::left << std::fixed << std::setprecision(3) << std::setw(20)
+                        << result.allocator_name << std::setw(15) << result.total_time_us
+                        << std::setw(18) << result.avg_time_per_op_us << std::setw(18)
+                        << std::scientific << result.throughput_ops_sec << std::fixed
+                        << std::setw(18) << peak_memory_mb << std::setw(15) << perf_vs_malloc << "x"
+                        << std::setw(10) << perf_indicator;
+
+            XSIGMA_LOG_INFO("{}", result_line.str());
+
+            std::cout << std::left << std::fixed << std::setprecision(3) << std::setw(20)
+                      << result.allocator_name << std::setw(15) << result.total_time_us
+                      << std::setw(18) << result.avg_time_per_op_us << std::setw(18)
+                      << std::scientific << result.throughput_ops_sec << std::fixed << std::setw(18)
+                      << peak_memory_mb << std::setw(15) << perf_vs_malloc << "x" << std::setw(10)
+                      << perf_indicator << "\n";
+        }
+        std::cout << "\n";
+    }
+
+    // Summary statistics
+    std::cout << "PERFORMANCE SUMMARY:\n";
+    std::cout << std::string(60, '-') << "\n";
+
+    // Find best and worst performers for each size
+    for (size_t test_size : test_sizes)
+    {
+        std::vector<BenchmarkResult> size_results;
+        for (const auto& result : all_results)
+        {
+            if (result.allocation_size == test_size)
+            {
+                size_results.push_back(result);
+            }
+        }
+
+        if (!size_results.empty())
+        {
+            auto fastest = std::max_element(
+                size_results.begin(),
+                size_results.end(),
+                [](const BenchmarkResult& a, const BenchmarkResult& b)
+                { return a.throughput_ops_sec < b.throughput_ops_sec; });
+
+            auto slowest = std::min_element(
+                size_results.begin(),
+                size_results.end(),
+                [](const BenchmarkResult& a, const BenchmarkResult& b)
+                { return a.throughput_ops_sec < b.throughput_ops_sec; });
+
+            std::ostringstream summary_line;
+            summary_line << "Size " << test_size << "B: Fastest = " << fastest->allocator_name
+                         << " (" << std::scientific << fastest->throughput_ops_sec << " ops/s), "
+                         << "Slowest = " << slowest->allocator_name << " (" << std::scientific
+                         << slowest->throughput_ops_sec << " ops/s)";
+
+            XSIGMA_LOG_INFO("{}", summary_line.str());
+
+            std::cout << "Size " << test_size << "B: Fastest = " << fastest->allocator_name << " ("
+                      << std::scientific << fastest->throughput_ops_sec << " ops/s), "
+                      << "Slowest = " << slowest->allocator_name << " (" << std::scientific
+                      << slowest->throughput_ops_sec << " ops/s)\n";
+        }
+    }
+
+    std::cout << "\nBENCHMARK METHODOLOGY:\n";
+    std::cout << "- Each allocator tested with " << num_iterations
+              << " allocation/deallocation cycles\n";
+    std::cout << "- Memory touched after allocation to ensure realistic performance\n";
+    std::cout << "- Multiple allocation sizes tested: 64B (small), 1KB (medium), 64KB (large)\n";
+    std::cout << "- Relative performance calculated vs malloc/free baseline\n";
+    std::cout << "- Peak memory is approximate based on allocation size × iterations\n";
+
+    std::cout << "\n" << std::string(120, '=') << "\n";
+    std::cout << "                              BENCHMARK COMPLETED SUCCESSFULLY\n";
+    std::cout << std::string(120, '=') << "\n\n";
+
+    XSIGMA_LOG_INFO("Comprehensive Memory Allocator Performance Benchmark completed successfully!");
+}
+#endif

@@ -106,28 +106,28 @@ struct memory_allocation
  * calculates memory usage statistics, and supports cross-platform
  * memory usage queries.
  */
-class XSIGMA_API memory_tracker
+class XSIGMA_VISIBILITY memory_tracker
 {
 public:
     /**
      * @brief Construct a new memory tracker
      */
-    memory_tracker();
+    XSIGMA_API memory_tracker();
 
     /**
      * @brief Destructor - automatically stops tracking if active
      */
-    ~memory_tracker();
+    XSIGMA_API ~memory_tracker();
 
     /**
      * @brief Start memory tracking
      */
-    void start_tracking();
+    XSIGMA_API void start_tracking();
 
     /**
      * @brief Stop memory tracking
      */
-    void stop_tracking();
+    XSIGMA_API void stop_tracking();
 
     /**
      * @brief Check if memory tracking is currently active
@@ -141,89 +141,89 @@ public:
      * @param size Size of the allocation in bytes
      * @param context Optional context information
      */
-    void track_allocation(void* ptr, size_t size, const std::string& context = "");
+    XSIGMA_API void track_allocation(void* ptr, size_t size, const std::string& context = "");
 
     /**
      * @brief Track a memory deallocation
      * @param ptr Pointer to the memory being deallocated
      */
-    void track_deallocation(void* ptr);
+    XSIGMA_API void track_deallocation(void* ptr);
 
     /**
      * @brief Get current memory usage statistics
      * @return Complete memory statistics structure
      */
-    xsigma::memory_stats get_current_stats() const;
+    XSIGMA_API xsigma::memory_stats get_current_stats() const;
 
     /**
      * @brief Get current memory usage in bytes
      * @return Current memory usage
      */
-    size_t get_current_usage() const;
+    XSIGMA_API size_t get_current_usage() const;
 
     /**
      * @brief Get peak memory usage in bytes
      * @return Peak memory usage observed
      */
-    size_t get_peak_usage() const;
+    XSIGMA_API size_t get_peak_usage() const;
     /**
      * @brief Get total memory allocated since tracking started
      * @return Total allocated memory in bytes
      */
-    size_t get_total_allocated() const;
+    XSIGMA_API size_t get_total_allocated() const;
 
     /**
      * @brief Get total memory deallocated since tracking started
      * @return Total deallocated memory in bytes
      */
-    size_t get_total_deallocated() const;
+    XSIGMA_API size_t get_total_deallocated() const;
 
     /**
      * @brief Get current system memory usage
      * @return System memory usage in bytes
      */
-    static size_t get_system_memory_usage();
+    XSIGMA_API static size_t get_system_memory_usage();
 
     /**
      * @brief Get peak system memory usage
      * @return Peak system memory usage in bytes
      */
-    static size_t get_system_peak_memory_usage();
+    XSIGMA_API static size_t get_system_peak_memory_usage();
 
     /**
      * @brief Get available system memory
      * @return Available system memory in bytes
      */
-    static size_t get_available_system_memory();
+    XSIGMA_API static size_t get_available_system_memory();
 
     /**
      * @brief Reset all tracking data and statistics
      */
-    void reset();
+    XSIGMA_API void reset();
 
     /**
      * @brief Get a copy of all currently active allocations (thread-safe)
      * @return Vector of active memory allocations
      */
-    std::vector<xsigma::memory_allocation> get_active_allocations() const;
+    XSIGMA_API std::vector<xsigma::memory_allocation> get_active_allocations() const;
 
     /**
      * @brief Get the number of currently active allocations
      * @return Number of active allocations
      */
-    size_t get_allocation_count() const;
+    XSIGMA_API size_t get_allocation_count() const;
 
     /**
      * @brief Take a memory usage snapshot with optional label
      * @param label Optional label for the snapshot
      */
-    void take_snapshot(const std::string& label = "");
+    XSIGMA_API void take_snapshot(const std::string& label = "");
 
     /**
      * @brief Get all memory usage snapshots
      * @return Vector of labeled memory statistics snapshots
      */
-    std::vector<std::pair<std::string, xsigma::memory_stats>> get_snapshots() const;
+    XSIGMA_API std::vector<std::pair<std::string, xsigma::memory_stats>> get_snapshots() const;
 
 private:
     /// Atomic flag indicating if tracking is active
@@ -279,7 +279,7 @@ private:
  * memory usage at the beginning and end of the scope to calculate
  * memory deltas and usage patterns.
  */
-class XSIGMA_API memory_tracking_scope
+class XSIGMA_VISIBILITY memory_tracking_scope
 {
 public:
     /**

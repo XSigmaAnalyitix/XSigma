@@ -54,7 +54,7 @@ namespace gpu
  *
  * @note This allocator is designed for CUDA devices only
  */
-class XSIGMA_API cuda_caching_allocator
+class XSIGMA_VISIBILITY cuda_caching_allocator
 {
 public:
 #ifdef XSIGMA_ENABLE_CUDA
@@ -69,13 +69,13 @@ public:
      * @param max_cached_bytes Maximum bytes to cache (default: unlimited)
      * @throws std::runtime_error if device is invalid
      */
-    explicit cuda_caching_allocator(
+    XSIGMA_API explicit cuda_caching_allocator(
         int device = 0, size_t max_cached_bytes = std::numeric_limits<size_t>::max());
 
     /**
      * @brief Destructor - releases all cached memory
      */
-    ~cuda_caching_allocator();
+    XSIGMA_API ~cuda_caching_allocator();
 
     /**
      * @brief Allocate GPU memory with caching
@@ -85,7 +85,7 @@ public:
      * @throws std::bad_alloc if allocation fails
      * @throws std::invalid_argument if size is zero
      */
-    void* allocate(size_t size, stream_type stream = nullptr);
+    XSIGMA_API void* allocate(size_t size, stream_type stream = nullptr);
 
     /**
      * @brief Deallocate GPU memory (may cache for reuse)
@@ -95,43 +95,43 @@ public:
      * @throws std::invalid_argument if ptr is not owned by this allocator
      * @throws std::logic_error if double free detected
      */
-    void deallocate(void* ptr, size_t size, stream_type stream = nullptr);
+    XSIGMA_API void deallocate(void* ptr, size_t size, stream_type stream = nullptr);
 
     /**
      * @brief Clear all cached memory immediately
      * @note This will synchronize with all pending CUDA operations
      */
-    void empty_cache();
+    XSIGMA_API void empty_cache();
 
     /**
      * @brief Set maximum bytes to cache
      * @param bytes Maximum cache size (0 = no caching)
      */
-    void set_max_cached_bytes(size_t bytes);
+    XSIGMA_API void set_max_cached_bytes(size_t bytes);
 
     /**
      * @brief Get maximum cache size
      * @return Maximum bytes that can be cached
      */
-    size_t max_cached_bytes() const;
+    XSIGMA_API size_t max_cached_bytes() const;
 
     /**
      * @brief Get comprehensive allocation statistics
      * @return Statistics structure with performance metrics
      */
-    unified_cache_stats stats() const;
+    XSIGMA_API unified_cache_stats stats() const;
 
     /**
      * @brief Get device index this allocator manages
      * @return CUDA device index
      */
-    int device() const;
+    XSIGMA_API int device() const;
 
     // Non-copyable but movable
-    cuda_caching_allocator(const cuda_caching_allocator&)            = delete;
-    cuda_caching_allocator& operator=(const cuda_caching_allocator&) = delete;
-    cuda_caching_allocator(cuda_caching_allocator&&) noexcept;
-    cuda_caching_allocator& operator=(cuda_caching_allocator&&) noexcept;
+    cuda_caching_allocator(const cuda_caching_allocator&)                       = delete;
+    cuda_caching_allocator&            operator=(const cuda_caching_allocator&) = delete;
+    XSIGMA_API                         cuda_caching_allocator(cuda_caching_allocator&&) noexcept;
+    XSIGMA_API cuda_caching_allocator& operator=(cuda_caching_allocator&&) noexcept;
 
 private:
     struct Impl;

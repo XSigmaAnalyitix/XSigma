@@ -222,7 +222,7 @@ struct enhanced_alloc_record : public alloc_record
  * capabilities by wrapping any underlying Allocator implementation. Offers
  * detailed statistics, allocation records, and advanced debugging features.
  */
-class XSIGMA_API allocator_tracking : public Allocator
+class XSIGMA_VISIBILITY allocator_tracking : public Allocator
 {
 public:
     /**
@@ -240,7 +240,7 @@ public:
      * **Reference Counting**: Initializes with reference count of 1
      * **Performance Impact**: Enhanced tracking adds minimal overhead (~5-10%)
      */
-    explicit allocator_tracking(
+    XSIGMA_API explicit allocator_tracking(
         Allocator* allocator, bool track_sizes, bool enable_enhanced_tracking = true);
 
     /**
@@ -290,7 +290,7 @@ public:
      * **Statistics**: Updates all tracking metrics and records
      * **Reference Counting**: Increments reference count during allocation
      */
-    void* allocate_raw(
+    XSIGMA_API void* allocate_raw(
         size_t alignment, size_t num_bytes, const allocation_attributes& allocation_attr) override;
 
     /**
@@ -308,7 +308,7 @@ public:
      * **Reference Counting**: Decrements reference count, may trigger cleanup
      * **Statistics**: Updates bytes in use and allocation records
      */
-    void deallocate_raw(void* ptr) override;
+    XSIGMA_API void deallocate_raw(void* ptr) override;
 
     /**
      * @brief Indicates comprehensive allocation size tracking capability.
@@ -319,7 +319,7 @@ public:
      * **Local Tracking**: Provides tracking even for non-tracking allocators
      * **Thread Safety**: Thread-safe (returns constant)
      */
-    bool tracks_allocation_sizes() const noexcept override;
+    XSIGMA_API bool tracks_allocation_sizes() const noexcept override;
 
     /**
      * @brief Returns originally requested size for allocation.
@@ -331,7 +331,7 @@ public:
      * **Performance**: O(1) - hash table lookup or delegation
      * **Thread Safety**: Thread-safe with internal synchronization
      */
-    size_t RequestedSize(const void* ptr) const override;
+    XSIGMA_API size_t RequestedSize(const void* ptr) const override;
 
     /**
      * @brief Returns actual allocated size for allocation.
@@ -343,7 +343,7 @@ public:
      * **Performance**: O(1) - hash table lookup or delegation
      * **Thread Safety**: Thread-safe with internal synchronization
      */
-    size_t AllocatedSize(const void* ptr) const override;
+    XSIGMA_API size_t AllocatedSize(const void* ptr) const override;
 
     /**
      * @brief Returns unique allocation identifier.
@@ -355,7 +355,7 @@ public:
      * **Performance**: O(1) - hash table lookup or delegation
      * **Thread Safety**: Thread-safe with internal synchronization
      */
-    int64_t AllocationId(const void* ptr) const override;
+    XSIGMA_API int64_t AllocationId(const void* ptr) const override;
 
     /**
      * @brief Retrieves comprehensive tracking statistics.
@@ -366,7 +366,7 @@ public:
      * **Performance**: O(1) - returns cached statistics
      * **Thread Safety**: Thread-safe with internal synchronization
      */
-    std::optional<allocator_stats> GetStats() const override;
+    XSIGMA_API std::optional<allocator_stats> GetStats() const override;
 
     /**
      * @brief Resets tracking statistics while preserving allocations.
@@ -377,7 +377,7 @@ public:
      * **Performance**: O(1) - simple counter reset
      * **Thread Safety**: Thread-safe with internal synchronization
      */
-    bool ClearStats() override;
+    XSIGMA_API bool ClearStats() override;
 
     /**
      * @brief Returns memory type of underlying allocator.
@@ -415,7 +415,7 @@ public:
      * **Thread Safety**: Thread-safe with internal synchronization
      * **Use Cases**: Memory usage monitoring, performance analysis
      */
-    std::tuple<size_t, size_t, size_t> GetSizes() const;
+    XSIGMA_API std::tuple<size_t, size_t, size_t> GetSizes() const;
 
     /**
      * @brief Retrieves allocation records and releases reference.
@@ -436,7 +436,7 @@ public:
      * - Only deallocations of existing pointers are permitted
      * - Wrapper will self-destruct when reference count reaches zero
      */
-    std::vector<alloc_record> GetRecordsAndUnRef();
+    XSIGMA_API std::vector<alloc_record> GetRecordsAndUnRef();
 
     /**
      * @brief Returns copy of current allocation records.
@@ -451,7 +451,7 @@ public:
      * **Performance**: O(n) where n is number of allocation records
      * **Use Cases**: Intermediate monitoring, debugging, analysis
      */
-    std::vector<alloc_record> GetCurrentRecords();
+    XSIGMA_API std::vector<alloc_record> GetCurrentRecords();
 
     // ========== Enhanced Memory Analytics ==========
 
@@ -474,7 +474,7 @@ public:
      * - Performance debugging
      * - Resource planning
      */
-    memory_fragmentation_metrics GetFragmentationMetrics() const;
+    XSIGMA_API memory_fragmentation_metrics GetFragmentationMetrics() const;
 
     /**
      * @brief Retrieves detailed performance timing statistics.
@@ -495,7 +495,7 @@ public:
      * - Total operation counts
      * - Cumulative timing data
      */
-    atomic_timing_stats GetTimingStats() const noexcept;
+    XSIGMA_API atomic_timing_stats GetTimingStats() const noexcept;
 
     /**
      * @brief Retrieves enhanced allocation records with comprehensive metadata.
@@ -516,7 +516,7 @@ public:
      * - Memory alignment requirements
      * - Custom allocation tags
      */
-    std::vector<enhanced_alloc_record> GetEnhancedRecords() const;
+    XSIGMA_API std::vector<enhanced_alloc_record> GetEnhancedRecords() const;
 
     /**
      * @brief Configures logging verbosity for tracking operations.
@@ -539,7 +539,7 @@ public:
      * - DEBUG: Detailed debugging information
      * - TRACE: Maximum detail (performance impact)
      */
-    void SetLoggingLevel(tracking_log_level level) noexcept;
+    XSIGMA_API void SetLoggingLevel(tracking_log_level level) noexcept;
 
     /**
      * @brief Gets current logging verbosity level.
@@ -549,7 +549,7 @@ public:
      * **Performance**: O(1) atomic read
      * **Thread Safety**: Thread-safe atomic operation
      */
-    tracking_log_level GetLoggingLevel() const noexcept;
+    XSIGMA_API tracking_log_level GetLoggingLevel() const noexcept;
 
     /**
      * @brief Resets all performance timing statistics.
@@ -562,7 +562,7 @@ public:
      * **Performance**: O(1) - simple atomic resets
      * **Preservation**: Keeps allocation records and memory statistics
      */
-    void ResetTimingStats() noexcept;
+    XSIGMA_API void ResetTimingStats() noexcept;
 
     /**
      * @brief Calculates current allocation efficiency metrics.
@@ -581,7 +581,7 @@ public:
      * **Thread Safety**: Thread-safe with shared lock
      * **Performance**: O(1) for cached metrics, O(n) for detailed analysis
      */
-    std::tuple<double, double, double> GetEfficiencyMetrics() const;
+    XSIGMA_API std::tuple<double, double, double> GetEfficiencyMetrics() const;
 
     /**
      * @brief Generates comprehensive memory usage report.
@@ -603,7 +603,7 @@ public:
      * - Efficiency recommendations
      * - Optional allocation details
      */
-    std::string GenerateReport(bool include_allocations = false) const;
+    XSIGMA_API std::string GenerateReport(bool include_allocations = false) const;
 
 protected:
     /**

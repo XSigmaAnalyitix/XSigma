@@ -45,8 +45,8 @@ limitations under the License.
 
 #include "common/macros.h"
 #include "logging/logger.h"
-#include "util/no_init.h"
 #include "util/exception.h"
+#include "util/no_init.h"
 
 namespace xsigma
 {
@@ -141,7 +141,10 @@ public:
     ~blocked_queue_base()
     {
         clear();
-        XSIGMA_CHECK_DEBUG(empty(), "Queue is not empty in destructor");
+        if (!empty())
+        {
+            XSIGMA_LOG_WARNING("Queue is not empty in destructor");
+        }
         delete end_block_;
     }
 

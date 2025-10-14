@@ -38,14 +38,14 @@ namespace xsigma
  * Provides comprehensive report generation capabilities with multiple
  * output formats including console, JSON, CSV, and XML formats.
  */
-class XSIGMA_API profiler_report
+class XSIGMA_VISIBILITY profiler_report
 {
 public:
     /**
      * @brief Construct a new profiler report
      * @param session Reference to the profiler session to generate report from
      */
-    explicit profiler_report(const xsigma::profiler_session& session);
+    XSIGMA_API explicit profiler_report(const xsigma::profiler_session& session);
 
     /**
      * @brief Default destructor
@@ -56,25 +56,25 @@ public:
      * @brief Generate human-readable console report
      * @return String containing formatted console report
      */
-    std::string generate_console_report() const;
+    XSIGMA_API std::string generate_console_report() const;
 
     /**
      * @brief Generate JSON format report
      * @return String containing JSON formatted report
      */
-    std::string generate_json_report() const;
+    XSIGMA_API std::string generate_json_report() const;
 
     /**
      * @brief Generate CSV format report
      * @return String containing CSV formatted report
      */
-    std::string generate_csv_report() const;
+    XSIGMA_API std::string generate_csv_report() const;
 
     /**
      * @brief Generate XML format report
      * @return String containing XML formatted report
      */
-    std::string generate_xml_report() const;
+    XSIGMA_API std::string generate_xml_report() const;
 
     /**
      * @brief Export report to file in specified format
@@ -82,7 +82,7 @@ public:
      * @param format Output format to use
      * @return true if export successful, false otherwise
      */
-    bool export_to_file(
+    XSIGMA_API bool export_to_file(
         const std::string& filename, xsigma::profiler_options::output_format_enum format) const;
 
     /**
@@ -90,35 +90,35 @@ public:
      * @param filename Path to output file
      * @return true if export successful, false otherwise
      */
-    bool export_console_report(const std::string& filename) const;
+    XSIGMA_API bool export_console_report(const std::string& filename) const;
 
     /**
      * @brief Export JSON report to file
      * @param filename Path to output file
      * @return true if export successful, false otherwise
      */
-    bool export_json_report(const std::string& filename) const;
+    XSIGMA_API bool export_json_report(const std::string& filename) const;
 
     /**
      * @brief Export CSV report to file
      * @param filename Path to output file
      * @return true if export successful, false otherwise
      */
-    bool export_csv_report(const std::string& filename) const;
+    XSIGMA_API bool export_csv_report(const std::string& filename) const;
 
     /**
      * @brief Export XML report to file
      * @param filename Path to output file
      * @return true if export successful, false otherwise
      */
-    bool export_xml_report(const std::string& filename) const;
+    XSIGMA_API bool export_xml_report(const std::string& filename) const;
 
     // Print to console
-    static void print_summary();
-    void        print_detailed_report() const;
-    static void print_memory_report();
-    static void print_timing_report();
-    static void print_statistical_report();
+    XSIGMA_API static void print_summary();
+    XSIGMA_API void        print_detailed_report() const;
+    XSIGMA_API static void print_memory_report();
+    XSIGMA_API static void print_timing_report();
+    XSIGMA_API static void print_statistical_report();
 
     // Report customization
     void set_precision(int precision) { precision_ = precision; }
@@ -177,10 +177,10 @@ private:
 };
 
 // Report builder with fluent interface
-class XSIGMA_API profiler_report_builder
+class XSIGMA_VISIBILITY profiler_report_builder
 {
 public:
-    explicit profiler_report_builder(const xsigma::profiler_session& session);
+    XSIGMA_API explicit profiler_report_builder(const xsigma::profiler_session& session);
 
     profiler_report_builder& with_precision(int precision)
     {
@@ -224,7 +224,7 @@ public:
         return *this;
     }
 
-    std::unique_ptr<xsigma::profiler_report> build() const;
+    XSIGMA_API std::unique_ptr<xsigma::profiler_report> build() const;
 
 private:
     const xsigma::profiler_session& session_;

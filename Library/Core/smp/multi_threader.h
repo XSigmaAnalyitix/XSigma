@@ -32,7 +32,7 @@
 #include <array>  // for array
 #include <mutex>  // for mutex
 
-      #include "common/macros.h"
+#include "common/macros.h"
 #include "common/macros.h"   // for XSIGMA_DELETE_COPY
 #include "xsigma_threads.h"  // for XSIGMA_MAX_THREADS, XSIGMA_USE_PTHREADS
 
@@ -108,7 +108,7 @@ namespace xsigma
  * including parallel execution of a single method, concurrent execution of 
  * multiple methods, and individual thread spawning.
  */
-class XSIGMA_API multi_threader
+class XSIGMA_VISIBILITY multi_threader
 {
 public:
     /**

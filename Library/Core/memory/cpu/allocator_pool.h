@@ -203,7 +203,7 @@ public:
  *
  * **Thread Safety**: Fully thread-safe with internal mutex protection
  */
-class XSIGMA_API allocator_pool : public Allocator
+class XSIGMA_VISIBILITY allocator_pool : public Allocator
 {
 public:
     /**
@@ -228,7 +228,7 @@ public:
      * **Thread Safety**: Constructor is not thread-safe
      * **Exception Safety**: Strong guarantee - no partial construction
      */
-    allocator_pool(
+    XSIGMA_API allocator_pool(
         size_t                                 pool_size_limit,
         bool                                   auto_resize,
         std::unique_ptr<xsigma::sub_allocator> allocator,
@@ -242,7 +242,7 @@ public:
      * **Thread Safety**: Destructor is not thread-safe
      * **Exception Safety**: noexcept - logs errors but doesn't throw
      */
-    ~allocator_pool() override;
+    XSIGMA_API ~allocator_pool() override;
 
     /**
      * @brief Returns human-readable name of the allocator.
@@ -277,7 +277,7 @@ public:
      * **Thread Safety**: Thread-safe with internal synchronization
      * **Statistics**: Updates allocation counters and hit/miss ratios
      */
-    void* allocate_raw(size_t alignment, size_t num_bytes) override;
+    XSIGMA_API void* allocate_raw(size_t alignment, size_t num_bytes) override;
 
     /**
      * @brief Deallocates memory by returning it to pool or backend.
@@ -297,7 +297,7 @@ public:
      * **Thread Safety**: Thread-safe with internal synchronization
      * **LRU Management**: Automatically maintains LRU ordering
      */
-    void deallocate_raw(void* ptr) override;
+    XSIGMA_API void deallocate_raw(void* ptr) override;
 
     /**
      * @brief Allocates memory region from pool or backend allocator.
@@ -313,7 +313,7 @@ public:
      * **Performance**: Optimized path for pool-aware allocations
      * **Thread Safety**: Thread-safe with internal synchronization
      */
-    void* Get(size_t num_bytes);
+    XSIGMA_API void* Get(size_t num_bytes);
 
     /**
      * @brief Returns memory region to pool for reuse.
@@ -330,7 +330,7 @@ public:
      * **Thread Safety**: Thread-safe with internal synchronization
      * **Auto-Resize**: May trigger pool size increase if enabled
      */
-    void Put(void* ptr, size_t num_bytes);
+    XSIGMA_API void Put(void* ptr, size_t num_bytes);
 
     /**
      * @brief Clears all cached buffers from pool.
@@ -344,7 +344,7 @@ public:
      * **Thread Safety**: Thread-safe with internal synchronization
      * **Use Cases**: Memory pressure relief, explicit cleanup, testing
      */
-    void Clear();
+    XSIGMA_API void Clear();
 
     // The following accessors permit monitoring the effectiveness of
     // the pool at avoiding repeated malloc/frees on the underlying

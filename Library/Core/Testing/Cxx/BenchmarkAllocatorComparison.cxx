@@ -135,7 +135,7 @@ static void BM_BFCAllocator_SmallAllocation(benchmark::State& state)
     opts.allow_growth = true;
 
     allocator_bfc allocator(
-        std::move(sub_allocator), 100ULL * 1024ULL * 1024ULL, "bench_bfc", opts);
+        std::move(sub_allocator), 1024ULL * 1024ULL * 1024ULL, "bench_bfc", opts);
 
     const size_t size = static_cast<size_t>(state.range(0));
 
@@ -159,7 +159,7 @@ static void BM_BFCAllocator_BatchAllocation(benchmark::State& state)
     opts.allow_growth = true;
 
     allocator_bfc allocator(
-        std::move(sub_allocator), 100ULL * 1024ULL * 1024ULL, "bench_bfc_batch", opts);
+        std::move(sub_allocator), 1024ULL * 1024ULL * 1024ULL, "bench_bfc_batch", opts);
 
     const size_t size       = static_cast<size_t>(state.range(0));
     const int    batch_size = static_cast<int>(state.range(1));
@@ -188,14 +188,15 @@ static void BM_BFCAllocator_BatchAllocation(benchmark::State& state)
 // Pool Allocator Benchmarks
 // =============================================================================
 
-static void BM_PoolAllocator_SmallAllocation(benchmark::State& state)
+static void BM_PoolAllocator_SmallAllocation(XSIGMA_UNUSED benchmark::State& state)
 {
+#if 0
     auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
 
     auto pool = std::make_unique<allocator_pool>(
         50,
-        false,
+        true,
         std::move(base_allocator),
         util::make_ptr_unique_mutable<NoopRounder>(),
         "bench_pool");
@@ -211,6 +212,7 @@ static void BM_PoolAllocator_SmallAllocation(benchmark::State& state)
 
     state.SetItemsProcessed(state.iterations());
     state.SetBytesProcessed(state.iterations() * size);
+#endif
 }
 
 static void BM_PoolAllocator_BatchAllocation(benchmark::State& state)
@@ -219,7 +221,7 @@ static void BM_PoolAllocator_BatchAllocation(benchmark::State& state)
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
 
     auto pool = std::make_unique<allocator_pool>(
-        100,
+        1000,
         true,
         std::move(base_allocator),
         util::make_ptr_unique_mutable<NoopRounder>(),

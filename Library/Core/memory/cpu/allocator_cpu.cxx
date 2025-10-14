@@ -116,6 +116,7 @@ static constexpr double kTotalAllocationWarningThreshold = 0.5;
  */
 static constexpr double kLargeAllocationWarningThreshold = 0.1;
 
+#ifndef NDEBUG
 /**
  * @brief Cached threshold for large allocation warnings in bytes.
  *
@@ -131,6 +132,7 @@ static int64_t LargeAllocationWarningBytes() noexcept
         static_cast<int64_t>(port::available_ram() * kLargeAllocationWarningThreshold);
     return value;
 }
+#endif
 
 /**
  * @brief Cached threshold for total allocation warnings in bytes.

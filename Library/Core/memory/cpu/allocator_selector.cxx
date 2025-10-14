@@ -360,7 +360,7 @@ bool allocator_selector::is_bfc_suitable(const allocation_context& ctx)
     return ctx.allocation_size > 4096 || ctx.memory_constrained;
 }
 
-bool allocator_selector::is_cpu_suitable(const allocation_context& ctx)
+bool allocator_selector::is_cpu_suitable(XSIGMA_UNUSED const allocation_context& ctx)
 {
     // CPU allocator is always suitable as a fallback
     return true;
@@ -383,7 +383,8 @@ adaptive_allocator_manager::adaptive_allocator_manager() : pimpl_(std::make_uniq
 
 adaptive_allocator_manager::~adaptive_allocator_manager() = default;
 
-void adaptive_allocator_manager::initialize(bool enable_pool, bool enable_bfc, bool enable_tracking)
+void adaptive_allocator_manager::initialize(
+    bool enable_pool, bool enable_bfc, XSIGMA_UNUSED bool enable_tracking)
 {
     std::lock_guard<std::mutex> lock(pimpl_->mutex_);
 

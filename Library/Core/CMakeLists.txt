@@ -141,12 +141,19 @@ endif()
 # This ensures the Solution Explorer shows the actual filesystem hierarchy
 xsigma_module_create_filters("${CMAKE_CURRENT_SOURCE_DIR}")
 
+message(STATUS "Compiler: ${CMAKE_CXX_COMPILER}")
+message(STATUS "Compiler ID: ${CMAKE_CXX_COMPILER_ID}, std++=${XSIGMA_CXX_STANDARD}")
+
 # Set target properties
 set_target_properties(Core PROPERTIES
     CXX_STANDARD ${XSIGMA_CXX_STANDARD}
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )
+
+if(MSVC)
+    target_compile_options(Core PRIVATE /WX)
+endif()
 
 # Include directories
 target_include_directories(Core

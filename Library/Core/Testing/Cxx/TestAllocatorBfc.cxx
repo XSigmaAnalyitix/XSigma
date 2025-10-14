@@ -98,7 +98,7 @@ std::unique_ptr<allocator_bfc> create_test_bfc_allocator()
  */
 XSIGMATEST(AllocatorBFC, basic_allocation_deallocation)
 {
-    bool started   = traceme_recorder::start(3);
+    traceme_recorder::start(3);
     auto allocator = create_test_bfc_allocator();
 
     // Test basic allocation

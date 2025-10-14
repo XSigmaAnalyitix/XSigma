@@ -578,7 +578,7 @@ TEST(AllocatorPool, allocation_timing)
     EXPECT_GT(ptrs.size(), num_allocations / 2);  // Most allocations should succeed
 
     // Pool allocations should be faster than initial allocations
-    auto pool_time =
+    XSIGMA_UNUSED auto pool_time =
         std::chrono::duration_cast<std::chrono::microseconds>(pool_end_time - pool_start_time)
             .count();
 

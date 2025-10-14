@@ -52,7 +52,7 @@ namespace xsigma
  * COMPONENT CLASSIFICATION: REQUIRED
  * This is a core component essential for basic profiling functionality.
  */
-class XSIGMA_API profiler_interface
+class XSIGMA_VISIBILITY profiler_interface
 {
 public:
     virtual ~profiler_interface() = default;

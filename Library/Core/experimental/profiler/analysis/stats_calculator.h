@@ -90,24 +90,30 @@ public:
 
     HighPrecisionValueType avg() const
     {
-        return empty() ? std::numeric_limits<ValueType>::quiet_NaN()
-                       : static_cast<HighPrecisionValueType>(sum_) / count_;
+        return (HighPrecisionValueType)(empty()
+                                            ? std::numeric_limits<ValueType>::quiet_NaN()
+                                            : static_cast<HighPrecisionValueType>(sum_) / count_);
     }
 
     // Returns sample variance.
     ValueType sample_variance() const
     {
-        return all_same() ? 0 : (squared_sum_ - std::pow(sum_, 2.0) / count_) / (count_ - 1);
+        return (ValueType)(all_same()
+                               ? 0
+                               : (squared_sum_ - std::pow(sum_, 2.0) / count_) / (count_ - 1));
     }
 
     // Returns population variance.
     ValueType variance() const
     {
-        return all_same() ? 0 : (squared_sum_ / count_) - (avg() * avg());
+        return all_same() ? (ValueType)0 : (ValueType)((squared_sum_ / count_) - (avg() * avg()));
     }
 
     // Returns population stddev.
-    ValueType std_deviation() const { return all_same() ? 0 : std::sqrt(variance()); }
+    ValueType std_deviation() const
+    {
+        return all_same() ? (ValueType)0 : (ValueType)std::sqrt(variance());
+    }
 
     void output_to_stream(std::ostream* stream) const
     {

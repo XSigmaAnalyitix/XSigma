@@ -273,31 +273,31 @@ struct profiler_scope_data
  *
  * Thread-safe for concurrent profiling operations when enabled.
  */
-class XSIGMA_API profiler_session
+class XSIGMA_VISIBILITY profiler_session
 {
 public:
     /**
      * @brief Construct a new enhanced profiler session
      * @param options Configuration options for the profiler
      */
-    explicit profiler_session(xsigma::profiler_options options);
+    XSIGMA_API explicit profiler_session(xsigma::profiler_options options);
 
     /**
      * @brief Destructor - automatically stops profiling if active
      */
-    ~profiler_session();
+    XSIGMA_API ~profiler_session();
 
     /**
      * @brief Start the profiling session
      * @return true if successfully started, false if already active or failed
      */
-    bool start();
+    XSIGMA_API bool start();
 
     /**
      * @brief Stop the profiling session
      * @return true if successfully stopped, false if not active or failed
      */
-    bool stop();
+    XSIGMA_API bool stop();
 
     /**
      * @brief Check if the profiling session is currently active
@@ -310,7 +310,7 @@ public:
      * @param name Human-readable name for the scope
      * @return Unique pointer to the created profiler scope
      */
-    std::unique_ptr<xsigma::profiler_scope> create_scope(const std::string& name);
+    XSIGMA_API std::unique_ptr<xsigma::profiler_scope> create_scope(const std::string& name);
 
     /**
      * @brief Get reference to the memory tracker component
@@ -328,30 +328,30 @@ public:
      * @brief Generate a comprehensive profiling report
      * @return Unique pointer to the generated report
      */
-    std::unique_ptr<xsigma::profiler_report> generate_report() const;
+    XSIGMA_API std::unique_ptr<xsigma::profiler_report> generate_report() const;
 
     /**
      * @brief Export profiling report to a file
      * @param filename Path to the output file
      */
-    void export_report(const std::string& filename) const;
+    XSIGMA_API void export_report(const std::string& filename) const;
 
     /**
      * @brief Print profiling report to console
      */
-    void print_report() const;
+    XSIGMA_API void print_report() const;
 
     /**
      * @brief Get the current active profiling session (thread-safe)
      * @return Pointer to current session or nullptr if none active
      */
-    static profiler_session* current_session();
+    XSIGMA_API static profiler_session* current_session();
 
     /**
      * @brief Set the current active profiling session (thread-safe)
      * @param session Pointer to the session to set as current
      */
-    static void set_current_session(profiler_session* session);
+    XSIGMA_API static void set_current_session(profiler_session* session);
 
     /**
      * @brief Get read-only access to the root profiling scope
@@ -425,7 +425,7 @@ private:
  * creating a profiler session. All methods return a reference to the
  * profiler_session_builder for method chaining.
  */
-class XSIGMA_API profiler_session_builder
+class XSIGMA_VISIBILITY profiler_session_builder
 {
 public:
     /**
@@ -589,7 +589,7 @@ private:
  *
  * Thread-safe when used with a thread-safe profiler session.
  */
-class XSIGMA_API profiler_scope
+class XSIGMA_VISIBILITY profiler_scope
 {
 public:
     /**
@@ -597,22 +597,23 @@ public:
      * @param name Human-readable name for this profiling scope
      * @param session Pointer to the profiler session (uses current session if nullptr)
      */
-    explicit profiler_scope(const std::string& name, xsigma::profiler_session* session = nullptr);
+    XSIGMA_API explicit profiler_scope(
+        const std::string& name, xsigma::profiler_session* session = nullptr);
 
     /**
      * @brief Destructor - automatically stops profiling
      */
-    ~profiler_scope();
+    XSIGMA_API ~profiler_scope();
 
     /**
      * @brief Manually start profiling (called automatically in constructor)
      */
-    void start();
+    XSIGMA_API void start();
 
     /**
      * @brief Manually stop profiling (called automatically in destructor)
      */
-    void stop();
+    XSIGMA_API void stop();
 
     /**
      * @brief Get read-only access to the scope data
@@ -653,7 +654,8 @@ private:
  * Creates a profiler_scope object that will automatically profile
  * the current code block until the scope ends.
  */
-#define XSIGMA_PROFILE_SCOPE(name) xsigma::profiler_scope _xsigma_profile_scope(name)
+#define XSIGMA_PROFILE_SCOPE(name)
+//xsigma::profiler_scope _xsigma_profile_scope(name)
 
 /**
  * @brief Convenience macro for profiling the current function
@@ -672,6 +674,6 @@ private:
  */
 #define XSIGMA_PROFILE_BLOCK(name)                                                             \
     for (bool _xsigma_profile_once = true; _xsigma_profile_once; _xsigma_profile_once = false) \
-        if (xsigma::profiler_scope _xsigma_profile_scope(name); true)
+        if (xsigma::profiler_scope _xsigma_profile_scope##name(name); true)
 
 }  // namespace xsigma

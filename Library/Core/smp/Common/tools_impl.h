@@ -33,7 +33,7 @@ inline constexpr BackendType DefaultBackend = BackendType::STDThread;
 #endif
 
 template <BackendType Backend>
-class XSIGMA_API tools_impl
+class XSIGMA_VISIBILITY tools_impl
 {
 public:
     //--------------------------------------------------------------------------------

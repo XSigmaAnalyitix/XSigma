@@ -559,10 +559,10 @@ std::optional<int64_t> FindTaskEnvStatType(std::string_view stat_name)
     return std::nullopt;
 }
 
-static std::string_view GetLineIdTypeStr(LineIdType line_id_type)
-{
-    return GetLineIdTypeStrMap().at(line_id_type);
-}
+//static std::string_view GetLineIdTypeStr(LineIdType line_id_type)
+//{
+//    return GetLineIdTypeStrMap().at(line_id_type);
+//}
 
 bool IsInternalEvent(std::optional<int64_t> event_type)
 {

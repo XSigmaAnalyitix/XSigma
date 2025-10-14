@@ -25,7 +25,7 @@ namespace detail
 namespace smp
 {
 
-class XSIGMA_API tools_api
+class XSIGMA_VISIBILITY tools_api
 {
 public:
     //--------------------------------------------------------------------------------
@@ -204,7 +204,7 @@ private:
 };
 
 //--------------------------------------------------------------------------------
-class XSIGMA_API toolsAPIInitialize
+class XSIGMA_VISIBILITY toolsAPIInitialize
 {
 public:
     toolsAPIInitialize();

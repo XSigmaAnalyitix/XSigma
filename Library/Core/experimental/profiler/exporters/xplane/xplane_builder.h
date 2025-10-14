@@ -465,7 +465,7 @@ private:
     xevent*      event_;
 };
 
-class XSIGMA_API xline_builder
+class XSIGMA_VISIBILITY xline_builder
 {
 public:
     explicit xline_builder(xline* line, xplane_builder* plane) : line_(line), plane_(plane) {}

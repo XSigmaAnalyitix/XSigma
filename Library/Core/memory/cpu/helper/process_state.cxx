@@ -121,7 +121,7 @@ Allocator* process_state::GetCPUAllocator(int numa_node)
             // TODO(reedwm): evaluate whether 64GB by default is the best choice.
             int64_t cpu_mem_limit_in_mb = -1;
 
-            XSIGMA_UNUSED bool const status = read_int64_from_env_var(
+            XSIGMA_UNUSED auto const status2 = read_int64_from_env_var(
                 "CPU_BFC_MEM_LIMIT_IN_MB", 1LL << 16 /*64GB max by default*/, &cpu_mem_limit_in_mb);
             int64_t const cpu_mem_limit = cpu_mem_limit_in_mb * (1LL << 20);
             XSIGMA_CHECK_DEBUG(sub_allocator != nullptr);
@@ -159,7 +159,7 @@ Allocator* process_state::GetCPUAllocator(int numa_node)
             allocator = allocator_cpu_base();
         }
 
-        if (use_allocator_tracking && !allocator->tracks_allocation_sizes())
+        if constexpr (use_allocator_tracking && !allocator->tracks_allocation_sizes())
         {
             allocator = new allocator_tracking(allocator, true);
         }

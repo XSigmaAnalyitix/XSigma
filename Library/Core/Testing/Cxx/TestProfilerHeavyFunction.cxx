@@ -360,8 +360,8 @@ XSIGMATEST(ProfilerHeavyFunction, ComprehensiveComputationalProfiling)
                         XSIGMA_PROFILE_SCOPE("worker_thread_" + std::to_string(i));
 
                         // Each thread performs different computational work
-                        const size_t samples_per_thread = 250000;
-                        double       pi_est = estimate_pi_monte_carlo(samples_per_thread);
+                        const size_t         samples_per_thread = 250000;
+                        XSIGMA_UNUSED double pi_est = estimate_pi_monte_carlo(samples_per_thread);
 
                         // Small computation to keep thread busy
                         std::vector<double> data(10000);

@@ -50,7 +50,7 @@ XSIGMATEST(Exception, basic_macros)
 XSIGMATEST(Exception, mode_configuration)
 {
     // Test default mode
-    auto default_mode = xsigma::get_exception_mode();
+    XSIGMA_UNUSED auto default_mode = xsigma::get_exception_mode();
 
     // Test mode switching
     xsigma::set_exception_mode(xsigma::exception_mode::THROW);
