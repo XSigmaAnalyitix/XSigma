@@ -97,7 +97,6 @@ std::string_view x_stat_visitor::str_or_ref_value() const
     case xstat::value_case_type::kDoubleValue:
     case xstat::value_case_type::kBytesValue:
     case xstat::value_case_type::VALUE_NOT_SET:
-        return {};
     default:
         return {};
     }

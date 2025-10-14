@@ -100,7 +100,7 @@ std::string allocator_selector::analyze_context(const allocation_context& ctx)
     {
         analysis << "Very Small (<64 bytes)\n";
     }
-    else if (ctx.allocation_size < 1024)
+    else if (ctx.allocation_size < 1024ULL)
     {
         analysis << "Small (64 bytes - 1 KB)\n";
     }
@@ -108,7 +108,7 @@ std::string allocator_selector::analyze_context(const allocation_context& ctx)
     {
         analysis << "Medium (1 KB - 4 KB)\n";
     }
-    else if (ctx.allocation_size < 1024 * 1024)
+    else if (ctx.allocation_size < 1024ULL * 1024ULL)
     {
         analysis << "Large (4 KB - 1 MB)\n";
     }
@@ -211,7 +211,7 @@ std::string allocator_selector::validate_choice(
     }
     else
     {
-        double chosen_confidence = calculate_confidence(allocator_type, ctx);
+        double const chosen_confidence = calculate_confidence(allocator_type, ctx);
         validation << "Status: SUBOPTIMAL - Consider " << rec.allocator_type << "\n";
         validation << "Chosen Confidence: " << (chosen_confidence * 100.0) << "%\n";
         validation << "Recommended Confidence: " << (rec.confidence * 100.0) << "%\n";
@@ -326,7 +326,7 @@ std::string allocator_selector::generate_configuration(
     }
     else if (allocator_type == "allocator_bfc")
     {
-        size_t pool_size = std::max<size_t>(ctx.allocation_size * 100, 10ULL * 1024ULL * 1024ULL);
+        size_t const pool_size = std::max<size_t>(ctx.allocation_size * 100, 10ULL * 1024ULL * 1024ULL);
 
         config << "total_memory: " << pool_size << " bytes\n";
         config << "allow_growth: " << (!ctx.memory_constrained ? "true" : "false") << "\n";
@@ -386,7 +386,7 @@ adaptive_allocator_manager::~adaptive_allocator_manager() = default;
 void adaptive_allocator_manager::initialize(
     bool enable_pool, bool enable_bfc, XSIGMA_UNUSED bool enable_tracking)
 {
-    std::lock_guard<std::mutex> lock(pimpl_->mutex_);
+    std::lock_guard<std::mutex> const lock(pimpl_->mutex_);
 
     if (pimpl_->initialized_)
     {
@@ -433,7 +433,7 @@ void adaptive_allocator_manager::initialize(
 
 Allocator* adaptive_allocator_manager::get_allocator(const allocation_context& ctx)
 {
-    std::lock_guard<std::mutex> lock(pimpl_->mutex_);
+    std::lock_guard<std::mutex> const lock(pimpl_->mutex_);
 
     if (!pimpl_->initialized_)
     {
@@ -447,7 +447,7 @@ Allocator* adaptive_allocator_manager::get_allocator(const allocation_context& c
     {
         return pimpl_->pool_allocator_.get();
     }
-    else if (rec.allocator_type == "allocator_bfc" && pimpl_->bfc_allocator_)
+    if (rec.allocator_type == "allocator_bfc" && pimpl_->bfc_allocator_)
     {
         return pimpl_->bfc_allocator_.get();
     }
@@ -457,13 +457,13 @@ Allocator* adaptive_allocator_manager::get_allocator(const allocation_context& c
 
 std::string adaptive_allocator_manager::generate_report() const
 {
-    std::lock_guard<std::mutex> lock(pimpl_->mutex_);
+    std::lock_guard<std::mutex> const lock(pimpl_->mutex_);
 
     std::ostringstream report;
     report << "=== Adaptive Allocator Manager Report ===\n";
 
     // CPU allocator stats
-    if (pimpl_->cpu_allocator_)
+    if (pimpl_->cpu_allocator_ != nullptr)
     {
         auto stats = pimpl_->cpu_allocator_->GetStats();
         if (stats.has_value())
@@ -504,17 +504,17 @@ std::string adaptive_allocator_manager::generate_report() const
 std::optional<allocator_stats> adaptive_allocator_manager::get_stats(
     const std::string& allocator_type) const
 {
-    std::lock_guard<std::mutex> lock(pimpl_->mutex_);
+    std::lock_guard<std::mutex> const lock(pimpl_->mutex_);
 
-    if (allocator_type == "allocator_cpu" && pimpl_->cpu_allocator_)
+    if (allocator_type == "allocator_cpu" && (pimpl_->cpu_allocator_ != nullptr))
     {
         return pimpl_->cpu_allocator_->GetStats();
     }
-    else if (allocator_type == "allocator_pool" && pimpl_->pool_allocator_)
+    if (allocator_type == "allocator_pool" && pimpl_->pool_allocator_)
     {
         return pimpl_->pool_allocator_->GetStats();
     }
-    else if (allocator_type == "allocator_bfc" && pimpl_->bfc_allocator_)
+    if (allocator_type == "allocator_bfc" && pimpl_->bfc_allocator_)
     {
         return pimpl_->bfc_allocator_->GetStats();
     }
@@ -524,9 +524,9 @@ std::optional<allocator_stats> adaptive_allocator_manager::get_stats(
 
 void adaptive_allocator_manager::reset_stats()
 {
-    std::lock_guard<std::mutex> lock(pimpl_->mutex_);
+    std::lock_guard<std::mutex> const lock(pimpl_->mutex_);
 
-    if (pimpl_->cpu_allocator_)
+    if (pimpl_->cpu_allocator_ != nullptr)
     {
         pimpl_->cpu_allocator_->ClearStats();
     }
