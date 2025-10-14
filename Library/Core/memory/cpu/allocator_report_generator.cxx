@@ -37,11 +37,11 @@ namespace xsigma
 // Helper Functions
 // ============================================================================
 
-std::string allocator_report_generator::format_bytes(size_t bytes) const
+std::string allocator_report_generator::format_bytes(size_t bytes) 
 {
     const char* units[] = {"B", "KB", "MB", "GB", "TB"};
     int         unit    = 0;
-    double      size    = static_cast<double>(bytes);
+    auto      size    = static_cast<double>(bytes);
 
     while (size >= 1024.0 && unit < 4)
     {
@@ -54,26 +54,25 @@ std::string allocator_report_generator::format_bytes(size_t bytes) const
     return oss.str();
 }
 
-std::string allocator_report_generator::format_duration(int64_t microseconds) const
+std::string allocator_report_generator::format_duration(int64_t microseconds) 
 {
     if (microseconds < 1000)
     {
         return std::to_string(microseconds) + " μs";
     }
-    else if (microseconds < 1000000)
+    if (microseconds < 1000000)
     {
         return std::to_string(microseconds / 1000) + " ms";
     }
-    else
-    {
-        return std::to_string(microseconds / 1000000) + " s";
-    }
+    
+            return std::to_string(microseconds / 1000000) + " s";
+   
 }
 
-std::string allocator_report_generator::generate_header(const std::string& title) const
+std::string allocator_report_generator::generate_header(const std::string& title) 
 {
     std::ostringstream header;
-    std::string        separator(80, '=');
+    std::string        const separator(80, '=');
 
     header << "\n" << separator << "\n";
     header << title << "\n";
@@ -82,7 +81,7 @@ std::string allocator_report_generator::generate_header(const std::string& title
     return header.str();
 }
 
-std::string allocator_report_generator::generate_separator() const
+std::string allocator_report_generator::generate_separator() 
 {
     return std::string(80, '-') + "\n";
 }
@@ -123,7 +122,7 @@ std::string allocator_report_generator::generate_comprehensive_report(
         if (stats_opt.has_value())
         {
             auto&       stats      = stats_opt.value();
-            std::string usage_bars = visualizer_.create_usage_bars(
+            std::string const usage_bars = visualizer_.create_usage_bars(
                 stats.bytes_in_use.load(),
                 stats.peak_bytes_in_use.load(),
                 stats.bytes_limit.load());
@@ -168,7 +167,7 @@ std::string allocator_report_generator::generate_comprehensive_report(
     {
         report << generate_header("Detailed Allocation Records");
         auto   records = allocator.GetEnhancedRecords();
-        size_t count   = std::min(records.size(), config.max_allocation_details);
+        size_t const count   = std::min(records.size(), config.max_allocation_details);
 
         for (size_t i = 0; i < count; ++i)
         {
@@ -223,7 +222,7 @@ std::string allocator_report_generator::generate_comprehensive_report(
 // ============================================================================
 
 std::vector<memory_leak_info> allocator_report_generator::detect_leaks(
-    const allocator_tracking& allocator, int64_t leak_threshold_ms) const
+    const allocator_tracking& allocator, int64_t leak_threshold_ms) 
 {
     std::vector<memory_leak_info> leaks;
 
@@ -263,7 +262,7 @@ std::vector<memory_leak_info> allocator_report_generator::detect_leaks(
 }
 
 std::string allocator_report_generator::generate_leak_report(
-    const std::vector<memory_leak_info>& leaks, size_t max_reports) const
+    const std::vector<memory_leak_info>& leaks, size_t max_reports) 
 {
     std::ostringstream report;
 
@@ -275,7 +274,7 @@ std::string allocator_report_generator::generate_leak_report(
 
     report << "Detected " << leaks.size() << " potential memory leak(s):\n\n";
 
-    size_t count = std::min(leaks.size(), max_reports);
+    size_t const count = std::min(leaks.size(), max_reports);
     for (size_t i = 0; i < count; ++i)
     {
         const auto& leak = leaks[i];
@@ -316,7 +315,7 @@ std::string allocator_report_generator::generate_leak_report(
 // ============================================================================
 
 std::string allocator_report_generator::generate_summary_statistics(
-    const allocator_tracking& allocator) const
+    const allocator_tracking& allocator) 
 {
     std::ostringstream summary;
 
@@ -345,7 +344,7 @@ std::string allocator_report_generator::generate_summary_statistics(
 
     if (stats.num_allocs.load() > 0)
     {
-        double avg_size = stats.average_allocation_size();
+        double const avg_size = stats.average_allocation_size();
         summary << "Average Allocation:    " << format_bytes(static_cast<size_t>(avg_size)) << "\n";
     }
 
@@ -370,7 +369,7 @@ std::string allocator_report_generator::generate_summary_statistics(
 // ============================================================================
 
 std::string allocator_report_generator::generate_performance_report(
-    const atomic_timing_stats& timing_stats) const
+    const atomic_timing_stats& timing_stats) 
 {
     std::ostringstream perf;
 
@@ -381,16 +380,16 @@ std::string allocator_report_generator::generate_performance_report(
     perf << "Avg Deallocation Time:  " << std::fixed << std::setprecision(2)
          << timing_stats.average_dealloc_time_us() << " μs\n";
 
-    uint64_t min_alloc = timing_stats.min_alloc_time_us.load();
-    uint64_t max_alloc = timing_stats.max_alloc_time_us.load();
+    uint64_t const min_alloc = timing_stats.min_alloc_time_us.load();
+    uint64_t const max_alloc = timing_stats.max_alloc_time_us.load();
     if (min_alloc != UINT64_MAX)
     {
         perf << "Min Allocation Time:    " << min_alloc << " μs\n";
         perf << "Max Allocation Time:    " << max_alloc << " μs\n";
     }
 
-    uint64_t min_dealloc = timing_stats.min_dealloc_time_us.load();
-    uint64_t max_dealloc = timing_stats.max_dealloc_time_us.load();
+    uint64_t const min_dealloc = timing_stats.min_dealloc_time_us.load();
+    uint64_t const max_dealloc = timing_stats.max_dealloc_time_us.load();
     if (min_dealloc != UINT64_MAX)
     {
         perf << "Min Deallocation Time:  " << min_dealloc << " μs\n";
@@ -398,7 +397,7 @@ std::string allocator_report_generator::generate_performance_report(
     }
 
     // Performance assessment
-    double avg_alloc = timing_stats.average_alloc_time_us();
+    double const avg_alloc = timing_stats.average_alloc_time_us();
     perf << "\nPerformance Assessment:\n";
     if (avg_alloc < 1.0)
     {
@@ -427,7 +426,7 @@ std::string allocator_report_generator::generate_performance_report(
 // ============================================================================
 
 std::string allocator_report_generator::analyze_allocation_patterns(
-    const std::vector<enhanced_alloc_record>& records) const
+    const std::vector<enhanced_alloc_record>& records) 
 {
     std::ostringstream analysis;
 
@@ -451,9 +450,9 @@ std::string allocator_report_generator::analyze_allocation_patterns(
         max_size = std::max(max_size, record.requested_bytes);
     }
 
-    double avg_requested = static_cast<double>(total_requested) / records.size();
-    double avg_allocated = static_cast<double>(total_allocated) / records.size();
-    double overhead_ratio =
+    double const avg_requested = static_cast<double>(total_requested) / records.size();
+    double const avg_allocated = static_cast<double>(total_allocated) / records.size();
+    double const overhead_ratio =
         total_allocated > 0
             ? static_cast<double>(total_allocated - total_requested) / total_allocated
             : 0.0;
@@ -475,11 +474,11 @@ std::string allocator_report_generator::analyze_allocation_patterns(
     double size_variance = 0.0;
     for (const auto& record : records)
     {
-        double diff = static_cast<double>(record.requested_bytes) - avg_requested;
+        double const diff = static_cast<double>(record.requested_bytes) - avg_requested;
         size_variance += diff * diff;
     }
     size_variance /= records.size();
-    double size_stddev = std::sqrt(size_variance);
+    double const size_stddev = std::sqrt(size_variance);
 
     if (size_stddev < avg_requested * 0.1)
     {
@@ -524,7 +523,7 @@ std::string allocator_report_generator::generate_size_distribution(
 // ============================================================================
 
 std::string allocator_report_generator::generate_fragmentation_report(
-    const memory_fragmentation_metrics& metrics) const
+    const memory_fragmentation_metrics& metrics) 
 {
     std::ostringstream frag;
 
@@ -566,7 +565,7 @@ std::string allocator_report_generator::generate_fragmentation_report(
 // ============================================================================
 
 std::string allocator_report_generator::generate_recommendations(
-    const allocator_tracking& allocator) const
+    const allocator_tracking& allocator) 
 {
     std::ostringstream recommendations;
 
@@ -604,7 +603,7 @@ std::string allocator_report_generator::generate_recommendations(
     }
 
     // Check for slow allocations
-    double avg_alloc_time = timing_stats.average_alloc_time_us();
+    double const avg_alloc_time = timing_stats.average_alloc_time_us();
     if (avg_alloc_time > 50.0)
     {
         recommendations << "• Slow allocation performance detected (" << std::fixed
@@ -615,11 +614,11 @@ std::string allocator_report_generator::generate_recommendations(
     }
 
     // Check for memory leaks
-    int64_t active = stats.active_allocations.load();
-    int64_t total  = stats.num_allocs.load();
+    int64_t const active = stats.active_allocations.load();
+    int64_t const total  = stats.num_allocs.load();
     if (active > 0 && total > 0)
     {
-        double leak_ratio = static_cast<double>(active) / total;
+        double const leak_ratio = static_cast<double>(active) / total;
         if (leak_ratio > 0.5)
         {
             recommendations << "• High number of active allocations (" << active << " / " << total
@@ -643,7 +642,7 @@ std::string allocator_report_generator::generate_recommendations(
 // ============================================================================
 
 bool allocator_report_generator::export_report(
-    const std::string& report, const std::string& filename) const
+    const std::string& report, const std::string& filename) 
 {
     try
     {
@@ -741,7 +740,7 @@ std::string memory_report_builder::build() const
         return "Error: No allocator specified for report generation.\n";
     }
 
-    allocator_report_generator generator;
+    allocator_report_generator const generator;
     return generator.generate_comprehensive_report(*allocator_, config_);
 }
 

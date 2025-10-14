@@ -114,8 +114,8 @@ public:
      * **Algorithm**: Identifies allocations older than threshold
      * **Performance**: O(n) where n is number of active allocations
      */
-    XSIGMA_API std::vector<memory_leak_info> detect_leaks(
-        const allocator_tracking& allocator, int64_t leak_threshold_ms = 60000) const;
+    static XSIGMA_API std::vector<memory_leak_info> detect_leaks(
+        const allocator_tracking& allocator, int64_t leak_threshold_ms = 60000) ;
 
     /**
      * @brief Generate memory usage timeline visualization
@@ -147,8 +147,8 @@ public:
      *
      * **Performance**: O(1) - simple statistics formatting
      */
-    XSIGMA_API std::string generate_performance_report(
-        const atomic_timing_stats& timing_stats) const;
+    static XSIGMA_API std::string generate_performance_report(
+        const atomic_timing_stats& timing_stats) ;
 
     /**
      * @brief Generate optimization recommendations
@@ -158,7 +158,7 @@ public:
      *
      * **Performance**: O(1) - heuristic-based analysis
      */
-    XSIGMA_API std::string generate_recommendations(const allocator_tracking& allocator) const;
+    static XSIGMA_API std::string generate_recommendations(const allocator_tracking& allocator) ;
 
     /**
      * @brief Generate fragmentation analysis report
@@ -168,8 +168,8 @@ public:
      *
      * **Performance**: O(1) - metrics formatting
      */
-    XSIGMA_API std::string generate_fragmentation_report(
-        const memory_fragmentation_metrics& metrics) const;
+    static XSIGMA_API std::string generate_fragmentation_report(
+        const memory_fragmentation_metrics& metrics) ;
 
     /**
      * @brief Export report to file
@@ -181,34 +181,34 @@ public:
      * **Performance**: O(n) where n is report size
      * **Thread Safety**: Not thread-safe
      */
-    XSIGMA_API bool export_report(const std::string& report, const std::string& filename) const;
+    static XSIGMA_API bool export_report(const std::string& report, const std::string& filename) ;
 
 private:
     /**
      * @brief Format bytes in human-readable format
      */
-    std::string format_bytes(size_t bytes) const;
+    static std::string format_bytes(size_t bytes) ;
 
     /**
      * @brief Format duration in human-readable format
      */
-    std::string format_duration(int64_t microseconds) const;
+    static std::string format_duration(int64_t microseconds) ;
 
     /**
      * @brief Generate report header
      */
-    std::string generate_header(const std::string& title) const;
+    static std::string generate_header(const std::string& title) ;
 
     /**
      * @brief Generate report section separator
      */
-    std::string generate_separator() const;
+    static std::string generate_separator() ;
 
     /**
      * @brief Analyze allocation patterns
      */
-    std::string analyze_allocation_patterns(
-        const std::vector<enhanced_alloc_record>& records) const;
+    static std::string analyze_allocation_patterns(
+        const std::vector<enhanced_alloc_record>& records) ;
 
     /**
      * @brief Calculate memory efficiency score
@@ -223,13 +223,13 @@ private:
     /**
      * @brief Generate leak report section
      */
-    std::string generate_leak_report(
-        const std::vector<memory_leak_info>& leaks, size_t max_reports) const;
+    static std::string generate_leak_report(
+        const std::vector<memory_leak_info>& leaks, size_t max_reports) ;
 
     /**
      * @brief Generate summary statistics
      */
-    std::string generate_summary_statistics(const allocator_tracking& allocator) const;
+    static std::string generate_summary_statistics(const allocator_tracking& allocator) ;
 
     /**
      * @brief ASCII visualizer for graphs

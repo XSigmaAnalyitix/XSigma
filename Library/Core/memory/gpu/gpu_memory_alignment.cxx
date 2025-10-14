@@ -114,7 +114,7 @@ gpu_architecture gpu_memory_alignment::detect_architecture(
     {
     case device_enum::CUDA:
     {
-        int const compute_capability = compute_major * 10 + compute_minor;
+        int const compute_capability = (compute_major * 10) + compute_minor;
 
         if (compute_capability >= 90)
         {

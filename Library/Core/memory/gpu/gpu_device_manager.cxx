@@ -268,7 +268,7 @@ private:
 
         // Compute capability (20% weight) - higher is better for PDE
         double const compute_score =
-            device.compute_capability_major + device.compute_capability_minor * 0.1;
+            device.compute_capability_major + (device.compute_capability_minor * 0.1);
         score += 0.2 * (compute_score / 8.0);  // Normalize to compute capability 8.0
 
         // Double precision support (15% weight)
