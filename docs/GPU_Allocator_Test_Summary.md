@@ -157,7 +157,7 @@ The test suite supports all three allocation methods through compile-time select
 - **Testing**: Complete test coverage on CUDA systems
 
 ### HIP Support ✅
-- **Preprocessor**: `XSIGMA_USE_HIP`
+- **Preprocessor**: `XSIGMA_ENABLE_HIP`
 - **APIs**: HIP Runtime API
 - **Devices**: AMD GPU architectures (gfx803-gfx1100)
 - **Testing**: Parallel test coverage for HIP systems

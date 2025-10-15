@@ -53,7 +53,7 @@
 #include <cuda_runtime.h>
 #endif
 
-#ifdef XSIGMA_USE_HIP
+#ifdef XSIGMA_ENABLE_HIP
 #include <hip/hip_runtime.h>
 #endif
 
@@ -220,7 +220,7 @@ namespace xsigma::gpu::memory_allocator
 #endif
 
 // HIP error checking helper macros
-#ifdef XSIGMA_USE_HIP
+#ifdef XSIGMA_ENABLE_HIP
 #define HIP_CHECK_RETURN_NULL(call)                                                   \
     do                                                                                \
     {                                                                                 \
@@ -337,7 +337,7 @@ void* allocate(
     }
 #endif
 
-#elif defined(XSIGMA_USE_HIP)
+#elif defined(XSIGMA_ENABLE_HIP)
 
 #if defined(XSIGMA_HIP_ALLOC_SYNC)
     // Use synchronous HIP allocation
@@ -484,7 +484,7 @@ void free(
     }
 #endif
 
-#elif defined(XSIGMA_USE_HIP)
+#elif defined(XSIGMA_ENABLE_HIP)
 
 #if defined(XSIGMA_HIP_ALLOC_SYNC)
     // Use synchronous HIP deallocation
@@ -553,7 +553,7 @@ bool set_device(int device_id) noexcept
 #ifdef XSIGMA_ENABLE_CUDA
     CUDA_CHECK_RETURN_FALSE(cudaSetDevice(device_id));
     return true;
-#elif defined(XSIGMA_USE_HIP)
+#elif defined(XSIGMA_ENABLE_HIP)
     HIP_CHECK_RETURN_FALSE(hipSetDevice(device_id));
     return true;
 #else
@@ -573,7 +573,7 @@ int get_current_device() noexcept
         return -1;
     }
     return device_id;
-#elif defined(XSIGMA_USE_HIP)
+#elif defined(XSIGMA_ENABLE_HIP)
     int        device_id = -1;
     hipError_t error     = hipGetDevice(&device_id);
     if (error != hipSuccess)

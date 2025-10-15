@@ -42,7 +42,7 @@ class GPUTestCoverageAnalyzer:
             gpu_keywords = [
                 'cuda', 'gpu', 'allocator_gpu', 'allocator_cuda', 
                 'XSIGMA_ENABLE_CUDA', 'cudaMalloc', 'cuMem',
-                'hip', 'XSIGMA_USE_HIP'
+                'hip', 'XSIGMA_ENABLE_HIP'
             ]
             return any(keyword.lower() in content.lower() for keyword in gpu_keywords)
         except Exception:

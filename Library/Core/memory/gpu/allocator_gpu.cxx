@@ -20,7 +20,7 @@
 #include <cuda_runtime.h>
 #endif
 
-#ifdef XSIGMA_USE_HIP
+#ifdef XSIGMA_ENABLE_HIP
 #include <hip/hip_runtime.h>
 #endif
 

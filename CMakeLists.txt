@@ -99,7 +99,7 @@ set(XSIGMA_VECTORIZATION_TYPE
       "vectorization implementation to use. Options are no, sse, avx, avx2, or avx512"
 )
 set_property(CACHE XSIGMA_VECTORIZATION_TYPE PROPERTY STRINGS no sse avx avx2 avx512)
-cmake_dependent_option(XSIGMA_USE_HIP "Support HIP backend accelerator" OFF
+cmake_dependent_option(XSIGMA_ENABLE_HIP "Support HIP backend accelerator" OFF
   "CMAKE_VERSION VERSION_GREATER_EQUAL 3.21;NOT XSIGMA_ENABLE_CUDA" OFF)
 
 # Mandatory core dependencies (always included)

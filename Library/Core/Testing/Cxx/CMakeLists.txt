@@ -17,9 +17,38 @@ file(
 set(TestFiles)
 foreach(_test_source IN ITEMS ${test_sources})
   get_filename_component(file_name "${_test_source}" NAME)
-  if(NOT file_name MATCHES "TestLoggerDisableSignalHandler")
-    list(APPEND TestFiles "${_test_source}")
+
+  # Always exclude TestLoggerDisableSignalHandler
+  if(file_name MATCHES "TestLoggerDisableSignalHandler")
+    continue()
   endif()
+
+  # Exclude GPU-related test files based on compile flags
+  # When both CUDA and HIP are disabled, exclude all GPU tests
+  if(NOT XSIGMA_ENABLE_CUDA AND NOT XSIGMA_ENABLE_HIP)
+    if(file_name MATCHES "TestGpu" OR file_name MATCHES "TestGPU")
+      message(STATUS "Excluding GPU test (no GPU support): ${file_name}")
+      continue()
+    endif()
+  endif()
+
+  # When CUDA is disabled, exclude CUDA-specific tests
+  if(NOT XSIGMA_ENABLE_CUDA)
+    if(file_name MATCHES "TestCuda")
+      message(STATUS "Excluding CUDA test (CUDA disabled): ${file_name}")
+      continue()
+    endif()
+  endif()
+
+  # When HIP is disabled, exclude HIP-specific tests
+  if(NOT XSIGMA_ENABLE_HIP)
+    if(file_name MATCHES "TestHip")
+      message(STATUS "Excluding HIP test (HIP disabled): ${file_name}")
+      continue()
+    endif()
+  endif()
+
+  list(APPEND TestFiles "${_test_source}")
 endforeach()
 
 # =============================================================================
@@ -117,6 +146,22 @@ file(
   "${CMAKE_CURRENT_SOURCE_DIR}/Benchmark*.cxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/Benchmark*.cu"
 )
+
+# Exclude CUDA-related benchmarks when GPU support is disabled
+if(NOT XSIGMA_ENABLE_CUDA AND NOT XSIGMA_ENABLE_HIP)
+  set(filtered_bench_sources)
+  foreach(_bench_source IN ITEMS ${bench_sources})
+    get_filename_component(file_name "${_bench_source}" NAME)
+    # Exclude CUDA-related benchmarks
+    if(NOT file_name MATCHES ".*[Cc]uda.*")
+      list(APPEND filtered_bench_sources "${_bench_source}")
+    else()
+      message(STATUS "Excluding CUDA benchmark (no GPU support): ${file_name}")
+    endif()
+  endforeach()
+  set(bench_sources ${filtered_bench_sources})
+endif()
+
     add_executable(CoreCxxBenchmark ${bench_sources})
 
     # Link libraries
