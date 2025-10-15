@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "Testing/xsigmaTest.h"
-#include "memory/cpu/helper/memory_allocator.h"
+#include "memory/helper/memory_allocator.h"
 #include "memory/unified_memory_stats.h"
 #include "memory/visualization/ascii_visualizer.h"
 

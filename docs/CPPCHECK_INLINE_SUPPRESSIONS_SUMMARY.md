@@ -24,7 +24,7 @@ if XSIGMA_UNLIKELY (num_bytes > static_cast<size_t>(LargeAllocationWarningBytes(
 
 ---
 
-### 2. syntaxError at `Library/Core/memory/cpu/helper/memory_allocator.cxx:57`
+### 2. syntaxError at `Library/Core/memory/helper/memory_allocator.cxx:57`
 
 **Location:** Line 57 (now line 60 after adding comments)
 
@@ -62,7 +62,7 @@ if (current_log_level >= gpu_tracking_log_level::ERROR)
 
 ---
 
-### 4. knownConditionTrueFalse at `Library/Core/memory/cpu/helper/process_state.cxx:161`
+### 4. knownConditionTrueFalse at `Library/Core/memory/helper/process_state.cxx:161`
 
 **Location:** Line 161 (now line 165 after adding comments)
 
@@ -109,9 +109,9 @@ if (use_allocator_tracking && !allocator->TracksAllocationSizes())
 ## Files Modified
 
 1. ✅ `Library/Core/memory/cpu/allocator_cpu_impl.cxx`
-2. ✅ `Library/Core/memory/cpu/helper/memory_allocator.cxx`
+2. ✅ `Library/Core/memory/helper/memory_allocator.cxx`
 3. ✅ `Library/Core/memory/gpu/gpu_allocator_tracking.cxx`
-4. ✅ `Library/Core/memory/cpu/helper/process_state.cxx`
+4. ✅ `Library/Core/memory/helper/process_state.cxx`
 5. ✅ `Library/Core/smp/multi_threader.cxx`
 
 ## Suppression Format
@@ -143,11 +143,11 @@ If you prefer to use global suppressions instead, you can add these to `Scripts/
 ```
 # Syntax errors from XSIGMA_UNLIKELY macro
 syntaxError:Library/Core/memory/cpu/allocator_cpu_impl.cxx:274
-syntaxError:Library/Core/memory/cpu/helper/memory_allocator.cxx:57
+syntaxError:Library/Core/memory/helper/memory_allocator.cxx:57
 syntaxError:Library/Core/memory/gpu/gpu_allocator_tracking.cxx:347
 
 # Known condition that varies by configuration
-knownConditionTrueFalse:Library/Core/memory/cpu/helper/process_state.cxx:161
+knownConditionTrueFalse:Library/Core/memory/helper/process_state.cxx:161
 
 # Platform-dependent assignment
 redundantAssignment:Library/Core/smp/multi_threader.cxx:116

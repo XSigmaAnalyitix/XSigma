@@ -50,7 +50,7 @@ Each suppression includes a clear explanation of why it's needed:
 - **Reason:** `XSIGMA_UNLIKELY` macro confuses cppcheck
 - **Lines added:** 3
 
-### 2. Library/Core/memory/cpu/helper/memory_allocator.cxx
+### 2. Library/Core/memory/helper/memory_allocator.cxx
 - **Line:** 57 (now 60)
 - **Warning:** syntaxError
 - **Reason:** `XSIGMA_UNLIKELY` macro confuses cppcheck
@@ -62,7 +62,7 @@ Each suppression includes a clear explanation of why it's needed:
 - **Reason:** False positive from conditional compilation
 - **Lines added:** 3
 
-### 4. Library/Core/memory/cpu/helper/process_state.cxx
+### 4. Library/Core/memory/helper/process_state.cxx
 - **Line:** 161 (now 165)
 - **Warning:** knownConditionTrueFalse
 - **Reason:** Condition depends on runtime configuration
@@ -102,7 +102,7 @@ cppcheck Library/Core/memory/cpu/allocator_cpu_impl.cxx \
   --enable=all --inline-suppr
 
 # Test file 2
-cppcheck Library/Core/memory/cpu/helper/memory_allocator.cxx \
+cppcheck Library/Core/memory/helper/memory_allocator.cxx \
   --enable=all --inline-suppr
 
 # Test file 3
@@ -110,7 +110,7 @@ cppcheck Library/Core/memory/gpu/gpu_allocator_tracking.cxx \
   --enable=all --inline-suppr
 
 # Test file 4
-cppcheck Library/Core/memory/cpu/helper/process_state.cxx \
+cppcheck Library/Core/memory/helper/process_state.cxx \
   --enable=all --inline-suppr
 
 # Test file 5
@@ -187,11 +187,11 @@ If you prefer global suppressions, add to `Scripts/cppcheck_suppressions.txt`:
 ```
 # Syntax errors from XSIGMA_UNLIKELY macro
 syntaxError:Library/Core/memory/cpu/allocator_cpu_impl.cxx:274
-syntaxError:Library/Core/memory/cpu/helper/memory_allocator.cxx:57
+syntaxError:Library/Core/memory/helper/memory_allocator.cxx:57
 syntaxError:Library/Core/memory/gpu/gpu_allocator_tracking.cxx:347
 
 # Known condition that varies by configuration
-knownConditionTrueFalse:Library/Core/memory/cpu/helper/process_state.cxx:161
+knownConditionTrueFalse:Library/Core/memory/helper/process_state.cxx:161
 
 # Platform-dependent assignment
 redundantAssignment:Library/Core/smp/multi_threader.cxx:116

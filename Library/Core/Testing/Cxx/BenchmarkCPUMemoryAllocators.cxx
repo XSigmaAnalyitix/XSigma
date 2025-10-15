@@ -27,17 +27,7 @@
 
 #include "common/configure.h"
 #include "common/macros.h"
-#include "memory/cpu/helper/memory_allocator.h"
-
-// Platform-specific includes
-#ifdef XSIGMA_ENABLE_TBB
-#include <tbb/cache_aligned_allocator.h>
-#include <tbb/scalable_allocator.h>
-#endif
-
-#ifdef XSIGMA_ENABLE_MIMALLOC
-#include "mimalloc.h"
-#endif
+#include "memory/helper/memory_allocator.h"
 
 // Standard aligned allocation
 #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
@@ -70,18 +60,12 @@ public:
     void* allocate(
         XSIGMA_UNUSED std::size_t size, XSIGMA_UNUSED std::size_t alignment = 64) noexcept override
     {
-#ifdef XSIGMA_ENABLE_MIMALLOC
-        return mi_malloc_aligned(size, alignment);
-#else
-        return nullptr;
-#endif
+        return xsigma::cpu::memory_allocator::allocate_mi(size, alignment);
     }
 
     void deallocate(XSIGMA_UNUSED void* ptr, XSIGMA_UNUSED std::size_t size = 0) noexcept override
     {
-#ifdef XSIGMA_ENABLE_MIMALLOC
-        mi_free(ptr);
-#endif
+        xsigma::cpu::memory_allocator::free_mi(ptr, size);
     }
 
     const char* name() const noexcept override { return "mimalloc"; }
@@ -93,18 +77,12 @@ public:
     void* allocate(
         XSIGMA_UNUSED std::size_t size, XSIGMA_UNUSED std::size_t alignment = 64) noexcept override
     {
-#ifdef XSIGMA_ENABLE_TBB
-        return scalable_aligned_malloc(size, alignment);
-#else
-        return nullptr;
-#endif
+        return xsigma::cpu::memory_allocator::allocate_tbb(size, alignment);
     }
 
     void deallocate(XSIGMA_UNUSED void* ptr, XSIGMA_UNUSED std::size_t size = 0) noexcept override
     {
-#ifdef XSIGMA_ENABLE_TBB
-        scalable_aligned_free(ptr);
-#endif
+        xsigma::cpu::memory_allocator::free_tbb(ptr, size);
     }
 
     const char* name() const noexcept override { return "tbb_scalable"; }
@@ -139,23 +117,20 @@ public:
         }
     }
 
-    const char* name() const noexcept override { return "standard_aligned"; }
+    const char* name() const noexcept override { return "standard_aligned_malloc"; }
 };
 
 class xsigma_cpu_benchmark_allocator : public allocator_benchmark_interface
 {
 public:
-    void* allocate(std::size_t size, std::size_t alignment = 64) noexcept override
+    void* allocate(std::size_t size, XSIGMA_UNUSED std::size_t alignment = 64) noexcept override
     {
-        return xsigma::cpu::memory_allocator::allocate(size, alignment);
+        return malloc(size);
     }
 
-    void deallocate(void* ptr, std::size_t size = 0) noexcept override
-    {
-        xsigma::cpu::memory_allocator::free(ptr, size);
-    }
+    void deallocate(void* ptr, XSIGMA_UNUSED std::size_t size = 0) noexcept override { free(ptr); }
 
-    const char* name() const noexcept override { return "xsigma_cpu"; }
+    const char* name() const noexcept override { return "standard_malloc"; }
 };
 
 // =============================================================================

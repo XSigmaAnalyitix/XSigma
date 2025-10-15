@@ -15,6 +15,10 @@
  *
  * Contact: licensing@xsigma.co.uk
  * Website: https://www.xsigma.co.uk
+ *
+ * NOTE: This file tests the legacy gpu_allocator_factory which is deprecated.
+ * The main GPU allocator functionality is now in allocator_gpu (see TestAllocatorCuda.cxx).
+ * This file is kept for testing the remaining factory functionality (caching allocator creation).
  */
 
 #include "common/configure.h"
@@ -35,11 +39,13 @@ using namespace xsigma;
 using namespace xsigma::gpu;
 
 /**
- * @brief Test strategy recommendation functionality
+ * @brief Test strategy recommendation functionality (legacy factory support)
  */
 XSIGMATEST(GpuAllocatorFactory, recommends_appropriate_strategies)
 {
     // Test strategy recommendation for different scenarios
+    // Note: This tests the legacy factory pattern which is deprecated
+    // but still provides useful strategy recommendations
 
     // Small, frequent allocations should prefer caching
     auto strategy1 = gpu_allocator_factory::recommend_strategy(1024, 200.0, 0.5);
@@ -61,11 +67,14 @@ XSIGMATEST(GpuAllocatorFactory, recommends_appropriate_strategies)
 }
 
 /**
- * @brief Test device validation functionality
+ * @brief Test device validation functionality (legacy factory support)
  */
 XSIGMATEST(GpuAllocatorFactory, validates_device_support_correctly)
 {
     // Test CUDA device validation
+    // Note: This tests the legacy factory pattern which is deprecated
+    // but device validation is still useful for compatibility
+
     bool cuda_direct_support = gpu_allocator_factory::validate_device_support(
         gpu_allocation_strategy::DIRECT, device_enum::CUDA, 0);
 

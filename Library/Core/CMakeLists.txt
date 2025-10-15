@@ -72,8 +72,8 @@ file(
   "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.hxx"
   ${xsigma_templates})
 
-# Remove GPU files if CUDA is not enabled
-if(NOT XSIGMA_ENABLE_CUDA)
+# Remove GPU files if neither CUDA nor HIP is enabled
+if(NOT XSIGMA_ENABLE_CUDA AND NOT XSIGMA_USE_HIP)
     file(GLOB_RECURSE GPU_SOURCE_FILES memory/gpu/*.cxx)
     file(GLOB_RECURSE GPU_HEADER_FILES memory/gpu/*.h memory/gpu/*.hxx)
     list(REMOVE_ITEM headers ${GPU_HEADER_FILES})
@@ -242,9 +242,13 @@ if(XSIGMA_ENABLE_MIMALLOC)
     add_dependencies(Core XSigma::mimalloc)
 endif()
 
-# CUDA support
+# GPU support (CUDA or HIP)
 if(XSIGMA_ENABLE_CUDA)
     target_link_libraries(Core PRIVATE ${XSIGMA_CUDA_LIBRARIES})
+endif()
+
+if(XSIGMA_USE_HIP)
+    target_link_libraries(Core PRIVATE ${XSIGMA_HIP_LIBRARIES})
 endif()
 
 # Install targets

@@ -18,7 +18,7 @@
  *       or SaaS usage. Contact us to obtain a commercial agreement.
  *
  * MODIFICATIONS FROM ORIGINAL:
- * - Extracted from memory/cpu/helper/mem.cxx for better modularity
+ * - Extracted from memory/helper/mem.cxx for better modularity
  * - Added conditional compilation support for optional compression
  * - Enhanced error handling and platform compatibility
  *

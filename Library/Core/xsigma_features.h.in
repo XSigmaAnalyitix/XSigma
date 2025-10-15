@@ -25,6 +25,8 @@
 
 #cmakedefine XSIGMA_ENABLE_CUDA
 
+#cmakedefine XSIGMA_USE_HIP
+
 #cmakedefine XSIGMA_ENABLE_GTEST
 
 #cmakedefine XSIGMA_USE_EXCEPTION_PTR

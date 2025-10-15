@@ -121,7 +121,7 @@ xsigma::cpu_allocator_collect_stats.store(true);
 
 ### 2. mimalloc Integration
 
-**File:** `Library/Core/memory/cpu/helper/memory_allocator.h`
+**File:** `Library/Core/memory/helper/memory_allocator.h`
 
 #### Implementation
 
@@ -157,7 +157,7 @@ inline void free(void* ptr) {
 
 ### 3. TBB Scalable Allocator
 
-**File:** `Library/Core/memory/cpu/helper/memory_allocator.h`
+**File:** `Library/Core/memory/helper/memory_allocator.h`
 
 #### Implementation
 

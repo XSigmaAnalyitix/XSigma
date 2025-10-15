@@ -29,7 +29,7 @@ This document shows the exact changes made to each file to add inline cppcheck s
 
 ---
 
-## 2. Library/Core/memory/cpu/helper/memory_allocator.cxx
+## 2. Library/Core/memory/helper/memory_allocator.cxx
 
 ### Before (Line 54-57):
 ```cpp
@@ -79,7 +79,7 @@ void* allocate(std::size_t nbytes, std::size_t alignment, init_policy_enum init)
 
 ---
 
-## 4. Library/Core/memory/cpu/helper/process_state.cxx
+## 4. Library/Core/memory/helper/process_state.cxx
 
 ### Before (Line 158-161):
 ```cpp
@@ -178,13 +178,13 @@ To verify these suppressions work:
 cppcheck Library/Core/memory/cpu/allocator_cpu_impl.cxx \
   --enable=all --inline-suppr
 
-cppcheck Library/Core/memory/cpu/helper/memory_allocator.cxx \
+cppcheck Library/Core/memory/helper/memory_allocator.cxx \
   --enable=all --inline-suppr
 
 cppcheck Library/Core/memory/gpu/gpu_allocator_tracking.cxx \
   --enable=all --inline-suppr
 
-cppcheck Library/Core/memory/cpu/helper/process_state.cxx \
+cppcheck Library/Core/memory/helper/process_state.cxx \
   --enable=all --inline-suppr
 
 cppcheck Library/Core/smp/multi_threader.cxx \
@@ -211,9 +211,9 @@ If you prefer global suppressions, you can remove these inline comments and add 
 
 ```
 syntaxError:Library/Core/memory/cpu/allocator_cpu_impl.cxx:274
-syntaxError:Library/Core/memory/cpu/helper/memory_allocator.cxx:57
+syntaxError:Library/Core/memory/helper/memory_allocator.cxx:57
 syntaxError:Library/Core/memory/gpu/gpu_allocator_tracking.cxx:347
-knownConditionTrueFalse:Library/Core/memory/cpu/helper/process_state.cxx:161
+knownConditionTrueFalse:Library/Core/memory/helper/process_state.cxx:161
 redundantAssignment:Library/Core/smp/multi_threader.cxx:116
 ```
 

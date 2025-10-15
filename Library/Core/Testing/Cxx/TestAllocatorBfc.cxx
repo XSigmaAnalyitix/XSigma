@@ -26,7 +26,7 @@
 #include "logging/tracing/traceme_recorder.h"
 #include "memory/backend/allocator_bfc.h"
 #include "memory/backend/allocator_pool.h"
-#include "memory/cpu/helper/memory_allocator.h"
+#include "memory/helper/memory_allocator.h"
 
 using namespace xsigma;
 
