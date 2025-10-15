@@ -58,7 +58,7 @@ function(print_configuration_summary)
   message("    Mimalloc            : ${XSIGMA_ENABLE_MIMALLOC}")
   message("    TBB                 : ${XSIGMA_ENABLE_TBB}")
   message("    CUDA                : ${XSIGMA_ENABLE_CUDA}")
-  message("    HIP                 : ${XSIGMA_USE_HIP}")
+  message("    HIP                 : ${XSIGMA_ENABLE_HIP}")
   message("    Documentation       : ${XSIGMA_BUILD_DOCUMENTATION}")
   message("    External libraries  : ${XSIGMA_ENABLE_EXTERNAL}")
 
