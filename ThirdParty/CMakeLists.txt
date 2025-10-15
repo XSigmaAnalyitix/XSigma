@@ -149,7 +149,7 @@ if(XSIGMA_USE_LOGURU)
     # Force loguru to be static
     set(BUILD_SHARED_LIBS OFF)
     # loguru - Lightweight C++ logging library
-    add_third_party_library(loguru)
+    cd s(loguru)
     # Restore the original BUILD_SHARED_LIBS state
     set(BUILD_SHARED_LIBS ${_saved_build_shared_libs})
     set_target_properties(loguru PROPERTIES FOLDER "ThirdParty/loguru")
