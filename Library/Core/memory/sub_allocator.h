@@ -8,6 +8,7 @@
 
 #include <functional>
 #include <vector>
+#include <cstdint>
 
 #include "common/export.h"
 #include "common/macros.h"
