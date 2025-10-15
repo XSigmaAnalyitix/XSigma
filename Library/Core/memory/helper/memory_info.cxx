@@ -28,7 +28,7 @@
  * Website: https://www.xsigma.co.uk
  */
 
-#include "memory/cpu/helper/memory_info.h"
+#include "memory/helper/memory_info.h"
 
 #include <cpuinfo.h>
 

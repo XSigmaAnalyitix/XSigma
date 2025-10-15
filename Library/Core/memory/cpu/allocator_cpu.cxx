@@ -42,8 +42,8 @@
 #include "logging/tracing/traceme.h"
 #include "logging/tracing/traceme_encode.h"
 #include "memory/cpu/allocator.h"
-#include "memory/cpu/helper/memory_allocator.h"
-#include "memory/cpu/helper/memory_info.h"
+#include "memory/helper/memory_allocator.h"
+#include "memory/helper/memory_info.h"
 
 namespace xsigma
 {

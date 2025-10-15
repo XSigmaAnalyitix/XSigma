@@ -47,6 +47,23 @@ option(XSIGMA_ENABLE_MKL "Enable MKL" OFF)
 option(XSIGMA_ENABLE_CUDA "Enable CUDA compilation" OFF)
 option(XSIGMA_ENABLE_MEMKIND "Build support for extended memory" OFF)
 
+# GPU Allocation Strategy Configuration
+# This flag controls which GPU allocation functions are used by allocator_gpu (CUDA/HIP)
+set(XSIGMA_CUDA_ALLOC
+    "POOL_ASYNC"
+    CACHE STRING "GPU allocation strategy to use. Options are SYNC, ASYNC, POOL_ASYNC")
+set_property(
+    CACHE XSIGMA_CUDA_ALLOC
+    PROPERTY STRINGS
+             SYNC
+             ASYNC
+             POOL_ASYNC)
+
+# Validate CUDA allocation strategy
+if(NOT XSIGMA_CUDA_ALLOC MATCHES "^(SYNC|ASYNC|POOL_ASYNC)$")
+    message(FATAL_ERROR "Invalid XSIGMA_CUDA_ALLOC: ${XSIGMA_CUDA_ALLOC}. Valid options are: SYNC, ASYNC, POOL_ASYNC")
+endif()
+
 option(XSIGMA_ENABLE_IWYU "Enable include-what-you-use (iwyu) support." OFF)
 option(XSIGMA_ENABLE_CLANGTIDY "enable clangtidy check" OFF)
 option(XSIGMA_ENABLE_FIX "Enable clang-tidy fix-errors and fix options" OFF)
@@ -184,6 +201,7 @@ include(platform)
 
 # Configure optional features
 include(cuda)
+include(hip)
 include(mkl)
 include(numa)
 include(tbb)

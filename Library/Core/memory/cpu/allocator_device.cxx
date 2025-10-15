@@ -24,7 +24,7 @@
 
 #include "common/macros.h"
 #include "memory/cpu/allocator.h"
-#include "memory/cpu/helper/memory_allocator.h"  // for allocate, free
+#include "memory/helper/memory_allocator.h"  // for allocate, free
 #include "util/exception.h"
 
 #ifdef XSIGMA_ENABLE_CUDA

@@ -34,9 +34,9 @@
 #include "memory/backend/allocator_pool.h"  // for basic_cpu_allocator, allocator_pool, NoopRounder, round_up_i...
 #include "memory/backend/allocator_tracking.h"  // for allocator_tracking, enhanced_alloc_record, tracking_log_level
 #include "memory/cpu/allocator.h"  // for sub_allocator, allocation_attributes, Allocator, allocator_m...
-#include "memory/cpu/allocator_device.h"         // for allocator_device
-#include "memory/cpu/helper/memory_allocator.h"  // for free, allocate
-#include "memory/cpu/helper/process_state.h"     // for process_state
+#include "memory/cpu/allocator_device.h"     // for allocator_device
+#include "memory/helper/memory_allocator.h"  // for free, allocate
+#include "memory/helper/process_state.h"     // for process_state
 #include "memory/unified_memory_stats.h"  // for atomic_timing_stats, unified_resource_stats, memory_fragment...
 #include "xsigmaTest.h"                   // for XSIGMATEST_CALL, XSIGMATEST, END_TEST, XSIGMATEST
 

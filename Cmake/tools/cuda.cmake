@@ -95,9 +95,25 @@ elseif(XSIGMA_CUDA_ARCH_OPTIONS STREQUAL "none")
     # Don't set any architectures, let parent project handle it
 endif()
 
+# CUDA Allocation Strategy Configuration (defined in main CMakeLists.txt)
+message(STATUS "CUDA allocation strategy: ${XSIGMA_CUDA_ALLOC}")
+
+# Set preprocessor definitions based on allocation strategy
+if(XSIGMA_CUDA_ALLOC STREQUAL "SYNC")
+    add_compile_definitions(XSIGMA_CUDA_ALLOC_SYNC)
+    message(STATUS "Using synchronous CUDA allocation (cuMemAlloc/cuMemFree)")
+elseif(XSIGMA_CUDA_ALLOC STREQUAL "ASYNC")
+    add_compile_definitions(XSIGMA_CUDA_ALLOC_ASYNC)
+    message(STATUS "Using asynchronous CUDA allocation (cuMemAllocAsync/cuMemFreeAsync)")
+elseif(XSIGMA_CUDA_ALLOC STREQUAL "POOL_ASYNC")
+    add_compile_definitions(XSIGMA_CUDA_ALLOC_POOL_ASYNC)
+    message(STATUS "Using pool-based asynchronous CUDA allocation (cuMemAllocFromPoolAsync)")
+endif()
+
 # Set up CUDA libraries using modern imported targets
 set(XSIGMA_CUDA_LIBRARIES
     CUDA::cudart
+    CUDA::cuda_driver
     CUDA::cusparse
     CUDA::curand
     CUDA::cublas

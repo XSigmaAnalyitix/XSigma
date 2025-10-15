@@ -26,7 +26,7 @@
  * Website: https://www.xsigma.co.uk
  */
 
-#include "memory/cpu/helper/process_state.h"
+#include "memory/helper/process_state.h"
 
 #include <atomic>
 #include <cstdint>

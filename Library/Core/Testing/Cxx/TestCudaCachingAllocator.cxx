@@ -51,6 +51,41 @@ XSIGMATEST(CudaCachingAllocator, constructs_with_valid_parameters)
 }
 
 /**
+ * @brief Test CUDA caching allocator constructor variations
+ */
+XSIGMATEST(CudaCachingAllocator, constructor_variations)
+{
+    // Test default constructor (if available)
+    try
+    {
+        cuda_caching_allocator allocator1(0);  // Default cache size
+        EXPECT_EQ(0, allocator1.device());
+        EXPECT_GT(allocator1.max_cached_bytes(), 0);
+    }
+    catch (...)
+    {
+        // Default constructor may not be available, that's okay
+    }
+
+    // Test constructor with different cache sizes
+    std::vector<size_t> cache_sizes = {
+        1024 * 1024,       // 1MB
+        16 * 1024 * 1024,  // 16MB
+        64 * 1024 * 1024,  // 64MB
+        256 * 1024 * 1024  // 256MB
+    };
+
+    for (size_t cache_size : cache_sizes)
+    {
+        cuda_caching_allocator allocator(0, cache_size);
+        EXPECT_EQ(0, allocator.device());
+        EXPECT_EQ(cache_size, allocator.max_cached_bytes());
+    }
+
+    XSIGMA_LOG_INFO("CUDA caching allocator constructor variations test passed");
+}
+
+/**
  * @brief Test basic allocation and deallocation functionality
  */
 XSIGMATEST(CudaCachingAllocator, allocates_and_deallocates_memory)

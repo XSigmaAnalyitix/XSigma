@@ -18,7 +18,7 @@
  *       or SaaS usage. Contact us to obtain a commercial agreement.
  *
  * MODIFICATIONS FROM ORIGINAL:
- * - Extracted from memory/cpu/helper/mem.h for better modularity
+ * - Extracted from memory/helper/mem.h for better modularity
  * - Added conditional compilation support for optional compression
  * - Enhanced documentation and error handling
  *

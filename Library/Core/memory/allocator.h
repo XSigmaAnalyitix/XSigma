@@ -32,8 +32,8 @@
 #include "common/macros.h"         // for XSIGMA_FORCE_INLINE, XSIGMA_ALIGNMENT, XSIG...
 #include "memory/cpu/allocator.h"  // for Allocator
 #include "memory/cpu/allocator_device.h"
-#include "memory/cpu/helper/process_state.h"  // for process_state
-#include "memory/device.h"                    // for device_enum
+#include "memory/device.h"                // for device_enum
+#include "memory/helper/process_state.h"  // for process_state
 
 // GPU support includes
 #ifdef XSIGMA_ENABLE_CUDA

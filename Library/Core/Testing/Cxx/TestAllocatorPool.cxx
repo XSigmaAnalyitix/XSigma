@@ -21,7 +21,7 @@
 #include "common/pointer.h"
 #include "memory/backend/allocator_pool.h"
 #include "memory/cpu/allocator.h"
-#include "memory/cpu/helper/memory_allocator.h"
+#include "memory/helper/memory_allocator.h"
 
 using namespace xsigma;
 
