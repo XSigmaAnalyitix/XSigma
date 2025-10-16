@@ -34,7 +34,11 @@
 #include "memory/backend/allocator_pool.h"  // for basic_cpu_allocator, allocator_pool, NoopRounder, round_up_i...
 #include "memory/backend/allocator_tracking.h"  // for allocator_tracking, enhanced_alloc_record, tracking_log_level
 #include "memory/cpu/allocator.h"  // for sub_allocator, allocation_attributes, Allocator, allocator_m...
-#include "memory/cpu/allocator_device.h"     // for allocator_device
+
+#if defined(XSIGMA_ENABLE_CUDA) || defined(XSIGMA_ENABLE_HIP)
+#include "memory/cpu/allocator_device.h"  // for allocator_device
+#endif
+
 #include "memory/helper/memory_allocator.h"  // for free, allocate
 #include "memory/helper/process_state.h"     // for process_state
 #include "memory/unified_memory_stats.h"  // for atomic_timing_stats, unified_resource_stats, memory_fragment...
@@ -45,7 +49,7 @@ using namespace xsigma;
 // ============================================================================
 // ALLOCATOR_DEVICE TESTS
 // ============================================================================
-
+#if defined(XSIGMA_ENABLE_CUDA) || defined(XSIGMA_ENABLE_HIP)
 XSIGMATEST(AllocatorDevice, basic_allocation)
 {
     auto allocator = std::make_unique<allocator_device>();
@@ -135,6 +139,8 @@ XSIGMATEST(AllocatorDevice, error_handling)
 
     END_TEST();
 }
+
+#endif
 
 // Test allocator stress scenarios
 XSIGMATEST(AllocatorTest, StressTest)
@@ -1249,7 +1255,8 @@ XSIGMATEST(AllocatorBenchmark, PerformanceBenchmark)
             tracker->GetRecordsAndUnRef();
         }
 
-        // ========== ALLOCATOR_DEVICE ==========
+// ========== ALLOCATOR_DEVICE ==========
+#if defined(XSIGMA_ENABLE_CUDA) || defined(XSIGMA_ENABLE_HIP)
         {
             auto               device_allocator = std::make_unique<allocator_device>();
             std::vector<void*> ptrs;
@@ -1291,7 +1298,7 @@ XSIGMATEST(AllocatorBenchmark, PerformanceBenchmark)
             size_results.push_back(result);
             EXPECT_EQ(ptrs.size(), num_iterations);
         }
-
+#endif
         // Store results for this allocation size
         all_results.insert(all_results.end(), size_results.begin(), size_results.end());
     }

@@ -78,7 +78,7 @@ if(NOT XSIGMA_ENABLE_CUDA OR XSIGMA_ENABLE_HIP)
     file(GLOB_RECURSE GPU_HEADER_FILES memory/gpu/*.h memory/gpu/*.hxx)
     list(REMOVE_ITEM headers ${GPU_HEADER_FILES})
     list(REMOVE_ITEM sources ${GPU_SOURCE_FILES})
-    list(REMOVE_ITEM sources "${CMAKE_CURRENT_SOURCE_DIR}/memeory/cpu/allocator_device.cxx")
+    list(REMOVE_ITEM sources "${CMAKE_CURRENT_SOURCE_DIR}/memory/cpu/allocator_device.cxx")
     list(REMOVE_ITEM headers "${CMAKE_CURRENT_SOURCE_DIR}/memory/cpu/allocator_device.h")
 endif()
 

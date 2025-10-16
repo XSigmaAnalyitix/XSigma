@@ -566,7 +566,6 @@ class XsigmaFlags:
                 "sanitizer": self.OFF,  # Can conflict with other tools
                 "valgrind": self.OFF,  # Can conflict with sanitizer
                 "coverage": self.OFF,  # Coverage analysis is optional
-                "cppcheck_autofix": self.OFF,  # Modifies source files - requires explicit opt-in
             }
         )
 
@@ -686,10 +685,6 @@ class XsigmaFlags:
         if self.__value.get("coverage") == self.ON and self.__value.get("test") != self.ON:
             print_status("Coverage enabled but testing is disabled - enabling tests automatically.", "WARNING")
             self.__value["test"] = self.ON
-
-        if self.__value.get("cppcheck_autofix") == self.ON:
-            print_status("CPPCHECK AUTOFIX ENABLED: Source files will be automatically modified during build!", "WARNING")
-            print_status("Ensure you have committed your changes before building with this option.", "WARNING")
 
         if self.__value.get("spell") == self.ON:
             print_status("SPELL CHECKING ENABLED: Automatic spelling corrections will be applied during build!", "WARNING")

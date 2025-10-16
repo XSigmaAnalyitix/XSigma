@@ -44,8 +44,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Enable options
 option(XSIGMA_ENABLE_NUMA "Enable numa node" OFF)
 option(XSIGMA_ENABLE_MKL "Enable MKL" OFF)
+option(XSIGMA_ENABLE_ENZYME "Enable Enzyme" OFF)
 option(XSIGMA_ENABLE_CUDA "Enable CUDA compilation" OFF)
 option(XSIGMA_ENABLE_MEMKIND "Build support for extended memory" OFF)
+mark_as_advanced(XSIGMA_ENABLE_ENZYME)
 
 # GPU Allocation Strategy Configuration
 # This flag controls which GPU allocation functions are used by allocator_gpu (CUDA/HIP)
