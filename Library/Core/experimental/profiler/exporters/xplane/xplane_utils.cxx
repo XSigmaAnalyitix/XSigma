@@ -403,7 +403,7 @@ void MergePlanes(const xplane& src_plane, xplane* dst_plane)
     src.for_each_stat(
         [&](const x_stat_visitor& stat)
         {
-            x_stat_metadata* stat_metadata = dst.get_or_create_stat_metadata(stat.name());
+            x_stat_metadata const* stat_metadata = dst.get_or_create_stat_metadata(stat.name());
             // Use SetOrAddStat to avoid duplicating stats in dst_plane.
             dst.set_or_add_stat(*stat_metadata, stat.raw_stat(), src_plane);
         });
@@ -811,11 +811,11 @@ void AggregateXPlane(const xplane& full_trace, xplane& aggregated_trace)
             GetStatTypeStr(StatType::kTotalProfileDurationPs)),
         total_time_ps);
 
-    x_stat_metadata* kMinDurationPs =
+    x_stat_metadata const* kMinDurationPs =
         aggregated_plane.get_or_create_stat_metadata(GetStatTypeStr(StatType::kMinDurationPs));
-    x_stat_metadata* kSelfDurationPs =
+    x_stat_metadata const* kSelfDurationPs =
         aggregated_plane.get_or_create_stat_metadata(GetStatTypeStr(StatType::kSelfDurationPs));
-    x_stat_metadata* kGroupId =
+    x_stat_metadata const* kGroupId =
         aggregated_plane.get_or_create_stat_metadata(GetStatTypeStr(StatType::kGroupId));
 
     for (const auto& [line_id, stats_by_group] : stats)

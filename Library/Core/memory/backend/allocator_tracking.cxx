@@ -96,7 +96,7 @@ void* allocator_tracking::allocate_raw(
         //                + std::to_string(num_bytes) + " bytes, alignment=" + std::to_string(alignment));
     }
 
-    void* ptr = allocator_->allocate_raw(alignment, num_bytes, allocation_attr);
+    void* ptr = allocator_->allocate_raw(alignment, num_bytes, allocation_attr);  //NOLINT
 
     // Calculate allocation timing
     auto end_time = std::chrono::steady_clock::now();
@@ -543,7 +543,7 @@ memory_fragmentation_metrics allocator_tracking::GetFragmentationMetrics() const
     size_t total_allocated;
     size_t total_requested;
     {
-        std::lock_guard<std::mutex> const stats_lock(mu_);
+        std::scoped_lock const stats_lock(mu_);
         total_allocated = allocated_;
         total_requested = 0;
 
@@ -615,7 +615,7 @@ void allocator_tracking::ResetTimingStats() noexcept
 
 std::tuple<double, double, double> allocator_tracking::GetEfficiencyMetrics() const
 {
-    std::lock_guard<std::mutex> const lock(mu_);
+    std::scoped_lock const lock(mu_);
 
     if (allocated_ == 0)
     {

@@ -185,29 +185,35 @@ endif()
 if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS)
   add_definitions(-D_SCL_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
-endif()
 
-# Enable /MP flag for Visual Studio
-if(MSVC)
-  set(CMAKE_CXX_MP_FLAG OFF CACHE BOOL "Build with /MP flag enabled")
+  # Enable /MP flag for Visual Studio
+  set(CMAKE_CXX_MP_FLAG ON CACHE BOOL "Build with /MP flag enabled")
   set(PROCESSOR_COUNT "$ENV{NUMBER_OF_PROCESSORS}")
   set(CMAKE_CXX_MP_NUM_PROCESSORS ${PROCESSOR_COUNT} CACHE STRING "The maximum number of processes for the /MP flag")
   if (CMAKE_CXX_MP_FLAG)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP${CMAKE_CXX_MP_NUM_PROCESSORS}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP${CMAKE_CXX_MP_NUM_PROCESSORS}")
   endif ()
-endif()
 
-# Enable /bigobj for MSVC to allow larger symbol tables
-if(MSVC)
+  # Enable /bigobj for MSVC to allow larger symbol tables
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /bigobj")
-endif()
 
-# Use /utf-8 so that MSVC uses utf-8 in source files and object files
-if(MSVC)
+  # Enable faster PDB generation
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Zi")
+  
+  # Use parallel linking (VS 2019+)
+  set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} /DEBUG:FASTLINK")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /DEBUG:FASTLINK")
+
+  # Use /utf-8 so that MSVC uses utf-8 in source files and object files
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8")
+
+  #use /EHsc for exception handling
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /EHsc")
 endif()
 
 if(APPLE)

@@ -123,7 +123,7 @@ void* PrepareChunk(void* chunk, size_t alignment, size_t num_bytes)
 
 ChunkPrefix* FindPrefix(void* user_ptr)
 {
-    ChunkPrefix* cp = reinterpret_cast<ChunkPrefix*>(user_ptr) - 1;
+    ChunkPrefix const* cp = reinterpret_cast<ChunkPrefix*>(user_ptr) - 1;
     return reinterpret_cast<ChunkPrefix*>(cp->chunk_ptr);
 }
 }  // namespace
@@ -146,8 +146,8 @@ void* allocator_pool::allocate_raw(size_t alignment, size_t num_bytes)
     if (has_size_limit_)
     {
         {
-            std::lock_guard<std::mutex> const lock(mutex_);
-            auto                              iter = pool_.find(num_bytes);
+            std::scoped_lock const lock(mutex_);
+            auto                   iter = pool_.find(num_bytes);
             if (iter == pool_.end())
             {
                 allocated_count_++;
@@ -191,7 +191,7 @@ void allocator_pool::deallocate_raw(void* ptr)
     }
     else
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         // Check for double-free: search if this pointer is already in the pool
         if (std::any_of(
@@ -220,10 +220,10 @@ void allocator_pool::Clear()
 {
     if (has_size_limit_)
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         for (auto iter : pool_)
         {
-            PtrRecord* pr = iter.second;
+            PtrRecord const* pr = iter.second;
             allocator_->Free(pr->ptr, pr->num_bytes);
             delete pr;
         }

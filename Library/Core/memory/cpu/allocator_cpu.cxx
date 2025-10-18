@@ -192,7 +192,7 @@ void* allocator_cpu::allocate_raw(size_t alignment, size_t num_bytes)
 #endif
 
     // Perform the actual allocation
-    void* p = cpu::memory_allocator::allocate(num_bytes, alignment);
+    void* p = cpu::memory_allocator::allocate(num_bytes, alignment);  //NOLINT
 
     // Collect statistics if enabled (fast path when disabled)
     if XSIGMA_UNLIKELY (cpu_allocator_collect_stats.load(std::memory_order_relaxed) && p != nullptr)
@@ -201,7 +201,7 @@ void* allocator_cpu::allocate_raw(size_t alignment, size_t num_bytes)
 
         // Use scoped lock for statistics update
         {
-            std::lock_guard<std::mutex> const lock(mu_);
+            std::scoped_lock const lock(mu_);
 
             // Update core statistics
             stats_.num_allocs.fetch_add(1, std::memory_order_relaxed);
@@ -259,7 +259,7 @@ void allocator_cpu::deallocate_raw(void* ptr)
 
         // Update statistics under lock
         {
-            std::lock_guard<std::mutex> const lock(mu_);
+            std::scoped_lock const lock(mu_);
             stats_.bytes_in_use -= alloc_size;
         }
 
@@ -285,7 +285,7 @@ std::optional<allocator_stats> allocator_cpu::GetStats() const
         return std::nullopt;
     }
 
-    std::lock_guard<std::mutex> const lock(mu_);
+    std::scoped_lock const lock(mu_);
     // Create a copy of the atomic stats structure
     allocator_stats stats_copy(stats_);
     return stats_copy;
@@ -298,7 +298,7 @@ bool allocator_cpu::ClearStats()
         return false;
     }
 
-    std::lock_guard<std::mutex> const lock(mu_);
+    std::scoped_lock const lock(mu_);
     stats_.num_allocs.store(0, std::memory_order_relaxed);
     stats_.peak_bytes_in_use.store(
         stats_.bytes_in_use.load(std::memory_order_relaxed), std::memory_order_relaxed);

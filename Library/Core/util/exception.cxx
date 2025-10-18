@@ -66,7 +66,7 @@ void set_exception_mode(exception_mode mode) noexcept
 
 void init_exception_mode_from_env() noexcept
 {
-    std::lock_guard<std::mutex> const lock(g_exception_mode_init_mutex_);
+    std::scoped_lock const lock(g_exception_mode_init_mutex_);
 
     // Double-check after acquiring lock
     if (g_exception_mode_initialized_.load(std::memory_order_acquire))
@@ -135,7 +135,7 @@ exception::exception(
           std::string(source_location.file) + ":" + std::to_string(source_location.line) +
           " (most recent call first):\n" + (*GetFetchStackTrace())()),
       caller_(nullptr),
-      nested_exception_(std::move(nested)),//NOLINT
+      nested_exception_(std::move(nested)),  //NOLINT
       category_(category)
 {
     refresh_what();

@@ -104,8 +104,8 @@ void statistical_analyzer::add_timing_sample(const std::string& name, double tim
         return;
     }
 
-    std::lock_guard<std::mutex> const lock(timing_mutex_);
-    auto&                             series = timing_data_[name];
+    std::scoped_lock const lock(timing_mutex_);
+    auto&                  series = timing_data_[name];
     series.push_back(time_ms);
     trim_series_if_needed(series);
 }
@@ -117,8 +117,8 @@ void statistical_analyzer::add_memory_sample(const std::string& name, size_t mem
         return;
     }
 
-    std::lock_guard<std::mutex> const lock(memory_mutex_);
-    auto&                             series = memory_data_[name];
+    std::scoped_lock const lock(memory_mutex_);
+    auto&                  series = memory_data_[name];
     series.push_back(static_cast<double>(memory_bytes));
     trim_series_if_needed(series);
 }
@@ -130,8 +130,8 @@ void statistical_analyzer::add_custom_sample(const std::string& name, double val
         return;
     }
 
-    std::lock_guard<std::mutex> const lock(custom_mutex_);
-    auto&                             series = custom_data_[name];
+    std::scoped_lock const lock(custom_mutex_);
+    auto&                  series = custom_data_[name];
     series.push_back(value);
     trim_series_if_needed(series);
 }
@@ -150,8 +150,8 @@ void statistical_analyzer::add_time_series_point(
     point.label_     = label;
     point.thread_id_ = std::this_thread::get_id();
 
-    std::lock_guard<std::mutex> const lock(time_series_mutex_);
-    auto&                             series = time_series_data_[series_name];
+    std::scoped_lock const lock(time_series_mutex_);
+    auto&                  series = time_series_data_[series_name];
     series.push_back(point);
     trim_time_series_if_needed(series);
 }
@@ -159,8 +159,8 @@ void statistical_analyzer::add_time_series_point(
 xsigma::statistical_metrics statistical_analyzer::calculate_timing_stats(
     const std::string& name) const
 {
-    std::lock_guard<std::mutex> const lock(timing_mutex_);
-    auto                              it = timing_data_.find(name);
+    std::scoped_lock const lock(timing_mutex_);
+    auto                   it = timing_data_.find(name);
     if (it == timing_data_.end())
     {
         return xsigma::statistical_metrics{};
@@ -171,8 +171,8 @@ xsigma::statistical_metrics statistical_analyzer::calculate_timing_stats(
 xsigma::statistical_metrics statistical_analyzer::calculate_memory_stats(
     const std::string& name) const
 {
-    std::lock_guard<std::mutex> const lock(memory_mutex_);
-    auto                              it = memory_data_.find(name);
+    std::scoped_lock const lock(memory_mutex_);
+    auto                   it = memory_data_.find(name);
     if (it == memory_data_.end())
     {
         return xsigma::statistical_metrics{};
@@ -183,8 +183,8 @@ xsigma::statistical_metrics statistical_analyzer::calculate_memory_stats(
 xsigma::statistical_metrics statistical_analyzer::calculate_custom_stats(
     const std::string& name) const
 {
-    std::lock_guard<std::mutex> const lock(custom_mutex_);
-    auto                              it = custom_data_.find(name);
+    std::scoped_lock const lock(custom_mutex_);
+    auto                   it = custom_data_.find(name);
     if (it == custom_data_.end())
     {
         return xsigma::statistical_metrics{};
@@ -195,7 +195,7 @@ xsigma::statistical_metrics statistical_analyzer::calculate_custom_stats(
 xsigma_map<std::string, xsigma::statistical_metrics>
 statistical_analyzer::calculate_all_timing_stats() const
 {
-    std::lock_guard<std::mutex> const                    lock(timing_mutex_);
+    std::scoped_lock const                               lock(timing_mutex_);
     xsigma_map<std::string, xsigma::statistical_metrics> results;
 
     for (const auto& pair : timing_data_)
@@ -209,7 +209,7 @@ statistical_analyzer::calculate_all_timing_stats() const
 xsigma_map<std::string, xsigma::statistical_metrics>
 statistical_analyzer::calculate_all_memory_stats() const
 {
-    std::lock_guard<std::mutex> const                    lock(memory_mutex_);
+    std::scoped_lock const                               lock(memory_mutex_);
     xsigma_map<std::string, xsigma::statistical_metrics> results;
 
     for (const auto& pair : memory_data_)
@@ -223,7 +223,7 @@ statistical_analyzer::calculate_all_memory_stats() const
 xsigma_map<std::string, xsigma::statistical_metrics>
 statistical_analyzer::calculate_all_custom_stats() const
 {
-    std::lock_guard<std::mutex> const                    lock(custom_mutex_);
+    std::scoped_lock const                               lock(custom_mutex_);
     xsigma_map<std::string, xsigma::statistical_metrics> results;
 
     for (const auto& pair : custom_data_)
@@ -237,8 +237,8 @@ statistical_analyzer::calculate_all_custom_stats() const
 std::vector<xsigma::time_series_point> statistical_analyzer::get_time_series(
     const std::string& series_name) const
 {
-    std::lock_guard<std::mutex> const lock(time_series_mutex_);
-    auto                              it = time_series_data_.find(series_name);
+    std::scoped_lock const lock(time_series_mutex_);
+    auto                   it = time_series_data_.find(series_name);
 
     if (it == time_series_data_.end())
     {
@@ -250,8 +250,8 @@ std::vector<xsigma::time_series_point> statistical_analyzer::get_time_series(
 xsigma::statistical_metrics statistical_analyzer::analyze_time_series(
     const std::string& series_name) const
 {
-    std::lock_guard<std::mutex> const lock(time_series_mutex_);
-    auto                              it = time_series_data_.find(series_name);
+    std::scoped_lock const lock(time_series_mutex_);
+    auto                   it = time_series_data_.find(series_name);
     if (it == time_series_data_.end())
     {
         return xsigma::statistical_metrics{};
@@ -269,8 +269,8 @@ xsigma::statistical_metrics statistical_analyzer::analyze_time_series(
 
 double statistical_analyzer::calculate_trend_slope(const std::string& series_name) const
 {
-    std::lock_guard<std::mutex> const lock(time_series_mutex_);
-    auto                              it = time_series_data_.find(series_name);
+    std::scoped_lock const lock(time_series_mutex_);
+    auto                   it = time_series_data_.find(series_name);
     if (it == time_series_data_.end() || it->second.size() < 2)
     {
         return 0.0;
@@ -315,7 +315,7 @@ bool statistical_analyzer::is_trending_down(const std::string& series_name, doub
 double statistical_analyzer::calculate_correlation(
     const std::string& series1, const std::string& series2) const
 {
-    std::lock_guard<std::mutex> const lock(time_series_mutex_);
+    std::scoped_lock const lock(time_series_mutex_);
 
     auto it1 = time_series_data_.find(series1);
     auto it2 = time_series_data_.find(series2);
@@ -377,19 +377,19 @@ bool statistical_analyzer::detect_performance_regression(
 void statistical_analyzer::clear_data()
 {
     {
-        std::lock_guard<std::mutex> const lock(timing_mutex_);
+        std::scoped_lock const lock(timing_mutex_);
         timing_data_.clear();
     }
     {
-        std::lock_guard<std::mutex> const lock(memory_mutex_);
+        std::scoped_lock const lock(memory_mutex_);
         memory_data_.clear();
     }
     {
-        std::lock_guard<std::mutex> const lock(custom_mutex_);
+        std::scoped_lock const lock(custom_mutex_);
         custom_data_.clear();
     }
     {
-        std::lock_guard<std::mutex> const lock(time_series_mutex_);
+        std::scoped_lock const lock(time_series_mutex_);
         time_series_data_.clear();
     }
 }
@@ -397,19 +397,19 @@ void statistical_analyzer::clear_data()
 void statistical_analyzer::clear_series(const std::string& name)
 {
     {
-        std::lock_guard<std::mutex> const lock(timing_mutex_);
+        std::scoped_lock const lock(timing_mutex_);
         timing_data_.erase(name);
     }
     {
-        std::lock_guard<std::mutex> const lock(memory_mutex_);
+        std::scoped_lock const lock(memory_mutex_);
         memory_data_.erase(name);
     }
     {
-        std::lock_guard<std::mutex> const lock(custom_mutex_);
+        std::scoped_lock const lock(custom_mutex_);
         custom_data_.erase(name);
     }
     {
-        std::lock_guard<std::mutex> const lock(time_series_mutex_);
+        std::scoped_lock const lock(time_series_mutex_);
         time_series_data_.erase(name);
     }
 }
@@ -417,8 +417,8 @@ void statistical_analyzer::clear_series(const std::string& name)
 size_t statistical_analyzer::get_sample_count(const std::string& name) const
 {
     {
-        std::lock_guard<std::mutex> const lock(timing_mutex_);
-        auto                              it = timing_data_.find(name);
+        std::scoped_lock const lock(timing_mutex_);
+        auto                   it = timing_data_.find(name);
 
         if (it != timing_data_.end())
         {
@@ -426,8 +426,8 @@ size_t statistical_analyzer::get_sample_count(const std::string& name) const
         }
     }
     {
-        std::lock_guard<std::mutex> const lock(memory_mutex_);
-        auto                              it = memory_data_.find(name);
+        std::scoped_lock const lock(memory_mutex_);
+        auto                   it = memory_data_.find(name);
 
         if (it != memory_data_.end())
         {
@@ -435,8 +435,8 @@ size_t statistical_analyzer::get_sample_count(const std::string& name) const
         }
     }
     {
-        std::lock_guard<std::mutex> const lock(custom_mutex_);
-        auto                              it = custom_data_.find(name);
+        std::scoped_lock const lock(custom_mutex_);
+        auto                   it = custom_data_.find(name);
 
         if (it != custom_data_.end())
         {

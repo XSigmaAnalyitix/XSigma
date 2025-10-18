@@ -32,7 +32,7 @@
 #define SUPPORTS_BACKTRACE 0
 #endif
 
-#if !defined(_WIN32)
+#ifndef _WIN32
 // Unix/Linux/macOS-specific helper functions
 namespace xsigma
 {

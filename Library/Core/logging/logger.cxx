@@ -17,7 +17,7 @@
 #include "util/flat_hash.h"
 
 // Include appropriate logging backend headers
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
 #include <loguru.hpp>  // for LogScopeRAII, Message, Options, Verbosity, SignalOptions, g_stderr_verbosity, remov...
 #elif defined(XSIGMA_USE_GLOG)
 #include <glog/logging.h>
@@ -32,7 +32,7 @@
 //=============================================================================
 // NATIVE LOGGING BACKEND - Simplified fmt-based Implementation
 //=============================================================================
-#if defined(XSIGMA_USE_NATIVE_LOGGING)
+#ifdef XSIGMA_USE_NATIVE_LOGGING
 
 namespace xsigma
 {
@@ -135,7 +135,7 @@ namespace xsigma
 class logger::LogScopeRAII::LSInternals
 {
 public:
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     std::unique_ptr<loguru::LogScopeRAII> Data;
 #elif defined(XSIGMA_USE_GLOG)
     // glog doesn't have a direct scope RAII equivalent
@@ -155,11 +155,11 @@ logger::LogScopeRAII::LogScopeRAII(
     unsigned int          lineno,
     const char*           format,
     ...)
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     : Internals(new LSInternals())
 #endif
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     va_list vlist;
     va_start(vlist, format);
     auto result = loguru::vstrprintf(format, vlist);
@@ -197,13 +197,13 @@ logger::LogScopeRAII::~LogScopeRAII()
 //=============================================================================
 namespace detail
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
 using scope_pair = std::pair<std::string, std::shared_ptr<loguru::LogScopeRAII>>;
 static std::mutex                                           g_mutex;
 static xsigma_map<std::thread::id, std::vector<scope_pair>> g_vectors;
 static std::vector<scope_pair>&                             get_vector()
 {
-    const std::lock_guard<std::mutex> guard(g_mutex);
+    const std::scoped_lock guard(g_mutex);
     return g_vectors[std::this_thread::get_id()];
 }
 
@@ -221,7 +221,7 @@ static void pop_scope(const char* id)
 
         if (vector.empty())
         {
-            const std::lock_guard<std::mutex> guard(g_mutex);
+            const std::scoped_lock guard(g_mutex);
             g_vectors.erase(std::this_thread::get_id());
         }
     }
@@ -257,7 +257,7 @@ logger::~logger() = default;
 //------------------------------------------------------------------------------
 void logger::Init(int& argc, char* argv[], const char* verbosity_flag /*= "-v"*/)
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     if (argc == 0)
     {  // loguru::init can't handle this case -- call the no-arg overload.
         logger::Init();
@@ -344,7 +344,7 @@ void logger::Init()
 //------------------------------------------------------------------------------
 void logger::SetStderrVerbosity(logger_verbosity_enum level)
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     loguru::g_stderr_verbosity = static_cast<loguru::Verbosity>(level);
 #elif defined(XSIGMA_USE_GLOG)
     // glog uses FLAGS_stderrthreshold to control stderr output
@@ -372,7 +372,7 @@ void logger::SetStderrVerbosity(logger_verbosity_enum level)
 //------------------------------------------------------------------------------
 void logger::SetInternalVerbosityLevel(logger_verbosity_enum level)
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     loguru::g_internal_verbosity   = static_cast<loguru::Verbosity>(level);
     logger::InternalVerbosityLevel = level;
 #elif defined(XSIGMA_USE_GLOG)
@@ -388,7 +388,7 @@ void logger::SetInternalVerbosityLevel(logger_verbosity_enum level)
 //------------------------------------------------------------------------------
 void logger::LogToFile(const char* path, logger::FileMode filemode, logger_verbosity_enum verbosity)
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     loguru::add_file(
         path, static_cast<loguru::FileMode>(filemode), static_cast<loguru::Verbosity>(verbosity));
 #elif defined(XSIGMA_USE_GLOG)
@@ -413,7 +413,7 @@ void logger::LogToFile(const char* path, logger::FileMode filemode, logger_verbo
 //------------------------------------------------------------------------------
 void logger::EndLogToFile(const char* path)
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     loguru::remove_callback(path);
 #elif defined(XSIGMA_USE_GLOG)
     // glog doesn't have a direct way to remove a specific log file
@@ -429,7 +429,7 @@ void logger::EndLogToFile(const char* path)
 //------------------------------------------------------------------------------
 void logger::SetThreadName(const std::string& name)
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     loguru::set_thread_name(name.c_str());
     // Save threadname so if this is called before `Init`, we can pass the thread
     // name to loguru::init().
@@ -446,7 +446,7 @@ void logger::SetThreadName(const std::string& name)
 //------------------------------------------------------------------------------
 std::string logger::GetThreadName()
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     char buffer[128];
     loguru::get_thread_name(buffer, 128, false);
     return {buffer};
@@ -463,7 +463,7 @@ std::string logger::GetThreadName()
 
 namespace
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
 struct CallbackBridgeData
 {
     logger::LogHandlerCallbackT   handler;
@@ -523,7 +523,7 @@ void logger::AddCallback(
     logger::CloseHandlerCallbackT on_close,
     logger::FlushHandlerCallbackT on_flush)
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     auto* callback_data = new CallbackBridgeData{callback, on_close, on_flush, user_data};
     loguru::add_callback(
         id,
@@ -555,7 +555,7 @@ void logger::AddCallback(
 //------------------------------------------------------------------------------
 bool logger::RemoveCallback(const char* id)
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     return loguru::remove_callback(id);
 #elif defined(XSIGMA_USE_GLOG) || defined(XSIGMA_USE_NATIVE_LOGGING)
     (void)id;
@@ -579,7 +579,7 @@ bool logger::IsEnabled()
 //------------------------------------------------------------------------------
 logger_verbosity_enum logger::GetCurrentVerbosityCutoff()
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     return static_cast<logger_verbosity_enum>(loguru::current_verbosity_cutoff());
 #elif defined(XSIGMA_USE_GLOG)
     return static_cast<logger_verbosity_enum>(FLAGS_v);
@@ -598,7 +598,7 @@ void logger::Log(
     XSIGMA_UNUSED unsigned int          lineno,
     XSIGMA_UNUSED const char*           txt)
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     loguru::log(static_cast<loguru::Verbosity>(verbosity), fname, lineno, "%s", txt);
 #elif defined(XSIGMA_USE_GLOG)
     // Map verbosity to glog severity
@@ -642,7 +642,7 @@ void logger::LogF(
 void logger::StartScope(
     logger_verbosity_enum verbosity, const char* id, const char* fname, unsigned int lineno)
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     detail::push_scope(
         id,
         verbosity > logger::GetCurrentVerbosityCutoff()
@@ -664,7 +664,7 @@ void logger::StartScope(
 //------------------------------------------------------------------------------
 void logger::EndScope(const char* id)
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     detail::pop_scope(id);
 #elif defined(XSIGMA_USE_GLOG) || defined(XSIGMA_USE_NATIVE_LOGGING)
     // No-op for glog and native logging
@@ -683,7 +683,7 @@ void logger::StartScopeF(
     const char*           format,
     ...)
 {
-#if defined(XSIGMA_USE_LOGURU)
+#ifdef XSIGMA_USE_LOGURU
     if (verbosity > logger::GetCurrentVerbosityCutoff())
     {
         detail::push_scope(id, std::make_shared<loguru::LogScopeRAII>());
@@ -736,7 +736,7 @@ logger_verbosity_enum logger::ConvertToVerbosity(const char* text)
 {
     if (text != nullptr)
     {
-        char*     end    = nullptr;
+        char*     end    = nullptr;  //NOLINT
         const int ivalue = static_cast<int>(std::strtol(text, &end, 10));
         if (end != text && *end == '\0')
         {

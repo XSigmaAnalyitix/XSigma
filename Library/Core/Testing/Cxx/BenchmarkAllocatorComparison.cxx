@@ -65,11 +65,11 @@ constexpr int kIterations = 1000;
  */
 static void touch_memory(void* ptr, size_t size)
 {
-    if (ptr != nullptr && size > 0)
+    /* if (ptr != nullptr && size > 0)
     {
         std::memset(ptr, 0xAA, std::min(size, size_t(64)));
         benchmark::DoNotOptimize(ptr);
-    }
+    }*/
 }
 
 // =============================================================================
@@ -78,7 +78,6 @@ static void touch_memory(void* ptr, size_t size)
 
 static void BM_CPUAllocator_SmallAllocation(benchmark::State& state)
 {
-    EnableCPUAllocatorStats();
     Allocator*   allocator = cpu_allocator(0);
     const size_t size      = static_cast<size_t>(state.range(0));
 
@@ -95,7 +94,6 @@ static void BM_CPUAllocator_SmallAllocation(benchmark::State& state)
 
 static void BM_CPUAllocator_BatchAllocation(benchmark::State& state)
 {
-    EnableCPUAllocatorStats();
     Allocator*   allocator  = cpu_allocator(0);
     const size_t size       = static_cast<size_t>(state.range(0));
     const int    batch_size = static_cast<int>(state.range(1));
@@ -156,13 +154,15 @@ static void BM_BFCAllocator_BatchAllocation(benchmark::State& state)
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
 
     allocator_bfc::Options opts;
-    opts.allow_growth = true;
-
-    allocator_bfc allocator(
-        std::move(sub_allocator), 1024ULL * 1024ULL * 1024ULL, "bench_bfc_batch", opts);
-
+    opts.allow_growth       = true;
     const size_t size       = static_cast<size_t>(state.range(0));
     const int    batch_size = static_cast<int>(state.range(1));
+
+    allocator_bfc allocator(
+        std::move(sub_allocator),
+        1024ULL * 1024ULL * 1024ULL /** batch_size*/,
+        "bench_bfc_batch",
+        opts);
 
     std::vector<void*> ptrs(batch_size);
 
@@ -190,13 +190,12 @@ static void BM_BFCAllocator_BatchAllocation(benchmark::State& state)
 
 static void BM_PoolAllocator_SmallAllocation(XSIGMA_UNUSED benchmark::State& state)
 {
-#if 0
     auto base_allocator = util::make_ptr_unique_mutable<basic_cpu_allocator>(
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
 
     auto pool = std::make_unique<allocator_pool>(
-        50,
-        true,
+        0,
+        false,
         std::move(base_allocator),
         util::make_ptr_unique_mutable<NoopRounder>(),
         "bench_pool");
@@ -212,7 +211,6 @@ static void BM_PoolAllocator_SmallAllocation(XSIGMA_UNUSED benchmark::State& sta
 
     state.SetItemsProcessed(state.iterations());
     state.SetBytesProcessed(state.iterations() * size);
-#endif
 }
 
 static void BM_PoolAllocator_BatchAllocation(benchmark::State& state)
@@ -221,8 +219,8 @@ static void BM_PoolAllocator_BatchAllocation(benchmark::State& state)
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
 
     auto pool = std::make_unique<allocator_pool>(
-        1000,
-        true,
+        0,
+        false,
         std::move(base_allocator),
         util::make_ptr_unique_mutable<NoopRounder>(),
         "bench_pool_batch");
@@ -260,8 +258,8 @@ static void BM_Fragmentation_MixedSizes(benchmark::State& state)
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
 
     auto pool = std::make_unique<allocator_pool>(
-        200,
-        true,
+        0,
+        false,
         std::move(base_allocator),
         util::make_ptr_unique_mutable<NoopRounder>(),
         "bench_fragmentation");
@@ -341,8 +339,8 @@ static void BM_ThreadContention_PoolAllocator(benchmark::State& state)
         0, std::vector<sub_allocator::Visitor>{}, std::vector<sub_allocator::Visitor>{});
 
     static auto pool = std::make_unique<allocator_pool>(
-        100,
-        true,
+        0,
+        false,
         std::move(base_allocator),
         util::make_ptr_unique_mutable<NoopRounder>(),
         "bench_thread_pool");
@@ -362,7 +360,6 @@ static void BM_ThreadContention_PoolAllocator(benchmark::State& state)
 // =============================================================================
 // Benchmark Registration
 // =============================================================================
-
 // Small allocations (< 64 bytes)
 BENCHMARK(BM_CPUAllocator_SmallAllocation)
     ->Name("CPU/Small/Single")
@@ -482,6 +479,7 @@ BENCHMARK(BM_ThreadContention_PoolAllocator)
     ->Unit(benchmark::kMicrosecond);
 
 // Size range sweep
+#if 0
 BENCHMARK(BM_CPUAllocator_SmallAllocation)
     ->Name("CPU/SizeSweep")
     ->RangeMultiplier(2)
@@ -499,5 +497,7 @@ BENCHMARK(BM_PoolAllocator_SmallAllocation)
     ->RangeMultiplier(2)
     ->Range(16, 16384)
     ->Unit(benchmark::kMicrosecond);
+
+#endif
 
 BENCHMARK_MAIN();

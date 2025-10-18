@@ -13,7 +13,7 @@
 // platforms about passing function pointer to an argument expecting an
 // extern "C" function.  Placing the typedef of the function pointer type
 // inside an extern "C" block solves this problem.
-#if defined(XSIGMA_USE_PTHREADS)
+#ifdef XSIGMA_USE_PTHREADS
 #include <pthread.h>
 #include <unistd.h>
 extern "C"
@@ -225,11 +225,11 @@ void multi_threader::SingleMethodExecute()
 #ifdef XSIGMA_USE_WIN32_THREADS
     int    thread_loop;
     DWORD  threadId;
-    HANDLE process_id[XSIGMA_MAX_THREADS] = {};
+    HANDLE process_id[XSIGMA_MAX_THREADS] = {};  //NOLINT
 #endif
 
 #ifdef XSIGMA_USE_PTHREADS
-    pthread_t process_id[XSIGMA_MAX_THREADS] = {};
+    pthread_t process_id[XSIGMA_MAX_THREADS] = {};  //NOLINT
 #endif
     XSIGMA_CHECK(this->SingleMethod, "No single method set!");
     // obey the global maximum number of threads limit
@@ -348,11 +348,11 @@ void multi_threader::MultipleMethodExecute()
 
 #ifdef XSIGMA_USE_WIN32_THREADS
     DWORD  threadId;
-    HANDLE process_id[XSIGMA_MAX_THREADS] = {};
+    HANDLE process_id[XSIGMA_MAX_THREADS] = {};  //NOLINT
 #endif
 
 #ifdef XSIGMA_USE_PTHREADS
-    pthread_t process_id[XSIGMA_MAX_THREADS] = {};
+    pthread_t process_id[XSIGMA_MAX_THREADS] = {};  //NOLINT
 #endif
 
     // obey the global maximum number of threads limit
@@ -479,8 +479,7 @@ int multi_threader::SpawnThread(const xsigmaThreadFunctionType f, void* userdata
         {
             this->SpawnedThreadActiveFlagLock[id] = new std::mutex;
         }
-        XSIGMA_UNUSED std::lock_guard<std::mutex> const lockGuard(
-            *this->SpawnedThreadActiveFlagLock[id]);
+        XSIGMA_UNUSED std::scoped_lock const lockGuard(*this->SpawnedThreadActiveFlagLock[id]);
         if (this->SpawnedThreadActiveFlag[id] == 0)
         {
             // We've got a usable thread id, so grab it
@@ -552,7 +551,7 @@ void multi_threader::TerminateThread(int threadId)
     // If we do have a lock, use it and find out the status of the active flag
     int val = 0;
     {
-        XSIGMA_UNUSED std::lock_guard<std::mutex> const lockGuard(
+        XSIGMA_UNUSED std::scoped_lock const lockGuard(
             *this->SpawnedThreadActiveFlagLock[threadId]);
         val = this->SpawnedThreadActiveFlag[threadId];
     }
@@ -566,7 +565,7 @@ void multi_threader::TerminateThread(int threadId)
     // OK - now we know we have an active thread - set the active flag to 0
     // to indicate to the thread that it should terminate itself
     {
-        XSIGMA_UNUSED std::lock_guard<std::mutex> const lockGuard(
+        XSIGMA_UNUSED std::scoped_lock const lockGuard(
             *this->SpawnedThreadActiveFlagLock[threadId]);
         this->SpawnedThreadActiveFlag[threadId] = 0;
     }
@@ -595,7 +594,7 @@ void multi_threader::TerminateThread(int threadId)
 //------------------------------------------------------------------------------
 xsigmaMultiThreaderIDType multi_threader::GetCurrentThreadID()
 {
-#if defined(XSIGMA_USE_PTHREADS)
+#ifdef XSIGMA_USE_PTHREADS
     return pthread_self();
 #elif defined(XSIGMA_USE_WIN32_THREADS)
     return GetCurrentThreadId();
@@ -623,7 +622,7 @@ bool multi_threader::IsThreadActive(int threadId)
     // We have a lock - use it to get the active flag value
     int val = 0;
     {
-        XSIGMA_UNUSED std::lock_guard<std::mutex> const lockGuard(
+        XSIGMA_UNUSED std::scoped_lock const lockGuard(
             *this->SpawnedThreadActiveFlagLock[threadId]);
         val = this->SpawnedThreadActiveFlag[threadId];
     }
@@ -635,7 +634,7 @@ bool multi_threader::IsThreadActive(int threadId)
 //------------------------------------------------------------------------------
 bool multi_threader::ThreadsEqual(xsigmaMultiThreaderIDType t1, xsigmaMultiThreaderIDType t2)
 {
-#if defined(XSIGMA_USE_PTHREADS)
+#ifdef XSIGMA_USE_PTHREADS
     return pthread_equal(t1, t2) != 0;
 #elif defined(XSIGMA_USE_WIN32_THREADS)
     return t1 == t2;
