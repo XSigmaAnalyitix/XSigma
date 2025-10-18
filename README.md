@@ -501,12 +501,12 @@ Build speed optimization is **enabled by default**. To disable it:
 
 ```bash
 cd Scripts
-python setup.py ninja.clang.config.build.ccach
+python setup.py ninja.clang.config.build.ccache
 ```
 
 Or when using CMake directly:
 ```bash
-cmake -DXSIGMA_ENABLE_CCACH=OFF ..
+cmake -DXSIGMA_ENABLE_CCACHE=OFF ..
 ```
 
 ### How It Works
@@ -584,7 +584,7 @@ ccache -M 10G
 **ccache not being used:**
 - Verify installation: `which ccache` (Linux/macOS) or `where ccache` (Windows)
 - Check CMake output for "Found ccache" message
-- Ensure `XSIGMA_ENABLE_CCACH` is ON
+- Ensure `XSIGMA_ENABLE_CCACHE` is ON
 
 **Linker not being used:**
 - Verify installation: `which mold` / `which lld` / `which ld.gold`

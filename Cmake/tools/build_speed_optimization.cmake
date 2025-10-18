@@ -6,15 +6,19 @@
 # ensuring that third-party dependencies are not affected by linker choices.
 
 # Option to enable/disable build speed optimizations
-option(XSIGMA_ENABLE_CCACH "Enable ccache and faster linker for faster builds" ON)
-mark_as_advanced(XSIGMA_ENABLE_CCACH)
+option(XSIGMA_ENABLE_CCACHE "Enable ccache and faster linker for faster builds" ON)
+mark_as_advanced(XSIGMA_ENABLE_CCACHE)
 
-if(NOT XSIGMA_ENABLE_CCACH)
-  message(STATUS "Build speed optimization disabled")
+if(NOT XSIGMA_ENABLE_CCACHE)
+  message("Build speed optimization disabled")
   return()
 endif()
 
-message(STATUS "Configuring build speed optimizations...")
+message("Configuring build speed optimizations...")
+
+# Note: When LTO is enabled, faster linkers (especially gold) may run out of memory
+# during the linking phase. In such cases, it's better to use the default linker.
+# This is a known limitation of LTO with certain linkers.
 
 # ============================================================================
 # CCACHE Configuration
@@ -27,7 +31,7 @@ message(STATUS "Configuring build speed optimizations...")
 
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
-  message(STATUS "Found ccache: ${CCACHE_PROGRAM}")
+  message("Found ccache: ${CCACHE_PROGRAM}")
 
   # Set ccache as the compiler launcher for C and CXX
   # This is applied globally because ccache needs to intercept all compilation
@@ -39,9 +43,9 @@ if(CCACHE_PROGRAM)
     set(CMAKE_CUDA_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "CUDA compiler launcher")
   endif()
 
-  message(STATUS "ccache enabled for C/C++ compilation")
+  message("ccache enabled for C/C++ compilation")
 else()
-  message(STATUS "ccache not found - skipping compiler caching")
+  message("ccache not found - skipping compiler caching")
 endif()
 
 # ============================================================================
@@ -54,6 +58,7 @@ endif()
 
 # Determine which linker to use based on platform and compiler
 set(XSIGMA_LINKER_CHOICE "default" CACHE STRING "Linker to use: default, lld, mold, gold, lld-link")
+mark_as_advanced(XSIGMA_LINKER_CHOICE)
 set_property(CACHE XSIGMA_LINKER_CHOICE PROPERTY STRINGS default lld mold gold lld-link)
 
 function(xsigma_find_linker)
@@ -61,21 +66,34 @@ function(xsigma_find_linker)
   set(LINKER_NAME "")
   set(LINKER_FLAGS)
 
+  # Skip faster linker selection if LTO is enabled
+  # LTO with faster linkers (especially gold) can cause out-of-memory errors
+  if(CMAKE_INTERPROCEDURAL_OPTIMIZATION)
+    message("LTO is enabled - skipping faster linker configuration to avoid memory issues")
+    return()
+  endif()
+
   # Platform and compiler specific linker selection
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-      # Linux + Clang: prefer lld or mold
-      find_program(LLD_LINKER lld)
+      # Linux + Clang: prefer mold, then ld.gold (more compatible), then ld.lld
       find_program(MOLD_LINKER mold)
+      find_program(GOLD_LINKER ld.gold)
+      find_program(LD_LLD_LINKER ld.lld)
 
       if(MOLD_LINKER)
         set(LINKER_NAME "${MOLD_LINKER}")
         set(LINKER_FOUND TRUE)
-        message(STATUS "Linux/Clang: Using mold linker for faster linking")
-      elseif(LLD_LINKER)
-        set(LINKER_NAME "${LLD_LINKER}")
+        message("Linux/Clang: Using mold linker for faster linking")
+      elseif(GOLD_LINKER)
+        # Use ld.gold as it's more compatible across LLVM versions
+        set(LINKER_NAME "${GOLD_LINKER}")
         set(LINKER_FOUND TRUE)
-        message(STATUS "Linux/Clang: Using lld linker for faster linking")
+        message("Linux/Clang: Using ld.gold linker for faster linking (more compatible)")
+      elseif(LD_LLD_LINKER)
+        set(LINKER_NAME "${LD_LLD_LINKER}")
+        set(LINKER_FOUND TRUE)
+        message("Linux/Clang: Using ld.lld linker for faster linking")
       endif()
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       # Linux + GCC: prefer mold or gold
@@ -85,22 +103,22 @@ function(xsigma_find_linker)
       if(MOLD_LINKER)
         set(LINKER_NAME "${MOLD_LINKER}")
         set(LINKER_FOUND TRUE)
-        message(STATUS "Linux/GCC: Using mold linker for faster linking")
+        message("Linux/GCC: Using mold linker for faster linking")
       elseif(GOLD_LINKER)
         set(LINKER_NAME "${GOLD_LINKER}")
         set(LINKER_FOUND TRUE)
-        message(STATUS "Linux/GCC: Using gold linker for faster linking")
+        message("Linux/GCC: Using gold linker for faster linking")
       endif()
     endif()
   elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    # macOS: use system linker or lld if available
-    find_program(LLD_LINKER lld)
-    if(LLD_LINKER)
-      set(LINKER_NAME "${LLD_LINKER}")
+    # macOS: use system linker or ld64.lld if available (not generic lld)
+    find_program(LD64_LLD_LINKER ld64.lld)
+    if(LD64_LLD_LINKER)
+      set(LINKER_NAME "${LD64_LLD_LINKER}")
       set(LINKER_FOUND TRUE)
-      message(STATUS "macOS: Using lld linker for faster linking")
+      message("macOS: Using ld64.lld linker for faster linking")
     else()
-      message(STATUS "macOS: Using system linker (lld not found)")
+      message("macOS: Using system linker (ld64.lld not found)")
     endif()
   elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
@@ -109,13 +127,13 @@ function(xsigma_find_linker)
       if(LLD_LINK_LINKER)
         set(LINKER_NAME "${LLD_LINK_LINKER}")
         set(LINKER_FOUND TRUE)
-        message(STATUS "Windows/Clang: Using lld-link linker for faster linking")
+        message("Windows/Clang: Using lld-link linker for faster linking")
       else()
-        message(STATUS "Windows/Clang: lld-link not found - using default linker")
+        message("Windows/Clang: lld-link not found - using default linker")
       endif()
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
       # Windows + MSVC: use default linker with optimizations
-      message(STATUS "Windows/MSVC: Using default linker with optimizations")
+      message("Windows/MSVC: Using default linker with optimizations")
     endif()
   endif()
 
@@ -123,37 +141,69 @@ function(xsigma_find_linker)
   if(LINKER_FOUND)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       # For Clang and GCC, use -fuse-ld flag
-      set(LINKER_FLAGS "-fuse-ld=${LINKER_NAME}")
+      # Extract just the linker name (e.g., "mold" from "/usr/bin/mold")
+      get_filename_component(LINKER_BASENAME "${LINKER_NAME}" NAME)
+
+      # Convert linker names to -fuse-ld compatible format
+      # ld.gold -> gold, ld.lld -> lld, mold -> mold
+      string(REPLACE "ld." "" LINKER_SHORTNAME "${LINKER_BASENAME}")
+      set(LINKER_FLAGS "-fuse-ld=${LINKER_SHORTNAME}")
 
       if(TARGET xsigmabuild)
         target_link_options(xsigmabuild INTERFACE ${LINKER_FLAGS})
-        message(STATUS "Applied linker flag to xsigmabuild: ${LINKER_FLAGS}")
+        message("Applied linker flag to xsigmabuild: ${LINKER_FLAGS}")
       else()
         message(WARNING "xsigmabuild target not found - linker flag will not be applied")
       endif()
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" AND LINKER_NAME MATCHES "lld-link")
       # For MSVC with lld-link, set the linker directly
       set(CMAKE_LINKER "${LINKER_NAME}" CACHE FILEPATH "Linker executable")
-      message(STATUS "Linker configured: ${LINKER_NAME}")
+      message("Linker configured: ${LINKER_NAME}")
     endif()
   else()
-    message(STATUS "No faster linker found - using default linker")
+    message("No faster linker found - using default linker")
   endif()
 endfunction()
 
 # Call the linker detection function
 xsigma_find_linker()
 
+# if(XSIGMA_ENABLE_GOLD_LINKER)
+#   if(USE_DISTRIBUTED AND USE_MPI)
+#     # Same issue as here with default MPI on Ubuntu
+#     # https://bugs.launchpad.net/ubuntu/+source/deal.ii/+bug/1841577
+#     message(WARNING "Refusing to use gold when USE_MPI=1")
+#   else()
+#     execute_process(
+#       COMMAND "${CMAKE_C_COMPILER}" -fuse-ld=gold -Wl,--version
+#       ERROR_QUIET
+#       OUTPUT_VARIABLE LD_VERSION)
+#     if(NOT "${LD_VERSION}" MATCHES "GNU gold")
+#       message(
+#         WARNING
+#           "USE_GOLD_LINKER was set but ld.gold isn't available, turning it off"
+#       )
+#       set(USE_GOLD_LINKER OFF)
+#     else()
+#       message("ld.gold is available, using it to link")
+#       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
+#       set(CMAKE_SHARED_LINKER_FLAGS
+#           "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold")
+#       set(CMAKE_MODULE_LINKER_FLAGS
+#           "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=gold")
+#     endif()
+#   endif()
+# endif()
 # ============================================================================
 # Summary
 # ============================================================================
 
-message(STATUS "Build speed optimization configuration complete")
+message("Build speed optimization configuration complete")
 if(CCACHE_PROGRAM)
-  message(STATUS "  - ccache: ENABLED (global compiler launcher)")
+  message("  - ccache: ENABLED (global compiler launcher)")
 else()
-  message(STATUS "  - ccache: NOT FOUND")
+  message("  - ccache: NOT FOUND")
 endif()
-message(STATUS "  - Faster linker: Automatically detected and applied to xsigmabuild target")
-message(STATUS "  - Third-party dependencies: Not affected by linker configuration")
+message("  - Faster linker: Automatically detected and applied to xsigmabuild target")
+message("  - Third-party dependencies: Not affected by linker configuration")
 
