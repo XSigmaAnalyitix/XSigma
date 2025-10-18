@@ -94,8 +94,9 @@ private:
                 {
                     while (!stop_background_thread_.load())
                     {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(
-                            static_cast<int>(leak_config_.scan_interval_ms)));
+                        std::this_thread::sleep_for(
+                            std::chrono::milliseconds(
+                                static_cast<int>(leak_config_.scan_interval_ms)));
 
                         if (stop_background_thread_.load())
                         {
@@ -206,7 +207,7 @@ public:
         stop_leak_scan_thread();
 
         // Check for remaining allocations
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         if (!active_allocations_.empty())
         {
             XSIGMA_LOG_WARNING(
@@ -218,7 +219,7 @@ public:
 
     void configure_leak_detection(const leak_detection_config& config) override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         bool const restart_thread =
             (config.enable_periodic_scan != leak_config_.enable_periodic_scan) ||
@@ -248,7 +249,7 @@ public:
             return 0;
         }
 
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         size_t const allocation_id = next_allocation_id_.fetch_add(1);
 
@@ -283,7 +284,7 @@ public:
             return false;
         }
 
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         auto it = active_allocations_.find(ptr);
         if (it == active_allocations_.end())
@@ -309,7 +310,7 @@ public:
             return;
         }
 
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         auto it = active_allocations_.find(ptr);
         if (it != active_allocations_.end())
@@ -327,7 +328,7 @@ public:
             return nullptr;
         }
 
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         auto it = active_allocations_.find(ptr);
         if (it != active_allocations_.end())
@@ -340,7 +341,7 @@ public:
 
     unified_resource_stats get_statistics() const override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         // Update potential leaks count
         statistics_.potential_leaks.store(0, std::memory_order_relaxed);
@@ -368,7 +369,7 @@ public:
 
     std::vector<std::shared_ptr<gpu_allocation_info>> get_active_allocations() const override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         std::vector<std::shared_ptr<gpu_allocation_info>> result;
         result.reserve(active_allocations_.size());
@@ -418,14 +419,14 @@ private:
 public:
     std::vector<std::shared_ptr<gpu_allocation_info>> detect_leaks() const override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         return detect_leaks_unsafe();
     }
 
     std::vector<std::shared_ptr<gpu_allocation_info>> get_allocations_by_tag(
         const std::string& tag) const override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         std::vector<std::shared_ptr<gpu_allocation_info>> result;
 
@@ -443,7 +444,7 @@ public:
     std::vector<std::shared_ptr<gpu_allocation_info>> get_allocations_by_device(
         device_enum device_type, int device_index) const override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         std::vector<std::shared_ptr<gpu_allocation_info>> result;
 
@@ -460,7 +461,7 @@ public:
 
     void clear_all_data() override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         active_allocations_.clear();
         all_allocations_.clear();
@@ -487,7 +488,7 @@ public:
 
     std::string generate_report(bool include_call_stacks) const override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         std::ostringstream oss;
         oss << "GPU Resource Tracker Report:\n";

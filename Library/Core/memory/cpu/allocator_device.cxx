@@ -49,7 +49,7 @@ void* allocator_device::allocate_raw(size_t alignment, size_t num_bytes)
         XSIGMA_THROW("allocating {} bytes", num_bytes);
     }
 
-    void* ptr = nullptr;
+    void* ptr = nullptr;  //NOLINT
 
 #ifdef XSIGMA_ENABLE_CUDA
     cudaError_t const result = cudaMallocHost(&ptr, num_bytes);

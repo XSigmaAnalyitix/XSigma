@@ -186,14 +186,14 @@ private:
      */
     gpu_stream* get_default_stream(device_enum device_type, int device_index)
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         auto key = std::make_pair(device_type, device_index);
         auto it  = default_streams_.find(key);
         if (it == default_streams_.end())
         {
             auto        stream     = gpu_stream::create(device_type, device_index, 0);
-            gpu_stream* stream_ptr = stream.get();
+            gpu_stream* stream_ptr = stream.get();  //NOLINT
             default_streams_[key]  = std::move(stream);
             return stream_ptr;
         }
@@ -375,14 +375,14 @@ public:
                 op_ptr->promise.set_value(op_ptr->info);
 
                 // Remove from active transfers
-                std::lock_guard<std::mutex> const lock(mutex_);
+                std::scoped_lock const lock(mutex_);
                 active_transfers_.erase(op_ptr->id);
             })
             .detach();
 
         // Store operation
         {
-            std::lock_guard<std::mutex> const lock(mutex_);
+            std::scoped_lock const lock(mutex_);
             active_transfers_[transfer_id] = std::move(op);
         }
 
@@ -477,7 +477,7 @@ public:
         }
 
         {
-            std::lock_guard<std::mutex> const lock(mutex_);
+            std::scoped_lock const lock(mutex_);
             oss << "Active transfers: " << active_transfers_.size() << "\n";
         }
 
@@ -497,7 +497,7 @@ public:
         std::vector<std::unique_ptr<transfer_operation>> operations;
 
         {
-            std::lock_guard<std::mutex> const lock(mutex_);
+            std::scoped_lock const lock(mutex_);
             operations.reserve(active_transfers_.size());
             for (auto& [id, op] : active_transfers_)
             {
@@ -515,7 +515,7 @@ public:
 
     void cancel_all_transfers() override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         for (auto& [id, op] : active_transfers_)
         {
@@ -534,7 +534,7 @@ public:
 std::unique_ptr<gpu_stream> gpu_stream::create(
     device_enum device_type, int device_index, int priority)
 {
-#if !defined(XSIGMA_ENABLE_CUDA)
+#ifndef XSIGMA_ENABLE_CUDA
     (void)device_index;
     (void)priority;
 #endif

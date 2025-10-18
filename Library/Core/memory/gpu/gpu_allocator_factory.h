@@ -40,7 +40,7 @@ namespace gpu
  * - POOL: Memory pool for frequent allocations of similar sizes
  * - CACHING: Intelligent caching for complex allocation patterns
  */
-enum class XSIGMA_API gpu_allocation_strategy
+enum class gpu_allocation_strategy
 {
     DIRECT  = 0,  ///< Direct CUDA allocation (cudaMalloc/cudaFree)
     POOL    = 1,  ///< Memory pool-based allocation
@@ -53,7 +53,7 @@ enum class XSIGMA_API gpu_allocation_strategy
  * Provides comprehensive configuration options for different allocation
  * strategies, allowing fine-tuning for specific quantitative applications.
  */
-struct XSIGMA_API gpu_allocator_config
+struct XSIGMA_VISIBILITY gpu_allocator_config
 {
     gpu_allocation_strategy strategy     = gpu_allocation_strategy::DIRECT;
     device_enum             device_type  = device_enum::CUDA;
@@ -75,7 +75,7 @@ struct XSIGMA_API gpu_allocator_config
      * @param device_index CUDA device index
      * @return Optimized configuration
      */
-    static gpu_allocator_config create_default(
+    XSIGMA_API static gpu_allocator_config create_default(
         gpu_allocation_strategy strategy, int device_index = 0);
 
     /**
@@ -83,14 +83,14 @@ struct XSIGMA_API gpu_allocator_config
      * @param device_index CUDA device index
      * @return Monte Carlo optimized configuration
      */
-    static gpu_allocator_config create_monte_carlo_optimized(int device_index = 0);
+    XSIGMA_API static gpu_allocator_config create_monte_carlo_optimized(int device_index = 0);
 
     /**
      * @brief Create configuration optimized for PDE solvers
      * @param device_index CUDA device index
      * @return PDE solver optimized configuration
      */
-    static gpu_allocator_config create_pde_optimized(int device_index = 0);
+    XSIGMA_API static gpu_allocator_config create_pde_optimized(int device_index = 0);
 };
 
 /**

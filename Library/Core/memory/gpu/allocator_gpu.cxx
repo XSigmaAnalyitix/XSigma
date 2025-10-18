@@ -52,7 +52,7 @@ basic_gpu_allocator::basic_gpu_allocator(
 
 basic_gpu_allocator::~basic_gpu_allocator()
 {
-    std::lock_guard<std::mutex> lock(stats_mutex_);
+    std::scoped_lock const lock(stats_mutex_);
     if (total_allocated_.load() > 0)
     {
         XSIGMA_LOG_WARNING(
@@ -74,8 +74,8 @@ void* basic_gpu_allocator::Alloc(
         if (ptr != nullptr)
         {
             // Update statistics
-            size_t new_total    = total_allocated_.fetch_add(num_bytes) + num_bytes;
-            size_t current_peak = peak_allocated_.load();
+            size_t const new_total    = total_allocated_.fetch_add(num_bytes) + num_bytes;
+            size_t       current_peak = peak_allocated_.load();
             while (new_total > current_peak &&
                    !peak_allocated_.compare_exchange_weak(current_peak, new_total))
             {
@@ -169,7 +169,7 @@ allocator_gpu::~allocator_gpu()
 void* allocator_gpu::allocate_gpu_memory(size_t num_bytes, void* stream) const
 {
     // Use the new gpu::memory_allocator with stream and memory pool support
-    void* gpu_stream = stream ? stream : options_.gpu_stream;
+    void* gpu_stream = (stream != nullptr) ? stream : options_.gpu_stream;
     return xsigma::gpu::memory_allocator::allocate(
         num_bytes, device_id_, gpu_stream, options_.memory_pool);
 }
@@ -182,7 +182,7 @@ void allocator_gpu::deallocate_gpu_memory(void* ptr, size_t num_bytes, void* str
     }
 
     // Use the new gpu::memory_allocator with stream support
-    void* gpu_stream = stream ? stream : options_.gpu_stream;
+    void* gpu_stream = (stream != nullptr) ? stream : options_.gpu_stream;
     xsigma::gpu::memory_allocator::free(ptr, num_bytes, device_id_, gpu_stream);
 }
 
@@ -213,10 +213,10 @@ void* allocator_gpu::allocate_raw(
         return nullptr;
     }
 
-    std::lock_guard<std::mutex> lock(device_mutex_);
+    std::scoped_lock const lock(device_mutex_);
 
     // Allocate memory using direct GPU API
-    void* ptr = allocate_gpu_memory(num_bytes, nullptr);
+    void* ptr = allocate_gpu_memory(num_bytes, nullptr);  //NOLINT
 
     if (ptr != nullptr && options_.enable_statistics)
     {
@@ -225,8 +225,8 @@ void* allocator_gpu::allocate_raw(
         allocation_count_.fetch_add(1);
 
         // Update peak allocation
-        size_t new_total    = total_allocated_.load();
-        size_t current_peak = peak_allocated_.load();
+        size_t const new_total    = total_allocated_.load();
+        size_t       current_peak = peak_allocated_.load();
         while (new_total > current_peak &&
                !peak_allocated_.compare_exchange_weak(current_peak, new_total))
         {
@@ -254,7 +254,7 @@ void allocator_gpu::deallocate_raw(void* ptr)
         return;
     }
 
-    std::lock_guard<std::mutex> lock(device_mutex_);
+    std::scoped_lock const lock(device_mutex_);
 
     // Note: We don't have the original size for direct GPU API calls
     // This is a limitation of the direct approach vs backend allocators

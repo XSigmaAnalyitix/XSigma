@@ -263,7 +263,7 @@ public:
         size_t const size_class = calculate_size_class(size);
         total_allocations_.fetch_add(1);
 
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         // Try to find a cached block of the appropriate size class
         auto cache_it = cached_blocks_.find(size_class);
@@ -334,7 +334,7 @@ public:
             XSIGMA_THROW("Cannot deallocate null pointer");
         }
 
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         auto it = active_allocations_.find(block.ptr);
         if (it == active_allocations_.end())
@@ -374,13 +374,13 @@ public:
 
     size_t get_active_allocations() const override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         return active_allocations_.size();
     }
 
     void clear_cache() override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         for (auto& [size_class, blocks] : cached_blocks_)
         {
@@ -400,7 +400,7 @@ public:
 
     std::string get_memory_report() const override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         std::ostringstream oss;
         oss << "GPU Memory Pool Report:\n";
@@ -426,7 +426,7 @@ public:
 
     gpu_memory_pool_statistics get_statistics() const override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         gpu_memory_pool_statistics stats;
 

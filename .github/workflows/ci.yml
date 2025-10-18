@@ -912,6 +912,68 @@ jobs:
       run: ctest --output-on-failure -j 2
 
   # ============================================================================
+  # Link Time Optimization (LTO) Testing
+  # Tests LTO enabled and disabled scenarios to ensure correct behavior
+  # ============================================================================
+  lto-tests:
+    name: LTO - ${{ matrix.lto_enabled }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        lto_enabled: ["ON", "OFF"]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache
+          build/ThirdParty
+        key: ubuntu-lto-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ubuntu-lto-${{ env.CACHE_VERSION }}-
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          clang \
+          cmake \
+          python3 \
+          libtbb-dev \
+          cppcheck \
+          libnuma-dev
+
+    - name: Configure with LTO=${{ matrix.lto_enabled }}
+      run: |
+        cmake -B build \
+          -S . \
+          -G Ninja \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=clang++ \
+          -DXSIGMA_LOGGING_BACKEND=LOGURU \
+          -DXSIGMA_BUILD_TESTING=ON \
+          -DXSIGMA_ENABLE_GTEST=ON \
+          -DXSIGMA_ENABLE_LTO=${{ matrix.lto_enabled }} \
+          -DXSIGMA_ENABLE_TBB=ON
+
+    - name: Build
+      run: cmake --build build -j 2
+
+    - name: Run Tests
+      working-directory: ${{ github.workspace }}/build
+      run: ctest --output-on-failure -j 2
+
+  # ============================================================================
   # Performance and Benchmark Tests
   # Runs performance benchmarks to detect regressions in computational performance
   # This job is non-blocking (failures don't fail the entire CI pipeline)
@@ -991,6 +1053,7 @@ jobs:
       - tbb-specific-tests
       - sanitizer-tests
       - optimization-flags-test
+      - lto-tests
       - benchmark-tests
     runs-on: ubuntu-latest
     if: always()

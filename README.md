@@ -8,6 +8,8 @@ A high-performance C++ library with a modern CMake build system providing cross-
 - [Quick Start](#quick-start)
 - [Features](#features)
 - [Documentation](#documentation)
+- [Best Practices](#best-practices)
+- [Build Speed Optimization](#build-speed-optimization)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -335,6 +337,7 @@ For faster builds:
 1. Use external libraries: add `external` flag to setup.py command
 2. Disable unused features
 3. Use parallel compilation: (automatically handled by setup.py)
+4. Enable build speed optimizations (see [Build Speed Optimization](#build-speed-optimization) section)
 
 For more detailed troubleshooting, see the specific feature documentation.
 
@@ -398,8 +401,202 @@ python setup.py ninja.clang.external.test.config.build
 2. **Disable vectorization**: For maximum compatibility
 3. **Use external libraries**: Reduce build time and repository size
 
+---
 
+## Build Speed Optimization
 
+XSigma includes automatic support for **ccache** (compiler cache) and **faster linkers** to significantly reduce build times, especially for incremental builds and large projects.
+
+### Overview
+
+The build system automatically detects and configures:
+- **ccache** - Caches compilation results to avoid recompiling unchanged code
+- **Faster linkers** - Uses platform and compiler-specific optimized linkers
+
+**Expected improvements:**
+- **First build**: 5-15% faster with optimized linker
+- **Incremental builds**: 50-80% faster with ccache (for unchanged files)
+- **Clean rebuilds**: 10-30% faster with optimized linker
+
+### Installation
+
+#### Linux
+
+**Install ccache:**
+```bash
+# Ubuntu/Debian
+sudo apt-get install ccache
+
+# Fedora/RHEL
+sudo dnf install ccache
+
+# Arch
+sudo pacman -S ccache
+```
+
+**Install faster linkers:**
+```bash
+# For Clang: install lld and/or mold
+# Ubuntu/Debian
+sudo apt-get install lld mold
+
+# Fedora/RHEL
+sudo dnf install lld mold
+
+# Arch
+sudo pacman -S lld mold
+
+# For GCC: install gold and/or mold
+# Ubuntu/Debian (gold is usually included with binutils)
+sudo apt-get install binutils mold
+
+# Fedora/RHEL
+sudo dnf install binutils mold
+
+# Arch
+sudo pacman -S binutils mold
+```
+
+#### macOS
+
+**Install ccache:**
+```bash
+# Using Homebrew
+brew install ccache
+
+# Using MacPorts
+sudo port install ccache
+```
+
+**Install faster linker (optional):**
+```bash
+# Install lld (LLVM linker)
+brew install llvm
+```
+
+#### Windows
+
+**Install ccache:**
+```bash
+# Using Chocolatey
+choco install ccache
+
+# Using vcpkg
+vcpkg install ccache:x64-windows
+
+# Or download from: https://github.com/ccache/ccache/releases
+```
+
+**Install faster linker (optional):**
+```bash
+# For Clang with lld-link (usually included with LLVM)
+# Download LLVM from: https://github.com/llvm/llvm-project/releases
+# Or use Chocolatey:
+choco install llvm
+```
+
+### Configuration
+
+Build speed optimization is **enabled by default**. To disable it:
+
+```bash
+cd Scripts
+python setup.py ninja.clang.config.build.ccach
+```
+
+Or when using CMake directly:
+```bash
+cmake -DXSIGMA_ENABLE_CCACH=OFF ..
+```
+
+### How It Works
+
+#### ccache
+
+The build system automatically uses ccache as a compiler launcher if available:
+- Caches compilation results based on source code and compiler flags
+- Subsequent compilations of the same code are retrieved from cache
+- Transparent to the build process - no configuration needed
+
+**Supported compilers:**
+- GCC
+- Clang
+- MSVC
+- CUDA (if enabled)
+
+#### Faster Linkers
+
+The build system automatically detects and uses the fastest available linker:
+
+| Platform | Compiler | Preferred Linker | Fallback |
+|----------|----------|------------------|----------|
+| Linux | Clang | mold | lld |
+| Linux | GCC | mold | gold |
+| macOS | Clang/Apple Clang | lld | system linker |
+| Windows | Clang | lld-link | default |
+| Windows | MSVC | default | - |
+
+### Verification
+
+**Check if ccache is being used:**
+```bash
+# View ccache statistics
+ccache -s
+
+# Clear ccache (if needed)
+ccache -C
+
+# Set ccache size limit (default is 5GB)
+ccache -M 10G
+```
+
+**Check which linker is being used:**
+```bash
+# During build, look for messages like:
+# "Linux/Clang: Using mold linker for faster linking"
+# "Linux/GCC: Using gold linker for faster linking"
+
+# Or check the build output for linker invocations
+```
+
+### Performance Tips
+
+1. **Increase ccache size** for large projects:
+   ```bash
+   ccache -M 20G  # Set to 20GB
+   ```
+
+2. **Use consistent compiler flags** to maximize cache hits
+
+3. **Enable on CI/CD** for faster pipelines:
+   ```bash
+   # In CI configuration, install ccache and faster linkers
+   # The build system will automatically detect and use them
+   ```
+
+4. **Monitor cache effectiveness**:
+   ```bash
+   ccache -s  # Shows hit/miss statistics
+   ```
+
+### Troubleshooting
+
+**ccache not being used:**
+- Verify installation: `which ccache` (Linux/macOS) or `where ccache` (Windows)
+- Check CMake output for "Found ccache" message
+- Ensure `XSIGMA_ENABLE_CCACH` is ON
+
+**Linker not being used:**
+- Verify installation: `which mold` / `which lld` / `which ld.gold`
+- Check CMake output for linker detection messages
+- Some systems may not have faster linkers available - fallback to default is automatic
+
+**Cache misses or stale cache:**
+- Clear cache: `ccache -C`
+- Check cache size: `ccache -s`
+- Verify compiler path consistency
+
+---
 
 ## Contributing
 

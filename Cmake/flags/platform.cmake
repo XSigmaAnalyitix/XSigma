@@ -178,11 +178,9 @@ if(MSVC)
   # Disable C4244: conversion warnings
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4267 /wd4715 /wd4018")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4244 /wd4267 /wd4715 /wd4018")
-endif()
 
-# Disable deprecation warnings for standard C and STL functions in VS2015+
-# and later
-if(MSVC)
+  # Disable deprecation warnings for standard C and STL functions in VS2015+
+  # and later
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS)
   add_definitions(-D_SCL_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
 

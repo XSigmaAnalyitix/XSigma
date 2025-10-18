@@ -71,6 +71,10 @@ target_link_libraries(CoreCxxTests PRIVATE
     ${XSIGMA_CUDA_LIBRARIES}
 )
 
+if(XSIGMA_ENABLE_CUDA)
+    target_link_libraries(CoreCxxTests PRIVATE CUDA::cudart)
+endif()
+
 # Set target properties
 set_target_properties(CoreCxxTests PROPERTIES
     FOLDER "Tests"
