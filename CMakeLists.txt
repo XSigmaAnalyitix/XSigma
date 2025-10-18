@@ -218,6 +218,12 @@ include(helperMacros)
 add_library(xsigmabuild INTERFACE)
 add_library(XSigma::build ALIAS xsigmabuild)
 
+# Include optimization modules AFTER xsigmabuild target is created
+# These modules apply flags to the xsigmabuild target to affect only XSigma targets,
+# not third-party dependencies
+include(lto)
+include(build_speed_optimization)
+
 # Include sanitizer configuration after xsigmabuild target is created
 include(sanitize)
 

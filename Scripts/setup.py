@@ -473,6 +473,7 @@ class XsigmaFlags:
             "cppcheck",
             "spell",
             "fix",
+            "ccach",
         ]
         self.__description = [
             # Valid CMake options
@@ -502,6 +503,7 @@ class XsigmaFlags:
             "enable cppcheck static analysis",
             "enable spell checking with automatic corrections",
             "enable clang-tidy fix-errors and fix options",
+            "enable ccache and faster linker for faster builds",
         ]
 
     def __build_cmake_flag(self):
@@ -535,6 +537,7 @@ class XsigmaFlags:
             "cppcheck": "XSIGMA_ENABLE_CPPCHECK",
             "spell": "XSIGMA_ENABLE_SPELL",
             "fix": "XSIGMA_ENABLE_FIX",
+            "ccach": "XSIGMA_ENABLE_CCACH",
 
             # Non-CMake flags (for internal use, not passed to CMake)
             "mkl_threading": "MKL_THREADING",

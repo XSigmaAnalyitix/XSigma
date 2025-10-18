@@ -121,7 +121,7 @@ struct cuda_caching_allocator::Impl
 
     ~Impl()
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         release_all_blocks_noexcept();
     }
 
@@ -131,7 +131,7 @@ struct cuda_caching_allocator::Impl
 
         // Debug log (simplified for build compatibility)
 
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         reclaim_deferred_blocks_locked();
 
         Block* block = find_suitable_block_locked(size);
@@ -174,8 +174,8 @@ struct cuda_caching_allocator::Impl
 
         // Debug log (simplified for build compatibility)
 
-        std::lock_guard<std::mutex> const lock(mutex_);
-        auto                              it = blocks_.find(ptr);
+        std::scoped_lock const lock(mutex_);
+        auto                   it = blocks_.find(ptr);
 
         XSIGMA_CHECK(
             it != blocks_.end(), "cuda_caching_allocator does not own the provided pointer");
@@ -219,8 +219,8 @@ struct cuda_caching_allocator::Impl
 
     void empty_cache()
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
-        DeviceGuard const                 guard(device_);
+        std::scoped_lock const lock(mutex_);
+        DeviceGuard const      guard(device_);
         reclaim_deferred_blocks_locked(true);
 
         while (!free_blocks_.empty())
@@ -249,20 +249,20 @@ struct cuda_caching_allocator::Impl
 
     void set_max_cached_bytes(size_t bytes)
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         max_cached_bytes_ = bytes;
         trim_cache_locked();
     }
 
     size_t max_cached_bytes() const
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         return max_cached_bytes_;
     }
 
     unified_cache_stats stats() const
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         // Create a copy of the atomic stats structure
         unified_cache_stats const stats_copy(stats_);
         return stats_copy;
@@ -308,7 +308,7 @@ private:
         block->last_stream = nullptr;
         block->in_use      = false;
 
-        Block* raw = block.get();
+        Block* raw = block.get();  //NOLINT
         blocks_.emplace(ptr, std::move(block));
 
         stats_.driver_allocations++;

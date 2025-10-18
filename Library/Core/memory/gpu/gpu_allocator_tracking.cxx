@@ -300,7 +300,7 @@ void* gpu_allocator_tracking::allocate_raw(
 #endif
 
     // Perform actual GPU allocation using the appropriate allocator
-    void*           ptr = nullptr;
+    void*           ptr = nullptr;  //NOLINT
     cuda_error_info error_info;
 
     try
@@ -487,7 +487,7 @@ void gpu_allocator_tracking::deallocate_raw(void* ptr, size_t bytes, void* strea
     }
 
     // Perform actual GPU deallocation using direct CUDA calls
-#if defined(XSIGMA_ENABLE_CUDA)
+#ifdef XSIGMA_ENABLE_CUDA
     if (device_type_ == device_enum::CUDA || device_type_ == device_enum::HIP)
     {
         cudaError_t result = cudaSetDevice(device_index_);

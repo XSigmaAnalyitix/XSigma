@@ -290,7 +290,7 @@ public:
 
     void initialize() override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         if (initialized_)
         {
@@ -321,19 +321,19 @@ public:
 
     gpu_runtime_info get_runtime_info() const override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         return runtime_info_;
     }
 
     std::vector<gpu_device_info> get_available_devices() const override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         return available_devices_;
     }
 
     gpu_device_info get_device_info(device_enum device_type, int device_index) const override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         auto device_it = std::find_if(
             available_devices_.begin(),
@@ -411,7 +411,7 @@ public:
 
     bool is_device_available(device_enum device_type, int device_index) const override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         return std::any_of(
             available_devices_.cbegin(),
@@ -422,7 +422,7 @@ public:
 
     void set_device_context(device_enum device_type, int device_index) override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         // Find the device
         auto device_it = std::find_if(
@@ -465,13 +465,13 @@ public:
 
     gpu_device_info get_current_device() const override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         return current_device_;
     }
 
     void refresh_device_info() override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         // Re-initialize to refresh device information
         initialized_ = false;
@@ -480,7 +480,7 @@ public:
 
     std::string get_system_report() const override
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
 
         std::ostringstream oss;
         oss << "GPU System Report:\n";

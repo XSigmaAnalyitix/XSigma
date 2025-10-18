@@ -270,7 +270,7 @@ void* allocate(
 
 #ifdef XSIGMA_ENABLE_CUDA
 
-#if defined(XSIGMA_CUDA_ALLOC_SYNC)
+#ifdef XSIGMA_CUDA_ALLOC_SYNC
     // Use synchronous CUDA Runtime API allocation (more commonly available)
     cudaError_t result = cudaMalloc(&ptr, nbytes);
     if (result != cudaSuccess)
@@ -325,7 +325,7 @@ void* allocate(
 
 #else
     // Default to synchronous allocation using CUDA Runtime API
-    cudaError_t result = cudaMalloc(&ptr, nbytes);
+    cudaError_t const result = cudaMalloc(&ptr, nbytes);
     if (result != cudaSuccess)
     {
         XSIGMA_LOG_WARNING(
@@ -429,7 +429,7 @@ void free(
 
 #ifdef XSIGMA_ENABLE_CUDA
 
-#if defined(XSIGMA_CUDA_ALLOC_SYNC)
+#ifdef XSIGMA_CUDA_ALLOC_SYNC
     // Use synchronous CUDA Runtime API deallocation
     cudaError_t result = cudaFree(ptr);
     if (result != cudaSuccess)
@@ -472,7 +472,7 @@ void free(
 
 #else
     // Default to synchronous deallocation using CUDA Runtime API
-    cudaError_t result = cudaFree(ptr);
+    cudaError_t const result = cudaFree(ptr);
     if (result != cudaSuccess)
     {
         XSIGMA_LOG_ERROR(
@@ -565,8 +565,8 @@ bool set_device(int device_id) noexcept
 int get_current_device() noexcept
 {
 #ifdef XSIGMA_ENABLE_CUDA
-    int         device_id = -1;
-    cudaError_t error     = cudaGetDevice(&device_id);
+    int               device_id = -1;
+    cudaError_t const error     = cudaGetDevice(&device_id);
     if (error != cudaSuccess)
     {
         XSIGMA_LOG_ERROR("Failed to get current CUDA device: {}", cudaGetErrorString(error));

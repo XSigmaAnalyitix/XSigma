@@ -244,7 +244,7 @@ endif()
 
 # GPU support (CUDA or HIP)
 if(XSIGMA_ENABLE_CUDA)
-    target_link_libraries(Core PRIVATE ${XSIGMA_CUDA_LIBRARIES})
+    target_link_libraries(Core PRIVATE CUDA::cudart)
 endif()
 
 if(XSIGMA_ENABLE_HIP)

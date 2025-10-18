@@ -66,21 +66,36 @@ cmake -B build -S . -DXSIGMA_CXX_STANDARD=23
 Enable Link-Time Optimization for maximum performance in release builds:
 
 ```bash
-# Enable LTO
+# Enable LTO (default is ON)
 cmake -B build -S . \
     -DCMAKE_BUILD_TYPE=Release \
     -DXSIGMA_ENABLE_LTO=ON
+
+# Disable LTO
+cmake -B build -S . \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DXSIGMA_ENABLE_LTO=OFF
 ```
 
 **Benefits:**
 - Improved runtime performance (5-15% typical)
 - Better inlining across translation units
 - Dead code elimination
+- Reduced binary size in some cases
 
 **Considerations:**
-- Increased build time
+- Increased build time (10-30% longer)
 - Higher memory usage during linking
 - Requires recent compiler versions
+
+**Compiler-Specific Implementation:**
+
+| Compiler | Flags | Tools |
+|----------|-------|-------|
+| GCC | `-flto` | `gcc-ar`, `gcc-ranlib` |
+| Clang | `-flto` | `llvm-ar`, `llvm-ranlib` (optional) |
+| Apple Clang | `-flto` | System tools |
+| MSVC | `/GL` (compile), `/LTCG` (link) | Built-in |
 
 ### Troubleshooting LTO
 
@@ -91,8 +106,31 @@ If LTO fails:
    cmake -B build -S . -DXSIGMA_ENABLE_LTO=OFF
    ```
 
-2. **Check compiler version** - ensure recent GCC/Clang/MSVC
-3. **Increase available memory** - LTO can be memory-intensive
+2. **Check compiler version** - ensure recent GCC/Clang/MSVC:
+   - GCC 7.0+
+   - Clang 5.0+
+   - Apple Clang 9.0+
+   - MSVC 19.14+ (Visual Studio 2017 15.7+)
+
+3. **Increase available memory** - LTO can be memory-intensive:
+   ```bash
+   # On Linux/macOS, increase available memory or use swap
+   # On Windows, ensure sufficient RAM is available
+   ```
+
+4. **Check for LTO support**:
+   ```bash
+   # The CMake configuration will verify LTO support
+   # Check the CMake output for "LTO support verified"
+   ```
+
+5. **Use with specific build types**:
+   ```bash
+   # LTO works best with Release builds
+   cmake -B build -S . \
+       -DCMAKE_BUILD_TYPE=Release \
+       -DXSIGMA_ENABLE_LTO=ON
+   ```
 
 ## Advanced Configuration
 
