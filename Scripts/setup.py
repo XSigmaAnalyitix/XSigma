@@ -473,7 +473,7 @@ class XsigmaFlags:
             "cppcheck",
             "spell",
             "fix",
-            "ccach",
+            "ccache",
         ]
         self.__description = [
             # Valid CMake options
@@ -537,7 +537,7 @@ class XsigmaFlags:
             "cppcheck": "XSIGMA_ENABLE_CPPCHECK",
             "spell": "XSIGMA_ENABLE_SPELL",
             "fix": "XSIGMA_ENABLE_FIX",
-            "ccach": "XSIGMA_ENABLE_CCACH",
+            "ccache": "XSIGMA_ENABLE_CCACHE",
 
             # Non-CMake flags (for internal use, not passed to CMake)
             "mkl_threading": "MKL_THREADING",
@@ -744,6 +744,10 @@ class XsigmaFlags:
                 "-DCMAKE_CXX_STANDARD_REQUIRED=ON",
                 "-DCMAKE_CXX_EXTENSIONS=OFF"
             ])
+
+        # Add CMAKE_INTERPROCEDURAL_OPTIMIZATION flag when LTO is enabled
+        if self.__value.get("lto") == self.ON:
+            cmake_cmd_flags.append("-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON")
 
         # Add compilation database generation flag
         cmake_cmd_flags.append("-DCMAKE_EXPORT_COMPILE_COMMANDS=ON")

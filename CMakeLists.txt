@@ -1,4 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
+cmake_policy(SET CMP0069 NEW)
+
+# Prohibit in-source builds
+if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+  message(FATAL_ERROR "In-source build are not supported")
+endif()
 
 # Set project name and version
 project(XSigma
@@ -18,8 +24,20 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cmake/tools")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cmake/flags")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cmake/packages")
 
+# Enable colored output for diagnostics
+set(CMAKE_COLOR_DIAGNOSTICS ON)
+
 # Build optimization settings
-option(XSIGMA_ENABLE_LTO "Enable Link Time Optimization" ON)
+option(XSIGMA_ENABLE_LTO "Enable Link Time Optimization" OFF)
+
+# Set CMAKE_INTERPROCEDURAL_OPTIMIZATION based on XSIGMA_ENABLE_LTO
+if(XSIGMA_ENABLE_LTO)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+  message(STATUS "Link Time Optimization (LTO) enabled via CMAKE_INTERPROCEDURAL_OPTIMIZATION")
+else()
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
+  message(STATUS "Link Time Optimization (LTO) disabled")
+endif()
 
 # Include necessary CMake modules early
 include(CMakeDependentOption)
@@ -221,7 +239,6 @@ add_library(XSigma::build ALIAS xsigmabuild)
 # Include optimization modules AFTER xsigmabuild target is created
 # These modules apply flags to the xsigmabuild target to affect only XSigma targets,
 # not third-party dependencies
-include(lto)
 include(build_speed_optimization)
 
 # Include sanitizer configuration after xsigmabuild target is created
