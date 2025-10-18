@@ -10,6 +10,7 @@ from datetime import datetime
 import glob
 import colorama
 from colorama import Fore, Style
+import time
 
 # Initialize colorama for cross-platform colored output
 colorama.init()
@@ -1634,14 +1635,40 @@ def main():
 
         # Execute build pipeline
         try:
+            start = time.perf_counter()            
             compilation_calc.config(source_path, build_path)
-            compilation_calc.build()
-            compilation_calc.cppcheck(source_path, build_path)
-            compilation_calc.test(source_path, build_path)
-            compilation_calc.coverage(source_path, build_path)
-            compilation_calc.analyze(source_path, build_path)
+            config_end = time.perf_counter()            
 
-            print_status("Build process completed successfully!", "SUCCESS")
+            build_start = time.perf_counter()            
+            compilation_calc.build()
+            build_end = time.perf_counter()            
+
+            cppcheck_start = time.perf_counter()            
+            compilation_calc.cppcheck(source_path, build_path)
+            cppcheck_end = time.perf_counter()            
+
+            test_start = time.perf_counter()            
+            compilation_calc.test(source_path, build_path)
+            test_end = time.perf_counter()            
+
+            coverage_start = time.perf_counter()          
+            compilation_calc.coverage(source_path, build_path)
+            coverage_end = time.perf_counter()            
+            
+            analyze_start = time.perf_counter()            
+            compilation_calc.analyze(source_path, build_path)
+            end = time.perf_counter()          
+
+            print_status(f"Config time: {config_end - start:.4f} seconds", "INFO")
+            print_status(f"Build time: {build_end - build_start:.4f} seconds", "INFO")
+            print_status(f"Cppcheck time: {cppcheck_end - cppcheck_start:.4f} seconds", "INFO")
+            print_status(f"Test time: {test_end - test_start:.4f} seconds", "INFO")  
+            print_status(f"Coverage time: {coverage_end - coverage_start:.4f} seconds", "INFO")  
+            print_status(f"Analyze time: {end - analyze_start:.4f} seconds", "INFO")  
+
+            print_status(f"Total time: {end - start:.4f} seconds", "INFO")            
+            
+            print_status("Build process completed successfully!", "SUCCESS")            
 
             # Display comprehensive summary report
             compilation_calc.summary_reporter.display_summary()

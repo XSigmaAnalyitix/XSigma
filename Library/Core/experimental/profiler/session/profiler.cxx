@@ -157,7 +157,7 @@ bool profiler_session::start()
     // Initialize root scope for hierarchical profiling
     if (options_.enable_hierarchical_profiling_)
     {
-        std::lock_guard<std::mutex> const lock(scope_mutex_);
+        std::scoped_lock const lock(scope_mutex_);
         root_scope_               = std::make_unique<xsigma::profiler_scope_data>();
         root_scope_->name_        = "ROOT";
         root_scope_->start_time_  = start_time_;
@@ -194,7 +194,7 @@ bool profiler_session::stop()
     // Finalize root scope
     if (options_.enable_hierarchical_profiling_ && root_scope_)
     {
-        std::lock_guard<std::mutex> const lock(scope_mutex_);
+        std::scoped_lock const lock(scope_mutex_);
         root_scope_->end_time_ = end_time_;
         thread_current_scope_  = nullptr;
     }
@@ -261,11 +261,13 @@ void profiler_session::initialize_components()
 
 void profiler_session::cleanup_components()
 {
-    memory_tracker_.reset();
-    statistical_analyzer_.reset();
+    memory_tracker_.reset();  //NOLINT
+    memory_tracker_ = nullptr;
 
-    std::lock_guard<std::mutex> const lock(scope_mutex_);
-    root_scope_.reset();
+    statistical_analyzer_.reset();  //NOLINT
+
+    std::scoped_lock const lock(scope_mutex_);
+    root_scope_.reset();  //NOLINT
     current_scope_ = nullptr;
 }
 void profiler_session::register_scope_start(xsigma::profiler_scope* scope)
@@ -275,7 +277,7 @@ void profiler_session::register_scope_start(xsigma::profiler_scope* scope)
         return;
     }
 
-    std::lock_guard<std::mutex> const lock(scope_mutex_);
+    std::scoped_lock const lock(scope_mutex_);
 
     // Find the current scope for this thread
     xsigma::profiler_scope_data* parent_scope = thread_current_scope_;
@@ -309,7 +311,7 @@ void profiler_session::register_scope_end(xsigma::profiler_scope* scope)
         return;
     }
 
-    std::lock_guard<std::mutex> const lock(scope_mutex_);
+    std::scoped_lock const lock(scope_mutex_);
 
     if (thread_current_scope_ != nullptr)
     {

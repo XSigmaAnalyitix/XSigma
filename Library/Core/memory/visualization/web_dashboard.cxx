@@ -75,7 +75,7 @@ void web_dashboard::stop_dashboard()
 
     // Clear WebSocket clients
     {
-        std::lock_guard<std::mutex> const lock(clients_mutex_);
+        std::scoped_lock const lock(clients_mutex_);
         websocket_clients_.clear();
     }
 
@@ -90,7 +90,7 @@ bool web_dashboard::register_allocator(const std::string& name, Allocator* alloc
         return false;
     }
 
-    std::lock_guard<std::mutex> const lock(allocators_mutex_);
+    std::scoped_lock const lock(allocators_mutex_);
 
     if (registered_allocators_.find(name) != registered_allocators_.end())
     {
@@ -113,7 +113,7 @@ bool web_dashboard::register_allocator(const std::string& name, Allocator* alloc
 
 bool web_dashboard::unregister_allocator(const std::string& name)
 {
-    std::lock_guard<std::mutex> const lock(allocators_mutex_);
+    std::scoped_lock const lock(allocators_mutex_);
 
     auto it = registered_allocators_.find(name);
     if (it == registered_allocators_.end())
@@ -126,7 +126,7 @@ bool web_dashboard::unregister_allocator(const std::string& name)
 
     // Also remove history
     {
-        std::lock_guard<std::mutex> const history_lock(history_mutex_);
+        std::scoped_lock const history_lock(history_mutex_);
         metrics_history_.erase(name);
     }
 
@@ -136,7 +136,7 @@ bool web_dashboard::unregister_allocator(const std::string& name)
 
 std::vector<std::string> web_dashboard::get_registered_allocators() const
 {
-    std::lock_guard<std::mutex> const lock(allocators_mutex_);
+    std::scoped_lock const lock(allocators_mutex_);
 
     std::vector<std::string> names;
     names.reserve(registered_allocators_.size());
@@ -151,7 +151,7 @@ std::vector<std::string> web_dashboard::get_registered_allocators() const
 
 std::string web_dashboard::get_allocator_metrics_json(const std::string& allocator_name) const
 {
-    std::lock_guard<std::mutex> const lock(allocators_mutex_);
+    std::scoped_lock const lock(allocators_mutex_);
 
     auto it = registered_allocators_.find(allocator_name);
     if (it == registered_allocators_.end())
@@ -202,7 +202,7 @@ std::string web_dashboard::get_allocator_metrics_json(const std::string& allocat
 std::string web_dashboard::get_allocator_history_json(
     const std::string& allocator_name, size_t max_points) const
 {
-    std::lock_guard<std::mutex> const lock(history_mutex_);
+    std::scoped_lock const lock(history_mutex_);
 
     auto it = metrics_history_.find(allocator_name);
     if (it == metrics_history_.end())
@@ -265,7 +265,7 @@ std::string web_dashboard::get_allocator_history_json(
 
 std::string web_dashboard::get_all_allocators_summary_json() const
 {
-    std::lock_guard<std::mutex> const lock(allocators_mutex_);
+    std::scoped_lock const lock(allocators_mutex_);
 
     std::ostringstream json;
     json << "{\n";
@@ -301,7 +301,7 @@ std::string web_dashboard::get_all_allocators_summary_json() const
 
 std::string web_dashboard::export_prometheus_metrics() const
 {
-    std::lock_guard<std::mutex> const lock(allocators_mutex_);
+    std::scoped_lock const lock(allocators_mutex_);
 
     std::ostringstream prometheus;
 
@@ -344,7 +344,7 @@ std::string web_dashboard::export_prometheus_metrics() const
 
 size_t web_dashboard::get_connected_clients_count() const
 {
-    std::lock_guard<std::mutex> const lock(clients_mutex_);
+    std::scoped_lock const lock(clients_mutex_);
     return std::count_if(
         websocket_clients_.begin(),
         websocket_clients_.end(),
@@ -390,8 +390,8 @@ void web_dashboard::metrics_thread_main()
 
 void web_dashboard::collect_metrics()
 {
-    std::lock_guard<std::mutex> const allocators_lock(allocators_mutex_);
-    std::lock_guard<std::mutex> const history_lock(history_mutex_);
+    std::scoped_lock<std::mutex> const allocators_lock(allocators_mutex_);
+    std::scoped_lock<std::mutex> const history_lock(history_mutex_);
 
     auto now = std::chrono::steady_clock::now();
 
@@ -435,7 +435,7 @@ void web_dashboard::collect_metrics()
 
 void web_dashboard::broadcast_metrics_update(const std::string& /*metrics_json*/)
 {
-    std::lock_guard<std::mutex> const lock(clients_mutex_);
+    std::scoped_lock const lock(clients_mutex_);
 
     // In a real implementation, this would send WebSocket messages to all connected clients
     // For now, just log that we would broadcast

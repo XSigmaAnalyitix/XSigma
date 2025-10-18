@@ -26,7 +26,7 @@
 #include "common/macros.h"
 #include "util/exception.h"
 
-#if defined(XSIGMA_ENABLE_TBB)
+#ifdef XSIGMA_ENABLE_TBB
 
 #ifdef _MSC_VER
 #pragma push_macro("__TBB_NO_IMPLICIT_LINKAGE")
@@ -157,7 +157,7 @@ void free(void* ptr, XSIGMA_UNUSED std::size_t nbytes) noexcept
 
 void* allocate_tbb(XSIGMA_UNUSED std::size_t nbytes, XSIGMA_UNUSED std::size_t alignment)
 {
-#if defined(XSIGMA_ENABLE_TBB)
+#ifdef XSIGMA_ENABLE_TBB
     return scalable_aligned_malloc(nbytes, alignment);
 #else
     return nullptr;
@@ -166,7 +166,7 @@ void* allocate_tbb(XSIGMA_UNUSED std::size_t nbytes, XSIGMA_UNUSED std::size_t a
 
 void free_tbb(XSIGMA_UNUSED void* ptr, XSIGMA_UNUSED std::size_t nbytes) noexcept
 {
-#if defined(XSIGMA_ENABLE_TBB)
+#ifdef XSIGMA_ENABLE_TBB
     scalable_aligned_free(ptr);
 #endif
 }
@@ -266,7 +266,7 @@ void* allocate(
         return nullptr;
     }
 
-    void* ptr = nullptr;
+    void* ptr = nullptr;  //NOLINT
 
 #ifdef XSIGMA_ENABLE_CUDA
 

@@ -72,7 +72,7 @@ public:
      */
     void register_factory(profiler_factory factory)
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         factories_.push_back(std::move(factory));
     }
 
@@ -85,7 +85,7 @@ public:
         const profile_options& options)
     {
         std::vector<std::unique_ptr<profiler_interface>> result;
-        std::lock_guard<std::mutex> const                lock(mutex_);
+        std::scoped_lock const                           lock(mutex_);
 
         result.reserve(factories_.size());  // Optimize for fewer allocations
         for (const auto& factory : factories_)
@@ -103,7 +103,7 @@ public:
      */
     void clear_factories()
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         factories_.clear();
     }
 

@@ -378,7 +378,7 @@ std::string ascii_visualizer::create_bar(size_t value, size_t max_value, size_t 
 
 std::string ascii_visualizer::format_bytes(size_t bytes)
 {
-    const char* units[]    = {"B", "KB", "MB", "GB", "TB"};
+    const char* units[]    = {"B", "KB", "MB", "GB", "TB"};  //NOLINT
     size_t      unit_index = 0;
     auto        size       = static_cast<double>(bytes);
 

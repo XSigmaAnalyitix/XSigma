@@ -35,7 +35,7 @@ public:
     void operator()()
     {
         while (this->Pop()) {}
-        std::lock_guard<std::mutex> const lock(this->Queue->ControlMutex);
+        std::scoped_lock const lock(this->Queue->ControlMutex);
         this->Queue->ThreadIdToIndex.erase(std::this_thread::get_id());
     }
 
@@ -114,9 +114,9 @@ threaded_callback_queue::threaded_callback_queue()
 threaded_callback_queue::~threaded_callback_queue()
 {
     {
-        std::lock_guard<std::mutex> const destroyLock(this->DestroyMutex);
+        std::scoped_lock const destroyLock(this->DestroyMutex);
         {
-            std::lock_guard<std::mutex> const lock(this->Mutex);
+            std::scoped_lock const lock(this->Mutex);
             this->Destroying = true;
         }
     }
@@ -133,7 +133,7 @@ void threaded_callback_queue::SetNumberOfThreads(int numberOfThreads)
         {
             const auto size = static_cast<int>(this->Threads.size());
 
-            std::lock_guard<std::mutex> const destroyLock(this->DestroyMutex);
+            std::scoped_lock const destroyLock(this->DestroyMutex);
             if (this->Destroying)
             {
                 return;
@@ -158,8 +158,7 @@ void threaded_callback_queue::SetNumberOfThreads(int numberOfThreads)
                             static_cast<int>(this->Threads.size()));
                         auto thread = std::thread(ThreadWorker(this, threadIndex));
                         {
-                            std::lock_guard<std::mutex> const threadIdLock(
-                                this->ThreadIdToIndexMutex);
+                            std::scoped_lock const threadIdLock(this->ThreadIdToIndexMutex);
                             this->ThreadIdToIndex.emplace(thread.get_id(), threadIndex);
                         }
                         return thread;
@@ -192,7 +191,7 @@ void threaded_callback_queue::SetNumberOfThreads(int numberOfThreads)
                 }
 
                 {
-                    std::lock_guard<std::mutex> const lock(this->Mutex);
+                    std::scoped_lock const lock(this->Mutex);
                     this->NumberOfThreads = numberOfThreads;
                 }
                 this->ConditionVariable.notify_all();
@@ -240,7 +239,7 @@ void threaded_callback_queue::SignalDependentSharedFutures(
         // We are iterating on our dependents, which mean we cannot let any dependent add themselves to
         // this container. At this point we're "ready" anyway so no dependents should be waiting in most
         // cases.
-        std::lock_guard<std::mutex> const lock(invoker->Mutex);
+        std::scoped_lock const lock(invoker->Mutex);
 
         for (auto& dependent : invoker->Dependents)
         {
@@ -271,7 +270,7 @@ void threaded_callback_queue::SignalDependentSharedFutures(
     }
     if (!invokersToLaunch.empty())
     {
-        std::lock_guard<std::mutex> const lock(this->Mutex);
+        std::scoped_lock const lock(this->Mutex);
         // We need to handle the invoker index.
         // If the InvokerQueue is empty, then we set it such that after this look, the front has index
         // 0.
@@ -284,7 +283,7 @@ void threaded_callback_queue::SignalDependentSharedFutures(
                 "Status should be ON_HOLD");
             inv->InvokerIndex = --index;
 
-            std::lock_guard<std::mutex> const stateLock(inv->Mutex);
+            std::scoped_lock const stateLock(inv->Mutex);
             inv->Status.store(ENQUEUED, std::memory_order_release);
 
             // This dependent has been waiting enough, let's give him some priority.
@@ -311,14 +310,14 @@ bool threaded_callback_queue::TryInvoke(ptr_mutable<xsigmaSharedFutureBase> invo
                 return false;
             }
 
-            std::lock_guard<std::mutex> const lock(this->Mutex);
+            std::scoped_lock const lock(this->Mutex);
 
             if (this->InvokerQueue.empty())
             {
                 return false;
             }
 
-            std::lock_guard<std::mutex> const invLock(invoker->Mutex);
+            std::scoped_lock const invLock(invoker->Mutex);
 
             if (invoker->Status.load(std::memory_order_acquire) != ENQUEUED)
             {

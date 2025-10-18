@@ -120,7 +120,7 @@ public:
     const char* name() const noexcept override { return "standard_aligned_malloc"; }
 };
 
-class xsigma_cpu_benchmark_allocator : public allocator_benchmark_interface
+class malloc_benchmark_allocator : public allocator_benchmark_interface
 {
 public:
     void* allocate(std::size_t size, XSIGMA_UNUSED std::size_t alignment = 64) noexcept override
@@ -284,8 +284,8 @@ void benchmark_memory_access_pattern(benchmark::State& state)
 // =============================================================================
 
 // XSigma CPU allocator benchmarks
-BENCHMARK_TEMPLATE(benchmark_simple_allocation, xsigma_cpu_benchmark_allocator)
-    ->Name("BM_XSigmaCPU_SimpleAllocation")
+BENCHMARK_TEMPLATE(benchmark_simple_allocation, malloc_benchmark_allocator)
+    ->Name("BM_Malloc_SimpleAllocation")
     ->Range(64, 64 << 10)
     ->Unit(benchmark::kMicrosecond);
 
@@ -314,8 +314,8 @@ BENCHMARK_TEMPLATE(benchmark_simple_allocation, tbb_scalable_benchmark_allocator
 // =============================================================================
 
 // XSigma CPU allocator batch benchmarks
-BENCHMARK_TEMPLATE(benchmark_batch_allocation, xsigma_cpu_benchmark_allocator)
-    ->Name("BM_XSigmaCPU_BatchAllocation")
+BENCHMARK_TEMPLATE(benchmark_batch_allocation, malloc_benchmark_allocator)
+    ->Name("BM_Malloc_BatchAllocation")
     ->Args({100, 1024})
     ->Args({1000, 1024})
     ->Args({100, 4096})
@@ -356,8 +356,8 @@ BENCHMARK_TEMPLATE(benchmark_batch_allocation, tbb_scalable_benchmark_allocator)
 // =============================================================================
 
 // XSigma CPU allocator mixed size benchmarks
-BENCHMARK_TEMPLATE(benchmark_mixed_sizes, xsigma_cpu_benchmark_allocator)
-    ->Name("BM_XSigmaCPU_MixedSizes")
+BENCHMARK_TEMPLATE(benchmark_mixed_sizes, malloc_benchmark_allocator)
+    ->Name("BM_Malloc_MixedSizes")
     ->Arg(100)
     ->Arg(500)
     ->Arg(1000)
@@ -394,8 +394,8 @@ BENCHMARK_TEMPLATE(benchmark_mixed_sizes, tbb_scalable_benchmark_allocator)
 // =============================================================================
 
 // XSigma CPU allocator memory access benchmarks
-BENCHMARK_TEMPLATE(benchmark_memory_access_pattern, xsigma_cpu_benchmark_allocator)
-    ->Name("BM_XSigmaCPU_MemoryAccess")
+BENCHMARK_TEMPLATE(benchmark_memory_access_pattern, malloc_benchmark_allocator)
+    ->Name("BM_Malloc_MemoryAccess")
     ->Range(1024, 1024 << 10)
     ->Unit(benchmark::kMicrosecond);
 
@@ -446,8 +446,8 @@ void benchmark_aligned_allocation(benchmark::State& state)
 }
 
 // Alignment benchmarks for all allocators
-BENCHMARK_TEMPLATE(benchmark_aligned_allocation, xsigma_cpu_benchmark_allocator)
-    ->Name("BM_XSigmaCPU_AlignedAllocation")
+BENCHMARK_TEMPLATE(benchmark_aligned_allocation, malloc_benchmark_allocator)
+    ->Name("BM_Malloc_AlignedAllocation")
     ->Arg(16)
     ->Arg(32)
     ->Arg(64)
@@ -556,8 +556,8 @@ void benchmark_fragmentation_pattern(benchmark::State& state)
 }
 
 // Fragmentation benchmarks
-BENCHMARK_TEMPLATE(benchmark_fragmentation_pattern, xsigma_cpu_benchmark_allocator)
-    ->Name("BM_XSigmaCPU_Fragmentation")
+BENCHMARK_TEMPLATE(benchmark_fragmentation_pattern, malloc_benchmark_allocator)
+    ->Name("BM_Malloc_Fragmentation")
     ->Arg(1000)
     ->Arg(5000)
     ->Unit(benchmark::kMicrosecond);

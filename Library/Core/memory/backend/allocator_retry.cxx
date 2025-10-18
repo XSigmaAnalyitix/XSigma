@@ -150,7 +150,7 @@ void* allocator_retry::allocate_raw(
     using Clock         = std::chrono::steady_clock;
     const auto deadline = Clock::now() + std::chrono::milliseconds(max_millis_to_wait);
 
-    void* ptr = nullptr;
+    void* ptr = nullptr;  //NOLINT
 
     while (ptr == nullptr)
     {

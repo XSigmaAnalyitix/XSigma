@@ -79,12 +79,12 @@ void memory_tracker::start_tracking()
     total_deallocated_.store(0);
 
     {
-        std::lock_guard<std::mutex> const lock(allocations_mutex_);
+        std::scoped_lock const lock(allocations_mutex_);
         active_allocations_.clear();
     }
 
     {
-        std::lock_guard<std::mutex> const lock(snapshots_mutex_);
+        std::scoped_lock const lock(snapshots_mutex_);
         snapshots_.clear();
     }
 }
@@ -115,7 +115,7 @@ void memory_tracker::track_allocation(void* ptr, size_t size, const std::string&
     allocation.thread_id_ = std::this_thread::get_id();
 
     {
-        std::lock_guard<std::mutex> const lock(allocations_mutex_);
+        std::scoped_lock const lock(allocations_mutex_);
         active_allocations_[ptr] = allocation;
     }
 
@@ -137,8 +137,8 @@ void memory_tracker::track_deallocation(void* ptr)
     size_t deallocated_size = 0;
 
     {
-        std::lock_guard<std::mutex> const lock(allocations_mutex_);
-        auto                              it = active_allocations_.find(ptr);
+        std::scoped_lock const lock(allocations_mutex_);
+        auto                   it = active_allocations_.find(ptr);
         if (it != active_allocations_.end())
         {
             deallocated_size = it->second.size_;
@@ -240,19 +240,19 @@ void memory_tracker::reset()
     total_deallocated_.store(0);
 
     {
-        std::lock_guard<std::mutex> const lock(allocations_mutex_);
+        std::scoped_lock const lock(allocations_mutex_);
         active_allocations_.clear();
     }
 
     {
-        std::lock_guard<std::mutex> const lock(snapshots_mutex_);
+        std::scoped_lock const lock(snapshots_mutex_);
         snapshots_.clear();
     }
 }
 
 std::vector<xsigma::memory_allocation> memory_tracker::get_active_allocations() const
 {
-    std::lock_guard<std::mutex> const      lock(allocations_mutex_);
+    std::scoped_lock const                 lock(allocations_mutex_);
     std::vector<xsigma::memory_allocation> allocations;
     allocations.reserve(active_allocations_.size());
 
@@ -266,7 +266,7 @@ std::vector<xsigma::memory_allocation> memory_tracker::get_active_allocations() 
 
 size_t memory_tracker::get_allocation_count() const
 {
-    std::lock_guard<std::mutex> const lock(allocations_mutex_);
+    std::scoped_lock const lock(allocations_mutex_);
     return active_allocations_.size();
 }
 
@@ -274,13 +274,13 @@ void memory_tracker::take_snapshot(const std::string& label)
 {
     xsigma::memory_stats const stats = get_current_stats();
 
-    std::lock_guard<std::mutex> const lock(snapshots_mutex_);
+    std::scoped_lock const lock(snapshots_mutex_);
     snapshots_.emplace_back(label, stats);
 }
 
 std::vector<std::pair<std::string, xsigma::memory_stats>> memory_tracker::get_snapshots() const
 {
-    std::lock_guard<std::mutex> const lock(snapshots_mutex_);
+    std::scoped_lock const lock(snapshots_mutex_);
     return snapshots_;
 }
 

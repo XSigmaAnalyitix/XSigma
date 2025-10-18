@@ -95,7 +95,7 @@ Allocator* process_state::GetCPUAllocator(int numa_node)
         return cpu_allocators_cache_[numa_node];
     }
 
-    std::lock_guard<std::mutex> const lock(mu_);
+    std::scoped_lock const lock(mu_);
     while (cpu_allocators_.size() <= static_cast<size_t>(numa_node))
     {
         // If visitors have been defined we need an Allocator built from
@@ -182,7 +182,7 @@ Allocator* process_state::GetCPUAllocator(int numa_node)
 void process_state::AddCPUAllocVisitor(sub_allocator::Visitor visitor)
 {
     XSIGMA_LOG_INFO("AddCPUAllocVisitor");
-    std::lock_guard<std::mutex> const lock(mu_);
+    std::scoped_lock const lock(mu_);
     XSIGMA_CHECK(
         cpu_allocators_.empty(),
         "AddCPUAllocVisitor must be called prior to first call to "
@@ -192,7 +192,7 @@ void process_state::AddCPUAllocVisitor(sub_allocator::Visitor visitor)
 
 void process_state::AddCPUFreeVisitor(sub_allocator::Visitor visitor)
 {
-    std::lock_guard<std::mutex> const lock(mu_);
+    std::scoped_lock const lock(mu_);
     XSIGMA_CHECK(
         cpu_allocators_.empty(),
         "AddCPUFreeVisitor must be called prior to first call to "
@@ -203,11 +203,11 @@ void process_state::AddCPUFreeVisitor(sub_allocator::Visitor visitor)
 
 void process_state::TestOnlyReset()
 {
-    std::lock_guard<std::mutex> const lock(mu_);
+    std::scoped_lock const lock(mu_);
     // Don't delete this value because it's static.
-    Allocator* default_cpu_allocator = allocator_cpu_base();
+    Allocator const* default_cpu_allocator = allocator_cpu_base();
     mem_desc_map_.clear();
-    for (Allocator* a : cpu_allocators_)
+    for (Allocator const* a : cpu_allocators_)
     {
         if (a != default_cpu_allocator)
         {
@@ -215,7 +215,7 @@ void process_state::TestOnlyReset()
         }
     }
     cpu_allocators_.clear();
-    for (Allocator* a : cpu_al_)
+    for (Allocator const* a : cpu_al_)
     {
         delete a;
     }

@@ -78,7 +78,7 @@ static std::string format_human_readable_bytes(int64_t bytes)
     {
         return std::to_string(bytes) + "B";
     }
-    const char*  units[]    = {"KiB", "MiB", "GiB", "TiB", "PiB"};
+    const char*  units[]    = {"KiB", "MiB", "GiB", "TiB", "PiB"};  //NOLINT
     const double divisors[] = {
         1024.0, 1048576.0, 1073741824.0, 1099511627776.0, 1125899906842624.0};
     for (int i = 4; i >= 0; --i)
@@ -260,8 +260,8 @@ allocator_bfc::allocator_bfc(
     : opts_(opts),
       coalesce_regions_(sub_allocator->SupportsCoalescing()),
       sub_allocator_(std::move(sub_allocator)),
-      name_(std::move(name)),
-      free_chunks_list_(kInvalidChunkHandle)
+      name_(std::move(name))
+
 {
     if (opts.allow_growth)
     {
@@ -413,7 +413,7 @@ bool allocator_bfc::Extend(size_t alignment, size_t rounded_bytes)
         mem_addr,
         static_cast<void*>(static_cast<char*>(mem_addr) + bytes_received));
 
-    AllocationRegion* maybe_extended_region = nullptr;
+    AllocationRegion const* maybe_extended_region = nullptr;
     if (coalesce_regions_)
     {
         maybe_extended_region =
@@ -464,7 +464,7 @@ allocator_bfc::ChunkHandle allocator_bfc::AllocateChunk()
     if (free_chunks_list_ != kInvalidChunkHandle)
     {
         ChunkHandle const h = free_chunks_list_;
-        Chunk*            c = ChunkFromHandle(h);
+        Chunk*            c = ChunkFromHandle(h);  //NOLINT
         free_chunks_list_   = c->next;
         return h;
     }
@@ -492,7 +492,7 @@ void* allocator_bfc::AllocateRawInternalWithRetry(
     {
         freed_by_count = (*allocation_attr.freed_by_func)();
     }
-    void* r = AllocateRawInternal(unused_alignment, num_bytes, false, freed_by_count);
+    void* r = AllocateRawInternal(unused_alignment, num_bytes, false, freed_by_count);  //NOLINT
 
     if (r != nullptr)
     {
@@ -521,7 +521,7 @@ void* allocator_bfc::allocate_raw(
     size_t unused_alignment, size_t num_bytes, const allocation_attributes& allocation_attr)
 {
     //XSIGMA_LOG_INFO_DEBUG_BFC("allocate_raw {}  {}", Name(), num_bytes);
-    void* result = [&]
+    void* result = [&]  //NOLINT
     {
         if (!opts_.allow_retry_on_failure || !allocation_attr.retry_on_failure)
         {
@@ -546,8 +546,11 @@ void* allocator_bfc::allocate_raw(
             {
                 freed_by_count = (*allocation_attr.freed_by_func)();
             }
-            void* res = AllocateRawInternal(
-                unused_alignment, num_bytes, dump_log_on_failure, freed_by_count);
+            void* res = AllocateRawInternal(  //NOLINT
+                unused_alignment,
+                num_bytes,
+                dump_log_on_failure,
+                freed_by_count);
             if (res == nullptr)
             {
                 int32_t const counter_value = log_counter.load(std::memory_order_relaxed);
@@ -705,13 +708,13 @@ void* allocator_bfc::AllocateRawInternal(
     // The BFC allocator tries to find the best fit first.
     BinNum const bin_num = BinNumForSize(rounded_bytes);
 
-    std::lock_guard<std::mutex> const lock(mutex_);
+    std::scoped_lock const lock(mutex_);
     if (!timestamped_chunks_.empty())
     {
         // Merge timestamped chunks whose counts have become safe for general use.
         MergeTimestampedChunks(0);
     }
-    void* ptr = FindChunkPtr(bin_num, rounded_bytes, num_bytes, freed_before);
+    void* ptr = FindChunkPtr(bin_num, rounded_bytes, num_bytes, freed_before);  //NOLINT
     if (ptr != nullptr)
     {
         AddTraceMe("MemoryAllocation", ptr);
@@ -804,7 +807,7 @@ double allocator_bfc::GetFragmentation()
 
 void allocator_bfc::AddTraceMe(std::string_view traceme_name, const void* ptr)
 {
-    allocator_bfc::Chunk* chunk = ChunkFromHandle(region_manager_.get_handle(ptr));
+    allocator_bfc::Chunk const* chunk = ChunkFromHandle(region_manager_.get_handle(ptr));
     AddTraceMe(traceme_name, chunk->ptr, chunk->requested_size, chunk->size);
 }
 
@@ -1018,14 +1021,14 @@ void allocator_bfc::DeallocateRawInternal(void* ptr)
         XSIGMA_LOG(INFO, "tried to deallocate nullptr");
         return;
     }
-    std::lock_guard<std::mutex> const lock(mutex_);
+    std::scoped_lock const lock(mutex_);
 
     // Find the chunk from the ptr.
     allocator_bfc::ChunkHandle const h = region_manager_.get_handle(ptr);
     XSIGMA_CHECK(h != kInvalidChunkHandle);
     // Record chunk information before it's freed.
-    Chunk*        chunk       = ChunkFromHandle(h);
-    void*         chunk_ptr   = chunk->ptr;
+    Chunk const*  chunk       = ChunkFromHandle(h);
+    void const*   chunk_ptr   = chunk->ptr;
     int64_t const req_bytes   = chunk->requested_size;
     int64_t const alloc_bytes = chunk->size;
 
@@ -1053,8 +1056,8 @@ void allocator_bfc::DeallocateRawInternal(void* ptr)
 // We merge Chunk(h2) into Chunk(h1).
 void allocator_bfc::Merge(allocator_bfc::ChunkHandle h1, allocator_bfc::ChunkHandle h2)
 {
-    Chunk* c1 = ChunkFromHandle(h1);
-    Chunk* c2 = ChunkFromHandle(h2);
+    Chunk*       c1 = ChunkFromHandle(h1);
+    Chunk const* c2 = ChunkFromHandle(h2);
     // We can only merge chunks that are not in use.
     XSIGMA_CHECK(!c1->in_use() && !c2->in_use());  //NOLINT
 
@@ -1087,7 +1090,7 @@ void allocator_bfc::Merge(allocator_bfc::ChunkHandle h1, allocator_bfc::ChunkHan
 void allocator_bfc::DeleteChunk(ChunkHandle h)
 {
     // Delete h and cleanup all state
-    Chunk* c = ChunkFromHandle(h);
+    Chunk const* c = ChunkFromHandle(h);
     //  VLOG(4) << "Removing: " << c->ptr;
     region_manager_.erase(c->ptr);
     DeallocateChunk(h);
@@ -1151,7 +1154,7 @@ void allocator_bfc::MarkFree(allocator_bfc::ChunkHandle h)
 
 allocator_bfc::ChunkHandle allocator_bfc::TryToCoalesce(ChunkHandle h, bool ignore_freed_at)
 {
-    Chunk* c = ChunkFromHandle(h);
+    Chunk const* c = ChunkFromHandle(h);
     if ((!ignore_freed_at) && c->freed_at_count > 0)
     {
         return h;
@@ -1161,7 +1164,7 @@ allocator_bfc::ChunkHandle allocator_bfc::TryToCoalesce(ChunkHandle h, bool igno
     // If the next chunk is free, merge it into c and delete it.
     if (c->next != kInvalidChunkHandle && !ChunkFromHandle(c->next)->in_use())
     {
-        Chunk* n = ChunkFromHandle(c->next);
+        Chunk const* n = ChunkFromHandle(c->next);
         if ((n->freed_at_count == 0) || ignore_freed_at)
         {
             XSIGMA_LOG_INFO_DEBUG_BFC("Merging c->next {} with c {}", n->ptr, c->ptr);
@@ -1173,7 +1176,7 @@ allocator_bfc::ChunkHandle allocator_bfc::TryToCoalesce(ChunkHandle h, bool igno
     // If the previous chunk is free, merge c into it and delete c.
     if (c->prev != kInvalidChunkHandle && !ChunkFromHandle(c->prev)->in_use())
     {
-        Chunk* n = ChunkFromHandle(c->prev);
+        Chunk const* n = ChunkFromHandle(c->prev);
         if ((n->freed_at_count == 0) || ignore_freed_at)
         {
             XSIGMA_LOG_INFO_DEBUG_BFC("Merging c {} into c->prev {}", c->ptr, n->ptr);
@@ -1270,7 +1273,7 @@ bool allocator_bfc::MergeTimestampedChunks(size_t required_bytes)
         }
         if (required_bytes == 0 || !satisfied)
         {
-            Chunk* c = ChunkFromHandle(h);
+            Chunk const* c = ChunkFromHandle(h);
             XSIGMA_CHECK_DEBUG(c->bin_num != kInvalidBinNum);
             XSIGMA_CHECK_DEBUG(!c->in_use());
             RemoveFreeChunkFromBin(h);
@@ -1307,8 +1310,8 @@ bool allocator_bfc::tracks_allocation_sizes() const noexcept
 size_t allocator_bfc::RequestedSize(const void* ptr) const
 {
     XSIGMA_CHECK(ptr != nullptr);
-    std::lock_guard<std::mutex> const lock(mutex_);
-    allocator_bfc::ChunkHandle const  h = region_manager_.get_handle(ptr);
+    std::scoped_lock const           lock(mutex_);
+    allocator_bfc::ChunkHandle const h = region_manager_.get_handle(ptr);
     XSIGMA_CHECK(
         h != kInvalidChunkHandle, "Asked for requested size of pointer we never allocated: ", ptr);
 
@@ -1318,8 +1321,8 @@ size_t allocator_bfc::RequestedSize(const void* ptr) const
 
 size_t allocator_bfc::AllocatedSize(const void* ptr) const
 {
-    std::lock_guard<std::mutex> const lock(mutex_);
-    allocator_bfc::ChunkHandle const  h = region_manager_.get_handle(ptr);
+    std::scoped_lock const           lock(mutex_);
+    allocator_bfc::ChunkHandle const h = region_manager_.get_handle(ptr);
 
     XSIGMA_CHECK(
         h != kInvalidChunkHandle, "Asked for allocated size of pointer we never allocated: ", ptr);
@@ -1330,8 +1333,8 @@ size_t allocator_bfc::AllocatedSize(const void* ptr) const
 
 int64_t allocator_bfc::AllocationId(const void* ptr) const
 {
-    std::lock_guard<std::mutex> const lock(mutex_);
-    allocator_bfc::ChunkHandle const  h = region_manager_.get_handle(ptr);
+    std::scoped_lock const           lock(mutex_);
+    allocator_bfc::ChunkHandle const h = region_manager_.get_handle(ptr);
 
     XSIGMA_CHECK(
         h != kInvalidChunkHandle, "Asked for allocation id of pointer we never allocated: ", ptr);
@@ -1399,7 +1402,7 @@ std::string allocator_bfc::RenderOccupancy()
         // Then render each chunk left to right.
         while (h != kInvalidChunkHandle)
         {
-            Chunk* c = ChunkFromHandle(h);
+            Chunk const* c = ChunkFromHandle(h);
             if (c->in_use())
             {
                 // Render the wasted space
@@ -1461,7 +1464,7 @@ void allocator_bfc::DumpMemoryLog(size_t num_bytes)
 
     // Find the bin that we would have liked to allocate in, so we
     // can get some further analysis about fragmentation.
-    Bin* b = BinForSize(num_bytes);
+    Bin const* b = BinForSize(num_bytes);
 
     XSIGMA_LOG_INFO(
         "Bin for {} was {}, Chunk State: ",
@@ -1470,7 +1473,7 @@ void allocator_bfc::DumpMemoryLog(size_t num_bytes)
 
     for (ChunkHandle const h : b->free_chunks)
     {
-        Chunk* c = ChunkFromHandle(h);
+        Chunk const* c = ChunkFromHandle(h);
         XSIGMA_LOG_INFO("{}", c->debug_string(this, true));
     }
 
@@ -1566,7 +1569,7 @@ void allocator_bfc::MaybeWriteMemoryMap()
 
 memory_dump allocator_bfc::RecordMemoryMap()
 {
-    std::lock_guard<std::mutex> const lock(mutex_);
+    std::scoped_lock const lock(mutex_);
     return RecordMemoryMapInternal();
 }
 
@@ -1647,7 +1650,7 @@ memory_dump allocator_bfc::RecordMemoryMapInternal()
 
 std::optional<allocator_stats> allocator_bfc::GetStats() const
 {
-    std::lock_guard<std::mutex> const lock(mutex_);
+    std::scoped_lock const lock(mutex_);
     // Create a copy of the atomic stats structure
     allocator_stats stats_copy(stats_);
     return stats_copy;
@@ -1655,7 +1658,7 @@ std::optional<allocator_stats> allocator_bfc::GetStats() const
 
 bool allocator_bfc::ClearStats()
 {
-    std::lock_guard<std::mutex> const lock(mutex_);
+    std::scoped_lock const lock(mutex_);
     stats_.num_allocs.store(0, std::memory_order_relaxed);
     stats_.peak_bytes_in_use.store(
         stats_.bytes_in_use.load(std::memory_order_relaxed), std::memory_order_relaxed);
@@ -1684,7 +1687,7 @@ std::array<allocator_bfc::BinDebugInfo, allocator_bfc::kNumBins> allocator_bfc::
             }
             else
             {
-                Bin* bin = BinFromIndex(bin_num);
+                Bin const* bin = BinFromIndex(bin_num);
                 XSIGMA_CHECK(bin->free_chunks.count(h) == 1);
                 XSIGMA_CHECK(c->bin_num == bin_num);
             }
