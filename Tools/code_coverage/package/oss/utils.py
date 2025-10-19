@@ -43,7 +43,7 @@ def get_llvm_tool_path() -> str:
 def get_pytorch_folder() -> str:
     # TOOLS_FOLDER in oss: pytorch/tools/code_coverage
     return os.path.abspath(
-        os.environ.get("PYTORCH_FOLDER", os.path.dirname(os.path.dirname(TOOLS_FOLDER)))
+        os.environ.get("XSIGMA_FOLDER", os.path.dirname(os.path.dirname(TOOLS_FOLDER)))
     )
 
 

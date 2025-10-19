@@ -842,6 +842,8 @@ class XsigmaConfiguration:
             self.__set_clang_compiler(arg)
         elif arg == "clang-cl":
             self.__value["cmake_cxx_compiler"] = "-DCMAKE_GENERATOR_TOOLSET=ClangCL"
+        elif self.__is_gcc_compiler(arg):
+            self.__set_gcc_compiler(arg)
         elif self.__is_visual_studio(arg):
             self.__set_visual_studio(arg)
         elif arg in ["config", "build", "test", "analyze"]:
@@ -912,6 +914,25 @@ class XsigmaConfiguration:
         self.__value["cmake_cxx_compiler"] = (
             f"-DCMAKE_CXX_COMPILER={arg.replace('clang', 'clang++')}"
         )
+
+    def __is_gcc_compiler(self, arg):
+        """Check if argument is a GCC compiler specification (gcc, g++, gcc-11, g++-11, etc.)"""
+        return ("gcc" in arg or "g++" in arg) and arg not in ["cppcheck"]
+
+    def __set_gcc_compiler(self, arg):
+        """Set GCC compiler for CMake configuration"""
+        if "g++" in arg:
+            # If it's g++ or g++-XX, use it as CXX and derive C compiler
+            self.__value["cmake_cxx_compiler"] = f"-DCMAKE_CXX_COMPILER={arg}"
+            # Replace g++ with gcc to get the C compiler
+            c_compiler = arg.replace("g++", "gcc")
+            self.__value["cmake_c_compiler"] = f"-DCMAKE_C_COMPILER={c_compiler}"
+        else:
+            # If it's gcc or gcc-XX, use it as C compiler and derive CXX compiler
+            self.__value["cmake_c_compiler"] = f"-DCMAKE_C_COMPILER={arg}"
+            # Replace gcc with g++ to get the CXX compiler
+            cxx_compiler = arg.replace("gcc", "g++")
+            self.__value["cmake_cxx_compiler"] = f"-DCMAKE_CXX_COMPILER={cxx_compiler}"
 
     def __is_visual_studio(self, arg):
         return arg in ["vs17", "vs19", "vs22"] and self.__value["system"] == "Windows"
