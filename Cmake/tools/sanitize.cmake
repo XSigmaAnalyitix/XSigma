@@ -63,7 +63,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANGXX)
 
     if (CMAKE_COMPILER_IS_CLANGXX)
       configure_file(
-        "${XSIGMA_SOURCE_DIR}/Scripts/sanitizer_ignore.txt.in"
+        "${XSIGMA_SOURCE_DIR}/Scripts/suppressions/sanitizer_ignore.txt.in"
         "${XSIGMA_BINARY_DIR}/sanitizer_ignore.txt"
         @ONLY)
       list(APPEND xsigma_sanitize_args

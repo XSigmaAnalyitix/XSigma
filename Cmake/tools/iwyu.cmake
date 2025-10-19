@@ -40,7 +40,7 @@ else()
     message(STATUS "IWYU found: ${XSIGMA_IWYU_EXECUTABLE}")
 
     # Check if mapping file exists
-    set(IWYU_MAPPING_FILE "${CMAKE_SOURCE_DIR}/Scripts/iwyu_exclusion.imp")
+    set(IWYU_MAPPING_FILE "${CMAKE_SOURCE_DIR}/Scripts/iwyu/iwyu_exclusion.imp")
     if(EXISTS "${IWYU_MAPPING_FILE}")
         message(STATUS "Using IWYU mapping file: ${IWYU_MAPPING_FILE}")
     else()
@@ -85,7 +85,7 @@ else()
     endif()
 
     # Create configure detector script path
-    set(CONFIGURE_DETECTOR_SCRIPT "${CMAKE_SOURCE_DIR}/Scripts/iwyu_configure_detector.py")
+    set(CONFIGURE_DETECTOR_SCRIPT "${CMAKE_SOURCE_DIR}/Scripts/iwyu/iwyu_configure_detector.py")
 
     message(STATUS "IWYU will analyze include dependencies for XSigma targets only")
     message(STATUS "IWYU analysis will be logged to: ${IWYU_LOG_FILE}")

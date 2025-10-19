@@ -893,19 +893,19 @@ jobs:
         # Set up sanitizer-specific environment variables
         case "${{ matrix.sanitizer }}" in
           "address")
-            echo "ASAN_OPTIONS=print_stacktrace=1:check_initialization_order=1:strict_init_order=1:suppressions=${{ github.workspace }}/Scripts/asan_suppressions.txt" >> $GITHUB_ENV
+            echo "ASAN_OPTIONS=print_stacktrace=1:check_initialization_order=1:strict_init_order=1:suppressions=${{ github.workspace }}/Scripts/suppressions/asan_suppressions.txt" >> $GITHUB_ENV
             ;;
           "leak")
-            echo "LSAN_OPTIONS=print_suppressions=0:suppressions=${{ github.workspace }}/Scripts/lsan_suppressions.txt" >> $GITHUB_ENV
+            echo "LSAN_OPTIONS=print_suppressions=0:suppressions=${{ github.workspace }}/Scripts/suppressions/lsan_suppressions.txt" >> $GITHUB_ENV
             ;;
           "thread")
-            echo "TSAN_OPTIONS=print_stacktrace=1:halt_on_error=1:suppressions=${{ github.workspace }}/Scripts/tsan_suppressions.txt" >> $GITHUB_ENV
+            echo "TSAN_OPTIONS=print_stacktrace=1:halt_on_error=1:suppressions=${{ github.workspace }}/Scripts/suppressions/tsan_suppressions.txt" >> $GITHUB_ENV
             ;;
           "undefined")
-            echo "UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1:suppressions=${{ github.workspace }}/Scripts/ubsan_suppressions.txt" >> $GITHUB_ENV
+            echo "UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1:suppressions=${{ github.workspace }}/Scripts/suppressions/ubsan_suppressions.txt" >> $GITHUB_ENV
             ;;
           "memory")
-            echo "MSAN_OPTIONS=print_stats=1:halt_on_error=1:suppressions=${{ github.workspace }}/Scripts/msan_suppressions.txt" >> $GITHUB_ENV
+            echo "MSAN_OPTIONS=print_stats=1:halt_on_error=1:suppressions=${{ github.workspace }}/Scripts/suppressions/msan_suppressions.txt" >> $GITHUB_ENV
             ;;
         esac
 

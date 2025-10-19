@@ -12,6 +12,14 @@ import colorama
 from colorama import Fore, Style
 import time
 
+# Import helper modules
+from helpers import cppcheck as cppcheck_helper
+from helpers import coverage as coverage_helper
+from helpers import build as build_helper
+from helpers import config as config_helper
+from helpers import test as test_helper
+from helpers import sanitizer as sanitizer_helper
+
 # Initialize colorama for cross-platform colored output
 colorama.init()
 
@@ -960,42 +968,32 @@ class XsigmaConfiguration:
 
         print_status("Configuring build...", "INFO")
         try:
-            build_folder = f"-B {build_path}"
-            source_folder = f"-S {source_path}"
-
-            cmake_cmd = [
-                "cmake",
-                source_folder,
-                build_folder,
-                "-G",
-                self.__value["cmake_generator"],
-                self.__value["arg_cmake_verbose"],
-            ]
-
-            if self.__value["cmake_cxx_compiler"]:
-                cmake_cmd.append(self.__value["cmake_cxx_compiler"])
-            if self.__value["cmake_c_compiler"]:
-                cmake_cmd.append(self.__value["cmake_c_compiler"])
-
+            cmake_flags = []
             self.__xsigma_flags.create_cmake_flags(
-                cmake_cmd, self.__value["build_enum"], self.__value["system"]
+                cmake_flags, self.__value["build_enum"], self.__value["system"]
             )
 
-            cmake_command = " ".join(cmake_cmd)
-            print(f"CMake command line: {cmake_command}")
-            print("======================================================")
-
-            subprocess.check_call(
-                cmake_cmd, stderr=subprocess.STDOUT, shell=self.__shell_flag()
+            exit_code = config_helper.configure_build(
+                source_path,
+                build_path,
+                self.__value["cmake_generator"],
+                self.__value["cmake_cxx_compiler"],
+                self.__value["cmake_c_compiler"],
+                cmake_flags,
+                self.__value["arg_cmake_verbose"],
+                self.__shell_flag()
             )
-            print_status("Build configured successfully", "SUCCESS")
 
-            # If using Xcode, offer to open the project
-            if self.__value["cmake_generator"] == "Xcode":
-                self.__handle_xcode_project_opening()
+            if exit_code == 0:
+                print_status("Build configured successfully", "SUCCESS")
+                # If using Xcode, offer to open the project
+                if self.__value["cmake_generator"] == "Xcode":
+                    config_helper.handle_xcode_project_opening()
+            else:
+                print_status("Configuration failed", "ERROR")
+                sys.exit(1)
 
         except subprocess.CalledProcessError as e:
-            cmake_cmd_str = ' '.join(cmake_cmd)
             suggestions = [
                 "Check if CMake is properly installed",
                 "Verify all required dependencies are available",
@@ -1003,7 +1001,7 @@ class XsigmaConfiguration:
                 "Try a different build generator (e.g., ninja instead of make)"
             ]
             self.error_logger.log_error(
-                cmake_cmd_str,
+                "cmake",
                 str(e),
                 "Configuring the build system",
                 suggestions
@@ -1018,39 +1016,18 @@ class XsigmaConfiguration:
 
         print_status("Building project...", "INFO")
         try:
-            if self.__value["system"] == "Linux" or self.__value["builder"] == "ninja":
-                n = get_logical_processor_count()
-                cmake_cmd_build = [self.__value["builder"], "-j", str(n)]
-            elif self.__value["builder"] == "xcodebuild":
-                # Xcode build command
-                n = get_logical_processor_count()
-                cmake_cmd_build = [
-                    "xcodebuild",
-                    "-configuration", self.__value["build_enum"],
-                    "-parallelizeTargets",
-                    "-jobs", str(n)
-                ]
-
-                # Add specific target if needed
-                if hasattr(self, '_xcode_target') and self._xcode_target:
-                    cmake_cmd_build.extend(["-target", self._xcode_target])
-                else:
-                    cmake_cmd_build.append("build")
-            elif self.__value["system"] == "Windows":
-                cmake_cmd_build = [
-                    self.__value["builder"],
-                    "--build",
-                    ".",
-                    "--config",
-                    self.__value["build_enum"],
-                ]
-
-            subprocess.check_call(
-                cmake_cmd_build, stderr=subprocess.STDOUT, shell=self.__shell_flag()
+            exit_code = build_helper.build_project(
+                self.__value["builder"],
+                self.__value["build_enum"],
+                self.__value["system"],
+                self.__shell_flag()
             )
-            print_status("Build completed successfully", "SUCCESS")
+            if exit_code == 0:
+                print_status("Build completed successfully", "SUCCESS")
+            else:
+                print_status("Build failed", "ERROR")
+                sys.exit(1)
         except subprocess.CalledProcessError as e:
-            build_cmd_str = ' '.join(cmake_cmd_build)
             suggestions = [
                 "Check if all dependencies are installed",
                 "Verify the build configuration is correct",
@@ -1058,7 +1035,7 @@ class XsigmaConfiguration:
                 "Check for compiler errors in the output above"
             ]
             self.error_logger.log_error(
-                build_cmd_str,
+                "build",
                 str(e),
                 "Building the project",
                 suggestions
@@ -1147,242 +1124,56 @@ class XsigmaConfiguration:
 
     def _build_cppcheck_command(self, source_path: str, output_file: str) -> List[str]:
         """Build the cppcheck command with appropriate settings."""
-        # Get the number of CPU cores for parallel processing
-        cpu_count = get_logical_processor_count()
-        parallel_jobs = min(cpu_count, 8)  # Cap at 8 to avoid overwhelming the system
-
-        cmd = [
-            "cppcheck",
-            ".",
-            "--platform=unspecified",
-            "--enable=style,performance,portability,information",
-            "--inline-suppr",
-            "-q",  # Quiet mode - only show errors
-            "--library=qt",
-            "--library=posix",
-            "--library=gnu",
-            "--library=bsd",
-            "--library=windows",
-            "--check-level=exhaustive",
-            "--template={id},{file}:{line},{severity},{message}",
-            "--suppress=missingInclude",
-            f"-j{parallel_jobs}",
-            "-I", "Library",
-            f"--output-file={output_file}"
-        ]
-
-        # Add suppressions file if it exists
-        suppressions_file = os.path.join(source_path, "Scripts", "cppcheck_suppressions.txt")
-        if os.path.exists(suppressions_file):
-            cmd.append(f"--suppressions-list={suppressions_file}")
-
-        return cmd
+        return cppcheck_helper.build_cppcheck_command(source_path, output_file)
 
     def _process_cppcheck_results(self, result: subprocess.CompletedProcess, output_file: str, source_path: str) -> int:
         """Process cppcheck results and provide user-friendly feedback."""
-
-        # Check if output file was created and has content
-        if not os.path.exists(output_file):
-            print_status("No cppcheck output file generated", "WARNING")
-            return 1
-
-        try:
-            with open(output_file, 'r', encoding='utf-8') as f:
-                content = f.read().strip()
-
-            if not content:
-                print_status("✓ No static analysis issues found!", "SUCCESS")
-                print_status(f"Analysis results saved to: {output_file}", "INFO")
-                return 0
-
-            # Count issues by type
-            lines = content.split('\n')
-            issue_counts = {}
-            for line in lines:
-                if ',' in line:
-                    parts = line.split(',')
-                    if len(parts) >= 3:
-                        severity = parts[2]
-                        issue_counts[severity] = issue_counts.get(severity, 0) + 1
-
-            total_issues = len(lines)
-            print_status(f"Found {total_issues} potential issues:", "WARNING")
-
-            # Display issue breakdown
-            for severity, count in sorted(issue_counts.items()):
-                if severity in ['error', 'warning']:
-                    status_type = "ERROR" if severity == 'error' else "WARNING"
-                else:
-                    status_type = "INFO"
-                print_status(f"  - {severity}: {count}", status_type)
-
-            print_status(f"Detailed results saved to: {output_file}", "INFO")
-            print_status("Review the output file for specific issues and locations", "INFO")
-
-            # Return appropriate exit code
-            if any(severity in ['error'] for severity in issue_counts.keys()):
-                return 1
-            else:
-                return 0
-
-        except Exception as e:
-            error_msg = f"Failed to process cppcheck results: {e}"
-            self.error_logger.log_error(
-                "Processing cppcheck output",
-                str(e),
-                f"Reading results from {output_file}",
-                ["Check if the output file is readable", "Verify file permissions"]
-            )
-            print_status(error_msg, "ERROR")
-            return 1
+        return cppcheck_helper.process_cppcheck_results(result, output_file)
 
 
 
     def test(self, source_path, build_path):
-        if self.__value["test"] != "test" or self.__xsigma_flags.is_coverage():
+        if self.__value["test"] != "test":
             return 0
 
         if self.__xsigma_flags.is_valgrind():
-            exit_code = self.__run_valgrind_test(source_path, build_path)
+            exit_code = test_helper.run_valgrind_test(source_path, build_path, self.__shell_flag())
             # Add valgrind results to summary
             self.summary_reporter.add_valgrind_report(build_path, exit_code)
             return exit_code
 
-        return self.__run_ctest()
-
-    def __run_valgrind_test(self, source_path, build_path):
-        """Run tests with Valgrind memory checking."""
-        script_full_path = f"{source_path}/Scripts/valgrind_ctest.sh"
-
-        # Check if script exists
-        if not os.path.exists(script_full_path):
-            suggestions = [
-                "Ensure the Scripts/valgrind_ctest.sh file exists in the project",
-                "Check if the project was cloned completely",
-                "Verify file permissions allow reading the script"
-            ]
-            self.error_logger.log_error(
-                f"ls {script_full_path}",
-                "Valgrind test script not found",
-                "Looking for valgrind test script",
-                suggestions
-            )
-            print_status(f"Valgrind test script not found: {script_full_path}", "ERROR")
-            print_status("The script should have been created during setup", "ERROR")
-            return 1
-
-        # Make script executable
-        try:
-            os.chmod(script_full_path, 0o755)
-        except Exception as e:
-            print_status(f"Failed to make script executable: {e}", "WARNING")
-
-        # Check platform compatibility
-        if platform.system() == "Darwin" and platform.machine() == "arm64":
-            print_status("WARNING: Valgrind does not support Apple Silicon (ARM64)", "WARNING")
-            print_status("Consider using sanitizers instead:", "INFO")
-            print_status("  AddressSanitizer: python3 setup.py config.ninja.clang.test --sanitizer.address", "INFO")
-            print_status("  LeakSanitizer:    python3 setup.py config.ninja.clang.test --sanitizer.leak", "INFO")
-            print_status("Attempting to run Valgrind anyway (will fail if not installed)...", "WARNING")
-
-        print_status(f"Running Valgrind tests from: {script_full_path}", "INFO")
-        print_status(f"Build directory: {build_path}", "INFO")
-
-        try:
-            return subprocess.call(
-                [script_full_path, build_path],
-                stdin=subprocess.PIPE,
-                shell=self.__shell_flag(),
-            )
-        except Exception as e:
-            print_status(f"Failed to run Valgrind tests: {e}", "ERROR")
-            return 1
-
-    def __run_ctest(self):
-        ctest_cmd = ["ctest"]
-
-        if self.__value["system"] == "Windows":
-            if self.__value["builder"] != "ninja":
-                ctest_cmd.extend(["-C", self.__value["build_enum"]])
-
-        # Handle Xcode configuration
-        if self.__value["builder"] == "xcodebuild":
-            ctest_cmd.extend(["-C", self.__value["build_enum"]])
-
-        ctest_cmd.append(self.__value["verbosity"])
-        return subprocess.check_call(
-            ctest_cmd, stderr=subprocess.STDOUT, shell=self.__shell_flag()
+        return test_helper.run_ctest(
+            self.__value["builder"],
+            self.__value["build_enum"],
+            self.__value["system"],
+            self.__value["verbosity"],
+            self.__shell_flag()
         )
 
-    def __setup_windows_path(self):
-        """Setup Windows PATH for testing. Skip if batch files don't exist."""
-        try:
-            if self.__value["builder"] != "ninja":
-                path_bat_file = f"windows_path.{self.__value['build_enum']}.bat"
-                if os.path.exists(path_bat_file):
-                    subprocess.check_call(path_bat_file)
-                else:
-                    print_status(f"Windows PATH setup file {path_bat_file} not found, skipping PATH setup", "WARNING")
-            else:
-                if os.path.exists("windows_path.bat"):
-                    subprocess.check_call("windows_path.bat")
-                else:
-                    print_status("Windows PATH setup file windows_path.bat not found, skipping PATH setup", "WARNING")
-        except subprocess.CalledProcessError as e:
-            print_status(f"Windows PATH setup failed: {e}", "WARNING")
-        except Exception as e:
-            print_status(f"Unexpected error during Windows PATH setup: {e}", "WARNING")
+
+
+
 
     def coverage(self, source_path, build_path):
         if self.__value["build"] != "build" or not self.__xsigma_flags.is_coverage():
             return 0
 
-        # Use cross-platform bash script for all platforms
-        script_name = "compute_code_coverage_locally.sh"
-        script_full_path = f"{source_path}/Scripts/{script_name}"
+        print_status("Starting code coverage collection and report generation...", "INFO")
 
-        # Make script executable on Unix-like systems
-        if os.path.exists(script_full_path):
-            os.chmod(script_full_path, 0o755)
-
-        dll_info = self.__get_dll_info()
-        gtest = (
-            "gtest"
-            if "clang" in self.__value["cmake_cxx_compiler"].lower()
-            and self.__xsigma_flags.is_gtest()
-            else ""
-        )
-
-        # Build command arguments
-        coverage_args = [
+        # Try to use the oss_coverage.py tool first
+        oss_coverage_result = coverage_helper.run_oss_coverage(
+            source_path,
             build_path,
-            dll_info["output_dir"],
-            dll_info["suffix"],
-            dll_info["extension"],
-            dll_info["exe_extension"],
-            gtest,
-        ]
-
-        # Construct the full command with bash script
-        ctest_cmd = [script_full_path] + coverage_args
-
-        print_status(f"Running coverage script: {script_name}", "INFO")
-        result = subprocess.check_call(
-            ctest_cmd, stderr=subprocess.STDOUT, shell=self.__shell_flag()
+            self.__value["cmake_cxx_compiler"]
         )
 
-        # Automatically run coverage analysis after successful coverage collection
-        if result == 0:
-            print_status("Coverage data collection completed successfully", "SUCCESS")
-            print_status("Running automatic coverage analysis...", "INFO")
-            analyze_result = self.analyze(source_path, build_path)
+        if oss_coverage_result == 0:
+            print_status("Coverage collection completed successfully using oss_coverage.py", "SUCCESS")
             # Add coverage results to summary
-            self.summary_reporter.add_coverage_report(build_path, analyze_result)
-        else:
-            # Add failed coverage to summary
-            self.summary_reporter.add_coverage_report(build_path, result)
+            self.summary_reporter.add_coverage_report(build_path, 0)
+            return 0
 
-        return result
+
 
     def analyze(self, source_path, build_path):
         """
@@ -1403,91 +1194,10 @@ class XsigmaConfiguration:
 
         print_status("Running coverage analysis...", "INFO")
 
-        # Path to the analyze_coverage.py script
-        analyze_script = os.path.join(source_path, "Scripts", "analyze_coverage.py")
+        verbose = bool(self.__value.get("verbosity"))
+        return coverage_helper.run_analyze_coverage(source_path, build_path, verbose)
 
-        if not os.path.exists(analyze_script):
-            print_status(f"Coverage analysis script not found: {analyze_script}", "ERROR")
-            return 1
 
-        # Build command to run analyze_coverage.py
-        analyze_cmd = [sys.executable, analyze_script]
-
-        # Add build directory if we're in a build context
-        if build_path and os.path.isdir(build_path):
-            analyze_cmd.extend(["--build-dir", build_path])
-            print_status(f"Analyzing coverage for build: {build_path}", "INFO")
-        else:
-            print_status("Auto-detecting build directory...", "INFO")
-
-        # Add verbose flag if setup.py was run with verbose mode
-        if self.__value.get("verbosity"):
-            analyze_cmd.append("--verbose")
-
-        try:
-            # Run the analysis script
-            result = subprocess.run(
-                analyze_cmd,
-                cwd=source_path,
-                check=False,
-                shell=self.__shell_flag()
-            )
-
-            if result.returncode == 0:
-                print_status("Coverage analysis completed successfully", "SUCCESS")
-                print_status("All files meet or exceed the coverage threshold", "SUCCESS")
-            elif result.returncode == 1:
-                print_status("Coverage analysis completed", "WARNING")
-                print_status("Some files are below the coverage threshold", "WARNING")
-                print_status("Review the output above for details", "INFO")
-            else:
-                print_status(f"Coverage analysis failed with exit code {result.returncode}", "ERROR")
-
-            return result.returncode
-
-        except Exception as e:
-            print_status(f"Error running coverage analysis: {e}", "ERROR")
-            return 1
-
-    def __get_dll_info(self):
-        if self.__value["system"] == "Windows":
-            return {
-                "output_dir": "bin",
-                "suffix": "",
-                "extension": (
-                    "d.dll" if self.__value["build_enum"] == "Debug" else ".dll"
-                ),
-                "exe_extension": ".exe",
-            }
-        else:
-            return {
-                "output_dir": "lib",
-                "suffix": "lib",
-                "extension": ".so",
-                "exe_extension": "",
-            }
-
-    def __handle_xcode_project_opening(self):
-        """Handle opening the Xcode project after generation."""
-        try:
-            # Look for the .xcodeproj file
-            xcodeproj_files = [f for f in os.listdir('.') if f.endswith('.xcodeproj')]
-            if xcodeproj_files:
-                project_file = xcodeproj_files[0]
-                print_status(f"Xcode project generated: {project_file}", "SUCCESS")
-
-                # Ask user if they want to open the project
-                try:
-                    response = input("Would you like to open the Xcode project? (y/N): ").strip().lower()
-                    if response in ['y', 'yes']:
-                        subprocess.run(["open", project_file], check=True)
-                        print_status("Xcode project opened", "SUCCESS")
-                except (KeyboardInterrupt, EOFError):
-                    print_status("\nSkipping Xcode project opening", "INFO")
-            else:
-                print_status("No Xcode project file found", "WARNING")
-        except Exception as e:
-            print_status(f"Error handling Xcode project: {e}", "WARNING")
 
     def __shell_flag(self):
         return self.__value["system"] == "Windows"
