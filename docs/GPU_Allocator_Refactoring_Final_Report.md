@@ -31,9 +31,9 @@ The XSigma GPU memory allocator system has been successfully refactored to impro
 - Ensured mutual exclusivity between CUDA and HIP
 
 ### ✅ **Task 4: CMake Configuration Flag**
-**Objective**: Add XSIGMA_CUDA_ALLOC configuration option
+**Objective**: Add XSIGMA_GPU_ALLOC configuration option
 **Status**: **COMPLETE**
-- Added `XSIGMA_CUDA_ALLOC` flag to main CMakeLists.txt
+- Added `XSIGMA_GPU_ALLOC` flag to main CMakeLists.txt
 - Supports SYNC, ASYNC, and POOL_ASYNC options
 - Integrated with preprocessor definitions
 - Provides compile-time allocation method selection
@@ -111,7 +111,7 @@ The XSigma GPU memory allocator system has been successfully refactored to impro
 - `Library/Core/memory/gpu/allocator_gpu.h` - Main GPU allocator header
 - `Library/Core/memory/gpu/allocator_gpu.cxx` - Implementation with CUDA/HIP support
 - `Cmake/tools/hip.cmake` - HIP configuration module (NEW)
-- `CMakeLists.txt` - Updated with XSIGMA_CUDA_ALLOC flag
+- `CMakeLists.txt` - Updated with XSIGMA_GPU_ALLOC flag
 
 ### Test Suite (12 Test Cases)
 - `Library/Core/Testing/Cxx/TestAllocatorCuda.cxx` - Core functionality tests (enhanced)

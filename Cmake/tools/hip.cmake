@@ -1,3 +1,24 @@
+# =============================================================================
+# XSigma HIP (Heterogeneous-compute Interface for Portability) Configuration Module
+# =============================================================================
+# This module configures HIP for AMD GPU acceleration and ROCm support.
+# It manages HIP toolkit detection, architecture configuration, and GPU compilation.
+# =============================================================================
+
+# Include guard to prevent multiple inclusions
+include_guard(GLOBAL)
+
+# HIP GPU Support Flag
+# Controls whether HIP GPU acceleration is enabled for AMD GPUs.
+# When enabled, requires CMake 3.21+ and ROCm/HIP toolkit.
+# Mutually exclusive with XSIGMA_ENABLE_CUDA.
+cmake_dependent_option(XSIGMA_ENABLE_HIP "Support HIP backend accelerator" OFF
+  "CMAKE_VERSION VERSION_GREATER_EQUAL 3.21;NOT XSIGMA_ENABLE_CUDA" OFF)
+mark_as_advanced(XSIGMA_ENABLE_HIP)
+
+# Use the variable name expected by the rest of the module
+set(XSIGMA_USE_HIP ${XSIGMA_ENABLE_HIP})
+
 if(NOT XSIGMA_USE_HIP)
     return()
 endif()
@@ -83,16 +104,16 @@ elseif(XSIGMA_HIP_ARCH_OPTIONS STREQUAL "none")
 endif()
 
 # HIP Allocation Strategy Configuration (uses same flag as CUDA)
-message(STATUS "HIP allocation strategy: ${XSIGMA_CUDA_ALLOC}")
+message(STATUS "HIP allocation strategy: ${XSIGMA_GPU_ALLOC}")
 
 # Set preprocessor definitions based on allocation strategy
-if(XSIGMA_CUDA_ALLOC STREQUAL "SYNC")
+if(XSIGMA_GPU_ALLOC STREQUAL "SYNC")
     add_compile_definitions(XSIGMA_HIP_ALLOC_SYNC)
     message(STATUS "Using synchronous HIP allocation (hipMalloc/hipFree)")
-elseif(XSIGMA_CUDA_ALLOC STREQUAL "ASYNC")
+elseif(XSIGMA_GPU_ALLOC STREQUAL "ASYNC")
     add_compile_definitions(XSIGMA_HIP_ALLOC_ASYNC)
     message(STATUS "Using asynchronous HIP allocation (hipMallocAsync/hipFreeAsync)")
-elseif(XSIGMA_CUDA_ALLOC STREQUAL "POOL_ASYNC")
+elseif(XSIGMA_GPU_ALLOC STREQUAL "POOL_ASYNC")
     add_compile_definitions(XSIGMA_HIP_ALLOC_POOL_ASYNC)
     message(STATUS "Using pool-based asynchronous HIP allocation (hipMallocFromPoolAsync)")
 endif()

@@ -1,3 +1,19 @@
+# =============================================================================
+# XSigma Intel MKL (Math Kernel Library) Configuration Module
+# =============================================================================
+# This module configures Intel MKL for optimized matrix operations and linear algebra.
+# It sets up BLAS/LAPACK backends and threading configuration.
+# =============================================================================
+
+# Include guard to prevent multiple inclusions
+include_guard(GLOBAL)
+
+# Intel MKL Support Flag
+# Controls whether Intel MKL is enabled for optimized mathematical operations.
+# When enabled, provides high-performance BLAS and LAPACK implementations.
+option(XSIGMA_ENABLE_MKL "Enable MKL" OFF)
+mark_as_advanced(XSIGMA_ENABLE_MKL)
+
 if(NOT XSIGMA_ENABLE_MKL)
     return()
 endif()

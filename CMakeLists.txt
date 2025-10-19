@@ -33,9 +33,11 @@ option(XSIGMA_ENABLE_LTO "Enable Link Time Optimization" OFF)
 # Set CMAKE_INTERPROCEDURAL_OPTIMIZATION based on XSIGMA_ENABLE_LTO
 if(XSIGMA_ENABLE_LTO)
   set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
   message(STATUS "Link Time Optimization (LTO) enabled via CMAKE_INTERPROCEDURAL_OPTIMIZATION")
 else()
   set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE OFF)
   message(STATUS "Link Time Optimization (LTO) disabled")
 endif()
 
@@ -59,59 +61,85 @@ set(CMAKE_CXX_STANDARD ${XSIGMA_CXX_STANDARD})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Enable options
-option(XSIGMA_ENABLE_NUMA "Enable numa node" OFF)
-option(XSIGMA_ENABLE_MKL "Enable MKL" OFF)
+# =============================================================================
+# General Project-Wide Configuration Flags
+# =============================================================================
+# These flags control general project settings that are not specific to
+# individual feature modules. Feature-specific flags are declared in their
+# respective module files (Cmake/tools/*.cmake).
+# =============================================================================
+
+# Enzyme Automatic Differentiation Support Flag
+# Controls whether Enzyme automatic differentiation is enabled.
+# Enzyme provides high-performance automatic differentiation capabilities.
 option(XSIGMA_ENABLE_ENZYME "Enable Enzyme" OFF)
-option(XSIGMA_ENABLE_CUDA "Enable CUDA compilation" OFF)
-option(XSIGMA_ENABLE_MEMKIND "Build support for extended memory" OFF)
 mark_as_advanced(XSIGMA_ENABLE_ENZYME)
 
 # GPU Allocation Strategy Configuration
 # This flag controls which GPU allocation functions are used by allocator_gpu (CUDA/HIP)
-set(XSIGMA_CUDA_ALLOC
+set(XSIGMA_GPU_ALLOC
     "POOL_ASYNC"
     CACHE STRING "GPU allocation strategy to use. Options are SYNC, ASYNC, POOL_ASYNC")
 set_property(
-    CACHE XSIGMA_CUDA_ALLOC
+    CACHE XSIGMA_GPU_ALLOC
     PROPERTY STRINGS
              SYNC
              ASYNC
              POOL_ASYNC)
 
 # Validate CUDA allocation strategy
-if(NOT XSIGMA_CUDA_ALLOC MATCHES "^(SYNC|ASYNC|POOL_ASYNC)$")
-    message(FATAL_ERROR "Invalid XSIGMA_CUDA_ALLOC: ${XSIGMA_CUDA_ALLOC}. Valid options are: SYNC, ASYNC, POOL_ASYNC")
+if(NOT XSIGMA_GPU_ALLOC MATCHES "^(SYNC|ASYNC|POOL_ASYNC)$")
+    message(FATAL_ERROR "Invalid XSIGMA_GPU_ALLOC: ${XSIGMA_GPU_ALLOC}. Valid options are: SYNC, ASYNC, POOL_ASYNC")
 endif()
 
-option(XSIGMA_ENABLE_IWYU "Enable include-what-you-use (iwyu) support." OFF)
-option(XSIGMA_ENABLE_CLANGTIDY "enable clangtidy check" OFF)
-option(XSIGMA_ENABLE_FIX "Enable clang-tidy fix-errors and fix options" OFF)
-mark_as_advanced(XSIGMA_ENABLE_FIX)
+# =============================================================================
+# Algorithm and Feature Configuration Flags
+# =============================================================================
+# These flags control specific algorithm implementations and optional features.
+# =============================================================================
 
+# Sobol Sequence 1111-Dimension Support Flag
+# Controls whether Sobol quasi-random sequence generation supports 1111 dimensions.
+# When enabled, provides extended Sobol sequence capabilities.
 option(XSIGMA_SOBOL_1111 "Build support sobol with 1111 dimension" ON)
+
+# LU Decomposition Pivoting Flag
+# Controls whether LU decomposition uses pivoting for numerical stability.
+# When enabled, improves numerical stability at the cost of additional computation.
 option(XSIGMA_LU_PIVOTING "Enable LU PIVOTING" OFF)
 
-# Testing options
+# =============================================================================
+# Testing and Quality Assurance Configuration Flags
+# =============================================================================
+# These flags control testing infrastructure, benchmarking, and code quality tools.
+# =============================================================================
+
+# Build Testing Configuration
+# Controls whether test directories are built: ON (always), OFF (never), or WANT (optional).
 set(XSIGMA_BUILD_TESTING
     "ON"
     CACHE STRING "Build module testing directories")
 set_property(CACHE XSIGMA_BUILD_TESTING PROPERTY STRINGS "ON;OFF;WANT")
+
+# Google Benchmark Support Flag
+# Controls whether Google Benchmark is enabled for performance benchmarking.
+# When enabled, allows creation of benchmark targets for performance analysis.
 option(XSIGMA_ENABLE_BENCHMARK "Enable google benchmark" OFF)
+
+# Google Test Support Flag
+# Controls whether Google Test framework is enabled for unit testing.
+# When enabled, provides comprehensive testing infrastructure.
 option(XSIGMA_ENABLE_GTEST "Enable google test" ON)
 
-option(XSIGMA_ENABLE_VALGRIND "Execute test suite with Valgrind" OFF)
-option(XSIGMA_ENABLE_COVERAGE "Build XSIGMA with coverage" OFF)
-option(XSIGMA_ENABLE_SANITIZER "Build with sanitizer support (Clang only)" OFF)
-set(XSIGMA_SANITIZER_TYPE
-        "address"
-        CACHE STRING "The sanitizer to use. Options are address, undefined, thread, memory, leak")
+# =============================================================================
+# Performance and Optimization Configuration Flags
+# =============================================================================
+# These flags control performance-related settings and optimization strategies.
+# =============================================================================
 
-set_property(CACHE XSIGMA_SANITIZER_TYPE PROPERTY STRINGS address undefined thread memory leak)
-
-option(XSIGMA_ENABLE_SPELL "Enable spell checking with automatic corrections (WARNING: modifies source files)" OFF)
-
-# Vectorization options
+# Vectorization Strategy Configuration
+# Specifies which SIMD vectorization to use: no, sse, avx, avx2, or avx512.
+# Enables platform-specific optimizations for numerical computations.
 set(XSIGMA_VECTORIZATION_TYPE
     "avx2"
     CACHE
@@ -119,93 +147,68 @@ set(XSIGMA_VECTORIZATION_TYPE
       "vectorization implementation to use. Options are no, sse, avx, avx2, or avx512"
 )
 set_property(CACHE XSIGMA_VECTORIZATION_TYPE PROPERTY STRINGS no sse avx avx2 avx512)
-cmake_dependent_option(XSIGMA_ENABLE_HIP "Support HIP backend accelerator" OFF
-  "CMAKE_VERSION VERSION_GREATER_EQUAL 3.21;NOT XSIGMA_ENABLE_CUDA" OFF)
 
-# Mandatory core dependencies (always included)
-# - fmt: Modern C++ formatting library
-# - cpuinfo: CPU feature detection library
+# =============================================================================
+# Third-Party Library and Dependency Configuration Flags
+# =============================================================================
+# These flags control the use of external libraries and optional dependencies.
+# Mandatory core dependencies: fmt (formatting), cpuinfo (CPU detection)
+# =============================================================================
 
-# Optional third-party library options
+# External Library Usage Flag
+# Controls whether external copies of third-party libraries are used by default.
+# When enabled, prefers external library versions over bundled versions.
 option(XSIGMA_ENABLE_EXTERNAL "Use external copies of third party libraries by default" OFF)
+
+# Magic Enum Static Reflection Flag
+# Controls whether magic_enum is enabled for compile-time enum reflection.
+# When enabled, provides powerful enum introspection capabilities.
 option(XSIGMA_ENABLE_MAGICENUM "Enable magic_enum static reflection for enums." ON)
 mark_as_advanced(XSIGMA_ENABLE_MAGICENUM)
 
-# Compression support options
-option(XSIGMA_ENABLE_COMPRESSION "Enable compression support" OFF)
-set(XSIGMA_COMPRESSION_TYPE
-    "none"
-    CACHE STRING "Compression library to use. Options are  none, snappy")
-set_property(CACHE XSIGMA_COMPRESSION_TYPE PROPERTY STRINGS none snappy)
-mark_as_advanced(XSIGMA_ENABLE_COMPRESSION XSIGMA_COMPRESSION_TYPE)
-
-# Logging backend selection (mutually exclusive)
-set(XSIGMA_LOGGING_BACKEND
-    "LOGURU"
-    CACHE STRING
-    "Logging backend to use. Options are NATIVE, LOGURU, or GLOG"
-)
-set_property(CACHE XSIGMA_LOGGING_BACKEND PROPERTY STRINGS NATIVE LOGURU GLOG)
-mark_as_advanced(XSIGMA_LOGGING_BACKEND)
-
-# Validate logging backend selection
-if(NOT XSIGMA_LOGGING_BACKEND MATCHES "^(NATIVE|LOGURU|GLOG)$")
-    message(FATAL_ERROR "XSIGMA_LOGGING_BACKEND must be NATIVE, LOGURU, or GLOG (got: ${XSIGMA_LOGGING_BACKEND})")
-endif()
-
-# Set preprocessor definitions based on selected backend
-if(XSIGMA_LOGGING_BACKEND STREQUAL "NATIVE")
-    message(STATUS "Using NATIVE logging backend")
-    set(XSIGMA_USE_NATIVE_LOGGING ON)
-elseif(XSIGMA_LOGGING_BACKEND STREQUAL "LOGURU")
-    message(STATUS "Using LOGURU logging backend")
-    set(XSIGMA_USE_LOGURU ON)
-elseif(XSIGMA_LOGGING_BACKEND STREQUAL "GLOG")
-    message(STATUS "Using GLOG logging backend")
-    set(XSIGMA_USE_GLOG ON)
-endif()
-
-# Intel TBB (Threading Building Blocks) support with automatic fallback
-option(XSIGMA_ENABLE_TBB "Enable Intel TBB (Threading Building Blocks) support with automatic fallback." ON)
-mark_as_advanced(XSIGMA_ENABLE_TBB)
-
+# Microsoft Mimalloc Memory Allocator Flag
+# Controls whether Microsoft's mimalloc high-performance allocator is enabled.
+# When enabled, provides faster memory allocation with better performance characteristics.
 option(XSIGMA_ENABLE_MIMALLOC "Enable Microsoft mimalloc high-performance memory allocator support." ON)
 mark_as_advanced(XSIGMA_ENABLE_MIMALLOC)
 
+# =============================================================================
+# Platform-Specific Configuration and Feature Validation
+# =============================================================================
+# Adjusts feature availability based on platform constraints.
+# Some features are only available on specific operating systems.
+# =============================================================================
+
+# NUMA is only available on Unix systems
 if(NOT UNIX)
   set(XSIGMA_ENABLE_NUMA OFF)
 endif()
 
-# Add an option to enable memkind
+# Memkind is only available on Unix systems (not macOS or Windows)
 if (NOT UNIX OR APPLE)
   set(XSIGMA_ENABLE_MEMKIND OFF)
 endif()
 
-if(XSIGMA_ENABLE_SANITIZER)
-  set(XSIGMA_ENABLE_MIMALLOC OFF)
-endif()
+# =============================================================================
+# Global Project Variables
+# =============================================================================
+# Set global variables used throughout the build system.
+# =============================================================================
 
-# Compression configuration validation and setup
-if(XSIGMA_ENABLE_COMPRESSION)
-    if(XSIGMA_COMPRESSION_TYPE STREQUAL "SNAPPY")
-        set(XSIGMA_COMPRESSION_TYPE_SNAPPY ON)
-        message(STATUS "Compression enabled: Snappy")
-    elseif(XSIGMA_COMPRESSION_TYPE STREQUAL "NONE")
-        set(XSIGMA_ENABLE_COMPRESSION OFF)
-        message(STATUS "Compression type set to NONE - disabling compression")
-    else()
-        message(FATAL_ERROR "Invalid XSIGMA_COMPRESSION_TYPE: ${XSIGMA_COMPRESSION_TYPE}. Valid options are: NONE, SNAPPY")
-    endif()
-else()
-    message(STATUS "Compression disabled")
-endif()
-
-# Set global variables
 set(XSIGMA_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(XSIGMA_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 set(XSIGMA_VERSION "${PROJECT_VERSION}")
 
-# Build shared libraries option
+# =============================================================================
+# Build Library Type Configuration
+# =============================================================================
+# Controls whether libraries are built as shared or static.
+# XSigma requires shared libraries (DLLs on Windows) for proper functionality.
+# =============================================================================
+
+# Build Shared Libraries Flag
+# Controls whether libraries are built as shared (ON) or static (OFF).
+# XSigma requires shared libraries for proper DLL export/import handling.
 option(XSIGMA_BUILD_SHARED_LIBS "Build shared libraries" ON)
 set(BUILD_SHARED_LIBS ${XSIGMA_BUILD_SHARED_LIBS})
 
@@ -214,10 +217,14 @@ include(CheckCXXSourceCompiles)
 include(CheckCXXSourceRuns)
 include(CheckSymbolExists)
 
+# Include XSigma-specific CMake modules
+include(cache)
 include(build_type)
 include(checks)
-include(xsigmaUtils)
+include(utils)
 include(platform)
+include(logging)
+include(compression)
 
 # Configure optional features
 include(cuda)
@@ -225,12 +232,12 @@ include(hip)
 include(mkl)
 include(numa)
 include(tbb)
-include(clangTidy)
+include(clang_tidy)
 include(spell)
 include(iwyu)
 include(coverage)
 include(valgrind)
-include(helperMacros)
+include(helper_macros)
 
 # Create build interface target for common settings
 add_library(xsigmabuild INTERFACE)
@@ -239,7 +246,7 @@ add_library(XSigma::build ALIAS xsigmabuild)
 # Include optimization modules AFTER xsigmabuild target is created
 # These modules apply flags to the xsigmabuild target to affect only XSigma targets,
 # not third-party dependencies
-include(build_speed_optimization)
+include(linker)
 
 # Include sanitizer configuration after xsigmabuild target is created
 include(sanitize)
@@ -252,9 +259,6 @@ if(DEFINED XSIGMA_LINKER_FLAGS_COMMON)
     target_link_options(xsigmabuild INTERFACE ${XSIGMA_LINKER_FLAGS_COMMON})
 endif()
 
-
-
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${XSIGMA_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${XSIGMA_BINARY_DIR}/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${XSIGMA_BINARY_DIR}/lib")
@@ -263,8 +267,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${XSIGMA_BINARY_DIR}/lib")
 if(XSIGMA_BUILD_TESTING STREQUAL "ON" OR XSIGMA_BUILD_TESTING STREQUAL "WANT")
     enable_testing()
     include(CTest)
-
-
 endif()
 
 # Add third-party dependencies
