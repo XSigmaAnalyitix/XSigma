@@ -19,6 +19,7 @@ on:
 env:
   BUILD_TYPE: Release
   CACHE_VERSION: v2  # Incremented due to workflow restructuring
+  SCCACHE_VERSION: "0.7.7"  # Version of sccache to use
 
 jobs:
   # ============================================================================
@@ -57,7 +58,7 @@ jobs:
             tbb_enabled: OFF
             cuda_enabled: OFF
             compiler_c: clang
-            compiler_cxx: clang++
+            compiler_cxx: clang
             generator: Ninja
             cache_path: ~/.cache
 
@@ -69,7 +70,7 @@ jobs:
             tbb_enabled: ON
             cuda_enabled: OFF
             compiler_c: clang
-            compiler_cxx: clang++
+            compiler_cxx: clang
             generator: Ninja
             cache_path: ~/.cache
 
@@ -83,7 +84,7 @@ jobs:
           #   tbb_enabled: OFF
           #   cuda_enabled: ON
           #   compiler_c: clang
-          #   compiler_cxx: clang++
+          #   compiler_cxx: clang
           #   generator: Ninja
           #   cache_path: ~/AppData/Local/Temp/chocolatey
 
@@ -95,7 +96,7 @@ jobs:
             tbb_enabled: OFF
             cuda_enabled: OFF
             compiler_c: clang
-            compiler_cxx: clang++
+            compiler_cxx: clang
             generator: Ninja
             cache_path: ~/AppData/Local/Temp/chocolatey
 
@@ -108,7 +109,7 @@ jobs:
             tbb_enabled: ON
             cuda_enabled: OFF  # CUDA not officially supported on Apple Silicon
             compiler_c: clang
-            compiler_cxx: clang++
+            compiler_cxx: clang
             generator: Ninja
             cache_path: ~/Library/Caches
 
@@ -120,7 +121,7 @@ jobs:
             tbb_enabled: OFF
             cuda_enabled: OFF
             compiler_c: clang
-            compiler_cxx: clang++
+            compiler_cxx: clang
             generator: Ninja
             cache_path: ~/Library/Caches
 
@@ -133,7 +134,7 @@ jobs:
             tbb_enabled: ON
             cuda_enabled: OFF
             compiler_c: clang
-            compiler_cxx: clang++
+            compiler_cxx: clang
             generator: Ninja
             cache_path: ~/.cache
 
@@ -146,7 +147,7 @@ jobs:
           #   tbb_enabled: OFF
           #   cuda_enabled: ON
           #   compiler_c: clang
-          #   compiler_cxx: clang++
+          #   compiler_cxx: clang
           #   generator: Ninja
           #   cache_path: ~/.cache
 
@@ -159,7 +160,7 @@ jobs:
           #   tbb_enabled: OFF
           #   cuda_enabled: ON
           #   compiler_c: clang
-          #   compiler_cxx: clang++
+          #   compiler_cxx: clang
           #   generator: Ninja
           #   cache_path: ~/AppData/Local/Temp/chocolatey
 
@@ -171,7 +172,7 @@ jobs:
             tbb_enabled: ON
             cuda_enabled: OFF  # CUDA not supported on Apple Silicon
             compiler_c: clang
-            compiler_cxx: clang++
+            compiler_cxx: clang
             generator: Ninja
             cache_path: ~/Library/Caches
 
@@ -184,7 +185,7 @@ jobs:
             tbb_enabled: ON
             cuda_enabled: OFF
             compiler_c: clang
-            compiler_cxx: clang++
+            compiler_cxx: clang
             generator: Ninja
             cache_path: ~/.cache
 
@@ -197,7 +198,7 @@ jobs:
           #   tbb_enabled: OFF
           #   cuda_enabled: ON
           #   compiler_c: clang
-          #   compiler_cxx: clang++
+          #   compiler_cxx: clang
           #   generator: Ninja
           #   cache_path: ~/AppData/Local/Temp/chocolatey
 
@@ -219,72 +220,24 @@ jobs:
           ${{ runner.os }}-deps-${{ env.CACHE_VERSION }}-
           ${{ runner.os }}-deps-
 
-    # ===== Ubuntu Dependencies =====
+    # ===== Install Dependencies Using Scripts =====
     - name: Install dependencies (Ubuntu)
       if: runner.os == 'Linux'
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          ninja-build \
-          clang \
-          llvm \
-          cmake \
-          python3 \
-          python3-pip \
-          libtbb-dev \
-          valgrind \
-          cppcheck \
-          libnuma-dev
+        chmod +x scripts/ci/install-deps-ubuntu.sh
+        ./scripts/ci/install-deps-ubuntu.sh --with-tbb
 
-    # Temporarily disabled - CUDA testing
-    # - name: Install CUDA Toolkit (Ubuntu)
-    #   if: runner.os == 'Linux' && matrix.cuda_enabled == 'ON'
-    #   run: |
-    #     # Install NVIDIA CUDA Toolkit for Ubuntu using system package manager
-    #     # This is more reliable than downloading from NVIDIA repos in CI environment
-    #     echo "=== Installing CUDA Toolkit via apt ==="
-    #     sudo apt-get update
-    #     sudo apt-get install -y nvidia-cuda-toolkit || {
-    #       echo "WARNING: CUDA installation via nvidia-cuda-toolkit failed"
-    #       echo "Attempting alternative installation method..."
-    #
-    #       # Fallback: Try NVIDIA's official repository
-    #       wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb || {
-    #         echo "ERROR: Failed to download CUDA keyring"
-    #         echo "Continuing without CUDA support"
-    #         exit 0
-    #       }
-    #
-    #       sudo dpkg -i cuda-keyring_1.0-1_all.deb
-    #       sudo apt-get update
-    #       sudo apt-get install -y cuda-toolkit-12-3 || {
-    #         echo "WARNING: CUDA toolkit installation failed"
-    #         echo "Continuing build without CUDA support"
-    #         exit 0
-    #       }
-    #     }
-    #
-    #     # Verify CUDA installation
-    #     if command -v nvcc &> /dev/null; then
-    #       echo "SUCCESS: CUDA installed successfully"
-    #       nvcc --version
-    #     else
-    #       echo "INFO: CUDA not available, build will continue without CUDA support"
-    #     fi
-
-    - name: Install Intel MKL (Ubuntu)
-      if: runner.os == 'Linux'
-      run: |
-        wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
-        echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
-        sudo apt-get update
-        sudo apt-get install -y intel-oneapi-mkl-devel intel-oneapi-tbb-devel
-
-    # ===== macOS Dependencies =====
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
       run: |
-        brew install ninja llvm cmake python3 tbb cppcheck
+        chmod +x scripts/ci/install-deps-macos.sh
+        ./scripts/ci/install-deps-macos.sh --with-tbb
+
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        & .\scripts\ci\install-deps-windows.ps1 -WithTbb
 
     - name: Setup macOS linker environment
       if: runner.os == 'macOS'
@@ -294,43 +247,6 @@ jobs:
         echo "LDFLAGS=-L/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib" >> $GITHUB_ENV
         echo "CPPFLAGS=-I/opt/homebrew/opt/llvm/include" >> $GITHUB_ENV
         echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
-
-        # Verify the environment setup
-        echo "=== macOS Linker Environment Setup ==="
-        echo "LDFLAGS: -L/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib"
-        echo "CPPFLAGS: -I/opt/homebrew/opt/llvm/include"
-        echo "PATH updated to include: /opt/homebrew/opt/llvm/bin"
-
-    # Temporarily disabled - CUDA testing
-    # - name: Install CUDA Toolkit (macOS)
-    #   if: runner.os == 'macOS' && matrix.cuda_enabled == 'ON'
-    #   run: |
-    #     # CUDA is not officially supported on Apple Silicon
-    #     # This step documents the limitation for future reference
-    #     echo "WARNING: CUDA is not officially supported on Apple Silicon (ARM64)"
-    #     echo "Skipping CUDA installation on macOS"
-    #     echo "For Intel-based Macs, CUDA can be installed via: brew install --cask cuda"
-
-    - name: Install Intel MKL (macOS)
-      if: runner.os == 'macOS'
-      run: |
-        # Intel MKL is available through conda or manual download
-        # For CI, we'll use the system's Accelerate framework as fallback
-        echo "Using macOS Accelerate framework (BLAS/LAPACK alternative to MKL)"
-
-    # ===== Windows Dependencies =====
-    - name: Install dependencies (Windows)
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        # Install basic build tools via chocolatey
-        Write-Host "Installing build tools via chocolatey..."
-        choco install ninja llvm cmake python3 -y
-        if ($LASTEXITCODE -ne 0) {
-          Write-Host "ERROR: Failed to install build tools"
-          exit 1
-        }
-        Write-Host "Build tools installed successfully"
 
     # Temporarily disabled - CUDA testing
     # - name: Install CUDA Toolkit (Windows)
@@ -435,52 +351,36 @@ jobs:
         echo ""
         echo "Tools verification complete"
 
-    # ===== CMake Configuration =====
-    - name: Configure CMake (Ubuntu/macOS)
+    # ===== Build Configuration and Execution Using setup.py =====
+    - name: Configure and Build (Unix/macOS)
       if: runner.os != 'Windows'
+      working-directory: Scripts
       run: |
-        cmake -B build \
-          -S . \
-          -G "${{ matrix.generator }}" \
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-          -DCMAKE_C_COMPILER=${{ matrix.compiler_c }} \
-          -DCMAKE_CXX_COMPILER=${{ matrix.compiler_cxx }} \
-          -DCMAKE_CXX_STANDARD=${{ matrix.cxx_std }} \
-          -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} \
-          -DXSIGMA_BUILD_TESTING=ON \
-          -DXSIGMA_ENABLE_GTEST=ON \
-          -DXSIGMA_ENABLE_BENCHMARK=OFF \
-          -DXSIGMA_ENABLE_LTO=OFF \
-          -DXSIGMA_ENABLE_TBB=${{ matrix.tbb_enabled }} \
-          -DXSIGMA_ENABLE_CUDA=${{ matrix.cuda_enabled }}
+        BUILD_TYPE_LOWER=$(echo "${{ matrix.build_type }}" | tr '[:upper:]' '[:lower:]')
+        LOGGING_LOWER=$(echo "${{ matrix.logging_backend }}" | tr '[:upper:]' '[:lower:]')
+        TBB_FLAG=""
+        if [ "${{ matrix.tbb_enabled }}" = "ON" ]; then
+          TBB_FLAG="tbb"
+        fi
+        python setup.py ninja ${{ matrix.compiler_cxx }} \
+          $BUILD_TYPE_LOWER \
+          test \
+          cxx${{ matrix.cxx_std }} \
+          $LOGGING_LOWER \
+          $TBB_FLAG
 
-    - name: Configure CMake (Windows)
+    - name: Configure and Build (Windows)
       if: runner.os == 'Windows'
+      working-directory: Scripts
       shell: pwsh
       run: |
-        # Windows builds without TBB (tested separately with Visual Studio)
-        cmake -B build `
-          -S . `
-          -G "${{ matrix.generator }}" `
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
-          -DCMAKE_C_COMPILER=${{ matrix.compiler_c }} `
-          -DCMAKE_CXX_COMPILER=${{ matrix.compiler_cxx }} `
-          -DCMAKE_CXX_STANDARD=${{ matrix.cxx_std }} `
-          -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} `
-          -DXSIGMA_BUILD_TESTING=ON `
-          -DXSIGMA_ENABLE_GTEST=ON `
-          -DXSIGMA_ENABLE_BENCHMARK=OFF `
-          -DXSIGMA_ENABLE_LTO=OFF `
-          -DXSIGMA_ENABLE_TBB=OFF `
-          -DXSIGMA_ENABLE_CUDA=${{ matrix.cuda_enabled }}
-
-    # ===== Build and Test =====
-    - name: Build
-      run: cmake --build build --config ${{ matrix.build_type }} -j 2
-
-    - name: Run Tests
-      working-directory: ${{ github.workspace }}/build
-      run: ctest --output-on-failure --build-config ${{ matrix.build_type }} -j 2
+        $buildType = "${{ matrix.build_type }}".ToLower()
+        $logging = "${{ matrix.logging_backend }}".ToLower()
+        python setup.py ninja clang `
+          $buildType `
+          test `
+          cxx${{ matrix.cxx_std }} `
+          $logging
 
     - name: Verify Build Configuration
       working-directory: ${{ github.workspace }}/build
@@ -538,6 +438,192 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: test-results-${{ matrix.name }}
+        path: |
+          build/Testing/Temporary/LastTest.log
+          build/**/*.log
+
+  # ============================================================================
+  # Compiler Version Matrix Testing
+  # Tests XSigma with multiple compiler versions to ensure compatibility
+  # Includes GCC, Clang, and MSVC versions across supported platforms
+  # ============================================================================
+  compiler-version-tests:
+    name: "Compiler Test - ${{ matrix.compiler_name }} ${{ matrix.compiler_version }} - ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ===== Ubuntu GCC Versions =====
+          - name: "Ubuntu GCC 11 - C++17"
+            os: ubuntu-latest
+            compiler_name: "GCC"
+            compiler_version: "11"
+            compiler_c: "gcc-11"
+            compiler_cxx: "g++-11"
+            cxx_std: 17
+            build_type: Release
+            generator: Ninja
+            cache_path: ~/.cache
+
+          - name: "Ubuntu GCC 12 - C++17"
+            os: ubuntu-latest
+            compiler_name: "GCC"
+            compiler_version: "12"
+            compiler_c: "gcc-12"
+            compiler_cxx: "g++-12"
+            cxx_std: 17
+            build_type: Release
+            generator: Ninja
+            cache_path: ~/.cache
+
+          - name: "Ubuntu GCC 13 - C++20"
+            os: ubuntu-latest
+            compiler_name: "GCC"
+            compiler_version: "13"
+            compiler_c: "gcc-13"
+            compiler_cxx: "g++-13"
+            cxx_std: 20
+            build_type: Release
+            generator: Ninja
+            cache_path: ~/.cache
+
+          # ===== Ubuntu Clang Versions =====
+          - name: "Ubuntu Clang 15 - C++17"
+            os: ubuntu-latest
+            compiler_name: "Clang"
+            compiler_version: "15"
+            compiler_c: "clang-15"
+            compiler_cxx: "clang-15"
+            cxx_std: 17
+            build_type: Release
+            generator: Ninja
+            cache_path: ~/.cache
+
+          - name: "Ubuntu Clang 16 - C++20"
+            os: ubuntu-latest
+            compiler_name: "Clang"
+            compiler_version: "16"
+            compiler_c: "clang-16"
+            compiler_cxx: "clang-16"
+            cxx_std: 20
+            build_type: Release
+            generator: Ninja
+            cache_path: ~/.cache
+
+          - name: "Ubuntu Clang 17 - C++23"
+            os: ubuntu-latest
+            compiler_name: "Clang"
+            compiler_version: "17"
+            compiler_c: "clang-17"
+            compiler_cxx: "clang-17"
+            cxx_std: 23
+            build_type: Release
+            generator: Ninja
+            cache_path: ~/.cache
+
+          # ===== macOS Clang Versions =====
+          - name: "macOS Clang (Xcode) - C++17"
+            os: macos-latest
+            compiler_name: "Clang"
+            compiler_version: "Xcode"
+            compiler_c: "clang"
+            compiler_cxx: "clang"
+            cxx_std: 17
+            build_type: Release
+            generator: Ninja
+            cache_path: ~/Library/Caches
+
+          - name: "macOS Clang (Xcode) - C++20"
+            os: macos-latest
+            compiler_name: "Clang"
+            compiler_version: "Xcode"
+            compiler_c: "clang"
+            compiler_cxx: "clang"
+            cxx_std: 20
+            build_type: Release
+            generator: Ninja
+            cache_path: ~/Library/Caches
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ matrix.cache_path }}
+          build/ThirdParty
+        key: ${{ runner.os }}-compiler-${{ matrix.compiler_name }}-${{ matrix.compiler_version }}-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-compiler-${{ matrix.compiler_name }}-${{ matrix.compiler_version }}-${{ env.CACHE_VERSION }}-
+
+    - name: Install dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        chmod +x scripts/ci/install-deps-ubuntu.sh
+        ./scripts/ci/install-deps-ubuntu.sh --with-tbb
+
+    - name: Install specific compiler version (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ${{ matrix.compiler_c }} ${{ matrix.compiler_cxx }} || {
+          echo "WARNING: Specific compiler version not available in default repos"
+          echo "Using default compiler instead"
+        }
+
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        chmod +x scripts/ci/install-deps-macos.sh
+        ./scripts/ci/install-deps-macos.sh --with-tbb
+
+    - name: Setup macOS linker environment
+      if: runner.os == 'macOS'
+      run: |
+        echo "LDFLAGS=-L/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib" >> $GITHUB_ENV
+        echo "CPPFLAGS=-I/opt/homebrew/opt/llvm/include" >> $GITHUB_ENV
+        echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+        cache: 'pip'
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install psutil colorama
+
+    - name: Configure and Build
+      working-directory: Scripts
+      run: |
+        BUILD_TYPE_LOWER=$(echo "${{ matrix.build_type }}" | tr '[:upper:]' '[:lower:]')
+        python setup.py ninja ${{ matrix.compiler_cxx }} \
+          $BUILD_TYPE_LOWER \
+          test \
+          cxx${{ matrix.cxx_std }} \
+          loguru \
+          tbb
+
+    - name: Verify compiler version
+      run: |
+        echo "=== Compiler Version Information ==="
+        ${{ matrix.compiler_cxx }} --version
+        echo ""
+
+    - name: Upload test results
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: compiler-test-results-${{ matrix.compiler_name }}-${{ matrix.compiler_version }}
         path: |
           build/Testing/Temporary/LastTest.log
           build/**/*.log
@@ -1044,17 +1130,402 @@ jobs:
           build/**/*benchmark*.log
 
   # ============================================================================
+  # Sccache Performance Testing - Baseline (Without Sccache)
+  # ============================================================================
+  # Tests build performance without sccache for baseline comparison
+  # Runs on Ubuntu, macOS, and Windows with consistent configuration
+  # ============================================================================
+  sccache-baseline-tests:
+    name: "Sccache Baseline - ${{ matrix.os }} - ${{ matrix.build_type }}"
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "Ubuntu C++17 Release - Baseline (No Sccache)"
+            os: ubuntu-latest
+            build_type: Release
+            cxx_std: 17
+            logging_backend: LOGURU
+            tbb_enabled: ON
+            cuda_enabled: OFF
+            compiler_c: clang
+            compiler_cxx: clang++
+            generator: Ninja
+            cache_path: ~/.cache
+
+          - name: "macOS C++17 Release - Baseline (No Sccache)"
+            os: macos-latest
+            build_type: Release
+            cxx_std: 17
+            logging_backend: LOGURU
+            tbb_enabled: ON
+            cuda_enabled: OFF
+            compiler_c: clang
+            compiler_cxx: clang++
+            generator: Ninja
+            cache_path: ~/Library/Caches
+
+          - name: "Windows C++17 Release - Baseline (No Sccache)"
+            os: windows-latest
+            build_type: Release
+            cxx_std: 17
+            logging_backend: NATIVE
+            tbb_enabled: OFF
+            cuda_enabled: OFF
+            compiler_c: clang
+            compiler_cxx: clang++
+            generator: Ninja
+            cache_path: ~/AppData/Local/Temp/chocolatey
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ matrix.cache_path }}
+          build/ThirdParty
+        key: ${{ runner.os }}-sccache-baseline-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt', 'ThirdParty/**') }}
+        restore-keys: |
+          ${{ runner.os }}-sccache-baseline-${{ env.CACHE_VERSION }}-
+          ${{ runner.os }}-sccache-baseline-
+
+    # ===== Ubuntu Dependencies =====
+    - name: Install dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          clang \
+          llvm \
+          cmake \
+          python3 \
+          python3-pip \
+          libtbb-dev \
+          libnuma-dev
+
+    # ===== macOS Dependencies =====
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install ninja clang-format cmake libtbb
+
+    # ===== Windows Dependencies =====
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        choco install -y ninja cmake llvm
+
+    # ===== CMake Configuration (Baseline - No Sccache) =====
+    - name: Configure CMake (Ubuntu/macOS - Baseline)
+      if: runner.os != 'Windows'
+      run: |
+        cmake -B build \
+          -S . \
+          -G "${{ matrix.generator }}" \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DCMAKE_C_COMPILER=${{ matrix.compiler_c }} \
+          -DCMAKE_CXX_COMPILER=${{ matrix.compiler_cxx }} \
+          -DCMAKE_CXX_STANDARD=${{ matrix.cxx_std }} \
+          -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} \
+          -DXSIGMA_BUILD_TESTING=ON \
+          -DXSIGMA_ENABLE_GTEST=ON \
+          -DXSIGMA_ENABLE_BENCHMARK=OFF \
+          -DXSIGMA_ENABLE_LTO=OFF \
+          -DXSIGMA_ENABLE_TBB=${{ matrix.tbb_enabled }} \
+          -DXSIGMA_ENABLE_CUDA=${{ matrix.cuda_enabled }}
+
+    - name: Configure CMake (Windows - Baseline)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        cmake -B build `
+          -S . `
+          -G "${{ matrix.generator }}" `
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+          -DCMAKE_C_COMPILER=${{ matrix.compiler_c }} `
+          -DCMAKE_CXX_COMPILER=${{ matrix.compiler_cxx }} `
+          -DCMAKE_CXX_STANDARD=${{ matrix.cxx_std }} `
+          -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} `
+          -DXSIGMA_BUILD_TESTING=ON `
+          -DXSIGMA_ENABLE_GTEST=ON `
+          -DXSIGMA_ENABLE_BENCHMARK=OFF `
+          -DXSIGMA_ENABLE_LTO=OFF `
+          -DXSIGMA_ENABLE_TBB=OFF `
+          -DXSIGMA_ENABLE_CUDA=${{ matrix.cuda_enabled }}
+
+    # ===== Build and Test (Baseline - No Sccache) =====
+    - name: Record build start time (Baseline)
+      shell: bash
+      run: |
+        echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
+
+    - name: Build (Baseline - No Sccache)
+      run: cmake --build build --config ${{ matrix.build_type }} -j 2
+
+    - name: Record build end time (Baseline)
+      shell: bash
+      run: |
+        echo "BUILD_END_TIME=$(date +%s)" >> $GITHUB_ENV
+        BUILD_DURATION=$((BUILD_END_TIME - BUILD_START_TIME))
+        echo "BUILD_DURATION_BASELINE=$BUILD_DURATION" >> $GITHUB_ENV
+
+    - name: Run Tests (Baseline)
+      working-directory: ${{ github.workspace }}/build
+      run: ctest --output-on-failure --build-config ${{ matrix.build_type }} -j 2
+
+    - name: Report Baseline Build Metrics
+      shell: bash
+      run: |
+        echo "=== Sccache Baseline Build Metrics ==="
+        echo "Platform: ${{ runner.os }}"
+        echo "Build Type: ${{ matrix.build_type }}"
+        echo "C++ Standard: ${{ matrix.cxx_std }}"
+        echo "Sccache Enabled: NO (Baseline)"
+        echo "Build Duration: ${{ env.BUILD_DURATION_BASELINE }} seconds"
+        echo ""
+
+  # ============================================================================
+  # Sccache Performance Testing - With Sccache Enabled
+  # ============================================================================
+  # Tests build performance with sccache enabled for comparison
+  # Uses CMAKE_CXX_COMPILER_LAUNCHER to enable sccache
+  # ============================================================================
+  sccache-enabled-tests:
+    name: "Sccache Enabled - ${{ matrix.os }} - ${{ matrix.build_type }}"
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "Ubuntu C++17 Release - Sccache Enabled"
+            os: ubuntu-latest
+            build_type: Release
+            cxx_std: 17
+            logging_backend: LOGURU
+            tbb_enabled: ON
+            cuda_enabled: OFF
+            compiler_c: clang
+            compiler_cxx: clang++
+            generator: Ninja
+            cache_path: ~/.cache
+
+          - name: "macOS C++17 Release - Sccache Enabled"
+            os: macos-latest
+            build_type: Release
+            cxx_std: 17
+            logging_backend: LOGURU
+            tbb_enabled: ON
+            cuda_enabled: OFF
+            compiler_c: clang
+            compiler_cxx: clang++
+            generator: Ninja
+            cache_path: ~/Library/Caches
+
+          - name: "Windows C++17 Release - Sccache Enabled"
+            os: windows-latest
+            build_type: Release
+            cxx_std: 17
+            logging_backend: NATIVE
+            tbb_enabled: OFF
+            cuda_enabled: OFF
+            compiler_c: clang
+            compiler_cxx: clang++
+            generator: Ninja
+            cache_path: ~/AppData/Local/Temp/chocolatey
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ matrix.cache_path }}
+          build/ThirdParty
+        key: ${{ runner.os }}-sccache-enabled-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt', 'ThirdParty/**') }}
+        restore-keys: |
+          ${{ runner.os }}-sccache-enabled-${{ env.CACHE_VERSION }}-
+          ${{ runner.os }}-sccache-enabled-
+
+    - name: Cache sccache directory
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/sccache
+          ~/Library/Caches/sccache
+          ~/AppData/Local/sccache
+        key: ${{ runner.os }}-sccache-${{ env.CACHE_VERSION }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-sccache-${{ env.CACHE_VERSION }}-
+
+    # ===== Ubuntu Dependencies =====
+    - name: Install dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          clang \
+          llvm \
+          cmake \
+          python3 \
+          python3-pip \
+          libtbb-dev \
+          libnuma-dev
+
+    # ===== macOS Dependencies =====
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install ninja clang-format cmake libtbb
+
+    # ===== Windows Dependencies =====
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        choco install -y ninja cmake llvm
+
+    # ===== Install Sccache =====
+    - name: Install sccache (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        echo "=== Installing sccache on Ubuntu ==="
+        mkdir -p ~/.local/bin
+        curl -L https://github.com/mozilla/sccache/releases/download/v${{ env.SCCACHE_VERSION }}/sccache-v${{ env.SCCACHE_VERSION }}-x86_64-unknown-linux-musl.tar.gz \
+          | tar xz -C ~/.local/bin --strip-components=1
+        chmod +x ~/.local/bin/sccache
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        sccache --version
+
+    - name: Install sccache (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        echo "=== Installing sccache on macOS ==="
+        mkdir -p ~/.local/bin
+        curl -L https://github.com/mozilla/sccache/releases/download/v${{ env.SCCACHE_VERSION }}/sccache-v${{ env.SCCACHE_VERSION }}-x86_64-apple-darwin.tar.gz \
+          | tar xz -C ~/.local/bin --strip-components=1
+        chmod +x ~/.local/bin/sccache
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        sccache --version
+
+    - name: Install sccache (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing sccache on Windows ==="
+        $sccachePath = "$env:USERPROFILE\.local\bin"
+        New-Item -ItemType Directory -Force -Path $sccachePath | Out-Null
+        $url = "https://github.com/mozilla/sccache/releases/download/v${{ env.SCCACHE_VERSION }}/sccache-v${{ env.SCCACHE_VERSION }}-x86_64-pc-windows-msvc.zip"
+        $zipPath = "$env:TEMP\sccache.zip"
+        Invoke-WebRequest -Uri $url -OutFile $zipPath
+        Expand-Archive -Path $zipPath -DestinationPath $sccachePath -Force
+        Remove-Item $zipPath
+        Add-Content -Path $env:GITHUB_PATH -Value $sccachePath
+        & "$sccachePath\sccache.exe" --version
+
+    # ===== CMake Configuration (With Sccache) =====
+    - name: Configure CMake (Ubuntu/macOS - With Sccache)
+      if: runner.os != 'Windows'
+      run: |
+        cmake -B build \
+          -S . \
+          -G "${{ matrix.generator }}" \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DCMAKE_C_COMPILER=${{ matrix.compiler_c }} \
+          -DCMAKE_CXX_COMPILER=${{ matrix.compiler_cxx }} \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+          -DCMAKE_CXX_STANDARD=${{ matrix.cxx_std }} \
+          -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} \
+          -DXSIGMA_BUILD_TESTING=ON \
+          -DXSIGMA_ENABLE_GTEST=ON \
+          -DXSIGMA_ENABLE_BENCHMARK=OFF \
+          -DXSIGMA_ENABLE_LTO=OFF \
+          -DXSIGMA_ENABLE_TBB=${{ matrix.tbb_enabled }} \
+          -DXSIGMA_ENABLE_CUDA=${{ matrix.cuda_enabled }}
+
+    - name: Configure CMake (Windows - With Sccache)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        cmake -B build `
+          -S . `
+          -G "${{ matrix.generator }}" `
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+          -DCMAKE_C_COMPILER=${{ matrix.compiler_c }} `
+          -DCMAKE_CXX_COMPILER=${{ matrix.compiler_cxx }} `
+          -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
+          -DCMAKE_CXX_STANDARD=${{ matrix.cxx_std }} `
+          -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} `
+          -DXSIGMA_BUILD_TESTING=ON `
+          -DXSIGMA_ENABLE_GTEST=ON `
+          -DXSIGMA_ENABLE_BENCHMARK=OFF `
+          -DXSIGMA_ENABLE_LTO=OFF `
+          -DXSIGMA_ENABLE_TBB=OFF `
+          -DXSIGMA_ENABLE_CUDA=${{ matrix.cuda_enabled }}
+
+    # ===== Build and Test (With Sccache) =====
+    - name: Record build start time (Sccache)
+      shell: bash
+      run: |
+        echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
+
+    - name: Build (With Sccache)
+      run: cmake --build build --config ${{ matrix.build_type }} -j 2
+
+    - name: Record build end time (Sccache)
+      shell: bash
+      run: |
+        echo "BUILD_END_TIME=$(date +%s)" >> $GITHUB_ENV
+        BUILD_DURATION=$((BUILD_END_TIME - BUILD_START_TIME))
+        echo "BUILD_DURATION_SCCACHE=$BUILD_DURATION" >> $GITHUB_ENV
+
+    - name: Run Tests (With Sccache)
+      working-directory: ${{ github.workspace }}/build
+      run: ctest --output-on-failure --build-config ${{ matrix.build_type }} -j 2
+
+    - name: Report Sccache Build Metrics
+      shell: bash
+      run: |
+        echo "=== Sccache Enabled Build Metrics ==="
+        echo "Platform: ${{ runner.os }}"
+        echo "Build Type: ${{ matrix.build_type }}"
+        echo "C++ Standard: ${{ matrix.cxx_std }}"
+        echo "Sccache Enabled: YES"
+        echo "Build Duration: ${{ env.BUILD_DURATION_SCCACHE }} seconds"
+        echo ""
+        sccache --show-stats || echo "Sccache stats unavailable"
+
+  # ============================================================================
   # CI Success Summary
   # ============================================================================
   ci-success:
     name: CI Success
     needs:
       - build-matrix
+      - compiler-version-tests
       - tbb-specific-tests
       - sanitizer-tests
       - optimization-flags-test
       - lto-tests
       - benchmark-tests
+      - sccache-baseline-tests
+      - sccache-enabled-tests
     runs-on: ubuntu-latest
     if: always()
 
@@ -1063,10 +1534,13 @@ jobs:
       run: |
         echo "=== Streamlined CI Pipeline Results ==="
         echo "Build Matrix: ${{ needs.build-matrix.result }}"
+        echo "Compiler Version Tests: ${{ needs.compiler-version-tests.result }}"
         echo "TBB Specific Tests: ${{ needs.tbb-specific-tests.result }}"
         echo "Sanitizer Tests: ${{ needs.sanitizer-tests.result }}"
         echo "Optimization Flags: ${{ needs.optimization-flags-test.result }}"
         echo "Benchmark Tests: ${{ needs.benchmark-tests.result }}"
+        echo "Sccache Baseline Tests: ${{ needs.sccache-baseline-tests.result }}"
+        echo "Sccache Enabled Tests: ${{ needs.sccache-enabled-tests.result }}"
         echo ""
         echo "Note: Code quality and coverage testing have been removed from this pipeline"
         echo "      to streamline CI execution time and focus on essential functionality tests."
@@ -1075,6 +1549,10 @@ jobs:
         # Check if any required job failed
         if [ "${{ needs.build-matrix.result }}" != "success" ]; then
           echo "ERROR: Build matrix failed"
+          exit 1
+        fi
+        if [ "${{ needs.compiler-version-tests.result }}" != "success" ]; then
+          echo "ERROR: Compiler version tests failed"
           exit 1
         fi
         if [ "${{ needs.tbb-specific-tests.result }}" != "success" ]; then
@@ -1092,6 +1570,14 @@ jobs:
         if [ "${{ needs.benchmark-tests.result }}" != "success" ]; then
           echo "WARNING: Benchmark tests failed (non-blocking)"
         fi
+        if [ "${{ needs.sccache-baseline-tests.result }}" != "success" ]; then
+          echo "ERROR: Sccache baseline tests failed"
+          exit 1
+        fi
+        if [ "${{ needs.sccache-enabled-tests.result }}" != "success" ]; then
+          echo "ERROR: Sccache enabled tests failed"
+          exit 1
+        fi
 
         echo ""
         echo "SUCCESS: All essential CI checks passed successfully!"
@@ -1105,11 +1591,14 @@ jobs:
 #
 # ## Job Structure Overview:
 # 1. build-matrix: Primary testing across platforms with C++17 baseline + selective C++20/C++23
-# 2. tbb-specific-tests: TBB functionality testing (Unix/macOS only)
-# 3. sanitizer-tests: Memory/thread safety testing (Unix/macOS only)
-# 4. optimization-flags-test: Compiler optimization testing
-# 5. benchmark-tests: Performance regression testing (non-blocking)
-# 6. ci-success: Aggregates results from all jobs
+# 2. compiler-version-tests: Multi-compiler version testing (GCC 11-13, Clang 15-17, Xcode)
+# 3. tbb-specific-tests: TBB functionality testing (Unix/macOS only)
+# 4. sanitizer-tests: Memory/thread safety testing (Unix/macOS only)
+# 5. optimization-flags-test: Compiler optimization testing
+# 6. benchmark-tests: Performance regression testing (non-blocking)
+# 7. sccache-baseline-tests: Build performance baseline without sccache (all platforms)
+# 8. sccache-enabled-tests: Build performance with sccache enabled (all platforms)
+# 9. ci-success: Aggregates results from all jobs
 #
 # ## Platform-Specific Notes:
 # - Ubuntu: Full TBB + CUDA support, all sanitizers including leak
@@ -1123,11 +1612,23 @@ jobs:
 # 3. Set appropriate values for: os, build_type, cxx_std, logging_backend, tbb_enabled, cuda_enabled
 # 4. Add platform-specific compiler and cache path settings
 #
-# ## Modifying Dependencies:
-# - Ubuntu: Update the "Install dependencies (Ubuntu)" step
-# - macOS: Update the "Install dependencies (macOS)" step
-# - Windows: Update the "Install dependencies (Windows)" step
-# - CUDA: Modify the platform-specific CUDA installation steps
+# ## Dependency Installation Scripts:
+# All dependency installation has been refactored into separate scripts for maintainability:
+# - scripts/ci/install-deps-ubuntu.sh: Ubuntu/Linux dependencies (with --with-tbb, --with-cuda flags)
+# - scripts/ci/install-deps-macos.sh: macOS dependencies (with --with-tbb, --with-cuda flags)
+# - scripts/ci/install-deps-windows.ps1: Windows dependencies (PowerShell, with -WithTbb, -WithCuda flags)
+# - scripts/ci/install-sccache.sh: Sccache installation with platform detection
+#
+# To modify dependencies:
+# 1. Update the appropriate script in scripts/ci/
+# 2. Scripts are idempotent and include error handling
+# 3. Test changes locally before committing
+#
+# ## Build System Integration:
+# - All builds now use setup.py from Scripts/ directory
+# - setup.py handles CMake configuration and build execution
+# - Supports multiple compiler versions and C++ standards
+# - Automatically detects and uses build_ninja_python directory if it exists
 #
 # ## Adding New Jobs:
 # 1. Create the new job following the existing pattern
@@ -1150,8 +1651,31 @@ jobs:
 # - Benchmark tests are non-blocking to prevent CI delays
 # - Code quality and coverage jobs have been removed for faster execution
 #
+# ## Compiler Version Matrix Testing:
+# - compiler-version-tests: Tests multiple compiler versions for compatibility
+# - Ubuntu: GCC 11, 12, 13 and Clang 15, 16, 17 with C++17/20/23
+# - macOS: Xcode Clang with C++17/20
+# - Each compiler version tests with TBB enabled and LOGURU logging backend
+# - Non-critical job (warnings only) - allows CI to pass even if specific compiler versions fail
+# - To add new compiler versions:
+#   1. Add new matrix entry to compiler-version-tests job
+#   2. Specify compiler_c, compiler_cxx, compiler_name, compiler_version
+#   3. Set appropriate cxx_std and build_type
+#   4. Ensure compiler is available in the target platform
+#
+# ## Sccache Performance Testing:
+# - sccache-baseline-tests: Builds without sccache for baseline metrics
+# - sccache-enabled-tests: Builds with sccache enabled via CMAKE_CXX_COMPILER_LAUNCHER
+# - Both jobs run on Ubuntu, macOS, and Windows with identical configurations
+# - Sccache version is controlled via SCCACHE_VERSION environment variable
+# - Sccache cache directory is cached between runs for better performance
+# - Build duration is recorded and reported for performance comparison
+# - To update sccache version, modify SCCACHE_VERSION in the env section
+# - Sccache stats are displayed after each build for debugging
+#
 # ## Security Notes:
 # - All external downloads (CUDA, Intel repos) include error handling
 # - Package installations use official repositories where possible
 # - Chocolatey installations include retry logic for transient failures
+# - Sccache downloads are from official Mozilla GitHub releases
 
