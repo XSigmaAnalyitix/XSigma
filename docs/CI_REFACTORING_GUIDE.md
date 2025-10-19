@@ -13,27 +13,27 @@ The XSigma CI pipeline has been refactored to improve maintainability, reduce co
 
 #### Installation Scripts
 
-Located in `scripts/ci/`:
+Located in `.github/workflows/install/`:
 
 - **`install-deps-ubuntu.sh`**: Ubuntu/Linux dependencies
   - Installs: CMake, Ninja, Clang, GCC, Python, TBB, development libraries
   - Flags: `--with-cuda`, `--with-tbb`
-  - Usage: `./scripts/ci/install-deps-ubuntu.sh --with-tbb`
+  - Usage: `./.github/workflows/install/install-deps-ubuntu.sh --with-tbb`
 
 - **`install-deps-macos.sh`**: macOS dependencies
   - Installs: Homebrew packages, Clang, GCC, Python, TBB
   - Flags: `--with-cuda`, `--with-tbb`
-  - Usage: `./scripts/ci/install-deps-macos.sh --with-tbb`
+  - Usage: `./.github/workflows/install/install-deps-macos.sh --with-tbb`
 
 - **`install-deps-windows.ps1`**: Windows dependencies (PowerShell)
   - Installs: Chocolatey packages, LLVM, CMake, Python
   - Flags: `-WithCuda`, `-WithTbb`
-  - Usage: `.\scripts\ci\install-deps-windows.ps1 -WithTbb`
+  - Usage: `.\.github\workflows\install\install-deps-windows.ps1 -WithTbb`
 
 - **`install-sccache.sh`**: Sccache installation with platform detection
   - Automatic platform detection (Linux, macOS)
   - Downloads from official Mozilla releases
-  - Usage: `./scripts/ci/install-sccache.sh 0.7.7`
+  - Usage: `./.github/workflows/install/install-sccache.sh 0.7.7`
 
 #### Benefits
 

@@ -30,7 +30,7 @@ This part will introduce about the arguments you can use when run this tool. The
 We have two different compilers, `gcc` and `clang`, and this tool supports both. But it is recommended to use `gcc` because it's much faster and use less disk place. The examples will also be divided to two parts, for `gcc` and `clang`.
 
 ## Preparation
-The first step is to [build *Pytorch* from source](https://github.com/pytorch/pytorch#from-source) with `USE_CPP_CODE_COVERAGE` option `ON`. You may also want to set `BUILD_TEST` option `ON` to get the test binaries. Besides, if you are under `gcc` compiler, to get accurate result, it is recommended to also select `CMAKE_BUILD_TYPE=Debug`.
+The first step is to [build *Pytorch* from source](https://github.com/pytorch/pytorch#from-source) with `XSIGMA_ENABLE_COVERAGE` option `ON`. You may also want to set `BUILD_TEST` option `ON` to get the test binaries. Besides, if you are under `gcc` compiler, to get accurate result, it is recommended to also select `CMAKE_BUILD_TYPE=Debug`.
 See: [how to adjust build options](https://github.com/pytorch/pytorch#adjust-build-options-optional) for reference. Following is one way to adjust build option:
 ```
 # in build/ folder (all build artifacts must in `build/` folder)
