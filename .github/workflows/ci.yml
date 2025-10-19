@@ -46,7 +46,7 @@ jobs:
             tbb_enabled: ON
             cuda_enabled: OFF
             compiler_c: clang
-            compiler_cxx: clang++
+            compiler_cxx: clang
             generator: Ninja
             cache_path: ~/.cache
 
@@ -224,20 +224,20 @@ jobs:
     - name: Install dependencies (Ubuntu)
       if: runner.os == 'Linux'
       run: |
-        chmod +x scripts/ci/install-deps-ubuntu.sh
-        ./scripts/ci/install-deps-ubuntu.sh --with-tbb
+        chmod +x .github/workflows/install/install-deps-ubuntu.sh
+        ./.github/workflows/install/install-deps-ubuntu.sh --with-tbb
 
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
       run: |
-        chmod +x scripts/ci/install-deps-macos.sh
-        ./scripts/ci/install-deps-macos.sh --with-tbb
+        chmod +x .github/workflows/install/install-deps-macos.sh
+        ./.github/workflows/install/install-deps-macos.sh --with-tbb
 
     - name: Install dependencies (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
-        & .\scripts\ci\install-deps-windows.ps1 -WithTbb
+        & .\.github\workflows\install\install-deps-windows.ps1 -WithTbb
 
     - name: Setup macOS linker environment
       if: runner.os == 'macOS'
@@ -566,8 +566,8 @@ jobs:
     - name: Install dependencies (Ubuntu)
       if: runner.os == 'Linux'
       run: |
-        chmod +x scripts/ci/install-deps-ubuntu.sh
-        ./scripts/ci/install-deps-ubuntu.sh --with-tbb
+        chmod +x .github/workflows/install/install-deps-ubuntu.sh
+        ./.github/workflows/install/install-deps-ubuntu.sh --with-tbb
 
     - name: Install specific compiler version (Ubuntu)
       if: runner.os == 'Linux'
@@ -581,8 +581,8 @@ jobs:
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
       run: |
-        chmod +x scripts/ci/install-deps-macos.sh
-        ./scripts/ci/install-deps-macos.sh --with-tbb
+        chmod +x .github/workflows/install/install-deps-macos.sh
+        ./.github/workflows/install/install-deps-macos.sh --with-tbb
 
     - name: Setup macOS linker environment
       if: runner.os == 'macOS'
@@ -1151,7 +1151,7 @@ jobs:
             tbb_enabled: ON
             cuda_enabled: OFF
             compiler_c: clang
-            compiler_cxx: clang++
+            compiler_cxx: clang
             generator: Ninja
             cache_path: ~/.cache
 
@@ -1163,7 +1163,7 @@ jobs:
             tbb_enabled: ON
             cuda_enabled: OFF
             compiler_c: clang
-            compiler_cxx: clang++
+            compiler_cxx: clang
             generator: Ninja
             cache_path: ~/Library/Caches
 
@@ -1175,7 +1175,7 @@ jobs:
             tbb_enabled: OFF
             cuda_enabled: OFF
             compiler_c: clang
-            compiler_cxx: clang++
+            compiler_cxx: clang
             generator: Ninja
             cache_path: ~/AppData/Local/Temp/chocolatey
 
@@ -1316,7 +1316,7 @@ jobs:
             tbb_enabled: ON
             cuda_enabled: OFF
             compiler_c: clang
-            compiler_cxx: clang++
+            compiler_cxx: clang
             generator: Ninja
             cache_path: ~/.cache
 
@@ -1328,7 +1328,7 @@ jobs:
             tbb_enabled: ON
             cuda_enabled: OFF
             compiler_c: clang
-            compiler_cxx: clang++
+            compiler_cxx: clang
             generator: Ninja
             cache_path: ~/Library/Caches
 
@@ -1340,7 +1340,7 @@ jobs:
             tbb_enabled: OFF
             cuda_enabled: OFF
             compiler_c: clang
-            compiler_cxx: clang++
+            compiler_cxx: clang
             generator: Ninja
             cache_path: ~/AppData/Local/Temp/chocolatey
 
@@ -1614,13 +1614,13 @@ jobs:
 #
 # ## Dependency Installation Scripts:
 # All dependency installation has been refactored into separate scripts for maintainability:
-# - scripts/ci/install-deps-ubuntu.sh: Ubuntu/Linux dependencies (with --with-tbb, --with-cuda flags)
-# - scripts/ci/install-deps-macos.sh: macOS dependencies (with --with-tbb, --with-cuda flags)
-# - scripts/ci/install-deps-windows.ps1: Windows dependencies (PowerShell, with -WithTbb, -WithCuda flags)
-# - scripts/ci/install-sccache.sh: Sccache installation with platform detection
+# - .github/workflows/install/install-deps-ubuntu.sh: Ubuntu/Linux dependencies (with --with-tbb, --with-cuda flags)
+# - .github/workflows/install/install-deps-macos.sh: macOS dependencies (with --with-tbb, --with-cuda flags)
+# - .github/workflows/install/install-deps-windows.ps1: Windows dependencies (PowerShell, with -WithTbb, -WithCuda flags)
+# - .github/workflows/install/install-sccache.sh: Sccache installation with platform detection
 #
 # To modify dependencies:
-# 1. Update the appropriate script in scripts/ci/
+# 1. Update the appropriate script in .github/workflows/install/
 # 2. Scripts are idempotent and include error handling
 # 3. Test changes locally before committing
 #

@@ -6,10 +6,10 @@ XSigma now includes platform-specific installation scripts for setting up build 
 
 ## Scripts Location
 
-All scripts are located in `scripts/ci/`:
+All scripts are located in `.github/workflows/install/`:
 
 ```
-scripts/ci/
+.github/workflows/install/
 ├── install-deps-ubuntu.sh      # Ubuntu/Linux dependencies
 ├── install-deps-macos.sh       # macOS dependencies
 ├── install-deps-windows.ps1    # Windows dependencies (PowerShell)
@@ -21,8 +21,8 @@ scripts/ci/
 ### Usage
 
 ```bash
-chmod +x scripts/ci/install-deps-ubuntu.sh
-./scripts/ci/install-deps-ubuntu.sh [OPTIONS]
+chmod +x .github/workflows/install/install-deps-ubuntu.sh
+./.github/workflows/install/install-deps-ubuntu.sh [OPTIONS]
 ```
 
 ### Options
@@ -34,13 +34,13 @@ chmod +x scripts/ci/install-deps-ubuntu.sh
 
 ```bash
 # Basic installation
-./scripts/ci/install-deps-ubuntu.sh
+./.github/workflows/install/install-deps-ubuntu.sh
 
 # With TBB support
-./scripts/ci/install-deps-ubuntu.sh --with-tbb
+./.github/workflows/install/install-deps-ubuntu.sh --with-tbb
 
 # With TBB and CUDA
-./scripts/ci/install-deps-ubuntu.sh --with-tbb --with-cuda
+./.github/workflows/install/install-deps-ubuntu.sh --with-tbb --with-cuda
 ```
 
 ### Installed Packages
@@ -55,8 +55,8 @@ chmod +x scripts/ci/install-deps-ubuntu.sh
 ### Usage
 
 ```bash
-chmod +x scripts/ci/install-deps-macos.sh
-./scripts/ci/install-deps-macos.sh [OPTIONS]
+chmod +x .github/workflows/install/install-deps-macos.sh
+./.github/workflows/install/install-deps-macos.sh [OPTIONS]
 ```
 
 ### Prerequisites
@@ -73,10 +73,10 @@ chmod +x scripts/ci/install-deps-macos.sh
 
 ```bash
 # Basic installation
-./scripts/ci/install-deps-macos.sh
+./.github/workflows/install/install-deps-macos.sh
 
 # With TBB support
-./scripts/ci/install-deps-macos.sh --with-tbb
+./.github/workflows/install/install-deps-macos.sh --with-tbb
 ```
 
 ### Installed Packages
@@ -92,7 +92,7 @@ chmod +x scripts/ci/install-deps-macos.sh
 ```powershell
 # Run as Administrator
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
-.\scripts\ci\install-deps-windows.ps1 [-WithCuda] [-WithTbb]
+.\.github\workflows\install\install-deps-windows.ps1 [-WithCuda] [-WithTbb]
 ```
 
 ### Prerequisites
@@ -109,13 +109,13 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 
 ```powershell
 # Basic installation
-.\scripts\ci\install-deps-windows.ps1
+.\.github\workflows\install\install-deps-windows.ps1
 
 # With TBB support
-.\scripts\ci\install-deps-windows.ps1 -WithTbb
+.\.github\workflows\install\install-deps-windows.ps1 -WithTbb
 
 # With TBB and CUDA
-.\scripts\ci\install-deps-windows.ps1 -WithTbb -WithCuda
+.\.github\workflows\install\install-deps-windows.ps1 -WithTbb -WithCuda
 ```
 
 ### Installed Packages
@@ -129,8 +129,8 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 ### Usage
 
 ```bash
-chmod +x scripts/ci/install-sccache.sh
-./scripts/ci/install-sccache.sh [VERSION]
+chmod +x .github/workflows/install/install-sccache.sh
+./.github/workflows/install/install-sccache.sh [VERSION]
 ```
 
 ### Features
@@ -144,10 +144,10 @@ chmod +x scripts/ci/install-sccache.sh
 
 ```bash
 # Install default version (0.7.7)
-./scripts/ci/install-sccache.sh
+./.github/workflows/install/install-sccache.sh
 
 # Install specific version
-./scripts/ci/install-sccache.sh 0.8.0
+./.github/workflows/install/install-sccache.sh 0.8.0
 
 # Verify installation
 sccache --version
