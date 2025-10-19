@@ -17,7 +17,7 @@ PYPROJECT = REPO_ROOT / "pyproject.toml"
 DICTIONARY = REPO_ROOT / "tools" / "linter" / "dictionary.txt"
 
 FORBIDDEN_WORDS = {
-    "multipy",  # project pytorch/multipy is dead  # codespell:ignore multipy
+    "multipy",  # project xsigma/multipy is dead  # codespell:ignore multipy
 }
 
 

@@ -569,14 +569,41 @@ jobs:
         chmod +x .github/workflows/install/install-deps-ubuntu.sh
         ./.github/workflows/install/install-deps-ubuntu.sh --with-tbb
 
-    - name: Install specific compiler version (Ubuntu)
-      if: runner.os == 'Linux'
+    - name: Install specific Clang version (Ubuntu)
+      if: runner.os == 'Linux' && matrix.compiler_name == 'Clang'
       run: |
-        sudo apt-get update
-        sudo apt-get install -y ${{ matrix.compiler_c }} ${{ matrix.compiler_cxx }} || {
-          echo "WARNING: Specific compiler version not available in default repos"
-          echo "Using default compiler instead"
-        }
+        # Extract version number from compiler_cxx (e.g., "clang-16" -> "16")
+        CLANG_VERSION=$(echo "${{ matrix.compiler_cxx }}" | grep -oE '[0-9]+$' || echo "")
+
+        if [ -z "$CLANG_VERSION" ]; then
+          echo "WARNING: Could not extract Clang version from ${{ matrix.compiler_cxx }}"
+          echo "Using default Clang compiler"
+        else
+          echo "Installing Clang version $CLANG_VERSION..."
+          chmod +x .github/workflows/install/install-clang-version.sh
+          ./.github/workflows/install/install-clang-version.sh "$CLANG_VERSION" --with-llvm-tools || {
+            echo "WARNING: Failed to install Clang $CLANG_VERSION"
+            echo "Attempting to use available compiler"
+          }
+        fi
+
+    - name: Install specific GCC version (Ubuntu)
+      if: runner.os == 'Linux' && matrix.compiler_name == 'GCC'
+      run: |
+        # Extract version number from compiler_cxx (e.g., "g++-12" -> "12")
+        GCC_VERSION=$(echo "${{ matrix.compiler_cxx }}" | grep -oE '[0-9]+$' || echo "")
+
+        if [ -z "$GCC_VERSION" ]; then
+          echo "WARNING: Could not extract GCC version from ${{ matrix.compiler_cxx }}"
+          echo "Using default GCC compiler"
+        else
+          echo "Installing GCC version $GCC_VERSION..."
+          sudo apt-get update
+          sudo apt-get install -y gcc-$GCC_VERSION g++-$GCC_VERSION || {
+            echo "WARNING: Failed to install GCC $GCC_VERSION"
+            echo "Attempting to use available compiler"
+          }
+        fi
 
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'

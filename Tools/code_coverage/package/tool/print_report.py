@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import os
 import subprocess
-from typing import IO
+from typing import IO, Optional
 
-from ..oss.utils import get_pytorch_folder
 from ..util.setting import SUMMARY_FOLDER_DIR, TestList, TestStatusType
+from .html_report_generator import HtmlReportGenerator
 
 
 CoverageItem = tuple[str, float, int, int]
@@ -234,3 +234,28 @@ def html_oriented_report() -> None:
             os.path.join(SUMMARY_FOLDER_DIR, "html_report"),
         ]
     )
+
+
+def generate_multifile_html_report(
+    covered_lines: dict[str, set[int]],
+    uncovered_lines: dict[str, set[int]],
+    output_dir: Optional[str] = None,
+    source_root: str = "",
+) -> None:
+    """Generate a multi-file HTML coverage report.
+
+    Creates an index page with overall statistics and individual file reports
+    with line-by-line coverage visualization.
+
+    Args:
+        covered_lines: Dict mapping file paths to sets of covered line numbers
+        uncovered_lines: Dict mapping file paths to sets of uncovered line numbers
+        output_dir: Output directory for HTML reports
+                   (defaults to SUMMARY_FOLDER_DIR/html_details)
+        source_root: Root directory of source files for reading content
+    """
+    if output_dir is None:
+        output_dir = os.path.join(SUMMARY_FOLDER_DIR, "html_details")
+
+    generator = HtmlReportGenerator(output_dir)
+    generator.generate_report(covered_lines, uncovered_lines, source_root)

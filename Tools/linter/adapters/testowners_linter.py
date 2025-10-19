@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test ownership was introduced in https://github.com/pytorch/pytorch/issues/66232.
+Test ownership was introduced in https://github.com/xsigma/xsigma/issues/66232.
 
 This lint verifies that every Python test file (file that matches test_*.py or *_test.py in the test folder)
 has valid ownership information in a comment header. Valid means:
@@ -82,7 +82,7 @@ def check_labels(
                     replacement=None,
                     description=(
                         f"{label} is not a PyTorch label "
-                        "(please choose from https://github.com/pytorch/pytorch/labels)"
+                        "(please choose from https://github.com/xsigma/xsigma/labels)"
                     ),
                 )
             )

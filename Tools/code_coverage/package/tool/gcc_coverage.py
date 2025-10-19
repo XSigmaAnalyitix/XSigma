@@ -18,14 +18,19 @@ def update_gzip_dict(gzip_dict: dict[str, int], file_name: str) -> str:
     return str(num) + "_" + file_name
 
 
-def run_target(binary_file: str, test_type: TestType) -> None:
+def run_target(
+    binary_file: str,
+    test_type: TestType,
+    build_folder: str = "",
+    test_subfolder: str = "bin",
+) -> None:
     print_log("start run", test_type.value, "test: ", binary_file)
     start_time = time.time()
     assert test_type in {TestType.CPP, TestType.PY}
     if test_type == TestType.CPP:
         run_cpp_test(binary_file)
     else:
-        run_oss_python_test(binary_file)
+        run_oss_python_test(binary_file, build_folder, test_subfolder)
 
     print_time(" time: ", start_time)
 
