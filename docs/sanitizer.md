@@ -153,11 +153,11 @@ endif()
 
 The sanitizer system includes suppression files to handle known false positives and third-party library issues:
 
-- **`Scripts/asan_suppressions.txt`** - AddressSanitizer suppressions
-- **`Scripts/ubsan_suppressions.txt`** - UndefinedBehaviorSanitizer suppressions
-- **`Scripts/tsan_suppressions.txt`** - ThreadSanitizer suppressions
-- **`Scripts/msan_suppressions.txt`** - MemorySanitizer suppressions
-- **`Scripts/lsan_suppressions.txt`** - LeakSanitizer suppressions
+- **`Scripts/suppressions/asan_suppressions.txt`** - AddressSanitizer suppressions
+- **`Scripts/suppressions/ubsan_suppressions.txt`** - UndefinedBehaviorSanitizer suppressions
+- **`Scripts/suppressions/tsan_suppressions.txt`** - ThreadSanitizer suppressions
+- **`Scripts/suppressions/msan_suppressions.txt`** - MemorySanitizer suppressions
+- **`Scripts/suppressions/lsan_suppressions.txt`** - LeakSanitizer suppressions
 
 These files are automatically configured via environment variables (`ASAN_OPTIONS`, `UBSAN_OPTIONS`, etc.) when sanitizers are enabled.
 
@@ -165,7 +165,7 @@ These files are automatically configured via environment variables (`ASAN_OPTION
 
 To add custom suppressions:
 
-1. Edit the appropriate suppression file in the `Scripts/` directory
+1. Edit the appropriate suppression file in the `Scripts/suppressions/` directory
 2. Add patterns to match problematic functions, files, or libraries
 3. Rebuild and test to verify the suppression works
 

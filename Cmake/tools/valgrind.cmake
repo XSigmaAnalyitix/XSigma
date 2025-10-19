@@ -126,7 +126,7 @@ set(CMAKE_MEMORYCHECK_COMMAND_OPTIONS
 # =============================================================================
 
 set(CTEST_MEMORYCHECK_SUPPRESSIONS_FILE
-    "${PROJECT_SOURCE_DIR}/Scripts/valgrind_suppression.txt"
+    "${PROJECT_SOURCE_DIR}/Scripts/suppressions/valgrind_suppression.txt"
 )
 
 if(EXISTS "${CTEST_MEMORYCHECK_SUPPRESSIONS_FILE}")
