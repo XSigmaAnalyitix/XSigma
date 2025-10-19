@@ -22,6 +22,7 @@ from .parser.gcov_coverage_parser import GcovCoverageParser
 from .parser.llvm_coverage_parser import LlvmCoverageParser
 from .print_report import (
     file_oriented_report,
+    generate_multifile_html_report,
     html_oriented_report,
     line_oriented_report,
 )
@@ -48,7 +49,7 @@ def transform_file_name(
         for folder in interested_folders:
             if folder in file_path:
                 return file_path[file_path.find(folder) :]
-    # remove pytorch base folder path
+    # remove xsigma base folder path
     if platform == TestPlatform.OSS:
         from package.oss.utils import get_pytorch_folder  # type: ignore[import]
 
@@ -65,7 +66,7 @@ def is_intrested_file(
     if any(pattern in file_path for pattern in ignored_patterns):
         return False
 
-    # ignore files that are not belong to pytorch
+    # ignore files that are not belong to xsigma
     if platform == TestPlatform.OSS:
         # pyrefly: ignore  # import-error
         from package.oss.utils import get_pytorch_folder
@@ -219,4 +220,15 @@ def summarize_jsons(
             covered_lines,
             uncovered_lines,
         )
+        # Generate multi-file HTML report
+        try:
+            from package.oss.utils import get_pytorch_folder
+            source_root = get_pytorch_folder()
+            generate_multifile_html_report(
+                covered_lines,
+                uncovered_lines,
+                source_root=source_root,
+            )
+        except Exception as e:
+            print_error(f"Failed to generate multi-file HTML report: {e}")
     print_time("summary jsons take time: ", start_time)

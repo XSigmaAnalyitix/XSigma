@@ -30,8 +30,8 @@ This part will introduce about the arguments you can use when run this tool. The
 We have two different compilers, `gcc` and `clang`, and this tool supports both. But it is recommended to use `gcc` because it's much faster and use less disk place. The examples will also be divided to two parts, for `gcc` and `clang`.
 
 ## Preparation
-The first step is to [build *Pytorch* from source](https://github.com/pytorch/pytorch#from-source) with `XSIGMA_ENABLE_COVERAGE` option `ON`. You may also want to set `BUILD_TEST` option `ON` to get the test binaries. Besides, if you are under `gcc` compiler, to get accurate result, it is recommended to also select `CMAKE_BUILD_TYPE=Debug`.
-See: [how to adjust build options](https://github.com/pytorch/pytorch#adjust-build-options-optional) for reference. Following is one way to adjust build option:
+The first step is to [build *Pytorch* from source](https://github.com/xsigma/xsigma#from-source) with `XSIGMA_ENABLE_COVERAGE` option `ON`. You may also want to set `BUILD_TEST` option `ON` to get the test binaries. Besides, if you are under `gcc` compiler, to get accurate result, it is recommended to also select `CMAKE_BUILD_TYPE=Debug`.
+See: [how to adjust build options](https://github.com/xsigma/xsigma#adjust-build-options-optional) for reference. Following is one way to adjust build option:
 ```
 # in build/ folder (all build artifacts must in `build/` folder)
 cmake .. -DUSE_CPP_CODE_COVERAGE=ON -DBUILD_TEST=ON -DCMAKE_BUILD_TYPE=Debug
@@ -91,7 +91,7 @@ python oss_coverage.py --run-only=atest --interest-only=c10 --summary
 
 
 **2. Run tests yourself**
-When you are developing a new feature, you may first run the tests yourself to make sure the implementation is all right and then want to learn its coverage. But sometimes the test take very long time and you don't want to wait to run it again when doing code coverage. In this case, you can use these arguments to accelerate your development (make sure you build pytorch with the coverage option!):
+When you are developing a new feature, you may first run the tests yourself to make sure the implementation is all right and then want to learn its coverage. But sometimes the test take very long time and you don't want to wait to run it again when doing code coverage. In this case, you can use these arguments to accelerate your development (make sure you build xsigma with the coverage option!):
 ```
 # run tests when you are developing a new feature, assume the test is `test_nn.py`
 python oss_coverage.py --run-only=test_nn.py

@@ -79,15 +79,15 @@ sudo apt-get install -y \
         exit 1
     }
 
-# Clang compiler
-log_info "Installing Clang compiler..."
+# Clang compiler (default version only)
+# Note: Specific Clang versions are installed on-demand via install-clang-version.sh
+# to avoid package conflicts when multiple versions are needed
+log_info "Installing default Clang compiler..."
 sudo apt-get install -y \
     clang \
     clang++ \
-    llvm \
-    llvm-dev \
     || {
-        log_error "Failed to install Clang"
+        log_error "Failed to install default Clang"
         exit 1
     }
 

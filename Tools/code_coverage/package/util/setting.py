@@ -10,8 +10,21 @@ HOME_DIR = os.environ["HOME"]
 TOOLS_FOLDER = str(Path(__file__).resolve().parents[2])
 
 
+def get_profile_dir() -> str:
+    """Get the profile directory.
+
+    If XSIGMA_COVERAGE_DIR environment variable is set, use that
+    (for build folder coverage output). Otherwise, use the default
+    Tools/code_coverage/profile directory.
+    """
+    coverage_dir = os.environ.get("XSIGMA_COVERAGE_DIR")
+    if coverage_dir:
+        return coverage_dir
+    return os.path.join(TOOLS_FOLDER, "profile")
+
+
 # <profile folder>
-PROFILE_DIR = os.path.join(TOOLS_FOLDER, "profile")
+PROFILE_DIR = get_profile_dir()
 JSON_FOLDER_BASE_DIR = os.path.join(PROFILE_DIR, "json")
 MERGED_FOLDER_BASE_DIR = os.path.join(PROFILE_DIR, "merged")
 SUMMARY_FOLDER_DIR = os.path.join(PROFILE_DIR, "summary")

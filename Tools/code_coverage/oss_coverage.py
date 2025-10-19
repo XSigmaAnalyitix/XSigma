@@ -1,5 +1,17 @@
 #!/usr/bin/env python3
+import os
 import time
+
+# Set coverage output directory before importing settings
+# This allows coverage reports to be generated in the build folder
+build_folder = os.environ.get("XSIGMA_BUILD_FOLDER", "build")
+if build_folder:
+    coverage_dir = os.path.join(
+        os.path.dirname(os.environ.get("XSIGMA_FOLDER", ".")),
+        build_folder,
+        "coverage_report",
+    )
+    os.environ["XSIGMA_COVERAGE_DIR"] = coverage_dir
 
 from package.oss.cov_json import get_json_report  # type: ignore[import]
 from package.oss.init import initialization  # type: ignore[import]
@@ -11,8 +23,13 @@ from package.util.utils import print_time  # type: ignore[import]
 def report_coverage() -> None:
     start_time = time.time()
     (options, test_list, interested_folders) = initialization()
+    # Extract build_folder and test_subfolder from environment
+    # These are set by the caller (coverage.py helper)
+    build_folder = os.environ.get("XSIGMA_BUILD_FOLDER", "build")
+    test_subfolder = os.environ.get("XSIGMA_TEST_SUBFOLDER", "bin")
+
     # run cpp tests
-    get_json_report(test_list, options)
+    get_json_report(test_list, options, build_folder, test_subfolder)
     # collect coverage data from json profiles
     if options.need_summary:
         summarize_jsons(test_list, interested_folders, [""], TestPlatform.OSS)

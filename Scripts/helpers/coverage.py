@@ -22,18 +22,30 @@ def run_oss_coverage(source_path: str, build_path: str, cmake_cxx_compiler: str)
     - HTML report generation
     - Cross-platform compatibility
 
+    Args:
+        source_path: Path to the source directory
+        build_path: Path to the build directory
+        cmake_cxx_compiler: C++ compiler being used
+
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    oss_coverage_script = os.path.join(source_path, "tools", "code_coverage", "oss_coverage.py")
+    oss_coverage_script = os.path.join(
+        source_path, "tools", "code_coverage", "oss_coverage.py"
+    )
 
     if not os.path.exists(oss_coverage_script):
         return 1
+
+    # Extract build folder name from build_path
+    build_folder = os.path.basename(build_path)
 
     # Build command to run oss_coverage.py
     oss_cov_cmd = [
         sys.executable,
         oss_coverage_script,
+        "--build-folder",
+        build_folder,
         "--run",
         "--export",
         "--summary",
@@ -41,7 +53,7 @@ def run_oss_coverage(source_path: str, build_path: str, cmake_cxx_compiler: str)
 
     # Add merge step for Clang (required for LLVM coverage)
     if "clang" in cmake_cxx_compiler.lower():
-        oss_cov_cmd.insert(3, "--merge")
+        oss_cov_cmd.insert(5, "--merge")
 
     try:
         # Prepare environment for oss_coverage.py
@@ -63,6 +75,17 @@ def run_oss_coverage(source_path: str, build_path: str, cmake_cxx_compiler: str)
         # Set XSIGMA_FOLDER to help oss_coverage.py find the correct paths
         env["XSIGMA_FOLDER"] = source_path
 
+        # Set build folder environment variables for oss_coverage.py
+        # Pass the full build path so the coverage tool can resolve it correctly
+        env["XSIGMA_BUILD_FOLDER"] = build_folder
+        env["XSIGMA_BUILD_PATH"] = build_path
+        env["XSIGMA_TEST_SUBFOLDER"] = "bin"
+
+        # Set coverage output directory to build folder
+        # This ensures coverage reports are generated in the build folder
+        coverage_dir = os.path.join(build_path, "coverage_report")
+        env["XSIGMA_COVERAGE_DIR"] = coverage_dir
+
         # Change to source directory for oss_coverage.py to work correctly
         original_dir = os.getcwd()
         os.chdir(source_path)
@@ -72,7 +95,7 @@ def run_oss_coverage(source_path: str, build_path: str, cmake_cxx_compiler: str)
             cwd=source_path,
             env=env,
             check=False,
-            shell=(os.name == 'nt')
+            shell=(os.name == "nt"),
         )
 
         os.chdir(original_dir)

@@ -25,6 +25,35 @@ from ..util.utils import (
 from .utils import get_tool_path_by_platform, run_cpp_test
 
 
+def get_coverage_filters() -> list[str]:
+    """Get list of regex patterns to exclude from coverage analysis.
+
+    Excludes:
+    - ThirdParty/ directory
+    - Library/Core/Testing/ directory
+    - Test files (Test*.cxx, *Test.cxx, etc.)
+    """
+    filters = [
+        # Exclude ThirdParty directory (handle both / and \)
+        ".*[/\\\\]ThirdParty[/\\\\].*",
+        # Exclude test files in Library/Core/Testing
+        ".*[/\\\\]Library[/\\\\]Core[/\\\\]Testing[/\\\\].*",
+        # Exclude test files by naming pattern
+        ".*[/\\\\]Test[A-Za-z0-9_]*\\.(cxx|cpp|h|hxx)$",
+        ".*[/\\\\][A-Za-z0-9_]*Test\\.(cxx|cpp|h|hxx)$",
+    ]
+    return filters
+
+
+def build_llvm_cov_filter_args() -> list[str]:
+    """Build llvm-cov filter arguments to exclude unwanted files."""
+    filters = get_coverage_filters()
+    args = []
+    for filter_pattern in filters:
+        args.extend(["-ignore-filename-regex", filter_pattern])
+    return args
+
+
 def create_corresponding_folder(
     cur_path: str, prefix_cur_path: str, dir_list: list[str], new_base_folder: str
 ) -> None:
@@ -37,7 +66,12 @@ def create_corresponding_folder(
 
 
 def run_target(
-    binary_file: str, raw_file: str, test_type: TestType, platform_type: TestPlatform
+    binary_file: str,
+    raw_file: str,
+    test_type: TestType,
+    platform_type: TestPlatform,
+    build_folder: str = "",
+    test_subfolder: str = "bin",
 ) -> None:
     print_log("start run: ", binary_file)
     # set environment variable -- raw profile output path of the binary run
@@ -46,7 +80,7 @@ def run_target(
     if test_type == TestType.PY and platform_type == TestPlatform.OSS:
         from ..oss.utils import run_oss_python_test
 
-        run_oss_python_test(binary_file)
+        run_oss_python_test(binary_file, build_folder, test_subfolder)
     else:
         run_cpp_test(binary_file)
 
@@ -55,9 +89,11 @@ def merge_target(raw_file: str, merged_file: str, platform_type: TestPlatform) -
     print_log("start to merge target: ", raw_file)
     # run command
     llvm_tool_path = get_tool_path_by_platform(platform_type)
+    # Use os.path.join to handle path separators correctly on all platforms
+    llvm_profdata = os.path.join(llvm_tool_path, "llvm-profdata")
     subprocess.check_call(
         [
-            f"{llvm_tool_path}/llvm-profdata",
+            llvm_profdata,
             "merge",
             "-sparse",
             raw_file,
@@ -80,17 +116,29 @@ def export_target(
         )  # noqa: TRY002
     print_log("start to export: ", merged_file)
     # run export
-    cmd_shared_library = (
-        ""
-        if not shared_library_list
-        else f" -object  {' -object '.join(shared_library_list)}"
-    )
-    # if binary_file = "", then no need to add it (python test)
-    cmd_binary = "" if not binary_file else f" -object {binary_file} "
     llvm_tool_path = get_tool_path_by_platform(platform_type)
+    llvm_cov = os.path.join(llvm_tool_path, "llvm-cov")
 
-    cmd = f"{llvm_tool_path}/llvm-cov export {cmd_binary} {cmd_shared_library}  -instr-profile={merged_file} > {json_file}"
-    os.system(cmd)
+    # Build command arguments
+    cmd_args = [llvm_cov, "export"]
+
+    # Add binary file if provided
+    if binary_file:
+        cmd_args.extend(["-object", binary_file])
+
+    # Add shared libraries
+    for shared_lib in shared_library_list:
+        cmd_args.extend(["-object", shared_lib])
+
+    # Add profile file
+    cmd_args.extend(["-instr-profile=" + merged_file])
+
+    # Add coverage filters to exclude unwanted files
+    cmd_args.extend(build_llvm_cov_filter_args())
+
+    # Run command and redirect output to json file
+    with open(json_file, "w") as f:
+        subprocess.check_call(cmd_args, stdout=f)
 
 
 def merge(test_list: TestList, platform_type: TestPlatform) -> None:
@@ -121,7 +169,12 @@ def merge(test_list: TestList, platform_type: TestPlatform) -> None:
     print_time("merge take time: ", start_time, summary_time=True)
 
 
-def export(test_list: TestList, platform_type: TestPlatform) -> None:
+def export(
+    test_list: TestList,
+    platform_type: TestPlatform,
+    build_folder: str = "",
+    test_subfolder: str = "bin",
+) -> None:
     print("start export")
     start_time = time.time()
     # find all merged profile under merged_folder and sub-folders
@@ -160,16 +213,23 @@ def export(test_list: TestList, platform_type: TestPlatform) -> None:
                         get_test_name_from_whole_path(merged_file),
                     )
                 elif platform_type == TestPlatform.OSS:
-                    from ..oss.utils import get_oss_binary_file, get_oss_shared_library
+                    from ..oss.utils import (
+                        get_oss_binary_file,
+                        get_oss_shared_library,
+                    )
 
                     test_name = get_test_name_from_whole_path(merged_file)
-                    # if it is python test, no need to provide binary, shared library is enough
+                    # if it is python test, no need to provide binary
                     binary_file = (
                         ""
                         if test_name.endswith(".py")
-                        else get_oss_binary_file(test_name, TestType.CPP)
+                        else get_oss_binary_file(
+                            test_name, TestType.CPP, build_folder, test_subfolder
+                        )
                     )
-                    shared_library_list = get_oss_shared_library()
+                    shared_library_list = get_oss_shared_library(
+                        build_folder, test_subfolder
+                    )
                 export_target(
                     merged_file,
                     json_file,
@@ -178,3 +238,132 @@ def export(test_list: TestList, platform_type: TestPlatform) -> None:
                     platform_type,
                 )
     print_time("export take time: ", start_time, summary_time=True)
+
+
+def show_html(
+    test_list: TestList,
+    platform_type: TestPlatform,
+    build_folder: str = "",
+    test_subfolder: str = "bin",
+) -> None:
+    """Generate HTML coverage report using llvm-cov show.
+
+    Args:
+        test_list: List of tests to generate reports for
+        platform_type: Platform type (OSS or FBCODE)
+        build_folder: Name of the build folder
+        test_subfolder: Subfolder within build folder where tests are
+    """
+    print("start html report generation")
+    start_time = time.time()
+
+    # Create HTML output directory
+    html_dir = os.path.join(JSON_FOLDER_BASE_DIR, "..", "html")
+    create_folder(html_dir)
+
+    # Find all merged profile files
+    g = os.walk(MERGED_FOLDER_BASE_DIR)
+    for path, dir_list, file_list in g:
+        for file_name in file_list:
+            if file_name.endswith(".merged"):
+                if not related_to_test_list(file_name, test_list):
+                    continue
+                print(f"start html generation for {file_name}")
+
+                # merged file
+                merged_file = os.path.join(path, file_name)
+
+                # Get binary and shared libraries
+                binary_file = ""
+                shared_library_list = []
+                if platform_type == TestPlatform.OSS:
+                    from ..oss.utils import (
+                        get_oss_binary_file,
+                        get_oss_shared_library,
+                    )
+
+                    test_name = get_test_name_from_whole_path(
+                        merged_file
+                    )
+                    # if it is python test, skip HTML generation
+                    if test_name.endswith(".py"):
+                        continue
+                    binary_file = get_oss_binary_file(
+                        test_name,
+                        TestType.CPP,
+                        build_folder,
+                        test_subfolder,
+                    )
+                    shared_library_list = get_oss_shared_library(
+                        build_folder, test_subfolder
+                    )
+
+                if not binary_file:
+                    continue
+
+                # Build llvm-cov show command
+                llvm_tool_path = get_tool_path_by_platform(
+                    platform_type
+                )
+                llvm_cov = os.path.join(llvm_tool_path, "llvm-cov")
+
+                # Create output file for this test
+                html_file_name = replace_extension(file_name, ".html")
+                html_file = os.path.join(html_dir, html_file_name)
+
+                cmd_args = [
+                    llvm_cov,
+                    "show",
+                    "-format=html",
+                    "-object",
+                    binary_file,
+                ]
+
+                # Add shared libraries
+                for shared_lib in shared_library_list:
+                    cmd_args.extend(["-object", shared_lib])
+
+                # Add profile file
+                cmd_args.extend(["-instr-profile=" + merged_file])
+
+                # Add coverage filters
+                cmd_args.extend(build_llvm_cov_filter_args())
+
+                # Run command and redirect output to html file
+                with open(html_file, "w") as f:
+                    subprocess.check_call(cmd_args, stdout=f)
+
+    print_time("html generation take time: ", start_time,
+               summary_time=True)
+
+
+def show_multifile_html(
+    covered_lines: dict[str, set[int]],
+    uncovered_lines: dict[str, set[int]],
+    source_root: str = "",
+) -> None:
+    """Generate multi-file HTML coverage report.
+
+    Creates an index page with overall statistics and individual file reports
+    with line-by-line coverage visualization.
+
+    Args:
+        covered_lines: Dict mapping file paths to sets of covered line numbers
+        uncovered_lines: Dict mapping file paths to sets of uncovered line numbers
+        source_root: Root directory of source files for reading content
+    """
+    from .html_report_generator import HtmlReportGenerator
+    from ..util.setting import SUMMARY_FOLDER_DIR
+
+    print("start multi-file html report generation")
+    start_time = time.time()
+
+    # Create output directory
+    html_dir = os.path.join(SUMMARY_FOLDER_DIR, "..", "html_details")
+
+    # Generate report
+    generator = HtmlReportGenerator(html_dir)
+    generator.generate_report(covered_lines, uncovered_lines, source_root)
+
+    print_time("multi-file html generation take time: ", start_time,
+               summary_time=True)
