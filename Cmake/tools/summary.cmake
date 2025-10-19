@@ -1,4 +1,15 @@
-# Prints accumulated Caffe2 configuration summary
+# =============================================================================
+# XSigma Configuration Summary Module
+# =============================================================================
+# This module provides a function to print a comprehensive summary of the
+# XSigma build configuration, including compiler settings, enabled features,
+# and optional dependencies.
+# =============================================================================
+
+# Include guard to prevent multiple inclusions
+include_guard(GLOBAL)
+
+# Prints accumulated XSigma configuration summary
 function(print_configuration_summary)
   message("")
   message( "******** Summary ********")

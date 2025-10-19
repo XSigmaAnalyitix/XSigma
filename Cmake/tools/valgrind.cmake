@@ -1,13 +1,24 @@
-if(NOT XSIGMA_ENABLE_VALGRIND)
-    return()
-endif()
-
 # =============================================================================
-# XSigma Valgrind Configuration
+# XSigma Valgrind Memory Checking Configuration Module
 # =============================================================================
 # This module configures Valgrind memory checking for CTest.
 # All Valgrind options and settings are centralized here.
+# Provides comprehensive memory leak detection and error tracking.
 # =============================================================================
+
+# Include guard to prevent multiple inclusions
+include_guard(GLOBAL)
+
+# Valgrind Memory Checking Flag
+# Controls whether Valgrind memory checking is enabled for test execution.
+# When enabled, runs all tests under Valgrind with comprehensive memory analysis.
+# Automatically adjusts test timeouts to account for Valgrind overhead.
+option(XSIGMA_ENABLE_VALGRIND "Execute test suite with Valgrind" OFF)
+mark_as_advanced(XSIGMA_ENABLE_VALGRIND)
+
+if(NOT XSIGMA_ENABLE_VALGRIND)
+    return()
+endif()
 
 message(STATUS "Configuring Valgrind memory checking...")
 

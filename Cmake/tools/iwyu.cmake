@@ -1,3 +1,20 @@
+# =============================================================================
+# XSigma Include-What-You-Use (IWYU) Configuration Module
+# =============================================================================
+# This module configures include-what-you-use for analyzing include dependencies.
+# It detects unnecessary includes and suggests improvements to include structure.
+# =============================================================================
+
+# Include guard to prevent multiple inclusions
+include_guard(GLOBAL)
+
+# Include-What-You-Use Analysis Flag
+# Controls whether IWYU include analysis is enabled during compilation.
+# When enabled, analyzes include dependencies and suggests optimizations.
+# Helps maintain clean and efficient include hierarchies.
+option(XSIGMA_ENABLE_IWYU "Enable include-what-you-use (iwyu) support." OFF)
+mark_as_advanced(XSIGMA_ENABLE_IWYU)
+
 if(NOT XSIGMA_ENABLE_IWYU)
     return()
 endif()

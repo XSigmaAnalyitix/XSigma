@@ -1,3 +1,20 @@
+# =============================================================================
+# XSigma CUDA Configuration Module
+# =============================================================================
+# This module handles CUDA compilation support for GPU acceleration.
+# It manages CUDA toolkit detection, architecture configuration, and allocation
+# strategy selection for GPU memory management.
+# =============================================================================
+
+# Include guard to prevent multiple inclusions
+include_guard(GLOBAL)
+
+# CUDA Support Flag
+# Controls whether CUDA GPU acceleration is enabled for the build.
+# When enabled, requires CUDA 12.0+ and configures GPU compilation.
+option(XSIGMA_ENABLE_CUDA "Enable CUDA compilation" OFF)
+mark_as_advanced(XSIGMA_ENABLE_CUDA)
+
 if(NOT XSIGMA_ENABLE_CUDA)
     return()
 endif()
@@ -96,16 +113,16 @@ elseif(XSIGMA_CUDA_ARCH_OPTIONS STREQUAL "none")
 endif()
 
 # CUDA Allocation Strategy Configuration (defined in main CMakeLists.txt)
-message(STATUS "CUDA allocation strategy: ${XSIGMA_CUDA_ALLOC}")
+message(STATUS "CUDA allocation strategy: ${XSIGMA_GPU_ALLOC}")
 
 # Set preprocessor definitions based on allocation strategy
-if(XSIGMA_CUDA_ALLOC STREQUAL "SYNC")
+if(XSIGMA_GPU_ALLOC STREQUAL "SYNC")
     add_compile_definitions(XSIGMA_CUDA_ALLOC_SYNC)
     message(STATUS "Using synchronous CUDA allocation (cuMemAlloc/cuMemFree)")
-elseif(XSIGMA_CUDA_ALLOC STREQUAL "ASYNC")
+elseif(XSIGMA_GPU_ALLOC STREQUAL "ASYNC")
     add_compile_definitions(XSIGMA_CUDA_ALLOC_ASYNC)
     message(STATUS "Using asynchronous CUDA allocation (cuMemAllocAsync/cuMemFreeAsync)")
-elseif(XSIGMA_CUDA_ALLOC STREQUAL "POOL_ASYNC")
+elseif(XSIGMA_GPU_ALLOC STREQUAL "POOL_ASYNC")
     add_compile_definitions(XSIGMA_CUDA_ALLOC_POOL_ASYNC)
     message(STATUS "Using pool-based asynchronous CUDA allocation (cuMemAllocFromPoolAsync)")
 endif()

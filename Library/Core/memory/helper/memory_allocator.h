@@ -143,7 +143,7 @@ constexpr allocation_strategy get_allocation_strategy() noexcept
  *
  * **Thread Safety**: Thread-safe with device-level synchronization
  * **Performance**: O(1) direct GPU API call
- * **Strategy**: Determined at compile time by XSIGMA_CUDA_ALLOC/XSIGMA_HIP_ALLOC flags
+ * **Strategy**: Determined at compile time by XSIGMA_GPU_ALLOC/XSIGMA_HIP_ALLOC flags
  */
 XSIGMA_API void* allocate(
     std::size_t nbytes, int device_id, void* stream = nullptr, void* memory_pool = nullptr);

@@ -1,4 +1,36 @@
-# This code has been adapted from smtk (https://gitlab.kitware.com/cmb/smtk)
+# =============================================================================
+# XSigma Sanitizer Configuration Module
+# =============================================================================
+# This module configures compiler sanitizers for runtime error detection.
+# Supports AddressSanitizer, UndefinedBehaviorSanitizer, ThreadSanitizer,
+# MemorySanitizer, and LeakSanitizer (Clang/GCC only).
+# Adapted from smtk (https://gitlab.kitware.com/cmb/smtk)
+# =============================================================================
+
+# Include guard to prevent multiple inclusions
+include_guard(GLOBAL)
+
+# Sanitizer Support Flag
+# Controls whether compiler sanitizers are enabled for runtime error detection.
+# When enabled, instruments code to detect memory errors, undefined behavior, and data races.
+# Clang and GCC only. Automatically disabled when using mimalloc.
+option(XSIGMA_ENABLE_SANITIZER "Build with sanitizer support (Clang only)" OFF)
+mark_as_advanced(XSIGMA_ENABLE_SANITIZER)
+
+if(XSIGMA_ENABLE_SANITIZER)
+  message(STATUS "Sanitizer enabled")
+else()
+  message(STATUS "Sanitizer disabled")
+  return()
+endif()
+
+# Sanitizer Type Configuration
+# Specifies which sanitizer to use: address, undefined, thread, memory, or leak.
+set(XSIGMA_SANITIZER_TYPE
+        "address"
+        CACHE STRING "The sanitizer to use. Options are address, undefined, thread, memory, leak")
+set_property(CACHE XSIGMA_SANITIZER_TYPE PROPERTY STRINGS address undefined thread memory leak)
+mark_as_advanced(XSIGMA_SANITIZER_TYPE)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
    CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
@@ -45,4 +77,8 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANGXX)
       INTERFACE
         "$<BUILD_INTERFACE:${xsigma_sanitize_args}>")
   endif()
+endif()
+
+if(XSIGMA_ENABLE_SANITIZER)
+  set(XSIGMA_ENABLE_MIMALLOC OFF)
 endif()

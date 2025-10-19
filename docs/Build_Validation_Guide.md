@@ -32,7 +32,7 @@ This guide provides comprehensive instructions for building and validating the r
 
 ### GPU Allocation Strategy Selection
 
-The build system supports three GPU allocation strategies via the `XSIGMA_CUDA_ALLOC` CMake flag:
+The build system supports three GPU allocation strategies via the `XSIGMA_GPU_ALLOC` CMake flag:
 
 ```bash
 # Synchronous allocation (default)

@@ -9,11 +9,15 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-# Guard against multiple inclusions
-if(XSIGMA_TBB_CONFIGURED)
-    return()
-endif()
-set(XSIGMA_TBB_CONFIGURED TRUE CACHE INTERNAL "TBB module loaded")
+# Include guard to prevent multiple inclusions
+include_guard(GLOBAL)
+
+# Intel TBB (Threading Building Blocks) Support Flag
+# Controls whether Intel TBB is enabled for parallel task scheduling and memory allocation.
+# When enabled, provides automatic fallback to building from source if system TBB is not found.
+# On Windows with Clang, requires system-installed TBB (building from source not supported).
+option(XSIGMA_ENABLE_TBB "Enable Intel TBB (Threading Building Blocks) support with automatic fallback." ON)
+mark_as_advanced(XSIGMA_ENABLE_TBB)
 
 # Only proceed if TBB is enabled
 if(NOT XSIGMA_ENABLE_TBB)

@@ -103,7 +103,7 @@ private:
 /**
  * @brief GPU allocation method enumeration (determined at compile time).
  *
- * The actual allocation method is controlled by the XSIGMA_CUDA_ALLOC CMake flag:
+ * The actual allocation method is controlled by the XSIGMA_GPU_ALLOC CMake flag:
  * - SYNC: Uses cuMemAlloc/cuMemFree or hipMalloc/hipFree (synchronous allocation)
  * - ASYNC: Uses cuMemAllocAsync/cuMemFreeAsync or hipMallocAsync/hipFreeAsync (asynchronous allocation)
  * - POOL_ASYNC: Uses cuMemAllocFromPoolAsync or hipMallocFromPoolAsync (pool-based async allocation)
@@ -126,7 +126,7 @@ enum class gpu_allocation_method
  *
  * allocator_gpu provides a direct wrapper around GPU memory allocation functions
  * (CUDA/HIP), eliminating intermediate backend layers for optimal performance.
- * The allocation method is determined at compile time via the XSIGMA_CUDA_ALLOC CMake flag.
+ * The allocation method is determined at compile time via the XSIGMA_GPU_ALLOC CMake flag.
  *
  * **Key Features**:
  * - Direct GPU API integration (no backend layers)
@@ -137,7 +137,7 @@ enum class gpu_allocation_method
  * - Thread-safe operation
  * - Support for synchronous and asynchronous allocation
  *
- * **Allocation Methods** (controlled by XSIGMA_CUDA_ALLOC):
+ * **Allocation Methods** (controlled by XSIGMA_GPU_ALLOC):
  * - SYNC: cuMemAlloc/cuMemFree or hipMalloc/hipFree - O(1) allocation, best for large allocations
  * - ASYNC: cuMemAllocAsync/cuMemFreeAsync or hipMallocAsync/hipFreeAsync - O(1) async, best for stream-based workloads
  * - POOL_ASYNC: cuMemAllocFromPoolAsync or hipMallocFromPoolAsync - O(1) pooled async, best for frequent small allocations
@@ -177,7 +177,7 @@ public:
      * @param name Human-readable name for debugging and profiling
      *
      * **Device Context**: Automatically manages GPU device context
-     * **Allocation Method**: Determined at compile time by XSIGMA_CUDA_ALLOC flag
+     * **Allocation Method**: Determined at compile time by XSIGMA_GPU_ALLOC flag
      * **Thread Safety**: Constructor is not thread-safe
      * **Exception Safety**: Strong guarantee - no partial construction
      */
@@ -361,7 +361,7 @@ private:
  * @param name Allocator name for debugging
  * @return Unique pointer to allocator_gpu instance
  *
- * **Allocation Method**: Determined at compile time by XSIGMA_CUDA_ALLOC flag
+ * **Allocation Method**: Determined at compile time by XSIGMA_GPU_ALLOC flag
  */
 XSIGMA_API std::unique_ptr<allocator_gpu> create_gpu_allocator(
     int device_id, const std::string& name = "GPU-Direct");

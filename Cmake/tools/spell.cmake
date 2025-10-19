@@ -1,3 +1,20 @@
+# =============================================================================
+# XSigma Spell Checking Configuration Module
+# =============================================================================
+# This module configures codespell for automated spell checking and correction.
+# WARNING: When enabled, automatically modifies source files to fix spelling errors.
+# =============================================================================
+
+# Include guard to prevent multiple inclusions
+include_guard(GLOBAL)
+
+# Spell Checking Flag
+# Controls whether spell checking with automatic corrections is enabled.
+# When enabled, runs codespell during build to fix spelling errors in source files.
+# WARNING: This modifies source files directly. Ensure changes are committed first.
+option(XSIGMA_ENABLE_SPELL "Enable spell checking with automatic corrections (WARNING: modifies source files)" OFF)
+mark_as_advanced(XSIGMA_ENABLE_SPELL)
+
 if(NOT XSIGMA_ENABLE_SPELL)
     return()
 endif()

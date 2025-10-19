@@ -1,3 +1,20 @@
+# =============================================================================
+# XSigma NUMA (Non-Uniform Memory Access) Configuration Module
+# =============================================================================
+# This module configures NUMA support for multi-socket systems.
+# It enables memory-aware thread scheduling and allocation on NUMA architectures.
+# =============================================================================
+
+# Include guard to prevent multiple inclusions
+include_guard(GLOBAL)
+
+# NUMA Support Flag
+# Controls whether NUMA (Non-Uniform Memory Access) support is enabled.
+# When enabled on Unix systems, provides memory-aware scheduling for multi-socket systems.
+# Automatically disabled on non-Unix platforms (Windows, macOS).
+option(XSIGMA_ENABLE_NUMA "Enable numa node" OFF)
+mark_as_advanced(XSIGMA_ENABLE_NUMA)
+
 if(NOT XSIGMA_ENABLE_NUMA)
     return()
 endif()

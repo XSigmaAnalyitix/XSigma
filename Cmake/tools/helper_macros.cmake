@@ -1,3 +1,13 @@
+# =============================================================================
+# XSigma Helper Macros Module
+# =============================================================================
+# This module provides utility macros for common CMake operations used throughout
+# the XSigma build system, including source file filtering and organization.
+# =============================================================================
+
+# Include guard to prevent multiple inclusions
+include_guard(GLOBAL)
+
 macro(xsigma_module_create_filters name)
   file(
     GLOB_RECURSE _source_list
