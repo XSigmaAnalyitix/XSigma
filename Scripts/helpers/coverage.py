@@ -31,7 +31,7 @@ def run_oss_coverage(source_path: str, build_path: str, cmake_cxx_compiler: str)
         Exit code (0 for success, non-zero for failure)
     """
     oss_coverage_script = os.path.join(
-        source_path, "tools", "code_coverage", "oss_coverage.py"
+        source_path, "Tools", "code_coverage", "oss_coverage.py"
     )
 
     if not os.path.exists(oss_coverage_script):
