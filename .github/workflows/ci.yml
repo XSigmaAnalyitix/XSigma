@@ -1839,7 +1839,8 @@ jobs:
     name: CI Success
     needs:
       - build-matrix
-      - compiler-version-tests
+      - compiler-version-tests-clang
+      - compiler-version-tests-gcc
       - tbb-specific-tests
       - sanitizer-tests
       - optimization-flags-test
@@ -1855,7 +1856,8 @@ jobs:
       run: |
         echo "=== Streamlined CI Pipeline Results ==="
         echo "Build Matrix: ${{ needs.build-matrix.result }}"
-        echo "Compiler Version Tests: ${{ needs.compiler-version-tests.result }}"
+        echo "Compiler Version Tests (Clang): ${{ needs.compiler-version-tests-clang.result }}"
+        echo "Compiler Version Tests (GCC): ${{ needs.compiler-version-tests-gcc.result }}"
         echo "TBB Specific Tests: ${{ needs.tbb-specific-tests.result }}"
         echo "Sanitizer Tests: ${{ needs.sanitizer-tests.result }}"
         echo "Optimization Flags: ${{ needs.optimization-flags-test.result }}"
@@ -1872,8 +1874,12 @@ jobs:
           echo "ERROR: Build matrix failed"
           exit 1
         fi
-        if [ "${{ needs.compiler-version-tests.result }}" != "success" ]; then
-          echo "ERROR: Compiler version tests failed"
+        if [ "${{ needs.compiler-version-tests-clang.result }}" != "success" ]; then
+          echo "ERROR: Compiler version tests (Clang) failed"
+          exit 1
+        fi
+        if [ "${{ needs.compiler-version-tests-gcc.result }}" != "success" ]; then
+          echo "ERROR: Compiler version tests (GCC) failed"
           exit 1
         fi
         if [ "${{ needs.tbb-specific-tests.result }}" != "success" ]; then
@@ -1912,8 +1918,9 @@ jobs:
 #
 # ## Job Structure Overview:
 # 1. build-matrix: Primary testing across platforms with C++17 baseline + selective C++20/C++23
-# 2. compiler-version-tests: Multi-compiler version testing (GCC 11-13, Clang 15-17, Xcode)
-# 3. tbb-specific-tests: TBB functionality testing (Unix/macOS only)
+# 2. compiler-version-tests-clang: Clang version testing (Clang 9, 18, 20, 21 with C++17/20/23)
+# 3. compiler-version-tests-gcc: GCC version testing (GCC 8-13 with C++17/20/23)
+# 4. tbb-specific-tests: TBB functionality testing (Unix/macOS only)
 # 4. sanitizer-tests: Memory/thread safety testing (Unix/macOS only)
 # 5. optimization-flags-test: Compiler optimization testing
 # 6. benchmark-tests: Performance regression testing (non-blocking)
@@ -1973,13 +1980,13 @@ jobs:
 # - Code quality and coverage jobs have been removed for faster execution
 #
 # ## Compiler Version Matrix Testing:
-# - compiler-version-tests: Tests multiple compiler versions for compatibility
-# - Ubuntu: GCC 11, 12, 13 and Clang 15, 16, 17 with C++17/20/23
-# - macOS: Xcode Clang with C++17/20
+# - compiler-version-tests-clang: Tests Clang versions (9, 18, 20, 21) with C++17/20/23
+# - compiler-version-tests-gcc: Tests GCC versions (8-13) with C++17/20/23
+# - Each job installs only one compiler version to avoid package conflicts
 # - Each compiler version tests with TBB enabled and LOGURU logging backend
-# - Non-critical job (warnings only) - allows CI to pass even if specific compiler versions fail
+# - Non-critical jobs (warnings only) - allows CI to pass even if specific compiler versions fail
 # - To add new compiler versions:
-#   1. Add new matrix entry to compiler-version-tests job
+#   1. Add new matrix entry to compiler-version-tests-clang or compiler-version-tests-gcc job
 #   2. Specify compiler_c, compiler_cxx, compiler_name, compiler_version
 #   3. Set appropriate cxx_std and build_type
 #   4. Ensure compiler is available in the target platform
