@@ -1,2 +1,4 @@
 /build/
 *__pycache__*
+/CPUinfo.log
+/Heavy Function Performance

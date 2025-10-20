@@ -48,13 +48,13 @@ include(CMakeDependentOption)
 set(XSIGMA_CXX_STANDARD
     "17"
     CACHE STRING
-    "C++ standard to use. Options are 17, 20, or 23"
+    "C++ standard to use. Options are 11, 14, 17, 20, or 23"
 )
 mark_as_advanced(XSIGMA_CXX_STANDARD)
 
 # Validate C++ standard
-if(NOT XSIGMA_CXX_STANDARD MATCHES "^(17|20|23)$")
-    message(FATAL_ERROR "XSIGMA_CXX_STANDARD must be 17, 20, or 23")
+if(NOT XSIGMA_CXX_STANDARD MATCHES "^(11|14|17|20|23)$")
+    message(FATAL_ERROR "XSIGMA_CXX_STANDARD must be 11,14, 17, 20, or 23")
 endif()
 
 set(CMAKE_CXX_STANDARD ${XSIGMA_CXX_STANDARD})
