@@ -238,6 +238,7 @@ Full cross-platform compatibility across Windows, Linux, and macOS with platform
 - **[Sanitizers](docs/sanitizers.md)** - Memory debugging and analysis tools
 - **[Code Coverage](docs/code-coverage.md)** - Coverage analysis and reporting
 - **[Static Analysis](docs/static-analysis.md)** - IWYU and Cppcheck tools
+- **[Compiler Caching](docs/cache.md)** - Compiler cache types, installation, and configuration
 - **[Spell Checking](#spell-checking)** - Codespell configuration and usage
 - **[Cross-Platform Building](docs/cross-platform-building.md)** - Platform-specific build instructions
 - **[Usage Examples](docs/usage-examples.md)** - Practical build configuration examples
@@ -405,17 +406,20 @@ python setup.py ninja.clang.external.test.config.build
 
 ## Build Speed Optimization
 
-XSigma includes automatic support for **ccache** (compiler cache) and **faster linkers** to significantly reduce build times, especially for incremental builds and large projects.
+XSigma includes configurable compiler caching and **faster linkers** to significantly reduce build times, especially for incremental builds and large projects.
 
 ### Overview
 
-The build system automatically detects and configures:
+The build system supports multiple compiler cache types:
+- **none** - No compiler caching (default)
 - **ccache** - Caches compilation results to avoid recompiling unchanged code
+- **sccache** - Distributed compiler cache with cloud storage support
+- **buildcache** - Incremental build cache for faster rebuilds
 - **Faster linkers** - Uses platform and compiler-specific optimized linkers
 
 **Expected improvements:**
 - **First build**: 5-15% faster with optimized linker
-- **Incremental builds**: 50-80% faster with ccache (for unchanged files)
+- **Incremental builds**: 50-80% faster with compiler cache (for unchanged files)
 - **Clean rebuilds**: 10-30% faster with optimized linker
 
 ### Installation
@@ -497,28 +501,53 @@ choco install llvm
 
 ### Configuration
 
-Build speed optimization is **enabled by default**. To disable it:
+Build speed optimization is **enabled by default**. You can select which cache type to use:
 
+**Using setup.py (recommended):**
 ```bash
 cd Scripts
-python setup.py ninja.clang.config.build.ccache
+
+# Use ccache (if available)
+python setup.py ninja.clang.ccache.config.build
+
+# Use sccache (if available)
+python setup.py ninja.clang.sccache.config.build
+
+# Use buildcache (if available)
+python setup.py ninja.clang.buildcache.config.build
+
+# Disable caching (use 'none')
+python setup.py ninja.clang.none.config.build
 ```
 
-Or when using CMake directly:
+**Using CMake directly:**
 ```bash
-cmake -DXSIGMA_ENABLE_CCACHE=OFF ..
+# Select cache type
+cmake -DXSIGMA_CACHE_TYPE=ccache ..
+cmake -DXSIGMA_CACHE_TYPE=sccache ..
+cmake -DXSIGMA_CACHE_TYPE=buildcache ..
+cmake -DXSIGMA_CACHE_TYPE=none ..
+
+# Disable caching entirely
+cmake -DXSIGMA_ENABLE_CACHE=OFF ..
 ```
 
 ### How It Works
 
-#### ccache
+#### Compiler Caching
 
-The build system automatically uses ccache as a compiler launcher if available:
+The build system automatically uses the selected compiler cache as a compiler launcher if available:
 - Caches compilation results based on source code and compiler flags
 - Subsequent compilations of the same code are retrieved from cache
 - Transparent to the build process - no configuration needed
 
-**Supported compilers:**
+**Supported cache types:**
+- **ccache** - Local compilation cache, best for single-machine builds
+- **sccache** - Distributed cache with cloud storage support (S3, Azure, GCS)
+- **buildcache** - Incremental build cache optimized for CI/CD pipelines
+- **none** - No caching
+
+**Supported compilers (all cache types):**
 - GCC
 - Clang
 - MSVC
@@ -561,30 +590,44 @@ ccache -M 10G
 
 ### Performance Tips
 
-1. **Increase ccache size** for large projects:
+1. **Choose the right cache type for your use case:**
+   - **ccache** - Best for local development and single-machine builds
+   - **sccache** - Best for distributed CI/CD with cloud storage
+   - **buildcache** - Best for incremental CI/CD pipelines
+
+2. **Increase cache size** for large projects:
    ```bash
-   ccache -M 20G  # Set to 20GB
+   ccache -M 20G  # Set ccache to 20GB
    ```
 
-2. **Use consistent compiler flags** to maximize cache hits
+3. **Use consistent compiler flags** to maximize cache hits
 
-3. **Enable on CI/CD** for faster pipelines:
+4. **Enable on CI/CD** for faster pipelines:
    ```bash
-   # In CI configuration, install ccache and faster linkers
-   # The build system will automatically detect and use them
+   # In CI configuration, install your chosen cache tool
+   # The build system will automatically detect and use it
    ```
 
-4. **Monitor cache effectiveness**:
+5. **Monitor cache effectiveness**:
    ```bash
-   ccache -s  # Shows hit/miss statistics
+   ccache -s      # Shows ccache hit/miss statistics
+   sccache --show-stats  # Shows sccache statistics
    ```
+
+📖 **[Read more: Compiler Caching Guide](docs/cache.md)** - Comprehensive guide with installation instructions, performance comparisons, and advanced configuration
 
 ### Troubleshooting
 
-**ccache not being used:**
-- Verify installation: `which ccache` (Linux/macOS) or `where ccache` (Windows)
-- Check CMake output for "Found ccache" message
-- Ensure `XSIGMA_ENABLE_CCACHE` is ON
+**Compiler cache not being used:**
+- Verify installation: `which ccache` / `which sccache` / `which buildcache` (Linux/macOS) or `where` (Windows)
+- Check CMake output for "Found [cache_type]" message
+- Ensure `XSIGMA_ENABLE_CACHE` is ON
+- Verify `XSIGMA_CACHE_TYPE` is set to the correct cache type
+
+**Wrong cache type selected:**
+- Check current setting: `cmake -L | grep XSIGMA_CACHE_TYPE`
+- Reconfigure with correct type: `python setup.py ninja.clang.[cache_type].config`
+- Or use CMake directly: `cmake -DXSIGMA_CACHE_TYPE=[cache_type] ..`
 
 **Linker not being used:**
 - Verify installation: `which mold` / `which lld` / `which ld.gold`
@@ -592,8 +635,9 @@ ccache -M 10G
 - Some systems may not have faster linkers available - fallback to default is automatic
 
 **Cache misses or stale cache:**
-- Clear cache: `ccache -C`
-- Check cache size: `ccache -s`
+- For ccache: `ccache -C` (clear) or `ccache -s` (stats)
+- For sccache: `sccache --stop-server` then `sccache --start-server`
+- For buildcache: Check `~/.buildcache` directory
 - Verify compiler path consistency
 
 ---
