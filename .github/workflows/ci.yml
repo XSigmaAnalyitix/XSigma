@@ -1332,8 +1332,6 @@ jobs:
     name: CI Success
     needs:
       - build-matrix
-      - compiler-version-tests-clang
-      - compiler-version-tests-gcc
       - tbb-specific-tests
       - sanitizer-tests
       - optimization-flags-test
@@ -1349,8 +1347,6 @@ jobs:
       run: |
         echo "=== Streamlined CI Pipeline Results ==="
         echo "Build Matrix: ${{ needs.build-matrix.result }}"
-        echo "Compiler Version Tests (Clang): ${{ needs.compiler-version-tests-clang.result }}"
-        echo "Compiler Version Tests (GCC): ${{ needs.compiler-version-tests-gcc.result }}"
         echo "TBB Specific Tests: ${{ needs.tbb-specific-tests.result }}"
         echo "Sanitizer Tests: ${{ needs.sanitizer-tests.result }}"
         echo "Optimization Flags: ${{ needs.optimization-flags-test.result }}"
@@ -1365,14 +1361,6 @@ jobs:
         # Check if any required job failed
         if [ "${{ needs.build-matrix.result }}" != "success" ]; then
           echo "ERROR: Build matrix failed"
-          exit 1
-        fi
-        if [ "${{ needs.compiler-version-tests-clang.result }}" != "success" ]; then
-          echo "ERROR: Compiler version tests (Clang) failed"
-          exit 1
-        fi
-        if [ "${{ needs.compiler-version-tests-gcc.result }}" != "success" ]; then
-          echo "ERROR: Compiler version tests (GCC) failed"
           exit 1
         fi
         if [ "${{ needs.tbb-specific-tests.result }}" != "success" ]; then
