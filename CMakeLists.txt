@@ -218,6 +218,7 @@ include(CheckCXXSourceRuns)
 include(CheckSymbolExists)
 
 # Include XSigma-specific CMake modules
+include(compiler_checks)
 include(cache)
 include(build_type)
 include(checks)
