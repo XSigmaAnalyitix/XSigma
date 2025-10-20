@@ -481,7 +481,7 @@ class XsigmaFlags:
             "cppcheck",
             "spell",
             "fix",
-            "ccache",
+            "cache_type",
         ]
         self.__description = [
             # Valid CMake options
@@ -511,7 +511,7 @@ class XsigmaFlags:
             "enable cppcheck static analysis",
             "enable spell checking with automatic corrections",
             "enable clang-tidy fix-errors and fix options",
-            "enable ccache and faster linker for faster builds",
+            "compiler cache type: none, ccache, sccache, or buildcache",
         ]
 
     def __build_cmake_flag(self):
@@ -545,7 +545,7 @@ class XsigmaFlags:
             "cppcheck": "XSIGMA_ENABLE_CPPCHECK",
             "spell": "XSIGMA_ENABLE_SPELL",
             "fix": "XSIGMA_ENABLE_FIX",
-            "ccache": "XSIGMA_ENABLE_CCACHE",
+            "cache_type": "XSIGMA_CACHE_TYPE",
 
             # Non-CMake flags (for internal use, not passed to CMake)
             "mkl_threading": "MKL_THREADING",
@@ -597,6 +597,7 @@ class XsigmaFlags:
                 "javatargetversion": 1.8,  # Special case: numeric value
                 "cxxstd": "",  # Special case: let CMake decide
                 "logging_backend": "LOGURU",  # Default logging backend
+                "cache_type": "none",  # Default cache type is none
 
                 # CMake options with default ON - keep ON in setup.py
                 "lto": self.ON,  # XSIGMA_ENABLE_LTO default is ON
@@ -628,6 +629,7 @@ class XsigmaFlags:
         vectorisation_list = ["sse", "avx", "avx2", "avx512"]
         cxx_std_list = ["cxx17", "cxx20", "cxx23"]
         logging_backend_list = ["native", "loguru", "glog"]
+        cache_type_list = ["none", "ccache", "sccache", "buildcache"]
 
         # Set default values for special flags
         self.__value["mkl_link"] = "static"
@@ -657,6 +659,11 @@ class XsigmaFlags:
                 self.__value["logging_backend"] = arg.upper()
                 self.builder_suffix += f"_logging_{arg}"
                 print_status(f"Setting logging backend to {arg.upper()}", "INFO")
+            elif arg in cache_type_list:
+                # Set cache type (none, ccache, sccache, or buildcache)
+                self.__value["cache_type"] = arg
+                self.builder_suffix += f"_{arg}"
+                print_status(f"Setting cache type to {arg}", "INFO")
             elif any(arg.lower() == item.lower() for item in cxx_std_list):
                 # Extract the numeric part (e.g., "cxx17" -> "17")
                 std_version = arg[3:]  # Remove "cxx" prefix

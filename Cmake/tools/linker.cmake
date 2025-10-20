@@ -155,12 +155,6 @@ xsigma_find_linker()
 # Summary
 # ============================================================================
 
-message("Build speed optimization configuration complete")
-if(CCACHE_PROGRAM)
-  message("  - ccache: ENABLED (global compiler launcher)")
-else()
-  message("  - ccache: NOT FOUND")
-endif()
 message("  - Faster linker: Automatically detected and applied to xsigmabuild target")
 message("  - Third-party dependencies: Not affected by linker configuration")
 
