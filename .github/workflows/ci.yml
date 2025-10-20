@@ -530,6 +530,7 @@ jobs:
     - name: Configure with TBB enabled
       run: |
         cmake -B build \
+          -C .github/cmake/configure_cache.cmake \
           -S . \
           -G Ninja \
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
@@ -686,6 +687,7 @@ jobs:
       run: |
         # Use NATIVE logging backend for sanitizer builds to avoid threading/memory issues
         cmake -B build -S . -G Ninja \
+          -C .github/cmake/configure_cache.cmake \
           -DCMAKE_BUILD_TYPE=Debug \
           -DCMAKE_C_COMPILER=clang \
           -DCMAKE_CXX_COMPILER=clang++ \
@@ -792,6 +794,7 @@ jobs:
     - name: Configure with ${{ matrix.opt_level }}
       run: |
         cmake -B build \
+          -C .github/cmake/configure_cache.cmake \
           -S . \
           -G Ninja \
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
@@ -856,6 +859,7 @@ jobs:
     - name: Configure with LTO=${{ matrix.lto_enabled }}
       run: |
         cmake -B build \
+          -C .github/cmake/configure_cache.cmake \
           -S . \
           -G Ninja \
           -DCMAKE_BUILD_TYPE=Release \
@@ -915,6 +919,7 @@ jobs:
     - name: Configure for benchmarks
       run: |
         cmake -B build \
+          -C .github/cmake/configure_cache.cmake \
           -S . \
           -G Ninja \
           -DCMAKE_BUILD_TYPE=Release \
@@ -1038,6 +1043,7 @@ jobs:
       if: runner.os != 'Windows'
       run: |
         cmake -B build \
+          -C .github/cmake/configure_cache.cmake \
           -S . \
           -G Ninja \
           -DCMAKE_BUILD_TYPE=Release \
@@ -1056,6 +1062,7 @@ jobs:
       shell: pwsh
       run: |
         cmake -B build `
+          -C .github/cmake/configure_cache.cmake `
           -S . `
           -G "${{ matrix.generator }}" `
           -DCMAKE_BUILD_TYPE=Release `
@@ -1252,6 +1259,7 @@ jobs:
       if: runner.os != 'Windows'
       run: |
         cmake -B build \
+          -C .github/cmake/configure_cache.cmake \
           -S . \
           -G Ninja \
           -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
@@ -1269,6 +1277,7 @@ jobs:
       shell: pwsh
       run: |
         cmake -B build `
+          -C .github/cmake/configure_cache.cmake `
           -S . `
           -G "${{ matrix.generator }}" `
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `

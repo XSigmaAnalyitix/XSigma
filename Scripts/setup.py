@@ -756,7 +756,6 @@ class XsigmaFlags:
         # Add C++ standard related flags if specified
         if self.__value.get("cxxstd"):
             cmake_cmd_flags.extend([
-                f"-DCMAKE_CXX_STANDARD={self.__value['cxxstd']}",
                 "-DCMAKE_CXX_STANDARD_REQUIRED=ON",
                 "-DCMAKE_CXX_EXTENSIONS=OFF"
             ])

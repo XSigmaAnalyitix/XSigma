@@ -29,10 +29,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND
 endif ()
 
 # Make sure we have C++17 enabled.
-if(NOT VTK_IGNORE_CMAKE_CXX17_CHECKS)
-  # Needed to make sure libraries and executables not built by the
-  # vtkModuleMacros still have the C++17 compiler flags enabled
-  # Wrap this in an escape hatch for unknown compilers
+if(NOT XSIGMA_IGNORE_CMAKE_CXX17_CHECKS)
   set(CMAKE_CXX_STANDARD 17)
   set(CMAKE_CXX_STANDARD_REQUIRED True)
   set(CMAKE_CXX_EXTENSIONS False)
