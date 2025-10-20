@@ -80,16 +80,20 @@ sudo apt-get install -y \
     }
 
 # Clang compiler
-log_info "Installing Clang compiler..."
-sudo apt-get install -y \
-    clang \
-    clang++ \
-    llvm \
-    llvm-dev \
-    || {
-        log_error "Failed to install Clang"
-        exit 1
-    }
+if command -v clang >/dev/null 2>&1 && command -v clang++ >/dev/null 2>&1; then
+    log_info "Detected existing Clang toolchain ($(clang --version | head -n 1)); skipping package install."
+else
+    log_info "Installing Clang compiler..."
+    sudo apt-get install -y \
+        clang \
+        clang++ \
+        llvm \
+        llvm-dev \
+        || {
+            log_error "Failed to install Clang"
+            exit 1
+        }
+fi
 
 # GCC compiler (for compiler version testing)
 log_info "Installing GCC compiler..."
