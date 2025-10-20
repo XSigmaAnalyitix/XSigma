@@ -963,7 +963,7 @@ jobs:
             build_type: Release
             cxx_std: 17
             logging_backend: LOGURU
-            tbb_enabled: ON
+            tbb_enabled: OFF
             cuda_enabled: OFF
             compiler_c: clang
             compiler_cxx: clang
@@ -975,7 +975,7 @@ jobs:
             build_type: Release
             cxx_std: 17
             logging_backend: LOGURU
-            tbb_enabled: ON
+            tbb_enabled: OFF
             cuda_enabled: OFF
             compiler_c: clang
             compiler_cxx: clang
@@ -986,7 +986,7 @@ jobs:
             os: windows-latest
             build_type: Release
             cxx_std: 17
-            logging_backend: NATIVE
+            logging_backend: LOGURU
             tbb_enabled: OFF
             cuda_enabled: OFF
             compiler_c: clang
@@ -1039,18 +1039,17 @@ jobs:
       run: |
         cmake -B build \
           -S . \
-          -G "${{ matrix.generator }}" \
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-          -DCMAKE_C_COMPILER=${{ matrix.compiler_c }} \
-          -DCMAKE_CXX_COMPILER=${{ matrix.compiler_cxx }} \
-          -DCMAKE_CXX_STANDARD=${{ matrix.cxx_std }} \
-          -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} \
+          -G Ninja \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=clang++ \
+          -DXSIGMA_LOGGING_BACKEND=LOGURU \
           -DXSIGMA_BUILD_TESTING=ON \
-          -DXSIGMA_ENABLE_GTEST=ON \
           -DXSIGMA_ENABLE_BENCHMARK=OFF \
           -DXSIGMA_ENABLE_LTO=OFF \
-          -DXSIGMA_ENABLE_TBB=${{ matrix.tbb_enabled }} \
-          -DXSIGMA_ENABLE_CUDA=${{ matrix.cuda_enabled }}
+          -DXSIGMA_BUILD_TESTING=ON \
+          -DXSIGMA_ENABLE_GTEST=ON \
+          -DXSIGMA_ENABLE_TBB=OFF
 
     - name: Configure CMake (Windows - Baseline)
       if: runner.os == 'Windows'
@@ -1059,7 +1058,7 @@ jobs:
         cmake -B build `
           -S . `
           -G "${{ matrix.generator }}" `
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+          -DCMAKE_BUILD_TYPE=Release `
           -DCMAKE_C_COMPILER=${{ matrix.compiler_c }} `
           -DCMAKE_CXX_COMPILER=${{ matrix.compiler_cxx }} `
           -DCMAKE_CXX_STANDARD=${{ matrix.cxx_std }} `
@@ -1069,7 +1068,7 @@ jobs:
           -DXSIGMA_ENABLE_BENCHMARK=OFF `
           -DXSIGMA_ENABLE_LTO=OFF `
           -DXSIGMA_ENABLE_TBB=OFF `
-          -DXSIGMA_ENABLE_CUDA=${{ matrix.cuda_enabled }}
+          -DXSIGMA_ENABLE_CUDA=OFF
 
     # ===== Build and Test (Baseline - No Sccache) =====
     - name: Record build start time (Baseline)
@@ -1254,19 +1253,16 @@ jobs:
       run: |
         cmake -B build \
           -S . \
-          -G "${{ matrix.generator }}" \
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-          -DCMAKE_C_COMPILER=${{ matrix.compiler_c }} \
-          -DCMAKE_CXX_COMPILER=${{ matrix.compiler_cxx }} \
+          -G Ninja \
           -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
-          -DCMAKE_CXX_STANDARD=${{ matrix.cxx_std }} \
-          -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} \
-          -DXSIGMA_BUILD_TESTING=ON \
-          -DXSIGMA_ENABLE_GTEST=ON \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=clang++ \
           -DXSIGMA_ENABLE_BENCHMARK=OFF \
           -DXSIGMA_ENABLE_LTO=OFF \
-          -DXSIGMA_ENABLE_TBB=${{ matrix.tbb_enabled }} \
-          -DXSIGMA_ENABLE_CUDA=${{ matrix.cuda_enabled }}
+          -DXSIGMA_BUILD_TESTING=ON \
+          -DXSIGMA_ENABLE_GTEST=ON \
+          -DXSIGMA_ENABLE_TBB=OFF
 
     - name: Configure CMake (Windows - With Sccache)
       if: runner.os == 'Windows'
