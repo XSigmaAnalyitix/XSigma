@@ -74,6 +74,7 @@ sudo apt-get install -y \
     python3 \
     python3-pip \
     python3-dev \
+    sccache \
     || {
         log_error "Failed to install core build tools"
         exit 1

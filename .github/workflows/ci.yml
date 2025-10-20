@@ -490,7 +490,8 @@ jobs:
           libtbb-dev \
           valgrind \
           cppcheck \
-          libnuma-dev
+          libnuma-dev \
+          sccache
 
     - name: Install Intel TBB (Ubuntu)
       if: runner.os == 'Linux'
@@ -504,7 +505,7 @@ jobs:
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
       run: |
-        brew install ninja llvm cmake python3 tbb cppcheck
+        brew install ninja llvm cmake python3 tbb cppcheck sccache
 
     - name: Setup macOS linker environment (TBB tests)
       if: runner.os == 'macOS'
@@ -653,13 +654,14 @@ jobs:
           libtbb-dev \
           valgrind \
           cppcheck \
-          libnuma-dev
+          libnuma-dev \
+          sccache
 
     # ===== macOS Sanitizer Dependencies =====
     - name: Install dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
-        brew install ninja cmake llvm tbb cppcheck
+        brew install ninja cmake llvm tbb cppcheck sccache
         echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
 
     - name: Setup macOS linker environment (Sanitizer tests)
@@ -789,7 +791,8 @@ jobs:
           libtbb-dev \
           valgrind \
           cppcheck \
-          libnuma-dev
+          libnuma-dev \
+          sccache
 
     - name: Configure with ${{ matrix.opt_level }}
       run: |
@@ -854,7 +857,8 @@ jobs:
           python3 \
           libtbb-dev \
           cppcheck \
-          libnuma-dev
+          libnuma-dev \
+          sccache
 
     - name: Configure with LTO=${{ matrix.lto_enabled }}
       run: |
@@ -914,7 +918,8 @@ jobs:
           libtbb-dev \
           valgrind \
           cppcheck \
-          libnuma-dev
+          libnuma-dev \
+          sccache
 
     - name: Configure for benchmarks
       run: |

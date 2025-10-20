@@ -76,6 +76,7 @@ brew install \
     wget \
     pkg-config \
     python@3 \
+    sccache \
     || {
         log_error "Failed to install core build tools"
         exit 1
@@ -136,4 +137,3 @@ python3 -m pip install colorama psutil || {
 
 log_success "macOS dependency installation completed successfully!"
 log_info "You can now build XSigma using: python Scripts/setup.py ninja clang config build test"
-
