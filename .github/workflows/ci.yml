@@ -480,6 +480,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
+          build-essential \
           ninja-build \
           clang \
           llvm \
@@ -1017,6 +1018,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
+          build-essential \
           ninja-build \
           clang \
           llvm \
@@ -1030,7 +1032,7 @@ jobs:
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
       run: |
-        brew install ninja clang-format cmake libtbb
+        brew install ninja clang-format cmake tbb
 
     # ===== Windows Dependencies =====
     - name: Install dependencies (Windows)
@@ -1193,6 +1195,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
+          build-essential \
           ninja-build \
           clang \
           llvm \
@@ -1206,7 +1209,7 @@ jobs:
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
       run: |
-        brew install ninja clang-format cmake libtbb
+        brew install ninja clang-format cmake tbb
 
     # ===== Windows Dependencies =====
     - name: Install dependencies (Windows)
@@ -1250,7 +1253,15 @@ jobs:
         Invoke-WebRequest -Uri $url -OutFile $zipPath
         Expand-Archive -Path $zipPath -DestinationPath $sccachePath -Force
         Remove-Item $zipPath
-        Add-Content -Path $env:GITHUB_PATH -Value $sccachePath
+        $exe = Get-ChildItem -Path $sccachePath -Filter sccache.exe -Recurse | Select-Object -First 1
+        if (-not $exe) {
+          throw "sccache.exe not found after extraction"
+        }
+        Copy-Item $exe.FullName -Destination (Join-Path $sccachePath "sccache.exe") -Force
+        if ($exe.DirectoryName -ne $sccachePath) {
+          Remove-Item $exe.DirectoryName -Recurse -Force
+        }
+        Add-Content -Path $env:GITHUB_PATH -Value "$sccachePath"
         & "$sccachePath\sccache.exe" --version
 
     # ===== CMake Configuration (With Sccache) =====
