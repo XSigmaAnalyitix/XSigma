@@ -20,6 +20,7 @@ env:
   BUILD_TYPE: Release
   CACHE_VERSION: v2  # Incremented due to workflow restructuring
   SCCACHE_VERSION: "0.7.7"  # Version of sccache to use
+  BUILDCACHE_VERSION: "0.33.0"  # Version of buildcache to use on Windows
 
 jobs:
   # ============================================================================
@@ -1036,13 +1037,6 @@ jobs:
         chmod +x .github/workflows/install/install-deps-macos.sh
         ./.github/workflows/install/install-deps-macos.sh --with-tbb
 
-    # ===== Windows Dependencies =====
-    - name: Install dependencies (Windows)
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        choco install -y ninja cmake llvm
-
     # ===== CMake Configuration (Baseline - No Sccache) =====
     - name: Configure CMake (Ubuntu/macOS - Baseline)
       if: runner.os != 'Windows'
@@ -1151,18 +1145,6 @@ jobs:
             generator: Ninja
             cache_path: ~/Library/Caches
 
-          - name: "Windows C++17 Release - Sccache Enabled"
-            os: windows-latest
-            build_type: Release
-            cxx_std: 17
-            logging_backend: NATIVE
-            tbb_enabled: OFF
-            cuda_enabled: OFF
-            compiler_c: clang
-            compiler_cxx: clang
-            generator: Ninja
-            cache_path: ~/AppData/Local/Temp/chocolatey
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -1187,7 +1169,6 @@ jobs:
         path: |
           ~/.cache/sccache
           ~/Library/Caches/sccache
-          ~/AppData/Local/sccache
         key: ${{ runner.os }}-sccache-${{ env.CACHE_VERSION }}-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-sccache-${{ env.CACHE_VERSION }}-
@@ -1211,7 +1192,7 @@ jobs:
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
-        choco install -y ninja cmake llvm
+        & .\.github\workflows\install\install-deps-windows.ps1
 
     # ===== Install Sccache =====
     - name: Install sccache (Ubuntu)
@@ -1235,29 +1216,6 @@ jobs:
         chmod +x ~/.local/bin/sccache
         echo "$HOME/.local/bin" >> $GITHUB_PATH
         sccache --version
-
-    - name: Install sccache (Windows)
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        Write-Host "=== Installing sccache on Windows ==="
-        $sccachePath = "$env:USERPROFILE\.local\bin"
-        New-Item -ItemType Directory -Force -Path $sccachePath | Out-Null
-        $url = "https://github.com/mozilla/sccache/releases/download/v${{ env.SCCACHE_VERSION }}/sccache-v${{ env.SCCACHE_VERSION }}-x86_64-pc-windows-msvc.zip"
-        $zipPath = "$env:TEMP\sccache.zip"
-        Invoke-WebRequest -Uri $url -OutFile $zipPath
-        Expand-Archive -Path $zipPath -DestinationPath $sccachePath -Force
-        Remove-Item $zipPath
-        $exe = Get-ChildItem -Path $sccachePath -Filter sccache.exe -Recurse | Select-Object -First 1
-        if (-not $exe) {
-          throw "sccache.exe not found after extraction"
-        }
-        Copy-Item $exe.FullName -Destination (Join-Path $sccachePath "sccache.exe") -Force
-        if ($exe.DirectoryName -ne $sccachePath) {
-          Remove-Item $exe.DirectoryName -Recurse -Force
-        }
-        Add-Content -Path $env:GITHUB_PATH -Value "$sccachePath"
-        & "$sccachePath\sccache.exe" --version
 
     # ===== CMake Configuration (With Sccache) =====
     - name: Configure CMake (Ubuntu/macOS - With Sccache)

@@ -67,6 +67,41 @@ try {
     Write-Warning "Failed to install LLVM/Clang: $_"
 }
 
+# buildcache compiler cache
+Write-Info "Installing buildcache compiler cache..."
+$buildcacheVersion = $env:BUILDCACHE_VERSION
+if ([string]::IsNullOrWhiteSpace($buildcacheVersion)) {
+    $buildcacheVersion = "0.33.0"
+}
+try {
+    $buildcacheRoot = Join-Path $env:USERPROFILE ".local\bin"
+    New-Item -ItemType Directory -Force -Path $buildcacheRoot | Out-Null
+    $zipPath = Join-Path $env:TEMP "buildcache.zip"
+    $buildcacheUrl = "https://github.com/mbitsnbites/buildcache/releases/download/v$buildcacheVersion/buildcache-windows.zip"
+    Write-Info "Downloading buildcache from $buildcacheUrl"
+    Invoke-WebRequest -Uri $buildcacheUrl -OutFile $zipPath -UseBasicParsing
+    Expand-Archive -Path $zipPath -DestinationPath $buildcacheRoot -Force
+    Remove-Item $zipPath -Force
+    $exe = Get-ChildItem -Path $buildcacheRoot -Filter buildcache.exe -Recurse | Select-Object -First 1
+    if (-not $exe) {
+        throw "buildcache.exe not found after extraction"
+    }
+    $targetExe = Join-Path $buildcacheRoot "buildcache.exe"
+    Copy-Item $exe.FullName -Destination $targetExe -Force
+    if ($exe.DirectoryName -ne $buildcacheRoot) {
+        Remove-Item $exe.DirectoryName -Recurse -Force
+    }
+    if ($env:GITHUB_PATH) {
+        Add-Content -Path $env:GITHUB_PATH -Value $buildcacheRoot
+    } else {
+        $env:Path = "$buildcacheRoot;$env:Path"
+    }
+    $buildcacheVersionOutput = & $targetExe --version
+    Write-Success "buildcache installed: $buildcacheVersionOutput"
+} catch {
+    Write-Warning "Failed to install buildcache: $_"
+}
+
 # Visual Studio Build Tools (for MSVC)
 Write-Info "Checking for Visual Studio Build Tools..."
 if (-not (Test-Path "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools")) {
@@ -117,7 +152,7 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";"
 # Verify installations
 Write-Info "Verifying installations..."
 
-$tools = @("cmake", "ninja", "git", "python", "clang")
+$tools = @("cmake", "ninja", "git", "python", "clang", "buildcache")
 foreach ($tool in $tools) {
     if (Get-Command $tool -ErrorAction SilentlyContinue) {
         Write-Success "$tool is available"
@@ -128,4 +163,3 @@ foreach ($tool in $tools) {
 
 Write-Success "Windows dependency installation completed!"
 Write-Info "You can now build XSigma using: python Scripts/setup.py ninja clang config build test"
-
