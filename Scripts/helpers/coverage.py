@@ -10,6 +10,37 @@ import subprocess
 import sys
 from typing import Optional
 
+def _detect_compiler_from_cmake_cache(build_path: str) -> Optional[str]:
+    """
+    Detect the compiler used in the build by reading CMakeCache.txt.
+
+    Args:
+        build_path: Path to the build directory
+
+    Returns:
+        Compiler type: "clang", "gcc", or None if not detected
+    """
+    cmake_cache_path = os.path.join(build_path, "CMakeCache.txt")
+    if not os.path.exists(cmake_cache_path):
+        return None
+
+    try:
+        with open(cmake_cache_path, 'r') as f:
+            for line in f:
+                if line.startswith("CMAKE_CXX_COMPILER:"):
+                    # Extract the compiler path/name
+                    compiler_path = line.split("=", 1)[1].strip()
+                    compiler_name = os.path.basename(compiler_path).lower()
+
+                    if "clang" in compiler_name:
+                        return "clang"
+                    elif "gcc" in compiler_name or "g++" in compiler_name:
+                        return "gcc"
+    except Exception:
+        pass
+
+    return None
+
 
 def run_oss_coverage(source_path: str, build_path: str, cmake_cxx_compiler: str) -> int:
     """
@@ -25,7 +56,7 @@ def run_oss_coverage(source_path: str, build_path: str, cmake_cxx_compiler: str)
     Args:
         source_path: Path to the source directory
         build_path: Path to the build directory
-        cmake_cxx_compiler: C++ compiler being used
+        cmake_cxx_compiler: C++ compiler being used (can be empty string)
 
     Returns:
         Exit code (0 for success, non-zero for failure)
@@ -51,8 +82,21 @@ def run_oss_coverage(source_path: str, build_path: str, cmake_cxx_compiler: str)
         "--summary",
     ]
 
+    # Determine the actual compiler used in the build
+    # First, check if cmake_cxx_compiler was explicitly specified
+    detected_compiler = None
+    if cmake_cxx_compiler and cmake_cxx_compiler.strip():
+        if "clang" in cmake_cxx_compiler.lower():
+            detected_compiler = "clang"
+        elif "gcc" in cmake_cxx_compiler.lower():
+            detected_compiler = "gcc"
+
+    # If not detected from cmake_cxx_compiler, try to read from CMakeCache.txt
+    if not detected_compiler:
+        detected_compiler = _detect_compiler_from_cmake_cache(build_path)
+
     # Add merge step for Clang (required for LLVM coverage)
-    if "clang" in cmake_cxx_compiler.lower():
+    if detected_compiler == "clang":
         oss_cov_cmd.insert(5, "--merge")
 
     try:
@@ -68,16 +112,16 @@ def run_oss_coverage(source_path: str, build_path: str, cmake_cxx_compiler: str)
 
         # Set CXX environment variable to help compiler detection
         # This is critical for oss_coverage.py to detect the compiler type
-        if "clang" in cmake_cxx_compiler.lower():
+        if detected_compiler == "clang":
             env["CXX"] = "clang++"
             env["CC"] = "clang"
-        elif "gcc" in cmake_cxx_compiler.lower():
+        elif detected_compiler == "gcc":
             env["CXX"] = "g++"
             env["CC"] = "gcc"
         else:
-            # Default to clang for unknown compilers
-            env["CXX"] = "clang++"
-            env["CC"] = "clang"
+            # Default to gcc for unknown compilers (safer default)
+            env["CXX"] = "g++"
+            env["CC"] = "gcc"
 
         # Set XSIGMA_FOLDER to help oss_coverage.py find the correct paths
         env["XSIGMA_FOLDER"] = source_path

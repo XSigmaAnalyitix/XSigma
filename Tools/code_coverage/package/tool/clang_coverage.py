@@ -91,16 +91,20 @@ def merge_target(raw_file: str, merged_file: str, platform_type: TestPlatform) -
     llvm_tool_path = get_tool_path_by_platform(platform_type)
     # Use os.path.join to handle path separators correctly on all platforms
     llvm_profdata = os.path.join(llvm_tool_path, "llvm-profdata")
-    subprocess.check_call(
-        [
-            llvm_profdata,
-            "merge",
-            "-sparse",
-            raw_file,
-            "-o",
-            merged_file,
-        ]
-    )
+    # Suppress stderr to avoid "functions have mismatched data" warnings from llvm-profdata
+    # These warnings are harmless and occur due to LTO and compiler optimizations
+    with open(os.devnull, "w") as devnull:
+        subprocess.check_call(
+            [
+                llvm_profdata,
+                "merge",
+                "-sparse",
+                raw_file,
+                "-o",
+                merged_file,
+            ],
+            stderr=devnull,
+        )
 
 
 def export_target(
@@ -139,8 +143,11 @@ def export_target(
     # and prevents them from appearing in coverage reports even with 0% coverage
 
     # Run command and redirect output to json file
+    # Suppress stderr to avoid "functions have mismatched data" warnings from llvm-cov
+    # These warnings are harmless and occur due to LTO and compiler optimizations
     with open(json_file, "w") as f:
-        subprocess.check_call(cmd_args, stdout=f)
+        with open(os.devnull, "w") as devnull:
+            subprocess.check_call(cmd_args, stdout=f, stderr=devnull)
 
 
 def merge(test_list: TestList, platform_type: TestPlatform) -> None:

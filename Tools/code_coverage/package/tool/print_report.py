@@ -6,6 +6,7 @@ from typing import IO, Optional
 
 from ..util.setting import SUMMARY_FOLDER_DIR, TestList, TestStatusType
 from .html_report_generator import HtmlReportGenerator
+from ..oss.utils import get_xsigma_folder
 
 
 CoverageItem = tuple[str, float, int, int]
@@ -202,43 +203,114 @@ def file_oriented_report(
 
 
 def get_html_ignored_pattern() -> list[str]:
-    return ["/usr/*", "*anaconda3/*", "*third_party/*"]
+    # Patterns to exclude from coverage reports
+    # Note: Only include patterns that actually match files in the coverage data
+    # Using patterns that don't match any files causes lcov to fail with exit code 25
+    return ["/usr/*", "*/third_party/*"]
 
 
 def html_oriented_report() -> None:
     # use lcov to generate the coverage report
-    build_folder = os.path.join(get_xsigma_folder(), "build")
+    # Get the build folder from PROFILE_DIR (which is set to the actual build folder)
+    # PROFILE_DIR is typically something like /path/to/build_ninja_coverage_lto/coverage_report
+    # So we need to go up two levels to get the build folder
+    from ..util.setting import PROFILE_DIR
+
+    # Extract the build folder path from PROFILE_DIR
+    # PROFILE_DIR = /path/to/build_ninja_coverage_lto/coverage_report
+    # We need /path/to/build_ninja_coverage_lto
+    build_folder = os.path.dirname(PROFILE_DIR)
+
     coverage_info_file = os.path.join(SUMMARY_FOLDER_DIR, "coverage.info")
-    # generate coverage report -- coverage.info in build folder
-    subprocess.check_call(
-        [
-            "lcov",
-            "--capture",
-            "--directory",
-            build_folder,
-            "--output-file",
-            coverage_info_file,
-        ]
-    )
-    # remove files that are unrelated
-    cmd_array = (
-        ["lcov", "--remove", coverage_info_file]
-        + get_html_ignored_pattern()
-        + ["--output-file", coverage_info_file]
-    )
-    subprocess.check_call(
-        # ["lcov", "--remove", coverage_info_file, "--output-file", coverage_info_file]
-        cmd_array
-    )
-    # generate beautiful html page
-    subprocess.check_call(
-        [
-            "genhtml",
-            coverage_info_file,
-            "--output-directory",
-            os.path.join(SUMMARY_FOLDER_DIR, "html_report"),
-        ]
-    )
+
+    try:
+        # generate coverage report -- coverage.info in build folder
+        # Use --ignore-errors to bypass known gcov issues with line number mismatches and other errors
+        # Common errors to ignore:
+        # - mismatch: mismatched line numbers in debug info
+        # - gcov: gcov-related warnings
+        # - range: out-of-range line numbers
+        # - negative: negative coverage counts (can occur with certain compiler optimizations)
+        subprocess.check_call(
+            [
+                "lcov",
+                "--capture",
+                "--directory",
+                build_folder,
+                "--output-file",
+                coverage_info_file,
+                "--ignore-errors",
+                "mismatch,gcov,range,negative",
+            ]
+        )
+        # remove files that are unrelated
+        cmd_array = (
+            ["lcov", "--remove", coverage_info_file]
+            + get_html_ignored_pattern()
+            + ["--output-file", coverage_info_file, "--ignore-errors", "unused"]
+        )
+        try:
+            subprocess.check_call(cmd_array)
+        except subprocess.CalledProcessError as e:
+            # If lcov remove fails, continue anyway - the coverage.info file may still be usable
+            print(f"Warning: lcov --remove command failed (exit code {e.returncode}), but continuing with coverage report generation")
+
+        # generate beautiful html page
+        html_output_dir = os.path.join(SUMMARY_FOLDER_DIR, "html_report")
+        try:
+            subprocess.check_call(
+                [
+                    "genhtml",
+                    coverage_info_file,
+                    "--output-directory",
+                    html_output_dir,
+                    "--ignore-errors",
+                    "empty,unused",
+                ]
+            )
+        except subprocess.CalledProcessError as e:
+            # If genhtml fails, try removing problematic patterns and retrying
+            print(f"Warning: genhtml command failed (exit code {e.returncode}), attempting to clean coverage data")
+            try:
+                # Try to remove problematic patterns that might cause genhtml to crash
+                subprocess.check_call(
+                    [
+                        "lcov",
+                        "--remove",
+                        coverage_info_file,
+                        "/usr/*",
+                        "*/third_party/*",
+                        "--output-file",
+                        coverage_info_file,
+                        "--ignore-errors",
+                        "unused",
+                    ]
+                )
+                # Retry genhtml with cleaned data
+                subprocess.check_call(
+                    [
+                        "genhtml",
+                        coverage_info_file,
+                        "--output-directory",
+                        html_output_dir,
+                        "--ignore-errors",
+                        "empty,unused",
+                    ]
+                )
+            except subprocess.CalledProcessError as e2:
+                print(f"Error: genhtml failed even after cleanup (exit code {e2.returncode})")
+                raise
+    except FileNotFoundError as e:
+        # lcov or genhtml not found - this is expected if they're not installed
+        # The coverage data is still collected in .gcda files, but HTML report generation is skipped
+        print(f"Warning: {e.filename} not found. HTML coverage report generation skipped.")
+        print("To generate HTML reports, install lcov and genhtml:")
+        print("  Ubuntu/Debian: sudo apt-get install lcov")
+        print("  macOS: brew install lcov")
+        print("  Or use Clang coverage instead for automatic HTML report generation")
+    except subprocess.CalledProcessError as e:
+        print(f"Error generating coverage report: {e}")
+        raise
 
 
 def generate_multifile_html_report(
