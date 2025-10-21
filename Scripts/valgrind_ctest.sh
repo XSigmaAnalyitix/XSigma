@@ -135,6 +135,185 @@ run_valgrind_tests() {
 }
 
 # =============================================================================
+# Report Generation Functions
+# =============================================================================
+
+# Generate a comprehensive Valgrind summary report
+generate_valgrind_report() {
+    local build_dir="$1"
+    local report_file="$2"
+    local memcheck_logs="$3"
+
+    # Initialize report
+    {
+        echo "================================================================================"
+        echo "XSigma Valgrind Memory Analysis Report"
+        echo "================================================================================"
+        echo "Generated: $(date '+%Y-%m-%d %H:%M:%S')"
+        echo "Build Directory: $build_dir"
+        echo ""
+
+        # =====================================================================
+        # Section 1: Executive Summary
+        # =====================================================================
+        echo "EXECUTIVE SUMMARY"
+        echo "================================================================================"
+
+        local total_errors=0
+        local total_leaks=0
+        local total_invalid_access=0
+        local total_uninitialized=0
+        local total_fd_leaks=0
+
+        # Count different types of errors
+        total_errors=$(grep -h "ERROR SUMMARY:" $memcheck_logs 2>/dev/null | \
+                      grep -oE "[0-9]+ errors" | grep -oE "[0-9]+" | \
+                      awk '{sum+=$1} END {print sum}' || echo "0")
+
+        total_leaks=$(grep -h "definitely lost:" $memcheck_logs 2>/dev/null | \
+                     grep -oE "[0-9]+ bytes" | grep -oE "[0-9]+" | \
+                     awk '{sum+=$1} END {print sum}' || echo "0")
+
+        total_invalid_access=$(grep -hc "Invalid read\|Invalid write" $memcheck_logs 2>/dev/null || echo "0")
+        total_uninitialized=$(grep -hc "Use of uninitialised value" $memcheck_logs 2>/dev/null || echo "0")
+        total_fd_leaks=$(grep -hc "Open file descriptor" $memcheck_logs 2>/dev/null || echo "0")
+
+        echo "Total Memory Errors:        $total_errors"
+        echo "Total Bytes Leaked:         $total_leaks bytes"
+        echo "Invalid Memory Accesses:    $total_invalid_access"
+        echo "Uninitialized Value Uses:   $total_uninitialized"
+        echo "File Descriptor Leaks:      $total_fd_leaks"
+        echo ""
+
+        # =====================================================================
+        # Section 2: Memory Leaks
+        # =====================================================================
+        echo "MEMORY LEAKS ANALYSIS"
+        echo "================================================================================"
+
+        if grep -q "definitely lost: [1-9]" $memcheck_logs 2>/dev/null; then
+            echo "Status: FOUND"
+            echo ""
+            echo "Leak Details:"
+            echo "-------------"
+            grep -h "definitely lost:" $memcheck_logs 2>/dev/null | sort | uniq | while read line; do
+                echo "  $line"
+            done
+            echo ""
+            echo "Leak Locations (with stack traces):"
+            echo "-----------------------------------"
+            grep -B 10 "definitely lost: [1-9]" $memcheck_logs 2>/dev/null | \
+            grep -E "at 0x|by 0x|in |at " | head -50
+        else
+            echo "Status: NONE DETECTED ✓"
+        fi
+        echo ""
+
+        # =====================================================================
+        # Section 3: Invalid Memory Access
+        # =====================================================================
+        echo "INVALID MEMORY ACCESS"
+        echo "================================================================================"
+
+        if grep -qE "Invalid (read|write)" $memcheck_logs 2>/dev/null; then
+            echo "Status: FOUND"
+            echo ""
+            echo "Invalid Read/Write Errors:"
+            echo "--------------------------"
+            grep -h "Invalid read\|Invalid write" $memcheck_logs 2>/dev/null | \
+            sort | uniq -c | sort -rn | head -20
+            echo ""
+            echo "Locations:"
+            echo "----------"
+            grep -B 5 "Invalid read\|Invalid write" $memcheck_logs 2>/dev/null | \
+            grep -E "at 0x|by 0x|in |at " | head -30
+        else
+            echo "Status: NONE DETECTED ✓"
+        fi
+        echo ""
+
+        # =====================================================================
+        # Section 4: Uninitialized Values
+        # =====================================================================
+        echo "UNINITIALIZED VALUE USAGE"
+        echo "================================================================================"
+
+        if grep -q "Use of uninitialised value" $memcheck_logs 2>/dev/null; then
+            echo "Status: FOUND"
+            echo ""
+            echo "Uninitialized Value Errors:"
+            echo "---------------------------"
+            grep -h "Use of uninitialised value" $memcheck_logs 2>/dev/null | \
+            wc -l | xargs echo "Total occurrences:"
+            echo ""
+            echo "Sample Locations:"
+            echo "-----------------"
+            grep -B 3 "Use of uninitialised value" $memcheck_logs 2>/dev/null | \
+            grep -E "at 0x|by 0x|in |at " | head -20
+        else
+            echo "Status: NONE DETECTED ✓"
+        fi
+        echo ""
+
+        # =====================================================================
+        # Section 5: File Descriptor Leaks
+        # =====================================================================
+        echo "FILE DESCRIPTOR LEAKS"
+        echo "================================================================================"
+
+        if grep -q "Open file descriptor" $memcheck_logs 2>/dev/null; then
+            echo "Status: FOUND"
+            echo ""
+            echo "Open File Descriptors:"
+            echo "---------------------"
+            grep -h "Open file descriptor" $memcheck_logs 2>/dev/null | head -20
+        else
+            echo "Status: NONE DETECTED ✓"
+        fi
+        echo ""
+
+        # =====================================================================
+        # Section 6: Error Summary by Test
+        # =====================================================================
+        echo "ERROR SUMMARY BY TEST"
+        echo "================================================================================"
+
+        if [ -n "$memcheck_logs" ]; then
+            for log_file in $memcheck_logs; do
+                local test_name=$(basename "$log_file" | sed 's/MemoryChecker\.\(.*\)\.log/\1/')
+                local error_count=$(grep -c "ERROR SUMMARY:" "$log_file" 2>/dev/null || echo "0")
+                if [ "$error_count" -gt 0 ]; then
+                    echo "Test: $test_name"
+                    grep "ERROR SUMMARY:" "$log_file" 2>/dev/null | head -1
+                    echo ""
+                fi
+            done
+        fi
+
+        # =====================================================================
+        # Section 7: Overall Status
+        # =====================================================================
+        echo "OVERALL STATUS"
+        echo "================================================================================"
+
+        if [ "$total_errors" -eq 0 ] && [ "$total_leaks" -eq 0 ]; then
+            echo "Result: PASS ✓"
+            echo "No memory issues detected during test execution."
+        else
+            echo "Result: FAIL ✗"
+            echo "Memory issues detected. Please review the details above."
+        fi
+        echo ""
+        echo "================================================================================"
+        echo "End of Report"
+        echo "================================================================================"
+
+    } > "$report_file"
+
+    print_status "Report saved to: $report_file" "SUCCESS"
+}
+
+# =============================================================================
 # Valgrind Results Analysis
 # =============================================================================
 
@@ -155,6 +334,10 @@ analyze_valgrind_results() {
     fi
 
     print_status "Found Valgrind log files, analyzing..."
+
+    # Generate comprehensive report
+    local report_file="$build_dir/valgrind_summary_report.txt"
+    generate_valgrind_report "$build_dir" "$report_file" "$memcheck_logs"
 
     # Check for memory leaks (definitely lost)
     if grep -q "definitely lost: [1-9]" $memcheck_logs 2>/dev/null; then
@@ -195,6 +378,37 @@ analyze_valgrind_results() {
     fi
 
     return $has_memory_issues
+}
+
+# =============================================================================
+# Display Report Summary to Console
+# =============================================================================
+
+display_report_summary() {
+    local report_file="$1"
+
+    if [ ! -f "$report_file" ]; then
+        return
+    fi
+
+    print_header "Valgrind Summary Report"
+    echo ""
+
+    # Display key sections from the report
+    if grep -q "EXECUTIVE SUMMARY" "$report_file"; then
+        echo "=== EXECUTIVE SUMMARY ==="
+        sed -n '/^EXECUTIVE SUMMARY/,/^[A-Z]/p' "$report_file" | head -20
+        echo ""
+    fi
+
+    # Display overall status
+    if grep -q "OVERALL STATUS" "$report_file"; then
+        echo "=== OVERALL STATUS ==="
+        sed -n '/^OVERALL STATUS/,/^====/p' "$report_file" | grep -v "^====" | head -10
+        echo ""
+    fi
+
+    print_status "Full report saved to: $report_file" "INFO"
 }
 
 # =============================================================================
@@ -240,6 +454,10 @@ determine_test_status() {
         print_status "SUCCESS: All tests passed with no memory issues!" "SUCCESS"
         final_exit_code=0
     fi
+
+    # Display report summary to console
+    local report_file="$build_dir/valgrind_summary_report.txt"
+    display_report_summary "$report_file"
 
     # Provide helpful information
     echo ""
