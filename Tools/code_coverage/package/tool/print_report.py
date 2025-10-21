@@ -20,12 +20,17 @@ def key_by_name(x: CoverageItem) -> str:
 
 
 def is_intrested_file(file_path: str, interested_folders: list[str]) -> bool:
-    if "cuda" in file_path:
+    # Normalize path separators to forward slashes for consistent matching
+    normalized_path = file_path.replace("\\", "/")
+
+    if "cuda" in normalized_path:
         return False
-    if "aten/gen_aten" in file_path or "aten/aten_" in file_path:
+    if "aten/gen_aten" in normalized_path or "aten/aten_" in normalized_path:
         return False
     for folder in interested_folders:
-        if folder in file_path:
+        # Normalize folder path to forward slashes
+        normalized_folder = folder.replace("\\", "/")
+        if normalized_folder in normalized_path:
             return True
     return False
 

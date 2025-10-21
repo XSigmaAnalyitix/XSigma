@@ -41,29 +41,45 @@ tests_type: TestStatusType = {"success": set(), "partial": set(), "fail": set()}
 def transform_file_name(
     file_path: str, interested_folders: list[str], platform: TestPlatform
 ) -> str:
+    # Normalize path separators to forward slashes for consistent matching
+    normalized_path = file_path.replace("\\", "/")
+
     remove_patterns: set[str] = {".DEFAULT.cpp", ".AVX.cpp", ".AVX2.cpp"}
     for pattern in remove_patterns:
-        file_path = file_path.replace(pattern, "")
+        normalized_path = normalized_path.replace(pattern, "")
     # if user has specified interested folder
     if interested_folders:
         for folder in interested_folders:
-            if folder in file_path:
-                return file_path[file_path.find(folder) :]
+            normalized_folder = folder.replace("\\", "/")
+            if normalized_folder in normalized_path:
+                return normalized_path[normalized_path.find(normalized_folder) :]
     # remove xsigma base folder path
     if platform == TestPlatform.OSS:
         from package.oss.utils import get_xsigma_folder  # type: ignore[import]
 
-        pytorch_foler = get_xsigma_folder()
-        assert file_path.startswith(pytorch_foler)
-        file_path = file_path[len(pytorch_foler) + 1 :]
-    return file_path
+        pytorch_foler = get_xsigma_folder().replace("\\", "/")
+        assert normalized_path.startswith(pytorch_foler)
+        normalized_path = normalized_path[len(pytorch_foler) + 1 :]
+    return normalized_path
 
 
 def is_intrested_file(
     file_path: str, interested_folders: list[str], platform: TestPlatform
 ) -> bool:
-    ignored_patterns = ["cuda", "aten/gen_aten", "aten/aten_", "build/"]
-    if any(pattern in file_path for pattern in ignored_patterns):
+    # Normalize path separators to forward slashes for consistent matching
+    normalized_path = file_path.replace("\\", "/")
+
+    # Patterns to exclude from coverage (test code, build artifacts, etc.)
+    ignored_patterns = [
+        "cuda",
+        "aten/gen_aten",
+        "aten/aten_",
+        "build/",
+        "Testing",  # Exclude XSigma Testing folder
+        "/test/",   # Exclude test directories
+        "/tests/",  # Exclude tests directories
+    ]
+    if any(pattern in normalized_path for pattern in ignored_patterns):
         return False
 
     # ignore files that are not belong to xsigma
@@ -71,13 +87,16 @@ def is_intrested_file(
         # pyrefly: ignore  # import-error
         from package.oss.utils import get_xsigma_folder
 
-        if not file_path.startswith(get_xsigma_folder()):
+        xsigma_folder = get_xsigma_folder().replace("\\", "/")
+        if not normalized_path.startswith(xsigma_folder):
             return False
     # if user has specified interested folder
     if interested_folders:
         for folder in interested_folders:
-            intersted_folder_path = folder if folder.endswith("/") else f"{folder}/"
-            if intersted_folder_path in file_path:
+            # Normalize folder path to forward slashes
+            normalized_folder = folder.replace("\\", "/")
+            intersted_folder_path = normalized_folder if normalized_folder.endswith("/") else f"{normalized_folder}/"
+            if intersted_folder_path in normalized_path:
                 return True
         return False
     else:

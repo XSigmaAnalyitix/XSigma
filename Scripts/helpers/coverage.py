@@ -67,10 +67,17 @@ def run_oss_coverage(source_path: str, build_path: str, cmake_cxx_compiler: str)
                 env["HOME"] = os.path.expanduser("~")
 
         # Set CXX environment variable to help compiler detection
+        # This is critical for oss_coverage.py to detect the compiler type
         if "clang" in cmake_cxx_compiler.lower():
             env["CXX"] = "clang++"
+            env["CC"] = "clang"
         elif "gcc" in cmake_cxx_compiler.lower():
             env["CXX"] = "g++"
+            env["CC"] = "gcc"
+        else:
+            # Default to clang for unknown compilers
+            env["CXX"] = "clang++"
+            env["CC"] = "clang"
 
         # Set XSIGMA_FOLDER to help oss_coverage.py find the correct paths
         env["XSIGMA_FOLDER"] = source_path
@@ -85,6 +92,17 @@ def run_oss_coverage(source_path: str, build_path: str, cmake_cxx_compiler: str)
         # This ensures coverage reports are generated in the build folder
         coverage_dir = os.path.join(build_path, "coverage_report")
         env["XSIGMA_COVERAGE_DIR"] = coverage_dir
+
+        # Ensure coverage directory exists
+        os.makedirs(coverage_dir, exist_ok=True)
+
+        # Set interested folders to focus on Library code only
+        # This ensures only production code is analyzed, not test code
+        env["XSIGMA_INTERESTED_FOLDERS"] = "Library"
+
+        # Set excluded patterns to exclude Testing folder and other test code
+        # This prevents test code from appearing in coverage reports
+        env["XSIGMA_EXCLUDED_PATTERNS"] = "Testing,test,tests,mock,stub"
 
         # Change to source directory for oss_coverage.py to work correctly
         original_dir = os.getcwd()

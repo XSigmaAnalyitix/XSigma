@@ -2,3 +2,18 @@
 *__pycache__*
 /CPUinfo.log
 /Heavy Function Performance
+/build*
+/Tools/code_coverage/package/tool/__pycache__/*
+/Tools/**/__pycache__/**
+/Tools/****/__pycache__/*
+/Tools/*/__pycache__/*
+/Tools/**/__pycache__/*
+/Tools/***/__pycache__/*
+/Tools/code_coverage/package/tool/__pycache__/clang_coverage.cpython-312.pyc
+/Tools/code_coverage/package/tool/__pycache__/print_report.cpython-312.pyc
+/Tools/code_coverage/package/tool/__pycache__/summarize_jsons.cpython-312.pyc
+/Tools/code_coverage/package/tool/__pycache__/utils.cpython-312.pyc
+/Tools/code_coverage/package/oss/__pycache__/*
+/Tools/code_coverage/package/oss/__pycache__/cov_json.cpython-312.pyc
+/Tools/code_coverage/package/oss/__pycache__/init.cpython-312.pyc
+/Tools/code_coverage/package/oss/__pycache__/utils.cpython-312.pyc

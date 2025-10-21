@@ -306,6 +306,42 @@ class HtmlReportGenerator:
 </html>
 """
 
+    def _resolve_source_file(self, file_path: str, source_root: str) -> str:
+        """Resolve the actual source file path.
+
+        Handles paths like 'dev\\XSigma\\Library\\...' by finding the actual file.
+
+        Args:
+            file_path: Path from coverage data
+            source_root: Root directory to search from
+
+        Returns:
+            Absolute path to source file, or empty string if not found
+        """
+        from pathlib import Path
+
+        # Try direct path first
+        if os.path.exists(file_path):
+            return file_path
+
+        # Try joining with source_root
+        if source_root:
+            full_path = os.path.join(source_root, file_path)
+            if os.path.exists(full_path):
+                return full_path
+
+            # Try extracting just the filename and searching from source_root
+            # For paths like 'dev\\XSigma\\Library\\Core\\...', extract 'Library\\Core\\...'
+            parts = Path(file_path).parts
+            if 'Library' in parts:
+                lib_index = parts.index('Library')
+                relative_path = os.path.join(*parts[lib_index:])
+                full_path = os.path.join(source_root, relative_path)
+                if os.path.exists(full_path):
+                    return full_path
+
+        return ""
+
     def _get_file_html(
         self,
         file_path: str,
@@ -317,8 +353,8 @@ class HtmlReportGenerator:
         # Try to read source file
         source_lines = []
         if source_root:
-            full_path = os.path.join(source_root, file_path)
-            if os.path.exists(full_path):
+            full_path = self._resolve_source_file(file_path, source_root)
+            if full_path:
                 try:
                     with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
                         source_lines = f.readlines()

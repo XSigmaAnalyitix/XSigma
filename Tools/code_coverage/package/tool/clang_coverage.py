@@ -133,8 +133,10 @@ def export_target(
     # Add profile file
     cmd_args.extend(["-instr-profile=" + merged_file])
 
-    # Add coverage filters to exclude unwanted files
-    cmd_args.extend(build_llvm_cov_filter_args())
+    # NOTE: Do NOT apply filters at export stage!
+    # Filters should only be applied at report generation stage (summarize_jsons.py)
+    # Applying filters here removes files from JSON export permanently
+    # and prevents them from appearing in coverage reports even with 0% coverage
 
     # Run command and redirect output to json file
     with open(json_file, "w") as f:
