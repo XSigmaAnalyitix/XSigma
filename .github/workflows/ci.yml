@@ -993,18 +993,6 @@ jobs:
             generator: Ninja
             cache_path: ~/Library/Caches
 
-          - name: "Windows C++17 Release - Baseline (No Sccache)"
-            os: windows-latest
-            build_type: Release
-            cxx_std: 17
-            logging_backend: LOGURU
-            tbb_enabled: OFF
-            cuda_enabled: OFF
-            compiler_c: clang
-            compiler_cxx: clang
-            generator: Ninja
-            cache_path: ~/AppData/Local/Temp/chocolatey
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -1055,26 +1043,6 @@ jobs:
           -DXSIGMA_BUILD_TESTING=ON \
           -DXSIGMA_ENABLE_GTEST=ON \
           -DXSIGMA_ENABLE_TBB=OFF
-
-    - name: Configure CMake (Windows - Baseline)
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        cmake -B build `
-          -C .github/cmake/configure_cache.cmake `
-          -S . `
-          -G "${{ matrix.generator }}" `
-          -DCMAKE_BUILD_TYPE=Release `
-          -DCMAKE_C_COMPILER=${{ matrix.compiler_c }} `
-          -DCMAKE_CXX_COMPILER=${{ matrix.compiler_cxx }} `
-          -DCMAKE_CXX_STANDARD=${{ matrix.cxx_std }} `
-          -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} `
-          -DXSIGMA_BUILD_TESTING=ON `
-          -DXSIGMA_ENABLE_GTEST=ON `
-          -DXSIGMA_ENABLE_BENCHMARK=OFF `
-          -DXSIGMA_ENABLE_LTO=OFF `
-          -DXSIGMA_ENABLE_TBB=OFF `
-          -DXSIGMA_ENABLE_CUDA=OFF
 
     # ===== Build and Test (Baseline - No Sccache) =====
     - name: Record build start time (Baseline)
