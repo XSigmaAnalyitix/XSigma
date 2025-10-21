@@ -80,7 +80,7 @@ def detect_compiler_type() -> CompilerType | None:
         raise RuntimeError(f"User specified compiler is not valid {user_specify}")
 
     # Try to detect from CMAKE_CXX_COMPILER in build directory
-    pytorch_folder = get_pytorch_folder()
+    pytorch_folder = get_xsigma_folder()
     build_dir = os.path.join(pytorch_folder, "build")
     cmake_cache = os.path.join(build_dir, "CMakeCache.txt")
     

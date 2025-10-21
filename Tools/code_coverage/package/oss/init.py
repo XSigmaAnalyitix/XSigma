@@ -27,7 +27,7 @@ from .utils import (
     detect_compiler_type,
     get_llvm_tool_path,
     get_oss_binary_folder,
-    get_pytorch_folder,
+    get_xsigma_folder,
 )
 
 
@@ -228,7 +228,7 @@ def get_python_run_only(
 
 
 def print_init_info(build_folder: str, test_subfolder: str = "bin") -> None:
-    print_log("xsigma folder: ", get_pytorch_folder())
+    print_log("xsigma folder: ", get_xsigma_folder())
     print_log(
         "cpp test binaries folder: ",
         get_oss_binary_folder(TestType.CPP, build_folder, test_subfolder),

@@ -51,9 +51,9 @@ def transform_file_name(
                 return file_path[file_path.find(folder) :]
     # remove xsigma base folder path
     if platform == TestPlatform.OSS:
-        from package.oss.utils import get_pytorch_folder  # type: ignore[import]
+        from package.oss.utils import get_xsigma_folder  # type: ignore[import]
 
-        pytorch_foler = get_pytorch_folder()
+        pytorch_foler = get_xsigma_folder()
         assert file_path.startswith(pytorch_foler)
         file_path = file_path[len(pytorch_foler) + 1 :]
     return file_path
@@ -69,9 +69,9 @@ def is_intrested_file(
     # ignore files that are not belong to xsigma
     if platform == TestPlatform.OSS:
         # pyrefly: ignore  # import-error
-        from package.oss.utils import get_pytorch_folder
+        from package.oss.utils import get_xsigma_folder
 
-        if not file_path.startswith(get_pytorch_folder()):
+        if not file_path.startswith(get_xsigma_folder()):
             return False
     # if user has specified interested folder
     if interested_folders:
@@ -222,8 +222,8 @@ def summarize_jsons(
         )
         # Generate multi-file HTML report
         try:
-            from package.oss.utils import get_pytorch_folder
-            source_root = get_pytorch_folder()
+            from package.oss.utils import get_xsigma_folder
+            source_root = get_xsigma_folder()
             generate_multifile_html_report(
                 covered_lines,
                 uncovered_lines,
