@@ -119,6 +119,7 @@ def get_test_list_by_type(
     exclude_benchmarks: bool = True,
 ) -> TestList:
     import platform
+    import stat
 
     test_list: TestList = []
     binary_folder = get_oss_binary_folder(
@@ -136,6 +137,16 @@ def get_test_list_by_type(
                 else:
                     # On Unix, skip files with extensions
                     if "." in file_name:
+                        continue
+                    # On Unix, verify the file is actually executable
+                    # This prevents non-executable files (like JSON reports) from being treated as test binaries
+                    file_path = os.path.join(binary_folder, file_name)
+                    if not os.path.isfile(file_path):
+                        continue
+                    # Check if file has execute permissions
+                    file_stat = os.stat(file_path)
+                    if not (file_stat.st_mode & stat.S_IXUSR):
+                        # File is not executable, skip it
                         continue
             elif test_type == TestType.PY:
                 # For Python tests, only include .py files

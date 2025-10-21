@@ -132,37 +132,68 @@ def get_llvm_tool_path() -> str:
     """
     Get the LLVM tool path for the current platform.
 
-    On Windows, tries to find llvm-profdata in PATH.
-    On macOS, defaults to /usr/local/opt/llvm/bin.
-    On Linux, defaults to /usr/local/opt/llvm/bin.
+    Searches in the following order:
+    1. LLVM_TOOL_PATH environment variable
+    2. System PATH for llvm-profdata
+    3. Common platform-specific installation directories
 
     Returns:
         Path to LLVM tools directory
+
+    Raises:
+        FileNotFoundError: If LLVM tools cannot be found on the system
     """
+    import os
     import platform
     import shutil
+    from pathlib import Path
 
-    # Check if LLVM_TOOL_PATH is explicitly set
-    if "LLVM_TOOL_PATH" in os.environ:
-        return os.environ["LLVM_TOOL_PATH"]
+    tool_name = "llvm-profdata"
+    env_var = "LLVM_TOOL_PATH"
 
-    # On Windows, try to find llvm-profdata in PATH
-    if platform.system() == "Windows":
-        llvm_profdata = shutil.which("llvm-profdata")
-        if llvm_profdata:
-            # Return the directory containing llvm-profdata
-            return os.path.dirname(llvm_profdata)
-        # Fallback: try common LLVM installation paths on Windows
-        common_paths = [
+    # Check explicit environment variable
+    if env_var in os.environ:
+        path = os.environ[env_var]
+        if os.path.isdir(path):
+            return path
+
+    # Try to find tool in PATH
+    tool_path = shutil.which(tool_name)
+    if tool_path:
+        return str(Path(tool_path).parent)
+
+    # Platform-specific search directories
+    system = platform.system()
+    search_paths = {
+        "Windows": [
             "C:\\Program Files\\LLVM\\bin",
             "C:\\Program Files (x86)\\LLVM\\bin",
-        ]
-        for path in common_paths:
-            if os.path.isdir(path):
-                return path
+            "C:\\tools\\llvm\\bin",
+        ],
+        "Darwin": [  # macOS
+            "/opt/homebrew/opt/llvm/bin",  # Apple Silicon
+            "/usr/local/opt/llvm/bin",      # Intel Homebrew
+            "/opt/llvm/bin",
+            "/usr/local/llvm/bin",
+        ],
+        "Linux": [
+            "/usr/bin",
+            "/usr/local/bin",
+            "/opt/llvm/bin",
+            "/usr/lib/llvm-*/bin",
+        ],
+    }
 
-    # Default paths for macOS and Linux
-    return "/usr/local/opt/llvm/bin"
+    # Search platform-specific directories
+    for path in search_paths.get(system, []):
+        if os.path.isdir(path):
+            return path
+
+    # If nothing found, raise error
+    raise FileNotFoundError(
+        f"Could not find {tool_name} on {system}. "
+        f"Set {env_var} environment variable to specify location."
+    )
 
 
 def get_xsigma_folder() -> str:
@@ -225,18 +256,37 @@ def get_gcda_files() -> list[str]:
     import os
 
     project_folder = get_xsigma_folder()
-    # Try to find build folder with .gcda files
-    # First check relative to project folder
-    folder_has_gcda = os.path.join(project_folder, "build")
-    if not os.path.isdir(folder_has_gcda):
-        # If not found, try parent directory (for builds outside project)
-        parent_folder = os.path.dirname(project_folder)
-        # Look for any build_* folder in parent
-        for item in os.listdir(parent_folder):
-            potential_build = os.path.join(parent_folder, item)
-            if os.path.isdir(potential_build) and item.startswith("build"):
-                folder_has_gcda = potential_build
-                break
+    parent_folder = os.path.dirname(project_folder)
+
+    # First, try to use XSIGMA_BUILD_FOLDER environment variable if set
+    build_folder_name = os.environ.get("XSIGMA_BUILD_FOLDER", "")
+    if build_folder_name:
+        # Check if it's an absolute path
+        if os.path.isabs(build_folder_name):
+            folder_has_gcda = build_folder_name
+        else:
+            # Try relative to project folder first (most common case)
+            folder_has_gcda = os.path.join(project_folder, build_folder_name)
+            if not os.path.isdir(folder_has_gcda):
+                # Try relative to parent directory (for builds outside project)
+                folder_has_gcda = os.path.join(parent_folder, build_folder_name)
+    else:
+        # Fallback: Try to find build folder with .gcda files
+        # First check relative to project folder
+        folder_has_gcda = os.path.join(project_folder, "build")
+        if not os.path.isdir(folder_has_gcda):
+            # If not found, try parent directory (for builds outside project)
+            # Look for the most recent build_* folder
+            build_folders = []
+            for item in os.listdir(parent_folder):
+                potential_build = os.path.join(parent_folder, item)
+                if os.path.isdir(potential_build) and item.startswith("build"):
+                    build_folders.append((potential_build, os.path.getmtime(potential_build)))
+
+            if build_folders:
+                # Sort by modification time (most recent first)
+                build_folders.sort(key=lambda x: x[1], reverse=True)
+                folder_has_gcda = build_folders[0][0]
 
     if os.path.isdir(folder_has_gcda):
         # TODO use glob

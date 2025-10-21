@@ -15,6 +15,7 @@ from ..util.setting import (
 from ..util.utils import (
     detect_compiler_type,
     print_error,
+    print_log,
     print_time,
     related_to_test_list,
 )
@@ -23,7 +24,6 @@ from .parser.llvm_coverage_parser import LlvmCoverageParser
 from .print_report import (
     file_oriented_report,
     generate_multifile_html_report,
-    html_oriented_report,
     line_oriented_report,
 )
 
@@ -218,36 +218,39 @@ def summarize_jsons(
     platform: TestPlatform,
 ) -> None:
     start_time = time.time()
-    if detect_compiler_type(platform) == CompilerType.GCC:
-        html_oriented_report()
-    else:
-        parse_jsons(test_list, interested_folders, platform)
-        update_set()
-        line_oriented_report(
-            test_list,
-            tests_type,
-            interested_folders,
-            coverage_only,
+    # Parse JSON files for both GCC and Clang
+    parse_jsons(test_list, interested_folders, platform)
+    update_set()
+
+    # Generate reports
+    line_oriented_report(
+        test_list,
+        tests_type,
+        interested_folders,
+        coverage_only,
+        covered_lines,
+        uncovered_lines,
+    )
+    file_oriented_report(
+        test_list,
+        tests_type,
+        interested_folders,
+        coverage_only,
+        covered_lines,
+        uncovered_lines,
+    )
+
+    # Generate multi-file HTML report using custom HTML generator
+    # This works for both GCC and Clang coverage
+    try:
+        from package.oss.utils import get_xsigma_folder
+        source_root = get_xsigma_folder()
+        generate_multifile_html_report(
             covered_lines,
             uncovered_lines,
+            source_root=source_root,
         )
-        file_oriented_report(
-            test_list,
-            tests_type,
-            interested_folders,
-            coverage_only,
-            covered_lines,
-            uncovered_lines,
-        )
-        # Generate multi-file HTML report
-        try:
-            from package.oss.utils import get_xsigma_folder
-            source_root = get_xsigma_folder()
-            generate_multifile_html_report(
-                covered_lines,
-                uncovered_lines,
-                source_root=source_root,
-            )
-        except Exception as e:
-            print_error(f"Failed to generate multi-file HTML report: {e}")
+    except Exception as e:
+        print_error(f"Failed to generate multi-file HTML report: {e}")
+
     print_time("summary jsons take time: ", start_time)

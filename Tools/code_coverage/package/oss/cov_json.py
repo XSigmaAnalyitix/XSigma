@@ -1,4 +1,4 @@
-from ..tool import clang_coverage
+from ..tool import clang_coverage, gcc_coverage
 from ..util.setting import CompilerType, Option, TestList, TestPlatform
 from ..util.utils import check_compiler_type
 from .init import detect_compiler_type  # type: ignore[attr-defined]
@@ -32,3 +32,6 @@ def get_json_report(
         # run
         if options.need_run:
             gcc_run(test_list, build_folder, test_subfolder)
+        # export
+        if options.need_export:
+            gcc_coverage.export()

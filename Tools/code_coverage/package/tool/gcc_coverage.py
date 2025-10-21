@@ -42,14 +42,28 @@ def export() -> None:
     # file name like utils.cpp may have same name in different folder
     gzip_dict: dict[str, int] = {}
     for gcda_item in gcda_files:
-        # generate json.gz
-        subprocess.check_call(["gcov", "-i", gcda_item])
-        # cp json.gz to profile/json folder
-        gz_file_name = os.path.basename(gcda_item) + ".gcov.json.gz"
+        # Skip empty strings from split
+        if not gcda_item or not gcda_item.strip():
+            continue
+        # Get the directory of the .gcda file
+        gcda_dir = os.path.dirname(gcda_item)
+        gcda_basename = os.path.basename(gcda_item)
+
+        # Run gcov from the directory containing the .gcda file
+        # This ensures gcov can find the corresponding .gcno file
+        subprocess.check_call(["gcov", "-i", gcda_basename], cwd=gcda_dir)
+
+        # gcov creates a .gcov.json.gz file with the source file name (without .gcda)
+        # For example: TestCPUMemory.cxx.gcda -> TestCPUMemory.cxx.gcov.json.gz
+        source_file_name = gcda_basename.replace(".gcda", "")
+        gz_file_name = source_file_name + ".gcov.json.gz"
+        gz_file_path = os.path.join(gcda_dir, gz_file_name)
+
+        # Use the original gcda basename for the dictionary key to avoid collisions
         new_file_path = os.path.join(
-            JSON_FOLDER_BASE_DIR, update_gzip_dict(gzip_dict, gz_file_name)
+            JSON_FOLDER_BASE_DIR, update_gzip_dict(gzip_dict, gcda_basename + ".gcov.json.gz")
         )
-        os.rename(gz_file_name, new_file_path)
+        os.rename(gz_file_path, new_file_path)
         #  unzip json.gz to json
         subprocess.check_output(["gzip", "-d", new_file_path])
     print_time("export take time: ", start_time, summary_time=True)
