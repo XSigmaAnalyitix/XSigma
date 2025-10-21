@@ -1,0 +1,292 @@
+# XSigma Linter Configuration
+# This file configures linters for the XSigma project
+# Linters are run on Library/, Scripts/, Tools/, and other XSigma-specific directories
+# ThirdParty/ is excluded from all linters
+
+[[linter]]
+code = 'FLAKE8'
+include_patterns = ['**/*.py']
+exclude_patterns = [
+    '.git/**',
+    'ThirdParty/**',
+]
+command = [
+    'python3',
+    'Tools/linter/adapters/flake8_linter.py',
+    '--',
+    '@{{PATHSFILE}}'
+]
+init_command = [
+    'python3',
+    'Tools/linter/adapters/pip_init.py',
+    '--dry-run={{DRYRUN}}',
+    'flake8==7.3.0',
+    'flake8-bugbear==24.12.12',
+    'flake8-comprehensions==3.16.0',
+    'flake8-executable==2.1.3',
+    'flake8-logging-format==2024.24.12',
+    'flake8-pyi==25.5.0',
+    'flake8-simplify==0.22.0',
+    'mccabe==0.7.0',
+    'pycodestyle==2.14.0',
+    'pyflakes==3.4.0',
+]
+
+[[linter]]
+code = 'CLANGFORMAT'
+include_patterns = [
+    'Library/**/*.h',
+    'Library/**/*.cxx',
+]
+exclude_patterns = [
+    'ThirdParty/**',
+]
+init_command = [
+    'python3',
+    'Tools/linter/adapters/s3_init.py',
+    '--config-json=Tools/linter/adapters/s3_init_config.json',
+    '--linter=clang-format',
+    '--dry-run={{DRYRUN}}',
+    '--output-dir=.lintbin',
+    '--output-name=clang-format',
+]
+command = [
+    'python3',
+    'Tools/linter/adapters/clangformat_linter.py',
+    '--binary=.lintbin/clang-format',
+    '--',
+    '@{{PATHSFILE}}'
+]
+is_formatter = true
+
+[[linter]]
+code = 'CLANGTIDY'
+include_patterns = [
+    'Library/**/*.h',
+    'Library/**/*.cxx',
+]
+exclude_patterns = [
+    'ThirdParty/**/*',
+]
+init_command = [
+    'python3',
+    'Tools/linter/adapters/s3_init.py',
+    '--config-json=Tools/linter/adapters/s3_init_config.json',
+    '--linter=clang-tidy',
+    '--dry-run={{DRYRUN}}',
+    '--output-dir=.lintbin',
+    '--output-name=clang-tidy',
+]
+command = [
+    'python3',
+    'Tools/linter/adapters/clangtidy_linter.py',
+    '--binary=.lintbin/clang-tidy',
+    '--build_dir=./build',
+    '--',
+    '@{{PATHSFILE}}'
+]
+
+[[linter]]
+code = 'CMAKE'
+include_patterns = [
+    "**/*.cmake",
+    "**/*.cmake.in",
+    "**/CMakeLists.txt",
+]
+exclude_patterns = [
+    'ThirdParty/**',
+]
+init_command = [
+    'python3',
+    'Tools/linter/adapters/s3_init.py',
+    '--config-json=Tools/linter/adapters/s3_init_config.json',
+    '--linter=cmakelint',
+    '--dry-run={{DRYRUN}}',
+    '--output-dir=.lintbin',
+    '--output-name=cmakelint',
+]
+command = [
+    'python3',
+    'Tools/linter/adapters/cmake_linter.py',
+    '--config=.cmakelintrc',
+    '--',
+    '@{{PATHSFILE}}',
+]
+
+[[linter]]
+code = 'NEWLINE'
+include_patterns=['**']
+exclude_patterns=[
+    'ThirdParty/**',
+    '**/*.bat',
+    '**/*.expect',
+    '**/*.ipynb',
+    '**/*.ps1',
+    '**/*.ptl',
+    'Tools/clang_format_hash/**',
+    '**/*.png',
+    '**/*.gz',
+    '**/*.patch',
+]
+command = [
+    'python3',
+    'Tools/linter/adapters/newlines_linter.py',
+    '--',
+    '@{{PATHSFILE}}',
+]
+is_formatter = true
+
+[[linter]]
+code = 'SPACES'
+include_patterns=['**']
+exclude_patterns=[
+    'ThirdParty/**',
+    '**/*.patch',
+]
+command = [
+    'python3',
+    'Tools/linter/adapters/grep_linter.py',
+    '--pattern= $',
+    '--linter-name=SPACES',
+    '--error-name=trailing spaces',
+    '--replace-pattern=s/ +$//',
+    """--error-description=\
+        This line has trailing spaces; please remove them.\
+    """,
+    '--',
+    '@{{PATHSFILE}}'
+]
+is_formatter = true
+
+[[linter]]
+code = 'TABS'
+include_patterns=['**']
+exclude_patterns=[
+    'ThirdParty/**',
+]
+command = [
+    'python3',
+    'Tools/linter/adapters/grep_linter.py',
+    '--pattern=	',
+    '--linter-name=TABS',
+    '--error-name=saw some tabs',
+    '--replace-pattern=s/\t/    /',
+    """--error-description=\
+        This line has tabs; please replace them with spaces.\
+    """,
+    '--',
+    '@{{PATHSFILE}}'
+]
+
+[[linter]]
+code = 'XSIGMA_UNUSED'
+include_patterns = [
+    '**/*.cpp',
+    '**/*.h',
+]
+exclude_patterns = [
+    'ThirdParty/**',
+]
+command = [
+    'python3',
+    'Tools/linter/adapters/grep_linter.py',
+    '--pattern=XSIGMA_UNUSED',
+    '--linter-name=XSIGMA_UNUSED',
+    '--error-name=deprecated XSIGMA_UNUSED macro',
+    '--replace-pattern=s/XSIGMA_UNUSED/[[maybe_unused]]/',
+    """--error-description=\
+        Deprecated macro, use [[maybe_unused]] directly\
+    """,
+    '--',
+    '@{{PATHSFILE}}'
+]
+
+[[linter]]
+code = 'XSIGMA_NODISCARD'
+include_patterns = [
+    '**/*.cpp',
+    '**/*.h',
+]
+exclude_patterns = [
+    'ThirdParty/**',
+]
+command = [
+    'python3',
+    'Tools/linter/adapters/grep_linter.py',
+    '--pattern=XSIGMA_NODISCARD',
+    '--linter-name=XSIGMA_NODISCARD',
+    '--error-name=deprecated XSIGMA_NODISCARD macro',
+    '--replace-pattern=s/XSIGMA_NODISCARD/[[nodiscard]]/',
+    """--error-description=\
+        Deprecated macro, use [[nodiscard]] directly\
+    """,
+    '--',
+    '@{{PATHSFILE}}'
+]
+
+[[linter]]
+code = 'EXEC'
+include_patterns = ['**']
+exclude_patterns = [
+    'ThirdParty/**',
+    '**/*.bat',
+    '**/*.py',
+    '**/*.sh',
+    '**/*.bash',
+    '**/git-pre-commit',
+    '**/git-clang-format',
+    '**/gradlew',
+]
+command = [
+    'python3',
+    'Tools/linter/adapters/exec_linter.py',
+    '--',
+    '@{{PATHSFILE}}',
+]
+
+[[linter]]
+code = 'CODESPELL'
+include_patterns = ['**']
+exclude_patterns = [
+    'ThirdParty/**',
+    '**/*.md',
+    '**/*.diff',
+]
+command = [
+    'python3',
+    'Tools/linter/adapters/grep_linter.py',
+    '--pattern=(?i)\\b(teh|recieve|occured)\\b',
+    '--linter-name=CODESPELL',
+    '--error-name=spelling error',
+    """--error-description=\
+        This line has a common spelling error.\
+    """,
+    '--',
+    '@{{PATHSFILE}}'
+]
+
+[[linter]]
+code = 'RUFF'
+include_patterns = [
+    '**/*.py',
+    '**/*.pyi',
+]
+exclude_patterns = [
+    'ThirdParty/**',
+]
+command = [
+    'python3',
+    'Tools/linter/adapters/ruff_linter.py',
+    '--config=pyproject.toml',
+    '--show-disable',
+    '--',
+    '@{{PATHSFILE}}'
+]
+init_command = [
+    'python3',
+    'Tools/linter/adapters/pip_init.py',
+    '--dry-run={{DRYRUN}}',
+    'ruff==0.13.1',
+]
+is_formatter = true
+
