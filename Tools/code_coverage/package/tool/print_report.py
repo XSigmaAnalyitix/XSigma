@@ -202,7 +202,7 @@ def get_html_ignored_pattern() -> list[str]:
 
 def html_oriented_report() -> None:
     # use lcov to generate the coverage report
-    build_folder = os.path.join(get_pytorch_folder(), "build")
+    build_folder = os.path.join(get_xsigma_folder(), "build")
     coverage_info_file = os.path.join(SUMMARY_FOLDER_DIR, "coverage.info")
     # generate coverage report -- coverage.info in build folder
     subprocess.check_call(

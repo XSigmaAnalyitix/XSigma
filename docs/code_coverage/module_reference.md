@@ -43,7 +43,7 @@ This reference enumerates the modules under `Tools/code_coverage`, capturing the
 | `get_oss_shared_library(build_folder, test_subfolder)` | function | Lists shared libraries to pass to llvm-cov for symbol resolution. |
 | `get_oss_binary_file(test_name, test_type, build_folder, test_subfolder)` | function | Builds the full command for invoking a test binary or Python script. |
 | `get_llvm_tool_path()` | function | Determines the llvm toolchain path, honouring `LLVM_TOOL_PATH`. |
-| `get_pytorch_folder()` | function | Resolves the XSigma source tree root. |
+| `get_xsigma_folder()` | function | Resolves the XSigma source tree root. |
 | `detect_compiler_type()` | function | Identifies active compiler (clang/gcc) via `$CXX` or `cc -v`. |
 | `clean_up_gcda()` / `get_gcda_files()` | function | Finds and removes residual `.gcda` files before a GCC pass. |
 | `run_oss_python_test(binary_file, build_folder, test_subfolder)` | function | Runs Python tests in the correct working directory. |

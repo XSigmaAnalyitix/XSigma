@@ -23,7 +23,7 @@ def get_oss_binary_folder(
         Full path to the binary folder
     """
     assert test_type in {TestType.CPP, TestType.PY}
-    project_folder = get_pytorch_folder()
+    project_folder = get_xsigma_folder()
 
     # Try to find the build folder
     # First, check if it exists relative to project folder
@@ -55,7 +55,7 @@ def get_oss_shared_library(
     """
     import platform
 
-    project_folder = get_pytorch_folder()
+    project_folder = get_xsigma_folder()
 
     # Try to find the build folder
     build_path = os.path.join(project_folder, build_folder)
@@ -155,7 +155,7 @@ def get_llvm_tool_path() -> str:
     return "/usr/local/opt/llvm/bin"
 
 
-def get_pytorch_folder() -> str:
+def get_xsigma_folder() -> str:
     # TOOLS_FOLDER in oss: xsigma/tools/code_coverage
     return os.path.abspath(
         os.environ.get("XSIGMA_FOLDER", os.path.dirname(os.path.dirname(TOOLS_FOLDER)))
@@ -193,7 +193,7 @@ def clean_up_gcda() -> None:
 def get_gcda_files() -> list[str]:
     import os
 
-    project_folder = get_pytorch_folder()
+    project_folder = get_xsigma_folder()
     # Try to find build folder with .gcda files
     # First check relative to project folder
     folder_has_gcda = os.path.join(project_folder, "build")
