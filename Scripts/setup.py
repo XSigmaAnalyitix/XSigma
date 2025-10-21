@@ -1210,7 +1210,7 @@ class XsigmaConfiguration:
         return self.__value["system"] == "Windows"
 
     def move_to_build_folder(self):
-        os.chdir("../..")
+        os.chdir("..")
         build_folder = self.__value["build_folder"]
 
         if os.path.isdir(build_folder) and self.__value["config"] == "config":
