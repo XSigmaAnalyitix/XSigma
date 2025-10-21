@@ -6,10 +6,22 @@ from ..util.utils import print_error
 
 def run_cpp_test(binary_file: str) -> None:
     # cpp test binary
+    import os
+    import platform
+
+    # Convert path to absolute path and normalize for the platform
+    binary_file = os.path.abspath(binary_file)
+
+    # On Windows, ensure the path uses backslashes
+    if platform.system() == "Windows":
+        binary_file = binary_file.replace("/", "\\")
+
     try:
         subprocess.check_call([binary_file])
     except subprocess.CalledProcessError:
         print_error(f"Binary failed to run: {binary_file}")
+    except FileNotFoundError:
+        print_error(f"Binary not found: {binary_file}")
 
 
 def get_tool_path_by_platform(platform: TestPlatform) -> str:

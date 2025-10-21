@@ -4,14 +4,17 @@ import time
 
 # Set coverage output directory before importing settings
 # This allows coverage reports to be generated in the build folder
-build_folder = os.environ.get("XSIGMA_BUILD_FOLDER", "build")
-if build_folder:
-    coverage_dir = os.path.join(
-        os.path.dirname(os.environ.get("XSIGMA_FOLDER", ".")),
-        build_folder,
-        "coverage_report",
-    )
-    os.environ["XSIGMA_COVERAGE_DIR"] = coverage_dir
+# If XSIGMA_COVERAGE_DIR is already set (by the caller), use it
+# Otherwise, try to construct it from XSIGMA_BUILD_FOLDER and XSIGMA_FOLDER
+if not os.environ.get("XSIGMA_COVERAGE_DIR"):
+    build_folder = os.environ.get("XSIGMA_BUILD_FOLDER", "build")
+    if build_folder:
+        coverage_dir = os.path.join(
+            os.path.dirname(os.environ.get("XSIGMA_FOLDER", ".")),
+            build_folder,
+            "coverage_report",
+        )
+        os.environ["XSIGMA_COVERAGE_DIR"] = coverage_dir
 
 from package.oss.cov_json import get_json_report  # type: ignore[import]
 from package.oss.init import initialization  # type: ignore[import]
@@ -27,6 +30,17 @@ def report_coverage() -> None:
     # These are set by the caller (coverage.py helper)
     build_folder = os.environ.get("XSIGMA_BUILD_FOLDER", "build")
     test_subfolder = os.environ.get("XSIGMA_TEST_SUBFOLDER", "bin")
+
+    # Extract interested folders from environment if set
+    # This allows the build system to specify which folders to analyze
+    env_interested_folders = os.environ.get("XSIGMA_INTERESTED_FOLDERS", "")
+    if env_interested_folders:
+        # Parse comma-separated list and merge with command-line specified folders
+        env_folders = [f.strip() for f in env_interested_folders.split(",") if f.strip()]
+        if interested_folders:
+            interested_folders.extend(env_folders)
+        else:
+            interested_folders = env_folders
 
     # run cpp tests
     get_json_report(test_list, options, build_folder, test_subfolder)

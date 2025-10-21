@@ -64,32 +64,42 @@ def get_oss_shared_library(
         parent_folder = os.path.dirname(project_folder)
         build_path = os.path.join(parent_folder, build_folder)
 
-    # Look for lib directory
-    lib_dir = os.path.join(build_path, "lib")
-    if not os.path.isdir(lib_dir):
-        # If lib dir doesn't exist, return empty list
-        return []
-
     # Filter libraries based on platform
     libs = []
     system = platform.system()
 
-    for lib in os.listdir(lib_dir):
-        lib_path = os.path.join(lib_dir, lib)
-        # Only include files (not directories)
-        if not os.path.isfile(lib_path):
-            continue
+    # Look for shared libraries in multiple directories
+    # On Windows: look in both lib/ and bin/ directories
+    # On Unix: look in lib/ directory
+    search_dirs = []
 
-        # Filter by platform-specific extensions
-        if system == "Darwin":  # macOS
-            if lib.endswith(".dylib"):
-                libs.append(lib_path)
-        elif system == "Windows":
-            if lib.endswith(".dll"):
-                libs.append(lib_path)
-        else:  # Linux and others
-            if lib.endswith(".so"):
-                libs.append(lib_path)
+    lib_dir = os.path.join(build_path, "lib")
+    if os.path.isdir(lib_dir):
+        search_dirs.append(lib_dir)
+
+    # On Windows, also search in bin directory for DLLs
+    if system == "Windows":
+        bin_dir = os.path.join(build_path, "bin")
+        if os.path.isdir(bin_dir):
+            search_dirs.append(bin_dir)
+
+    for search_dir in search_dirs:
+        for lib in os.listdir(search_dir):
+            lib_path = os.path.join(search_dir, lib)
+            # Only include files (not directories)
+            if not os.path.isfile(lib_path):
+                continue
+
+            # Filter by platform-specific extensions
+            if system == "Darwin":  # macOS
+                if lib.endswith(".dylib"):
+                    libs.append(lib_path)
+            elif system == "Windows":
+                if lib.endswith(".dll"):
+                    libs.append(lib_path)
+            else:  # Linux and others
+                if lib.endswith(".so"):
+                    libs.append(lib_path)
 
     return libs
 
@@ -166,22 +176,43 @@ def detect_compiler_type() -> CompilerType | None:
     # check if user specifies the compiler type
     user_specify = os.environ.get("CXX", None)
     if user_specify:
-        if user_specify in ["clang", "clang++"]:
+        # Normalize the compiler name
+        compiler_lower = user_specify.lower()
+        if "clang" in compiler_lower:
             return CompilerType.CLANG
-        elif user_specify in ["gcc", "g++"]:
+        elif "gcc" in compiler_lower or "g++" in compiler_lower:
             return CompilerType.GCC
 
         raise RuntimeError(f"User specified compiler is not valid {user_specify}")
 
-    # auto detect
-    auto_detect_result = subprocess.check_output(
-        ["cc", "-v"], stderr=subprocess.STDOUT
-    ).decode("utf-8")
-    if "clang" in auto_detect_result:
+    # Check CC environment variable as fallback
+    cc_specify = os.environ.get("CC", None)
+    if cc_specify:
+        compiler_lower = cc_specify.lower()
+        if "clang" in compiler_lower:
+            return CompilerType.CLANG
+        elif "gcc" in compiler_lower:
+            return CompilerType.GCC
+
+    # auto detect (only on Unix-like systems)
+    import platform
+    if platform.system() != "Windows":
+        try:
+            auto_detect_result = subprocess.check_output(
+                ["cc", "-v"], stderr=subprocess.STDOUT
+            ).decode("utf-8")
+            if "clang" in auto_detect_result:
+                return CompilerType.CLANG
+            elif "gcc" in auto_detect_result:
+                return CompilerType.GCC
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            pass
+
+    # Default to Clang on Windows if no compiler is detected
+    if platform.system() == "Windows":
         return CompilerType.CLANG
-    elif "gcc" in auto_detect_result:
-        return CompilerType.GCC
-    raise RuntimeError(f"Auto detected compiler is not valid {auto_detect_result}")
+
+    raise RuntimeError("Could not detect compiler type. Please set CXX environment variable.")
 
 
 def clean_up_gcda() -> None:
