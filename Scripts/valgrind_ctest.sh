@@ -56,6 +56,85 @@ print_header() {
     echo -e "${CYAN}========================================${NC}"
 }
 
+# Extract XSigma-specific stack trace information from Valgrind logs
+# This function identifies function names and source locations from the xsigma namespace
+extract_xsigma_stack_trace() {
+    local log_file="$1"
+    local issue_type="$2"  # "definitely lost", "Invalid read", etc.
+
+    # Find the block containing the issue and extract stack trace
+    # Valgrind format: lines starting with "at 0x" or "by 0x" contain stack info
+    awk -v issue="$issue_type" '
+        BEGIN { in_block = 0; block_count = 0 }
+
+        # Start of a new block (marked by ==PID==)
+        /^==.*==/ && NF > 1 {
+            if (in_block && block_count > 0) {
+                # End of previous block
+                in_block = 0
+            }
+        }
+
+        # Look for the issue type
+        $0 ~ issue {
+            in_block = 1
+            block_count++
+            print "=== Issue Block " block_count " ==="
+            print $0
+            next
+        }
+
+        # Collect stack trace lines while in a block
+        in_block && /^==.*== *(at|by) 0x/ {
+            print $0
+        }
+
+        # Stop collecting when we hit a blank line or new section
+        in_block && /^==.*== *$/ {
+            in_block = 0
+        }
+    ' "$log_file"
+}
+
+# Parse stack trace line to extract XSigma function and source location
+# Input format: "==12345==    by 0x123456: xsigma::namespace::function() (file.cxx:123)"
+parse_stack_frame() {
+    local frame="$1"
+
+    # Extract the part after the address
+    local info="${frame#*: }"
+
+    # Check if this is an XSigma frame (contains xsigma:: or .cxx/.h file)
+    if [[ "$info" =~ xsigma:: ]] || [[ "$info" =~ \.(cxx|h|hpp|cc|cpp)\: ]]; then
+        # Extract function name (everything before the opening paren)
+        local func="${info%%(*}"
+
+        # Extract file and line number (inside parentheses)
+        local file_line="${info##*(}"
+        file_line="${file_line%)*}"
+
+        echo "  Function: $func"
+        echo "  Location: $file_line"
+    fi
+}
+
+# Extract all XSigma frames from a stack trace block
+extract_xsigma_frames() {
+    local log_file="$1"
+    local issue_type="$2"
+
+    # Get the stack trace for this issue
+    local stack_trace
+    stack_trace=$(extract_xsigma_stack_trace "$log_file" "$issue_type" | grep -E "at 0x|by 0x")
+
+    # Process each frame
+    while IFS= read -r frame; do
+        if [[ -n "$frame" ]]; then
+            parse_stack_frame "$frame"
+        fi
+    done <<< "$stack_trace"
+}
+
 # =============================================================================
 # Argument Validation
 # =============================================================================
@@ -129,7 +208,7 @@ run_valgrind_tests() {
     # Note: All Valgrind options are configured in CMake (valgrind.cmake)
     # The --output-on-failure flag ensures we see test output if something fails
     local ctest_exit_code=0
-    ctest -T memcheck --output-on-failure || ctest_exit_code=$?
+    ctest -T memcheck|| ctest_exit_code=$?
 
     return $ctest_exit_code
 }
@@ -166,17 +245,29 @@ generate_valgrind_report() {
         local total_fd_leaks=0
 
         # Count different types of errors
+        # Note: Valgrind logs can have two formats:
+        # 1. ERROR SUMMARY: N errors (when summary is present)
+        # 2. Individual loss records: "N bytes in M blocks are definitely lost"
+
+        # Try to get error count from ERROR SUMMARY first, then fall back to counting loss records
         total_errors=$(grep -h "ERROR SUMMARY:" $memcheck_logs 2>/dev/null | \
                       grep -oE "[0-9]+ errors" | grep -oE "[0-9]+" | \
-                      awk '{sum+=$1} END {print sum}' || echo "0")
+                      awk '{sum+=$1} END {print sum+0}' 2>/dev/null || echo "0")
+        total_errors=$(echo "$total_errors" | tr -d '\n' | xargs)
 
-        total_leaks=$(grep -h "definitely lost:" $memcheck_logs 2>/dev/null | \
-                     grep -oE "[0-9]+ bytes" | grep -oE "[0-9]+" | \
-                     awk '{sum+=$1} END {print sum}' || echo "0")
+        # Parse definitely lost bytes from loss records (format: "N bytes in M blocks are definitely lost")
+        total_leaks=$(grep -h "are definitely lost" $memcheck_logs 2>/dev/null | \
+                     awk '{sum+=$2} END {print sum+0}' 2>/dev/null || echo "0")
+        total_leaks=$(echo "$total_leaks" | tr -d '\n' | xargs)
 
-        total_invalid_access=$(grep -hc "Invalid read\|Invalid write" $memcheck_logs 2>/dev/null || echo "0")
-        total_uninitialized=$(grep -hc "Use of uninitialised value" $memcheck_logs 2>/dev/null || echo "0")
-        total_fd_leaks=$(grep -hc "Open file descriptor" $memcheck_logs 2>/dev/null || echo "0")
+        total_invalid_access=$(grep -hE "Invalid read|Invalid write" $memcheck_logs 2>/dev/null | wc -l)
+        total_invalid_access=$(echo "$total_invalid_access" | tr -d '\n' | xargs)
+
+        total_uninitialized=$(grep -h "Use of uninitialised value" $memcheck_logs 2>/dev/null | wc -l)
+        total_uninitialized=$(echo "$total_uninitialized" | tr -d '\n' | xargs)
+
+        total_fd_leaks=$(grep -h "Open file descriptor" $memcheck_logs 2>/dev/null | wc -l)
+        total_fd_leaks=$(echo "$total_fd_leaks" | tr -d '\n' | xargs)
 
         echo "Total Memory Errors:        $total_errors"
         echo "Total Bytes Leaked:         $total_leaks bytes"
@@ -191,19 +282,50 @@ generate_valgrind_report() {
         echo "MEMORY LEAKS ANALYSIS"
         echo "================================================================================"
 
-        if grep -q "definitely lost: [1-9]" $memcheck_logs 2>/dev/null; then
+        if grep -qE "are definitely lost" $memcheck_logs 2>/dev/null; then
             echo "Status: FOUND"
             echo ""
-            echo "Leak Details:"
-            echo "-------------"
-            grep -h "definitely lost:" $memcheck_logs 2>/dev/null | sort | uniq | while read line; do
-                echo "  $line"
+
+            # Count and display individual leaks
+            local leak_count=0
+            grep -h "are definitely lost" $memcheck_logs 2>/dev/null | while read leak_line; do
+                leak_count=$((leak_count + 1))
+
+                # Extract bytes and blocks from the leak line
+                # Format: "==12345== N bytes in M blocks are definitely lost in loss record X of Y"
+                local bytes=$(echo "$leak_line" | awk '{print $2}')
+                local blocks=$(echo "$leak_line" | awk '{print $5}')
+                local record=$(echo "$leak_line" | grep -oE "loss record [0-9]+" | awk '{print $3}')
+
+                echo "Leak #$leak_count: $bytes bytes in $blocks block(s)"
+
+                # Try to extract XSigma-specific stack trace information
+                # Look for the allocation site in the log
+                local alloc_site=$(grep -A 20 "loss record $record of" "$memcheck_logs" 2>/dev/null | \
+                                  grep -E "xsigma::" | head -1)
+
+                if [[ -n "$alloc_site" ]]; then
+                    # Extract function name (everything between xsigma:: and the opening paren)
+                    local func=$(echo "$alloc_site" | sed -n 's/.*\(xsigma::[^(]*\).*/\1/p')
+                    if [[ -n "$func" ]]; then
+                        echo "  Allocated by: $func"
+                    fi
+
+                    # Extract file and line number from the format: (filename.cxx:linenum)
+                    local file_line=$(echo "$alloc_site" | sed -n 's/.*(\([^)]*\)).*/\1/p')
+                    if [[ -n "$file_line" ]]; then
+                        echo "  Location: $file_line"
+                    fi
+                fi
+
+                echo ""
             done
-            echo ""
+
             echo "Leak Locations (with stack traces):"
             echo "-----------------------------------"
-            grep -B 10 "definitely lost: [1-9]" $memcheck_logs 2>/dev/null | \
-            grep -E "at 0x|by 0x|in |at " | head -50
+            # Show stack traces for definitely lost blocks
+            grep -B 5 "are definitely lost" $memcheck_logs 2>/dev/null | \
+            grep -E "at 0x|by 0x" | head -50
         else
             echo "Status: NONE DETECTED ✓"
         fi
@@ -218,15 +340,30 @@ generate_valgrind_report() {
         if grep -qE "Invalid (read|write)" $memcheck_logs 2>/dev/null; then
             echo "Status: FOUND"
             echo ""
+
+            # Count invalid accesses
+            local invalid_count=$(grep -hE "Invalid read|Invalid write" $memcheck_logs 2>/dev/null | wc -l)
+            echo "Total Invalid Memory Accesses: $invalid_count"
+            echo ""
+
             echo "Invalid Read/Write Errors:"
             echo "--------------------------"
             grep -h "Invalid read\|Invalid write" $memcheck_logs 2>/dev/null | \
             sort | uniq -c | sort -rn | head -20
             echo ""
-            echo "Locations:"
-            echo "----------"
-            grep -B 5 "Invalid read\|Invalid write" $memcheck_logs 2>/dev/null | \
-            grep -E "at 0x|by 0x|in |at " | head -30
+
+            echo "XSigma-Specific Locations:"
+            echo "-------------------------"
+            # Extract stack traces and filter for XSigma code
+            # Look both before and after the Invalid read/write line
+            grep -B 10 -A 10 "Invalid read\|Invalid write" $memcheck_logs 2>/dev/null | \
+            grep -E "xsigma::|\.cxx:|\.h:" | head -20
+
+            echo ""
+            echo "Full Stack Traces (first 30 frames):"
+            echo "-----------------------------------"
+            grep -B 5 -A 5 "Invalid read\|Invalid write" $memcheck_logs 2>/dev/null | \
+            grep -E "at 0x|by 0x" | head -30
         else
             echo "Status: NONE DETECTED ✓"
         fi
@@ -241,15 +378,23 @@ generate_valgrind_report() {
         if grep -q "Use of uninitialised value" $memcheck_logs 2>/dev/null; then
             echo "Status: FOUND"
             echo ""
-            echo "Uninitialized Value Errors:"
-            echo "---------------------------"
-            grep -h "Use of uninitialised value" $memcheck_logs 2>/dev/null | \
-            wc -l | xargs echo "Total occurrences:"
+
+            local uninit_count=$(grep -h "Use of uninitialised value" $memcheck_logs 2>/dev/null | wc -l)
+            echo "Total Uninitialized Value Errors: $uninit_count"
             echo ""
-            echo "Sample Locations:"
-            echo "-----------------"
-            grep -B 3 "Use of uninitialised value" $memcheck_logs 2>/dev/null | \
-            grep -E "at 0x|by 0x|in |at " | head -20
+
+            echo "XSigma-Specific Locations:"
+            echo "-------------------------"
+            # Extract stack traces and filter for XSigma code
+            # Look both before and after the Use of uninitialised value line
+            grep -B 10 -A 10 "Use of uninitialised value" $memcheck_logs 2>/dev/null | \
+            grep -E "xsigma::|\.cxx:|\.h:" | head -20
+
+            echo ""
+            echo "Sample Stack Traces (first 20 frames):"
+            echo "-------------------------------------"
+            grep -B 3 -A 3 "Use of uninitialised value" $memcheck_logs 2>/dev/null | \
+            grep -E "at 0x|by 0x" | head -20
         else
             echo "Status: NONE DETECTED ✓"
         fi
@@ -278,16 +423,58 @@ generate_valgrind_report() {
         echo "ERROR SUMMARY BY TEST"
         echo "================================================================================"
 
+        local tests_with_issues=0
         if [ -n "$memcheck_logs" ]; then
             for log_file in $memcheck_logs; do
                 local test_name=$(basename "$log_file" | sed 's/MemoryChecker\.\(.*\)\.log/\1/')
                 local error_count=$(grep -c "ERROR SUMMARY:" "$log_file" 2>/dev/null || echo "0")
-                if [ "$error_count" -gt 0 ]; then
+                # Trim whitespace and newlines from error_count
+                error_count=$(echo "$error_count" | tr -d '\n' | xargs)
+
+                # Check if this test has any issues
+                local has_issues=0
+                if [ -n "$error_count" ] && [ "$error_count" -gt 0 ]; then
+                    has_issues=1
+                fi
+
+                if grep -q "definitely lost: [1-9]" "$log_file" 2>/dev/null; then
+                    has_issues=1
+                fi
+
+                if grep -q "Invalid read\|Invalid write" "$log_file" 2>/dev/null; then
+                    has_issues=1
+                fi
+
+                if [ $has_issues -eq 1 ]; then
+                    tests_with_issues=$((tests_with_issues + 1))
                     echo "Test: $test_name"
-                    grep "ERROR SUMMARY:" "$log_file" 2>/dev/null | head -1
+
+                    # Show error summary if present
+                    if [ -n "$error_count" ] && [ "$error_count" -gt 0 ]; then
+                        grep "ERROR SUMMARY:" "$log_file" 2>/dev/null | head -1
+                    fi
+
+                    # Show memory leaks if present
+                    if grep -q "definitely lost: [1-9]" "$log_file" 2>/dev/null; then
+                        echo "  Memory Leaks:"
+                        grep "definitely lost:" "$log_file" 2>/dev/null | head -1 | sed 's/^/    /'
+                    fi
+
+                    # Show invalid access if present
+                    if grep -q "Invalid read\|Invalid write" "$log_file" 2>/dev/null; then
+                        echo "  Invalid Memory Access:"
+                        grep -c "Invalid read\|Invalid write" "$log_file" 2>/dev/null | xargs echo "    Count:"
+                    fi
+
                     echo ""
                 fi
             done
+
+            if [ $tests_with_issues -eq 0 ]; then
+                echo "All tests passed memory checks ✓"
+            else
+                echo "Total tests with issues: $tests_with_issues"
+            fi
         fi
 
         # =====================================================================
@@ -340,33 +527,34 @@ analyze_valgrind_results() {
     generate_valgrind_report "$build_dir" "$report_file" "$memcheck_logs"
 
     # Check for memory leaks (definitely lost)
-    if grep -q "definitely lost: [1-9]" $memcheck_logs 2>/dev/null; then
+    # Pattern: "N bytes in M blocks are definitely lost"
+    if grep -lE "are definitely lost" $memcheck_logs 2>/dev/null | grep -q .; then
         print_status "Memory leaks detected!" "ERROR"
         echo ""
         echo "=== Memory Leak Summary ==="
-        grep -B 2 -A 5 "definitely lost" $memcheck_logs | head -30
+        grep -h "are definitely lost" $memcheck_logs 2>/dev/null | head -30
         has_memory_issues=1
     else
         print_status "No memory leaks detected" "SUCCESS"
     fi
 
     # Check for memory errors (invalid reads/writes, use of uninitialized values, etc.)
-    if grep -qE "ERROR SUMMARY: [1-9][0-9]* errors" $memcheck_logs 2>/dev/null; then
+    if grep -l "ERROR SUMMARY: [1-9][0-9]* errors" $memcheck_logs 2>/dev/null | grep -q .; then
         print_status "Memory errors detected!" "ERROR"
         echo ""
         echo "=== Memory Error Summary ==="
-        grep "ERROR SUMMARY" $memcheck_logs
+        grep -h "ERROR SUMMARY" $memcheck_logs 2>/dev/null
         has_memory_issues=1
     else
         print_status "No memory errors detected" "SUCCESS"
     fi
 
     # Check for invalid memory access
-    if grep -qE "Invalid (read|write)" $memcheck_logs 2>/dev/null; then
+    if grep -lE "Invalid (read|write)" $memcheck_logs 2>/dev/null | grep -q .; then
         print_status "Invalid memory access detected!" "ERROR"
         echo ""
         echo "=== Invalid Memory Access ==="
-        grep -B 2 -A 3 "Invalid" $memcheck_logs | head -20
+        grep -h -B 2 -A 3 "Invalid" $memcheck_logs 2>/dev/null | head -20
         has_memory_issues=1
     fi
 
@@ -397,7 +585,14 @@ display_report_summary() {
     # Display key sections from the report
     if grep -q "EXECUTIVE SUMMARY" "$report_file"; then
         echo "=== EXECUTIVE SUMMARY ==="
-        sed -n '/^EXECUTIVE SUMMARY/,/^[A-Z]/p' "$report_file" | head -20
+        sed -n '/^EXECUTIVE SUMMARY/,/^ERROR SUMMARY BY TEST/p' "$report_file" | head -30
+        echo ""
+    fi
+
+    # Display error summary by test
+    if grep -q "ERROR SUMMARY BY TEST" "$report_file"; then
+        echo "=== TESTS WITH ISSUES ==="
+        sed -n '/^ERROR SUMMARY BY TEST/,/^OVERALL STATUS/p' "$report_file" | grep -v "^===" | head -50
         echo ""
     fi
 
