@@ -1,0 +1,17 @@
+
+[dev]
+pytest
+black
+ruff
+pylint
+build
+wheel
+
+[opt-einsum]
+opt-einsum>=3.3
+
+[optree]
+optree>=0.13.0
+
+[pyyaml]
+pyyaml

@@ -5,6 +5,7 @@ import subprocess
 from typing import IO, Optional
 
 from ..util.setting import SUMMARY_FOLDER_DIR, TestList, TestStatusType
+from .coverage_filters import is_interested_file
 from .html_report_generator import HtmlReportGenerator
 from ..oss.utils import get_xsigma_folder
 
@@ -20,20 +21,25 @@ def key_by_name(x: CoverageItem) -> str:
     return x[0]
 
 
-def is_intrested_file(file_path: str, interested_folders: list[str]) -> bool:
-    # Normalize path separators to forward slashes for consistent matching
-    normalized_path = file_path.replace("\\", "/")
+def is_interested_file_wrapper(file_path: str, interested_folders: list[str]) -> bool:
+    """Check if file should be included in coverage report.
 
-    if "cuda" in normalized_path:
-        return False
-    if "aten/gen_aten" in normalized_path or "aten/aten_" in normalized_path:
-        return False
-    for folder in interested_folders:
-        # Normalize folder path to forward slashes
-        normalized_folder = folder.replace("\\", "/")
-        if normalized_folder in normalized_path:
-            return True
-    return False
+    Wrapper around the shared is_interested_file function for backward
+    compatibility with the old typo'd name.
+
+    Args:
+        file_path: Path to file to check
+        interested_folders: List of folders to include
+
+    Returns:
+        True if file should be included, False otherwise
+    """
+    return is_interested_file(file_path, interested_folders, platform=None)
+
+
+# Deprecated: Use is_interested_file from coverage_filters module instead
+# Kept for backward compatibility with typo'd name
+is_intrested_file = is_interested_file_wrapper
 
 
 def is_this_type_of_tests(target_name: str, test_set_by_type: set[str]) -> bool:

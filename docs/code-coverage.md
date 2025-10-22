@@ -289,15 +289,114 @@ void platform_specific() { /* LCOV_EXCL_LINE */
 2. Add LLVM tools to PATH
 3. Specify tool paths in CMake: `-DLLVM_PROFDATA=/path/to/llvm-profdata`
 
+## Code Coverage Tools Architecture
+
+The XSigma code coverage system is implemented in `Tools/code_coverage/` with the following components:
+
+### Project Structure
+
+```
+Tools/code_coverage/
+├── package/
+│   ├── tool/              # Core coverage tools
+│   │   ├── clang_coverage.py      # LLVM/Clang coverage implementation
+│   │   ├── gcc_coverage.py        # GCC coverage implementation
+│   │   ├── coverage_filters.py    # Shared file filtering logic
+│   │   ├── summarize_jsons.py     # JSON parsing and summarization
+│   │   ├── print_report.py        # HTML report generation
+│   │   └── utils.py               # Utility functions
+│   ├── oss/
+│   │   └── utils.py               # OSS platform utilities
+│   └── util/
+│       └── setting.py             # Configuration and enums
+├── tests/                 # Comprehensive test suite
+│   ├── unit/             # Unit tests (110+ tests)
+│   ├── integration/      # Integration tests
+│   └── fixtures/         # Test data and mocks
+└── scripts/              # Standalone scripts
+```
+
+### Platform Support
+
+- **Windows**: Uses LLVM/Clang with OpenCppCoverage or native LLVM tools
+- **Linux**: Uses GCC or Clang with native LLVM tools
+- **macOS**: Uses Clang with native LLVM tools
+
+### Key Features
+
+1. **Cross-Platform Compatibility**: Works on Windows, Linux, and macOS
+2. **Error Handling**: Uses return values instead of exceptions (XSigma standard)
+3. **File Filtering**: Automatically excludes test code, build artifacts, and third-party libraries
+4. **Multiple Report Formats**: HTML, JSON, and terminal output
+5. **Comprehensive Testing**: 110+ tests with >90% code coverage
+
+### Customizing HTML Reports
+
+The HTML report layout can be customized by modifying:
+- `Tools/code_coverage/package/tool/print_report.py` - Report generation logic
+- CSS styling in the generated HTML files
+
+### Testing the Coverage Tools
+
+Run the comprehensive test suite:
+
+```bash
+# Run all tests
+pytest Tools/code_coverage/tests/ -v
+
+# Run specific test category
+pytest Tools/code_coverage/tests/unit/ -v
+pytest Tools/code_coverage/tests/integration/ -v
+
+# Generate coverage report for the tools themselves
+pytest Tools/code_coverage/tests/ --cov=Tools/code_coverage/package --cov-report=html
+```
+
+### Architecture and Design Decisions
+
+**Error Handling**: All functions return boolean or status codes instead of raising exceptions, following XSigma coding standards.
+
+**File Filtering**: Common filtering logic is centralized in `coverage_filters.py` to avoid duplication and ensure consistency across different report generators.
+
+**JSON Streaming**: JSON files are parsed line-by-line to handle large coverage files efficiently without loading entire files into memory.
+
+**Platform Abstraction**: Platform-specific logic is isolated in separate modules (`clang_coverage.py`, `gcc_coverage.py`) while shared logic is in common modules.
+
+## Troubleshooting
+
+### Coverage Tools Issues
+
+**Problem**: Coverage report shows 0% coverage
+
+**Solutions**:
+1. Verify tests were executed: Check for `.profraw` or `.gcda` files in build directory
+2. Check file filtering: Ensure your source files aren't being excluded by filters
+3. Verify LLVM tools: Run `llvm-profdata --version` and `llvm-cov --version`
+
+**Problem**: "File not found" errors in coverage report
+
+**Solutions**:
+1. Verify source file paths are correct
+2. Check that build directory structure matches source structure
+3. Ensure coverage data was collected from the correct build
+
+**Problem**: Tests fail during coverage collection
+
+**Solutions**:
+1. Run tests without coverage first: `pytest Tests/`
+2. Check for permission errors on coverage data files
+3. Verify disk space for coverage data files
+
 ## Additional Documentation
 
 For detailed coverage configuration and advanced usage, see:
 - `Cmake/tools/COVERAGE_USAGE.md` - Detailed CMake coverage configuration
 - `Scripts/README_COVERAGE.md` - Coverage script documentation
+- `Tools/code_coverage/README.md` - Coverage tools documentation
 
 ## Related Documentation
 
 - [Build Configuration](build-configuration.md) - Build system configuration
-- [Sanitizers](sanitizers.md) - Memory debugging and analysis
+- [Sanitizers](sanitizer.md) - Memory debugging and analysis
 - [Static Analysis](static-analysis.md) - IWYU and Cppcheck tools
 

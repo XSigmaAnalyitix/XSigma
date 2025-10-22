@@ -17,6 +17,7 @@ from ..util.utils import (
     create_folder,
     get_raw_profiles_folder,
     get_test_name_from_whole_path,
+    print_error,
     print_log,
     print_time,
     related_to_test_list,
@@ -57,6 +58,18 @@ def build_llvm_cov_filter_args() -> list[str]:
 def create_corresponding_folder(
     cur_path: str, prefix_cur_path: str, dir_list: list[str], new_base_folder: str
 ) -> None:
+    """Create corresponding folder structure in a new base folder.
+
+    Mirrors the directory hierarchy from the current path into a new base
+    folder. Used to create matching folder structures for merged profiles
+    and JSON exports.
+
+    Args:
+        cur_path: Current path being processed
+        prefix_cur_path: Base path to calculate relative path from
+        dir_list: List of directory names to create
+        new_base_folder: Base folder where new directories should be created
+    """
     for dir_name in dir_list:
         relative_path = convert_to_relative_path(
             cur_path, prefix_cur_path
@@ -80,7 +93,8 @@ def run_target(
     if test_type == TestType.PY and platform_type == TestPlatform.OSS:
         from ..oss.utils import run_oss_python_test
 
-        run_oss_python_test(binary_file, build_folder, test_subfolder)
+        if not run_oss_python_test(binary_file, build_folder, test_subfolder):
+            print_error(f"Python test failed: {binary_file}")
     else:
         run_cpp_test(binary_file)
 
@@ -113,11 +127,22 @@ def export_target(
     binary_file: str,
     shared_library_list: list[str],
     platform_type: TestPlatform,
-) -> None:
+) -> bool:
+    """Export coverage data to JSON format.
+
+    Args:
+        merged_file: Path to merged profile file
+        json_file: Path to output JSON file
+        binary_file: Path to binary file with coverage data
+        shared_library_list: List of shared library paths
+        platform_type: Platform type (OSS or FBCODE)
+
+    Returns:
+        True if export succeeded, False otherwise
+    """
     if binary_file is None:
-        raise Exception(  # noqa: TRY002
-            f"{merged_file} doesn't have corresponding binary!"
-        )  # noqa: TRY002
+        print_error(f"{merged_file} doesn't have corresponding binary!")
+        return False
     print_log("start to export: ", merged_file)
     # run export
     llvm_tool_path = get_tool_path_by_platform(platform_type)
@@ -145,9 +170,17 @@ def export_target(
     # Run command and redirect output to json file
     # Suppress stderr to avoid "functions have mismatched data" warnings from llvm-cov
     # These warnings are harmless and occur due to LTO and compiler optimizations
-    with open(json_file, "w") as f:
-        with open(os.devnull, "w") as devnull:
-            subprocess.check_call(cmd_args, stdout=f, stderr=devnull)
+    try:
+        with open(json_file, "w") as f:
+            with open(os.devnull, "w") as devnull:
+                subprocess.check_call(cmd_args, stdout=f, stderr=devnull)
+        return True
+    except subprocess.CalledProcessError as e:
+        print_error(f"Failed to export coverage data: {e}")
+        return False
+    except (IOError, OSError) as e:
+        print_error(f"Failed to write JSON file {json_file}: {e}")
+        return False
 
 
 def merge(test_list: TestList, platform_type: TestPlatform) -> None:
@@ -239,13 +272,14 @@ def export(
                     shared_library_list = get_oss_shared_library(
                         build_folder, test_subfolder
                     )
-                export_target(
+                if not export_target(
                     merged_file,
                     json_file,
                     binary_file,
                     shared_library_list,
                     platform_type,
-                )
+                ):
+                    print_error(f"Failed to export {merged_file}, skipping...")
     print_time("export take time: ", start_time, summary_time=True)
 
 
