@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import os
+import sys
 from enum import Enum
 from pathlib import Path
 
 
 # <project folder>
-HOME_DIR = os.environ["HOME"]
+def get_home_dir() -> str:
+    """Get the home directory cross-platform."""
+    return os.path.expanduser("~")
+
+
+HOME_DIR = get_home_dir()
 TOOLS_FOLDER = str(Path(__file__).resolve().parents[2])
 
 
@@ -20,17 +26,17 @@ def get_profile_dir() -> str:
     coverage_dir = os.environ.get("XSIGMA_COVERAGE_DIR")
     if coverage_dir:
         return coverage_dir
-    return os.path.join(TOOLS_FOLDER, "profile")
+    return str(Path(TOOLS_FOLDER) / "profile")
 
 
 # <profile folder>
 PROFILE_DIR = get_profile_dir()
-JSON_FOLDER_BASE_DIR = os.path.join(PROFILE_DIR, "json")
-MERGED_FOLDER_BASE_DIR = os.path.join(PROFILE_DIR, "merged")
-SUMMARY_FOLDER_DIR = os.path.join(PROFILE_DIR, "summary")
+JSON_FOLDER_BASE_DIR = str(Path(PROFILE_DIR) / "json")
+MERGED_FOLDER_BASE_DIR = str(Path(PROFILE_DIR) / "merged")
+SUMMARY_FOLDER_DIR = str(Path(PROFILE_DIR) / "summary")
 
 # <log path>
-LOG_DIR = os.path.join(PROFILE_DIR, "log")
+LOG_DIR = str(Path(PROFILE_DIR) / "log")
 
 
 # test type, DO NOT change the name, it should be consistent with [buck query --output-attribute] result

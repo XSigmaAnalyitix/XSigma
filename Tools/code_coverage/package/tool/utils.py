@@ -5,6 +5,11 @@ from ..util.utils import print_error
 
 
 def run_cpp_test(binary_file: str) -> None:
+    """Run a C++ test binary and capture output.
+
+    Args:
+        binary_file: Path to the C++ test binary to execute
+    """
     # cpp test binary
     import os
     import platform
@@ -12,10 +17,8 @@ def run_cpp_test(binary_file: str) -> None:
 
     # Convert path to absolute path and normalize for the platform
     binary_file = os.path.abspath(binary_file)
-
-    # On Windows, ensure the path uses backslashes
-    if platform.system() == "Windows":
-        binary_file = binary_file.replace("/", "\\")
+    # Use os.path.normpath for proper platform-specific path handling
+    binary_file = os.path.normpath(binary_file)
 
     # Verify the file exists and is executable (on Unix systems)
     if not os.path.isfile(binary_file):

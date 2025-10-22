@@ -7,7 +7,7 @@ import time
 # gcc is only used in oss
 from ..oss.utils import get_gcda_files, run_oss_python_test
 from ..util.setting import JSON_FOLDER_BASE_DIR, TestType
-from ..util.utils import print_log, print_time
+from ..util.utils import print_error, print_log, print_time
 from .utils import run_cpp_test
 
 
@@ -30,7 +30,8 @@ def run_target(
     if test_type == TestType.CPP:
         run_cpp_test(binary_file)
     else:
-        run_oss_python_test(binary_file, build_folder, test_subfolder)
+        if not run_oss_python_test(binary_file, build_folder, test_subfolder):
+            print_error(f"Python test failed: {binary_file}")
 
     print_time(" time: ", start_time)
 

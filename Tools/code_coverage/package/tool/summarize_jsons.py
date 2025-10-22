@@ -19,6 +19,7 @@ from ..util.utils import (
     print_time,
     related_to_test_list,
 )
+from .coverage_filters import is_interested_file
 from .parser.gcov_coverage_parser import GcovCoverageParser
 from .parser.llvm_coverage_parser import LlvmCoverageParser
 from .print_report import (
@@ -63,69 +64,67 @@ def transform_file_name(
     return normalized_path
 
 
-def is_intrested_file(
-    file_path: str, interested_folders: list[str], platform: TestPlatform
+def is_interested_file_wrapper(
+    file_path: str, interested_folders: list[str], platform: TestPlatform | None = None
 ) -> bool:
-    # Normalize path separators to forward slashes for consistent matching
-    normalized_path = file_path.replace("\\", "/")
+    """Check if file should be included in coverage report.
 
-    # Patterns to exclude from coverage (test code, build artifacts, etc.)
-    ignored_patterns = [
-        "cuda",
-        "aten/gen_aten",
-        "aten/aten_",
-        "build/",
-        "Testing",  # Exclude XSigma Testing folder
-        "/test/",   # Exclude test directories
-        "/tests/",  # Exclude tests directories
-    ]
-    if any(pattern in normalized_path for pattern in ignored_patterns):
-        return False
+    Wrapper around the shared is_interested_file function for backward
+    compatibility with the old typo'd name.
 
-    # ignore files that are not belong to xsigma
-    if platform == TestPlatform.OSS:
-        # pyrefly: ignore  # import-error
-        from package.oss.utils import get_xsigma_folder
+    Args:
+        file_path: Path to file to check
+        interested_folders: List of folders to include
+        platform: Platform type (OSS or FBCODE), optional
 
-        xsigma_folder = get_xsigma_folder().replace("\\", "/")
-        if not normalized_path.startswith(xsigma_folder):
-            return False
-    # if user has specified interested folder
-    if interested_folders:
-        for folder in interested_folders:
-            # Normalize folder path to forward slashes
-            normalized_folder = folder.replace("\\", "/")
-            intersted_folder_path = normalized_folder if normalized_folder.endswith("/") else f"{normalized_folder}/"
-            if intersted_folder_path in normalized_path:
-                return True
-        return False
-    else:
-        return True
+    Returns:
+        True if file should be included, False otherwise
+    """
+    return is_interested_file(file_path, interested_folders, platform)
+
+
+# Deprecated: Use is_interested_file from coverage_filters module instead
+# Kept for backward compatibility with typo'd name
+is_intrested_file = is_interested_file_wrapper
 
 
 def get_json_obj(json_file: str) -> tuple[Any, int]:
-    """
-    Sometimes at the start of file llvm/gcov will complains "fail to find coverage data",
-    then we need to skip these lines
-      -- success read: 0      -  this json file have the full json coverage information
-      -- partial success: 1   -  this json file starts with some error prompt, but still have the coverage information
-      -- fail to read: 2      -  this json file doesn't have any coverage information
+    """Parse JSON file, handling partial reads and errors.
+
+    Sometimes at the start of file llvm/gcov will complain "fail to find
+    coverage data", so we need to skip these lines.
+
+    Args:
+        json_file: Path to JSON file to parse
+
+    Returns:
+        Tuple of (json_object, status_code) where status_code is:
+        - 0: success read (full JSON coverage information)
+        - 1: partial success (starts with error prompt but has coverage info)
+        - 2: fail to read (no coverage information)
     """
     read_status = -1
-    with open(json_file) as f:
-        lines = f.readlines()
-        for line in lines:
-            try:
-                json_obj = json.loads(line)
-            except json.JSONDecodeError:
-                read_status = 1
-                continue
-            else:
-                if read_status == -1:
-                    # not meet jsonDecoderError before, return success
-                    read_status = 0
-                return (json_obj, read_status)
-    return None, 2
+    try:
+        with open(json_file) as f:
+            # Stream line-by-line instead of loading entire file into memory
+            # This is more efficient for large JSON files
+            for line in f:
+                if not line.strip():
+                    continue
+                try:
+                    json_obj = json.loads(line)
+                except json.JSONDecodeError:
+                    read_status = 1
+                    continue
+                else:
+                    if read_status == -1:
+                        # No JSON decode error encountered before, return success
+                        read_status = 0
+                    return (json_obj, read_status)
+        return None, 2
+    except (IOError, OSError) as e:
+        print_error(f"Failed to read JSON file {json_file}: {e}")
+        return None, 2
 
 
 def parse_json(json_file: str, platform: TestPlatform) -> list[CoverageRecord]:

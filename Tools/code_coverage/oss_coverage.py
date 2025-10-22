@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import os
+import sys
 import time
+from pathlib import Path
 
 # Set coverage output directory before importing settings
 # This allows coverage reports to be generated in the build folder
@@ -9,10 +11,9 @@ import time
 if not os.environ.get("XSIGMA_COVERAGE_DIR"):
     build_folder = os.environ.get("XSIGMA_BUILD_FOLDER", "build")
     if build_folder:
-        coverage_dir = os.path.join(
-            os.path.dirname(os.environ.get("XSIGMA_FOLDER", ".")),
-            build_folder,
-            "coverage_report",
+        xsigma_folder = os.environ.get("XSIGMA_FOLDER", ".")
+        coverage_dir = str(
+            Path(xsigma_folder).parent / build_folder / "coverage_report"
         )
         os.environ["XSIGMA_COVERAGE_DIR"] = coverage_dir
 
@@ -36,7 +37,9 @@ def report_coverage() -> None:
     env_interested_folders = os.environ.get("XSIGMA_INTERESTED_FOLDERS", "")
     if env_interested_folders:
         # Parse comma-separated list and merge with command-line specified folders
-        env_folders = [f.strip() for f in env_interested_folders.split(",") if f.strip()]
+        env_folders = [
+            f.strip() for f in env_interested_folders.split(",") if f.strip()
+        ]
         if interested_folders:
             interested_folders.extend(env_folders)
         else:

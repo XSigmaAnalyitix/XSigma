@@ -1,3 +1,50 @@
+Metadata-Version: 2.4
+Name: xsigma
+Version: 0.0.0
+Summary: XSigma: High-Performance Quantitative Library
+Author-email: XSigma <support@xsigma.co.uk>
+License-Expression: GPL-3.0-or-later
+Project-URL: Homepage, https://xsigma.co.uk
+Project-URL: Repository, https://https://github.com/XSigmaAnalyitix/XSigma
+Project-URL: Documentation, https://xsigma.co.uk/docs
+Project-URL: Issue Tracker, https://github.com/XSigmaAnalyitix/XSigma/issues
+Project-URL: Forum, https://discuss.xsigma.co.uk
+Keywords: xsigma,quantitative,library
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Mathematics
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Software Development
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Programming Language :: C++
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+Requires-Dist: pylint; extra == "dev"
+Requires-Dist: build; extra == "dev"
+Requires-Dist: wheel; extra == "dev"
+Provides-Extra: optree
+Requires-Dist: optree>=0.13.0; extra == "optree"
+Provides-Extra: opt-einsum
+Requires-Dist: opt-einsum>=3.3; extra == "opt-einsum"
+Provides-Extra: pyyaml
+Requires-Dist: pyyaml; extra == "pyyaml"
+Dynamic: license-file
+
 # XSigma
 
 A high-performance C++ library with a modern CMake build system providing cross-platform compatibility, advanced optimization, and flexible dependency management.

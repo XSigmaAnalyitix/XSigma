@@ -1,0 +1,8 @@
+LICENSE
+README.md
+pyproject.toml
+xsigma.egg-info/PKG-INFO
+xsigma.egg-info/SOURCES.txt
+xsigma.egg-info/dependency_links.txt
+xsigma.egg-info/requires.txt
+xsigma.egg-info/top_level.txt
