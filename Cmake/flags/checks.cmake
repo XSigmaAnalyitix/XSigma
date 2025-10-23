@@ -64,6 +64,9 @@ set(XSIGMA_MIN_APPLE_CLANG_VERSION "9.0")
 set(XSIGMA_MIN_MSVC_VERSION "19.14")  # VS 2017 15.7
 set(XSIGMA_MIN_INTEL_VERSION "18.0")
 
+set(XSIGMA_COMPILER_ID ${CMAKE_CXX_COMPILER_ID} CACHE INTERNAL "Compiler ID")
+mark_as_advanced(XSIGMA_COMPILER_ID)
+
 # GCC version check
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${XSIGMA_MIN_GCC_VERSION})
@@ -71,6 +74,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     endif()
     set(XSIGMA_COMPILER_GCC TRUE CACHE INTERNAL "GCC compiler detected")
     message(STATUS "XSigma: GCC ${CMAKE_CXX_COMPILER_VERSION} validated")
+    set(XSIGMA_COMPILER_ID "gcc" CACHE INTERNAL "Compiler ID")
 
 # Clang version check
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
@@ -79,6 +83,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     endif()
     set(XSIGMA_COMPILER_CLANG TRUE CACHE INTERNAL "Clang compiler detected")
     message(STATUS "XSigma: Clang ${CMAKE_CXX_COMPILER_VERSION} validated")
+    set(XSIGMA_COMPILER_ID "clang" CACHE INTERNAL "Compiler ID")
 
 # Apple Clang version check
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
@@ -87,6 +92,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
     endif()
     set(XSIGMA_COMPILER_APPLE_CLANG TRUE CACHE INTERNAL "Apple Clang compiler detected")
     message(STATUS "XSigma: Apple Clang ${CMAKE_CXX_COMPILER_VERSION} validated")
+    set(XSIGMA_COMPILER_ID "clang" CACHE INTERNAL "Compiler ID")
 
 # MSVC version check
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
@@ -95,6 +101,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     endif()
     set(XSIGMA_COMPILER_MSVC TRUE CACHE INTERNAL "MSVC compiler detected")
     message(STATUS "XSigma: MSVC ${CMAKE_CXX_COMPILER_VERSION} validated")
+    set(XSIGMA_COMPILER_ID "msvc" CACHE INTERNAL "Compiler ID")
 
 # Intel C++ version check
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
@@ -103,6 +110,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
     endif()
     set(XSIGMA_COMPILER_INTEL TRUE CACHE INTERNAL "Intel compiler detected")
     message(STATUS "XSigma: Intel C++ ${CMAKE_CXX_COMPILER_VERSION} validated")
+    set(XSIGMA_COMPILER_ID "intel" CACHE INTERNAL "Compiler ID")
 
 else()
     message(WARNING "XSigma: Unknown compiler '${CMAKE_CXX_COMPILER_ID}'. Build may fail.")

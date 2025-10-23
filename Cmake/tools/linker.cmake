@@ -12,6 +12,9 @@
 # Include guard to prevent multiple inclusions
 include_guard(GLOBAL)
 
+if(XSIGMA_ENABLE_COVERAGE)
+    return()
+endif()
 # Determine which linker to use based on platform and compiler
 set(XSIGMA_LINKER_CHOICE "default" CACHE STRING "Linker to use: default, lld, mold, gold, lld-link")
 mark_as_advanced(XSIGMA_LINKER_CHOICE)

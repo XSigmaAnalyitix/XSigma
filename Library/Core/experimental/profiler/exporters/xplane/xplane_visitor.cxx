@@ -81,7 +81,8 @@ std::string x_stat_visitor::to_string() const
         return std::string(plane_->get_stat_metadata(stat_->ref_value())->name());
     case xstat::value_case_type::VALUE_NOT_SET:
         return "";
-    }
+    } 
+    return "";
 }
 
 std::string_view x_stat_visitor::str_or_ref_value() const
