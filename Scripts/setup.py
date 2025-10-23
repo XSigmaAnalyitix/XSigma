@@ -14,7 +14,6 @@ import time
 
 # Import helper modules
 from helpers import cppcheck as cppcheck_helper
-from helpers import coverage as coverage_helper
 from helpers import build as build_helper
 from helpers import config as config_helper
 from helpers import test as test_helper
@@ -1160,11 +1159,7 @@ class XsigmaConfiguration:
             self.__value["verbosity"],
             self.__shell_flag()
         )
-
-
-
-
-
+        
     def coverage(self, source_path, build_path):
         """Run code coverage analysis.
 
@@ -1195,68 +1190,6 @@ class XsigmaConfiguration:
         else:
             print_status("Coverage collection failed", "ERROR")
             return 1
-
-    def _detect_compiler_from_build(self, build_path: str) -> str:
-        """Detect compiler from CMake cache in build directory.
-
-        Args:
-            build_path: Path to build directory
-
-        Returns:
-            Compiler type: "clang", "msvc", "gcc", or None if not detected
-        """
-        cmake_cache_path = os.path.join(build_path, "CMakeCache.txt")
-        if not os.path.exists(cmake_cache_path):
-            return "auto"
-
-        try:
-            with open(cmake_cache_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-
-                # Check for MSVC first (Visual Studio sets XSIGMA_COMPILER_MSVC)
-                if "XSIGMA_COMPILER_MSVC:INTERNAL=TRUE" in content:
-                    return "msvc"
-
-                # Check for CMAKE_CXX_COMPILER
-                for line in content.split('\n'):
-                    if line.startswith("CMAKE_CXX_COMPILER:"):
-                        compiler_path = line.split("=", 1)[1].strip()
-                        compiler_name = os.path.basename(compiler_path).lower()
-
-                        if "clang" in compiler_name:
-                            return "clang"
-                        elif "cl" in compiler_name or "msvc" in compiler_name:
-                            return "msvc"
-                        elif "gcc" in compiler_name or "g++" in compiler_name:
-                            return "gcc"
-        except Exception:
-            pass
-
-        return "auto"
-
-    def analyze(self, source_path, build_path):
-        """
-        Run coverage analysis to identify files below coverage threshold.
-
-        This method runs the analyze_coverage.py script which:
-        - Auto-detects LLVM tools (llvm-cov, llvm-profdata)
-        - Finds coverage data in the build directory
-        - Analyzes coverage for Core library files
-        - Reports files below 95% coverage threshold
-
-        Can be used standalone or after coverage collection:
-        - python setup.py analyze (standalone, auto-detects build dir)
-        - python setup.py ninja.clang.coverage.build.analyze (after coverage build)
-        """
-        if self.__value["analyze"] != "analyze":
-            return 0
-
-        print_status("Running coverage analysis...", "INFO")
-
-        verbose = bool(self.__value.get("verbosity"))
-        return coverage_helper.run_analyze_coverage(source_path, build_path, verbose)
-
-
 
     def __shell_flag(self):
         return self.__value["system"] == "Windows"
@@ -1347,8 +1280,6 @@ def main():
         print("     setup.py config.build.test.xcode.release.python")
         print("  5. Build with coverage (analysis runs automatically):")
         print("     setup.py ninja.clang.config.build.test.coverage")
-        print("  6. Re-analyze existing coverage data:")
-        print("     setup.py analyze")
         print("\nBuild system generators:")
         print("  ninja     - Ninja build system (fast, cross-platform)")
         print("  cninja    - CodeBlocks + Ninja (IDE integration)")
@@ -1360,7 +1291,6 @@ def main():
         print("  build     - Build the project")
         print("  test      - Run tests")
         print("  coverage  - Enable coverage (automatically runs analysis)")
-        print("  analyze   - Re-analyze existing coverage data (standalone)")
         print("\nSpecial flags:")
         print("  spell                      Enable spell checking with automatic corrections (WARNING: modifies source files)")
         print("  fix                        Enable clang-tidy fix-errors and fix options")
@@ -1396,9 +1326,6 @@ def main():
         print("\nCoverage analysis examples:")
         print("  # Build with coverage (analysis runs automatically)")
         print("  python setup.py ninja.clang.config.build.test.coverage")
-        print("")
-        print("  # Re-analyze existing coverage data without rebuilding")
-        print("  python setup.py analyze")
         print("")
         print("  # Re-analyze with verbose output")
         print("  python setup.py analyze.v")
@@ -1450,18 +1377,13 @@ def main():
 
             coverage_start = time.perf_counter()          
             compilation_calc.coverage(source_path, build_path)
-            coverage_end = time.perf_counter()            
-            
-            analyze_start = time.perf_counter()            
-            compilation_calc.analyze(source_path, build_path)
             end = time.perf_counter()          
 
             print_status(f"Config time: {config_end - start:.4f} seconds", "INFO")
             print_status(f"Build time: {build_end - build_start:.4f} seconds", "INFO")
             print_status(f"Cppcheck time: {cppcheck_end - cppcheck_start:.4f} seconds", "INFO")
             print_status(f"Test time: {test_end - test_start:.4f} seconds", "INFO")  
-            print_status(f"Coverage time: {coverage_end - coverage_start:.4f} seconds", "INFO")  
-            print_status(f"Analyze time: {end - analyze_start:.4f} seconds", "INFO")  
+            print_status(f"Coverage time: {end - coverage_start:.4f} seconds", "INFO") 
 
             print_status(f"Total time: {end - start:.4f} seconds", "INFO")            
             
