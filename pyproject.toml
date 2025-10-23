@@ -290,9 +290,9 @@ keep-runtime-typing = true
     "PYI021", # docstring-in-stub
     "PYI053", # string-or-bytes-too-long
 ]
-#"XSigma/**" = [
-#    "PGH004"
-#]
+"Tools/linter/adapters/**" = [
+    "LOG015"
+]
 
 [tool.codespell]
-ignore-words = "tools/linter/dictionary.txt"
+ignore-words = "Tools/linter/dictionary.txt"

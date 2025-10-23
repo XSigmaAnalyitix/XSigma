@@ -12,7 +12,7 @@ import sys
 import token
 from enum import Enum
 from pathlib import Path
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 
 _PARENT = Path(__file__).parent.absolute()

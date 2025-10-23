@@ -123,34 +123,37 @@ Comprehensive sanitizer support for memory debugging and analysis with all moder
 
 ### Code Coverage
 
-Generate code coverage reports to measure test effectiveness and identify untested code paths using LLVM coverage tools (llvm-profdata and llvm-cov).
+Generate code coverage reports to measure test effectiveness and identify untested code paths using multiple compilers (Clang, GCC, MSVC).
 
 **Key features:**
-- Line, function, and region coverage tracking
-- HTML, text, and JSON report formats
+- Multi-compiler support (Clang, GCC, MSVC)
+- HTML reports with line-by-line coverage highlighting
+- JSON summaries for programmatic access
+- Unified coverage runner for all compilers
 - Automatic exclusion of third-party code
 - Integrated with setup.py for easy use
 - Cross-platform support (Windows, Linux, macOS)
 
 #### Quick Start
 
-**Generate coverage locally:**
+**Generate coverage with Clang:**
 ```bash
-# Run tests with coverage collection
 cd Scripts
-python setup.py ninja.clang.python.build.coverage
-
-# View HTML report
-# On Windows: start ../build_ninja_python/coverage_report/index.html
-# On Linux/macOS: open ../build_ninja_python/coverage_report/index.html
+python setup.py ninja.clang.debug.coverage.lto
+# View HTML report: build_ninja_coverage_lto/coverage_report/html/index.html
 ```
 
-**Using setup.py directly:**
+**Generate coverage with MSVC:**
 ```bash
 cd Scripts
-python setup.py coverage.collect    # Collect coverage data
-python setup.py coverage.report     # Generate HTML report
-python setup.py coverage.summary    # Print coverage summary
+python setup.py vs22.debug.coverage.lto
+# View HTML report: build_vs22_coverage_lto/coverage_report/html/index.html
+```
+
+**Run coverage for all available compilers:**
+```bash
+cd Tools/coverage
+python run.py --source-folder ../../Library --build-folder ../../build_ninja --all
 ```
 
 #### Report Formats
@@ -167,7 +170,7 @@ Coverage reports are automatically generated in CI/CD pipelines and can be:
 - Used to enforce minimum coverage thresholds
 - Tracked over time to monitor code quality trends
 
-📖 **[Read more: Code Coverage Guide](docs/code-coverage.md)**
+📖 **[Read more: Code Coverage Guide](COVERAGE.md)** - Comprehensive guide with multi-compiler support, unified runner, and detailed usage examples
 
 ---
 
@@ -272,7 +275,7 @@ Full cross-platform compatibility across Windows, Linux, and macOS with platform
 - **[Third-Party Dependencies](docs/third-party-dependencies.md)** - Dependency management and integration
 - **[Vectorization](docs/vectorization.md)** - CPU SIMD optimization (SSE, AVX, AVX2, AVX-512)
 - **[Sanitizers](docs/sanitizers.md)** - Memory debugging and analysis tools
-- **[Code Coverage](docs/code-coverage.md)** - Coverage analysis and reporting
+- **[Code Coverage](COVERAGE.md)** - Multi-compiler coverage analysis and reporting
 - **[Static Analysis](docs/static-analysis.md)** - IWYU and Cppcheck tools
 - **[Compiler Caching](docs/cache.md)** - Compiler cache types, installation, and configuration
 - **[Spell Checking](#spell-checking)** - Codespell configuration and usage

@@ -22,7 +22,7 @@ import os
 import re
 from enum import Enum
 from pathlib import Path
-from typing import Any, NamedTuple, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, NamedTuple, Optional
 
 from yaml import load
 

@@ -3,11 +3,11 @@ from __future__ import annotations
 import token
 from functools import cached_property
 from pathlib import Path
-from tokenize import generate_tokens, TokenInfo
+from tokenize import TokenInfo, generate_tokens
 from typing import TYPE_CHECKING
 from typing_extensions import Self
 
-from . import EMPTY_TOKENS, NO_TOKEN, ParseError, ROOT
+from . import EMPTY_TOKENS, NO_TOKEN, ROOT, ParseError
 from .blocks import blocks
 from .sets import LineWithSets
 

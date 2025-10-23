@@ -11,7 +11,7 @@ import json
 from collections import defaultdict
 from enum import Enum
 from pathlib import Path
-from typing import Any, NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 from yaml import dump, load
 
