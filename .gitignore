@@ -6,6 +6,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.log
+*.txt
 /CPUinfo.log
 /Heavy Function Performance
 /build*
@@ -31,3 +32,5 @@ Tools/code_coverage/package/tool/parser/__pycache__/coverage_record.cpython-312.
 Tools/code_coverage/package/util/__pycache__/utils.cpython-312.pyc
 Tools/code_coverage/package/util/__pycache__/utils.cpython-312.pyc
 Tools/code_coverage/package/util/__pycache__/utils.cpython-312.pyc
+Tools/code_coverage/profile/log/log.txt
+*/Heavy Function Performance

@@ -198,7 +198,10 @@ if __name__ == "__main__":
 
     config = json.load(open(args.config_json))
     config = config[args.linter]
-
+    if HOST_PLATFORM == "Windows":
+        logging.info("Windows detected. Skipping binary download and using system clang-format.")
+        sys.exit(0)
+        
     # Allow processor specific binaries for platform (namely Intel and M1 binaries for MacOS)
     host_platform = HOST_PLATFORM if HOST_PLATFORM in config else HOST_PLATFORM_ARCH
     # If the host platform is not in platform_to_hash, it is unsupported.

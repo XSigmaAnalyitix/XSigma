@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import token
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 from . import EMPTY_TOKENS, ParseError
 from .block import Block

@@ -18,7 +18,7 @@ def _detect_compiler_from_cmake_cache(build_path: str) -> Optional[str]:
         build_path: Path to the build directory
 
     Returns:
-        Compiler type: "clang", "gcc", or None if not detected
+        Compiler type: "clang", "gcc", "msvc", or None if not detected
     """
     cmake_cache_path = os.path.join(build_path, "CMakeCache.txt")
     if not os.path.exists(cmake_cache_path):
@@ -36,6 +36,8 @@ def _detect_compiler_from_cmake_cache(build_path: str) -> Optional[str]:
                         return "clang"
                     elif "gcc" in compiler_name or "g++" in compiler_name:
                         return "gcc"
+                    elif "cl" in compiler_name or "msvc" in compiler_name:
+                        return "msvc"
     except Exception:
         pass
 
@@ -90,6 +92,8 @@ def run_oss_coverage(source_path: str, build_path: str, cmake_cxx_compiler: str)
             detected_compiler = "clang"
         elif "gcc" in cmake_cxx_compiler.lower():
             detected_compiler = "gcc"
+        elif "cl" in cmake_cxx_compiler.lower() or "msvc" in cmake_cxx_compiler.lower():
+            detected_compiler = "msvc"
 
     # If not detected from cmake_cxx_compiler, try to read from CMakeCache.txt
     if not detected_compiler:
@@ -118,6 +122,9 @@ def run_oss_coverage(source_path: str, build_path: str, cmake_cxx_compiler: str)
         elif detected_compiler == "gcc":
             env["CXX"] = "g++"
             env["CC"] = "gcc"
+        elif detected_compiler == "msvc":
+            env["CXX"] = "cl"
+            env["CC"] = "cl"
         else:
             # Default to gcc for unknown compilers (safer default)
             env["CXX"] = "g++"

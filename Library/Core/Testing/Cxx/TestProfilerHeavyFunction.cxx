@@ -382,7 +382,7 @@ XSIGMATEST(ProfilerHeavyFunction, ComprehensiveComputationalProfiling)
 
     // Print profiling report to console
     std::cout << "\n=== Heavy Function Performance Analysis ===\n";
-    session.export_report("Heavy Function Performance");
+    session.export_report("Heavy Function Performance.log");
 
     std::cout << "\nAll computational workloads profiled successfully:\n";
     std::cout << "  - Matrix multiplication (100x100)\n";

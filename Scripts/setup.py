@@ -20,6 +20,10 @@ from helpers import config as config_helper
 from helpers import test as test_helper
 from helpers import sanitizer as sanitizer_helper
 
+# Import coverage runner
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "Tools", "coverage"))
+from run_coverage import get_coverage
+
 # Initialize colorama for cross-platform colored output
 colorama.init()
 
@@ -1162,25 +1166,73 @@ class XsigmaConfiguration:
 
 
     def coverage(self, source_path, build_path):
+        """Run code coverage analysis.
+
+        Args:
+            source_path: Path to source directory (project root).
+            build_path: Path to build directory.
+
+        Returns:
+            Exit code (0 for success, non-zero for failure).
+        """
         if self.__value["build"] != "build" or not self.__xsigma_flags.is_coverage():
             return 0
 
         print_status("Starting code coverage collection and report generation...", "INFO")
 
-        # Try to use the oss_coverage.py tool first
-        oss_coverage_result = coverage_helper.run_oss_coverage(
-            source_path,
-            build_path,
-            self.__value["cmake_cxx_compiler"]
+        coverage_result = get_coverage(
+            compiler="auto",
+            build_folder=build_path,
+            source_folder=os.path.join(source_path, "Library"),
+            output_folder=os.path.join(build_path, "coverage_report"),
+            summary=True,
+            xsigma_root=source_path
         )
-
-        if oss_coverage_result == 0:
-            print_status("Coverage collection completed successfully using oss_coverage.py", "SUCCESS")
-            # Add coverage results to summary
+        if coverage_result == 0:
+            print_status("Coverage collection completed successfully", "SUCCESS")
             self.summary_reporter.add_coverage_report(build_path, 0)
             return 0
+        else:
+            print_status("Coverage collection failed", "ERROR")
+            return 1
 
+    def _detect_compiler_from_build(self, build_path: str) -> str:
+        """Detect compiler from CMake cache in build directory.
 
+        Args:
+            build_path: Path to build directory
+
+        Returns:
+            Compiler type: "clang", "msvc", "gcc", or None if not detected
+        """
+        cmake_cache_path = os.path.join(build_path, "CMakeCache.txt")
+        if not os.path.exists(cmake_cache_path):
+            return "auto"
+
+        try:
+            with open(cmake_cache_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+                # Check for MSVC first (Visual Studio sets XSIGMA_COMPILER_MSVC)
+                if "XSIGMA_COMPILER_MSVC:INTERNAL=TRUE" in content:
+                    return "msvc"
+
+                # Check for CMAKE_CXX_COMPILER
+                for line in content.split('\n'):
+                    if line.startswith("CMAKE_CXX_COMPILER:"):
+                        compiler_path = line.split("=", 1)[1].strip()
+                        compiler_name = os.path.basename(compiler_path).lower()
+
+                        if "clang" in compiler_name:
+                            return "clang"
+                        elif "cl" in compiler_name or "msvc" in compiler_name:
+                            return "msvc"
+                        elif "gcc" in compiler_name or "g++" in compiler_name:
+                            return "gcc"
+        except Exception:
+            pass
+
+        return "auto"
 
     def analyze(self, source_path, build_path):
         """

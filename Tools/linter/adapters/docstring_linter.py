@@ -5,7 +5,7 @@ import json
 import sys
 from functools import cached_property
 from pathlib import Path
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 
 _FILE = Path(__file__).absolute()
