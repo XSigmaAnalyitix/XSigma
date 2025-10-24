@@ -29,8 +29,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     message("Enabling Clang code coverage ${CMAKE_CXX_FLAGS}")
   else()
     message(
-      ERROR
-      "Code coverage for compiler ${CMAKE_CXX_COMPILER_ID} is unsupported")
+      WARNING
+      " Code coverage for compiler ${CMAKE_CXX_COMPILER_ID} is unsupported natively. ")
   endif()
 endif()
 

@@ -43,6 +43,8 @@ CONFIG = {
 
 # ============================================================================
 # END CONFIGURATION
+
+
 # ============================================================================
 
 
@@ -133,6 +135,9 @@ def discover_test_executables(build_dir: Path) -> List[Path]:
     exe_ext = config["exe_extension"]
 
     search_dirs = [
+        build_dir / "bin",
+        build_dir / "bin/Debug",
+        build_dir / "bin/Release",
         build_dir / "bin",
         build_dir / "lib",
         build_dir / "tests",
