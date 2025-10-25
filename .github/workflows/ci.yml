@@ -352,36 +352,82 @@ jobs:
         echo ""
         echo "Tools verification complete"
 
-    # ===== Build Configuration and Execution Using setup.py =====
+    # ===== Build Configuration and Execution Using CMake =====
     - name: Configure and Build (Unix/macOS)
       if: runner.os != 'Windows'
-      working-directory: Scripts
       run: |
-        BUILD_TYPE_LOWER=$(echo "${{ matrix.build_type }}" | tr '[:upper:]' '[:lower:]')
-        LOGGING_LOWER=$(echo "${{ matrix.logging_backend }}" | tr '[:upper:]' '[:lower:]')
-        TBB_FLAG=""
-        if [ "${{ matrix.tbb_enabled }}" = "ON" ]; then
-          TBB_FLAG="tbb"
+        # Determine compiler paths
+        if [ "${{ matrix.compiler_cxx }}" = "clang" ]; then
+          CC_COMPILER="clang"
+          CXX_COMPILER="clang++"
+        else
+          CC_COMPILER="${{ matrix.compiler_cxx }}"
+          CXX_COMPILER="g++"
         fi
-        python setup.py ninja ${{ matrix.compiler_cxx }} \
-          $BUILD_TYPE_LOWER \
-          test \
-          cxx${{ matrix.cxx_std }} \
-          $LOGGING_LOWER \
-          $TBB_FLAG
+
+        # Determine build directory name
+        BUILD_DIR="build_ninja"
+        if [ "${{ matrix.tbb_enabled }}" = "ON" ]; then
+          BUILD_DIR="${BUILD_DIR}_tbb"
+        fi
+        if [ "${{ matrix.cxx_std }}" != "17" ]; then
+          BUILD_DIR="${BUILD_DIR}_cxx${{ matrix.cxx_std }}"
+        fi
+
+        # Configure CMake
+        cmake -B "$BUILD_DIR" \
+          -S . \
+          -G Ninja \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DCMAKE_C_COMPILER=$CC_COMPILER \
+          -DCMAKE_CXX_COMPILER=$CXX_COMPILER \
+          -DCMAKE_CXX_STANDARD=${{ matrix.cxx_std }} \
+          -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} \
+          -DXSIGMA_BUILD_TESTING=ON \
+          -DXSIGMA_ENABLE_GTEST=ON \
+          -DXSIGMA_ENABLE_TBB=${{ matrix.tbb_enabled }} \
+          -DXSIGMA_ENABLE_CUDA=${{ matrix.cuda_enabled }} \
+          -DXSIGMA_ENABLE_LTO=OFF
+
+        # Build
+        cmake --build "$BUILD_DIR" -j 2
+
+        # Run tests
+        ctest --test-dir "$BUILD_DIR" --output-on-failure -j 2
 
     - name: Configure and Build (Windows)
       if: runner.os == 'Windows'
-      working-directory: Scripts
       shell: pwsh
       run: |
-        $buildType = "${{ matrix.build_type }}".ToLower()
-        $logging = "${{ matrix.logging_backend }}".ToLower()
-        python setup.py ninja clang `
-          $buildType `
-          test `
-          cxx${{ matrix.cxx_std }} `
-          $logging
+        # Determine build directory name
+        $buildDir = "build_ninja"
+        if ("${{ matrix.tbb_enabled }}" -eq "ON") {
+          $buildDir = "$buildDir`_tbb"
+        }
+        if ("${{ matrix.cxx_std }}" -ne "17") {
+          $buildDir = "$buildDir`_cxx${{ matrix.cxx_std }}"
+        }
+
+        # Configure CMake
+        cmake -B "$buildDir" `
+          -S . `
+          -G Ninja `
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+          -DCMAKE_C_COMPILER=clang `
+          -DCMAKE_CXX_COMPILER=clang++ `
+          -DCMAKE_CXX_STANDARD=${{ matrix.cxx_std }} `
+          -DXSIGMA_LOGGING_BACKEND=${{ matrix.logging_backend }} `
+          -DXSIGMA_BUILD_TESTING=ON `
+          -DXSIGMA_ENABLE_GTEST=ON `
+          -DXSIGMA_ENABLE_TBB=${{ matrix.tbb_enabled }} `
+          -DXSIGMA_ENABLE_CUDA=${{ matrix.cuda_enabled }} `
+          -DXSIGMA_ENABLE_LTO=OFF
+
+        # Build
+        cmake --build "$buildDir" -j 2
+
+        # Run tests
+        ctest --test-dir "$buildDir" --output-on-failure -j 2
 
     - name: Verify Build Configuration
       working-directory: ${{ github.workspace }}/build
@@ -1309,8 +1355,31 @@ jobs:
     - name: Run coverage build
       shell: bash
       run: |
+        # Configure CMake with coverage enabled
+        cmake -B build_ninja_coverage \
+          -S . \
+          -G Ninja \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=clang++ \
+          -DCMAKE_CXX_STANDARD=17 \
+          -DXSIGMA_LOGGING_BACKEND=NATIVE \
+          -DXSIGMA_BUILD_TESTING=ON \
+          -DXSIGMA_ENABLE_GTEST=ON \
+          -DXSIGMA_ENABLE_COVERAGE=ON \
+          -DXSIGMA_ENABLE_TBB=OFF \
+          -DXSIGMA_ENABLE_CUDA=OFF \
+          -DXSIGMA_ENABLE_LTO=OFF
+
+        # Build
+        cmake --build build_ninja_coverage -j 2
+
+        # Run tests
+        ctest --test-dir build_ninja_coverage --output-on-failure -j 2
+
+        # Run coverage analysis (Python script)
         cd Scripts
-        python setup.py config.build.ninja.clang.TEST.coverage
+        python run_coverage.py
 
     - name: Verify JSON report generation
       shell: bash
@@ -1356,7 +1425,7 @@ jobs:
         fi
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         files: ./build_ninja_coverage/coverage_report/coverage.lcov
         flags: clang-coverage
