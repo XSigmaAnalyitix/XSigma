@@ -2,9 +2,11 @@
 """MSVC-specific code coverage generation.
 
 Handles coverage generation for MSVC compiler using OpenCppCoverage tool.
+Generates both HTML and JSON coverage reports.
 """
 
 import subprocess
+import json
 from pathlib import Path
 import logging
 
@@ -16,6 +18,113 @@ from common import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _generate_json_from_html(html_dir: Path, output_dir: Path) -> None:
+    """Generate JSON coverage report from OpenCppCoverage HTML output.
+
+    Args:
+        html_dir: Directory containing OpenCppCoverage HTML reports.
+        output_dir: Directory where JSON report will be saved.
+    """
+    try:
+        summary = {
+            "metadata": {
+                "format_version": "2.0",
+                "generator": "xsigma_coverage_tool",
+                "schema": "cobertura-compatible"
+            },
+            "summary": {
+                "line_coverage": {
+                    "total": 0,
+                    "covered": 0,
+                    "uncovered": 0,
+                    "percent": 0.0
+                }
+            },
+            "files": []
+        }
+
+        # Parse HTML files to extract coverage data
+        # OpenCppCoverage generates index.html with coverage summary
+        index_file = html_dir / "index.html"
+        if not index_file.exists():
+            print(f"Warning: OpenCppCoverage index.html not found at {index_file}")
+            return
+
+        # Extract coverage data from HTML
+        with open(index_file, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+
+            # Look for coverage percentage in HTML
+            # OpenCppCoverage format: look for coverage metrics
+            import re
+            # Pattern to find coverage percentages
+            coverage_pattern = r'(\d+(?:\.\d+)?)\s*%'
+            matches = re.findall(coverage_pattern, content)
+
+            if matches:
+                # Try to extract overall coverage
+                try:
+                    overall_coverage = float(matches[0])
+                    summary["summary"]["line_coverage"]["percent"] = round(overall_coverage, 2)
+                except (ValueError, IndexError):
+                    pass
+
+        # Look for individual file reports
+        html_files = list(html_dir.glob("*.html"))
+        for html_file in html_files:
+            if html_file.name == "index.html":
+                continue
+
+            try:
+                with open(html_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    file_content = f.read()
+
+                    # Extract file path and coverage info
+                    file_data = {
+                        "file": html_file.stem,
+                        "line_coverage": {
+                            "total": 0,
+                            "covered": 0,
+                            "uncovered": 0,
+                            "percent": 0.0
+                        }
+                    }
+
+                    # Try to extract coverage percentage from file
+                    import re
+                    coverage_match = re.search(r'(\d+(?:\.\d+)?)\s*%', file_content)
+                    if coverage_match:
+                        try:
+                            file_coverage = float(coverage_match.group(1))
+                            file_data["line_coverage"]["percent"] = round(file_coverage, 2)
+                        except ValueError:
+                            pass
+
+                    summary["files"].append(file_data)
+
+            except Exception as e:
+                logger.warning(f"Failed to parse {html_file}: {e}")
+
+        # Save JSON
+        json_file = output_dir / "coverage_summary.json"
+        with open(json_file, 'w', encoding='utf-8') as f:
+            json.dump(summary, f, indent=2)
+        print(f"JSON coverage report saved to: {json_file}")
+
+        # Generate HTML from JSON using the new html_report package
+        try:
+            from html_report import JsonHtmlGenerator
+            json_html_dir = output_dir / "html_from_json"
+            generator = JsonHtmlGenerator(json_html_dir)
+            index_file = generator.generate_from_dict(summary)
+            print(f"HTML report generated from JSON at: {index_file}")
+        except Exception as e:
+            print(f"Warning: Failed to generate HTML from JSON: {e}")
+
+    except Exception as e:
+        print(f"Warning: Failed to generate JSON from HTML: {e}")
 
 
 def generate_msvc_coverage(build_dir: Path, modules: list[str],
@@ -136,6 +245,10 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
     if not html_files and not raw_files:
         print("\n⚠ Warning: No coverage output generated!")
         raise RuntimeError("Coverage generation produced no output")
+
+    # Generate JSON coverage report
+    print("\nGenerating JSON coverage report...")
+    _generate_json_from_html(html_dir, coverage_dir)
 
     if failed_tests:
         print(f"\n{len(failed_tests)} test(s) had issues:")

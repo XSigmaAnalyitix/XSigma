@@ -18,7 +18,6 @@ from typing import List, Optional
 from gcc_coverage import generate_lcov_coverage as gcc_generate_coverage
 from clang_coverage import generate_llvm_coverage as clang_generate_coverage
 from msvc_coverage import generate_msvc_coverage as msvc_generate_coverage
-from html_report_generator import HtmlReportGenerator
 
 # Import common utilities
 from common import (
