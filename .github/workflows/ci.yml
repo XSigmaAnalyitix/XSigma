@@ -1257,6 +1257,103 @@ jobs:
         sccache --show-stats || echo "Sccache stats unavailable"
 
   # ============================================================================
+  # Code Coverage Testing - Clang
+  # ============================================================================
+  clang-coverage-tests:
+    name: Clang Coverage Tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "Ubuntu Clang Coverage - C++17"
+            os: ubuntu-latest
+            build_type: Release
+            cxx_std: 17
+            logging_backend: NATIVE
+            tbb_enabled: OFF
+            cuda_enabled: OFF
+            compiler_c: clang
+            compiler_cxx: clang
+            generator: Ninja
+            cache_path: ~/.cache
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        bash .github/workflows/install/install-deps-ubuntu.sh --with-tbb=OFF --with-cuda=OFF
+
+    - name: Install Clang
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang llvm
+
+    - name: Verify Clang installation
+      shell: bash
+      run: |
+        clang --version
+        llvm-cov --version
+
+    - name: Run coverage build
+      shell: bash
+      run: |
+        cd Scripts
+        python setup.py config.build.ninja.clang.TEST.coverage
+
+    - name: Verify JSON report generation
+      shell: bash
+      run: |
+        if [ ! -f "build_ninja_coverage/coverage_report/coverage_summary.json" ]; then
+          echo "Error: JSON coverage report not generated"
+          exit 1
+        fi
+        echo "✓ JSON coverage report generated successfully"
+
+    - name: Verify HTML report generation
+      shell: bash
+      run: |
+        if [ ! -f "build_ninja_coverage/coverage_report/html/index.html" ]; then
+          echo "Error: HTML coverage report not generated"
+          exit 1
+        fi
+        echo "✓ HTML coverage report generated successfully"
+
+    - name: Display coverage metrics
+      shell: bash
+      run: |
+        python -c "
+        import json
+        with open('build_ninja_coverage/coverage_report/coverage_summary.json') as f:
+            data = json.load(f)
+            line_cov = data['summary']['line_coverage']
+            func_cov = data['summary']['function_coverage']
+            print('=== Coverage Metrics ===')
+            print(f'Line Coverage: {line_cov[\"covered\"]}/{line_cov[\"total\"]} ({line_cov[\"percent\"]}%)')
+            print(f'Function Coverage: {func_cov[\"covered\"]}/{func_cov[\"total\"]} ({func_cov[\"percent\"]}%)')
+            print(f'Files Analyzed: {len(data[\"files\"])}')
+        "
+
+    - name: Upload coverage artifacts
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: clang-coverage-reports
+        path: build_ninja_coverage/coverage_report/
+        retention-days: 30
+
+  # ============================================================================
   # CI Success Summary
   # ============================================================================
   ci-success:
@@ -1270,6 +1367,7 @@ jobs:
       - benchmark-tests
       - sccache-baseline-tests
       - sccache-enabled-tests
+      - clang-coverage-tests
     runs-on: ubuntu-latest
     if: always()
 
@@ -1284,9 +1382,7 @@ jobs:
         echo "Benchmark Tests: ${{ needs.benchmark-tests.result }}"
         echo "Sccache Baseline Tests: ${{ needs.sccache-baseline-tests.result }}"
         echo "Sccache Enabled Tests: ${{ needs.sccache-enabled-tests.result }}"
-        echo ""
-        echo "Note: Code quality and coverage testing have been removed from this pipeline"
-        echo "      to streamline CI execution time and focus on essential functionality tests."
+        echo "Clang Coverage Tests: ${{ needs.clang-coverage-tests.result }}"
         echo ""
 
         # Check if any required job failed
@@ -1315,6 +1411,10 @@ jobs:
         fi
         if [ "${{ needs.sccache-enabled-tests.result }}" != "success" ]; then
           echo "ERROR: Sccache enabled tests failed"
+          exit 1
+        fi
+        if [ "${{ needs.clang-coverage-tests.result }}" != "success" ]; then
+          echo "ERROR: Clang coverage tests failed"
           exit 1
         fi
 
