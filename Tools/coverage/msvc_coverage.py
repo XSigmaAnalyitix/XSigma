@@ -162,31 +162,46 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
     if not opencpp_path:
         raise RuntimeError("OpenCppCoverage not found. Please install it.")
 
+    print(f"OpenCppCoverage found at: {opencpp_path}")
+
     # Discover test executables
-    print("Discovering test executables...")
+    print("\nDiscovering test executables...")
     test_executables = discover_test_executables(build_dir)
 
     if not test_executables:
         print("Warning: No test executables found")
+        print(f"Searched in: {build_dir}")
+        print("Expected locations:")
+        print(f"  - {build_dir / 'bin'}")
+        print(f"  - {build_dir / 'bin/Debug'}")
+        print(f"  - {build_dir / 'bin/Release'}")
+        print(f"  - {build_dir / 'lib'}")
+        print(f"  - {build_dir / 'tests'}")
         return
 
-    print(f"Found {len(test_executables)} test executable(s)")
+    print(f"Found {len(test_executables)} test executable(s):")
+    for exe in test_executables:
+        print(f"  - {exe.name} ({exe.stat().st_size} bytes)")
 
     # Run coverage for each test executable
-    print("Running coverage analysis...")
+    print("\nRunning coverage analysis...")
     print(f"Analyzing coverage for: {source_folder}")
+    print(f"OpenCppCoverage path: {opencpp_path}")
 
     failed_tests = []
     successful_tests = 0
 
     for test_exe in test_executables:
         test_name = test_exe.stem
+        separator = "=" * 60
+        print(f"\n{separator}")
         print(f"Running coverage for: {test_name}")
+        print(f"Executable: {test_exe}")
+        print(separator)
 
         # Build OpenCppCoverage command
         cov_cmd = [
             str(opencpp_path),
-            "--quiet",
         ]
 
         # Add HTML export
@@ -209,22 +224,52 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
         cov_cmd.append("--")
         cov_cmd.append(str(test_exe))
 
+        print(f"Command: {' '.join(cov_cmd)}\n")
+
         try:
+            # First, verify the test executable runs without coverage
+            print("Verifying test executable runs...")
+            verify_result = subprocess.run(
+                [str(test_exe)],
+                cwd=str(test_exe.parent),
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False
+            )
+
+            if verify_result.returncode != 0:
+                print(f"⚠ Warning: Test executable returned non-zero exit code: {verify_result.returncode}")
+                if verify_result.stderr:
+                    print(f"  Test stderr: {verify_result.stderr[:200]}")
+            else:
+                print("✓ Test executable runs successfully")
+
+            # Now run with coverage
             result = subprocess.run(
                 cov_cmd,
                 cwd=build_dir,
                 capture_output=True,
                 text=True,
-                check=False
+                check=False,
+                timeout=60
             )
+
+            # Print output for debugging
+            if result.stdout:
+                print(f"Coverage tool output:\n{result.stdout}")
+
             if result.returncode == 0:
                 print(f"✓ Coverage generated for: {test_name}")
                 successful_tests += 1
             else:
-                print(f"✗ Coverage failed for: {test_name}")
+                print(f"✗ Coverage failed for: {test_name} (exit code: {result.returncode})")
                 if result.stderr:
                     print(f"  Error: {result.stderr}")
                 failed_tests.append(test_name)
+        except subprocess.TimeoutExpired:
+            print(f"✗ Coverage timed out for: {test_name}")
+            failed_tests.append(test_name)
         except Exception as e:
             print(f"✗ Exception running coverage for {test_name}: {e}")
             failed_tests.append(test_name)
@@ -233,9 +278,10 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
     html_files = list(html_dir.glob("**/*.html"))
     raw_files = list(raw_dir.glob("*.cov"))
 
-    print(f"\n{'='*60}")
-    print(f"Coverage Report Summary")
-    print(f"{'='*60}")
+    separator = "=" * 60
+    print(f"\n{separator}")
+    print("Coverage Report Summary")
+    print(separator)
     print(f"Tests processed: {successful_tests}/{len(test_executables)}")
     print(f"HTML files generated: {len(html_files)}")
     print(f"Raw coverage files: {len(raw_files)}")

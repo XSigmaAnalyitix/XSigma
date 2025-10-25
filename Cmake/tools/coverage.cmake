@@ -23,14 +23,24 @@ set(CMAKE_BUILD_TYPE "Debug")
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     string(APPEND CMAKE_C_FLAGS " --coverage -g -O0  -fprofile-arcs -ftest-coverage")
     string(APPEND CMAKE_CXX_FLAGS " --coverage -g -O0  -fprofile-arcs -ftest-coverage")
+    message(STATUS "Enabling GCC code coverage")
   elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
     string(APPEND CMAKE_C_FLAGS " -g -O0  -fprofile-instr-generate -fcoverage-mapping")
     string(APPEND CMAKE_CXX_FLAGS " -g -O0  -fprofile-instr-generate -fcoverage-mapping")
-    message("Enabling Clang code coverage ${CMAKE_CXX_FLAGS}")
+    message(STATUS "Enabling Clang code coverage")
+  elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    # For MSVC with OpenCppCoverage, we need debug information
+    # OpenCppCoverage instruments binaries at runtime, so we just need debug symbols
+    string(APPEND CMAKE_C_FLAGS " /Zi /Od")
+    string(APPEND CMAKE_CXX_FLAGS " /Zi /Od")
+    # Ensure debug info is included in the linker output
+    string(APPEND CMAKE_EXE_LINKER_FLAGS " /DEBUG")
+    string(APPEND CMAKE_SHARED_LINKER_FLAGS " /DEBUG")
+    message(STATUS "Enabling MSVC code coverage (OpenCppCoverage mode)")
   else()
     message(
       WARNING
-      " Code coverage for compiler ${CMAKE_CXX_COMPILER_ID} is unsupported natively. ")
+      "Code coverage for compiler ${CMAKE_CXX_COMPILER_ID} is unsupported natively.")
   endif()
 endif()
 
