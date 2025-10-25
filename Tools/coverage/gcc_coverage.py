@@ -221,6 +221,7 @@ def generate_lcov_coverage(build_dir: Path, modules: List[str],
     # Generate HTML report
     genhtml_cmd = [
         "genhtml",
+        #"--css-file", str(Path(__file__).parent / "html_report" / "custom.css"),
         str(coverage_filtered),
         "--output-directory", str(coverage_report_dir),
         "--title", "Code Coverage Report",
