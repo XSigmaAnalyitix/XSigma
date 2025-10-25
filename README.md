@@ -136,32 +136,89 @@ Generate code coverage reports to measure test effectiveness and identify untest
 
 #### Quick Start
 
-**Generate coverage with Clang:**
+**Generate coverage with Clang (using setup.py):**
 ```bash
 cd Scripts
-python setup.py ninja.clang.debug.coverage.lto
-# View HTML report: build_ninja_coverage_lto/coverage_report/html/index.html
+python setup.py ninja.clang.debug.coverage
+# View HTML report: ../build_ninja_coverage/coverage_report/html/index.html
 ```
 
-**Generate coverage with MSVC:**
+**Generate coverage with MSVC (using setup.py):**
 ```bash
 cd Scripts
-python setup.py vs22.debug.coverage.lto
-# View HTML report: build_vs22_coverage_lto/coverage_report/html/index.html
+python setup.py vs22.debug.coverage
+# View HTML report: ../build_vs22_coverage/coverage_report/html/index.html
 ```
 
-**Run coverage for all available compilers:**
+**Generate coverage with GCC (using setup.py):**
+```bash
+cd Scripts
+python setup.py ninja.gcc.debug.coverage
+# View HTML report: ../build_ninja_coverage/coverage_report/html/index.html
+```
+
+#### Running Coverage Directly
+
+For more control over coverage generation, use the `run_coverage.py` script directly:
+
+**Basic usage:**
 ```bash
 cd Tools/coverage
-python run.py --source-folder ../../Library --build-folder ../../build_ninja --all
+python run_coverage.py --build=../../build_ninja
+```
+
+**With custom source folder:**
+```bash
+cd Tools/coverage
+python run_coverage.py --build=../../build_ninja --filter=Library
+```
+
+**With verbose output:**
+```bash
+cd Tools/coverage
+python run_coverage.py --build=../../build_ninja --verbose
 ```
 
 #### Report Formats
 
-The coverage tools support multiple output formats:
+The coverage tools generate multiple output formats:
+
 - **HTML** - Interactive visual reports with source code highlighting
+  - Location: `<build_dir>/coverage_report/html/index.html`
+  - Includes line-by-line coverage visualization
+  - Supports navigation between files and coverage statistics
+
 - **JSON** - Machine-readable format for CI/CD integration
-- **Terminal** - Summary statistics printed to console
+  - Location: `<build_dir>/coverage_report/coverage_summary.json`
+  - Contains overall coverage metrics and per-file statistics
+  - Compatible with Codecov and other coverage services
+
+- **LCOV** - Standard coverage format
+  - Location: `<build_dir>/coverage_report/coverage.lcov`
+  - Used by Codecov and other coverage tracking services
+  - Can be processed by lcov tools for additional analysis
+
+#### Expected Output
+
+When coverage generation completes successfully, you should see:
+
+```
+=== Coverage Metrics ===
+Line Coverage: 1234/5678 (21.73%)
+Function Coverage: 89/120 (74.17%)
+Files Analyzed: 45
+```
+
+The coverage report directory structure:
+```
+build_ninja_coverage/coverage_report/
+├── html/                          # HTML reports
+│   ├── index.html                # Main coverage report
+│   └── [source files].html       # Per-file coverage
+├── coverage_summary.json         # JSON summary
+├── coverage.lcov                 # LCOV format
+└── raw/                          # Raw coverage data (MSVC only)
+```
 
 #### CI/CD Integration
 
@@ -169,6 +226,12 @@ Coverage reports are automatically generated in CI/CD pipelines and can be:
 - Uploaded to coverage tracking services (Codecov, Coveralls)
 - Used to enforce minimum coverage thresholds
 - Tracked over time to monitor code quality trends
+
+**Codecov Integration:**
+The CI/CD pipeline automatically uploads coverage reports to Codecov. To enable this:
+1. Set up a Codecov account at https://codecov.io
+2. Add your repository to Codecov
+3. Set the `CODECOV_TOKEN` secret in your GitHub repository settings (optional for public repos)
 
 📖 **[Read more: Code Coverage Guide](COVERAGE.md)** - Comprehensive guide with multi-compiler support, unified runner, and detailed usage examples
 

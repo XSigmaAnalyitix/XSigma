@@ -265,10 +265,61 @@ python -m json.tool build_ninja_coverage/coverage_report/coverage_summary.json
 
 ### Issue: Low coverage percentage
 
-**Solution**: 
+**Solution**:
 1. Ensure all test suites are running
 2. Check that coverage flags are applied to all source files
 3. Verify test execution completed successfully
+
+### Issue: MSVC/OpenCppCoverage generates empty report
+
+**Symptoms**:
+- Coverage report generated but contains no data
+- HTML report shows 0% coverage
+- No coverage data collected from test executables
+
+**Root Causes**:
+1. Test executables not built with debug information
+2. OpenCppCoverage not finding instrumented binaries
+3. Test executables not running successfully
+4. Source paths not correctly specified
+
+**Solution**:
+
+1. **Verify debug information is included**:
+   ```bash
+   # Check that binaries have debug symbols
+   dumpbin /headers build_ninja_coverage/bin/CoreCxxTests.exe | findstr /i "debug"
+   ```
+
+2. **Ensure CMake coverage flags are applied**:
+   - The CMake coverage configuration now automatically adds `/Zi /Od` flags for MSVC
+   - Verify in CMakeCache.txt:
+   ```bash
+   grep "CMAKE_CXX_FLAGS" build_ninja_coverage/CMakeCache.txt
+   ```
+
+3. **Test executable verification**:
+   ```bash
+   # Run test executable directly to verify it works
+   cd build_ninja_coverage/bin
+   CoreCxxTests.exe
+   ```
+
+4. **Check OpenCppCoverage command**:
+   - The coverage script now provides detailed debugging output
+   - Run with verbose output to see the exact command:
+   ```bash
+   cd Tools/coverage
+   python run_coverage.py --build=../../build_ninja_coverage --verbose
+   ```
+
+5. **Verify source paths**:
+   - Ensure source folder path is correct and uses Windows path separators
+   - Check that source files exist at the specified path
+
+6. **Check for test failures**:
+   - The coverage script now verifies test executables run successfully
+   - Look for warnings about non-zero exit codes in the output
 
 ---
 
