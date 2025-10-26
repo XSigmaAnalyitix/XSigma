@@ -1,8 +1,8 @@
 # XSigma Memory Allocation System - Comprehensive Analysis
 
-**Date:** December 2024  
-**Version:** 1.0  
-**Audience:** Developers, System Architects, Performance Engineers  
+**Date:** December 2024
+**Version:** 1.0
+**Audience:** Developers, System Architects, Performance Engineers
 **Purpose:** Complete technical analysis and implementation guide for XSigma memory allocation system
 
 ---
@@ -111,7 +111,7 @@ The XSigma memory allocation system implements a sophisticated, multi-layered ar
 class Allocator {
 public:
     static constexpr size_t Allocator_Alignment = 64;
-    
+
     virtual void* allocate_raw(size_t alignment, size_t num_bytes) = 0;
     virtual void deallocate_raw(void* ptr) = 0;
     virtual bool TracksAllocationSizes() const noexcept { return false; }
@@ -175,7 +175,7 @@ public:
 
 **Purpose**: Pinned CPU memory for optimal GPU transfers
 
-**Features**: 
+**Features**:
 - CUDA-aware allocation with fallback to standard aligned allocation
 - HOST_PINNED memory type for optimal device transfer performance
 
@@ -203,19 +203,19 @@ The XSigma memory system provides comprehensive NUMA (Non-Uniform Memory Access)
 namespace xsigma {
     // Check NUMA availability
     bool IsNUMAEnabled();
-    
+
     // Bind thread to NUMA node
     void NUMABind(int numa_node_id);
-    
+
     // Get NUMA node for memory pointer
     int GetNUMANode(const void* ptr);
-    
+
     // Get total number of NUMA nodes
     int GetNumNUMANodes();
-    
+
     // Move memory to specific NUMA node
     void NUMAMove(void* ptr, size_t size, int numa_node_id);
-    
+
     // Get current thread's NUMA node
     int GetCurrentNUMANode();
 }
@@ -229,10 +229,10 @@ namespace xsigma {
 // Automatic NUMA optimization in memory_allocator
 void* allocate(size_t nbytes, size_t alignment, init_policy_enum init) {
     void* ptr = /* system allocation */;
-    
+
     // Automatically move to current NUMA node
     NUMAMove(ptr, nbytes, GetCurrentNUMANode());
-    
+
     return ptr;
 }
 #endif
@@ -243,10 +243,10 @@ void* allocate(size_t nbytes, size_t alignment, init_policy_enum init) {
 class process_state {
 public:
     void EnableNUMA() { numa_enabled_ = true; }
-    
+
     // Returns NUMA-optimized allocator for specific node
     Allocator* GetCPUAllocator(int numa_node);
-    
+
 private:
     bool numa_enabled_ = false;
     std::vector<std::unique_ptr<Allocator>> cpu_allocators_;
@@ -316,7 +316,7 @@ Memory Bandwidth (GB/s):
 ```cpp
 // Example: 2-socket system with 4 NUMA nodes
 // Node 0-1: Socket 0, Node 2-3: Socket 1
-// 
+//
 // Optimal allocation strategy:
 // - Bind computation threads to specific NUMA nodes
 // - Allocate memory on same NUMA node as computation
@@ -325,10 +325,10 @@ Memory Bandwidth (GB/s):
 void optimize_numa_allocation() {
     int num_nodes = GetNumNUMANodes();
     int current_node = GetCurrentNUMANode();
-    
+
     // Allocate on current NUMA node for best performance
     Allocator* local_allocator = cpu_allocator(current_node);
-    
+
     // Large allocations: consider spreading across nodes
     if (allocation_size > numa_threshold) {
         // Interleave across all NUMA nodes
@@ -348,10 +348,10 @@ void optimize_numa_allocation() {
 void setup_numa_thread(int numa_node) {
     // Bind thread to NUMA node
     NUMABind(numa_node);
-    
+
     // Get NUMA-local allocator
     Allocator* allocator = cpu_allocator(numa_node);
-    
+
     // All subsequent allocations will be NUMA-local
 }
 ```
@@ -362,14 +362,14 @@ void setup_numa_thread(int numa_node) {
 void* allocate_large_numa_aware(size_t total_size) {
     int num_nodes = GetNumNUMANodes();
     size_t chunk_size = total_size / num_nodes;
-    
+
     std::vector<void*> chunks;
     for (int node = 0; node < num_nodes; ++node) {
         Allocator* node_allocator = cpu_allocator(node);
         void* chunk = node_allocator->allocate_raw(64, chunk_size);
         chunks.push_back(chunk);
     }
-    
+
     return create_interleaved_mapping(chunks);
 }
 ```
@@ -382,19 +382,19 @@ public:
     void run_simulation(int num_threads) {
         int num_nodes = GetNumNUMANodes();
         int threads_per_node = num_threads / num_nodes;
-        
+
         for (int node = 0; node < num_nodes; ++node) {
             for (int t = 0; t < threads_per_node; ++t) {
                 std::thread worker([node, this]() {
                     // Bind to NUMA node
                     NUMABind(node);
-                    
+
                     // Get NUMA-local allocator
                     Allocator* allocator = cpu_allocator(node);
-                    
+
                     // Allocate simulation data locally
                     auto* data = allocate_simulation_data(allocator);
-                    
+
                     // Run computation with local memory
                     run_monte_carlo_iteration(data);
                 });
@@ -410,11 +410,11 @@ public:
 // Migrate memory when workload changes NUMA affinity
 void migrate_memory_to_numa_node(void* ptr, size_t size, int target_node) {
     int current_node = GetNUMANode(ptr);
-    
+
     if (current_node != target_node) {
         // Move memory to target NUMA node
         NUMAMove(ptr, size, target_node);
-        
+
         // Verify migration
         int new_node = GetNUMANode(ptr);
         assert(new_node == target_node);
@@ -436,10 +436,10 @@ struct numa_memory_stats {
 numa_memory_stats get_numa_statistics() {
     numa_memory_stats stats;
     int num_nodes = GetNumNUMANodes();
-    
+
     stats.bytes_per_node.resize(num_nodes, 0);
     stats.allocations_per_node.resize(num_nodes, 0);
-    
+
     // Collect per-node statistics
     for (int node = 0; node < num_nodes; ++node) {
         Allocator* allocator = cpu_allocator(node);
@@ -448,7 +448,7 @@ numa_memory_stats get_numa_statistics() {
             stats.allocations_per_node[node] = node_stats->num_allocs;
         }
     }
-    
+
     return stats;
 }
 ```

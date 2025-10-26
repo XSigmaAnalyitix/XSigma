@@ -299,4 +299,3 @@ python generate_html_report.py --coverage-data data/coverage.xml --output report
 - `package/tool/html_report_generator.py` - HTML generation implementation
 - `package/tool/clang_coverage.py` - Clang coverage support
 - `package/tool/gcc_coverage.py` - GCC coverage support
-

@@ -176,4 +176,3 @@ lintrunner --verbose -- ThirdParty/ 2>&1 | grep -i "skip\|exclude"
 ✓ Configuration is now XSigma-focused and maintainable
 ✓ Cross-platform compatibility verified
 ✓ ThirdParty exclusion working correctly
-

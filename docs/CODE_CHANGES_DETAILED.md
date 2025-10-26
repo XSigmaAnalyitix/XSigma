@@ -19,11 +19,11 @@ def _should_exclude_file(file_path: str) -> bool:
         True if file should be excluded, False otherwise.
     """
     exclude_patterns = CONFIG.get("exclude_patterns", [])
-    
+
     # Always exclude test files
     if "CxxTests" in file_path or "Test" in file_path:
         return True
-    
+
     # Check against configured exclusion patterns
     for pattern in exclude_patterns:
         # Convert glob pattern to regex-like matching
@@ -36,7 +36,7 @@ def _should_exclude_file(file_path: str) -> bool:
             # Substring matching
             if pattern in file_path:
                 return True
-    
+
     return False
 ```
 
@@ -75,26 +75,26 @@ def _collect_html_files_recursive(html_dir: Path) -> list[tuple[Path, str]]:
         List of tuples (file_path, relative_path) for non-excluded HTML files.
     """
     html_files = []
-    
+
     # Recursively find all HTML files in subdirectories
     for html_file in html_dir.rglob("*.html"):
         # Skip the main index.html
         if html_file.name == "index.html" and html_file.parent == html_dir:
             continue
-        
+
         # Get relative path for display
         try:
             rel_path = html_file.relative_to(html_dir)
         except ValueError:
             rel_path = html_file
-        
+
         # Check if file should be excluded
         if _should_exclude_file(str(rel_path)):
             logger.debug(f"Excluding file from coverage: {rel_path}")
             continue
-        
+
         html_files.append((html_file, str(rel_path)))
-    
+
     return html_files
 ```
 
@@ -247,4 +247,3 @@ No new dependencies added. Uses only:
 - `pathlib.Path` (standard library)
 - `fnmatch` (standard library)
 - `logging` (standard library)
-

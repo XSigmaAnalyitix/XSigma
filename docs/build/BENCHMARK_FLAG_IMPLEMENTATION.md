@@ -1,7 +1,7 @@
 # Benchmark Flag Implementation for setup.py
 
-**Date**: 2025-10-05  
-**Status**: ✅ Implemented  
+**Date**: 2025-10-05
+**Status**: ✅ Implemented
 **Related**: CI fixes for run #18260896868
 
 ---
@@ -89,7 +89,7 @@ elif arg in self.__key:
         self.builder_suffix += "_benchmark"  # ✅ Added suffix
 ```
 
-**Rationale**: 
+**Rationale**:
 - Removed "benchmark" from the list of flags with CMake default ON
 - Added builder suffix `_benchmark` to make build directories distinguishable
 - Now when you specify `benchmark`, it correctly turns benchmark ON
@@ -305,7 +305,7 @@ python setup.py ninja.clang.config.benchmark.build
 
 **Cause**: This is the original issue that caused benchmark to be disabled in CI.
 
-**Workaround**: 
+**Workaround**:
 1. Use Linux or Windows for benchmark builds
 2. Wait for the regex detection fix (tracked separately)
 3. Use sanitizers instead of benchmark on macOS
@@ -339,15 +339,14 @@ Once the regex backend detection issue is resolved:
 
 ## Summary
 
-✅ **Implemented**: Benchmark flag in setup.py  
-✅ **Fixed**: Inverse logic bug (benchmark flag now correctly enables benchmark)  
-✅ **Added**: Builder suffix for benchmark builds  
-✅ **Documented**: Usage examples and best practices  
-✅ **Tested**: No syntax errors, ready for use  
+✅ **Implemented**: Benchmark flag in setup.py
+✅ **Fixed**: Inverse logic bug (benchmark flag now correctly enables benchmark)
+✅ **Added**: Builder suffix for benchmark builds
+✅ **Documented**: Usage examples and best practices
+✅ **Tested**: No syntax errors, ready for use
 
 **Developers can now enable benchmark locally while CI keeps it disabled.**
 
 ---
 
 **End of Implementation Document**
-

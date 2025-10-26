@@ -251,4 +251,3 @@ ci-success:
 - All other jobs intact
 
 **Result:** Simplified CI pipeline with reduced maintenance burden while preserving core testing functionality.
-

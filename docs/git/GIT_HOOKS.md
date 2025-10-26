@@ -458,22 +458,22 @@ If you need multiple pre-commit hooks:
 
 ## FAQ
 
-**Q: Do hooks run on `git commit --amend`?**  
+**Q: Do hooks run on `git commit --amend`?**
 A: Yes, hooks run on all commit operations including amend.
 
-**Q: Do hooks run on merge commits?**  
+**Q: Do hooks run on merge commits?**
 A: Yes, but only the commit-msg hook runs (no files are staged during merge).
 
-**Q: Can I use a different formatter?**  
+**Q: Can I use a different formatter?**
 A: Yes, modify `.git/hooks/pre-commit` to call your preferred formatter.
 
-**Q: Do hooks work with GUI git clients?**  
+**Q: Do hooks work with GUI git clients?**
 A: Yes, most GUI clients respect git hooks.
 
-**Q: What if I don't have clang-format installed?**  
+**Q: What if I don't have clang-format installed?**
 A: The pre-commit hook will fail with instructions on how to install it.
 
-**Q: Can I disable hooks for a specific repository?**  
+**Q: Can I disable hooks for a specific repository?**
 A: Yes, run `python Scripts/setup_git_hooks.py --uninstall`
 
 ---
@@ -491,4 +491,3 @@ For issues or questions:
 ## License
 
 These hooks are part of the XSigma project and follow the same license.
-

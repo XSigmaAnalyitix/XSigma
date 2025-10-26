@@ -2,11 +2,11 @@
 
 ## Test Execution Summary
 
-**Date**: 2025-10-25  
-**Platform**: Windows (x86_64)  
-**Compiler**: Clang 21.1.0  
-**Build Type**: Debug  
-**Coverage**: Enabled  
+**Date**: 2025-10-25
+**Platform**: Windows (x86_64)
+**Compiler**: Clang 21.1.0
+**Build Type**: Debug
+**Coverage**: Enabled
 
 ---
 
@@ -74,10 +74,10 @@ Thread model: posix
 Exception Code: 0xC0000005 (Access Violation)
 ```
 
-**Root Cause**: 
+**Root Cause**:
 The Clang compiler crashes when processing Windows SDK headers (`wincrypt.h:600`) with coverage instrumentation enabled. This is a known issue with Clang on Windows when using `-fprofile-instr-generate -fcoverage-mapping` flags with Windows SDK headers.
 
-**Stack Trace Location**: 
+**Stack Trace Location**:
 ```
 C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\um\wincrypt.h:600:2
 ```
@@ -254,4 +254,3 @@ The build failure on Windows is **NOT caused by the CI fix**. It's a known issue
 2. ⚠️ Address Windows/Clang/Coverage compatibility separately
 3. ✅ Run coverage tests on Linux/macOS in CI
 4. ✅ Monitor for any other issues
-

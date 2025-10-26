@@ -28,7 +28,7 @@ if(CMAKE_SYSTEM MATCHES "SunOS.*")
   endif()
 endif()
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   # Enable exceptions because XSIGMA and third party code rely on C++ exceptions.
   # Allow C++ to catch exceptions. Emscripten disables it by default due to high overhead.
   # Generate helper functions to get stack traces for uncaught exceptions
@@ -38,13 +38,13 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   set(XSIGMA_REQUIRED_SHARED_LINKER_FLAGS "${XSIGMA_REQUIRED_SHARED_LINKER_FLAGS} -fwasm-exceptions -sEXCEPTION_STACK_TRACES=1")
   set(XSIGMA_REQUIRED_MODULE_LINKER_FLAGS "${XSIGMA_REQUIRED_MODULE_LINKER_FLAGS} -fwasm-exceptions -sEXCEPTION_STACK_TRACES=1")
   # Consumers linking to XSIGMA also need to add the exception flag.
-  if (TARGET XSIGMAplatform)
+  if(TARGET XSIGMAplatform)
     target_link_options(XSIGMAplatform
       INTERFACE
         "-fwasm-exceptions"
         "-sEXCEPTION_STACK_TRACES=1")
-  endif ()
-  if (XSIGMA_WEBASSEMBLY_THREADS)
+  endif()
+  if(XSIGMA_WEBASSEMBLY_THREADS)
     # Remove after https://github.com/WebAssembly/design/issues/1271 is closed
     # Set Wno flag globally because even though the flag is added in XSIGMACompilerWarningFlags.cmake,
     # wrapping tools do not link with `XSIGMAplatform`
@@ -54,7 +54,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
     set(XSIGMA_REQUIRED_SHARED_LINKER_FLAGS "${XSIGMA_REQUIRED_SHARED_LINKER_FLAGS} -pthread")
     set(XSIGMA_REQUIRED_MODULE_LINKER_FLAGS "${XSIGMA_REQUIRED_MODULE_LINKER_FLAGS} -pthread")
     # Consumers linking to XSIGMA also need to add the pthread flag.
-    if (TARGET XSIGMAplatform)
+    if(TARGET XSIGMAplatform)
       target_compile_options(XSIGMAplatform
         INTERFACE
           "-pthread"
@@ -62,25 +62,25 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
       target_link_options(XSIGMAplatform
         INTERFACE
           "-pthread")
-    endif ()
-  endif ()
-  if (XSIGMA_WEBASSEMBLY_64_BIT)
+    endif()
+  endif()
+  if(XSIGMA_WEBASSEMBLY_64_BIT)
     set(XSIGMA_REQUIRED_CXX_FLAGS "${XSIGMA_REQUIRED_CXX_FLAGS} -sMEMORY64=1")
     set(XSIGMA_REQUIRED_C_FLAGS "${XSIGMA_REQUIRED_C_FLAGS} -sMEMORY64=1")
     set(XSIGMA_REQUIRED_EXE_LINKER_FLAGS "${XSIGMA_REQUIRED_EXE_LINKER_FLAGS} -sMEMORY64=1")
     set(XSIGMA_REQUIRED_SHARED_LINKER_FLAGS "${XSIGMA_REQUIRED_SHARED_LINKER_FLAGS} -sMEMORY64=1")
     set(XSIGMA_REQUIRED_MODULE_LINKER_FLAGS "${XSIGMA_REQUIRED_MODULE_LINKER_FLAGS} -sMEMORY64=1")
     # Consumers linking to XSIGMA also need to add the memory64 flag.
-    if (TARGET XSIGMAplatform)
+    if(TARGET XSIGMAplatform)
       target_compile_options(XSIGMAplatform
         INTERFACE
           "-sMEMORY64=1")
       target_link_options(XSIGMAplatform
         INTERFACE
           "-sMEMORY64=1")
-    endif ()
-  endif ()
-endif ()
+    endif()
+  endif()
+endif()
 
 # A GCC compiler.
 if(CMAKE_COMPILER_IS_GNUCXX)
@@ -191,10 +191,10 @@ if(MSVC)
   set(CMAKE_CXX_MP_FLAG ON CACHE BOOL "Build with /MP flag enabled")
   set(PROCESSOR_COUNT "$ENV{NUMBER_OF_PROCESSORS}")
   set(CMAKE_CXX_MP_NUM_PROCESSORS ${PROCESSOR_COUNT} CACHE STRING "The maximum number of processes for the /MP flag")
-  if (CMAKE_CXX_MP_FLAG)
+  if(CMAKE_CXX_MP_FLAG)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP${CMAKE_CXX_MP_NUM_PROCESSORS}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP${CMAKE_CXX_MP_NUM_PROCESSORS}")
-  endif ()
+  endif()
 
   # Enable /bigobj for MSVC to allow larger symbol tables
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
@@ -203,7 +203,7 @@ if(MSVC)
   # Enable faster PDB generation
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Zi")
-  
+
   # Use parallel linking (VS 2019+)
   if(XSIGMA_ENABLE_COVERAGE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DEBUG:FULL /INCREMENTAL:NO")

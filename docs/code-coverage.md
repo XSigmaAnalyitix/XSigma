@@ -229,7 +229,7 @@ open ../build_ninja_tbb_coverage/coverage_report/html/index.html
   run: |
     cd Scripts
     python setup.py ninja.clang.config.build.test.coverage
-    
+
 - name: "Upload Coverage Report"
   uses: codecov/codecov-action@v3
   with:
@@ -399,4 +399,3 @@ For detailed coverage configuration and advanced usage, see:
 - [Build Configuration](build-configuration.md) - Build system configuration
 - [Sanitizers](sanitizer.md) - Memory debugging and analysis
 - [Static Analysis](static-analysis.md) - IWYU and Cppcheck tools
-

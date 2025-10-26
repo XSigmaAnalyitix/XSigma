@@ -53,7 +53,7 @@ Successfully refactored the Valgrind integration to fix timeout issues, eliminat
 ### Automatic Timeout Scaling
 ```cmake
 # In valgrind.cmake
-set(XSIGMA_VALGRIND_TIMEOUT_MULTIPLIER 20 CACHE STRING 
+set(XSIGMA_VALGRIND_TIMEOUT_MULTIPLIER 20 CACHE STRING
     "Timeout multiplier for tests running under Valgrind")
 
 # Example: CoreCxxTests
@@ -226,4 +226,3 @@ Refactoring completed to address:
 - Unclear failure reporting
 
 All changes follow project coding standards and maintain cross-platform compatibility.
-

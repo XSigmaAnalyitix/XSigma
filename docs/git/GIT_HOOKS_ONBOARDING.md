@@ -280,7 +280,7 @@ If the spell checker flags technical terms:
    ```bash
    # Windows
    where clang-format
-   
+
    # Unix/Linux/macOS
    which clang-format
    ```
@@ -415,6 +415,5 @@ We're always improving! If you have suggestions for the hooks or this documentat
 
 ---
 
-**Last Updated:** 2025-10-05  
+**Last Updated:** 2025-10-05
 **Version:** 1.0
-

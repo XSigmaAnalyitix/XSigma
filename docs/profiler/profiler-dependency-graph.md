@@ -42,7 +42,7 @@ These components provide additional features but can be disabled to reduce binar
 ### Core Dependencies (Required)
 ```
 profiler_interface.h (ROOT)
-    ├── profiler_controller.* 
+    ├── profiler_controller.*
     ├── profiler_factory.*
     │   └── profiler_options.h
     ├── profiler_collection.*

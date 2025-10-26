@@ -164,7 +164,7 @@ Different export formats implement a common interface:
 ```cpp
 class exporter_interface {
 public:
-    virtual void export_data(const profiling_data& data, 
+    virtual void export_data(const profiling_data& data,
                            const std::string& filename) = 0;
 };
 
@@ -249,12 +249,12 @@ The profiler system builds upon and extends the existing TraceMe infrastructure:
 {
     traceme trace("operation_name");
     // TraceMe records start time
-    
+
     // Profiler adds higher-level session management
     XSIGMA_PROFILE_SCOPE("operation_name");
-    
+
     perform_operation();
-    
+
     // TraceMe records end time
     // Profiler aggregates data for analysis
 }

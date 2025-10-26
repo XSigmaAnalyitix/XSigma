@@ -294,4 +294,3 @@ python setup.py ninja clang release test cxx17 loguru tbb
 - [XSigma CI Refactoring Guide](CI_REFACTORING_GUIDE.md)
 - [setup.py Documentation](../Scripts/setup.py)
 - [GitHub Actions CI Workflow](.github/workflows/ci.yml)
-

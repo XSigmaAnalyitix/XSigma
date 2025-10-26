@@ -139,7 +139,7 @@ if ($WithCuda) {
 Write-Info "Installing Python dependencies..."
 try {
     python -m pip install --upgrade pip setuptools wheel | Out-Null
-    python -m pip install colorama psutil | Out-Null
+    python -m pip install colorama==0.4.6 psutil==6.1.1 | Out-Null
     Write-Success "Python dependencies installed"
 } catch {
     Write-Warning "Failed to install Python dependencies: $_"

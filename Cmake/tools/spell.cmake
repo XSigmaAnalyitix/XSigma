@@ -30,7 +30,7 @@ endif()
 
 # Find codespell executable
 find_program(CODESPELL_EXECUTABLE NAMES codespell
-    PATHS 
+    PATHS
         "$ENV{HOME}/.local/bin"
         "/usr/local/bin"
         "/usr/bin"
@@ -52,11 +52,11 @@ Please install codespell:
 Or set XSIGMA_ENABLE_SPELL=OFF to disable spell checking")
 else()
     message(STATUS "Found codespell: ${CODESPELL_EXECUTABLE}")
-    
+
     # Check if .codespellrc configuration file exists
     set(CODESPELL_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/.codespellrc")
     set(CODESPELL_ARGS)
-    
+
     if(EXISTS ${CODESPELL_CONFIG_FILE})
         message(STATUS "Using codespell configuration: ${CODESPELL_CONFIG_FILE}")
         # codespell automatically reads .codespellrc from the current directory
@@ -68,10 +68,10 @@ else()
             "--check-hidden=no"
         )
     endif()
-    
+
     # Add write-changes flag for automatic corrections
     list(APPEND CODESPELL_ARGS "--write-changes")
-    
+
     # Create a custom target for spell checking
     add_custom_target(spell_check
         COMMAND ${CODESPELL_EXECUTABLE} ${CODESPELL_ARGS} ${CMAKE_CURRENT_SOURCE_DIR}
@@ -79,7 +79,7 @@ else()
         COMMENT "Running spell check with automatic corrections..."
         VERBATIM
     )
-    
+
     # Add spell checking to the build process
     # This will run spell check during the build
     add_custom_target(spell_check_build ALL
@@ -88,7 +88,7 @@ else()
         COMMENT "Running spell check with automatic corrections during build..."
         VERBATIM
     )
-    
+
     # Warning message about automatic corrections
     message(WARNING "XSIGMA_ENABLE_SPELL is ON: codespell will modify source files directly to fix spelling errors. "
                     "Ensure you have committed your changes before building.")

@@ -82,10 +82,10 @@ Create or edit `Scripts/iwyu_exclusion.imp` to customize IWYU behavior:
 [
   # Map standard library headers
   { include: ["<bits/std_abs.h>", private, "<cmath>", public] },
-  
+
   # Exclude third-party headers
   { include: ["@<ThirdParty/.*>", private, "<third_party.h>", public] },
-  
+
   # Custom mappings
   { include: ["\"internal/impl.h\"", private, "\"public_api.h\"", public] }
 ]
@@ -258,7 +258,7 @@ Cppcheck performs various checks:
    ```bash
    # Review IWYU suggestions
    less build/iwyu.log
-   
+
    # Review Cppcheck findings
    less build/cppcheckoutput.log
    ```
@@ -294,10 +294,10 @@ Cppcheck performs various checks:
     cmake -B build -S . \
         -DXSIGMA_ENABLE_IWYU=ON \
         -DXSIGMA_ENABLE_CPPCHECK=ON
-    
+
     # Build (runs analysis)
     cmake --build build -j
-    
+
     # Check for errors
     if grep -q "(error)" build/cppcheckoutput.log; then
       echo "Cppcheck found errors!"
@@ -362,4 +362,3 @@ fi
 - [Build Configuration](build-configuration.md) - Build system configuration
 - [Code Coverage](code-coverage.md) - Test coverage analysis
 - [Sanitizers](sanitizers.md) - Memory debugging and analysis
-

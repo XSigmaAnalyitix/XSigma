@@ -3,13 +3,13 @@
 ## 🎯 What Was Fixed
 
 ### 1. macOS Linker Issue ✅
-**Problem**: `std::__1::__hash_memory` symbol not found  
-**Solution**: Added LDFLAGS and CPPFLAGS for Homebrew LLVM libc++  
+**Problem**: `std::__1::__hash_memory` symbol not found
+**Solution**: Added LDFLAGS and CPPFLAGS for Homebrew LLVM libc++
 **Location**: 3 places in ci.yml (main builds, TBB tests, sanitizer tests)
 
 ### 2. CUDA Installation Failures ✅
-**Problem**: CUDA installation failing on Ubuntu and Windows  
-**Solution**: 
+**Problem**: CUDA installation failing on Ubuntu and Windows
+**Solution**:
 - Ubuntu: Use `nvidia-cuda-toolkit` package + fallback
 - Windows: Chocolatey + direct download fallback
 
@@ -74,4 +74,3 @@ PATH="/opt/homebrew/opt/llvm/bin:$PATH"
 | Windows | 3 jobs | Installation method |
 
 **Total CI jobs improved**: 11 out of 20+ jobs
-

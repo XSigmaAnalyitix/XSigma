@@ -131,7 +131,7 @@ python3 -m pip install --upgrade pip setuptools wheel || {
     log_warning "Failed to upgrade pip"
 }
 
-python3 -m pip install colorama psutil || {
+python3 -m pip install colorama==0.4.6 psutil==6.1.1 || {
     log_warning "Failed to install Python dependencies"
 }
 

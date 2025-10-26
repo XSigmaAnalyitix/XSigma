@@ -170,4 +170,3 @@ The coverage CI job should now:
 - Pass all verification checks
 
 The fix is minimal and focused on correcting the script path and adding required arguments.
-

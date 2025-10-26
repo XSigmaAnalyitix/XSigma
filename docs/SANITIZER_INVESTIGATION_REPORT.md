@@ -1,7 +1,7 @@
 # Sanitizer Failure Investigation Report
 
-**Date**: 2025-10-07  
-**Scope**: Unix platforms with Clang compiler only  
+**Date**: 2025-10-07
+**Scope**: Unix platforms with Clang compiler only
 **Status**: Investigation Complete - CI Configuration Updated
 
 ---
@@ -42,40 +42,40 @@ The CI pipeline sanitizer tests were experiencing failures with **ThreadSanitize
 ### Potential Fixes
 
 #### Option 1: Switch to NATIVE Logging Backend (✅ IMPLEMENTED)
-- **Pros**: 
+- **Pros**:
   - Eliminates loguru dependency for sanitizer builds
   - NATIVE backend is simpler and has no threading issues
   - Maintains full sanitizer functionality
-- **Cons**: 
+- **Cons**:
   - Reduced logging features (no callbacks, file logging, or advanced scopes)
   - Different logging behavior between sanitizer and production builds
 - **Status**: ✅ Implemented in CI configuration
 
 #### Option 2: Upgrade Loguru to Latest Version
-- **Pros**: 
+- **Pros**:
   - Newer versions may have fixed threading issues
   - Maintains full logging functionality
-- **Cons**: 
+- **Cons**:
   - May introduce breaking changes
   - No guarantee that all races are fixed
   - Requires testing across all platforms
 - **Status**: ⚠️ Recommended for future consideration
 
 #### Option 3: Patch Loguru with Thread-Safe Wrappers
-- **Pros**: 
+- **Pros**:
   - Maintains full logging functionality
   - Can be tailored to specific race conditions
-- **Cons**: 
+- **Cons**:
   - Requires maintaining custom patches
   - Complex to implement correctly
   - May impact performance
 - **Status**: ❌ Not recommended (maintenance burden)
 
 #### Option 4: Disable TSan for Logging Code
-- **Pros**: 
+- **Pros**:
   - Quick workaround
   - Maintains loguru functionality
-- **Cons**: 
+- **Cons**:
   - Hides potential real issues
   - Reduces test coverage
   - Not a proper fix
@@ -116,20 +116,20 @@ The CI pipeline sanitizer tests were experiencing failures with **ThreadSanitize
 ### Potential Fixes
 
 #### Option 1: Switch to NATIVE Logging Backend (✅ IMPLEMENTED)
-- **Pros**: 
+- **Pros**:
   - Eliminates uninstrumented loguru code
   - NATIVE backend is simple and fully instrumented
   - Allows MSan to focus on XSigma code
-- **Cons**: 
+- **Cons**:
   - Reduced logging features
   - Different behavior between builds
 - **Status**: ✅ Implemented in CI configuration
 
 #### Option 2: Build Loguru with MSan Instrumentation
-- **Pros**: 
+- **Pros**:
   - Maintains full logging functionality
   - Proper MSan coverage
-- **Cons**: 
+- **Cons**:
   - Requires custom build of loguru
   - Complex CMake configuration
   - Must rebuild for each sanitizer type
@@ -137,30 +137,30 @@ The CI pipeline sanitizer tests were experiencing failures with **ThreadSanitize
 - **Status**: ⚠️ Possible but complex
 
 #### Option 3: Disable Mimalloc for MSan Builds
-- **Pros**: 
+- **Pros**:
   - Removes custom allocator confusion
   - Uses system allocator that MSan understands
-- **Cons**: 
+- **Cons**:
   - Doesn't solve loguru instrumentation issue
   - Changes memory allocation behavior
   - May hide allocator-related bugs
 - **Status**: ⚠️ Partial solution only
 
 #### Option 4: Use MSan Suppressions Extensively
-- **Pros**: 
+- **Pros**:
   - Quick workaround
   - Maintains current configuration
-- **Cons**: 
+- **Cons**:
   - Hides potential real issues
   - Suppressions can be fragile
   - Reduces effectiveness of MSan
 - **Status**: ❌ Not recommended (defeats purpose of MSan)
 
 #### Option 5: Disable Custom Allocators for Sanitizer Builds
-- **Pros**: 
+- **Pros**:
   - Simplifies memory tracking
   - Better sanitizer compatibility
-- **Cons**: 
+- **Cons**:
   - Doesn't test production allocator configuration
   - May miss allocator-specific bugs
 - **Status**: ⚠️ Consider for comprehensive solution
@@ -185,7 +185,7 @@ The NATIVE logging backend eliminates these potential issues as well.
 
 ### CI Configuration Change
 
-**File**: `.github/workflows/ci.yml`  
+**File**: `.github/workflows/ci.yml`
 **Change**: Lines 529-559
 
 ```yaml
@@ -253,7 +253,7 @@ To reproduce and verify the fixes locally:
 cd Scripts
 python setup.py ninja.clang.config.build.test --sanitizer.thread --logging=NATIVE
 
-# Test with MemorySanitizer  
+# Test with MemorySanitizer
 python setup.py ninja.clang.config.build.test --sanitizer.memory --logging=NATIVE
 
 # Test with AddressSanitizer
@@ -285,7 +285,6 @@ The change is minimal, focused, and does not affect production builds or other C
 
 ---
 
-**Report prepared by**: Augment Agent  
-**Investigation scope**: Unix platforms with Clang compiler only  
+**Report prepared by**: Augment Agent
+**Investigation scope**: Unix platforms with Clang compiler only
 **Files modified**: `.github/workflows/ci.yml` (1 file, 1 line changed)
-

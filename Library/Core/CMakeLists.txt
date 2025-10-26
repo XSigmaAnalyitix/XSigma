@@ -238,7 +238,7 @@ endif()
 
 if(XSIGMA_ENABLE_MIMALLOC)
     target_link_libraries(Core PRIVATE XSigma::mimalloc)
-    
+
     add_dependencies(Core XSigma::mimalloc)
 endif()
 

@@ -132,7 +132,7 @@ class ResourceManager {
 public:
     ResourceManager() : resource_(allocate_resource()) {}
     ~ResourceManager() { free_resource(resource_); }
-    
+
     // Rule of Five: Also implement copy/move if needed
     ResourceManager(const ResourceManager&) = delete;
     ResourceManager& operator=(const ResourceManager&) = delete;
@@ -327,7 +327,7 @@ class FileHandle {
 public:
     explicit FileHandle(const char* path) : file_(fopen(path, "r")) {}
     ~FileHandle() { if (file_) fclose(file_); }
-    
+
     FileHandle(const FileHandle&) = delete;
     FileHandle& operator=(const FileHandle&) = delete;
 };
@@ -404,4 +404,3 @@ valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./bin/CoreC
 ---
 
 **End of Valgrind Analysis Guide**
-

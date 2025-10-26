@@ -1,8 +1,8 @@
 # XSigma Memory Allocator Performance Report
 
-**Date:** October 5, 2025  
-**Test Environment:** Windows 11, Visual Studio 2022, CUDA 13.0.88  
-**Build Configuration:** Release, AVX2, CUDA Enabled  
+**Date:** October 5, 2025
+**Test Environment:** Windows 11, Visual Studio 2022, CUDA 13.0.88
+**Build Configuration:** Release, AVX2, CUDA Enabled
 **Compiler:** MSVC 19.44.35217.0
 
 ---
@@ -385,14 +385,13 @@ XSIGMA_ENABLE_LTO=ON
 
 **Compiler Flags:**
 ```
-/arch:AVX2 /D__F16C__ /D__FMA__ /Zc:__cplusplus /permissive- 
-/Zc:inline /Zc:throwingNew /volatile:iso /bigobj /utf-8 
+/arch:AVX2 /D__F16C__ /D__FMA__ /Zc:__cplusplus /permissive-
+/Zc:inline /Zc:throwingNew /volatile:iso /bigobj /utf-8
 /favor:INTEL64 /Gy /Gw /W3 /MP32
 ```
 
 ---
 
-**Report Generated:** October 5, 2025  
-**XSigma Version:** 1.0.0  
+**Report Generated:** October 5, 2025
+**XSigma Version:** 1.0.0
 **Test Framework:** Google Test + Google Benchmark
-

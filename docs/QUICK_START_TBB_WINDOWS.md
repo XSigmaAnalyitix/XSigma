@@ -44,4 +44,3 @@ TBB cannot be built from source on Windows with Clang due to compiler compatibil
 ## Need Help?
 
 See detailed documentation in `docs/TBB_WINDOWS_CLANG.md`
-

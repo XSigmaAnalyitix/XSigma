@@ -167,13 +167,13 @@ CLANG_VERSION=$(echo "clang-16" | grep -oE '[0-9]+$')  # Result: "16"
 
 ## Benefits
 
-✅ **No Package Conflicts** - Each matrix entry installs only its required compiler  
-✅ **Parallel Execution** - Multiple compiler versions can be tested simultaneously  
-✅ **Cleaner Dependency Script** - Shared script only installs common dependencies  
-✅ **Better Maintainability** - Compiler-specific logic separated from shared setup  
-✅ **Graceful Fallback** - Failures don't block entire pipeline  
-✅ **Cross-Platform Ready** - GCC and Clang handled separately  
-✅ **Extensible** - Easy to add new compiler versions to matrix  
+✅ **No Package Conflicts** - Each matrix entry installs only its required compiler
+✅ **Parallel Execution** - Multiple compiler versions can be tested simultaneously
+✅ **Cleaner Dependency Script** - Shared script only installs common dependencies
+✅ **Better Maintainability** - Compiler-specific logic separated from shared setup
+✅ **Graceful Fallback** - Failures don't block entire pipeline
+✅ **Cross-Platform Ready** - GCC and Clang handled separately
+✅ **Extensible** - Easy to add new compiler versions to matrix
 
 ## Supported Compiler Versions
 
@@ -217,20 +217,20 @@ The changes are automatically tested when:
 
 ### Issue: "Could not extract Clang version"
 
-**Cause:** Compiler name doesn't match expected format  
+**Cause:** Compiler name doesn't match expected format
 **Solution:** Verify matrix entry has correct `compiler_cxx` value (e.g., "clang-16")
 
 ### Issue: "Failed to install Clang X"
 
-**Cause:** LLVM repository unavailable or package not found  
-**Solution:** 
+**Cause:** LLVM repository unavailable or package not found
+**Solution:**
 - Check Ubuntu version compatibility
 - Verify LLVM repository is accessible
 - Check for network issues
 
 ### Issue: "Package conflicts"
 
-**Cause:** Multiple Clang versions still being installed  
+**Cause:** Multiple Clang versions still being installed
 **Solution:**
 - Verify `install-deps-ubuntu.sh` doesn't install version-specific packages
 - Check that per-matrix installation steps are running
@@ -277,4 +277,3 @@ The on-demand compiler installation approach successfully resolves package confl
 - Maintaining backward compatibility with existing CI jobs
 
 This solution enables comprehensive compiler version testing while maintaining a clean, maintainable CI pipeline.
-

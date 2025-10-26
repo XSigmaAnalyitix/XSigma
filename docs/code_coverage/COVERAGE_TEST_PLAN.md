@@ -193,4 +193,3 @@ After integration, verify:
 
 - See `COVERAGE_INTEGRATION_SUMMARY.md` for integration details
 - See `code-coverage.md` for user documentation
-

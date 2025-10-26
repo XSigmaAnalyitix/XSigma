@@ -39,9 +39,9 @@ done
 ```bash
 if [ "$CLANG_VERSION" -ge 15 ]; then
     log_info "Adding LLVM repository for Clang $CLANG_VERSION..."
-    
+
     wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-    
+
     UBUNTU_VERSION=$(lsb_release -cs)
     echo "deb http://apt.llvm.org/$UBUNTU_VERSION/ llvm-toolchain-$UBUNTU_VERSION-$CLANG_VERSION main" | \
         sudo tee /etc/apt/sources.list.d/llvm-$CLANG_VERSION.list > /dev/null
@@ -217,13 +217,13 @@ Per-Matrix Installation:
     ✓ clang++-15
     ✓ llvm-15
     ✓ llvm-15-dev
-  
+
   Clang 16 test:
     ✓ clang-16
     ✓ clang++-16
     ✓ llvm-16
     ✓ llvm-16-dev
-  
+
   GCC 13 test:
     ✓ gcc-13
     ✓ g++-13
@@ -278,10 +278,10 @@ Upload Results (if failed)
 
 ## Backward Compatibility
 
-✅ All existing CI jobs continue to work  
-✅ Shared dependency script still installs common dependencies  
-✅ No breaking changes to matrix entries  
-✅ Graceful fallback if specific compiler not available  
+✅ All existing CI jobs continue to work
+✅ Shared dependency script still installs common dependencies
+✅ No breaking changes to matrix entries
+✅ Graceful fallback if specific compiler not available
 
 ## Testing Recommendations
 
@@ -310,4 +310,3 @@ The changes implement a clean, maintainable solution to the compiler installatio
 - ✅ Maintains backward compatibility
 - ✅ Provides clear error messages
 - ✅ Easy to extend with new versions
-

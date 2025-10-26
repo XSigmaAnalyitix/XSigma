@@ -299,4 +299,3 @@ All jobs must pass for CI to succeed:
 - [Clang Sanitizers](https://clang.llvm.org/docs/index.html)
 - [CMake Testing](https://cmake.org/cmake/help/latest/manual/ctest.1.html)
 - [Intel oneAPI](https://www.intel.com/content/www/us/en/developer/tools/oneapi/overview.html)
-

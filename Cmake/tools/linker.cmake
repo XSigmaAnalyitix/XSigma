@@ -160,4 +160,3 @@ xsigma_find_linker()
 
 message("  - Faster linker: Automatically detected and applied to xsigmabuild target")
 message("  - Third-party dependencies: Not affected by linker configuration")
-

@@ -23,13 +23,10 @@ else:
 
 
 REPO_ROOT = Path(__file__).absolute().parents[3]
-sys.path.insert(0, str(REPO_ROOT))
 
-from tools.setup_helpers.env import CMAKE_MINIMUM_VERSION_STRING
-
-
-sys.path.remove(str(REPO_ROOT))
-
+# Define CMAKE minimum version directly from CMakeLists.txt
+# This matches the version specified in the root CMakeLists.txt file
+CMAKE_MINIMUM_VERSION_STRING = "3.16"
 
 LINTER_CODE = "CMAKE_MINIMUM_REQUIRED"
 CMAKE_MINIMUM_VERSION = Version(CMAKE_MINIMUM_VERSION_STRING)

@@ -1,7 +1,7 @@
 # XSigma Memory Allocator - Technical Implementation Guide
 
-**Date:** October 5, 2025  
-**Audience:** Developers, System Architects  
+**Date:** October 5, 2025
+**Audience:** Developers, System Architects
 **Purpose:** Technical reference for memory allocator selection and configuration
 
 ---
@@ -78,16 +78,16 @@ public:
         if (cpu_allocator_collect_stats.load(std::memory_order_relaxed)) {
             UpdateStats(num_bytes);
         }
-        
+
         // Delegate to backend
         void* p = cpu::memory_allocator::allocate(num_bytes, alignment);
-        
+
         // Memory pressure warnings
         CheckMemoryPressure(num_bytes);
-        
+
         return p;
     }
-    
+
     void deallocate_raw(void* ptr) override {
         if (ptr) {
             cpu::memory_allocator::free(ptr);
@@ -205,22 +205,22 @@ private:
         Chunk* prev;
         Chunk* next;
     };
-    
+
     std::vector<Chunk*> bins_;  // Size-based bins
     std::mutex mutex_;
-    
+
 public:
     void* allocate_raw(size_t alignment, size_t num_bytes) override {
         std::lock_guard<std::mutex> lock(mutex_);
-        
+
         // Find best-fit chunk
         Chunk* chunk = FindBestFit(num_bytes);
-        
+
         if (!chunk) {
             // Allocate new chunk from sub-allocator
             chunk = AllocateNewChunk(num_bytes);
         }
-        
+
         return chunk->ptr;
     }
 };
@@ -237,9 +237,9 @@ opts.coalesce_on_free = true;
 
 auto sub_alloc = std::make_unique<CPUSubAllocator>();
 auto allocator = std::make_unique<allocator_bfc>(
-    std::move(sub_alloc), 
+    std::move(sub_alloc),
     1024*1024*1024,  // 1GB initial size
-    "MainAllocator", 
+    "MainAllocator",
     opts
 );
 ```
@@ -271,44 +271,44 @@ private:
         cudaEvent_t event;
         bool in_use;
     };
-    
+
     std::map<size_t, std::vector<Block*>> free_blocks_;
     std::map<void*, Block*> allocated_blocks_;
     size_t cached_bytes_;
     size_t max_cached_bytes_;
-    
+
 public:
     void* allocate(size_t size, cudaStream_t stream = 0) {
         std::lock_guard<std::mutex> lock(mutex_);
-        
+
         // Try to find cached block
         Block* block = find_suitable_block(size);
-        
+
         if (block) {
             // Cache hit - reuse block
             stats_.cache_hits++;
             return block->ptr;
         }
-        
+
         // Cache miss - allocate new block
         void* ptr;
         cudaMalloc(&ptr, size);
-        
+
         block = new Block{ptr, size, stream, nullptr, true};
         allocated_blocks_[ptr] = block;
         stats_.cache_misses++;
-        
+
         return ptr;
     }
-    
+
     void deallocate(void* ptr, size_t size) {
         std::lock_guard<std::mutex> lock(mutex_);
-        
+
         auto it = allocated_blocks_.find(ptr);
         if (it == allocated_blocks_.end()) return;
-        
+
         Block* block = it->second;
-        
+
         // Add to cache if under limit
         if (cached_bytes_ + size <= max_cached_bytes_) {
             block->in_use = false;
@@ -319,7 +319,7 @@ public:
             cudaFree(ptr);
             delete block;
         }
-        
+
         allocated_blocks_.erase(it);
     }
 };
@@ -398,7 +398,7 @@ auto pool = gpu_memory_pool::create(config);
 ```cpp
 void* allocator_device::allocate_raw(size_t alignment, size_t num_bytes) {
     void* ptr = nullptr;
-    
+
 #ifdef XSIGMA_ENABLE_CUDA
     cudaError_t result = cudaMallocHost(&ptr, num_bytes);
     if (result != cudaSuccess) {
@@ -408,7 +408,7 @@ void* allocator_device::allocate_raw(size_t alignment, size_t num_bytes) {
 #else
     ptr = cpu::memory_allocator::allocate(num_bytes, alignment);
 #endif
-    
+
     return ptr;
 }
 ```
@@ -538,7 +538,7 @@ cuda_caching_allocator allocator(0, initial_cache_size);
 
 // Monitor cache statistics
 auto stats = allocator.get_statistics();
-double hit_rate = static_cast<double>(stats.cache_hits) / 
+double hit_rate = static_cast<double>(stats.cache_hits) /
                   (stats.cache_hits + stats.cache_misses);
 
 // Adjust cache size
@@ -714,4 +714,3 @@ This technical guide provides the foundation for optimal memory allocator select
 - GitHub Issues: https://github.com/xsigma/xsigma
 - Documentation: https://docs.xsigma.co.uk
 - Email: support@xsigma.co.uk
-

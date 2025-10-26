@@ -30,6 +30,7 @@ jobs:
   # Unix/macOS: Both TBB enabled/disabled, CUDA enabled where available
   # ============================================================================
   build-matrix:
+    if: github.repository_owner == 'xsigma'
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
 
@@ -332,7 +333,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install psutil colorama
+        pip install psutil==6.1.1 colorama==0.4.6
 
     # ===== Verify Code Quality Tools Installation =====
     - name: Verify code quality tools (Unix only)
@@ -495,6 +496,7 @@ jobs:
   # Windows TBB testing is handled separately with Visual Studio builds
   # ============================================================================
   tbb-specific-tests:
+    if: github.repository_owner == 'xsigma'
     name: TBB Functionality - ${{ matrix.os }} - ${{ matrix.build_type }}
     runs-on: ${{ matrix.os }}
 
@@ -572,7 +574,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install psutil colorama
+        pip install psutil==6.1.1 colorama==0.4.6
 
     # ===== CMake Configuration for TBB Testing =====
     - name: Configure with TBB enabled
@@ -652,6 +654,7 @@ jobs:
   # Windows sanitizer support is limited and tested separately
   # ============================================================================
   sanitizer-tests:
+    if: github.repository_owner == 'xsigma'
     name: Sanitizer ${{ matrix.sanitizer }} - ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
 
@@ -728,7 +731,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install psutil colorama
+        pip install psutil==6.1.1 colorama==0.4.6
 
     # ===== CMake Configuration for Sanitizer Testing =====
     - name: Configure with ${{ matrix.sanitizer }} sanitizer
@@ -796,6 +799,7 @@ jobs:
   # across various optimization settings (-O0, -O2, -O3)
   # ============================================================================
   optimization-flags-test:
+    if: github.repository_owner == 'xsigma'
     name: Optimization - ${{ matrix.opt_level }}
     runs-on: ubuntu-latest
 
@@ -870,6 +874,7 @@ jobs:
   # Tests LTO enabled and disabled scenarios to ensure correct behavior
   # ============================================================================
   lto-tests:
+    if: github.repository_owner == 'xsigma'
     name: LTO - ${{ matrix.lto_enabled }}
     runs-on: ubuntu-latest
 
@@ -935,6 +940,7 @@ jobs:
   # This job is non-blocking (failures don't fail the entire CI pipeline)
   # ============================================================================
   benchmark-tests:
+    if: github.repository_owner == 'xsigma'
     name: Performance Benchmarks
     runs-on: ubuntu-latest
 
@@ -1008,6 +1014,7 @@ jobs:
   # Runs on Ubuntu, macOS, and Windows with consistent configuration
   # ============================================================================
   sccache-baseline-tests:
+    if: github.repository_owner == 'xsigma'
     name: "Sccache Baseline - ${{ matrix.os }} - ${{ matrix.build_type }}"
     runs-on: ${{ matrix.os }}
 
@@ -1128,6 +1135,7 @@ jobs:
   # Uses CMAKE_CXX_COMPILER_LAUNCHER to enable sccache
   # ============================================================================
   sccache-enabled-tests:
+    if: github.repository_owner == 'xsigma'
     name: "Sccache Enabled - ${{ matrix.os }} - ${{ matrix.build_type }}"
     runs-on: ${{ matrix.os }}
 
@@ -1306,6 +1314,7 @@ jobs:
   # Code Coverage Testing - Clang
   # ============================================================================
   clang-coverage-tests:
+    if: github.repository_owner == 'xsigma'
     name: Clang Coverage Tests
     runs-on: ubuntu-latest
     strategy:
@@ -1332,7 +1341,7 @@ jobs:
         fetch-depth: 0
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12'
 
@@ -1608,4 +1617,3 @@ jobs:
 # - Package installations use official repositories where possible
 # - Chocolatey installations include retry logic for transient failures
 # - Sccache downloads are from official Mozilla GitHub releases
-

@@ -459,7 +459,7 @@ public:
 
 void my_function() {
     XSIGMA_TRACY_ZONE("my_function");
-    
+
     // Your code here
     for (int i = 0; i < 1000; ++i) {
         XSIGMA_TRACY_ZONE("inner_loop");
@@ -470,13 +470,13 @@ void my_function() {
 int main() {
     while (running) {
         XSIGMA_TRACY_ZONE("main_loop");
-        
+
         update();
         render();
-        
+
         XSIGMA_TRACY_FRAME();  // Mark frame boundary
     }
-    
+
     return 0;
 }
 ```
@@ -562,7 +562,7 @@ int main() {
 
     // Your memory-intensive code
     std::vector<double> large_array(10000000);
-    
+
     tracker.stop_profiling();
     tracker.dump_profile("heap_profile.txt");
 
@@ -606,4 +606,3 @@ endif()
 - Advanced statistical analysis (Boost.Accumulators)
 - Minimal performance overhead (< 1%)
 - Cross-platform compatibility
-

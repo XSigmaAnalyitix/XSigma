@@ -24,7 +24,7 @@ include_directories("${MKL_ROOT}/include")
 # Set BLAS/LAPACK variables FIRST - before Ceres configuration
 #set(BLA_VENDOR Intel10_64lp CACHE STRING "BLAS vendor")
 #set(BLAS_FOUND TRUE CACHE BOOL "BLAS found")
-#set(LAPACK_FOUND TRUE CACHE BOOL "LAPACK found") 
+#set(LAPACK_FOUND TRUE CACHE BOOL "LAPACK found")
 #set(BLAS_LIBRARIES MKL::MKL CACHE STRING "BLAS libraries")
 #set(LAPACK_LIBRARIES MKL::MKL CACHE STRING "LAPACK libraries")
 

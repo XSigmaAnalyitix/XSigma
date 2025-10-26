@@ -1,6 +1,6 @@
 # XSigma Memory Allocator - Detailed Benchmark Data
 
-**Date:** October 5, 2025  
+**Date:** October 5, 2025
 **Companion to:** Memory_Allocator_Performance_Report.md
 
 ---
@@ -482,4 +482,3 @@ The detailed benchmarks confirm:
 2. Profile real-world Monte Carlo simulations
 3. Measure long-term fragmentation behavior
 4. Test NUMA-aware allocation patterns
-

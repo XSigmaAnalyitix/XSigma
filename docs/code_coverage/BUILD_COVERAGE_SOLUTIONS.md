@@ -274,4 +274,3 @@ The build system now automatically:
 - Excludes test code from coverage metrics
 
 **Status**: Ready for production use
-

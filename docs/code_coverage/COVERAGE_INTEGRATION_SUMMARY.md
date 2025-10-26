@@ -131,4 +131,3 @@ If `oss_coverage.py` is not available or fails:
 - **Compilers**: GCC 5+, Clang 3.5+
 - **Platforms**: Linux, macOS, Windows
 - **CMake**: 3.15+
-

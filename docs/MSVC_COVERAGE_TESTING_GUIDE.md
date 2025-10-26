@@ -373,4 +373,3 @@ echo "✓ All tests passed!"
 4. Links are broken
 5. Errors in console output
 6. Metrics don't match OpenCppCoverage
-

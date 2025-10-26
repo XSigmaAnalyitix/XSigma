@@ -201,5 +201,3 @@ function(xsigma_apply_iwyu target_name)
 
     message(STATUS "Applied IWYU to target: ${target_name}")
 endfunction()
-
-

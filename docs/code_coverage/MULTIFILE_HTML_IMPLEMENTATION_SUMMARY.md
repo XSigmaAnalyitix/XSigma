@@ -225,4 +225,3 @@ start tools/code_coverage/profile/html_details/index.html
 ## Conclusion
 
 The multi-file HTML coverage report system is now fully implemented and tested. It provides a professional, user-friendly interface for analyzing code coverage with detailed per-file statistics and line-by-line visualization.
-

@@ -191,4 +191,3 @@ The warnings should no longer appear in the output.
 - [Cppcheck Manual - Inline Suppressions](https://cppcheck.sourceforge.io/manual.pdf)
 - `docs/CPPCHECK_QUICK_REFERENCE.md` - Quick reference for cppcheck usage
 - `Scripts/cppcheck_suppressions.txt` - Global suppressions file
-

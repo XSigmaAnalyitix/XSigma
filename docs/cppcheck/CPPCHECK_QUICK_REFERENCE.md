@@ -248,4 +248,3 @@ For issues or questions:
 2. Review cppcheck output for specific error messages
 3. Check [Cppcheck documentation](https://cppcheck.sourceforge.io/)
 4. Review suppressions file for examples
-

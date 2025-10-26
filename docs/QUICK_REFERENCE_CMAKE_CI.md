@@ -278,4 +278,3 @@ ctest --test-dir build_ninja --verbose
 - `CMAKE_COMMAND_REFERENCE.md` - Detailed command reference
 - `CI_MIGRATION_COMPLETE.md` - Migration summary
 - `QUICK_REFERENCE_CMAKE_CI.md` - This file
-

@@ -33,7 +33,7 @@ The build completed successfully with all new files compiling without errors.
 
 All new test files compile and most tests pass:
 - ✅ `TestAllocatorReportGeneration.cxx` - 5/6 tests passing
-- ✅ `TestAllocatorStatistics.cxx` - 2/7 tests passing  
+- ✅ `TestAllocatorStatistics.cxx` - 2/7 tests passing
 - ✅ `BenchmarkAllocatorComparison.cxx` - Compiles successfully (benchmarks not run)
 
 ### Failing Tests
@@ -60,7 +60,7 @@ All new test files compile and most tests pass:
 - Check if allocations are actually being tracked by the statistics system
 - May need to keep pointers alive longer before checking stats
 
-#### 3. AllocatorStatistics.BFCAllocatorStats  
+#### 3. AllocatorStatistics.BFCAllocatorStats
 **Issue**: `bytes_reserved` field returns 0
 
 **Root Cause**: BFC allocator may not populate the `bytes_reserved` field in statistics.
@@ -168,7 +168,7 @@ Due to Clang 20.1.0 compiler crashes:
        EXPECT_FALSE(report.empty());
        EXPECT_TRUE(report.find("Allocator") != std::string::npos);
    }
-   
+
    XSIGMATEST(AllocatorTracking, GenerateReportWithAllocations)
    {
        // Test report with allocation details
@@ -177,7 +177,7 @@ Due to Clang 20.1.0 compiler crashes:
        std::string report = tracking->GenerateReport(true);
        EXPECT_TRUE(report.find("allocation") != std::string::npos);
    }
-   
+
    XSIGMATEST(AllocatorTracking, GenerateReportEdgeCases)
    {
        // Test empty allocator, no allocations, etc.
@@ -235,8 +235,7 @@ ctest --output-on-failure
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2025-10-13  
-**Build Platform**: Windows with Clang 20.1.0  
+**Document Version**: 1.0
+**Last Updated**: 2025-10-13
+**Build Platform**: Windows with Clang 20.1.0
 **Status**: Build SUCCESS, Tests PARTIAL SUCCESS
-

@@ -1,7 +1,7 @@
 # Scripts/setup.py - Code Coverage Changes
 
-**Date**: October 19, 2025  
-**File**: `Scripts/setup.py`  
+**Date**: October 19, 2025
+**File**: `Scripts/setup.py`
 **Total Changes**: 3 methods modified
 
 ## Summary of Changes
@@ -52,7 +52,7 @@ print_status(f"Using PyTorch coverage tool: {oss_coverage_script}", "INFO")
 print_status(f"Using coverage tool: {oss_coverage_script}", "INFO")
 ```
 
-**Impact**: 
+**Impact**:
 - Docstring now accurately describes the tool location
 - User-facing message is more concise and XSigma-focused
 
@@ -199,4 +199,3 @@ Potential improvements:
 3. Generate coverage trend reports
 4. Integrate with CI/CD dashboards
 5. Add coverage thresholds and alerts
-

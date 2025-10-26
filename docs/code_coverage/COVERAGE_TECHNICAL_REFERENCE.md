@@ -214,4 +214,3 @@ env["XSIGMA_FOLDER"] = source_path
 - [Clang Instrumentation Flags](https://clang.llvm.org/docs/Instrumentation.html)
 - [llvm-cov Documentation](https://llvm.org/docs/CommandGuide/llvm-cov.html)
 - [llvm-profdata Documentation](https://llvm.org/docs/CommandGuide/llvm-profdata.html)
-

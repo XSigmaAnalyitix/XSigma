@@ -35,8 +35,8 @@ python Scripts/setup_git_hooks.py --uninstall
 
 ## Prerequisites
 
-✅ **Python 3.6+** (already required by XSigma)  
-✅ **Git** (obviously!)  
+✅ **Python 3.6+** (already required by XSigma)
+✅ **Git** (obviously!)
 ✅ **clang-format** (must be in PATH)
 
 ### Installing clang-format
@@ -149,7 +149,7 @@ git commit -n -m "Emergency hotfix"
    ```bash
    # Windows
    where clang-format
-   
+
    # Unix/Linux/macOS
    which clang-format
    ```
@@ -225,22 +225,22 @@ The hooks use the project's `.clang-format` file at the repository root. No addi
 
 ## FAQ
 
-**Q: Do hooks run on `git commit --amend`?**  
+**Q: Do hooks run on `git commit --amend`?**
 A: Yes, hooks run on all commit operations.
 
-**Q: Do hooks work with GUI git clients?**  
+**Q: Do hooks work with GUI git clients?**
 A: Yes, most GUI clients respect git hooks.
 
-**Q: Can I disable hooks temporarily?**  
+**Q: Can I disable hooks temporarily?**
 A: Yes, use `git commit --no-verify` or `git commit -n`
 
-**Q: What if I don't have clang-format?**  
+**Q: What if I don't have clang-format?**
 A: The hook will fail with installation instructions.
 
-**Q: Do hooks modify my files?**  
+**Q: Do hooks modify my files?**
 A: Yes, the pre-commit hook formats files in-place and re-stages them.
 
-**Q: Can I customize the hooks?**  
+**Q: Can I customize the hooks?**
 A: Yes, edit `.git/hooks/pre-commit` and `.git/hooks/commit-msg`
 
 ---
@@ -274,4 +274,3 @@ GIT_HOOKS_QUICKSTART.md         # This file
 ---
 
 **Happy coding! 🚀**
-

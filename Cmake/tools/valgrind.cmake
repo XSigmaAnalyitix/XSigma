@@ -202,4 +202,3 @@ function(xsigma_apply_valgrind_timeouts)
 
     message(STATUS "Applied Valgrind timeout multiplier to ${CMAKE_MATCH_COUNT} tests")
 endfunction()
-

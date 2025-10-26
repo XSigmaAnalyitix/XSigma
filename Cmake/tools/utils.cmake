@@ -136,12 +136,12 @@ if(NOT INTERN_BUILD_MOBILE)
   endif()
   check_cxx_source_compiles(
     "#include <immintrin.h>
-	  int main() {
-		__m128 a, b;
-		a = _mm_set1_ps (1);
-		_mm_add_ps(a, a);
-		return 0;
-	  }"
+      int main() {
+        __m128 a, b;
+        a = _mm_set1_ps (1);
+        _mm_add_ps(a, a);
+        return 0;
+      }"
     XSIGMA_COMPILER_SUPPORTS_SSE_EXTENSIONS)
   if(XSIGMA_COMPILER_SUPPORTS_SSE_EXTENSIONS)
     message("--Current compiler supports sse extension.")
@@ -162,13 +162,13 @@ if(NOT INTERN_BUILD_MOBILE)
   endif()
   check_cxx_source_compiles(
     "#include <immintrin.h>
-	  int main() {
-		__m256 a, b;
-		a = _mm256_set1_ps (1);
-		b = a;
-		_mm256_add_ps (a,a);
-		return 0;
-	  }"
+      int main() {
+        __m256 a, b;
+        a = _mm256_set1_ps (1);
+        b = a;
+        _mm256_add_ps (a,a);
+        return 0;
+      }"
     XSIGMA_COMPILER_SUPPORTS_AVX_EXTENSIONS)
   if(XSIGMA_COMPILER_SUPPORTS_AVX_EXTENSIONS)
     message("--Current compiler supports avx extension.")
@@ -189,15 +189,15 @@ if(NOT INTERN_BUILD_MOBILE)
   endif()
   check_cxx_source_compiles(
     "#include <immintrin.h>
-	  int main() {
-		__m256i a, b;
-		a = _mm256_set1_epi8 (1);
-		b = a;
-		_mm256_add_epi8 (a,a);
-		__m256i x;
-		_mm256_extract_epi64(x, 0); // we rely on this in our AVX2 code
-		return 0;
-	  }"
+      int main() {
+        __m256i a, b;
+        a = _mm256_set1_epi8 (1);
+        b = a;
+        _mm256_add_epi8 (a,a);
+        __m256i x;
+        _mm256_extract_epi64(x, 0); // we rely on this in our AVX2 code
+        return 0;
+      }"
     XSIGMA_COMPILER_SUPPORTS_AVX2_EXTENSIONS)
   if(XSIGMA_COMPILER_SUPPORTS_AVX2_EXTENSIONS)
     message("--Current compiler supports avx2 extension.")
@@ -219,25 +219,25 @@ if(NOT INTERN_BUILD_MOBILE)
   endif()
   check_cxx_source_compiles(
     "#if defined(_MSC_VER)
-	 #include <intrin.h>
-	 #else
-	 #include <immintrin.h>
-	 #endif
-	 // check avx512f
-	 __m512 addConstant(__m512 arg) {
-	   return _mm512_add_ps(arg, _mm512_set1_ps(1.f));
-	 }
-	 // check avx512dq
-	 __m512 andConstant(__m512 arg) {
-	   return _mm512_and_ps(arg, _mm512_set1_ps(1.f));
-	 }
-	 int main() {
-	   __m512i a = _mm512_set1_epi32(1);
-	   __m256i ymm = _mm512_extracti64x4_epi64(a, 0);
-	   ymm = _mm256_abs_epi64(ymm); // check avx512vl
-	   __mmask16 m = _mm512_cmp_epi32_mask(a, a, _MM_CMPINT_EQ);
-	   __m512i r = _mm512_andnot_si512(a, a);
-	 }"
+     #include <intrin.h>
+     #else
+     #include <immintrin.h>
+     #endif
+     // check avx512f
+     __m512 addConstant(__m512 arg) {
+       return _mm512_add_ps(arg, _mm512_set1_ps(1.f));
+     }
+     // check avx512dq
+     __m512 andConstant(__m512 arg) {
+       return _mm512_and_ps(arg, _mm512_set1_ps(1.f));
+     }
+     int main() {
+       __m512i a = _mm512_set1_epi32(1);
+       __m256i ymm = _mm512_extracti64x4_epi64(a, 0);
+       ymm = _mm256_abs_epi64(ymm); // check avx512vl
+       __mmask16 m = _mm512_cmp_epi32_mask(a, a, _MM_CMPINT_EQ);
+       __m512i r = _mm512_andnot_si512(a, a);
+     }"
     XSIGMA_COMPILER_SUPPORTS_AVX512_EXTENSIONS)
   if(XSIGMA_COMPILER_SUPPORTS_AVX512_EXTENSIONS)
     message("--Current compiler supports avx512f extension.")
@@ -259,18 +259,18 @@ if(NOT INTERN_BUILD_MOBILE)
   endif()
   check_cxx_source_compiles(
     "#if defined(_MSC_VER)
-	 #include <intrin.h>
-	 #else
-	 #include <immintrin.h>
-	 #endif
+     #include <intrin.h>
+     #else
+     #include <immintrin.h>
+     #endif
 
-	  int main() {
-		__m128 a, b;
-		a = _mm_set1_ps (1);
-		b = _mm_set1_ps (1);
-		a = _mm_fmadd_ps(a,b,b);
-		return 0;
-	  }"
+      int main() {
+        __m128 a, b;
+        a = _mm_set1_ps (1);
+        b = _mm_set1_ps (1);
+        a = _mm_fmadd_ps(a,b,b);
+        return 0;
+      }"
     XSIGMA_COMPILER_SUPPORTS_FMA_EXTENSIONS)
   if(XSIGMA_COMPILER_SUPPORTS_FMA_EXTENSIONS)
     message("--Current compiler supports fma extension.")
@@ -283,19 +283,19 @@ if(NOT INTERN_BUILD_MOBILE)
   set(CMAKE_REQUIRED_FLAGS "${VECTORIZATION_COMPILER_FLAGS}")
   check_cxx_source_compiles(
     "#if defined(_MSC_VER)
-	 #include <intrin.h>
-	 #else
-	 #include <immintrin.h>
-	 #endif
+     #include <intrin.h>
+     #else
+     #include <immintrin.h>
+     #endif
 
-	  int main() {
-		__m256 a, b;
-		a = _mm256_setzero_ps();
-		b = _mm256_exp_ps(a);
-		b = _mm256_cos_ps(a);
-		b = _mm256_tanh_ps(a);
-		return 0;
-	  }"
+      int main() {
+        __m256 a, b;
+        a = _mm256_setzero_ps();
+        b = _mm256_exp_ps(a);
+        b = _mm256_cos_ps(a);
+        b = _mm256_tanh_ps(a);
+        return 0;
+      }"
     XSIGMA_COMPILER_SUPPORTS_SVML_EXTENSIONS)
 
   if(NOT XSIGMA_COMPILER_SUPPORTS_SVML_EXTENSIONS AND VECTORIZATION)

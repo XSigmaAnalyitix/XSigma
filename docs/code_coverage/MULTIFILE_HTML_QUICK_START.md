@@ -4,10 +4,10 @@
 
 The XSigma project now generates **rich, multi-file HTML coverage reports** instead of a single monolithic HTML file. The new reports include:
 
-✅ **Index/Summary Page** - Overall coverage statistics and file listing  
-✅ **Individual File Reports** - Line-by-line coverage visualization  
-✅ **Color-Coded Coverage** - Visual indicators for coverage quality  
-✅ **Professional Design** - Responsive, easy-to-navigate interface  
+✅ **Index/Summary Page** - Overall coverage statistics and file listing
+✅ **Individual File Reports** - Line-by-line coverage visualization
+✅ **Color-Coded Coverage** - Visual indicators for coverage quality
+✅ **Professional Design** - Responsive, easy-to-navigate interface
 
 ## Quick Start (5 Minutes)
 
@@ -230,4 +230,3 @@ The new multi-file HTML coverage reports provide:
 - 📦 Self-contained, shareable reports
 
 **Happy coverage analysis! 🎉**
-

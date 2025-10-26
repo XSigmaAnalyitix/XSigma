@@ -11,7 +11,7 @@
 ### Issue 2: HTML Report Generation ✅
 - **Status**: Fixed
 - **Location**: `Tools/coverage/msvc_coverage.py`
-- **What was wrong**: 
+- **What was wrong**:
   - Empty index.html
   - Only looked for HTML files in root directory
   - Included test files in coverage
@@ -174,4 +174,3 @@ These are hardcoded and always excluded:
 3. Compare metrics with Clang coverage
 4. Document any remaining issues
 5. Update CI/CD if needed
-

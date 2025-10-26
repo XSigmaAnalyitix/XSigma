@@ -30,7 +30,7 @@ Recent fixes addressed critical issues in the code coverage workflow that preven
 # and prevents them from appearing in coverage reports even with 0% coverage
 ```
 
-**Impact**: 
+**Impact**:
 - Before: 29 files in coverage report
 - After: 103 files in coverage report
 - Coverage: 35.99% → 38.16%
@@ -73,7 +73,7 @@ if system == "Windows":
         search_dirs.append(bin_dir)
 ```
 
-**Impact**: 
+**Impact**:
 - Production `.cxx` files now included in coverage
 - Coverage percentage increased
 - All 52 production `.cxx` files now discoverable
@@ -99,7 +99,7 @@ if not search_dirs:
 
 ## Fix 3: Path Separator Normalization
 
-**Files**: 
+**Files**:
 - `Tools/code_coverage/package/tool/summarize_jsons.py` (lines 41-63, 66-103)
 - `Tools/code_coverage/package/tool/print_report.py` (lines 23-35)
 
@@ -121,7 +121,7 @@ if not search_dirs:
 normalized_path = file_path.replace("\\", "/")
 ```
 
-**Impact**: 
+**Impact**:
 - Coverage percentage: 0% → 35.99% (then 38.16% with other fixes)
 - All files now properly included/excluded based on filters
 
@@ -135,8 +135,8 @@ normalized_path = file_path.replace("\\", "/")
 # Tools/code_coverage/package/tool/coverage_filters.py
 
 def is_interested_file(
-    file_path: str, 
-    interested_folders: list[str], 
+    file_path: str,
+    interested_folders: list[str],
     platform: TestPlatform = TestPlatform.OSS
 ) -> bool:
     """Check if file should be included in coverage report."""
@@ -235,4 +235,3 @@ However, there are opportunities for improvement in:
 - Cross-platform robustness (handle edge cases)
 
 **Overall Rating**: 7.5/10 - Good fixes with room for improvement
-

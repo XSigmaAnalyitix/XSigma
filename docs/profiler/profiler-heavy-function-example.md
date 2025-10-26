@@ -8,7 +8,7 @@ The `TestProfilerHeavyFunction.cxx` demonstrates practical profiling usage with 
 
 ### 1. Matrix Multiplication (`matrix_multiply`)
 **Purpose**: Dense matrix multiplication with O(n³) complexity
-**Instrumentation**: 
+**Instrumentation**:
 - Overall function timing
 - Row-by-row computation timing
 - Memory allocation tracking
@@ -20,18 +20,18 @@ std::vector<std::vector<double>> matrix_multiply(
     const std::vector<std::vector<double>>& b)
 {
     XSIGMA_PROFILE_SCOPE("matrix_multiply");
-    
+
     // ... dimension validation ...
-    
+
     {
         XSIGMA_PROFILE_SCOPE("matrix_multiply_computation");
-        
+
         for (size_t i = 0; i < rows_a; ++i) {
             XSIGMA_PROFILE_SCOPE("matrix_row_computation");
             // Inner loops for multiplication
         }
     }
-    
+
     return result;
 }
 ```
@@ -54,21 +54,21 @@ std::vector<std::vector<double>> matrix_multiply(
 void merge_sort(std::vector<double>& arr, size_t left, size_t right, int depth = 0)
 {
     XSIGMA_PROFILE_SCOPE("merge_sort_depth_" + std::to_string(depth));
-    
+
     if (left >= right) return;
-    
+
     size_t mid = left + (right - left) / 2;
-    
+
     {
         XSIGMA_PROFILE_SCOPE("merge_sort_left_half");
         merge_sort(arr, left, mid, depth + 1);
     }
-    
+
     {
         XSIGMA_PROFILE_SCOPE("merge_sort_right_half");
         merge_sort(arr, mid + 1, right, depth + 1);
     }
-    
+
     {
         XSIGMA_PROFILE_SCOPE("merge_operation");
         // Merge logic
@@ -94,12 +94,12 @@ void merge_sort(std::vector<double>& arr, size_t left, size_t right, int depth =
 double estimate_pi_monte_carlo(size_t num_samples)
 {
     XSIGMA_PROFILE_SCOPE("monte_carlo_pi_estimation");
-    
+
     // ... random number setup ...
-    
+
     {
         XSIGMA_PROFILE_SCOPE("monte_carlo_sampling");
-        
+
         for (size_t i = 0; i < num_samples; ++i) {
             if (i % 100000 == 0) {
                 XSIGMA_PROFILE_SCOPE("monte_carlo_batch_" + std::to_string(i / 100000));
@@ -107,7 +107,7 @@ double estimate_pi_monte_carlo(size_t num_samples)
             }
         }
     }
-    
+
     return 4.0 * points_inside_circle / num_samples;
 }
 ```
@@ -130,16 +130,16 @@ double estimate_pi_monte_carlo(size_t num_samples)
 std::vector<std::complex<double>> simulate_fft(const std::vector<double>& signal)
 {
     XSIGMA_PROFILE_SCOPE("simulate_fft");
-    
+
     {
         XSIGMA_PROFILE_SCOPE("fft_computation");
-        
+
         for (size_t k = 0; k < n; ++k) {
             XSIGMA_PROFILE_SCOPE("fft_frequency_bin");
             // Complex arithmetic for each frequency bin
         }
     }
-    
+
     return result;
 }
 ```
@@ -280,7 +280,7 @@ Based on typical execution times:
 4. **Merge Sort**: Memory allocation for temporary arrays
 
 ### Optimization Opportunities
-1. **Matrix Multiplication**: 
+1. **Matrix Multiplication**:
    - Use blocked/tiled algorithms for better cache usage
    - Implement SIMD vectorization
    - Consider BLAS library integration
@@ -305,7 +305,7 @@ const int num_threads = 4;
 for (int i = 0; i < num_threads; ++i) {
     workers.emplace_back([i]() {
         XSIGMA_PROFILE_SCOPE("worker_thread_" + std::to_string(i));
-        
+
         // Each thread performs independent work
         double pi_est = estimate_pi_monte_carlo(250000);
     });

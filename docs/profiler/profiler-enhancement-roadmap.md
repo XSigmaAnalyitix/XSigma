@@ -28,15 +28,15 @@
 class XSIGMA_API gpu_profiler : public profiler_interface {
 public:
     // Profile CUDA kernel launch
-    void profile_kernel_launch(const char* kernel_name, 
-                               dim3 grid_dim, 
+    void profile_kernel_launch(const char* kernel_name,
+                               dim3 grid_dim,
                                dim3 block_dim);
-    
+
     // Profile GPU memory operations
     void profile_memory_transfer(const char* operation_name,
                                  size_t bytes,
                                  cudaMemcpyKind kind);
-    
+
     // Get GPU utilization metrics
     gpu_metrics get_gpu_metrics(int device_id);
 };
@@ -79,10 +79,10 @@ class XSIGMA_API realtime_profiler_dashboard {
 public:
     // Start dashboard server
     void start_server(uint16_t port = 8080);
-    
+
     // Stream profiling data to connected clients
     void stream_metrics(const profiler_metrics& metrics);
-    
+
     // Configure alert thresholds
     void set_alert_threshold(const std::string& metric_name, double threshold);
 };
@@ -121,7 +121,7 @@ public:
         std::string recommendation;
         severity_level severity;
     };
-    
+
     // Analyze profiling data and detect bottlenecks
     std::vector<bottleneck_report> detect_bottlenecks(
         const profiler_session& session,
@@ -132,7 +132,7 @@ public:
 bottleneck_detector detector;
 auto bottlenecks = detector.detect_bottlenecks(session, opts);
 for (const auto& bottleneck : bottlenecks) {
-    std::cout << "Bottleneck: " << bottleneck.function_name 
+    std::cout << "Bottleneck: " << bottleneck.function_name
               << " (" << bottleneck.execution_time_ms << " ms)\n";
     std::cout << "Recommendation: " << bottleneck.recommendation << "\n";
 }
@@ -162,7 +162,7 @@ public:
     void generate_flamegraph(const profiler_session& session,
                             const std::string& output_file,
                             flamegraph_options opts = {});
-    
+
     // Generate differential flamegraph
     void generate_diff_flamegraph(const profiler_session& baseline,
                                   const profiler_session& current,
@@ -199,10 +199,10 @@ class XSIGMA_API distributed_profiler {
 public:
     // Initialize distributed profiling
     void initialize(int rank, int world_size);
-    
+
     // Synchronize profiling data across processes
     void synchronize();
-    
+
     // Aggregate profiling data from all processes
     distributed_profiler_report aggregate_reports();
 };
@@ -249,11 +249,11 @@ public:
     // Store baseline performance metrics
     void store_baseline(const profiler_session& session,
                        const std::string& commit_hash);
-    
+
     // Compare current performance against baseline
     regression_report detect_regressions(const profiler_session& current,
                                         const std::string& baseline_commit);
-    
+
     // Get performance trends over time
     std::vector<performance_datapoint> get_trends(
         const std::string& function_name,
@@ -300,24 +300,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Build with profiling
         run: |
           mkdir build && cd build
           cmake -DXSIGMA_ENABLE_PROFILING=ON ..
           make -j
-      
+
       - name: Run performance tests
         run: |
           ./build/bin/performance_tests --profile
-      
+
       - name: Compare against baseline
         run: |
           python scripts/compare_performance.py \
             --current profile.json \
             --baseline baseline_profile.json \
             --threshold 5.0
-      
+
       - name: Comment on PR
         uses: actions/github-script@v6
         with:
@@ -422,10 +422,10 @@ class XSIGMA_API valgrind_integration {
 public:
     // Enable Valgrind annotations
     void enable_valgrind_annotations();
-    
+
     // Mark memory regions for Valgrind
     void mark_memory_region(void* ptr, size_t size, const char* description);
-    
+
     // Export callgrind-compatible format
     void export_callgrind_format(const profiler_session& session,
                                 const std::string& output_file);
@@ -458,10 +458,10 @@ class XSIGMA_API vtune_integration {
 public:
     // Start VTune collection
     void start_vtune_collection(const vtune_collection_options& opts);
-    
+
     // Stop VTune collection
     void stop_vtune_collection();
-    
+
     // Export VTune-compatible format
     void export_vtune_format(const profiler_session& session,
                             const std::string& output_file);
@@ -490,7 +490,7 @@ class XSIGMA_API nsight_integration {
 public:
     // Enable Nsight profiling
     void enable_nsight_profiling();
-    
+
     // Export Nsight-compatible format
     void export_nsight_format(const profiler_session& session,
                              const std::string& output_file);
@@ -519,7 +519,7 @@ class XSIGMA_API perf_integration {
 public:
     // Enable perf event collection
     void enable_perf_events(const std::vector<std::string>& events);
-    
+
     // Export perf-compatible format
     void export_perf_format(const profiler_session& session,
                            const std::string& output_file);
@@ -558,10 +558,10 @@ class XSIGMA_API profiler_logger_adapter {
 public:
     // Enable logger integration
     void enable_logger_integration(xsigma::logger* logger);
-    
+
     // Configure log levels
     void set_log_level(log_level level);
-    
+
     // Configure performance thresholds for warnings
     void set_performance_threshold(const std::string& metric_name,
                                    double threshold_ms);
@@ -635,4 +635,3 @@ struct profiler_logger_options {
 6. Regression Detection (4-6 weeks)
 7. Real-time Dashboard (4-6 weeks)
 8. Distributed Profiling (6-8 weeks)
-

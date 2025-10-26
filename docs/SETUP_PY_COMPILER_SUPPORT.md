@@ -232,4 +232,3 @@ export PATH=/usr/bin:$PATH
 - [setup.py Source Code](../Scripts/setup.py)
 - [CMake Compiler Configuration](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER.html)
 - [XSigma CI Pipeline](.github/workflows/ci.yml)
-

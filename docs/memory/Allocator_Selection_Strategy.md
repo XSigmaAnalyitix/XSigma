@@ -282,7 +282,7 @@ public:
         }
         return cpu_allocator_;
     }
-    
+
 private:
     Allocator* pool_allocator_;
     Allocator* bfc_allocator_;
@@ -329,7 +329,6 @@ For questions or contributions to this strategy, please contact the XSigma devel
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2025-01-13  
+**Document Version**: 1.0
+**Last Updated**: 2025-01-13
 **Authors**: XSigma Development Team
-

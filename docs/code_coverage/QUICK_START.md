@@ -163,4 +163,3 @@ For detailed information, see:
 | Report only | `python generate_html_report.py --coverage-data <xml> --output <out>` |
 | Help | `python <script> --help` |
 | Verbose | Add `--verbose` to any command |
-

@@ -185,7 +185,7 @@ if(NOT UNIX)
 endif()
 
 # Memkind is only available on Unix systems (not macOS or Windows)
-if (NOT UNIX OR APPLE)
+if(NOT UNIX OR APPLE)
   set(XSIGMA_ENABLE_MEMKIND OFF)
 endif()
 

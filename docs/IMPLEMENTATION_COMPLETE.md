@@ -207,4 +207,3 @@ For questions or issues:
 - Check `CPPCHECK_INTEGRATION_SUMMARY.md` for technical details
 - Run `python3 verify_cppcheck_integration.py` to verify consistency
 - Refer to existing documentation in `docs/static-analysis.md`
-

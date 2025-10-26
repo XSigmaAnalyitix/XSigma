@@ -246,10 +246,9 @@ For issues or questions:
 
 ## Version History
 
-**2025-10-21**: 
+**2025-10-21**:
 - Fixed path separator normalization (Windows backslash issue)
 - Fixed shared library discovery on Windows
 - Removed filters from export stage (data loss prevention)
 - Coverage report now includes 103 files (up from 29)
 - Coverage percentage: 38.16%
-

@@ -122,14 +122,14 @@ public:
     // Plane management
     void SetId(int64_t id);
     void SetName(std::string_view name);
-    
+
     // Line creation
     xline_builder get_or_create_line(int64_t line_id);
-    
+
     // Metadata management
     xevent_metadata* get_or_create_event_metadata(std::string_view name);
     x_stat_metadata* get_or_create_stat_metadata(std::string_view name);
-    
+
     // Statistics
     void add_stat(const x_stat_metadata& metadata, int64_t value);
     void add_stat(const x_stat_metadata& metadata, double value);
@@ -142,7 +142,7 @@ public:
     void SetName(std::string_view name);
     void SetTimestampNs(int64_t timestamp);
     void SetDurationPs(int64_t duration);
-    
+
     // Event creation
     xevent_builder add_event(const xevent_metadata& metadata);
     xevent_builder add_event(const timespan& span, const xevent_metadata& metadata);
@@ -154,7 +154,7 @@ public:
     void SetOffsetPs(int64_t offset);
     void SetDurationPs(int64_t duration);
     void SetTimestampPs(int64_t timestamp);
-    
+
     // Event metadata
     void add_stat(const x_stat_metadata& metadata, int64_t value);
     void add_stat(const x_stat_metadata& metadata, double value);
@@ -203,15 +203,15 @@ public:
     int64_t id() const;
     std::string_view name() const;
     size_t num_lines() const;
-    
+
     // Line traversal
     template<typename ForEachLineFunc>
     void for_each_line(ForEachLineFunc&& func) const;
-    
+
     // Metadata access
     const xevent_metadata* get_event_metadata(int64_t id) const;
     const x_stat_metadata* get_stat_metadata(int64_t id) const;
-    
+
     // Statistics
     template<typename ForEachStatFunc>
     void for_each_stat(ForEachStatFunc&& func) const;
@@ -224,11 +224,11 @@ public:
     std::string_view name() const;
     int64_t timestamp_ns() const;
     int64_t duration_ps() const;
-    
+
     // Event traversal
     template<typename ForEachEventFunc>
     void for_each_event(ForEachEventFunc&& func) const;
-    
+
     size_t num_events() const;
 };
 
@@ -240,11 +240,11 @@ public:
     int64_t offset_ps() const;
     int64_t duration_ps() const;
     int64_t timestamp_ps() const;
-    
+
     // Metadata access
     template<typename ForEachStatFunc>
     void for_each_stat(ForEachStatFunc&& func) const;
-    
+
     std::optional<x_stat_visitor> get_stat(int64_t stat_type) const;
 };
 ```
@@ -258,11 +258,11 @@ std::cout << "Plane: " << visitor.name() << " (ID: " << visitor.id() << ")\n";
 
 visitor.for_each_line([](const xline_visitor& line) {
     std::cout << "  Line: " << line.name() << " (ID: " << line.id() << ")\n";
-    
+
     line.for_each_event([](const xevent_visitor& event) {
-        std::cout << "    Event: " << event.name() 
+        std::cout << "    Event: " << event.name()
                   << " Duration: " << event.duration_ps() / 1000000.0 << " ms\n";
-        
+
         // Access metadata
         event.for_each_stat([](const x_stat_visitor& stat) {
             std::cout << "      " << stat.name() << ": " << stat.ToString() << "\n";

@@ -32,7 +32,7 @@ Added a new step "Setup macOS linker environment" in **three locations** within 
     echo "LDFLAGS=-L/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib" >> $GITHUB_ENV
     echo "CPPFLAGS=-I/opt/homebrew/opt/llvm/include" >> $GITHUB_ENV
     echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
-    
+
     # Verify the environment setup
     echo "=== macOS Linker Environment Setup ==="
     echo "LDFLAGS: -L/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib"
@@ -94,14 +94,14 @@ CUDA installation was failing on both Ubuntu and Windows runners, causing builds
     sudo apt-get install -y nvidia-cuda-toolkit || {
       echo "WARNING: CUDA installation via nvidia-cuda-toolkit failed"
       echo "Attempting alternative installation method..."
-      
+
       # Fallback: Try NVIDIA's official repository
       wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb || {
         echo "ERROR: Failed to download CUDA keyring"
         echo "Continuing without CUDA support"
         exit 0
       }
-      
+
       sudo dpkg -i cuda-keyring_1.0-1_all.deb
       sudo apt-get update
       sudo apt-get install -y cuda-toolkit-12-3 || {
@@ -110,7 +110,7 @@ CUDA installation was failing on both Ubuntu and Windows runners, causing builds
         exit 0
       }
     }
-    
+
     # Verify CUDA installation
     if command -v nvcc &> /dev/null; then
       echo "SUCCESS: CUDA installed successfully"
@@ -135,14 +135,14 @@ CUDA installation was failing on both Ubuntu and Windows runners, causing builds
   run: |
     # Install NVIDIA CUDA Toolkit for Windows
     Write-Host "=== Installing CUDA Toolkit for Windows ==="
-    
+
     # Try chocolatey installation first
     Write-Host "Attempting CUDA installation via chocolatey..."
     try {
       choco install cuda --version=12.3.0 -y --no-progress --timeout=600
       if ($LASTEXITCODE -eq 0) {
         Write-Host "SUCCESS: CUDA Toolkit installed via chocolatey"
-        
+
         # Verify installation
         $nvccPath = Get-Command nvcc -ErrorAction SilentlyContinue
         if ($nvccPath) {
@@ -157,18 +157,18 @@ CUDA installation was failing on both Ubuntu and Windows runners, causing builds
     } catch {
       Write-Host "WARNING: CUDA installation via chocolatey failed: $_"
       Write-Host "Attempting direct download from NVIDIA..."
-      
+
       try {
         # Fallback: Direct download from NVIDIA
         $cudaUrl = "https://developer.download.nvidia.com/compute/cuda/12.3.0/network_installers/cuda_12.3.0_windows_network.exe"
         $installerPath = "$env:TEMP\cuda_installer.exe"
-        
+
         Write-Host "Downloading CUDA installer..."
         Invoke-WebRequest -Uri $cudaUrl -OutFile $installerPath -TimeoutSec 300
-        
+
         Write-Host "Running CUDA installer (silent mode)..."
         Start-Process -FilePath $installerPath -ArgumentList "-s" -Wait -NoNewWindow
-        
+
         if ($LASTEXITCODE -eq 0) {
           Write-Host "SUCCESS: CUDA installed via direct download"
         } else {
@@ -180,7 +180,7 @@ CUDA installation was failing on both Ubuntu and Windows runners, causing builds
         Write-Host "This is non-fatal - CUDA is optional for this build configuration"
       }
     }
-    
+
     # Final verification
     Write-Host "`n=== CUDA Installation Summary ==="
     if (Get-Command nvcc -ErrorAction SilentlyContinue) {
@@ -285,4 +285,3 @@ These are separate from the CI fixes and should be addressed in the codebase its
 - GitHub Actions Run (macOS failure): https://github.com/XSigmaAnalyitix/XSigma/actions/runs/18371357519/job/52335189432#step:9:1
 - Homebrew LLVM documentation: https://formulae.brew.sh/formula/llvm
 - CUDA Toolkit downloads: https://developer.nvidia.com/cuda-downloads
-

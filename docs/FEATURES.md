@@ -133,7 +133,7 @@ To add support for a new compiler:
 2. Update `run_coverage.py`:
    ```python
    from new_compiler_coverage import generate_new_compiler_coverage
-   
+
    # In get_coverage():
    elif compiler == "new_compiler":
        generate_new_compiler_coverage(build_path, modules, source_path)
@@ -203,4 +203,3 @@ All existing build scripts and CI/CD pipelines continue to work without modifica
 - Automatically handles GCC LTO line number mismatches
 - Uses `--ignore-errors` flags for lcov
 - Prevents build failures due to coverage issues
-

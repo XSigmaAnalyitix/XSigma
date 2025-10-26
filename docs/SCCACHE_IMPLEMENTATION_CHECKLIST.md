@@ -246,4 +246,3 @@ The sccache CI integration has been successfully implemented with:
 - Maintenance procedures documented
 
 The implementation is ready for testing and deployment.
-

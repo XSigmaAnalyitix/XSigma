@@ -26,7 +26,7 @@ std::lock_guard<std::mutex> const lock(mutex_);
 
 **Impact Analysis**:
 - **Allocation Path**: Every `allocate_raw()` call acquires global lock
-- **Deallocation Path**: Every `deallocate_raw()` call acquires global lock  
+- **Deallocation Path**: Every `deallocate_raw()` call acquires global lock
 - **Query Operations**: `RequestedSize()`, `AllocatedSize()`, `AllocationId()`, `GetStats()` all acquire lock
 - **Estimated Performance Impact**: 60-80% throughput reduction in multi-threaded scenarios
 
@@ -38,7 +38,7 @@ private:
     std::array<std::shared_mutex, kNumBins> bin_mutexes_;
     std::shared_mutex region_mutex_;  // For region management
     std::shared_mutex stats_mutex_;   // For statistics
-    
+
     // Lock-free allocation for small sizes using thread-local caches
     thread_local SmallObjectCache small_cache_;
 };
@@ -153,7 +153,7 @@ class CircularLRUBuffer {
 2. Add lock-free small object cache
 3. Implement lock-free pool operations
 
-### Phase 2: Algorithm Optimizations (Weeks 3-4)  
+### Phase 2: Algorithm Optimizations (Weeks 3-4)
 1. Add bin occupancy tracking
 2. Implement size-class based allocation
 3. Optimize LRU management

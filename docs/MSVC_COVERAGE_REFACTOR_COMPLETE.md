@@ -302,4 +302,3 @@ The `Tools/coverage/msvc_coverage.py` file has been successfully refactored acco
 6. ✅ Testing guide provided
 
 **Ready for testing and deployment.**
-

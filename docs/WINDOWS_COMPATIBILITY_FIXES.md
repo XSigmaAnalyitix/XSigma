@@ -69,7 +69,7 @@ Windows doesn't have a `cc` command, causing `FileNotFoundError`.
 ```python
 def detect_compiler_type() -> CompilerType | None:
     import platform
-    
+
     # check if user specifies the compiler type
     user_specify = os.environ.get("CXX", None)
     if user_specify:
@@ -83,7 +83,7 @@ def detect_compiler_type() -> CompilerType | None:
     pytorch_folder = get_xsigma_folder()
     build_dir = os.path.join(pytorch_folder, "build")
     cmake_cache = os.path.join(build_dir, "CMakeCache.txt")
-    
+
     if os.path.exists(cmake_cache):
         try:
             with open(cmake_cache, "r") as f:
@@ -235,4 +235,3 @@ All fixes comply with XSigma project rules:
 All Windows compatibility issues have been resolved. The code coverage tools now work seamlessly on Windows, Linux, and macOS with proper error handling and graceful fallbacks.
 
 **Status: ✓ COMPLETE AND TESTED**
-

@@ -43,10 +43,10 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANGXX)
       CACHE STRING "The sanitizer to use")
     mark_as_advanced(XSIGMA_SANITIZER)
 
-    if (UNIX AND NOT APPLE)
+    if(UNIX AND NOT APPLE)
       # Tests using external binaries need additional help to load the ASan
       # runtime when in use.
-      if (XSIGMA_SANITIZER STREQUAL "address" OR
+      if(XSIGMA_SANITIZER STREQUAL "address" OR
           XSIGMA_SANITIZER STREQUAL "undefined")
         find_library(XSIGMA_ASAN_LIBRARY
           NAMES libasan.so.6 libasan.so.5
@@ -55,20 +55,20 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANGXX)
 
         set(_xsigma_testing_ld_preload
           "${XSIGMA_ASAN_LIBRARY}")
-      endif ()
-    endif ()
+      endif()
+    endif()
 
     set(xsigma_sanitize_args
       "-fsanitize=${XSIGMA_SANITIZER}")
 
-    if (CMAKE_COMPILER_IS_CLANGXX)
+    if(CMAKE_COMPILER_IS_CLANGXX)
       configure_file(
         "${XSIGMA_SOURCE_DIR}/Scripts/suppressions/sanitizer_ignore.txt.in"
         "${XSIGMA_BINARY_DIR}/sanitizer_ignore.txt"
         @ONLY)
       list(APPEND xsigma_sanitize_args
         "SHELL:-fsanitize-blacklist=${XSIGMA_BINARY_DIR}/sanitizer_ignore.txt")
-    endif ()
+    endif()
 
     target_compile_options(xsigmabuild
       INTERFACE

@@ -205,4 +205,3 @@ brew install lcov          # macOS
 - Basic HTML reports
 - Limited error handling
 - GCC/Clang/MSVC support
-

@@ -2,9 +2,9 @@
 
 ## Quick Overview
 
-**Problem**: ThreadSanitizer and MemorySanitizer were failing in CI  
-**Root Cause**: Issues in the loguru logging library, not XSigma code  
-**Solution**: Use NATIVE logging backend for Unix sanitizer builds  
+**Problem**: ThreadSanitizer and MemorySanitizer were failing in CI
+**Root Cause**: Issues in the loguru logging library, not XSigma code
+**Solution**: Use NATIVE logging backend for Unix sanitizer builds
 **Status**: ✅ Fixed in CI configuration
 
 ---
@@ -21,7 +21,7 @@ Imagine a shared notebook where multiple people write at the same time without t
 
 **Specific Issues:**
 - Thread name registration happens without proper locking
-- Log callbacks are modified while other threads are using them  
+- Log callbacks are modified while other threads are using them
 - Global verbosity settings are read and written simultaneously
 - File handles are shared across threads without synchronization
 
@@ -66,14 +66,14 @@ Using uninitialized memory can lead to:
 
 ### What We Changed
 
-**File**: `.github/workflows/ci.yml`  
+**File**: `.github/workflows/ci.yml`
 **Change**: One line - switched from `LOGURU` to `NATIVE` logging backend for Unix sanitizer builds
 
 ```yaml
 # Old (Unix sanitizer builds):
 -DXSIGMA_LOGGING_BACKEND=LOGURU
 
-# New (Unix sanitizer builds):  
+# New (Unix sanitizer builds):
 -DXSIGMA_LOGGING_BACKEND=NATIVE
 ```
 
@@ -105,45 +105,45 @@ By using NATIVE logging, we eliminate all the loguru-related issues and let the 
 ## All Potential Fixes (Ranked)
 
 ### 1. ✅ Use NATIVE Logging (IMPLEMENTED)
-**Difficulty**: Easy  
-**Effectiveness**: Complete  
-**Maintenance**: Low  
+**Difficulty**: Easy
+**Effectiveness**: Complete
+**Maintenance**: Low
 **Recommendation**: ✅ Best solution
 
 ### 2. ⚠️ Upgrade Loguru
-**Difficulty**: Medium  
-**Effectiveness**: Unknown (may not fix all issues)  
-**Maintenance**: Medium  
+**Difficulty**: Medium
+**Effectiveness**: Unknown (may not fix all issues)
+**Maintenance**: Medium
 **Recommendation**: ⚠️ Worth trying in the future
 
 ### 3. ⚠️ Build Loguru with Sanitizer Instrumentation
-**Difficulty**: Hard  
-**Effectiveness**: High for MSan, doesn't fix TSan races  
-**Maintenance**: High  
+**Difficulty**: Hard
+**Effectiveness**: High for MSan, doesn't fix TSan races
+**Maintenance**: High
 **Recommendation**: ⚠️ Complex, only if NATIVE logging is insufficient
 
 ### 4. ⚠️ Disable Custom Allocators for Sanitizer Builds
-**Difficulty**: Easy  
-**Effectiveness**: Partial (helps MSan, doesn't fix TSan)  
-**Maintenance**: Low  
+**Difficulty**: Easy
+**Effectiveness**: Partial (helps MSan, doesn't fix TSan)
+**Maintenance**: Low
 **Recommendation**: ⚠️ Could combine with other solutions
 
 ### 5. ❌ Patch Loguru with Thread-Safe Wrappers
-**Difficulty**: Very Hard  
-**Effectiveness**: High but fragile  
-**Maintenance**: Very High  
+**Difficulty**: Very Hard
+**Effectiveness**: High but fragile
+**Maintenance**: Very High
 **Recommendation**: ❌ Not worth the effort
 
 ### 6. ❌ Use Extensive Suppressions
-**Difficulty**: Easy  
-**Effectiveness**: Low (hides problems)  
-**Maintenance**: High (fragile)  
+**Difficulty**: Easy
+**Effectiveness**: Low (hides problems)
+**Maintenance**: High (fragile)
 **Recommendation**: ❌ Defeats the purpose of sanitizers
 
 ### 7. ❌ Disable Problematic Sanitizers
-**Difficulty**: Easy  
-**Effectiveness**: None (avoids the problem)  
-**Maintenance**: Low  
+**Difficulty**: Easy
+**Effectiveness**: None (avoids the problem)
+**Maintenance**: Low
 **Recommendation**: ❌ Unacceptable - we need these tests
 
 ---
@@ -216,24 +216,23 @@ python setup.py ninja.clang.config.build.test --sanitizer.address --logging=NATI
 
 ## Questions & Answers
 
-**Q: Why not just fix loguru?**  
+**Q: Why not just fix loguru?**
 A: We don't control loguru's code, and fixing threading issues in a third-party library is complex and error-prone.
 
-**Q: Will this hide bugs in our logging code?**  
+**Q: Will this hide bugs in our logging code?**
 A: No - we still test logging functionality, just with a different backend. The NATIVE backend is simpler and has no threading issues.
 
-**Q: Should we switch to NATIVE logging everywhere?**  
+**Q: Should we switch to NATIVE logging everywhere?**
 A: No - LOGURU has more features and is fine for production. This change is only for sanitizer testing.
 
-**Q: What if we find bugs in XSigma now?**  
+**Q: What if we find bugs in XSigma now?**
 A: Great! That's what sanitizers are for. Fix them and the tests will pass.
 
-**Q: Can we test LOGURU with sanitizers later?**  
+**Q: Can we test LOGURU with sanitizers later?**
 A: Yes - we could add a separate CI job that allows known failures, or wait for loguru to fix their issues.
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2025-10-07  
+**Document Version**: 1.0
+**Last Updated**: 2025-10-07
 **Status**: Implementation Complete
-

@@ -12,7 +12,7 @@ Based on the test coverage analysis, we have achieved comprehensive coverage of 
 
 #### Core allocator_gpu Functions (10/10 tested):
 - ✅ `Alloc` - Tested in multiple scenarios
-- ✅ `Free` - Tested directly and through allocator interface  
+- ✅ `Free` - Tested directly and through allocator interface
 - ✅ `allocate_raw` - Extensively tested in all test cases
 - ✅ `deallocate_raw` - Tested in all allocation/deallocation scenarios
 - ✅ `allocate_gpu_memory` - Tested directly with various sizes and error cases
@@ -138,7 +138,7 @@ The test suite supports all three allocation methods through compile-time select
 - **API**: `cuMemAlloc`/`cuMemFree` (CUDA) or `hipMalloc`/`hipFree` (HIP)
 - **Tests**: All core functionality tests pass
 
-#### ASYNC Method Testing  
+#### ASYNC Method Testing
 - **Command**: `-DXSIGMA_CUDA_ALLOC=ASYNC`
 - **API**: `cuMemAllocAsync`/`cuMemFreeAsync` (CUDA) or `hipMallocAsync`/`hipFreeAsync` (HIP)
 - **Tests**: All core functionality tests pass with stream support

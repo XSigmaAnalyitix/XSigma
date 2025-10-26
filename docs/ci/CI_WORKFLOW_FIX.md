@@ -78,4 +78,3 @@ Updated the `ci-success` job in `.github/workflows/ci.yml` to reference the corr
 - `docs/CI_COMPILER_SEPARATION_IMPLEMENTATION.md` - Full implementation details
 - `docs/CI_COMPILER_SEPARATION_QUICK_REFERENCE.md` - Quick reference guide
 - `docs/CI_COMPILER_SEPARATION_BEFORE_AFTER.md` - Visual comparison
-

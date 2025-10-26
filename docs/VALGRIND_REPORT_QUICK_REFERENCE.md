@@ -105,7 +105,7 @@ Memory issues detected. Please review the details above.
 
 ### Issue: "No Valgrind log files found"
 **Cause**: Tests didn't run or Valgrind wasn't invoked
-**Solution**: 
+**Solution**:
 - Verify build directory is correct
 - Check that tests exist: `ctest -N`
 - Ensure Valgrind is installed: `valgrind --version`
@@ -195,4 +195,3 @@ For more information:
 - Full documentation: `docs/VALGRIND_REPORT_GENERATION.md`
 - Valgrind manual: `man valgrind`
 - XSigma Valgrind config: `Cmake/tools/valgrind.cmake`
-

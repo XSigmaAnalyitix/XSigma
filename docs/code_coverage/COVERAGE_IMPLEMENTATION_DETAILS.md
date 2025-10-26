@@ -17,7 +17,7 @@ oss_coverage.py (PyTorch Tool)
     ├── package/tool/clang_coverage.py (Clang Support)
     ├── package/tool/gcc_coverage.py (GCC Support)
     └── package/util/ (Utilities)
-    
+
 Fallback: __run_legacy_coverage() → compute_code_coverage_locally.sh
 ```
 
@@ -226,4 +226,3 @@ python setup.py ninja.clang.config.build.test.coverage
 - Keep usage examples current
 - Update troubleshooting guide
 - Document known issues
-

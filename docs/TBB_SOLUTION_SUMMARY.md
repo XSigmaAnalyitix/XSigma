@@ -34,7 +34,7 @@ Modified `Cmake/tools/tbb.cmake` to:
 **Added**:
 ```cmake
 if(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    message(FATAL_ERROR 
+    message(FATAL_ERROR
         [Clear error message with installation instructions]
     )
 endif()
@@ -98,7 +98,7 @@ python setup.py config.ninja.vs22.test.tbb
 ## Alternative Solutions Considered and Rejected
 
 ### ❌ Build TBB as Static Libraries
-**Why rejected**: 
+**Why rejected**:
 - Increases executable size
 - Not TBB's intended use case
 - Violates principle of least surprise
@@ -165,7 +165,7 @@ RECOMMENDED INSTALLATION METHODS:
 
 1. Using vcpkg (recommended):
    vcpkg install tbb:x64-windows
-   
+
    Then configure with:
    -DCMAKE_TOOLCHAIN_FILE=[vcpkg root]/scripts/buildsystems/vcpkg.cmake
 
@@ -249,4 +249,3 @@ If vcpkg becomes the standard package manager:
 - Track user feedback on installation experience
 - Monitor TBB project for Windows + Clang improvements
 - Consider telemetry on which installation method users choose
-

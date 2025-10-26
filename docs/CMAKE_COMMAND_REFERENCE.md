@@ -268,4 +268,3 @@ python run_coverage.py
 3. **Build Directory**: `-B` specifies build directory, `-S` specifies source
 4. **Generator**: `-G Ninja` specifies Ninja as build generator
 5. **Coverage**: Requires `-DXSIGMA_ENABLE_COVERAGE=ON` and Debug build type
-

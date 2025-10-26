@@ -6,22 +6,22 @@ Extracted from setup.py for better modularity and maintainability.
 """
 
 import os
-import platform
 import subprocess
-import sys
-from typing import List
+from typing import Optional
 
 
-def get_logical_processor_count():
+def get_logical_processor_count() -> Optional[int]:
     """Get the number of logical processors available."""
     try:
-        import psutil
-        return psutil.cpu_count(logical=True)
+        import psutil  # type: ignore[import-untyped]
+
+        return psutil.cpu_count(logical=True)  # type: ignore[no-untyped-call,no-any-return]
     except ImportError:
         try:
             return os.cpu_count()
         except AttributeError:
             import multiprocessing
+
             return multiprocessing.cpu_count()
 
 
@@ -46,9 +46,11 @@ def build_project(builder: str, build_enum: str, system: str, shell_flag: bool) 
             n = get_logical_processor_count()
             cmake_cmd_build = [
                 "xcodebuild",
-                "-configuration", build_enum,
+                "-configuration",
+                build_enum,
                 "-parallelizeTargets",
-                "-jobs", str(n)
+                "-jobs",
+                str(n),
             ]
         elif system == "Windows":
             cmake_cmd_build = [
@@ -62,9 +64,7 @@ def build_project(builder: str, build_enum: str, system: str, shell_flag: bool) 
             return 1
 
         subprocess.check_call(
-            cmake_cmd_build,
-            stderr=subprocess.STDOUT,
-            shell=shell_flag
+            cmake_cmd_build, stderr=subprocess.STDOUT, shell=shell_flag
         )
         return 0
 
@@ -86,4 +86,3 @@ def setup_windows_path(builder: str, build_enum: str) -> None:
                 subprocess.check_call("windows_path.bat")
     except (subprocess.CalledProcessError, Exception):
         pass
-

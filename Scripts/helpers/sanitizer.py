@@ -6,7 +6,7 @@ Extracted from setup.py for better modularity and maintainability.
 """
 
 import os
-from typing import Dict, Optional
+from typing import Optional
 
 
 def get_sanitizer_options(sanitizer_type: str, source_path: str) -> Optional[str]:
@@ -26,28 +26,30 @@ def get_sanitizer_options(sanitizer_type: str, source_path: str) -> Optional[str
         "address": {
             "env_var": "ASAN_OPTIONS",
             "base_options": "print_stacktrace=1:check_initialization_order=1:strict_init_order=1",
-            "suppression_file": os.path.join(suppressions_dir, "asan_suppressions.txt")
+            "suppression_file": os.path.join(suppressions_dir, "asan_suppressions.txt"),
         },
         "leak": {
             "env_var": "LSAN_OPTIONS",
             "base_options": "print_suppressions=0",
-            "suppression_file": os.path.join(suppressions_dir, "lsan_suppressions.txt")
+            "suppression_file": os.path.join(suppressions_dir, "lsan_suppressions.txt"),
         },
         "thread": {
             "env_var": "TSAN_OPTIONS",
             "base_options": "print_stacktrace=1:halt_on_error=1",
-            "suppression_file": os.path.join(suppressions_dir, "tsan_suppressions.txt")
+            "suppression_file": os.path.join(suppressions_dir, "tsan_suppressions.txt"),
         },
         "memory": {
             "env_var": "MSAN_OPTIONS",
             "base_options": "print_stats=1:halt_on_error=1",
-            "suppression_file": os.path.join(suppressions_dir, "msan_suppressions.txt")
+            "suppression_file": os.path.join(suppressions_dir, "msan_suppressions.txt"),
         },
         "undefined": {
             "env_var": "UBSAN_OPTIONS",
             "base_options": "print_stacktrace=1:halt_on_error=1",
-            "suppression_file": os.path.join(suppressions_dir, "ubsan_suppressions.txt")
-        }
+            "suppression_file": os.path.join(
+                suppressions_dir, "ubsan_suppressions.txt"
+            ),
+        },
     }
 
     if sanitizer_type not in sanitizer_options:
@@ -63,7 +65,9 @@ def get_sanitizer_options(sanitizer_type: str, source_path: str) -> Optional[str
     return options
 
 
-def build_sanitizer_environment(sanitizer_type: str, source_path: str) -> Dict[str, str]:
+def build_sanitizer_environment(
+    sanitizer_type: str, source_path: str
+) -> dict[str, str]:
     """
     Build environment variables for the specified sanitizer.
 
@@ -81,7 +85,7 @@ def build_sanitizer_environment(sanitizer_type: str, source_path: str) -> Dict[s
         "leak": "LSAN_OPTIONS",
         "thread": "TSAN_OPTIONS",
         "memory": "MSAN_OPTIONS",
-        "undefined": "UBSAN_OPTIONS"
+        "undefined": "UBSAN_OPTIONS",
     }
 
     if sanitizer_type in sanitizer_options:
@@ -90,4 +94,3 @@ def build_sanitizer_environment(sanitizer_type: str, source_path: str) -> Dict[s
             env_vars[sanitizer_options[sanitizer_type]] = options
 
     return env_vars
-

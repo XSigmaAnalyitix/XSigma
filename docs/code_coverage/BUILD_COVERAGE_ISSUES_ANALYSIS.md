@@ -142,7 +142,7 @@ def is_intrested_file(
     excluded_patterns = ["Testing", "test", "mock", "stub"]
     if any(pattern in file_path for pattern in excluded_patterns):
         return False
-    
+
     # ... rest of the function
 ```
 
@@ -210,4 +210,3 @@ Then modify `Tools/code_coverage/oss_coverage.py` to pass this to the collection
 - `EXCLUSION_FEATURE.md` - Source exclusion feature documentation
 - `Scripts/helpers/coverage.py` - Coverage helper implementation
 - `Tools/code_coverage/oss_coverage.py` - OSS coverage tool wrapper
-

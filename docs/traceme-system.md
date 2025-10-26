@@ -52,9 +52,9 @@ The TraceMe system consists of three main components:
 void example_function() {
     // Simple scoped tracing
     traceme trace("example_function");
-    
+
     // ... your code here ...
-    
+
     // Trace automatically ends when 'trace' goes out of scope
 }
 ```
@@ -74,7 +74,7 @@ void process_data(const std::vector<int>& data) {
             {"memory_mb", data.size() * sizeof(int) / 1024 / 1024}
         });
     });
-    
+
     // ... process data ...
 }
 ```
@@ -148,7 +148,7 @@ Utilities for structured metadata encoding.
 ```cpp
 void expensive_computation() {
     traceme trace(__FUNCTION__);  // Uses function name
-    
+
     // ... computation ...
 }
 ```
@@ -158,17 +158,17 @@ void expensive_computation() {
 ```cpp
 void machine_learning_training() {
     traceme trace("ml_training");
-    
+
     {
         traceme phase("data_loading", 2);
         load_training_data();
     }
-    
+
     {
         traceme phase("model_training", 2);
         train_model();
     }
-    
+
     {
         traceme phase("validation", 2);
         validate_model();
@@ -181,7 +181,7 @@ void machine_learning_training() {
 ```cpp
 void process_batches(const std::vector<Batch>& batches) {
     traceme trace("process_batches");
-    
+
     for (size_t i = 0; i < batches.size(); ++i) {
         // Only trace at verbose level to avoid noise
         traceme batch_trace([&]() {
@@ -190,7 +190,7 @@ void process_batches(const std::vector<Batch>& batches) {
                 {"batch_size", batches[i].size()}
             });
         }, 3);
-        
+
         process_single_batch(batches[i]);
     }
 }
@@ -208,7 +208,7 @@ void optimized_function() {
                 {"cache_hits", get_cache_hits()}
             });
         }, 3);
-        
+
         // ... function implementation ...
     } else {
         // ... function implementation without tracing overhead ...
@@ -222,19 +222,19 @@ void optimized_function() {
 class AsyncProcessor {
     void start_processing() {
         auto id = traceme::activity_start("async_processing");
-        
+
         // Store ID for later use
         processing_trace_id_ = id;
-        
+
         // Start async work...
         std::async([this]() {
             do_work();
-            
+
             // End trace when work completes
             traceme::activity_end(processing_trace_id_);
         });
     }
-    
+
 private:
     int64_t processing_trace_id_ = 0;
 };
@@ -248,7 +248,7 @@ private:
    ```cpp
    // DON'T: Always constructs string even when tracing disabled
    traceme trace(expensive_string_operation());
-   
+
    // DO: Only constructs string when tracing enabled
    traceme trace([&]() { return expensive_string_operation(); });
    ```
@@ -256,7 +256,7 @@ private:
 2. **Check Activity for Expensive Metadata**
    ```cpp
    traceme trace("operation");
-   
+
    if (traceme::active(2)) {
        trace.append_metadata([&]() {
            return traceme_encode({
@@ -279,7 +279,7 @@ private:
    class Application {
        traceme app_trace_{"application_lifetime"};  // Bad
    };
-   
+
    // DO: Trace specific operations
    void run_application() {
        traceme trace("application_run");
@@ -294,7 +294,7 @@ private:
        traceme trace("operation");
        // ... work ...
    }  // Automatically cleaned up
-   
+
    // Only when necessary: Manual management
    auto id = traceme::activity_start("cross_scope_operation");
    // ... work ...
@@ -311,7 +311,7 @@ private:
        // ... work ...
        traceme::activity_end(id);
    }
-   
+
    // INCORRECT: Cross-thread activity management
    void main_thread() {
        auto id = traceme::activity_start("task");
@@ -326,7 +326,7 @@ private:
    ```cpp
    void multi_threaded_operation() {
        traceme main_trace("multi_threaded_op");
-       
+
        std::vector<std::thread> threads;
        for (int i = 0; i < num_threads; ++i) {
            threads.emplace_back([i]() {
@@ -334,11 +334,11 @@ private:
                traceme thread_trace([i]() {
                    return traceme_encode("worker_thread", {{"thread_id", i}});
                });
-               
+
                // ... thread work ...
            });
        }
-       
+
        for (auto& t : threads) {
            t.join();
        }
@@ -359,9 +359,9 @@ public:
                 {"allocator", name_}
             });
         });
-        
+
         void* ptr = underlying_allocator_->allocate(size);
-        
+
         // Add allocation result to trace
         trace.append_metadata([&]() {
             return traceme_encode({
@@ -369,10 +369,10 @@ public:
                 {"success", ptr != nullptr}
             });
         });
-        
+
         return ptr;
     }
-    
+
 private:
     std::string name_;
     std::unique_ptr<Allocator> underlying_allocator_;
@@ -385,10 +385,10 @@ private:
 void launch_gpu_kernel() {
     // Trace CPU-side preparation
     traceme cpu_trace("gpu_kernel_launch");
-    
+
     // Prepare kernel parameters
     setup_kernel_parameters();
-    
+
     // Record instant event for kernel launch
     traceme::instant_activity([&]() {
         return traceme_encode("gpu_kernel_start", {
@@ -397,10 +397,10 @@ void launch_gpu_kernel() {
             {"block_size", block_size}
         });
     });
-    
+
     // Launch kernel (async)
     launch_kernel_async();
-    
+
     // CPU trace ends here, GPU work continues asynchronously
 }
 ```
@@ -410,10 +410,10 @@ void launch_gpu_kernel() {
 ```cpp
 void risky_operation() {
     traceme trace("risky_operation");
-    
+
     try {
         // ... operation that might fail ...
-        
+
         trace.append_metadata([&]() {
             return traceme_encode({{"status", "success"}});
         });
@@ -1290,39 +1290,39 @@ public:
             process_thread_events(thread_events);
         }
     }
-    
+
 private:
     void process_thread_events(const traceme_recorder::ThreadEvents& thread_events) {
         // Build call stack from nested events
         std::stack<const traceme_recorder::Event*> call_stack;
-        
+
         for (const auto& event : thread_events.events) {
             if (event.is_complete()) {
                 // Process complete event
                 analyze_event_duration(event);
-                
+
                 // Check for nested events
                 update_call_hierarchy(event, call_stack);
             }
         }
     }
-    
+
     void analyze_event_duration(const traceme_recorder::Event& event) {
         auto duration_ns = event.end_time - event.start_time;
-        
+
         // Collect statistics
         event_stats_[event.name].total_time += duration_ns;
         event_stats_[event.name].call_count++;
-        event_stats_[event.name].max_time = 
+        event_stats_[event.name].max_time =
             std::max(event_stats_[event.name].max_time, duration_ns);
     }
-    
+
     struct EventStats {
         int64_t total_time = 0;
         int64_t max_time = 0;
         size_t call_count = 0;
     };
-    
+
     std::unordered_map<std::string, EventStats> event_stats_;
 };
 ```
@@ -1341,31 +1341,31 @@ public:
             while (monitoring_active_) {
                 // Start short profiling session
                 traceme_recorder::start(2);
-                
+
                 std::this_thread::sleep_for(std::chrono::seconds(1));
-                
+
                 auto events = traceme_recorder::stop();
                 analyze_performance(events);
-                
+
                 std::this_thread::sleep_for(std::chrono::seconds(9));
             }
         });
     }
-    
+
     void stop_monitoring() {
         monitoring_active_ = false;
         if (monitoring_thread_.joinable()) {
             monitoring_thread_.join();
         }
     }
-    
+
 private:
     void analyze_performance(const traceme_recorder::Events& events) {
         // Detect performance anomalies
         // Update performance metrics
         // Trigger alerts if needed
     }
-    
+
     std::atomic<bool> monitoring_active_{false};
     std::thread monitoring_thread_;
 };

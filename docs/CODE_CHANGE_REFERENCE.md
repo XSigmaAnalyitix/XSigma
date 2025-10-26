@@ -205,4 +205,3 @@ This line expects `file_name` to NOT have the `.html` extension, which is now gu
 **Lines Changed**: 54-100 in `Tools/coverage/msvc_coverage.py`
 
 **Total Changes**: 1 function modified, 3 lines added (comments + fix)
-

@@ -208,4 +208,3 @@ Requiring system-installed TBB on Windows with Clang is the **cleanest and most 
 - [vcpkg Documentation](https://vcpkg.io/)
 - [CMake FindTBB Module](https://cmake.org/cmake/help/latest/module/FindTBB.html)
 - [Clang on Windows Documentation](https://clang.llvm.org/docs/MSVCCompatibility.html)
-

@@ -68,6 +68,10 @@ _MODULE_NAME_ALLOW_LIST.update(
         "torchrec",
         "numpy",
         "torch_xla",
+        "colorama",
+        "psutil",
+        "helpers",
+        "run_coverage",
     ]
 )
 

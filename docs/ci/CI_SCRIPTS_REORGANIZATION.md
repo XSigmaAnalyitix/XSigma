@@ -219,4 +219,3 @@ run: ./.github/workflows/install/install-deps-ubuntu.sh --with-tbb
 The CI installation scripts have been successfully reorganized to follow GitHub Actions conventions. All scripts are now located in `.github/workflows/install/`, all references have been updated, and documentation has been revised accordingly.
 
 ✅ **Status**: Ready for deployment
-

@@ -196,4 +196,3 @@ Potential improvements for future versions:
 - Trend analysis across multiple runs
 - Severity-based filtering
 - Custom report templates
-

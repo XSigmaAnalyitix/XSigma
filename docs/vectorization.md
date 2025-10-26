@@ -222,11 +222,11 @@ XSigma includes cpuinfo for runtime CPU feature detection. Use it to verify avai
 
 void check_cpu_features() {
     cpuinfo_initialize();
-    
+
     if (cpuinfo_has_x86_avx2()) {
         // AVX2 is available
     }
-    
+
     if (cpuinfo_has_x86_avx512f()) {
         // AVX-512 is available
     }
@@ -238,4 +238,3 @@ void check_cpu_features() {
 - [Build Configuration](build-configuration.md) - Build system configuration
 - [Cross-Platform Building](cross-platform-building.md) - Platform-specific instructions
 - [Third-Party Dependencies](third-party-dependencies.md) - cpuinfo library usage
-

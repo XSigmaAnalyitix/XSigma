@@ -60,11 +60,11 @@ Filters out test files and applies exclusion patterns:
 def _should_exclude_file(file_path: str) -> bool:
     """Check if a file should be excluded from coverage based on patterns."""
     exclude_patterns = CONFIG.get("exclude_patterns", [])
-    
+
     # Always exclude test files
     if "CxxTests" in file_path or "Test" in file_path:
         return True
-    
+
     # Check against configured exclusion patterns
     for pattern in exclude_patterns:
         if "*" in pattern:
@@ -74,7 +74,7 @@ def _should_exclude_file(file_path: str) -> bool:
         else:
             if pattern in file_path:
                 return True
-    
+
     return False
 ```
 
@@ -91,26 +91,26 @@ Recursively scans the nested OpenCppCoverage directory structure:
 def _collect_html_files_recursive(html_dir: Path) -> list[tuple[Path, str]]:
     """Recursively collect HTML files from OpenCppCoverage directory structure."""
     html_files = []
-    
+
     # Recursively find all HTML files in subdirectories
     for html_file in html_dir.rglob("*.html"):
         # Skip the main index.html
         if html_file.name == "index.html" and html_file.parent == html_dir:
             continue
-        
+
         # Get relative path for display
         try:
             rel_path = html_file.relative_to(html_dir)
         except ValueError:
             rel_path = html_file
-        
+
         # Check if file should be excluded
         if _should_exclude_file(str(rel_path)):
             logger.debug(f"Excluding file from coverage: {rel_path}")
             continue
-        
+
         html_files.append((html_file, str(rel_path)))
-    
+
     return html_files
 ```
 
@@ -243,4 +243,3 @@ build_vs22_coverage/coverage_report/html/index.html
 3. **Verify HTML output**: Open `html/index.html` to confirm it's not empty
 4. **Compare with Clang**: Run Clang coverage and compare metrics
 5. **Document results**: Record any metric differences for future reference
-

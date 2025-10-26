@@ -32,4 +32,3 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
       " Code coverage for compiler ${CMAKE_CXX_COMPILER_ID} is unsupported natively. ")
   endif()
 endif()
-

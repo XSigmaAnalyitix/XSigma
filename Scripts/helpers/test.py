@@ -8,11 +8,11 @@ Extracted from setup.py for better modularity and maintainability.
 import os
 import platform
 import subprocess
-import sys
-from typing import Optional
 
 
-def run_ctest(builder: str, build_enum: str, system: str, verbosity: str, shell_flag: bool) -> int:
+def run_ctest(
+    builder: str, build_enum: str, system: str, verbosity: str, shell_flag: bool
+) -> int:
     """
     Run tests using ctest.
 
@@ -41,9 +41,7 @@ def run_ctest(builder: str, build_enum: str, system: str, verbosity: str, shell_
             ctest_cmd.append(verbosity)
 
         return subprocess.check_call(
-            ctest_cmd,
-            stderr=subprocess.STDOUT,
-            shell=shell_flag
+            ctest_cmd, stderr=subprocess.STDOUT, shell=shell_flag
         )
 
     except subprocess.CalledProcessError:
@@ -88,4 +86,3 @@ def run_valgrind_test(source_path: str, build_path: str, shell_flag: bool) -> in
         )
     except Exception:
         return 1
-

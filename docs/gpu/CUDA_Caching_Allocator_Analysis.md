@@ -47,7 +47,7 @@ Each memory block contains:
 ### Deallocation Algorithm
 
 1. **Validation**: Verify pointer ownership and prevent double-free
-2. **Stream Analysis**: 
+2. **Stream Analysis**:
    - Same stream → immediate caching
    - Different stream → deferred caching with CUDA event
 3. **Cache Management**: Add to appropriate list (free or deferred)

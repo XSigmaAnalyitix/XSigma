@@ -288,4 +288,3 @@ cat tools/code_coverage/profile/log/log.txt
 3. Configure coverage thresholds
 4. Add coverage badges to documentation
 5. Monitor coverage trends over time
-

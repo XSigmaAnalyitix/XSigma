@@ -1,6 +1,6 @@
 # Benchmark Flag - Quick Reference
 
-**Status**: ✅ Implemented and Pushed  
+**Status**: ✅ Implemented and Pushed
 **Commit**: `6c4c9f6`
 
 ---
@@ -133,4 +133,3 @@ See `BENCHMARK_FLAG_IMPLEMENTATION.md` for:
 ---
 
 **Quick Start**: `python setup.py ninja.clang.release.benchmark.config.build`
-

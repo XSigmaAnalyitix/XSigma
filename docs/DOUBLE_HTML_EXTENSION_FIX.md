@@ -10,7 +10,7 @@ The generated `index.html` file contained links with double `.html` extensions:
 
 The issue was in how file paths were being stored in the JSON coverage report:
 
-1. **In `_collect_html_files_recursive()`**: 
+1. **In `_collect_html_files_recursive()`**:
    - Was storing the full relative path including `.html` extension
    - Example: `Modules/yyy/yyy.html`
 
@@ -211,4 +211,3 @@ ls -la build_vs22_coverage/coverage_report/html/
 - [ ] Check: All links in index.html are clickable
 - [ ] Check: No 404 errors when clicking links
 - [ ] Check: Coverage data displays correctly on each page
-

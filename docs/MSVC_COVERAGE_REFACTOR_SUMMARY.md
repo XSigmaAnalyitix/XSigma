@@ -255,4 +255,3 @@ ls build_vs22_coverage/coverage_report/coverage/ | grep -i test
 4. Verify test files are excluded
 5. Compare with Clang coverage for consistency
 6. Update CI/CD if needed
-

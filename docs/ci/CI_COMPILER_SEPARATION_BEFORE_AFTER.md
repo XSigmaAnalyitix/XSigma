@@ -236,4 +236,3 @@ Monitor first run
         ↓
 ✓ Success: New CI running smoothly
 ```
-

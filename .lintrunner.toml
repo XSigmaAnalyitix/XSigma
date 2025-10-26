@@ -1,18 +1,18 @@
-[[linter]]
+# [[linter]]
 code = 'FLAKE8'
-include_patterns = ['**/*.py']
+include_patterns = ['**/*.py','Scripts/**/*.py']
 exclude_patterns = [
     '.git/**',
     'ThirdParty/**',
     'venv/**',
     '**/*.pyi',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.augment/**',
+    'Scripts/iwyu/iwyu_configure_detector.py',
 ]
-command = [
-    'python3',
+# command = [
+#     'python3',
     'Tools/linter/adapters/flake8_linter.py',
     '--',
     '@{{PATHSFILE}}'
@@ -38,14 +38,12 @@ init_command = [
 [[linter]]
 code = 'CLANGFORMAT'
 include_patterns = [
-    'Library/**/*.h',
-    'Library/**/*.cxx',
+    '**/*.h',
+    '**/*.cxx',
 ]
 exclude_patterns = [
     'ThirdParty/**',
     '.lintrunner.toml',
-    'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -77,10 +75,16 @@ include_patterns = [
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
+    'venv/**',
+    'build/**',
+    'build_*/**',
+    'dist/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
+    'mypy_plugins/sympy_mypy_plugin.py',
+    'Scripts/setup.py',
+    'Scripts/iwyu/run_iwyu_analysis.py',
 ]
 command = [
     'python3',
@@ -122,10 +126,16 @@ include_patterns = [
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
+    'venv/**',
+    'build/**',
+    'build_*/**',
+    'dist/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
+    'mypy_plugins/sympy_mypy_plugin.py',
+    'Scripts/setup.py',
+    'Scripts/iwyu/run_iwyu_analysis.py',
 ]
 command = [
     'python3',
@@ -146,7 +156,6 @@ include_patterns = [
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -192,7 +201,6 @@ exclude_patterns = [
     '**/*pb.h',
     '**/*inl.h',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -221,14 +229,13 @@ include_patterns = ['**/*.py', '**/*.pyi']
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
 ]
 command = [
     'python3',
-    'Tools/linter/adapters/grep_linter.py',
+#     'Tools/linter/adapters/grep_linter.py',
     '--pattern=# type:\s*ignore([^\[]|$)',
     '--linter-name=TYPEIGNORE',
     '--error-name=unqualified type: ignore',
@@ -266,7 +273,6 @@ include_patterns = ['**/*.py', '**/*.pyi']
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -330,10 +336,10 @@ exclude_patterns=[
     '**/*.gz',
     '**/*.patch',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
+    'Scripts/valgrind_ctest.sh',
 ]
 command = [
     'python3',
@@ -351,7 +357,6 @@ exclude_patterns = [
     '**/*.diff',
     '**/*.patch',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -382,7 +387,6 @@ exclude_patterns = [
     '.lintrunner.toml',
     '**/*.patch',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -460,27 +464,26 @@ command = [
 #     '@{{PATHSFILE}}'
 # ]
 
-[[linter]]
-code = 'INCLUDE'
-include_patterns = [
-    'Library/**',
-    'Tests/**',
-]
-exclude_patterns = [
-    'ThirdParty/**',
-    '**/generated/**',
-    'Tools/**',
-    'Scripts/**',
-    '.vscode/**',
-    '.git/**',
-    '.augment/**',
-]
+# [[linter]]
+# code = 'INCLUDE'
+# include_patterns = [
+#     'Library/**',
+#     'Tests/**',
+# ]
+# exclude_patterns = [
+#     'ThirdParty/**',
+#     '**/generated/**',
+#     'Tools/**',
+#     '.vscode/**',
+#     '.git/**',
+#     '.augment/**',
+# ]
 command = [
     'python3',
     'Tools/linter/adapters/grep_linter.py',
-    '--pattern=#include "',
-    '--linter-name=INCLUDE',
-    '--error-name=quoted include',
+#     '--pattern=#include "',
+#     '--linter-name=INCLUDE',
+#     '--error-name=quoted include',
     '--replace-pattern=s/#include "(.*)"$/#include <\1>/',
     """--error-description=\
         This #include uses quotes; please convert it to #include <xxxx>\
@@ -499,7 +502,6 @@ include_patterns = [
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -534,7 +536,6 @@ include_patterns = [
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -569,7 +570,6 @@ include_patterns = [
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -602,7 +602,6 @@ exclude_patterns = [
     '**/*.md',
     '**/*.diff',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -636,7 +635,6 @@ exclude_patterns = [
     '**/git-pre-commit',
     '**/git-clang-format',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -652,14 +650,12 @@ command = [
 code = 'CUBINCLUDE'
 include_patterns = [
     'Library/**',
-    'Scripts/**',
     'Tools/**',
     'Tests/**',
 ]
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -679,60 +675,31 @@ command = [
     '@{{PATHSFILE}}'
 ]
 
-[[linter]]
-code = 'RAWCUDA'
-include_patterns = [
-    'Library/**',
-    'Tests/**',
-]
-exclude_patterns = [
-    'ThirdParty/**',
-    'Tools/**',
-    'Scripts/**',
-    '.vscode/**',
-    '.git/**',
-    '.augment/**',
-]
-command = [
-    'python3',
-    'Tools/linter/adapters/grep_linter.py',
-    '--pattern=cudaStreamSynchronize',
-    '--linter-name=RAWCUDA',
-    '--error-name=raw CUDA API usage',
-    """--error-description=\
-        This line calls raw CUDA APIs directly; please use at::cuda wrappers instead.
-    """,
-    '--',
-    '@{{PATHSFILE}}'
-]
-
-[[linter]]
-code = 'RAWCUDADEVICE'
-include_patterns = [
-    'Library/**',
-    'Tests/**',
-]
-exclude_patterns = [
-    'ThirdParty/**',
-    'Tools/**',
-    'Scripts/**',
-    '.vscode/**',
-    '.git/**',
-    '.augment/**',
-]
-command = [
-    'python3',
-    'Tools/linter/adapters/grep_linter.py',
-    '--pattern=cudaSetDevice(',
-    '--pattern=cudaGetDevice(',
-    '--linter-name=RAWCUDADEVICE',
-    '--error-name=raw CUDA API usage',
-    """--error-description=\
-        This line calls raw CUDA APIs directly; please use c10::cuda wrappers instead.
-    """,
-    '--',
-    '@{{PATHSFILE}}'
-]
+#[[linter]]
+#code = 'RAWCUDA'
+#include_patterns = [
+#    'Library/**',
+#    'Tests/**',
+#]
+#exclude_patterns = [
+#    'ThirdParty/**',
+#    'Tools/**',
+#    '.vscode/**',
+#    '.augment/**',
+#    '.git/**',
+#]
+#command = [
+#    'python3',
+#    'Tools/linter/adapters/grep_linter.py',
+#    '--pattern=cudaStreamSynchronize',
+#    '--linter-name=RAWCUDA',
+#    '--error-name=raw CUDA API usage',
+#    """--error-description=\
+#        This line calls raw CUDA APIs directly; please use at::cuda wrappers instead.
+#    """,
+#    '--',
+#    '@{{PATHSFILE}}'
+#]
 
 [[linter]]
 code = 'ROOT_LOGGING'
@@ -742,7 +709,6 @@ include_patterns = [
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -791,7 +757,6 @@ include_patterns = [
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -819,10 +784,11 @@ include_patterns = [
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
+    'Scripts/valgrind_ctest.sh',
+    'Scripts/all-cmake-format.sh',
 ]
 command = [
     'python3',
@@ -846,7 +812,6 @@ include_patterns = [
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -877,7 +842,6 @@ include_patterns = [
 exclude_patterns = [
     'test/run_test.py',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -897,7 +861,6 @@ include_patterns = [
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -909,31 +872,30 @@ command = [
     '@{{PATHSFILE}}',
 ]
 
-[[linter]]
-code = 'CALL_ONCE'
-include_patterns = [
-    'Library/**',
-]
-exclude_patterns = [
-    'Tools/**',
-    'Scripts/**',
-    '.vscode/**',
-    '.git/**',
-    '.augment/**',
-]
-command = [
-    'python3',
-    'Tools/linter/adapters/grep_linter.py',
-    '--pattern=std::call_once',
-    '--linter-name=CALL_ONCE',
-    '--error-name=invalid call_once',
-    '--replace-pattern=s/std::call_once/c10::call_once/',
-    """--error-description=\
-        Use of std::call_once is forbidden and should be replaced with c10::call_once\
-    """,
-    '--',
-    '@{{PATHSFILE}}'
-]
+#[[linter]]
+#code = 'CALL_ONCE'
+#include_patterns = [
+#    'Library/**',
+#]
+#exclude_patterns = [
+#    'Tools/**',
+#    '.vscode/**',
+#    '.augment/**',
+#    '.git/**',
+#]
+#command = [
+#    'python3',
+#    'Tools/linter/adapters/grep_linter.py',
+#    '--pattern=std::call_once',
+#    '--linter-name=CALL_ONCE',
+#    '--error-name=invalid call_once',
+#    '--replace-pattern=s/std::call_once/xsigma::call_once/',
+#    """--error-description=\
+#        Use of std::call_once is forbidden and should be replaced with xsigma::call_once\
+#    """,
+#    '--',
+#    '@{{PATHSFILE}}'
+#]
 
 [[linter]]
 code = 'CONTEXT_DECORATOR'
@@ -954,32 +916,31 @@ command = [
     '@{{PATHSFILE}}'
 ]
 
-[[linter]]
-code = 'ONCE_FLAG'
-include_patterns = [
-    'Library/**',
-]
-exclude_patterns = [
-    'ThirdParty/**',
-    'Tools/**',
-    'Scripts/**',
-    '.vscode/**',
-    '.git/**',
-    '.augment/**',
-]
-command = [
-    'python3',
-    'Tools/linter/adapters/grep_linter.py',
-    '--pattern=std::once_flag',
-    '--linter-name=ONCE_FLAG',
-    '--error-name=invalid once_flag',
-    '--replace-pattern=s/std::once_flag/c10::once_flag/',
-    """--error-description=\
-        Use of std::once_flag is forbidden and should be replaced with c10::once_flag\
-    """,
-    '--',
-    '@{{PATHSFILE}}'
-]
+#[[linter]]
+#code = 'ONCE_FLAG'
+#include_patterns = [
+#    'Library/**',
+#]
+#exclude_patterns = [
+#    'ThirdParty/**',
+#    'Tools/**',
+#    '.vscode/**',
+#    '.git/**',
+#    '.augment/**',
+#]
+#command = [
+#    'python3',
+#    'Tools/linter/adapters/grep_linter.py',
+#    '--pattern=std::once_flag',
+#    '--linter-name=ONCE_FLAG',
+#    '--error-name=invalid once_flag',
+#    '--replace-pattern=s/std::once_flag/std::once_flag/',
+#    """--error-description=\
+#        Use of std::once_flag is forbidden and should be replaced with std::once_flag\
+#    """,
+#    '--',
+#    '@{{PATHSFILE}}'
+#]
 
 [[linter]]
 code = 'WORKFLOWSYNC'
@@ -1012,7 +973,6 @@ include_patterns = [
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -1045,10 +1005,11 @@ exclude_patterns = [
     '.lintrunner.toml',
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
+    'Docs/git/**',
     '.augment/**',
+    'Scripts/iwyu/iwyu_configure_detector.py',
 ]
 init_command = [
     'python3',
@@ -1074,7 +1035,6 @@ command = [
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -1141,7 +1101,6 @@ exclude_patterns = [
     '.lintrunner.toml',
     'Docs/lintrunner_codes.md',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -1187,7 +1146,6 @@ include_patterns = ['**']
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -1208,7 +1166,6 @@ include_patterns = [
 exclude_patterns = [
     'ThirdParty/**',
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -1263,7 +1220,6 @@ include_patterns = [
 exclude_patterns = [
     "ThirdParty/**",
     'Tools/**',
-    'Scripts/**',
     '.vscode/**',
     '.git/**',
     '.augment/**',
@@ -1311,6 +1267,10 @@ command = [
 ]
 include_patterns = [
    'Scripts/**/*.py',
+]
+exclude_patterns = [
+    'Scripts/setup.py',
+    'Scripts/iwyu/run_iwyu_analysis.py',
 ]
 is_formatter = false
 

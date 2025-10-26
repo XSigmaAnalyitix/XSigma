@@ -386,4 +386,3 @@ gen.generate_from_lcov('merged.lcov')
 
 - **2.0**: JSON report generation, HTML from JSON conversion
 - **1.0**: Initial coverage system with HTML reports
-

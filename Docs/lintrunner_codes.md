@@ -17,6 +17,8 @@ Formatters (marked below) accept `--fix` to rewrite files. Codes commented out i
 ### MYPY
 - Runs `mypy` with `mypy.ini` across Scripts/Tools/Tests.
 - Run: `lintrunner -a --filter MYPY`
+ - macOS PATH tip: if mypy was installed with `pip --user`, add it to PATH:
+   `export PATH="$HOME/Library/Python/3.12/bin:$PATH"`
 
 ### MYPYSTRICT
 - Strict `mypy` profile (`mypy-strict.ini`) for scripts and tooling.
@@ -147,18 +149,6 @@ Formatters (marked below) accept `--fix` to rewrite files. Codes commented out i
 ### RAWCUDA *(formatter)*
 - Flags direct calls such as `cudaStreamSynchronize`; use `at::cuda` wrappers instead.
 - Run: `lintrunner -a --filter RAWCUDA --fix`
-
-### RAWCUDADEVICE *(formatter)*
-- Bans `cudaSetDevice`/`cudaGetDevice` in favor of c10 wrappers.
-- Run: `lintrunner -a --filter RAWCUDADEVICE --fix`
-
-### CALL_ONCE *(formatter)*
-- Rewrites `std::call_once` to `c10::call_once`.
-- Run: `lintrunner -a --filter CALL_ONCE --fix`
-
-### ONCE_FLAG *(formatter)*
-- Rewrites `std::once_flag` to `c10::once_flag`.
-- Run: `lintrunner -a --filter ONCE_FLAG --fix`
 
 ### ATEN_CPU_GPU_AGNOSTIC *(formatter)*
 - Blocks compile-time GPU conditionals inside ATen CPU sources.

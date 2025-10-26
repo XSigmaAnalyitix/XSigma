@@ -59,7 +59,7 @@ This document describes the refactoring of the Valgrind integration in the XSigm
 **Key Features:**
 ```cmake
 # Automatic timeout scaling
-set(XSIGMA_VALGRIND_TIMEOUT_MULTIPLIER 20 CACHE STRING 
+set(XSIGMA_VALGRIND_TIMEOUT_MULTIPLIER 20 CACHE STRING
     "Timeout multiplier for tests running under Valgrind")
 
 # Function to apply timeouts to all tests
@@ -278,4 +278,3 @@ For issues or questions about the Valgrind integration:
 2. Review this document for architectural details
 3. Examine the source files with their comprehensive comments
 4. Contact the development team
-

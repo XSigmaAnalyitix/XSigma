@@ -132,14 +132,14 @@ class profiler_session {
         }
         // ... start profiling ...
     }
-    
+
     void stop() {
         // ... stop profiling ...
         if (logger_adapter_) {
             logger_adapter_->log_session_stop(session_id_, duration_);
         }
     }
-    
+
 private:
     std::unique_ptr<profiler_logger_adapter> logger_adapter_;
 };
@@ -151,7 +151,7 @@ class profiler_logger_adapter {
             logger_->info("Profiling session started (session_id={})", session_id);
         }
     }
-    
+
     void check_performance_threshold(const std::string& function_name, double duration_ms) {
         auto threshold = get_threshold(function_name);
         if (threshold && duration_ms > *threshold) {
@@ -159,7 +159,7 @@ class profiler_logger_adapter {
                          function_name, duration_ms, *threshold);
         }
     }
-    
+
 private:
     xsigma::logger* logger_;
     std::unordered_map<std::string, double> thresholds_;
@@ -214,26 +214,26 @@ struct profiler_logger_options {
 
 class XSIGMA_API profiler_logger_adapter {
 public:
-    explicit profiler_logger_adapter(xsigma::logger* logger, 
+    explicit profiler_logger_adapter(xsigma::logger* logger,
                                     const profiler_logger_options& opts = {});
     ~profiler_logger_adapter();
 
     // Session lifecycle logging
     void log_session_start(const std::string& session_id);
     void log_session_stop(const std::string& session_id, double duration_s);
-    
+
     // Performance threshold logging
     void set_performance_threshold(const std::string& function_name, double threshold_ms);
     void check_performance_threshold(const std::string& function_name, double duration_ms);
-    
+
     // Memory threshold logging
     void set_memory_threshold(const std::string& operation_name, size_t threshold_bytes);
     void check_memory_threshold(const std::string& operation_name, size_t bytes);
-    
+
     // Scope logging (verbose)
     void log_scope_entry(const std::string& scope_name, int thread_id);
     void log_scope_exit(const std::string& scope_name, double duration_ms);
-    
+
     // Configuration
     void set_log_level(profiler_log_level level);
     void enable_session_logging(bool enable);
@@ -246,7 +246,7 @@ private:
     profiler_logger_options options_;
     std::unordered_map<std::string, double> performance_thresholds_;
     std::unordered_map<std::string, size_t> memory_thresholds_;
-    
+
     bool should_log(profiler_log_level level) const;
 };
 
@@ -269,13 +269,13 @@ private:
 ```cpp
 // profiler_logger_adapter.cxx
 void profiler_logger_adapter::check_performance_threshold(
-    const std::string& function_name, 
-    double duration_ms) 
+    const std::string& function_name,
+    double duration_ms)
 {
     if (!options_.log_performance_warnings) {
         return;
     }
-    
+
     auto it = performance_thresholds_.find(function_name);
     if (it != performance_thresholds_.end() && duration_ms > it->second) {
         if (should_log(profiler_log_level::WARN)) {
@@ -283,8 +283,8 @@ void profiler_logger_adapter::check_performance_threshold(
                 "Performance threshold exceeded: function='{}', "
                 "execution_time={:.2f}ms, threshold={:.2f}ms, "
                 "deviation={:.1f}%",
-                function_name, 
-                duration_ms, 
+                function_name,
+                duration_ms,
                 it->second,
                 ((duration_ms - it->second) / it->second) * 100.0
             );
@@ -313,7 +313,7 @@ void profiler_logger_adapter::check_memory_threshold(
     if (!options_.log_memory_warnings) {
         return;
     }
-    
+
     auto it = memory_thresholds_.find(operation_name);
     if (it != memory_thresholds_.end() && bytes > it->second) {
         if (should_log(profiler_log_level::WARN)) {
@@ -347,10 +347,10 @@ void profiler_logger_adapter::check_memory_threshold(
 class profiler_session {
 public:
     // ... existing methods ...
-    
+
     // Set logger adapter
     void set_logger_adapter(std::unique_ptr<profiler_logger_adapter> adapter);
-    
+
 private:
     std::unique_ptr<profiler_logger_adapter> logger_adapter_;
 };
@@ -359,7 +359,7 @@ private:
 class profiler_session_builder {
 public:
     // ... existing methods ...
-    
+
     profiler_session_builder& with_logger(xsigma::logger* logger,
                                          const profiler_logger_options& opts = {})
     {
@@ -367,7 +367,7 @@ public:
         logger_options_ = opts;
         return *this;
     }
-    
+
 private:
     xsigma::logger* logger_ = nullptr;
     profiler_logger_options logger_options_;
@@ -389,35 +389,35 @@ int main() {
     // Create logger
     xsigma::logger logger;
     logger.set_log_file("profiler.log");
-    
+
     // Configure profiler with logger
     xsigma::profiler_options opts;
     opts.enable_timing_ = true;
     opts.enable_memory_tracking_ = true;
-    
+
     xsigma::profiler_session session(opts);
-    
+
     // Create and attach logger adapter
     xsigma::profiler::profiler_logger_options log_opts;
     log_opts.log_session_events = true;
     log_opts.log_performance_warnings = true;
-    
+
     auto adapter = std::make_unique<xsigma::profiler::profiler_logger_adapter>(
         &logger, log_opts);
     session.set_logger_adapter(std::move(adapter));
-    
+
     // Start profiling (logged)
     session.start();
-    
+
     // Your code here
     {
         XSIGMA_PROFILE_SCOPE("main_work");
         // Work
     }
-    
+
     // Stop profiling (logged)
     session.stop();
-    
+
     return 0;
 }
 ```
@@ -435,34 +435,34 @@ int main() {
 ```cpp
 int main() {
     xsigma::logger logger;
-    
+
     xsigma::profiler_options opts;
     opts.enable_timing_ = true;
-    
+
     xsigma::profiler_session session(opts);
-    
+
     // Create logger adapter with performance thresholds
     xsigma::profiler::profiler_logger_options log_opts;
     log_opts.log_performance_warnings = true;
-    
+
     auto adapter = std::make_unique<xsigma::profiler::profiler_logger_adapter>(
         &logger, log_opts);
-    
+
     // Set performance thresholds
     adapter->set_performance_threshold("process_data", 100.0);  // 100ms
     adapter->set_performance_threshold("compute", 50.0);        // 50ms
-    
+
     session.set_logger_adapter(std::move(adapter));
     session.start();
-    
+
     // This will trigger a warning if it takes > 100ms
     {
         XSIGMA_PROFILE_SCOPE("process_data");
         slow_operation();  // Takes 150ms
     }
-    
+
     session.stop();
-    
+
     return 0;
 }
 ```
@@ -481,33 +481,33 @@ int main() {
 ```cpp
 int main() {
     xsigma::logger logger;
-    
+
     xsigma::profiler_options opts;
     opts.enable_memory_tracking_ = true;
-    
+
     xsigma::profiler_session session(opts);
-    
+
     // Create logger adapter with memory thresholds
     xsigma::profiler::profiler_logger_options log_opts;
     log_opts.log_memory_warnings = true;
-    
+
     auto adapter = std::make_unique<xsigma::profiler::profiler_logger_adapter>(
         &logger, log_opts);
-    
+
     // Set memory thresholds
     adapter->set_memory_threshold("allocate_buffer", 256 * 1024 * 1024);  // 256MB
-    
+
     session.set_logger_adapter(std::move(adapter));
     session.start();
-    
+
     // This will trigger a warning if allocation > 256MB
     {
         XSIGMA_PROFILE_SCOPE("allocate_buffer");
         std::vector<double> large_buffer(64 * 1024 * 1024);  // 512MB
     }
-    
+
     session.stop();
-    
+
     return 0;
 }
 ```
@@ -527,23 +527,23 @@ int main() {
 int main() {
     xsigma::logger logger;
     logger.set_log_level(xsigma::log_level::DEBUG);
-    
+
     xsigma::profiler_options opts;
     opts.enable_timing_ = true;
-    
+
     xsigma::profiler_session session(opts);
-    
+
     // Enable verbose scope logging
     xsigma::profiler::profiler_logger_options log_opts;
     log_opts.log_scope_entry_exit = true;  // ⚠️ Very verbose!
     log_opts.min_log_level = xsigma::profiler::profiler_log_level::DEBUG;
-    
+
     auto adapter = std::make_unique<xsigma::profiler::profiler_logger_adapter>(
         &logger, log_opts);
-    
+
     session.set_logger_adapter(std::move(adapter));
     session.start();
-    
+
     {
         XSIGMA_PROFILE_SCOPE("outer");
         {
@@ -551,9 +551,9 @@ int main() {
             // Work
         }
     }
-    
+
     session.stop();
-    
+
     return 0;
 }
 ```
@@ -626,16 +626,16 @@ void scope_logging() {
 struct profiler_logger_options {
     // Enable logging of session start/stop events
     bool log_session_events = true;
-    
+
     // Enable logging of performance threshold violations
     bool log_performance_warnings = true;
-    
+
     // Enable logging of memory threshold violations
     bool log_memory_warnings = true;
-    
+
     // Enable logging of every scope entry/exit (⚠️ VERY VERBOSE!)
     bool log_scope_entry_exit = false;
-    
+
     // Minimum log level to output
     profiler_log_level min_log_level = profiler_log_level::INFO;
 };
@@ -691,4 +691,3 @@ opts.min_log_level = profiler_log_level::TRACE;
 - Early detection of performance regressions
 - Minimal overhead (< 1% in production)
 - Seamless integration with existing XSigma logger
-

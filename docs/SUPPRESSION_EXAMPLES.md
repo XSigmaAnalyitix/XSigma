@@ -361,4 +361,3 @@ cppcheck <file> --enable=all --inline-suppr 2>&1 | grep <warningId>
 - `CPPCHECK_INLINE_SUPPRESSIONS_SUMMARY.md` - Detailed summary
 - `INLINE_SUPPRESSIONS_CHANGES.md` - Before/after comparisons
 - `test_inline_suppressions.sh` - Automated test script
-

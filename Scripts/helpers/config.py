@@ -7,8 +7,6 @@ Extracted from setup.py for better modularity and maintainability.
 
 import os
 import subprocess
-import sys
-from typing import List, Dict, Any
 
 
 def configure_build(
@@ -17,9 +15,9 @@ def configure_build(
     cmake_generator: str,
     cmake_cxx_compiler: str,
     cmake_c_compiler: str,
-    cmake_flags: List[str],
+    cmake_flags: list[str],
     arg_cmake_verbose: str,
-    shell_flag: bool
+    shell_flag: bool,
 ) -> int:
     """
     Configure the build system using CMake.
@@ -58,11 +56,7 @@ def configure_build(
         # Add additional CMake flags
         cmake_cmd.extend(cmake_flags)
 
-        subprocess.check_call(
-            cmake_cmd,
-            stderr=subprocess.STDOUT,
-            shell=shell_flag
-        )
+        subprocess.check_call(cmake_cmd, stderr=subprocess.STDOUT, shell=shell_flag)
         return 0
 
     except subprocess.CalledProcessError:
@@ -74,15 +68,18 @@ def configure_build(
 def handle_xcode_project_opening() -> None:
     """Handle opening the Xcode project after generation."""
     try:
-        xcodeproj_files = [f for f in os.listdir('.') if f.endswith('.xcodeproj')]
+        xcodeproj_files = [f for f in os.listdir(".") if f.endswith(".xcodeproj")]
         if xcodeproj_files:
             project_file = xcodeproj_files[0]
             try:
-                response = input("Would you like to open the Xcode project? (y/N): ").strip().lower()
-                if response in ['y', 'yes']:
+                response = (
+                    input("Would you like to open the Xcode project? (y/N): ")
+                    .strip()
+                    .lower()
+                )
+                if response in ["y", "yes"]:
                     subprocess.run(["open", project_file], check=True)
             except (KeyboardInterrupt, EOFError):
                 pass
     except Exception:
         pass
-

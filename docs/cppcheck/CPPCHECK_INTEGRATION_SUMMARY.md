@@ -174,4 +174,3 @@ To test the integration:
 - The new standalone execution complements the existing integration
 - Both approaches can be used together or independently
 - The suppressions file at `Scripts/cppcheck_suppressions.txt` is shared by both approaches
-

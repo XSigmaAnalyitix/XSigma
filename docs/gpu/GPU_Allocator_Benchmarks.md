@@ -27,7 +27,7 @@ This document describes the comprehensive benchmark suite for XSigma's GPU memor
 - **Pattern**: High frequency, mixed allocation/deallocation
 - **Purpose**: Test overhead and cache efficiency
 
-#### 2. Large Allocations Test  
+#### 2. Large Allocations Test
 - **Size Range**: 1MB to 16MB
 - **Pattern**: Lower frequency, larger blocks
 - **Purpose**: Test memory management for large data structures
@@ -90,7 +90,7 @@ cd Scripts
 python setup.py config.ninja.clang.python.build.test -DXSIGMA_CUDA_ALLOC=SYNC
 python setup.py ninja.clang.python.build.test
 
-# Test ASYNC method  
+# Test ASYNC method
 python setup.py config.ninja.clang.python.build.test -DXSIGMA_CUDA_ALLOC=ASYNC
 python setup.py ninja.clang.python.build.test
 
@@ -165,7 +165,7 @@ struct gpu_benchmark_config {
 - **Characteristics**: Predictable performance, lower complexity
 - **Trade-offs**: Higher latency, no stream parallelism
 
-#### ASYNC Method  
+#### ASYNC Method
 - **Best For**: Stream-based parallel workloads
 - **Characteristics**: Lower latency, stream parallelism
 - **Trade-offs**: Requires stream management, complexity

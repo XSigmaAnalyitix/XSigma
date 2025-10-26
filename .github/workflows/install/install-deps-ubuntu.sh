@@ -142,10 +142,9 @@ pip3 install --upgrade pip setuptools wheel || {
     log_warning "Failed to upgrade pip"
 }
 
-pip3 install colorama psutil || {
+pip3 install colorama==0.4.6 psutil==6.1.1 || {
     log_warning "Failed to install Python dependencies"
 }
 
 log_success "Ubuntu/Linux dependency installation completed successfully!"
 log_info "You can now build XSigma using: python Scripts/setup.py ninja clang config build test"
-

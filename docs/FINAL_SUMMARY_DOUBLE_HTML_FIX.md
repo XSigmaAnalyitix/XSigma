@@ -121,7 +121,7 @@ ls -la build_vs22_coverage/coverage_report/html/
 
 ✅ **Fixes**: Double `.html` extension issue in generated links
 
-✅ **Maintains**: 
+✅ **Maintains**:
 - Backward compatibility with JSON schema
 - All existing functionality
 - Coverage data accuracy
@@ -174,4 +174,3 @@ ls -la build_vs22_coverage/coverage_report/html/
 **Commit Message**: "Fix double .html extension in OpenCppCoverage HTML links"
 
 **Description**: Strip .html extension from file paths before storing in JSON so json_html_generator can properly add single .html extension to links.
-

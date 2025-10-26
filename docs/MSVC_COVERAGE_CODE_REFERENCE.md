@@ -327,4 +327,3 @@ Uses `CONFIG` from `common.py`:
 3. **Report filtering**: Allow filtering by coverage percentage
 4. **HTML enhancement**: Add sorting, search, filtering to index
 5. **Metrics aggregation**: Calculate overall coverage statistics
-

@@ -259,12 +259,12 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
-      
+
       - name: Install Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libfmt-dev libgtest-dev ninja-build
-      
+
       - name: Configure
         run: |
           cmake -B build -S . \
@@ -272,10 +272,10 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DXSIGMA_USE_EXTERNAL=ON \
             -DXSIGMA_BUILD_TESTING=ON
-      
+
       - name: Build
         run: cmake --build build -j
-      
+
       - name: Test
         run: ctest --test-dir build --output-on-failure
 ```
@@ -314,13 +314,13 @@ The Enhanced Profiler is an experimental feature providing:
 void example_function() {
     // Profile entire function
     XSIGMA_PROFILE_FUNCTION();
-    
+
     // Profile specific scope
     {
         XSIGMA_PROFILE_SCOPE("DataProcessing");
         // Your code here
     }
-    
+
     // Generate report
     xsigma::profiler::generate_report("profile_results.json");
 }
@@ -399,4 +399,3 @@ cmake --build build -j
 - [Sanitizers](sanitizers.md) - Memory debugging tools
 - [Code Coverage](code-coverage.md) - Coverage analysis
 - [Cross-Platform Building](cross-platform-building.md) - Platform-specific instructions
-

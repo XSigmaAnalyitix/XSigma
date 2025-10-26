@@ -176,4 +176,3 @@ build_dir/coverage_report/
 - Coverage trend analysis
 - Integration with code review tools
 - Support for additional compilers
-

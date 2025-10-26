@@ -183,7 +183,7 @@ BM_StandardAligned_SimpleAllocation/1024  156 ns      156 ns   4487179   6.11GB/
 
 #### Allocation Speed
 - **Excellent**: < 100ns per allocation
-- **Good**: 100-200ns per allocation  
+- **Good**: 100-200ns per allocation
 - **Acceptable**: 200-500ns per allocation
 - **Poor**: > 500ns per allocation
 

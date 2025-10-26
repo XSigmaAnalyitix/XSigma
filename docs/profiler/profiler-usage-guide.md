@@ -23,23 +23,23 @@ int main() {
     opts.enable_timing_ = true;
     opts.enable_memory_tracking_ = true;
     opts.output_format_ = xsigma::profiler_options::output_format_enum::JSON;
-    
+
     // 2. Create profiler session
     xsigma::profiler_session session(opts);
-    
+
     // 3. Start profiling
     session.start();
-    
+
     // 4. Profile your code
     {
         XSIGMA_PROFILE_SCOPE("my_function");
         // Your code here
     }
-    
+
     // 5. Stop and generate report
     session.stop();
     session.print_report();
-    
+
     return 0;
 }
 ```
@@ -55,7 +55,7 @@ Profile individual functions to measure execution time:
 ```cpp
 void process_data(const std::vector<double>& data) {
     XSIGMA_PROFILE_SCOPE("process_data");
-    
+
     // Function implementation
     for (const auto& value : data) {
         // Process each value
@@ -70,22 +70,22 @@ Profile nested scopes to understand call hierarchies:
 ```cpp
 void complex_algorithm() {
     XSIGMA_PROFILE_SCOPE("complex_algorithm");
-    
+
     {
         XSIGMA_PROFILE_SCOPE("initialization");
         // Initialization code
     }
-    
+
     {
         XSIGMA_PROFILE_SCOPE("computation");
         // Main computation
-        
+
         {
             XSIGMA_PROFILE_SCOPE("inner_loop");
             // Inner loop processing
         }
     }
-    
+
     {
         XSIGMA_PROFILE_SCOPE("finalization");
         // Cleanup code
@@ -100,22 +100,22 @@ Track memory allocations and deallocations:
 ```cpp
 void memory_intensive_operation() {
     XSIGMA_PROFILE_SCOPE("memory_operation");
-    
+
     // Enable memory tracking in profiler options
     xsigma::profiler_options opts;
     opts.enable_memory_tracking_ = true;
-    
+
     xsigma::profiler_session session(opts);
     session.start();
-    
+
     // Allocate memory
     std::vector<double> large_array(1000000);
-    
+
     // Process data
     for (auto& val : large_array) {
         val = std::rand() / static_cast<double>(RAND_MAX);
     }
-    
+
     session.stop();
     session.print_report();
 }
@@ -130,10 +130,10 @@ void parallel_computation() {
     xsigma::profiler_options opts;
     opts.enable_thread_safety_ = true;  // Enable thread-safe profiling
     opts.enable_timing_ = true;
-    
+
     xsigma::profiler_session session(opts);
     session.start();
-    
+
     std::vector<std::thread> threads;
     for (int i = 0; i < 4; ++i) {
         threads.emplace_back([i]() {
@@ -141,11 +141,11 @@ void parallel_computation() {
             // Thread-specific work
         });
     }
-    
+
     for (auto& thread : threads) {
         thread.join();
     }
-    
+
     session.stop();
     session.print_report();
 }
@@ -160,19 +160,19 @@ void conditional_profiling(bool enable_profiling) {
     xsigma::profiler_options opts;
     opts.enable_timing_ = enable_profiling;
     opts.enable_memory_tracking_ = enable_profiling;
-    
+
     xsigma::profiler_session session(opts);
-    
+
     if (enable_profiling) {
         session.start();
     }
-    
+
     // Your code here
     {
         XSIGMA_PROFILE_SCOPE("main_work");
         // Work that may or may not be profiled
     }
-    
+
     if (enable_profiling) {
         session.stop();
         session.export_report("profile_output.json");
@@ -209,12 +209,12 @@ void conditional_profiling(bool enable_profiling) {
 ```cpp
 void process_large_dataset() {
     XSIGMA_PROFILE_SCOPE("process_large_dataset");  // ✅ Profile entire function
-    
+
     {
         XSIGMA_PROFILE_SCOPE("data_loading");  // ✅ Profile major phase
         load_data();
     }
-    
+
     {
         XSIGMA_PROFILE_SCOPE("computation");  // ✅ Profile major phase
         compute_results();
@@ -355,11 +355,11 @@ void good_profiling() {
 ```cpp
 void leaky_profiling() {
     XSIGMA_PROFILE_SCOPE("outer");
-    
+
     if (error_condition) {
         return;  // ❌ Scope not properly closed!
     }
-    
+
     // More work
 }
 ```
@@ -368,11 +368,11 @@ void leaky_profiling() {
 ```cpp
 void safe_profiling() {
     XSIGMA_PROFILE_SCOPE("outer");  // ✅ RAII ensures cleanup
-    
+
     if (error_condition) {
         return;  // ✅ Scope automatically closed
     }
-    
+
     // More work
 }  // ✅ Scope automatically closed here too
 ```
@@ -486,32 +486,32 @@ public:
         opts.enable_memory_tracking_ = true;
         profiler_ = std::make_unique<xsigma::profiler_session>(opts);
     }
-    
+
     void run() {
         profiler_->start();
-        
+
         {
             XSIGMA_PROFILE_SCOPE("application_initialization");
             initialize();
         }
-        
+
         {
             XSIGMA_PROFILE_SCOPE("main_processing");
             process();
         }
-        
+
         {
             XSIGMA_PROFILE_SCOPE("cleanup");
             cleanup();
         }
-        
+
         profiler_->stop();
         profiler_->export_report("app_profile.json");
     }
-    
+
 private:
     std::unique_ptr<xsigma::profiler_session> profiler_;
-    
+
     void initialize() { /* ... */ }
     void process() { /* ... */ }
     void cleanup() { /* ... */ }
@@ -541,4 +541,3 @@ See `Library/Core/Testing/Cxx/TestProfilerHeavyFunction.cxx` for complete exampl
 - **XPlane Format**: See [XPlane Format Guide](xplane-format-guide.md)
 - **Enhancement Roadmap**: See [Enhancement Roadmap](profiler-enhancement-roadmap.md)
 - **Third-Party Integration**: See [Third-Party Integration](profiler-third-party-integration.md)
-
