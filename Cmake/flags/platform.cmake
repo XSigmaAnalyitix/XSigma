@@ -205,9 +205,13 @@ if(MSVC)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Zi")
   
   # Use parallel linking (VS 2019+)
-  set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} /DEBUG:FASTLINK")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /DEBUG:FASTLINK")
-
+  if(XSIGMA_ENABLE_COVERAGE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DEBUG:FULL /INCREMENTAL:NO")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /DEBUG:FULL /INCREMENTAL:NO")
+  else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DEBUG:FASTLINK")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /DEBUG:FASTLINK")
+  endif()
   # Use /utf-8 so that MSVC uses utf-8 in source files and object files
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8")

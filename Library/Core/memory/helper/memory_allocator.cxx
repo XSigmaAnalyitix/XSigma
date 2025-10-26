@@ -410,7 +410,6 @@ void* allocate(
     (void)stream;
     (void)memory_pool;
     XSIGMA_LOG_ERROR("GPU support not enabled in this build");
-    return nullptr;
 #endif
 
     return ptr;
