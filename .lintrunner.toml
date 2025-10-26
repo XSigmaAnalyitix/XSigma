@@ -6,6 +6,10 @@ exclude_patterns = [
     'ThirdParty/**',
     'venv/**',
     '**/*.pyi',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -36,15 +40,14 @@ code = 'CLANGFORMAT'
 include_patterns = [
     'Library/**/*.h',
     'Library/**/*.cxx',
-    'Scripts/**/*.h',
-    'Scripts/**/*.cxx',
-    'Tools/**/*.h',
-    'Tools/**/*.cxx',
-    'Tests/**/*.h',
-    'Tests/**/*.cxx',
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 init_command = [
     'python3',
@@ -67,15 +70,16 @@ is_formatter = true
 [[linter]]
 code = 'MYPY'
 include_patterns = [
-    'Scripts/**/*.py',
-    'Scripts/**/*.pyi',
-    'Tools/**/*.py',
-    'Tools/**/*.pyi',
-    'Tests/**/*.py',
-    'Tests/**/*.pyi',
+    '**/*.py',
+    '**/*.pyi',
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -112,11 +116,15 @@ init_command = [
 [[linter]]
 code = 'MYPYSTRICT'
 include_patterns = [
-    'Scripts/**/*.py',
-    'Tools/**/*.py',
+    '**/*.py',
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -131,13 +139,16 @@ command = [
 [[linter]]
 code = 'PYREFLY'
 include_patterns = [
-    'Scripts/**/*.py',
-    'Scripts/**/*.pyi',
-    'Tools/**/*.py',
-    'Tools/**/*.pyi',
+    '**/*.py',
+    '**/*.pyi',
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -171,23 +182,19 @@ init_command = [
 code = 'CLANGTIDY'
 include_patterns = [
     'Library/**/*.h',
-    'Library/**/*.cpp',
+    'Library/**/*.hxx',
     'Library/**/*.cxx',
-    'Scripts/**/*.h',
-    'Scripts/**/*.cpp',
-    'Scripts/**/*.cxx',
-    'Tools/**/*.h',
-    'Tools/**/*.cpp',
-    'Tools/**/*.cxx',
-    'Tests/**/*.h',
-    'Tests/**/*.cpp',
-    'Tests/**/*.cxx',
 ]
 exclude_patterns = [
     'ThirdParty/**',
     '**/generated/**',
     '**/*pb.h',
     '**/*inl.h',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 init_command = [
     'python3',
@@ -212,6 +219,11 @@ code = 'TYPEIGNORE'
 include_patterns = ['**/*.py', '**/*.pyi']
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -252,6 +264,11 @@ code = 'NOQA'
 include_patterns = ['**/*.py', '**/*.pyi']
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -267,21 +284,21 @@ command = [
     '@{{PATHSFILE}}'
 ]
 
-[[linter]]
-code = 'NATIVEFUNCTIONS'
-include_patterns=['aten/src/ATen/native/native_functions.yaml']
-command = [
-    'python3',
-    'Tools/linter/adapters/nativefunctions_linter.py',
-    '--native-functions-yml=aten/src/ATen/native/native_functions.yaml',
-]
-init_command = [
-    'python3',
-    'Tools/linter/adapters/pip_init.py',
-    '--dry-run={{DRYRUN}}',
-    'ruamel.yaml==0.18.10',
-]
-is_formatter = true
+# [[linter]]
+# code = 'NATIVEFUNCTIONS'
+# include_patterns=['aten/src/ATen/native/native_functions.yaml']
+# command = [
+#     'python3',
+#     'Tools/linter/adapters/nativefunctions_linter.py',
+#     '--native-functions-yml=aten/src/ATen/native/native_functions.yaml',
+# ]
+# init_command = [
+#     'python3',
+#     'Tools/linter/adapters/pip_init.py',
+#     '--dry-run={{DRYRUN}}',
+#     'ruamel.yaml==0.18.10',
+# ]
+# is_formatter = true
 
 [[linter]]
 code = 'GHA'
@@ -311,6 +328,11 @@ exclude_patterns=[
     '**/*.png',
     '**/*.gz',
     '**/*.patch',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -327,6 +349,11 @@ exclude_patterns = [
     'ThirdParty/**',
     '**/*.diff',
     '**/*.patch',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -353,6 +380,11 @@ exclude_patterns = [
     '**/.gitmodules',
     '.lintrunner.toml',
     '**/*.patch',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -370,22 +402,27 @@ command = [
 ]
 
 [[linter]]
-code = 'C10_UNUSED'
+code = 'XSIGMA_UNUSED'
 include_patterns = [
-    '**/*.cpp',
+    '**/*.hxx',
     '**/*.cxx',
     '**/*.h',
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
     'Tools/linter/adapters/grep_linter.py',
-    '--pattern=C10_UNUSED',
-    '--linter-name=C10_UNUSED',
-    '--error-name=deprecated C10_UNUSED macro',
-    '--replace-pattern=s/C10_UNUSED/[[maybe_unused]]/',
+    '--pattern=XSIGMA_UNUSED',
+    '--linter-name=XSIGMA_UNUSED',
+    '--error-name=deprecated XSIGMA_UNUSED macro',
+    '--replace-pattern=s/XSIGMA_UNUSED/[[maybe_unused]]/',
     """--error-description=\
         Deprecated macro, use [[maybe_unused]] directly\
     """,
@@ -394,22 +431,27 @@ command = [
 ]
 
 [[linter]]
-code = 'C10_NODISCARD'
+code = 'XSIGMA_NODISCARD'
 include_patterns = [
-    '**/*.cpp',
+    '**/*.hxx',
     '**/*.cxx',
     '**/*.h',
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
     'Tools/linter/adapters/grep_linter.py',
-    '--pattern=C10_NODISCARD',
-    '--linter-name=C10_NODISCARD',
-    '--error-name=deprecated C10_NODISCARD macro',
-    '--replace-pattern=s/C10_NODISCARD/[[nodiscard]]/',
+    '--pattern=XSIGMA_NODISCARD',
+    '--linter-name=XSIGMA_NODISCARD',
+    '--error-name=deprecated XSIGMA_NODISCARD macro',
+    '--replace-pattern=s/XSIGMA_NODISCARD/[[nodiscard]]/',
     """--error-description=\
         Deprecated macro, use [[nodiscard]] directly\
     """,
@@ -421,13 +463,16 @@ command = [
 code = 'INCLUDE'
 include_patterns = [
     'Library/**',
-    'Scripts/**',
-    'Tools/**',
     'Tests/**',
 ]
 exclude_patterns = [
     'ThirdParty/**',
     '**/generated/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -446,12 +491,17 @@ command = [
 [[linter]]
 code = 'PYBIND11_INCLUDE'
 include_patterns = [
-    '**/*.cpp',
+    '**/*.hxx',
     '**/*.cxx',
     '**/*.h',
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -478,14 +528,15 @@ command = [
 [[linter]]
 code = 'ERROR_PRONE_ISINSTANCE'
 include_patterns = [
-    'torch/_refs/**/*.py',
-    'torch/_prims/**/*.py',
-    'torch/_prims_common/**/*.py',
-    'torch/_decomp/**/*.py',
-    'torch/_meta_registrations.py',
+    '**/*.py',
 ]
 exclude_patterns = [
-    '**/fb/**',
+    'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -510,19 +561,17 @@ command = [
 [[linter]]
 code = 'PYBIND11_SPECIALIZATION'
 include_patterns = [
-    '**/*.cpp',
+    '**/*.hxx',
+    '**/*.cxx',
     '**/*.h',
 ]
 exclude_patterns = [
-    # The place for all orphan specializations
-    'torch/csrc/utils/pybind.h',
-    # These specializations are non-orphan
-    'torch/csrc/distributed/c10d/init.cpp',
-    'torch/csrc/jit/python/pybind.h',
-    'fb/**',
-    '**/fb/**',
-    # These are safe to exclude as they do not have Python
-    'c10/**/*',
+    'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -551,7 +600,11 @@ exclude_patterns = [
     '**/*.py',
     '**/*.md',
     '**/*.diff',
-    '**/fb/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -581,6 +634,11 @@ exclude_patterns = [
     '**/*.bash',
     '**/git-pre-commit',
     '**/git-clang-format',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -599,6 +657,11 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -619,12 +682,15 @@ command = [
 code = 'RAWCUDA'
 include_patterns = [
     'Library/**',
-    'Scripts/**',
-    'Tools/**',
     'Tests/**',
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -643,12 +709,15 @@ command = [
 code = 'RAWCUDADEVICE'
 include_patterns = [
     'Library/**',
-    'Scripts/**',
-    'Tools/**',
     'Tests/**',
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -671,6 +740,11 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -715,6 +789,11 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -738,6 +817,11 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -760,6 +844,11 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -786,7 +875,11 @@ include_patterns = [
 ]
 exclude_patterns = [
     'test/run_test.py',
-    '**/fb/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -801,62 +894,12 @@ include_patterns = [
     'test/**/test_*.py',
 ]
 exclude_patterns = [
-    'test/run_test.py',
-    '**/fb/**',
-    'test/dynamo/cpython/3.13/**',
-    'test/quantization/**',  # should be run through test/test_quantization.py
-    'test/jit/**',  # should be run through test/test_jit.py
-    'test/ao/sparsity/**',  # should be run through test/test_ao_sparsity.py
-    'test/fx/**',  # should be run through test/test_fx.py
-    'test/package/**',  # excluded by test/run_test.py
-    'test/distributed/argparse_util_test.py',
-    'test/distributed/bin/test_script.py',
-    'test/distributed/elastic/agent/server/test/local_elastic_agent_test.py',
-    'test/distributed/elastic/multiprocessing/bin/test_script.py',
-    'test/distributed/elastic/multiprocessing/bin/zombie_test.py',
-    'test/distributed/elastic/multiprocessing/errors/api_test.py',
-    'test/distributed/elastic/multiprocessing/errors/error_handler_test.py',
-    'test/distributed/elastic/multiprocessing/redirects_test.py',
-    'test/distributed/elastic/multiprocessing/tail_log_test.py',
-    'test/distributed/elastic/rendezvous/api_test.py',
-    'test/distributed/elastic/rendezvous/c10d_rendezvous_backend_test.py',
-    'test/distributed/elastic/rendezvous/dynamic_rendezvous_test.py',
-    'test/distributed/elastic/rendezvous/etcd_rendezvous_backend_test.py',
-    'test/distributed/elastic/rendezvous/etcd_rendezvous_test.py',
-    'test/distributed/elastic/rendezvous/etcd_server_test.py',
-    'test/distributed/elastic/rendezvous/rendezvous_backend_test.py',
-    'test/distributed/elastic/rendezvous/static_rendezvous_test.py',
-    'test/distributed/elastic/rendezvous/utils_test.py',
-    'test/distributed/elastic/timer/api_test.py',
-    'test/distributed/elastic/utils/data/cycling_iterator_test.py',
-    'test/distributed/launcher/api_test.py',
-    'test/distributed/launcher/bin/test_script.py',
-    'test/distributed/launcher/bin/test_script_init_method.py',
-    'test/distributed/launcher/bin/test_script_is_torchelastic_launched.py',
-    'test/distributed/launcher/bin/test_script_local_rank.py',
-    'test/distributed/launcher/launch_test.py',
-    'test/distributed/launcher/run_test.py',
-    'test/distributed/optim/test_apply_optimizer_in_backward.py',
-    'test/distributed/optim/test_named_optimizer.py',
-    'test/distributed/test_c10d_spawn.py',
-    'test/distributed/test_collective_utils.py',
-    'test/distributions/test_distributions.py',
-    'test/inductor/test_aot_inductor_utils.py',
-    'test/lazy/test_bindings.py',
-    'test/lazy/test_extract_compiled_graph.py',
-    'test/lazy/test_meta_kernel.py',
-    'test/nn/test_init.py',
-    'test/onnx/model_defs/op_test.py',
-    'test/onnx/test_models_quantized_onnxruntime.py',
-    'test/onnx/test_onnxscript_no_runtime.py',
-    'test/onnx_caffe2/test_caffe2_common.py',
-    'test/optim/test_lrscheduler.py',
-    'test/optim/test_optim.py',
-    'test/optim/test_swa_utils.py',
-    'test/run_test.py',
-    'test/test_bundled_images.py',
-    'test/test_cuda_expandable_segments.py',
-    'test/test_hub.py',
+    'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -868,14 +911,14 @@ command = [
 [[linter]]
 code = 'CALL_ONCE'
 include_patterns = [
-    'c10/**',
-    'aten/**',
-    'torch/csrc/**',
-    'torch/nativert/**',
+    'Library/**',
 ]
 exclude_patterns = [
-    'c10/util/CallOnce.h',
-    '**/fb/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -913,13 +956,15 @@ command = [
 [[linter]]
 code = 'ONCE_FLAG'
 include_patterns = [
-    'c10/**',
-    'aten/**',
-    'torch/csrc/**',
-    'torch/nativert/**',
+    'Library/**',
 ]
 exclude_patterns = [
-    '**/fb/**',
+    'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -964,7 +1009,12 @@ include_patterns = [
     '.github/**/*.yaml',
 ]
 exclude_patterns = [
-    '**/fb/**',
+    'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -992,6 +1042,11 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 init_command = [
     'python3',
@@ -1016,6 +1071,11 @@ command = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 init_command = [
     'python3',
@@ -1077,6 +1137,11 @@ include_patterns = ['**']
 exclude_patterns = [
     'ThirdParty/**',
     '.lintrunner.toml',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -1118,6 +1183,11 @@ code = 'LINTRUNNER_VERSION'
 include_patterns = ['**']
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -1134,6 +1204,11 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -1175,21 +1250,20 @@ command = [
 [[linter]]
 code = 'ATEN_CPU_GPU_AGNOSTIC'
 include_patterns = [
-    "Library/**/*.cpp",
+    "Library/**/*.hxx",
     "Library/**/*.cxx",
     "Library/**/*.h",
-    "Scripts/**/*.cpp",
-    "Scripts/**/*.cxx",
-    "Scripts/**/*.h",
-    "Tools/**/*.cpp",
-    "Tools/**/*.cxx",
-    "Tools/**/*.h",
     "Tests/**/*.cpp",
     "Tests/**/*.cxx",
     "Tests/**/*.h",
 ]
 exclude_patterns = [
     "ThirdParty/**",
+    'Tools/**',
+    'Scripts/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
 ]
 command = [
     'python3',
@@ -1208,20 +1282,20 @@ command = [
 ]
 is_formatter = true
 
-[[linter]]
-code = 'SET_LINTER'
-command = [
-    'python3',
-    'Tools/linter/adapters/set_linter.py',
-    '--lintrunner',
-    '--',
-    '@{{PATHSFILE}}'
-]
-include_patterns = [
-    "Scripts/**/*.py",
-    "Tools/**/*.py",
-]
-is_formatter = true
+# [[linter]]
+# code = 'SET_LINTER'
+# command = [
+#     'python3',
+#     'Tools/linter/adapters/set_linter.py',
+#     '--lintrunner',
+#     '--',
+#     '@{{PATHSFILE}}'
+# ]
+# include_patterns = [
+#     "Scripts/**/*.py",
+#     "Tools/**/*.py",
+# ]
+# is_formatter = true
 
 [[linter]]
 code = 'DOCSTRING_LINTER'
@@ -1234,7 +1308,6 @@ command = [
 ]
 include_patterns = [
    'Scripts/**/*.py',
-   'Tools/**/*.py',
 ]
 is_formatter = false
 
@@ -1248,7 +1321,6 @@ command = [
 ]
 include_patterns = [
    'Scripts/**/*.py',
-   'Tools/**/*.py',
 ]
 is_formatter = false
 

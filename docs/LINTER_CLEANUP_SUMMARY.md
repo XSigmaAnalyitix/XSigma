@@ -67,14 +67,14 @@ No changes needed - configuration is generic and applies to all CMake projects.
 **Status**: ✓ Complete
 
 **Replaced Linters**:
-- C10_UNUSED → XSIGMA_UNUSED
-- C10_NODISCARD → XSIGMA_NODISCARD
+- XSIGMA_UNUSED → [[maybe_unused]]
+- XSIGMA_NODISCARD → [[nodiscard]]
 
-**Pattern Changes**:
-- `--pattern=C10_UNUSED` → `--pattern=XSIGMA_UNUSED`
-- `--pattern=C10_NODISCARD` → `--pattern=XSIGMA_NODISCARD`
-- `--replace-pattern=s/C10_UNUSED/[[maybe_unused]]/` (unchanged)
-- `--replace-pattern=s/C10_NODISCARD/[[nodiscard]]/` (unchanged)
+**Pattern Configuration**:
+- `--pattern=XSIGMA_UNUSED`
+- `--pattern=XSIGMA_NODISCARD`
+- `--replace-pattern=s/XSIGMA_UNUSED/[[maybe_unused]]/`
+- `--replace-pattern=s/XSIGMA_NODISCARD/[[nodiscard]]/`
 
 ## Verification Results
 
