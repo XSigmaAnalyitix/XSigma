@@ -732,17 +732,18 @@ class XsigmaFlags:
     def create_cmake_flags(self, cmake_cmd_flags, build_enum, system):
         debug_print("Create cmake flags")
         # First handle build type
+        build_type = None
         if self.__value.get("wheel") == self.ON:
             cmake_cmd_flags.extend([
                 "-DPython3_FIND_STRATEGY=LOCATION"
             ])
             self.__value["test"] = self.OFF
-            return "RELEASE"
+            build_type = "RELEASE"
         elif self.__value.get("valgrind") == self.ON or self.__value.get("sanitizer") == self.ON or self.__value.get("coverage") == self.ON:
             print_status("Enabling debug build for sanitizer, valgrind, or coverage analysis", "INFO")
-            return "DEBUG"
+            build_type = "DEBUG"
         else:
-            return str(build_enum).capitalize()
+            build_type = str(build_enum).capitalize()
 
         # Add all other CMake flags
         for key, value in self.__value.items():
@@ -771,6 +772,8 @@ class XsigmaFlags:
 
         # Add compilation database generation flag
         cmake_cmd_flags.append("-DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
+
+        return build_type
 
     def helper(self):
         for key, description in zip(self.__key, self.__description):
