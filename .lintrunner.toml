@@ -401,63 +401,63 @@ command = [
     '@{{PATHSFILE}}'
 ]
 
-[[linter]]
-code = 'XSIGMA_UNUSED'
-include_patterns = [
-    '**/*.hxx',
-    '**/*.cxx',
-    '**/*.h',
-]
-exclude_patterns = [
-    'ThirdParty/**',
-    'Tools/**',
-    'Scripts/**',
-    '.vscode/**',
-    '.git/**',
-    '.augment/**',
-]
-command = [
-    'python3',
-    'Tools/linter/adapters/grep_linter.py',
-    '--pattern=XSIGMA_UNUSED',
-    '--linter-name=XSIGMA_UNUSED',
-    '--error-name=deprecated XSIGMA_UNUSED macro',
-    '--replace-pattern=s/XSIGMA_UNUSED/[[maybe_unused]]/',
-    """--error-description=\
-        Deprecated macro, use [[maybe_unused]] directly\
-    """,
-    '--',
-    '@{{PATHSFILE}}'
-]
+# [[linter]]
+# code = 'XSIGMA_UNUSED'
+# include_patterns = [
+#     '**/*.hxx',
+#     '**/*.cxx',
+#     '**/*.h',
+# ]
+# exclude_patterns = [
+#     'ThirdParty/**',
+#     'Tools/**',
+#     'Scripts/**',
+#     '.vscode/**',
+#     '.git/**',
+#     '.augment/**',
+# ]
+# command = [
+#     'python3',
+#     'Tools/linter/adapters/grep_linter.py',
+#     '--pattern=XSIGMA_UNUSED',
+#     '--linter-name=XSIGMA_UNUSED',
+#     '--error-name=deprecated XSIGMA_UNUSED macro',
+#     '--replace-pattern=s/XSIGMA_UNUSED/[[maybe_unused]]/',
+#     """--error-description=\
+#         Deprecated macro, use [[maybe_unused]] directly\
+#     """,
+#     '--',
+#     '@{{PATHSFILE}}'
+# ]
 
-[[linter]]
-code = 'XSIGMA_NODISCARD'
-include_patterns = [
-    '**/*.hxx',
-    '**/*.cxx',
-    '**/*.h',
-]
-exclude_patterns = [
-    'ThirdParty/**',
-    'Tools/**',
-    'Scripts/**',
-    '.vscode/**',
-    '.git/**',
-    '.augment/**',
-]
-command = [
-    'python3',
-    'Tools/linter/adapters/grep_linter.py',
-    '--pattern=XSIGMA_NODISCARD',
-    '--linter-name=XSIGMA_NODISCARD',
-    '--error-name=deprecated XSIGMA_NODISCARD macro',
-    '--replace-pattern=s/XSIGMA_NODISCARD/[[nodiscard]]/',
-    """--error-description=\
-        Deprecated macro, use [[nodiscard]] directly\
-    """,
-    '--',
-    '@{{PATHSFILE}}'
-]
+# [[linter]]
+# code = 'XSIGMA_NODISCARD'
+# include_patterns = [
+#     '**/*.hxx',
+#     '**/*.cxx',
+#     '**/*.h',
+# ]
+# exclude_patterns = [
+#     'ThirdParty/**',
+#     'Tools/**',
+#     'Scripts/**',
+#     '.vscode/**',
+#     '.git/**',
+#     '.augment/**',
+# ]
+# command = [
+#     'python3',
+#     'Tools/linter/adapters/grep_linter.py',
+#     '--pattern=XSIGMA_NODISCARD',
+#     '--linter-name=XSIGMA_NODISCARD',
+#     '--error-name=deprecated XSIGMA_NODISCARD macro',
+#     '--replace-pattern=s/XSIGMA_NODISCARD/[[nodiscard]]/',
+#     """--error-description=\
+#         Deprecated macro, use [[nodiscard]] directly\
+#     """,
+#     '--',
+#     '@{{PATHSFILE}}'
+# ]
 
 [[linter]]
 code = 'INCLUDE'

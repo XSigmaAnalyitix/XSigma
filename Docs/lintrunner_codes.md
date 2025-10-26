@@ -112,13 +112,13 @@ Formatters (marked below) accept `--fix` to rewrite files. Codes commented out i
 - Runs clang-tidy with the repo’s `.clang-tidy` ruleset.
 - Run: `lintrunner -a --filter CLANGTIDY`
 
-### XSIGMA_UNUSED *(formatter)*
+### XSIGMA_UNUSED *(commented out, formatter when enabled)*
 - Rewrites `XSIGMA_UNUSED` to `[[maybe_unused]]`.
-- Run: `lintrunner -a --filter XSIGMA_UNUSED --fix`
+- Run (if re-enabled): `lintrunner -a --filter XSIGMA_UNUSED --fix`
 
-### XSIGMA_NODISCARD *(formatter)*
+### XSIGMA_NODISCARD *(commented out, formatter when enabled)*
 - Replaces `XSIGMA_NODISCARD` with `[[nodiscard]]`.
-- Run: `lintrunner -a --filter XSIGMA_NODISCARD --fix`
+- Run (if re-enabled): `lintrunner -a --filter XSIGMA_NODISCARD --fix`
 
 ### INCLUDE *(formatter)*
 - Converts quoted includes to angle brackets where policy requires.
