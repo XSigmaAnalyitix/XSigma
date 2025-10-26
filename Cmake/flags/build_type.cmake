@@ -19,6 +19,7 @@ set(XSIGMA_BUILD_TYPE_CONFIGURED TRUE CACHE INTERNAL "Build type module loaded")
 
 # Set default build type with caching for performance
 if(NOT CMAKE_BUILD_TYPE)
+    message("CMAKE_BUILD_TYPE not set - defaulting to Release")
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()

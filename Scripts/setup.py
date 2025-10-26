@@ -734,13 +734,15 @@ class XsigmaFlags:
         # First handle build type
         if self.__value.get("wheel") == self.ON:
             cmake_cmd_flags.extend([
-                "-DPython3_FIND_STRATEGY=LOCATION",
-                "-DCMAKE_BUILD_TYPE=Release"
+                "-DPython3_FIND_STRATEGY=LOCATION"
             ])
-            build_enum = "Release"
             self.__value["test"] = self.OFF
+            return "RELEASE"
+        elif self.__value.get("valgrind") == self.ON or self.__value.get("sanitizer") == self.ON or self.__value.get("coverage") == self.ON:
+            print_status("Enabling debug build for sanitizer, valgrind, or coverage analysis", "INFO")
+            return "DEBUG"
         else:
-            cmake_cmd_flags.append(f"-DCMAKE_BUILD_TYPE={build_enum}")
+            return str(build_enum).capitalize()
 
         # Add all other CMake flags
         for key, value in self.__value.items():
@@ -979,9 +981,11 @@ class XsigmaConfiguration:
         print_status("Configuring build...", "INFO")
         try:
             cmake_flags = []
-            self.__xsigma_flags.create_cmake_flags(
+            self.__value["build_enum"] = self.__xsigma_flags.create_cmake_flags(
                 cmake_flags, self.__value["build_enum"], self.__value["system"]
             )
+            print(f"build enum: {self.__value['build_enum']}")
+            cmake_flags.append(f"-DCMAKE_BUILD_TYPE={self.__value['build_enum']}")
 
             exit_code = config_helper.configure_build(
                 source_path,

@@ -1,7 +1,11 @@
 # XSigma
 
 A high-performance C++ library with a modern CMake build system providing cross-platform compatibility, advanced optimization, and flexible dependency management.
+# XSigma
 
+[![CI Status](https://github.com/XSigmaAnalyitix/XSigma/actions/workflows/ci.yml/badge.svg)](https://github.com/XSigmaAnalyitix/XSigma/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/XSigmaAnalyitix/XSigma/branch/main/graph/badge.svg)](https://codecov.io/gh/XSigmaAnalyitix/XSigma)
+[![License: GPL-3.0 or Commercial](https://img.shields.io/badge/License-GPL--3.0%20or%20Commercial-blue.svg)](LICENSE)
 ## Table of Contents
 
 - [Overview](#overview)

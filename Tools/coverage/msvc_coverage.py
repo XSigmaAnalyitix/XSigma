@@ -20,14 +20,257 @@ from common import (
 logger = logging.getLogger(__name__)
 
 
-def _generate_json_from_html(html_dir: Path, output_dir: Path) -> None:
-    """Generate JSON coverage report from OpenCppCoverage HTML output.
+def _parse_cobertura_xml(xml_file: Path) -> dict:
+    """Parse Cobertura XML coverage file to extract coverage data.
+
+    Handles multiple Cobertura XML structures:
+    - Standard: coverage > package > classes > class > lines > line
+    - Alternative: coverage > package > classes > class (with line-rate attribute)
+    - Direct: coverage > sources > source > package > class > lines > line
+
+    Args:
+        xml_file: Path to Cobertura XML file.
+
+    Returns:
+        Dictionary with coverage data including file-level statistics.
+    """
+    try:
+        import xml.etree.ElementTree as ET
+
+        coverage_data = {
+            "line_coverage": {
+                "total": 0,
+                "covered": 0,
+                "uncovered": 0,
+                "percent": 0.0
+            },
+            "files": []
+        }
+
+        if not xml_file.exists():
+            return coverage_data
+
+        tree = ET.parse(xml_file)
+        root = tree.getroot()
+
+        # Extract overall coverage
+        # In Cobertura format, the root element is <coverage> with attributes
+        line_rate = root.get("line-rate", "0")
+        try:
+            coverage_data["line_coverage"]["percent"] = round(float(line_rate) * 100, 2)
+        except (ValueError, TypeError):
+            pass
+
+        # Extract per-file coverage - try multiple possible structures
+        files_found = set()  # Track files to avoid duplicates
+
+        # Structure 1: package > classes > class (standard OpenCppCoverage format)
+        for package in root.findall(".//package"):
+            for source_file in package.findall("classes/class"):
+                filename = source_file.get("filename", "unknown")
+                if filename in files_found:
+                    continue
+                files_found.add(filename)
+
+                line_rate = source_file.get("line-rate", "0")
+
+                try:
+                    file_coverage_percent = round(float(line_rate) * 100, 2)
+                except (ValueError, TypeError):
+                    file_coverage_percent = 0.0
+
+                file_data = {
+                    "file": filename,
+                    "line_coverage": {
+                        "total": 0,
+                        "covered": 0,
+                        "uncovered": 0,
+                        "percent": file_coverage_percent
+                    }
+                }
+
+                # Count lines
+                for line in source_file.findall("lines/line"):
+                    hits = line.get("hits", "0")
+                    try:
+                        hit_count = int(hits)
+                        file_data["line_coverage"]["total"] += 1
+                        if hit_count > 0:
+                            file_data["line_coverage"]["covered"] += 1
+                        else:
+                            file_data["line_coverage"]["uncovered"] += 1
+                    except (ValueError, TypeError):
+                        pass
+
+                coverage_data["files"].append(file_data)
+
+        return coverage_data
+
+    except Exception as e:
+        logger.warning(f"Failed to parse Cobertura XML {xml_file}: {e}")
+        return {
+            "line_coverage": {
+                "total": 0,
+                "covered": 0,
+                "uncovered": 0,
+                "percent": 0.0
+            },
+            "files": []
+        }
+
+
+
+def _generate_detailed_html_reports(html_dir: Path, raw_dir: Path, source_root: str) -> bool:
+    """Generate detailed line-by-line HTML reports from Cobertura XML.
+
+    Extracts source code and coverage data to create detailed per-file HTML reports
+    with line-by-line coverage highlighting, matching the Clang coverage report format.
+
+    Args:
+        html_dir: Directory where HTML reports will be saved.
+        raw_dir: Directory containing Cobertura XML files.
+        source_root: Root directory for source files.
+
+    Returns:
+        True if reports were generated successfully, False otherwise.
+    """
+    try:
+        from html_report import HtmlGenerator
+        import xml.etree.ElementTree as ET
+
+        if not raw_dir or not raw_dir.exists():
+            print("No Cobertura XML directory found, skipping detailed HTML generation")
+            return False
+
+        xml_files = list(raw_dir.glob("*.xml"))
+        if not xml_files:
+            print("No Cobertura XML files found, skipping detailed HTML generation")
+            return False
+
+        # Parse all XML files to extract file-level coverage data
+        covered_lines: dict[str, set] = {}
+        uncovered_lines: dict[str, set] = {}
+        execution_counts: dict[str, dict] = {}
+
+        print(f"Parsing {len(xml_files)} Cobertura XML file(s) for detailed coverage...")
+
+        for xml_file in xml_files:
+            print(f"  Processing {xml_file.name}...")
+            try:
+                tree = ET.parse(xml_file)
+                root = tree.getroot()
+
+                # Extract file coverage data from Cobertura XML
+                for package in root.findall('.//package'):
+                    for cls in package.findall('classes/class'):
+                        filename = cls.get('filename', '')
+                        if not filename:
+                            continue
+
+                        # Normalize path - convert to absolute path
+                        norm_path = filename.replace('/', '\\')
+
+                        # If filename is relative, make it absolute
+                        drive_letters = (
+                            'C:', 'D:', 'E:', 'F:', 'G:', 'H:', 'I:', 'J:',
+                            'K:', 'L:', 'M:', 'N:', 'O:', 'P:', 'Q:', 'R:',
+                            'S:', 'T:', 'U:', 'V:', 'W:', 'X:', 'Y:', 'Z:'
+                        )
+                        if not norm_path.startswith(drive_letters):
+                            # Relative path - prepend C: drive
+                            norm_path = 'C:\\' + norm_path
+
+                        # Filter to only include source files from the source_root
+                        if source_root:
+                            norm_src = source_root.replace('/', '\\').lower()
+                            if norm_src not in norm_path.lower():
+                                continue
+
+                        # Extract line coverage data
+                        covered = set()
+                        uncovered = set()
+                        counts = {}
+
+                        for line in cls.findall('lines/line'):
+                            try:
+                                line_num = int(line.get('number', 0))
+                                if line_num == 0:
+                                    continue
+
+                                hits = int(line.get('hits', 0))
+                                counts[line_num] = hits
+
+                                if hits > 0:
+                                    covered.add(line_num)
+                                else:
+                                    uncovered.add(line_num)
+                            except (ValueError, TypeError):
+                                continue
+
+                        if covered or uncovered:
+                            # Verify the file exists before adding to coverage data
+                            if Path(norm_path).exists():
+                                covered_lines[norm_path] = covered
+                                uncovered_lines[norm_path] = uncovered
+                                execution_counts[norm_path] = counts
+                            else:
+                                # Try to find the file in the source_root
+                                if source_root:
+                                    # Extract just the filename and relative path
+                                    parts = norm_path.split('\\')
+                                    # Find the part that starts with 'Library'
+                                    try:
+                                        lib_idx = next(i for i, p in enumerate(parts) if p.lower() == 'library')
+                                        rel_path = '\\'.join(parts[lib_idx:])
+                                        full_path = Path(source_root).parent / rel_path
+                                        if full_path.exists():
+                                            covered_lines[str(full_path)] = covered
+                                            uncovered_lines[str(full_path)] = uncovered
+                                            execution_counts[str(full_path)] = counts
+                                    except (StopIteration, IndexError):
+                                        pass
+
+                print(f"    Found {len(covered_lines)} file(s) with coverage data")
+
+            except Exception as e:
+                print(f"  Error parsing {xml_file.name}: {e}")
+                import traceback
+                traceback.print_exc()
+                continue
+
+        if not covered_lines and not uncovered_lines:
+            print("Warning: No coverage data extracted from Cobertura XML")
+            return False
+
+        # Generate HTML reports using HtmlGenerator
+        print(f"Generating detailed HTML reports for {len(covered_lines)} file(s)...")
+        generator = HtmlGenerator(html_dir, source_root)
+        generator.generate_report(covered_lines, uncovered_lines, execution_counts)
+
+        print(f"Generated detailed HTML reports in: {html_dir}")
+        return True
+
+    except Exception as e:
+        print(f"Error generating detailed HTML reports: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def _generate_json_from_html(html_dir: Path, output_dir: Path, raw_dir: Path = None) -> None:
+    """Generate JSON coverage report from OpenCppCoverage output.
+
+    Parses OpenCppCoverage Cobertura XML and HTML reports to generate both
+    JSON summary and styled HTML reports using the standard html_report templates.
 
     Args:
         html_dir: Directory containing OpenCppCoverage HTML reports.
         output_dir: Directory where JSON report will be saved.
+        raw_dir: Optional directory containing Cobertura XML files.
     """
     try:
+        import re
+
         summary = {
             "metadata": {
                 "format_version": "2.0",
@@ -45,67 +288,90 @@ def _generate_json_from_html(html_dir: Path, output_dir: Path) -> None:
             "files": []
         }
 
-        # Parse HTML files to extract coverage data
-        # OpenCppCoverage generates index.html with coverage summary
-        index_file = html_dir / "index.html"
-        if not index_file.exists():
-            print(f"Warning: OpenCppCoverage index.html not found at {index_file}")
-            return
+        # Try to parse Cobertura XML files first (more detailed)
+        if raw_dir and raw_dir.exists():
+            xml_files = list(raw_dir.glob("*.xml"))
+            if xml_files:
+                print(f"Found {len(xml_files)} Cobertura XML file(s), parsing for detailed coverage...")
+                for xml_file in xml_files:
+                    xml_data = _parse_cobertura_xml(xml_file)
+                    if xml_data["files"]:
+                        # Merge files, avoiding duplicates
+                        existing_files = {f["file"] for f in summary["files"]}
+                        for file_info in xml_data["files"]:
+                            if file_info["file"] not in existing_files:
+                                summary["files"].append(file_info)
+                                existing_files.add(file_info["file"])
+                        # Update overall coverage from XML
+                        if xml_data["line_coverage"]["percent"] > 0:
+                            summary["summary"]["line_coverage"]["percent"] = xml_data["line_coverage"]["percent"]
 
-        # Extract coverage data from HTML
-        with open(index_file, 'r', encoding='utf-8', errors='ignore') as f:
-            content = f.read()
+                    print(f"  Parsed {xml_file.name}: {len(xml_data['files'])} files found")
 
-            # Look for coverage percentage in HTML
-            # OpenCppCoverage format: look for coverage metrics
-            import re
-            # Pattern to find coverage percentages
-            coverage_pattern = r'(\d+(?:\.\d+)?)\s*%'
-            matches = re.findall(coverage_pattern, content)
+        # If no XML data, fall back to parsing HTML
+        if not summary["files"]:
+            print("No Cobertura XML found, parsing HTML for coverage data...")
 
-            if matches:
-                # Try to extract overall coverage
+            # Parse HTML files to extract coverage data
+            # OpenCppCoverage generates index.html with coverage summary
+            index_file = html_dir / "index.html"
+            if not index_file.exists():
+                print(f"Warning: OpenCppCoverage index.html not found at {index_file}")
+                return
+
+            # Extract coverage data from HTML
+            with open(index_file, encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+
+                # Look for coverage percentage in HTML
+                # OpenCppCoverage format: look for coverage metrics
+                # Pattern to find coverage percentages
+                coverage_pattern = r'(\d+(?:\.\d+)?)\s*%'
+                matches = re.findall(coverage_pattern, content)
+
+                if matches:
+                    # Try to extract overall coverage
+                    try:
+                        overall_coverage = float(matches[0])
+                        summary["summary"]["line_coverage"]["percent"] = round(overall_coverage, 2)
+                    except (ValueError, IndexError):
+                        pass
+
+            # Look for individual file reports
+            html_files = list(html_dir.glob("*.html"))
+            print(f"Found {len(html_files)} HTML file(s) in coverage report")
+            for html_file in html_files:
+                if html_file.name == "index.html":
+                    continue
+
                 try:
-                    overall_coverage = float(matches[0])
-                    summary["summary"]["line_coverage"]["percent"] = round(overall_coverage, 2)
-                except (ValueError, IndexError):
-                    pass
+                    with open(html_file, encoding='utf-8', errors='ignore') as f:
+                        file_content = f.read()
 
-        # Look for individual file reports
-        html_files = list(html_dir.glob("*.html"))
-        for html_file in html_files:
-            if html_file.name == "index.html":
-                continue
-
-            try:
-                with open(html_file, 'r', encoding='utf-8', errors='ignore') as f:
-                    file_content = f.read()
-
-                    # Extract file path and coverage info
-                    file_data = {
-                        "file": html_file.stem,
-                        "line_coverage": {
-                            "total": 0,
-                            "covered": 0,
-                            "uncovered": 0,
-                            "percent": 0.0
+                        # Extract file path and coverage info
+                        file_data = {
+                            "file": html_file.stem,
+                            "line_coverage": {
+                                "total": 0,
+                                "covered": 0,
+                                "uncovered": 0,
+                                "percent": 0.0
+                            }
                         }
-                    }
 
-                    # Try to extract coverage percentage from file
-                    import re
-                    coverage_match = re.search(r'(\d+(?:\.\d+)?)\s*%', file_content)
-                    if coverage_match:
-                        try:
-                            file_coverage = float(coverage_match.group(1))
-                            file_data["line_coverage"]["percent"] = round(file_coverage, 2)
-                        except ValueError:
-                            pass
+                        # Try to extract coverage percentage from file
+                        coverage_match = re.search(r'(\d+(?:\.\d+)?)\s*%', file_content)
+                        if coverage_match:
+                            try:
+                                file_coverage = float(coverage_match.group(1))
+                                file_data["line_coverage"]["percent"] = round(file_coverage, 2)
+                            except ValueError:
+                                pass
 
-                    summary["files"].append(file_data)
+                        summary["files"].append(file_data)
 
-            except Exception as e:
-                logger.warning(f"Failed to parse {html_file}: {e}")
+                except Exception as e:
+                    logger.warning(f"Failed to parse {html_file}: {e}")
 
         # Save JSON
         json_file = output_dir / "coverage_summary.json"
@@ -113,15 +379,25 @@ def _generate_json_from_html(html_dir: Path, output_dir: Path) -> None:
             json.dump(summary, f, indent=2)
         print(f"JSON coverage report saved to: {json_file}")
 
-        # Generate HTML from JSON using the new html_report package
+        # Note: Do NOT use JsonHtmlGenerator to overwrite per-file reports in html_dir
+        # The HtmlGenerator already created detailed per-file reports with source code.
+        # JsonHtmlGenerator only has summary data without source code, so we skip it
+        # for the main html_dir to preserve the detailed reports.
+        # We only use JsonHtmlGenerator for the reference html_from_json directory.
         try:
             from html_report import JsonHtmlGenerator
-            json_html_dir = output_dir / "html_from_json"
-            generator = JsonHtmlGenerator(json_html_dir)
-            index_file = generator.generate_from_dict(summary)
-            print(f"HTML report generated from JSON at: {index_file}")
+
+            # Keep a reference copy in html_from_json for parity with Clang flow
+            try:
+                json_html_dir = output_dir / "html_from_json"
+                ref_generator = JsonHtmlGenerator(json_html_dir)
+                ref_index = ref_generator.generate_from_dict(summary)
+                print(f"Reference JSON-based HTML report available at: {ref_index}")
+            except Exception as e:
+                print(f"Warning: Failed to generate reference JSON-based HTML: {e}")
+
         except Exception as e:
-            print(f"Warning: Failed to generate HTML from JSON: {e}")
+            print(f"Warning: Failed to generate reference HTML from JSON: {e}")
 
     except Exception as e:
         print(f"Warning: Failed to generate JSON from HTML: {e}")
@@ -207,13 +483,19 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
         # Add HTML export
         cov_cmd.append(f"--export_type=html:{html_dir}")
 
+        # Add Cobertura XML export for structured coverage data
+        xml_file = raw_dir / f"{test_name}.xml"
+        cov_cmd.append(f"--export_type=cobertura:{xml_file}")
+
         # Add binary export for raw coverage data
         raw_file = raw_dir / f"{test_name}.cov"
         cov_cmd.append(f"--export_type=binary:{raw_file}")
 
         # Add source filter for specific folder (Windows path separators)
         windows_source_path = str(source_folder).replace("/", "\\")
+        # Include source root and all subpaths (defensive: both directory and wildcard)
         cov_cmd.append(f"--sources={windows_source_path}")
+        cov_cmd.append(f"--sources={windows_source_path}\\*")
 
         # Add exclusion patterns with Windows path separators
         for exclude_pattern in excludes:
@@ -239,20 +521,21 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
             )
 
             if verify_result.returncode != 0:
-                print(f"⚠ Warning: Test executable returned non-zero exit code: {verify_result.returncode}")
+                print(f"Warning: Test executable returned non-zero exit code: {verify_result.returncode}")
                 if verify_result.stderr:
                     print(f"  Test stderr: {verify_result.stderr[:200]}")
             else:
-                print("✓ Test executable runs successfully")
+                print("Test executable runs successfully")
 
             # Now run with coverage
             result = subprocess.run(
                 cov_cmd,
-                cwd=build_dir,
+                # Use the test executable's directory as CWD so resources/DLLs resolve
+                cwd=str(test_exe.parent),
                 capture_output=True,
                 text=True,
                 check=False,
-                timeout=60
+                timeout=120
             )
 
             # Print output for debugging
@@ -260,18 +543,18 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
                 print(f"Coverage tool output:\n{result.stdout}")
 
             if result.returncode == 0:
-                print(f"✓ Coverage generated for: {test_name}")
+                print(f"Coverage generated for: {test_name}")
                 successful_tests += 1
             else:
-                print(f"✗ Coverage failed for: {test_name} (exit code: {result.returncode})")
+                print(f"Coverage failed for: {test_name} (exit code: {result.returncode})")
                 if result.stderr:
                     print(f"  Error: {result.stderr}")
                 failed_tests.append(test_name)
         except subprocess.TimeoutExpired:
-            print(f"✗ Coverage timed out for: {test_name}")
+            print(f"Coverage timed out for: {test_name}")
             failed_tests.append(test_name)
         except Exception as e:
-            print(f"✗ Exception running coverage for {test_name}: {e}")
+            print(f"Exception running coverage for {test_name}: {e}")
             failed_tests.append(test_name)
 
     # Verify output
@@ -289,16 +572,24 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
     print(f"Raw data location: {raw_dir}")
 
     if not html_files and not raw_files:
-        print("\n⚠ Warning: No coverage output generated!")
+        print("\nWarning: No coverage output generated!")
         raise RuntimeError("Coverage generation produced no output")
 
-    # Generate JSON coverage report
+    # Generate detailed line-by-line HTML pages from Cobertura XML (matches Clang styling)
+    # This creates per-file reports with source code and line-by-line coverage highlighting
+    print("\nGenerating detailed line-by-line HTML reports from Cobertura XML...")
+    detailed_generated = _generate_detailed_html_reports(html_dir, raw_dir, str(source_folder))
+    if not detailed_generated:
+        print("Warning: Detailed HTML generation skipped or failed; will fall back to JSON-based HTML.")
+
+    # Generate JSON coverage report (for summary and styled index)
+    # This will enhance or replace the index.html with styled version
     print("\nGenerating JSON coverage report...")
-    _generate_json_from_html(html_dir, coverage_dir)
+    _generate_json_from_html(html_dir, coverage_dir, raw_dir)
 
     if failed_tests:
         print(f"\n{len(failed_tests)} test(s) had issues:")
         for test_name in failed_tests:
             print(f"  - {test_name}")
     else:
-        print(f"\n✓ All {len(test_executables)} test(s) processed successfully!")
+        print(f"\nAll {len(test_executables)} test(s) processed successfully!")

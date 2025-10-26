@@ -18,7 +18,6 @@ mark_as_advanced(XSIGMA_ENABLE_COVERAGE)
 
 if(XSIGMA_ENABLE_COVERAGE)
 set(XSIGMA_ENABLE_LTO OFF)
-set(CMAKE_BUILD_TYPE "Debug")
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     string(APPEND CMAKE_C_FLAGS " --coverage -g -O0  -fprofile-arcs -ftest-coverage")
