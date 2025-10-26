@@ -1137,6 +1137,7 @@ include_patterns = ['**']
 exclude_patterns = [
     'ThirdParty/**',
     '.lintrunner.toml',
+    'Docs/lintrunner_codes.md',
     'Tools/**',
     'Scripts/**',
     '.vscode/**',
