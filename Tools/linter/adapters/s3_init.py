@@ -16,17 +16,17 @@ from pathlib import Path
 HOST_PLATFORM = platform.system()
 HOST_PLATFORM_ARCH = platform.system() + "-" + platform.processor()
 
-# PyTorch directory root
+# XSigma directory root
 try:
     result = subprocess.run(
         ["git", "rev-parse", "--show-toplevel"],
         stdout=subprocess.PIPE,
         check=True,
     )
-    PYTORCH_ROOT = result.stdout.decode("utf-8").strip()
+    XSIGMA_ROOT = result.stdout.decode("utf-8").strip()
 except subprocess.CalledProcessError:
     # If git is not installed, compute repo root as 3 folders up from this file
-    PYTORCH_ROOT = str(Path(__file__).absolute().parents[3])
+    XSIGMA_ROOT = str(Path(__file__).absolute().parents[3])
 
 DRY_RUN = False
 

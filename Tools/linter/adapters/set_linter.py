@@ -16,9 +16,19 @@ else:
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+# Add config directory to path for importing config_loader
+_config_dir = Path(__file__).parent.parent / "config"
+if str(_config_dir) not in sys.path:
+    sys.path.insert(0, str(_config_dir))
+
+try:
+    from config_loader import get_ordered_set_import
+    IMPORT_LINE = get_ordered_set_import()
+except Exception:
+    # Fallback to default if config loader is not available
+    IMPORT_LINE = "from xsigma.utils._ordered_set import OrderedSet\n\n"
 
 ERROR = "Builtin `set` is deprecated"
-IMPORT_LINE = "from torch.utils._ordered_set import OrderedSet\n\n"
 
 DESCRIPTION = """`set_linter` is a lintrunner linter which finds usages of the
 Python built-in class `set` in Python code, and optionally replaces them with

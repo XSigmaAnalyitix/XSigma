@@ -14,7 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT))
 
 
-from tools.dynamo.gb_id_mapping import (
+from Tools.dynamo.gb_id_mapping import (
     find_unimplemented_v2_calls,
     load_registry,
     next_gb_id,
@@ -261,11 +261,28 @@ def check_registry_sync(dynamo_dir: Path, registry_path: Path) -> list[LintMessa
 if __name__ == "__main__":
     script_dir = Path(__file__).resolve()
     repo_root = script_dir.parents[3]
-    default_registry_path = (
-        repo_root / "torch" / "_dynamo" / "graph_break_registry.json"
-    )
 
-    default_dynamo_dir = repo_root / "torch" / "_dynamo"
+    # Try to load from config, fall back to defaults
+    _config_dir = repo_root / "Tools" / "linter" / "config"
+    if str(_config_dir) not in sys.path:
+        sys.path.insert(0, str(_config_dir))
+
+    try:
+        from config_loader import get_graph_break_registry_path, get_dynamo_config
+        default_registry_path = get_graph_break_registry_path()
+        dynamo_config = get_dynamo_config()
+        default_dynamo_dir = Path(dynamo_config.get(
+            "default_dynamo_dir",
+            "Library/Core/_dynamo"
+        ))
+        if not default_dynamo_dir.is_absolute():
+            default_dynamo_dir = repo_root / default_dynamo_dir
+    except Exception:
+        # Fallback to defaults if config loader is not available
+        default_registry_path = (
+            repo_root / "Library" / "Core" / "_dynamo" / "graph_break_registry.json"
+        )
+        default_dynamo_dir = repo_root / "Library" / "Core" / "_dynamo"
 
     parser = argparse.ArgumentParser(
         description="Auto-sync graph break registry with source code"

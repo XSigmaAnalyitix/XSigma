@@ -1,17 +1,29 @@
 #!/usr/bin/env python3
 """
-Checks that all symbols in torch/header_only_apis.txt are tested in a .cpp
+Checks that all symbols in Library/Core/header_only_apis.txt are tested in a .cpp
 test file to ensure header-only-ness. The .cpp test file must be built
-without linking libtorch.
+without linking against the main XSigma library.
 """
 
 import argparse
 import json
 import re
+import sys
 from enum import Enum
 from pathlib import Path
 from typing import NamedTuple, Union
 
+# Add config directory to path for importing config_loader
+_config_dir = Path(__file__).parent.parent / "config"
+if str(_config_dir) not in sys.path:
+    sys.path.insert(0, str(_config_dir))
+
+try:
+    from config_loader import get_header_only_apis_file, get_header_only_test_globs
+except ImportError:
+    # Fallback if config loader is not available
+    get_header_only_apis_file = None
+    get_header_only_test_globs = None
 
 LINTER_CODE = "HEADER_ONLY_LINTER"
 
@@ -36,10 +48,17 @@ class LintMessage(NamedTuple):
 
 
 CPP_TEST_GLOBS = [
-    "test/cpp/aoti_abi_check/*.cpp",
+    "Library/Core/test/cpp/aoti_abi_check/*.cxx",
 ]
 
 REPO_ROOT = Path(__file__).parents[3]
+
+# Try to load from config, fall back to defaults
+if get_header_only_test_globs is not None:
+    try:
+        CPP_TEST_GLOBS = get_header_only_test_globs()
+    except Exception:
+        pass  # Use default globs
 
 
 def find_matched_symbols(

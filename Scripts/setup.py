@@ -1366,9 +1366,9 @@ def parse_args(args):
                     "ERROR",
                 )
                 sys.exit(1)
-        # Handle logging backend flags with dot notation (e.g., --logging=GLOG)
-        elif arg.startswith("--logging="):
-            backend_type = arg.split("=", 1)[1].upper()
+        # Handle logging backend flags with dot notation (e.g., --logging.GLOG)
+        elif arg.startswith("--logging."):
+            backend_type = arg.split(".", 1)[1].upper()
             valid_backends = ["NATIVE", "LOGURU", "GLOG"]
             if backend_type in valid_backends:
                 processed_args.append(backend_type.lower())

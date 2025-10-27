@@ -45,7 +45,6 @@ RESULTS_RE: re.Pattern[str] = re.compile(
     """
 )
 
-# torch/_dynamo/variables/tensor.py:363: error: INTERNAL ERROR
 INTERNAL_ERROR_RE: re.Pattern[str] = re.compile(
     r"""(?mx)
     ^

@@ -76,8 +76,8 @@ _MODULE_NAME_ALLOW_LIST.update(
 )
 
 _ERROR_MESSAGE = """
-Please do not import third-party modules in PyTorch unless they're explicit
-requirements of PyTorch. Imports of a third-party library may have side effects
+Please do not import third-party modules in XSigma unless they're explicit
+requirements of XSigma. Imports of a third-party library may have side effects
 and other unintentional behavior. If you're just checking if a module exists,
 use sys.modules.get("torchrec") or the like.
 """

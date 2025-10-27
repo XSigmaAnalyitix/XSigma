@@ -1,10 +1,5 @@
 ---
-## type: "always_apply"
-
-# Augmented AI Code Generation Rules (C++20)
-
-These rules define the standards and constraints for AI-assisted and human-authored C++20 code contributions in the project. They ensure generated code adheres to established engineering, architectural, and stylistic conventions while maintaining maintainability, reliability, and testability.
-
+type: "always_apply"
 ---
 
 ## 1. Error Handling
