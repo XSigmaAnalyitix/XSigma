@@ -118,25 +118,25 @@ Create a new file at the project root with settings aligned to XSigma's C++ stan
 format:
   # Line width (matches clang-format ColumnLimit)
   line_width: 100
-  
+
   # Indentation
   indent_width: 2
   tab_size: 2
   use_tabchars: false
-  
+
   # Formatting behavior
   dangle_parens: true
   separate_ctrl_name_with_space: true
   separate_fn_name_with_space: false
-  
+
   # Comment handling
   comment_prefix: '  #'
   enable_markup: true
-  
+
   # Wrapping
   max_subgroups_hwrap: 3
   max_paren_depth: 6
-  
+
   # Sorting
   enable_sort: true
   autosort: false
@@ -403,4 +403,3 @@ Test on:
 - [cmakelang GitHub](https://github.com/cheshirekow/cmake_format)
 - [XSigma .clang-format](../.clang-format)
 - [XSigma Linter Documentation](readme/linter.md)
-

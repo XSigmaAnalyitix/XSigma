@@ -174,7 +174,7 @@ ls -la .cmake-format.yaml
 
 **Issue**: cmake-format and cmakelint disagree on formatting
 
-**Solution**: 
+**Solution**:
 1. Run cmake-format first (formatter)
 2. Then run cmakelint (linter)
 3. Adjust `.cmakelintrc` if needed
@@ -266,4 +266,3 @@ For issues or questions:
 3. **Commit changes**: Include formatting changes in PR
 4. **Update CI/CD**: Add cmake-format check to pipeline
 5. **Document**: Update README and developer guides
-

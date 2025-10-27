@@ -106,8 +106,10 @@ def check_file(
     try:
         with open(filename, "rb") as f:
             original = f.read()
+        # Note: cmake-format requires '-o -' to output to stdout when given a filename
+        # Without this flag, it modifies the file in-place or produces no output
         proc = run_command(
-            ["cmake-format", "--config-file", config, filename],
+            ["cmake-format", "--config-file", config, "-o", "-", filename],
             retries=retries,
             timeout=timeout,
         )

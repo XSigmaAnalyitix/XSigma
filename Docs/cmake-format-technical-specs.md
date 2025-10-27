@@ -303,4 +303,3 @@ format:
 - [cmakelang GitHub](https://github.com/cheshirekow/cmake_format)
 - [Python subprocess](https://docs.python.org/3/library/subprocess.html)
 - [concurrent.futures](https://docs.python.org/3/library/concurrent.futures.html)
-
