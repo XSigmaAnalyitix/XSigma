@@ -55,8 +55,8 @@ Before using the setup.py script, install the required Python dependencies:
 git clone https://github.com/XSigmaAnalyitix/XSigma.git
 cd XSigma
 
-# Install Python dependencies for the build script
-pip install colorama
+# Install Python dependencies
+pip install -r requirements.txt
 
 # Initialize Git submodules (for third-party dependencies)
 git submodule update --init --recursive
