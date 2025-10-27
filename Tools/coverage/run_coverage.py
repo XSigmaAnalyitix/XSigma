@@ -129,7 +129,7 @@ def get_coverage(
             clang_generate_coverage(build_path, modules, source_path)
         elif compiler == "gcc":
             print("Generating GCC coverage...")
-            gcc_generate_coverage(build_path, modules)
+            gcc_generate_coverage(build_path, modules, verbose=False)
 
         return 0
 
@@ -251,7 +251,7 @@ def main():
             clang_generate_coverage(build_dir, modules, source_dir)
         elif compiler == "gcc":
             print("Using lcov coverage tool...")
-            gcc_generate_coverage(build_dir, modules)
+            gcc_generate_coverage(build_dir, modules, verbose=args.verbose)
         else:
             raise RuntimeError(f"Unsupported compiler: {compiler}")
 
