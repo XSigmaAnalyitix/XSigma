@@ -18,7 +18,7 @@ This document summarizes the fixes applied to address critical and high-priority
 
 ### 3. LLVM Tools Validation (clang_coverage.py)
 **Issue**: Missing LLVM tools (llvm-profdata, llvm-cov) were not validated; failures were silently caught.
-**Fix**: 
+**Fix**:
 - Added `_validate_llvm_tools()` function to check tool availability
 - Changed exception handling to raise RuntimeError instead of printing warnings
 - Updated docstring to document the RuntimeError
@@ -110,4 +110,3 @@ New environment variable support:
 - `Tools/coverage/clang_coverage.py` - Added LLVM validation, fixed dict mutation, fixed None handling
 - `Tools/coverage/gcc_coverage.py` - Fixed Unicode, improved exclusion handling
 - `Tools/coverage/msvc_coverage.py` - Improved error handling, fixed duplicate --sources
-

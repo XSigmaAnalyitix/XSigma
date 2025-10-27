@@ -923,18 +923,22 @@ class XsigmaConfiguration:
         self.__fill_compilation_flags(args_list)
 
     def __initialize_values(self):
+        # Set default compiler to Clang on all platforms
+        default_cxx_compiler = "clang++"
+        default_c_compiler = "clang"
+
         self.__value = {
             "system": platform.system(),
-            "build_folder": "build",
-            "builder": "make" if platform.system() == "Linux" else "",
+            "build_folder": "build_ninja",
+            "builder": "ninja",
             "config": "",
             "build": "",
             "test": "",
             "analyze": "",
             "build_enum": "Release",
-            "cmake_generator": "CodeBlocks - Unix Makefiles",
-            "cmake_cxx_compiler": "",
-            "cmake_c_compiler": "",
+            "cmake_generator": "Ninja",
+            "cmake_cxx_compiler": f"-DCMAKE_CXX_COMPILER={default_cxx_compiler}",
+            "cmake_c_compiler": f"-DCMAKE_C_COMPILER={default_c_compiler}",
             "compiler_flags": "--debug-trycompile",
             "verbosity": "",
             "arg_cmake_verbose": "--loglevel=NOTICE",
@@ -949,10 +953,6 @@ class XsigmaConfiguration:
     def __process_arg(self, arg):
         if arg == "ninja":
             self.__set_ninja_flags()
-        elif arg == "cninja":
-            self.__set_cninja_flags()
-        elif arg == "eninja":
-            self.__set_eninja_flags()
         elif arg == "xcode":
             self.__set_xcode_flags()
         elif self.__is_clang_compiler(arg):
@@ -977,29 +977,11 @@ class XsigmaConfiguration:
             self.__xsigma_flags.enable_gtest()
 
     def __set_ninja_flags(self):
-        self.__value["cmake_generator"] = (
-            "Ninja" if self.__value["system"] == "Linux" else "Ninja"
-        )
+        self.__value["cmake_generator"] = "Ninja"
         self.__value["builder"] = "ninja"
         self.__value["build_folder"] = (
             f"build_ninja{self.__xsigma_flags.builder_suffix}"
         )
-
-    def __set_cninja_flags(self):
-        self.__value["cmake_generator"] = "CodeBlocks - Ninja"
-        self.__value["builder"] = "ninja"
-        self.__value["build_folder"] = (
-            f"build_ninja{self.__xsigma_flags.builder_suffix}"
-        )
-
-    def __set_eninja_flags(self):
-        if self.__value["system"] == "Linux":
-            self.__value["cmake_generator"] = "Eclipse CDT4 - Unix Makefiles"
-            self.__value["build_folder"] = "build_eclipse"
-        else:
-            self.__value["cmake_generator"] = "Eclipse CDT4 - Ninja"
-            self.__value["builder"] = "ninja"
-            self.__value["build_folder"] = "build_eclipse_ninja"
 
     def __set_xcode_flags(self):
         if self.__value["system"] == "Darwin":
@@ -1296,10 +1278,115 @@ class XsigmaConfiguration:
         if coverage_result == 0:
             print_status("Coverage collection completed successfully", "SUCCESS")
             self.summary_reporter.add_coverage_report(build_path, 0)
+
+            # Display coverage summary automatically
+            self._display_coverage_summary(build_path)
+
             return 0
         else:
             print_status("Coverage collection failed", "ERROR")
             return 1
+
+    def _display_coverage_summary(self, build_path):
+        """Display coverage summary from JSON report.
+
+        Args:
+            build_path: Path to build directory containing coverage reports.
+        """
+        import json
+
+        # Look for coverage summary JSON file
+        coverage_json_paths = [
+            os.path.join(build_path, "coverage_report", "coverage_summary.json"),
+            os.path.join(build_path, "coverage_report", "coverage.json"),
+        ]
+
+        coverage_json = None
+        for path in coverage_json_paths:
+            if os.path.exists(path):
+                coverage_json = path
+                break
+
+        if not coverage_json:
+            print_status("Coverage summary file not found, skipping display", "WARNING")
+            return
+
+        try:
+            with open(coverage_json, encoding="utf-8") as f:
+                coverage_data = json.load(f)
+
+            print_status("\n" + "=" * 80, "INFO")
+            print_status("CODE COVERAGE SUMMARY", "INFO")
+            print_status("=" * 80, "INFO")
+
+            # Display global metrics if available
+            if "global_metrics" in coverage_data:
+                metrics = coverage_data["global_metrics"]
+                total_lines = metrics.get("total_lines", 0)
+                covered_lines = metrics.get("covered_lines", 0)
+                coverage_percent = metrics.get("line_coverage_percent", 0.0)
+
+                print_status(f"Total Lines:    {total_lines}", "INFO")
+                print_status(f"Covered Lines:  {covered_lines}", "INFO")
+                print_status(
+                    f"Coverage:       {coverage_percent:.2f}%",
+                    "SUCCESS"
+                    if coverage_percent >= 95.0
+                    else "WARNING"
+                    if coverage_percent >= 80.0
+                    else "ERROR",
+                )
+
+                # Display function coverage if available
+                if metrics.get("total_functions", 0) > 0:
+                    func_coverage = metrics.get("function_coverage_percent", 0.0)
+                    print_status(f"Function Coverage: {func_coverage:.2f}%", "INFO")
+
+                # Display region coverage if available
+                if metrics.get("total_regions", 0) > 0:
+                    region_coverage = metrics.get("region_coverage_percent", 0.0)
+                    print_status(f"Region Coverage:   {region_coverage:.2f}%", "INFO")
+
+            # Display summary metrics if available (alternative format)
+            elif "summary" in coverage_data:
+                summary = coverage_data["summary"]
+                if "line_coverage" in summary:
+                    line_cov = summary["line_coverage"]
+                    total = line_cov.get("total", 0)
+                    covered = line_cov.get("covered", 0)
+                    percent = line_cov.get("percent", 0.0)
+
+                    print_status(f"Total Lines:    {total}", "INFO")
+                    print_status(f"Covered Lines:  {covered}", "INFO")
+                    print_status(
+                        f"Coverage:       {percent:.2f}%",
+                        "SUCCESS"
+                        if percent >= 95.0
+                        else "WARNING"
+                        if percent >= 80.0
+                        else "ERROR",
+                    )
+
+                if "function_coverage" in summary:
+                    func_cov = summary["function_coverage"]
+                    func_percent = func_cov.get("percent", 0.0)
+                    print_status(f"Function Coverage: {func_percent:.2f}%", "INFO")
+
+            # Display HTML report location
+            html_report_paths = [
+                os.path.join(build_path, "coverage_report", "html", "index.html"),
+                os.path.join(build_path, "coverage_report", "index.html"),
+            ]
+
+            for html_path in html_report_paths:
+                if os.path.exists(html_path):
+                    print_status(f"\nHTML Report: {html_path}", "INFO")
+                    break
+
+            print_status("=" * 80, "INFO")
+
+        except Exception as e:
+            print_status(f"Failed to display coverage summary: {e}", "WARNING")
 
     def __shell_flag(self):
         return self.__value["system"] == "Windows"
@@ -1390,28 +1477,40 @@ def parse_args(args):
 def main():
     if len(sys.argv) == 2 and sys.argv[1] == "--help":
         print_status("PRETORIAN Build Configuration Helper", "INFO")
+        print("\n" + "=" * 80)
+        print("DEFAULT CONFIGURATION:")
+        print("  Build System: Ninja (fast, cross-platform)")
+        print("  Compiler:     Clang (clang/clang++)")
+        print("=" * 80)
         print("\nUsage examples:")
-        print("  1. Development build with Ninja, Clang, and Python:")
-        print("     setup.py config.build.test.ninja.clang.python")
-        print("  2. Release build with Visual Studio 2022:")
+        print("  1. Default build (Ninja + Clang):")
+        print("     setup.py config.build.test")
+        print("  2. Development build with Python:")
+        print("     setup.py config.build.test.python")
+        print("  3. Release build with Visual Studio 2022:")
         print("     setup.py config.build.test.vs22.release.python")
-        print("  3. macOS build with Xcode and Python:")
-        print("     setup.py config.build.test.xcode.python")
-        print("  4. macOS build with Xcode, release mode:")
-        print("     setup.py config.build.test.xcode.release.python")
-        print("  5. Build with coverage (analysis runs automatically):")
-        print("     setup.py config.build.test.ninja.clang.coverage")
+        print("  4. macOS build with Xcode:")
+        print("     setup.py config.build.test.xcode")
+        print("  5. Build with GCC compiler (Unix/Linux):")
+        print("     setup.py config.build.test.gcc")
+        print("  6. Build with coverage (analysis runs automatically):")
+        print("     setup.py config.build.test.coverage")
         print("\nBuild system generators:")
-        print("  ninja     - Ninja build system (fast, cross-platform)")
-        print("  cninja    - CodeBlocks + Ninja (IDE integration)")
-        print("  eninja    - Eclipse + Ninja (IDE integration)")
+        print("  ninja     - Ninja build system (DEFAULT, fast, cross-platform)")
         print("  xcode     - Xcode (macOS only, full IDE integration)")
         print("  vs17/19/22- Visual Studio (Windows only)")
+        print("\nCompiler options:")
+        print("  clang     - Clang compiler (DEFAULT)")
+        print("  clang-XX  - Specific Clang version (e.g., clang-15)")
+        print("  gcc       - GCC compiler (Unix/Linux)")
+        print("  gcc-XX    - Specific GCC version (e.g., gcc-11)")
+        print("  g++       - G++ compiler (Unix/Linux)")
+        print("  g++-XX    - Specific G++ version (e.g., g++-11)")
         print("\nBuild commands:")
         print("  config    - Configure the build system")
         print("  build     - Build the project")
         print("  test      - Run tests")
-        print("  coverage  - Enable coverage (automatically runs analysis)")
+        print("  coverage  - Enable coverage (automatically displays summary)")
         print("\nSpecial flags:")
         print(
             "  spell                      Enable spell checking with automatic corrections (WARNING: modifies source files)"
