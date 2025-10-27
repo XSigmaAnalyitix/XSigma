@@ -59,10 +59,11 @@
 #include <cpuid.h>
 #endif
 
+#include <unistd.h>
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <unistd.h>
 #if (defined(__APPLE__) && defined(__MACH__)) || defined(__FreeBSD__) || defined(__HAIKU__)
 #include <thread>
 #endif
@@ -95,7 +96,7 @@ memory_info GetMemoryInfo()
 #else
 #if defined(__linux__)
     struct sysinfo info;
-    int            const err = sysinfo(&info);
+    int const      err = sysinfo(&info);
     if (err == 0)
     {
         mem_info.free  = info.freeram;

@@ -368,13 +368,17 @@ public:
         }
     }
     sherwood_v3_table(sherwood_v3_table&& other) noexcept
-        : EntryAlloc(std::move(other)), DetailHasher(std::move(other)), Equal(std::move(other))  // cppcheck-suppress accessMoved
+        : EntryAlloc(std::move(other)),
+          DetailHasher(std::move(other)),
+          Equal(std::move(other))  // cppcheck-suppress accessMoved
     {
         // cppcheck-suppress accessMoved
         swap_pointers(other);
     }
     sherwood_v3_table(sherwood_v3_table&& other, const ArgumentAlloc& alloc) noexcept
-        : EntryAlloc(alloc), DetailHasher(std::move(other)), Equal(std::move(other))  // cppcheck-suppress accessMoved
+        : EntryAlloc(alloc),
+          DetailHasher(std::move(other)),
+          Equal(std::move(other))  // cppcheck-suppress accessMoved
     {
         // cppcheck-suppress accessMoved
         swap_pointers(other);
@@ -427,7 +431,7 @@ public:
         // cppcheck-suppress accessMoved
         static_cast<DetailHasher&>(*this) = std::move(other);
         // cppcheck-suppress accessMoved
-        static_cast<Equal&>(*this)        = std::move(other);
+        static_cast<Equal&>(*this) = std::move(other);
         return *this;
     }
     ~sherwood_v3_table()
@@ -623,7 +627,7 @@ public:
         int8_t old_max_lookups = max_lookups;
         max_lookups            = new_max_lookups;
         num_elements           = 0;
-        for (EntryPointer it  = new_buckets,
+        for (EntryPointer it      = new_buckets,
                           end_ptr = it + static_cast<ptrdiff_t>(num_buckets + old_max_lookups);
              it != end_ptr;
              ++it)
@@ -705,7 +709,7 @@ public:
 
     void clear()
     {
-        for (EntryPointer it  = entries,
+        for (EntryPointer it      = entries,
                           end_ptr = it + static_cast<ptrdiff_t>(num_slots_minus_one + max_lookups);
              it != end_ptr;
              ++it)
@@ -1721,9 +1725,10 @@ public:
     {
         if (lhs.size() != rhs.size())
             return false;
-        return std::all_of(lhs.begin(), lhs.end(), [&rhs](const T& value) {
-            return rhs.find(value) != rhs.end();
-        });
+        return std::all_of(
+            lhs.begin(),
+            lhs.end(),
+            [&rhs](const T& value) { return rhs.find(value) != rhs.end(); });
     }
     friend bool operator!=(const flat_hash_set& lhs, const flat_hash_set& rhs)
     {

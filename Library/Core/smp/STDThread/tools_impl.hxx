@@ -13,7 +13,7 @@
 #include <thread>      // for thread
 #include <vector>      // for vector
 
-                 #include "common/macros.h"
+#include "common/macros.h"
 #include "smp/Common/tools_impl.h"      // for tools_impl, Back...
 #include "smp/Common/tools_internal.h"  // for UnaryTransformCall
 #include "smp/STDThread/thread_pool.h"  // for thread_pool

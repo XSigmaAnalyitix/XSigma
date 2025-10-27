@@ -6,8 +6,6 @@
 
 #include <cstddef>
 
-
-
 namespace xsigma
 {
 /**

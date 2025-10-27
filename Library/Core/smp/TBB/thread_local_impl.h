@@ -7,7 +7,7 @@
 #define TBBthread_local_impl_h
 
 #include "smp/Common/thread_local_impl_abstract.h"
-//to avoid tbb12.lib linkage issue 
+//to avoid tbb12.lib linkage issue
 #ifdef _MSC_VER
 #pragma push_macro("__TBB_NO_IMPLICIT_LINKAGE")
 #define __TBB_NO_IMPLICIT_LINKAGE 1

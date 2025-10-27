@@ -24,44 +24,44 @@
 
 // Platform and build configuration detection
 #if defined(XSIGMA_STATIC_DEFINE)
-    // Static library - no symbol decoration needed
-    #define XSIGMA_API
-    #define XSIGMA_VISIBILITY
-    #define XSIGMA_IMPORT
-    #define XSIGMA_HIDDEN
+// Static library - no symbol decoration needed
+#define XSIGMA_API
+#define XSIGMA_VISIBILITY
+#define XSIGMA_IMPORT
+#define XSIGMA_HIDDEN
 
 #elif defined(XSIGMA_SHARED_DEFINE)
-    // Shared library - platform-specific symbol decoration
-    #if defined(_WIN32) || defined(__CYGWIN__)
-        // Windows DLL export/import
-        #ifdef XSIGMA_BUILDING_DLL
-            #define XSIGMA_API __declspec(dllexport)
-        #else
-            #define XSIGMA_API __declspec(dllimport)
-        #endif
-        #define XSIGMA_VISIBILITY
-        #define XSIGMA_IMPORT __declspec(dllimport)
-        #define XSIGMA_HIDDEN
-    #elif defined(__GNUC__) && __GNUC__ >= 4
-        // GCC 4+ visibility attributes
-        #define XSIGMA_API __attribute__((visibility("default")))
-        #define XSIGMA_VISIBILITY __attribute__((visibility("default")))
-        #define XSIGMA_IMPORT __attribute__((visibility("default")))
-        #define XSIGMA_HIDDEN __attribute__((visibility("hidden")))
-    #else
-        // Fallback for other compilers
-        #define XSIGMA_API
-        #define XSIGMA_VISIBILITY
-        #define XSIGMA_IMPORT
-        #define XSIGMA_HIDDEN
-    #endif
-
+// Shared library - platform-specific symbol decoration
+#if defined(_WIN32) || defined(__CYGWIN__)
+// Windows DLL export/import
+#ifdef XSIGMA_BUILDING_DLL
+#define XSIGMA_API __declspec(dllexport)
 #else
-    // Default fallback - assume static linking
-    #define XSIGMA_API
-    #define XSIGMA_VISIBILITY
-    #define XSIGMA_IMPORT
-    #define XSIGMA_HIDDEN
+#define XSIGMA_API __declspec(dllimport)
+#endif
+#define XSIGMA_VISIBILITY
+#define XSIGMA_IMPORT __declspec(dllimport)
+#define XSIGMA_HIDDEN
+#elif defined(__GNUC__) && __GNUC__ >= 4
+// GCC 4+ visibility attributes
+#define XSIGMA_API __attribute__((visibility("default")))
+#define XSIGMA_VISIBILITY __attribute__((visibility("default")))
+#define XSIGMA_IMPORT __attribute__((visibility("default")))
+#define XSIGMA_HIDDEN __attribute__((visibility("hidden")))
+#else
+// Fallback for other compilers
+#define XSIGMA_API
+#define XSIGMA_VISIBILITY
+#define XSIGMA_IMPORT
+#define XSIGMA_HIDDEN
 #endif
 
-#endif // __xsigma_export_h__
+#else
+// Default fallback - assume static linking
+#define XSIGMA_API
+#define XSIGMA_VISIBILITY
+#define XSIGMA_IMPORT
+#define XSIGMA_HIDDEN
+#endif
+
+#endif  // __xsigma_export_h__

@@ -1,4 +1,4 @@
-# [[linter]]
+[[linter]]
 code = 'FLAKE8'
 include_patterns = ['**/*.py','Scripts/**/*.py']
 exclude_patterns = [
@@ -11,8 +11,8 @@ exclude_patterns = [
     '.augment/**',
     'Scripts/iwyu/iwyu_configure_detector.py',
 ]
-# command = [
-#     'python3',
+command = [
+    'python3',
     'Tools/linter/adapters/flake8_linter.py',
     '--',
     '@{{PATHSFILE}}'
@@ -235,7 +235,7 @@ exclude_patterns = [
 ]
 command = [
     'python3',
-#     'Tools/linter/adapters/grep_linter.py',
+    'Tools/linter/adapters/grep_linter.py',
     '--pattern=# type:\s*ignore([^\[]|$)',
     '--linter-name=TYPEIGNORE',
     '--error-name=unqualified type: ignore',
@@ -478,19 +478,19 @@ command = [
 #     '.git/**',
 #     '.augment/**',
 # ]
-command = [
-    'python3',
-    'Tools/linter/adapters/grep_linter.py',
+# command = [
+#     'python3',
+#     'Tools/linter/adapters/grep_linter.py',
 #     '--pattern=#include "',
 #     '--linter-name=INCLUDE',
 #     '--error-name=quoted include',
-    '--replace-pattern=s/#include "(.*)"$/#include <\1>/',
-    """--error-description=\
-        This #include uses quotes; please convert it to #include <xxxx>\
-    """,
-    '--',
-    '@{{PATHSFILE}}'
-]
+#     '--replace-pattern=s/#include "(.*)"$/#include <\1>/',
+#     """--error-description=\
+#         This #include uses quotes; please convert it to #include <xxxx>\
+#     """,
+#     '--',
+#     '@{{PATHSFILE}}'
+# ]
 
 [[linter]]
 code = 'PYBIND11_INCLUDE'

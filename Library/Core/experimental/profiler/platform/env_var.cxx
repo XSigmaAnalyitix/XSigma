@@ -61,7 +61,7 @@ static std::string ascii_str_to_lower(std::string& result)
 bool read_bool_from_env_var(std::string_view env_var_name, bool default_val, bool* value)
 {
     *value              = default_val;
-    const char* env_val = std::getenv(env_var_name.data());//NOLINT
+    const char* env_val = std::getenv(env_var_name.data());  //NOLINT
     if (env_val == nullptr)
     {
         return false;
@@ -92,7 +92,7 @@ bool read_bool_from_env_var(std::string_view env_var_name, bool default_val, boo
 bool read_int64_from_env_var(std::string_view env_var_name, int64_t default_val, int64_t* value)
 {
     *value                     = default_val;
-    const char* tf_env_var_val = std::getenv(env_var_name.data());//NOLINT
+    const char* tf_env_var_val = std::getenv(env_var_name.data());  //NOLINT
     if (tf_env_var_val == nullptr)
     {
         return true;
@@ -136,7 +136,7 @@ bool read_int64_from_env_var(std::string_view env_var_name, int64_t default_val,
 bool read_float_from_env_var(std::string_view env_var_name, float default_val, float* value)
 {
     *value                     = default_val;
-    const char* tf_env_var_val = std::getenv(env_var_name.data());//NOLINT
+    const char* tf_env_var_val = std::getenv(env_var_name.data());  //NOLINT
     if (tf_env_var_val == nullptr)
     {
         return true;
@@ -179,7 +179,7 @@ bool read_float_from_env_var(std::string_view env_var_name, float default_val, f
 bool read_string_from_env_var(
     std::string_view env_var_name, std::string_view default_val, std::string& value)
 {
-    const char* tf_env_var_val = std::getenv(env_var_name.data());//NOLINT
+    const char* tf_env_var_val = std::getenv(env_var_name.data());  //NOLINT
     if (tf_env_var_val != nullptr)
     {
         value = tf_env_var_val;

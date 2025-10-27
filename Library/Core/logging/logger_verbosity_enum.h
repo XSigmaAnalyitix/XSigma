@@ -14,4 +14,4 @@ enum class logger_verbosity_enum : int
     VERBOSITY_TRACE   = +9,
     VERBOSITY_MAX     = +9,
 };
-}
+}  // namespace xsigma
