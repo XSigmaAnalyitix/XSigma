@@ -2,7 +2,7 @@
 """GCC/gcov-specific code coverage generation.
 
 Handles coverage generation for GCC compiler using lcov/genhtml tools.
-Generates both HTML and JSON coverage reports.
+Generates both HTML and JSON coverage reports with consistent styling.
 """
 
 import os
@@ -10,8 +10,10 @@ import subprocess
 import re
 import json
 import shutil
+import argparse
+import sys
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Set
 import logging
 from common import CONFIG
 logger = logging.getLogger(__name__)
@@ -34,12 +36,79 @@ def _check_required_tools() -> Tuple[bool, List[str]]:
 
 
 
-def _generate_json_from_lcov(lcov_file: Path, output_dir: Path) -> None:
+def _parse_lcov_for_line_coverage(lcov_file: Path) -> Dict[str, Dict]:
+    """Parse LCOV file to extract line-by-line coverage data.
+
+    Args:
+        lcov_file: Path to LCOV file.
+
+    Returns:
+        Dictionary mapping file paths to coverage data with covered/uncovered lines.
+    """
+    file_coverage = {}
+    current_file = None
+    covered_lines = set()
+    uncovered_lines = set()
+    execution_counts = {}
+
+    try:
+        with open(lcov_file, 'r', encoding='utf-8', errors='ignore') as f:
+            for line in f:
+                line = line.strip()
+
+                if line.startswith("SF:"):
+                    # Save previous file data
+                    if current_file:
+                        file_coverage[current_file] = {
+                            "covered": covered_lines,
+                            "uncovered": uncovered_lines,
+                            "execution_counts": execution_counts
+                        }
+                    # Start new file
+                    current_file = line[3:]
+                    covered_lines = set()
+                    uncovered_lines = set()
+                    execution_counts = {}
+
+                elif line.startswith("DA:") and current_file:
+                    # Line data: DA:line_number,hit_count
+                    parts = line[3:].split(',')
+                    if len(parts) == 2:
+                        line_num = int(parts[0])
+                        hit_count = int(parts[1])
+                        execution_counts[line_num] = hit_count
+                        if hit_count > 0:
+                            covered_lines.add(line_num)
+                        else:
+                            uncovered_lines.add(line_num)
+
+                elif line == "end_of_record" and current_file:
+                    # End of file record
+                    file_coverage[current_file] = {
+                        "covered": covered_lines,
+                        "uncovered": uncovered_lines,
+                        "execution_counts": execution_counts
+                    }
+                    current_file = None
+                    covered_lines = set()
+                    uncovered_lines = set()
+                    execution_counts = {}
+
+    except Exception as e:
+        print(f"Warning: Failed to parse LCOV file for line coverage: {e}")
+
+    return file_coverage
+
+
+def _generate_json_from_lcov(lcov_file: Path, output_dir: Path) -> Dict:
     """Generate JSON coverage report from LCOV data.
 
     Args:
         lcov_file: Path to the LCOV coverage file.
         output_dir: Directory where JSON report will be saved.
+
+    Returns:
+        Dictionary containing the coverage summary data.
     """
     try:
         summary = {
@@ -56,6 +125,12 @@ def _generate_json_from_lcov(lcov_file: Path, output_dir: Path) -> None:
                     "percent": 0.0
                 },
                 "function_coverage": {
+                    "total": 0,
+                    "covered": 0,
+                    "uncovered": 0,
+                    "percent": 0.0
+                },
+                "region_coverage": {
                     "total": 0,
                     "covered": 0,
                     "uncovered": 0,
@@ -78,6 +153,12 @@ def _generate_json_from_lcov(lcov_file: Path, output_dir: Path) -> None:
                     file_data = {
                         "file": current_file,
                         "line_coverage": {
+                            "total": 0,
+                            "covered": 0,
+                            "uncovered": 0,
+                            "percent": 0.0
+                        },
+                        "region_coverage": {
                             "total": 0,
                             "covered": 0,
                             "uncovered": 0,
@@ -164,23 +245,70 @@ def _generate_json_from_lcov(lcov_file: Path, output_dir: Path) -> None:
             json.dump(summary, f, indent=2)
         print(f"JSON coverage report saved to: {json_file}")
 
-        # Generate HTML from JSON using the new html_report package
-        try:
-            from html_report import JsonHtmlGenerator
-            json_html_dir = output_dir / "html_from_json"
-            generator = JsonHtmlGenerator(json_html_dir)
-            index_file = generator.generate_from_dict(summary)
-            print(f"HTML report generated from JSON at: {index_file}")
-        except Exception as e:
-            print(f"Warning: Failed to generate HTML from JSON: {e}")
+        return summary
 
     except Exception as e:
         print(f"Warning: Failed to generate JSON from LCOV: {e}")
+        return {}
+
+
+def _generate_html_from_lcov(lcov_file: Path, output_dir: Path) -> None:
+    """Generate HTML coverage report directly from LCOV data using custom templates.
+
+    Args:
+        lcov_file: Path to the LCOV coverage file.
+        output_dir: Directory where HTML report will be saved.
+    """
+    try:
+        from html_report import HtmlGenerator
+
+        # Parse LCOV for line-by-line coverage
+        line_coverage_data = _parse_lcov_for_line_coverage(lcov_file)
+
+        # Prepare data for HtmlGenerator
+        covered_lines = {}
+        uncovered_lines = {}
+        execution_counts = {}
+
+        for file_path, cov_data in line_coverage_data.items():
+            covered_lines[file_path] = cov_data["covered"]
+            uncovered_lines[file_path] = cov_data["uncovered"]
+            execution_counts[file_path] = cov_data["execution_counts"]
+
+        # Generate custom HTML reports
+        html_dir = output_dir / "html"
+        html_dir.mkdir(exist_ok=True)
+        generator = HtmlGenerator(html_dir)
+        generator.generate_report(covered_lines, uncovered_lines, execution_counts)
+        print(f"HTML coverage report generated at: {html_dir}/index.html")
+
+    except Exception as e:
+        print(f"Warning: Failed to generate HTML from LCOV: {e}")
+
+
+def _generate_html_from_json(json_file: Path, output_dir: Path) -> None:
+    """Generate HTML coverage report from JSON data.
+
+    Args:
+        json_file: Path to the JSON coverage file.
+        output_dir: Directory where HTML report will be saved.
+    """
+    try:
+        from html_report import JsonHtmlGenerator
+
+        json_html_dir = output_dir / "html_from_json"
+        generator = JsonHtmlGenerator(json_html_dir)
+        index_file = generator.generate_from_json(json_file)
+        print(f"HTML report generated from JSON at: {index_file}")
+
+    except Exception as e:
+        print(f"Warning: Failed to generate HTML from JSON: {e}")
 
 
 def generate_lcov_coverage(build_dir: Path, modules: List[str],
                           exclude_patterns: List[str] = None,
-                          verbose: bool = False) -> None:
+                          verbose: bool = False,
+                          output_format: str = "json") -> None:
     """
     Generate LCOV coverage report from build directory.
 
@@ -189,6 +317,7 @@ def generate_lcov_coverage(build_dir: Path, modules: List[str],
         modules: List of modules to include in coverage
         exclude_patterns: List of patterns to exclude (e.g., ['/usr/*', '*/ThirdParty/*'])
         verbose: Enable verbose output for debugging
+        output_format: Output format - 'json', 'html', or 'html-and-json'
     """
     import subprocess
 
@@ -218,6 +347,7 @@ def generate_lcov_coverage(build_dir: Path, modules: List[str],
         print(f"[VERBOSE] Build directory: {build_dir}")
         print(f"[VERBOSE] Modules: {modules}")
         print(f"[VERBOSE] Exclusion patterns: {exclude_patterns}")
+        print(f"[VERBOSE] Output format: {output_format}")
 
     print(f"Capturing coverage data from {build_dir}...")
 
@@ -300,30 +430,136 @@ def generate_lcov_coverage(build_dir: Path, modules: List[str],
         print(f"[VERBOSE] coverage_filtered.info size: {coverage_filtered_size} bytes")
 
     print("Coverage data filtered.")
-    print(f"Generating HTML report to {coverage_report_dir}...")
 
-    # Generate HTML report
-    genhtml_cmd = [
-        "genhtml",
-        "--css-file", str(Path(__file__).parent / "html_report" / "custom.css"),
-        str(coverage_filtered),
-        "--output-directory", str(coverage_report_dir),
-        "--title", "Code Coverage Report",
-        "--num-spaces", "4"
-    ]
+    # Generate output based on format
+    if output_format == "json":
+        print("Generating JSON coverage report...")
+        _generate_json_from_lcov(coverage_filtered, coverage_report_dir)
+        print(f"[OK] JSON coverage report generated at {coverage_report_dir}/coverage_summary.json")
 
-    if verbose:
-        print(f"[VERBOSE] Running: {' '.join(genhtml_cmd)}")
+    elif output_format == "html":
+        print(f"Generating HTML report to {coverage_report_dir}...")
+        _generate_html_from_lcov(coverage_filtered, coverage_report_dir)
+        print(f"[OK] HTML coverage report generated at {coverage_report_dir}/html/index.html")
 
-    result = subprocess.run(genhtml_cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        print(f"Error generating HTML: {result.stderr}")
-        if verbose:
-            print(f"[VERBOSE] stdout: {result.stdout}")
-        return
+    elif output_format == "html-and-json":
+        print("Generating JSON coverage report...")
+        _generate_json_from_lcov(coverage_filtered, coverage_report_dir)
+        print(f"[OK] JSON coverage report generated at {coverage_report_dir}/coverage_summary.json")
+        print(f"Generating HTML report to {coverage_report_dir}...")
+        _generate_html_from_lcov(coverage_filtered, coverage_report_dir)
+        print(f"[OK] HTML coverage report generated at {coverage_report_dir}/html/index.html")
 
-    print(f"[OK] Coverage report generated at {coverage_report_dir}/index.html")
+    else:
+        print(f"Warning: Unknown output format '{output_format}', defaulting to JSON")
+        _generate_json_from_lcov(coverage_filtered, coverage_report_dir)
 
-    # Generate JSON coverage report
-    print("Generating JSON coverage report...")
-    _generate_json_from_lcov(coverage_filtered, coverage_report_dir)
+
+def main():
+    """Main entry point for command-line usage."""
+    parser = argparse.ArgumentParser(
+        description="GCC Coverage Report Generator",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Output Formats:
+  json              Generate JSON coverage data only (default)
+  html              Generate HTML report directly from coverage data
+  html-and-json    Generate HTML report from existing JSON coverage data
+
+Examples:
+  # Generate JSON only (default)
+  python gcc_coverage.py --build=build_ninja_python --filter=Library
+
+  # Generate HTML report directly
+  python gcc_coverage.py --build=build_ninja_python --filter=Library --output=html
+
+  # Generate HTML from JSON
+  python gcc_coverage.py --build=build_ninja_python --filter=Library --output=html-and-json
+
+  # Verbose output
+  python gcc_coverage.py --build=build_ninja_python --filter=Library --output=html --verbose
+        """
+    )
+
+    parser.add_argument(
+        "--build",
+        required=True,
+        help="Build directory path containing .gcda files"
+    )
+    parser.add_argument(
+        "--filter",
+        default="Library",
+        help="Filter folder name (default: Library)"
+    )
+    parser.add_argument(
+        "--output", "-o",
+        choices=["json", "html", "html-and-json"],
+        default="json",
+        help="Output format: json (default), html, or html-and-json"
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable verbose output for debugging"
+    )
+    parser.add_argument(
+        "--exclude",
+        action="append",
+        help="Additional exclusion patterns (can be specified multiple times)"
+    )
+
+    args = parser.parse_args()
+
+    try:
+        # Resolve build directory
+        build_dir = Path(args.build)
+        if not build_dir.is_absolute():
+            build_dir = Path.cwd() / build_dir
+        build_dir = build_dir.resolve()
+
+        if not build_dir.exists():
+            print(f"Error: Build directory does not exist: {build_dir}", file=sys.stderr)
+            sys.exit(1)
+
+        # Resolve source directory
+        source_dir = Path.cwd() / args.filter
+        if not source_dir.exists():
+            print(f"Error: Source directory does not exist: {source_dir}", file=sys.stderr)
+            sys.exit(1)
+
+        # Discover modules
+        modules = [d.name for d in source_dir.iterdir()
+                   if d.is_dir() and not d.name.startswith("_")]
+
+        if not modules:
+            print(f"Error: No modules found in {source_dir}", file=sys.stderr)
+            sys.exit(1)
+
+        if args.verbose:
+            print(f"Build directory: {build_dir}")
+            print(f"Source directory: {source_dir}")
+            print(f"Modules: {', '.join(modules)}")
+            print(f"Output format: {args.output}")
+
+        # Generate coverage
+        generate_lcov_coverage(
+            build_dir=build_dir,
+            modules=modules,
+            exclude_patterns=args.exclude,
+            verbose=args.verbose,
+            output_format=args.output
+        )
+
+        print("\n[SUCCESS] Coverage generation completed.")
+        sys.exit(0)
+
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
