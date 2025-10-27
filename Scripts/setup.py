@@ -238,20 +238,26 @@ class SummaryReporter:
             }
 
     def add_coverage_report(self, build_path: str, exit_code: int):
-        """Add coverage analysis results to the summary."""
-        # Look for coverage report files
-        coverage_report_paths = [
-            os.path.join(build_path, "coverage_report", "coverage_summary.txt"),
-            os.path.join(build_path, "coverage.txt"),
+        """Add coverage analysis results to the summary.
+
+        Parses JSON coverage reports and extracts metrics including line coverage,
+        function coverage, and region coverage.
+        """
+        import json
+
+        # Look for coverage JSON files (primary source)
+        coverage_json_paths = [
+            os.path.join(build_path, "coverage_report", "coverage_summary.json"),
+            os.path.join(build_path, "coverage_report", "coverage.json"),
         ]
 
-        coverage_file = None
-        for path in coverage_report_paths:
+        coverage_json = None
+        for path in coverage_json_paths:
             if os.path.exists(path):
-                coverage_file = path
+                coverage_json = path
                 break
 
-        if not coverage_file:
+        if not coverage_json:
             self.reports["coverage"] = {
                 "status": "not_run",
                 "message": "Coverage report not found",
@@ -259,21 +265,51 @@ class SummaryReporter:
             return
 
         try:
-            with open(coverage_file, encoding="utf-8") as f:
-                content = f.read()
+            with open(coverage_json, encoding="utf-8") as f:
+                coverage_data = json.load(f)
 
-            # Extract coverage percentage (this is a simplified parser)
-            coverage_match = re.search(r"TOTAL.*?(\d+\.\d+)%", content)
-            coverage_percentage = (
-                float(coverage_match.group(1)) if coverage_match else 0.0
-            )
+            # Extract metrics from global_metrics (preferred format)
+            if "global_metrics" in coverage_data:
+                metrics = coverage_data["global_metrics"]
+                self.reports["coverage"] = {
+                    "status": "completed",
+                    "exit_code": exit_code,
+                    "total_lines": metrics.get("total_lines", 0),
+                    "covered_lines": metrics.get("covered_lines", 0),
+                    "line_coverage_percent": metrics.get("line_coverage_percent", 0.0),
+                    "total_functions": metrics.get("total_functions", 0),
+                    "covered_functions": metrics.get("covered_functions", 0),
+                    "function_coverage_percent": metrics.get("function_coverage_percent", 0.0),
+                    "total_regions": metrics.get("total_regions", 0),
+                    "covered_regions": metrics.get("covered_regions", 0),
+                    "region_coverage_percent": metrics.get("region_coverage_percent", 0.0),
+                    "report_file": coverage_json,
+                }
+            # Extract metrics from summary (alternative format)
+            elif "summary" in coverage_data:
+                summary = coverage_data["summary"]
+                line_cov = summary.get("line_coverage", {})
+                func_cov = summary.get("function_coverage", {})
 
-            self.reports["coverage"] = {
-                "status": "completed",
-                "exit_code": exit_code,
-                "coverage_percentage": coverage_percentage,
-                "report_file": coverage_file,
-            }
+                self.reports["coverage"] = {
+                    "status": "completed",
+                    "exit_code": exit_code,
+                    "total_lines": line_cov.get("total", 0),
+                    "covered_lines": line_cov.get("covered", 0),
+                    "line_coverage_percent": line_cov.get("percent", 0.0),
+                    "total_functions": func_cov.get("total", 0),
+                    "covered_functions": func_cov.get("covered", 0),
+                    "function_coverage_percent": func_cov.get("percent", 0.0),
+                    "total_regions": 0,
+                    "covered_regions": 0,
+                    "region_coverage_percent": 0.0,
+                    "report_file": coverage_json,
+                }
+            else:
+                self.reports["coverage"] = {
+                    "status": "error",
+                    "message": "Coverage JSON format not recognized",
+                }
         except Exception as e:
             self.reports["coverage"] = {
                 "status": "error",
@@ -329,21 +365,52 @@ class SummaryReporter:
                     print_status(f"{tool_name}: Found {errors} memory errors", "ERROR")
 
         elif tool == "coverage":
-            percentage = report["coverage_percentage"]
-            if percentage >= 95.0:
-                print_status(
-                    f"{tool_name}: ✓ {percentage:.1f}% coverage (excellent)", "SUCCESS"
-                )
-            elif percentage >= 80.0:
-                print_status(
-                    f"{tool_name}: {percentage:.1f}% coverage (good)", "WARNING"
-                )
-            else:
-                print_status(
-                    f"{tool_name}: {percentage:.1f}% coverage (needs improvement)",
-                    "ERROR",
-                )
-            print_status(f"  Report file: {report['report_file']}", "INFO")
+            # Display coverage summary in the same format as _display_coverage_summary
+            print_status("\n" + "=" * 80, "INFO")
+            print_status("CODE COVERAGE SUMMARY", "INFO")
+            print_status("=" * 80, "INFO")
+
+            total_lines = report.get("total_lines", 0)
+            covered_lines = report.get("covered_lines", 0)
+            coverage_percent = report.get("line_coverage_percent", 0.0)
+
+            print_status(f"Total Lines:    {total_lines}", "INFO")
+            print_status(f"Covered Lines:  {covered_lines}", "INFO")
+            print_status(
+                f"Coverage:       {coverage_percent:.2f}%",
+                "SUCCESS"
+                if coverage_percent >= 95.0
+                else "WARNING"
+                if coverage_percent >= 80.0
+                else "ERROR",
+            )
+
+            # Display function coverage if available
+            if report.get("total_functions", 0) > 0:
+                func_coverage = report.get("function_coverage_percent", 0.0)
+                print_status(f"Function Coverage: {func_coverage:.2f}%", "INFO")
+
+            # Display region coverage if available
+            if report.get("total_regions", 0) > 0:
+                region_coverage = report.get("region_coverage_percent", 0.0)
+                print_status(f"Region Coverage:   {region_coverage:.2f}%", "INFO")
+
+            # Display HTML report location if available
+            report_file = report.get("report_file", "")
+            if report_file:
+                # Try to find HTML report in the same directory structure
+                report_dir = os.path.dirname(report_file)
+                html_report_paths = [
+                    os.path.join(report_dir, "html", "index.html"),
+                    os.path.join(report_dir, "index.html"),
+                ]
+
+                for html_path in html_report_paths:
+                    if os.path.exists(html_path):
+                        print_status(f"\nHTML Report: {html_path}", "INFO")
+                        break
+
+            print_status("=" * 80, "INFO")
 
 
 def check_dependencies() -> list[str]:
@@ -1280,7 +1347,7 @@ class XsigmaConfiguration:
             self.summary_reporter.add_coverage_report(build_path, 0)
 
             # Display coverage summary automatically
-            self._display_coverage_summary(build_path)
+            #self._display_coverage_summary(build_path)
 
             return 0
         else:
