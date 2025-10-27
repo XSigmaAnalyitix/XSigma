@@ -64,8 +64,8 @@ def get_coverage(
             Default: True.
         xsigma_root: XSigma root directory for resolving relative paths.
             If None, uses current directory. Default: None.
-        output_format: Output format for GCC coverage - 'json', 'html', or
-            'html-and-json'. Default: 'json'. Only applies to GCC compiler.
+        output_format: Output format for all compilers - 'json', 'html', or
+            'html-and-json'. Default: 'html-and-json'.
 
     Returns:
         Exit code (0 for success, non-zero for failure).
@@ -126,10 +126,10 @@ def get_coverage(
         # Run coverage based on compiler
         if compiler == "msvc":
             print("Generating MSVC coverage...")
-            msvc_generate_coverage(build_path, modules, source_path)
+            msvc_generate_coverage(build_path, modules, source_path, output_format=output_format)
         elif compiler == "clang":
             print("Generating Clang coverage...")
-            clang_generate_coverage(build_path, modules, source_path)
+            clang_generate_coverage(build_path, modules, source_path, output_format=output_format)
         elif compiler == "gcc":
             print("Generating GCC coverage...")
             gcc_generate_coverage(build_path, modules, verbose=False, output_format=output_format)
@@ -162,11 +162,11 @@ def print_help():
         --filter=FOLDER     Filter folder within source (default: Library).
                             All subfolders are treated as modules.
 
-        --output=FORMAT     Output format for GCC coverage (default: json):
+        --output=FORMAT     Output format (default: html-and-json):
                             - json: Generate JSON coverage data only
                             - html: Generate HTML report directly from coverage data
-                            - html-and-json: Generate HTML report from JSON data
-                            (Only applies to GCC compiler)
+                            - html-and-json: Generate both HTML and JSON reports
+                            (Applies to all compilers: GCC, Clang, MSVC)
 
         --verbose           Print additional debug information
 
@@ -192,14 +192,14 @@ def print_help():
         - GCC compiler with -fprofile-arcs -ftest-coverage flags
 
     Examples:
-        # Auto-detect compiler, generate JSON (default)
+        # Auto-detect compiler, generate both HTML and JSON (default)
         python run_coverage.py --build=build
+
+        # Generate JSON only
+        python run_coverage.py --build=build --output=json
 
         # Generate HTML report directly
         python run_coverage.py --build=build --output=html
-
-        # Generate HTML from JSON
-        python run_coverage.py --build=build --output=html-and-json
 
         # With custom filter folder and verbose output
         python run_coverage.py --build=build --filter=Src --output=html --verbose
@@ -218,7 +218,7 @@ def main():
     parser.add_argument("--output", "-o",
                         choices=["json", "html", "html-and-json"],
                         default="html-and-json",
-                        help="Output format for GCC coverage: json (default), html, or html-and-json")
+                        help="Output format for all compilers: json, html, or html-and-json (default)")
     parser.add_argument("--verbose", action="store_true",
                         help="Enable verbose output")
     parser.add_argument("-h", "--help", action="store_true",
@@ -261,10 +261,10 @@ def main():
         # Choose coverage tool based on compiler
         if compiler == "msvc":
             print("Using opencppcoverage tool...")
-            msvc_generate_coverage(build_dir, modules, source_dir)
+            msvc_generate_coverage(build_dir, modules, source_dir, output_format=args.output)
         elif compiler == "clang":
             print("Using LLVM coverage tools...")
-            clang_generate_coverage(build_dir, modules, source_dir)
+            clang_generate_coverage(build_dir, modules, source_dir, output_format=args.output)
         elif compiler == "gcc":
             print("Using lcov coverage tool...")
             gcc_generate_coverage(build_dir, modules, verbose=args.verbose, output_format=args.output)

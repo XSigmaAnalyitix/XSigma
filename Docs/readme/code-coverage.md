@@ -72,14 +72,31 @@ Coverage is first-class in the build helper (`Scripts/setup.py`) and is enabled 
 ## Configuration
 - **CMake options**: `-DXSIGMA_ENABLE_COVERAGE=ON` (primary toggle); enabling coverage automatically disables LTO (`XSIGMA_ENABLE_LTO=OFF`) to avoid linker conflicts.
 - **Filtering**: modify `CONFIG["exclude_patterns"]` or `CONFIG["llvm_ignore_regex"]` in `Tools/coverage/common.py` to customise exclusions (e.g., additional generated directories).
-- **CLI arguments** (`python Tools/coverage/run_coverage.py --help`): `--build` (required), `--filter` (defaults to `Library`, controls module discovery), `--verbose` for detailed logging.
-- **Programmatic usage**: call `get_coverage(compiler="clang", build_folder="build_ninja_clang_coverage", source_folder="Library", output_folder="custom_dir", exclude=["Library/Experimental"])` from Python tooling.
+- **CLI arguments** (`python Tools/coverage/run_coverage.py --help`):
+  - `--build` (required): Build directory path
+  - `--filter` (defaults to `Library`): Controls module discovery
+  - `--output` (defaults to `html-and-json`): Output format for all compilers:
+    - `json`: Generate JSON coverage data only
+    - `html`: Generate HTML report directly from coverage data
+    - `html-and-json`: Generate both HTML and JSON reports
+  - `--verbose`: Enable detailed logging
+- **Programmatic usage**: call `get_coverage(compiler="clang", build_folder="build_ninja_clang_coverage", source_folder="Library", output_folder="custom_dir", output_format="html-and-json", exclude=["Library/Experimental"])` from Python tooling.
 - **Dependencies**: ensure LLVM tools (`llvm-profdata`, `llvm-cov`), GCC tooling (`gcov`, `lcov`, `genhtml`), or OpenCppCoverage are installed on the host machine used to execute the coverage pipeline.
 
 ## Output Formats
 All reports are written beneath `<build_dir>/coverage_report/` unless `output_folder` is overridden.
-- `html/index.html` – interactive dashboard with per-file drill downs (generated for all toolchains).
-- `coverage.json` – Cobertura-compatible JSON summary produced by `coverage_summary.py`, consumed by CI and downstream tooling.
+
+### Output Format Options
+The `--output` flag controls which reports are generated (applies to all compilers):
+- `--output=json`: Generates JSON coverage data only
+  - `coverage_summary.json` – Cobertura-compatible JSON summary consumed by CI and downstream tooling
+- `--output=html`: Generates HTML report directly from coverage data
+  - `html/index.html` – interactive dashboard with per-file drill downs
+- `--output=html-and-json` (default): Generates both HTML and JSON reports
+  - `html/index.html` – interactive dashboard with per-file drill downs
+  - `coverage_summary.json` – Cobertura-compatible JSON summary
+
+### Additional Artifacts
 - `coverage.txt` / `coverage_summary.txt` – plain-text rollups (used by `setup.py` to extract the global percentage).
 - `coverage.info` – LCOV trace (GCC only), suitable for upload to external dashboards (Codecov, Coveralls).
 - `*.profraw` / `*.profdata` – raw and merged LLVM instrumentation artefacts retained for post-processing and incremental reruns.
@@ -112,9 +129,19 @@ If OpenCppCoverage is not on PATH, place it under `C:\Program Files\OpenCppCover
 
 ### Using the runner directly
 ```bash
-python Tools/coverage/run_coverage.py --build=build_ninja_coverage --filter=Library --verbose
+# Generate both HTML and JSON (default)
+python Tools/coverage/run_coverage.py --build=build_ninja_coverage --filter=Library
+
+# Generate JSON only
+python Tools/coverage/run_coverage.py --build=build_ninja_coverage --filter=Library --output=json
+
+# Generate HTML only
+python Tools/coverage/run_coverage.py --build=build_ninja_coverage --filter=Library --output=html
+
+# With verbose output
+python Tools/coverage/run_coverage.py --build=build_ninja_coverage --filter=Library --output=html-and-json --verbose
 ```
-Useful when integrating with external automation or when tests were executed manually.
+Useful when integrating with external automation or when tests were executed manually. The `--output` flag works consistently across all compilers (GCC, Clang, MSVC).
 
 ## CI/CD Integration
 - Add a coverage stage that executes the same `setup.py` command as local runs; the helper prints the global percentage and exits non-zero if the underlying tests fail.
