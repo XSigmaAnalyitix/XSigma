@@ -641,6 +641,6 @@ fi
 
 ## Related Documentation
 
-- [Build Configuration](build-configuration.md) - Build system configuration
+- [Build Configuration](build/build-configuration.md) - Build system configuration
 - [Code Coverage](code-coverage.md) - Test coverage analysis
-- [Sanitizers](sanitizers.md) - Memory debugging and analysis
+- [Sanitizers](sanitizer.md) - Memory debugging and analysis

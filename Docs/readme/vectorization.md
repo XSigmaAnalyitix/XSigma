@@ -235,6 +235,6 @@ void check_cpu_features() {
 
 ## Related Documentation
 
-- [Build Configuration](build-configuration.md) - Build system configuration
+- [Build Configuration](build/build-configuration.md) - Build system configuration
 - [Cross-Platform Building](cross-platform-building.md) - Platform-specific instructions
 - [Third-Party Dependencies](third-party-dependencies.md) - cpuinfo library usage

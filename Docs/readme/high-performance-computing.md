@@ -351,10 +351,10 @@ cd Scripts
 python setup.py ninja.clang.ccache.config.build
 
 # Fastest clean builds
-python setup.py ninja.clang.release.lto.config.build
+python setup.py ninja.clang.release.config.build  # (LTO enabled by default in release builds)
 
 # Balanced approach
-python setup.py ninja.clang.release.ccache.lto.config.build
+python setup.py ninja.clang.release.ccache.config.build  # (LTO enabled by default in release builds)
 ```
 
 ## Troubleshooting

@@ -28,8 +28,8 @@ python setup.py [builder].[compiler].[options].config.build.test
 # Debug build with Clang
 python setup.py ninja.clang.debug.config.build
 
-# Release build with optimizations
-python setup.py ninja.clang.release.lto.avx2.config.build
+# Release build with optimizations (LTO enabled by default)
+python setup.py ninja.clang.release.avx2.config.build
 
 # With testing enabled
 python setup.py ninja.clang.debug.test.config.build.test
@@ -144,7 +144,7 @@ python setup.py ninja.clang.debug.test.config.build
 ### Release Build
 
 ```bash
-python setup.py ninja.clang.release.lto.avx2.config.build
+python setup.py ninja.clang.release.avx2.config.build
 ```
 
 ### With Coverage

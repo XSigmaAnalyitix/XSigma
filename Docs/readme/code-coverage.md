@@ -396,6 +396,6 @@ For detailed coverage configuration and advanced usage, see:
 
 ## Related Documentation
 
-- [Build Configuration](build-configuration.md) - Build system configuration
+- [Build Configuration](build/build-configuration.md) - Build system configuration
 - [Sanitizers](sanitizer.md) - Memory debugging and analysis
 - [Static Analysis](static-analysis.md) - IWYU and Cppcheck tools

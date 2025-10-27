@@ -211,7 +211,7 @@ cmake -B build -S . \
 
 ## Related Documentation
 
-- [Vectorization Support](vectorization.md) - CPU SIMD optimization
-- [Sanitizers](sanitizers.md) - Memory debugging and analysis
-- [Code Coverage](code-coverage.md) - Test coverage analysis
-- [Cross-Platform Building](cross-platform-building.md) - Platform-specific instructions
+- [Vectorization Support](../vectorization.md) - CPU SIMD optimization
+- [Sanitizers](../sanitizer.md) - Memory debugging and analysis
+- [Code Coverage](../code-coverage.md) - Test coverage analysis
+- [Cross-Platform Building](../cross-platform-building.md) - Platform-specific instructions

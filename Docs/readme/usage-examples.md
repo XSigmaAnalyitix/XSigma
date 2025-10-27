@@ -394,8 +394,8 @@ cmake --build build -j
 
 ## Related Documentation
 
-- [Build Configuration](build-configuration.md) - Detailed build options
+- [Build Configuration](build/build-configuration.md) - Detailed build options
 - [Third-Party Dependencies](third-party-dependencies.md) - Dependency management
-- [Sanitizers](sanitizers.md) - Memory debugging tools
+- [Sanitizers](sanitizer.md) - Memory debugging tools
 - [Code Coverage](code-coverage.md) - Coverage analysis
 - [Cross-Platform Building](cross-platform-building.md) - Platform-specific instructions

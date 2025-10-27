@@ -373,6 +373,6 @@ jobs:
 
 ## Related Documentation
 
-- [Build Configuration](build-configuration.md) - Build system configuration
+- [Build Configuration](build/build-configuration.md) - Build system configuration
 - [Vectorization](vectorization.md) - CPU SIMD optimization
 - [Third-Party Dependencies](third-party-dependencies.md) - Dependency management

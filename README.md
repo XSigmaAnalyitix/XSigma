@@ -151,7 +151,7 @@ cd Scripts
 python setup.py ninja.clang.release.config.build
 
 # Disable LTO if needed (add 'lto' flag to toggle OFF)
-python setup.py ninja.clang.release.lto.config.build
+python setup.py ninja.clang.release.lto.config.build  # (LTO enabled by default in release builds)
 ```
 
 **LTO Behavior**:
@@ -471,8 +471,8 @@ python setup.py ninja.clang.release.cuda.config.build
 # Multithreading (TBB)
 python setup.py ninja.clang.release.tbb.config.build
 
-# Combined: CUDA + AVX2 + LTO
-python setup.py ninja.clang.release.cuda.avx2.lto.config.build
+# Combined: CUDA + AVX2 + LTO (LTO enabled by default)
+python setup.py ninja.clang.release.cuda.avx2.config.build
 ```
 
 ### Features
@@ -541,8 +541,8 @@ Full cross-platform compatibility across Windows, Linux, and macOS with platform
 
 ### Additional Documentation
 
-- **[CI/CD Pipeline](Docs/ci/CI_CD_PIPELINE.md)** - Continuous integration setup
-- **[CI Quick Start](Docs/ci/CI_QUICK_START.md)** - Getting started with CI
+<!-- [CI/CD Pipeline](Docs/ci/CI_CD_PIPELINE.md) - Continuous integration setup (File not found: Docs/ci/ directory does not exist) -->
+<!-- [CI Quick Start](Docs/ci/CI_QUICK_START.md) - Getting started with CI (File not found: Docs/ci/ directory does not exist) -->
 - **[Valgrind Setup](Docs/readme/VALGRIND_SETUP.md)** - Memory debugging with Valgrind
 
 ## Running Tests
@@ -597,7 +597,7 @@ If Link-Time Optimization fails:
 1. **Disable LTO**: Add `lto` flag to setup.py command (toggles default ON to OFF)
    ```bash
    cd Scripts
-   python setup.py ninja.clang.release.lto.config.build
+   python setup.py ninja.clang.release.lto.config.build  # (LTO enabled by default in release builds)
    ```
 2. Check compiler version (GCC 5+, Clang 3.5+, MSVC 2015+)
 3. Increase available memory (LTO is memory-intensive)
@@ -652,7 +652,7 @@ python setup.py ninja.clang.debug.test.config.build
 **For production releases:**
 ```bash
 cd Scripts
-python setup.py ninja.clang.release.lto.config.build
+python setup.py ninja.clang.release.config.build  # (LTO enabled by default in release builds)
 ```
 
 **For CI/CD pipelines:**

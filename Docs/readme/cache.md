@@ -415,4 +415,4 @@ python setup.py ninja.clang.sccache.config.build
 
 ---
 
-**For more information:** See [Build Speed Optimization](../README.md#build-speed-optimization) in the main README.
+**For more information:** See [Build Optimizations](../README.md#build-optimizations) in the main README.

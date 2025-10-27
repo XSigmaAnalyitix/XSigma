@@ -223,6 +223,6 @@ For faster builds:
 
 ## Related Documentation
 
-- [Build Configuration](build-configuration.md) - Build system configuration
-- [Logging System](logging-system.md) - Logging backend selection
+- [Build Configuration](build/build-configuration.md) - Build system configuration
+- [Logging System](logging.md) - Logging backend selection
 - [Usage Examples](usage-examples.md) - Example build configurations
