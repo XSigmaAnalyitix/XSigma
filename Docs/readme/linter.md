@@ -25,11 +25,11 @@ The adapter directory contains one script per lint code (for example
 `docstring_linter-grandfather.json` and `s3_init_config.json`.
 
 ## Functionality
-- **Formatting and style**: `pyfmt`, `ruff`, `clangformat`, and `codespell` keep
-  Python and C++ sources consistent and typo-free.
+- **Formatting and style**: `pyfmt`, `ruff`, `clangformat`, `cmake_format`, and `codespell` keep
+  Python, C++, and CMake sources consistent and typo-free.
 - **Static analysis**: `mypy_linter`, `pyrefly_linter`, `ruff_linter`, and
   `clangtidy_linter` provide type checking, linting, and C++ diagnostics.
-- **Build and dependency hygiene**: `cmake_linter`, `cmake_minimum_required_linter`,
+- **Build and dependency hygiene**: `cmake_linter`, `cmake_format`, `cmake_minimum_required_linter`,
   `bazel_linter`, and `nativefunctions_linter` validate build scripts and
   generated metadata.
 - **Workflow safety**: `actionlint_linter`, `gha_linter`, `workflow_consistency_linter`,
@@ -81,6 +81,7 @@ positional file paths at the end.
 | CLANGFORMAT | `adapters/clangformat_linter.py` | Runs `clang-format` and captures diffs. | `--binary PATH` (required); `--retries N`; `--timeout SEC`; `--verbose`; `filenames...` |
 | CLANGTIDY | `adapters/clangtidy_linter.py` | Executes `clang-tidy` using a build directory. | `--binary PATH` (required); `--build-dir DIR` (required); `--verbose`; `filenames...` |
 | CMAKE | `adapters/cmake_linter.py` | Applies `cmakelint` with repo defaults. | `--config PATH` (required); `filenames...` |
+| CMAKEFORMAT | `adapters/cmake_format_linter.py` | Formats CMake files with `cmake-format`. | `--config PATH` (required); `--retries N`; `--timeout SEC`; `--verbose`; `filenames...` |
 | CMAKE_MINIMUM_REQUIRED | `adapters/cmake_minimum_required_linter.py` | Ensures CMake and dependency minimum versions match project policy. | `--verbose`; `filenames...` |
 | CODESPELL | `adapters/codespell_linter.py` | Runs `codespell` with the shared dictionary. | `--verbose`; `filenames...` |
 | DOCSTRING | `adapters/docstring_linter.py` | Requires docstrings on large classes/functions. | Shared `FileLinter` flags; plus `--grandfather PATH`; `--grandfather-tolerance PERCENT`; `--lint-init`; `--lint-local`; `--lint-protected`; `--max-class N`; `--max-def N`; `--min-docstring N`; `--no-grandfather`; `--report`; `--write-grandfather`. |
@@ -119,9 +120,9 @@ submodules, rebuilds `setup.py`, and reruns code generation before
 - **Python runtime**: adapters target the repository's supported Python version
   (tooling is validated with Python 3.12). Activate the same interpreter locally.
 - **Python packages**: `ruamel.yaml`, `typing_extensions`, `libcst`, `isort`,
-  `usort`, `ruff`, `codespell_lib`, `packaging`, `boto3`, and other packages
+  `usort`, `ruff`, `cmakelang`, `codespell_lib`, `packaging`, `boto3`, and other packages
   pinned by `pip_init.py`.
-- **Native tooling**: `clang-format`, `clang-tidy`, `cmakelint`, `shellcheck`,
+- **Native tooling**: `clang-format`, `clang-tidy`, `cmakelint`, `cmake-format`, `shellcheck`,
   `actionlint`, `bazel`, `grep`, `sed`, and any binaries referenced in
   `s3_init_config.json`. `lintrunner init` installs the correct versions.
 - **Repository build prerequisites**: the clang-tidy adapter expects generated
@@ -195,6 +196,7 @@ python Tools/linter/adapters/pip_init.py \
   flake8==7.3.0 \
   ruff==0.13.1 \
   cmakelint==1.4.1 \
+  cmakelang==0.6.13 \
   codespell[toml]==2.4.1
 
 # Fetch prebuilt binaries
@@ -238,6 +240,9 @@ lintrunner --take FLAKE8 -- Library/**/*.py
 
 # Run CMake linter
 lintrunner --take CMAKE -- CMakeLists.txt Cmake/**/*.cmake
+
+# Check CMake formatting
+lintrunner --take CMAKEFORMAT -- CMakeLists.txt Cmake/**/*.cmake
 ```
 
 ### Applying Fixes
@@ -247,6 +252,9 @@ lintrunner --take PYFMT --apply-patches
 
 # Apply formatting fixes for C++
 lintrunner --take CLANGFORMAT --apply-patches
+
+# Apply formatting fixes for CMake
+lintrunner --take CMAKEFORMAT --apply-patches
 
 # Apply all available fixes
 lintrunner --apply-patches
@@ -278,6 +286,11 @@ python Tools/linter/adapters/clangformat_linter.py \
 python Tools/linter/adapters/cmake_linter.py \
   --config=.cmakelintrc \
   CMakeLists.txt
+
+# Run cmake-format directly
+python Tools/linter/adapters/cmake_format_linter.py \
+  --config=.cmake-format.yaml \
+  CMakeLists.txt Cmake/**/*.cmake
 
 # Run codespell directly
 python Tools/linter/adapters/codespell_linter.py \
@@ -575,8 +588,157 @@ Python linting configuration. Key settings:
 CMake linting configuration. Specifies:
 - `filter`: Which checks to enable/disable
 
+### .cmake-format.yaml
+CMake formatting configuration. Key settings:
+- `line_width`: Maximum line length (default: 100)
+- `indent_width`: Spaces per indentation level (default: 2)
+- `dangle_parens`: Allow dangling parentheses (default: true)
+- `use_tabchars`: Use tabs instead of spaces (default: false)
+- `enable_sort`: Enable argument sorting (default: true)
+- `autosort`: Automatically sort arguments (default: false)
+
 ### Tools/linter/dictionary.txt
 Shared dictionary for `codespell`. Add words that should not be flagged as misspellings.
+
+## CMake Format Integration
+
+### Overview
+`cmake-format` automatically formats CMake files according to project standards defined in `.cmake-format.yaml`. It complements `cmakelint` (formatting vs. linting), similar to how `clang-format` complements `clang-tidy` for C++ code.
+
+### Configuration
+- **Configuration file**: `.cmake-format.yaml` (located in project root)
+- **Lintrunner code**: `CMAKEFORMAT`
+- **Adapter**: `Tools/linter/adapters/cmake_format_linter.py`
+
+### Key Settings
+The `.cmake-format.yaml` configuration includes:
+- `line_width: 100` - Maximum line length (matches `.clang-format` ColumnLimit)
+- `indent_width: 2` - Spaces per indentation level (matches project standards)
+- `dangle_parens: true` - Allow dangling parentheses for readability
+- `use_tabchars: false` - Use spaces instead of tabs
+- `enable_sort: true` - Enable sorting of arguments
+- `autosort: false` - Preserve developer intent (manual sorting)
+
+### File Patterns
+The formatter applies to:
+- `**/*.cmake` - CMake module files
+- `**/*.cmake.in` - CMake template files
+- `**/CMakeLists.txt` - CMake build files
+
+### Common Usage
+
+#### Check Formatting
+```bash
+# Check all CMake files
+lintrunner --only=CMAKEFORMAT
+
+# Check specific files
+lintrunner --take CMAKEFORMAT -- CMakeLists.txt Cmake/**/*.cmake
+
+# Direct check with cmake-format
+cmake-format --check --config-file=.cmake-format.yaml CMakeLists.txt
+```
+
+#### Apply Formatting
+```bash
+# Format all CMake files via lintrunner
+lintrunner --take CMAKEFORMAT --apply-patches
+
+# Format all CMake files via shell script
+bash Scripts/all-cmake-format.sh
+
+# Format specific file directly
+cmake-format -i --config-file=.cmake-format.yaml CMakeLists.txt
+```
+
+#### View Differences
+```bash
+# Show what would change
+cmake-format --check --config-file=.cmake-format.yaml --diff CMakeLists.txt
+```
+
+### Integration with Workflow
+
+1. **Before committing**: Run formatter to ensure consistent style
+   ```bash
+   lintrunner --take CMAKEFORMAT --apply-patches
+   ```
+
+2. **Before linting**: Format first, then run cmakelint
+   ```bash
+   lintrunner --take CMAKEFORMAT --apply-patches
+   lintrunner --take CMAKE
+   ```
+
+3. **In CI/CD**: Check formatting as part of validation
+   ```bash
+   lintrunner --only=CMAKEFORMAT
+   ```
+
+### IDE Integration
+
+#### VS Code
+1. Install "CMake Tools" extension
+2. Add to `.vscode/settings.json`:
+   ```json
+   {
+     "[cmake]": {
+       "editor.formatOnSave": true,
+       "editor.defaultFormatter": "ms-vscode.cmake-tools"
+     }
+   }
+   ```
+
+#### CLion/IntelliJ
+1. Settings → Editor → Code Style → CMake
+2. Set indentation to 2 spaces
+3. Enable "Reformat Code" on save
+
+#### Vim/Neovim
+Add to config:
+```vim
+autocmd FileType cmake setlocal formatprg=cmake-format\ -
+```
+
+### Performance
+- **Single file**: 100-500ms
+- **100 files**: ~10-50s (parallel processing)
+- **1000 files**: ~100-500s (parallel processing)
+- Uses concurrent processing for optimal performance
+
+### Troubleshooting
+
+#### cmake-format not found
+```bash
+# Install it
+pip install cmakelang==0.6.13
+
+# Verify installation
+cmake-format --version
+```
+
+#### Configuration file not found
+```bash
+# Verify file exists
+ls -la .cmake-format.yaml
+
+# Ensure correct path in command
+cmake-format --check --config-file=.cmake-format.yaml CMakeLists.txt
+```
+
+#### Formatting conflicts with cmakelint
+```bash
+# Run formatter first, then linter
+lintrunner --take CMAKEFORMAT --apply-patches
+lintrunner --take CMAKE
+```
+
+### Documentation
+For detailed information, see:
+- **Quick Reference**: `Docs/cmake-format-quick-reference.md`
+- **Implementation Guide**: `Docs/cmake-format-implementation-guide.md`
+- **Complete Overview**: `Docs/README_CMAKE_FORMAT.md`
+- **Official Docs**: https://cmake-format.readthedocs.io/
 
 ## Centralizing Lint Configuration
 
