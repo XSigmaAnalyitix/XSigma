@@ -30,6 +30,8 @@ from common import (
     resolve_build_dir,
     validate_build_structure,
     detect_compiler,
+    merge_exclude_patterns,
+    parse_exclude_patterns_string,
 )
 
 
@@ -40,6 +42,8 @@ def get_coverage(
     source_folder: str | Path = "Library",
     output_folder: Optional[str | Path] = None,
     exclude: Optional[List[str]] = None,
+    exclude_patterns: Optional[List[str]] = None,
+    verbose: bool = False,
     summary: bool = True,
     xsigma_root: Optional[str | Path] = None,
     output_format: str = "html-and-json",
@@ -58,8 +62,11 @@ def get_coverage(
             xsigma_root). Default: 'Library'.
         output_folder: Path to output directory. If None, uses
             build_folder/coverage_report. Default: None.
-        exclude: List of folders to exclude from coverage analysis.
-            Default: None.
+        exclude: List of folders to exclude from coverage analysis (deprecated,
+            use exclude_patterns instead). Default: None.
+        exclude_patterns: List of patterns to exclude from coverage analysis.
+            Merged with default patterns. Default: None.
+        verbose: Enable verbose output for debugging. Default: False.
         summary: Whether to generate and display summary report.
             Default: True.
         xsigma_root: XSigma root directory for resolving relative paths.
@@ -123,16 +130,30 @@ def get_coverage(
         if not modules:
             raise ValueError(f"No modules found in {source_path}")
 
+        # Merge exclude patterns (user patterns override defaults)
+        merged_patterns = merge_exclude_patterns(exclude_patterns, include_defaults=True)
+
         # Run coverage based on compiler
         if compiler == "msvc":
             print("Generating MSVC coverage...")
-            msvc_generate_coverage(build_path, modules, source_path, output_format=output_format)
+            msvc_generate_coverage(
+                build_path, modules, source_path,
+                exclude_patterns=merged_patterns,
+                verbose=verbose,
+                output_format=output_format)
         elif compiler == "clang":
             print("Generating Clang coverage...")
-            clang_generate_coverage(build_path, modules, source_path, output_format=output_format)
+            clang_generate_coverage(
+                build_path, modules, source_path,
+                exclude_patterns=merged_patterns,
+                verbose=verbose,
+                output_format=output_format)
         elif compiler == "gcc":
             print("Generating GCC coverage...")
-            gcc_generate_coverage(build_path, modules, verbose=False, output_format=output_format)
+            gcc_generate_coverage(
+                build_path, modules, verbose=verbose,
+                exclude_patterns=merged_patterns,
+                output_format=output_format)
 
         return 0
 
@@ -145,13 +166,13 @@ def get_coverage(
         return 1
 
 
-def print_help():
+def print_help() -> None:
     """Print usage instructions."""
     print("""
     Code Coverage Generator
 
     Usage:
-        python run_coverage.py --build=<build_directory> [--filter=<folder>] [--output=<format>] [--verbose]
+        python run_coverage.py --build=<build_directory> [--filter=<folder>] [--output=<format>] [--exclude-patterns=<patterns>] [--verbose]
 
     Arguments:
         --build=PATH        Build directory (required). Can be absolute or relative to:
@@ -167,6 +188,12 @@ def print_help():
                             - html: Generate HTML report directly from coverage data
                             - html-and-json: Generate both HTML and JSON reports
                             (Applies to all compilers: GCC, Clang, MSVC)
+
+        --exclude-patterns=PATTERNS
+                            Comma-separated patterns to exclude from coverage analysis.
+                            Examples: "Test,Benchmark,third_party" or "*Generated*,*Serialization*"
+                            Default patterns (ThirdParty, Testing, /usr/*) are always applied.
+                            User patterns are merged with defaults.
 
         --verbose           Print additional debug information
 
@@ -205,7 +232,7 @@ def print_help():
         python run_coverage.py --build=build --filter=Src --output=html --verbose
     """)
 
-def main():
+def main() -> None:
     """Main entry point for command-line usage."""
     parser = argparse.ArgumentParser(
         description="Code Coverage Generator",
@@ -219,6 +246,8 @@ def main():
                         choices=["json", "html", "html-and-json"],
                         default="html-and-json",
                         help="Output format for all compilers: json, html, or html-and-json (default)")
+    parser.add_argument("--exclude-patterns", default="",
+                        help="Comma-separated patterns to exclude from coverage analysis")
     parser.add_argument("--verbose", action="store_true",
                         help="Enable verbose output")
     parser.add_argument("-h", "--help", action="store_true",
@@ -258,16 +287,35 @@ def main():
         if args.verbose:
             print(f"Modules to analyze: {', '.join(modules)}")
 
+        # Parse and merge exclude patterns
+        user_patterns = parse_exclude_patterns_string(args.exclude_patterns)
+        merged_patterns = merge_exclude_patterns(user_patterns, include_defaults=True)
+
+        if args.verbose and user_patterns:
+            print(f"User exclude patterns: {user_patterns}")
+            print(f"Merged exclude patterns: {merged_patterns}")
+
         # Choose coverage tool based on compiler
         if compiler == "msvc":
             print("Using opencppcoverage tool...")
-            msvc_generate_coverage(build_dir, modules, source_dir, output_format=args.output)
+            msvc_generate_coverage(
+                build_dir, modules, source_dir,
+                exclude_patterns=merged_patterns,
+                verbose=args.verbose,
+                output_format=args.output)
         elif compiler == "clang":
             print("Using LLVM coverage tools...")
-            clang_generate_coverage(build_dir, modules, source_dir, output_format=args.output)
+            clang_generate_coverage(
+                build_dir, modules, source_dir,
+                exclude_patterns=merged_patterns,
+                verbose=args.verbose,
+                output_format=args.output)
         elif compiler == "gcc":
             print("Using lcov coverage tool...")
-            gcc_generate_coverage(build_dir, modules, verbose=args.verbose, output_format=args.output)
+            gcc_generate_coverage(
+                build_dir, modules, verbose=args.verbose,
+                exclude_patterns=merged_patterns,
+                output_format=args.output)
         else:
             raise RuntimeError(f"Unsupported compiler: {compiler}")
 

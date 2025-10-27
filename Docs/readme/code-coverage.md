@@ -70,8 +70,12 @@ Coverage is first-class in the build helper (`Scripts/setup.py`) and is enabled 
 - Supports exclusions, custom output folders, and verbose tracing through keyword arguments.
 
 ## Configuration
-- **CMake options**: `-DXSIGMA_ENABLE_COVERAGE=ON` (primary toggle); enabling coverage automatically disables LTO (`XSIGMA_ENABLE_LTO=OFF`) to avoid linker conflicts.
-- **Filtering**: modify `CONFIG["exclude_patterns"]` or `CONFIG["llvm_ignore_regex"]` in `Tools/coverage/common.py` to customise exclusions (e.g., additional generated directories).
+- **CMake options**:
+  - `-DXSIGMA_ENABLE_COVERAGE=ON` (primary toggle); enabling coverage automatically disables LTO (`XSIGMA_ENABLE_LTO=OFF`) to avoid linker conflicts.
+
+- **Filtering**:
+  - Use `--exclude-patterns` CLI flag or `XSIGMA_COVERAGE_EXCLUDE_PATTERNS` CMake option for user-provided exclusions.
+  - Modify `CONFIG["exclude_patterns"]` or `CONFIG["llvm_ignore_regex"]` in `Tools/coverage/common.py` to customize default exclusions.
 - **CLI arguments** (`python Tools/coverage/run_coverage.py --help`):
   - `--build` (required): Build directory path
   - `--filter` (defaults to `Library`): Controls module discovery
@@ -79,8 +83,9 @@ Coverage is first-class in the build helper (`Scripts/setup.py`) and is enabled 
     - `json`: Generate JSON coverage data only
     - `html`: Generate HTML report directly from coverage data
     - `html-and-json`: Generate both HTML and JSON reports
+  - `--exclude-patterns` (optional): Comma-separated patterns to exclude from coverage analysis (e.g., `"Test,Benchmark,third_party"`). Merged with default patterns.
   - `--verbose`: Enable detailed logging
-- **Programmatic usage**: call `get_coverage(compiler="clang", build_folder="build_ninja_clang_coverage", source_folder="Library", output_folder="custom_dir", output_format="html-and-json", exclude=["Library/Experimental"])` from Python tooling.
+- **Programmatic usage**: call `get_coverage(compiler="clang", build_folder="build_ninja_clang_coverage", source_folder="Library", output_folder="custom_dir", exclude_patterns=["*Generated*", "*Benchmark*"], output_format="html-and-json")` from Python tooling.
 - **Dependencies**: ensure LLVM tools (`llvm-profdata`, `llvm-cov`), GCC tooling (`gcov`, `lcov`, `genhtml`), or OpenCppCoverage are installed on the host machine used to execute the coverage pipeline.
 
 ## Output Formats
@@ -140,8 +145,45 @@ python Tools/coverage/run_coverage.py --build=build_ninja_coverage --filter=Libr
 
 # With verbose output
 python Tools/coverage/run_coverage.py --build=build_ninja_coverage --filter=Library --output=html-and-json --verbose
+
+# Exclude specific patterns from coverage
+python Tools/coverage/run_coverage.py --build=build_ninja_coverage --exclude-patterns="Test,Benchmark,Generated"
+
+# Exclude multiple patterns with wildcards
+python Tools/coverage/run_coverage.py --build=build_ninja_coverage --exclude-patterns="*Test*,*Benchmark*,*Generated*"
 ```
 Useful when integrating with external automation or when tests were executed manually. The `--output` flag works consistently across all compilers (GCC, Clang, MSVC).
+
+### Excluding files and folders from coverage
+The `--exclude-patterns` flag allows you to exclude specific files or folders from coverage analysis. Patterns are merged with default exclusions (ThirdParty, Testing, /usr/*).
+
+**Pattern matching behavior:**
+- Each pattern is matched against file paths and folder names
+- Patterns support wildcards (e.g., `*Generated*`, `*Serialization*`)
+- If a pattern matches any part of a file's path, that file is excluded
+- If a pattern matches a folder name, all files within that folder are excluded
+
+**Examples:**
+```bash
+# Exclude test files and benchmarks
+--exclude-patterns="Test,Benchmark"
+
+# Exclude generated code and serialization modules
+--exclude-patterns="*Generated*,*Serialization*"
+
+# Exclude multiple patterns
+--exclude-patterns="Test,Benchmark,third_party,*Generated*"
+```
+
+**CMake integration:**
+```bash
+cmake -B build -S . -DXSIGMA_ENABLE_COVERAGE=ON -DXSIGMA_COVERAGE_EXCLUDE_PATTERNS="Test,Benchmark,Generated"
+```
+
+**Default exclusions (always applied):**
+- `*ThirdParty*` – Third-party libraries
+- `*Testing*` – Test infrastructure
+- `/usr/*` – System libraries
 
 ## CI/CD Integration
 - Add a coverage stage that executes the same `setup.py` command as local runs; the helper prints the global percentage and exits non-zero if the underlying tests fail.

@@ -407,10 +407,15 @@ def prepare_llvm_coverage(build_dir: Path, module_name: str, binaries_list: str,
 
     return True
 
-def generate_llvm_coverage(build_dir: Path, modules: List[str],
-                          source_folder: Path,
-                          llvm_ignore_regex: List[str] = None,
-                          output_format: str = "html-and-json") -> None:
+def generate_llvm_coverage(
+    build_dir: Path,
+    modules: List[str],
+    source_folder: Path,
+    llvm_ignore_regex: List[str] = None,
+    exclude_patterns: List[str] = None,
+    verbose: bool = False,
+    output_format: str = "html-and-json"
+) -> None:
     """Generate code coverage using LLVM (for Clang).
 
     Args:
@@ -418,10 +423,21 @@ def generate_llvm_coverage(build_dir: Path, modules: List[str],
         modules: List of module names to analyze.
         source_folder: Path to source folder containing modules.
         llvm_ignore_regex: List of regex patterns to ignore. If None, uses CONFIG.
+        exclude_patterns: List of file/folder patterns to exclude. If None, uses CONFIG.
+        verbose: Enable verbose output for debugging. Default: False.
         output_format: Output format - 'json', 'html', or 'html-and-json'
     """
     if llvm_ignore_regex is None:
         llvm_ignore_regex = CONFIG["llvm_ignore_regex"]
+
+    if exclude_patterns is None:
+        exclude_patterns = CONFIG.get("exclude_patterns", [])
+
+    if verbose:
+        print(f"[VERBOSE] Build directory: {build_dir}")
+        print(f"[VERBOSE] Modules: {modules}")
+        print(f"[VERBOSE] Exclusion patterns: {exclude_patterns}")
+        print(f"[VERBOSE] Output format: {output_format}")
 
     build_dir = Path(build_dir)
     coverage_dir = build_dir / "coverage_report"
@@ -438,8 +454,12 @@ def generate_llvm_coverage(build_dir: Path, modules: List[str],
     all_profraw_files = []
     successful_modules = 0
     for module in modules:
+        if verbose:
+            print(f"[VERBOSE] Processing module: {module}")
         if prepare_llvm_coverage(build_dir, module, str(binaries_list), str(profraw_list)):
-             successful_modules += 1
+            successful_modules += 1
+            if verbose:
+                print(f"[VERBOSE] Successfully processed module: {module}")
 
     if successful_modules == 0:
         print("Error: No modules processed successfully")
@@ -447,26 +467,42 @@ def generate_llvm_coverage(build_dir: Path, modules: List[str],
 
     # Find all .profraw files
     print(f"Successfully processed {successful_modules}/{len(modules)} modules")
-    
+
     print("Merging profile data...")
     profraw_files = profraw_list.read_text().strip().split('\n')
     profraw_files = [f for f in profraw_files if f]
-    
+
+    if verbose:
+        print(f"[VERBOSE] Found {len(profraw_files)} profraw files:")
+        for pf in profraw_files:
+            print(f"[VERBOSE]   - {pf}")
+
     if not profraw_files:
         print("Error: No profraw files generated")
         return
-    
+
     merge_cmd = [
         "llvm-profdata", "merge", "-o",
         str(coverage_dir / "all-merged.profdata"), "-sparse"
     ] + profraw_files
+
+    if verbose:
+        print(f"[VERBOSE] Running: {' '.join(merge_cmd)}")
+
     subprocess.run(merge_cmd, check=True)
-    
+
     print("Generating coverage report...")
     binaries = binaries_list.read_text().strip().split('\n')
     binaries = [b for b in binaries if b]
 
+    if verbose:
+        print(f"[VERBOSE] Found {len(binaries)} binaries:")
+        for binary in binaries:
+            print(f"[VERBOSE]   - {binary}")
+
     # Generate coverage report based on output format
     print(f"Generating {output_format} coverage report...")
+    if verbose:
+        print(f"[VERBOSE] Output format: {output_format}")
     _generate_json_export(build_dir, coverage_dir, binaries, profraw_files, output_format)
 

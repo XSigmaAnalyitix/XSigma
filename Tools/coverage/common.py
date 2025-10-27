@@ -59,6 +59,75 @@ CONFIG = {
 
 
 # ============================================================================
+# PATTERN MERGING UTILITIES
+# ============================================================================
+
+
+def merge_exclude_patterns(
+    user_patterns: Optional[List[str]] = None,
+    include_defaults: bool = True
+) -> List[str]:
+    """Merge user-provided exclusion patterns with default patterns.
+
+    Combines user-provided patterns with default exclusion patterns from CONFIG.
+    Removes duplicates while preserving order (defaults first, then user patterns).
+
+    Args:
+        user_patterns: List of user-provided patterns to exclude. Can be None.
+        include_defaults: Whether to include default patterns from CONFIG.
+                         Default: True.
+
+    Returns:
+        List of merged exclusion patterns with duplicates removed.
+
+    Example:
+        >>> patterns = merge_exclude_patterns(["*Generated*", "*Benchmark*"])
+        >>> # Returns: ["*ThirdParty*", "*Testing*", "/usr/*", "*Generated*", "*Benchmark*"]
+    """
+    merged = []
+    seen = set()
+
+    # Add default patterns first
+    if include_defaults:
+        for pattern in CONFIG.get("exclude_patterns", []):
+            if pattern not in seen:
+                merged.append(pattern)
+                seen.add(pattern)
+
+    # Add user patterns
+    if user_patterns:
+        for pattern in user_patterns:
+            if pattern not in seen:
+                merged.append(pattern)
+                seen.add(pattern)
+
+    return merged
+
+
+def parse_exclude_patterns_string(patterns_str: str) -> List[str]:
+    """Parse comma-separated exclusion patterns from a string.
+
+    Splits a comma-separated string into individual patterns, stripping whitespace.
+    Empty strings are filtered out.
+
+    Args:
+        patterns_str: Comma-separated pattern string (e.g., "Test,Benchmark,third_party").
+
+    Returns:
+        List of individual patterns.
+
+    Example:
+        >>> patterns = parse_exclude_patterns_string("Test, Benchmark, third_party")
+        >>> # Returns: ["Test", "Benchmark", "third_party"]
+    """
+    if not patterns_str or not patterns_str.strip():
+        return []
+
+    patterns = [p.strip() for p in patterns_str.split(",")]
+    return [p for p in patterns if p]  # Filter out empty strings
+
+
+# ============================================================================
 
 
 def get_platform_config() -> dict:

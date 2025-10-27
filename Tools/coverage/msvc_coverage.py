@@ -462,9 +462,14 @@ def _generate_json_from_html(html_dir: Path, output_dir: Path, raw_dir: Path = N
         print(f"Warning: Failed to generate JSON from HTML: {e}")
 
 
-def generate_msvc_coverage(build_dir: Path, modules: list[str],
-                           source_folder: Path,
-                           output_format: str = "html-and-json") -> None:
+def generate_msvc_coverage(
+    build_dir: Path,
+    modules: list[str],
+    source_folder: Path,
+    exclude_patterns: list[str] = None,
+    verbose: bool = False,
+    output_format: str = "html-and-json"
+) -> None:
     """Generate code coverage using opencppcoverage (for MSVC on Windows).
 
     Generates HTML reports in html/ folder and raw coverage data in raw/ folder.
@@ -474,6 +479,8 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
         build_dir: Path to build directory.
         modules: List of module names to analyze.
         source_folder: Path to source folder containing modules.
+        exclude_patterns: List of patterns to exclude from coverage. If None, uses CONFIG.
+        verbose: Enable verbose output for debugging. Default: False.
         output_format: Output format - 'json', 'html', or 'html-and-json'
 
     Raises:
@@ -489,7 +496,16 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
     raw_dir.mkdir(parents=True, exist_ok=True)
 
     config = get_platform_config()
-    excludes = CONFIG.get("exclude_patterns", [])
+    if exclude_patterns is None:
+        excludes = CONFIG.get("exclude_patterns", [])
+    else:
+        excludes = exclude_patterns
+
+    if verbose:
+        print(f"[VERBOSE] Build directory: {build_dir}")
+        print(f"[VERBOSE] Modules: {modules}")
+        print(f"[VERBOSE] Exclusion patterns: {excludes}")
+        print(f"[VERBOSE] Output format: {output_format}")
 
     if config["os_name"] != "Windows":
         raise RuntimeError("MSVC coverage only supported on Windows")
@@ -500,6 +516,8 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
         raise RuntimeError("OpenCppCoverage not found. Please install it.")
 
     print(f"OpenCppCoverage found at: {opencpp_path}")
+    if verbose:
+        print(f"[VERBOSE] OpenCppCoverage path: {opencpp_path}")
 
     # Discover test executables
     print("\nDiscovering test executables...")
@@ -519,6 +537,8 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
     print(f"Found {len(test_executables)} test executable(s):")
     for exe in test_executables:
         print(f"  - {exe.name} ({exe.stat().st_size} bytes)")
+        if verbose:
+            print(f"[VERBOSE]   Full path: {exe}")
 
     # Run coverage for each test executable
     print("\nRunning coverage analysis...")
@@ -561,6 +581,11 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
         cov_cmd.append(f"--sources={windows_source_path}")
 
         # Add exclusion patterns with Windows path separators
+        if verbose:
+            print(f"[VERBOSE] Applying {len(excludes)} exclusion patterns:")
+            for exclude_pattern in excludes:
+                print(f"[VERBOSE]   - {exclude_pattern}")
+
         for exclude_pattern in excludes:
             windows_pattern = exclude_pattern.replace("/", "\\")
             cov_cmd.append(f"--excluded_sources={windows_pattern}")
@@ -571,9 +596,19 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
 
         print(f"Command: {' '.join(cov_cmd)}\n")
 
+        if verbose:
+            print(f"[VERBOSE] OpenCppCoverage command:")
+            print(f"[VERBOSE]   {' '.join(cov_cmd)}")
+            print(f"[VERBOSE] Output files:")
+            print(f"[VERBOSE]   HTML: {html_dir}")
+            print(f"[VERBOSE]   XML: {xml_file}")
+            print(f"[VERBOSE]   Binary: {raw_file}")
+
         try:
             # First, verify the test executable runs without coverage
             print("Verifying test executable runs...")
+            if verbose:
+                print(f"[VERBOSE] Running test executable: {test_exe}")
             verify_result = subprocess.run(
                 [str(test_exe)],
                 cwd=str(test_exe.parent),
@@ -587,10 +622,14 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
                 print(f"Warning: Test executable returned non-zero exit code: {verify_result.returncode}")
                 if verify_result.stderr:
                     print(f"  Test stderr: {verify_result.stderr[:200]}")
+                if verbose:
+                    print(f"[VERBOSE] Test stdout: {verify_result.stdout[:200]}")
             else:
                 print("Test executable runs successfully")
 
             # Now run with coverage
+            if verbose:
+                print(f"[VERBOSE] Running OpenCppCoverage for {test_name}...")
             result = subprocess.run(
                 cov_cmd,
                 # Use the test executable's directory as CWD so resources/DLLs resolve
@@ -608,10 +647,15 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
             if result.returncode == 0:
                 print(f"Coverage generated for: {test_name}")
                 successful_tests += 1
+                if verbose:
+                    print(f"[VERBOSE] Successfully generated coverage for {test_name}")
             else:
                 print(f"Coverage failed for: {test_name} (exit code: {result.returncode})")
                 if result.stderr:
                     print(f"  Error: {result.stderr}")
+                if verbose:
+                    print(f"[VERBOSE] Coverage generation failed for {test_name}")
+                    print(f"[VERBOSE] stderr: {result.stderr}")
                 failed_tests.append(test_name)
         except subprocess.TimeoutExpired:
             print(f"Coverage timed out for: {test_name}")
@@ -623,6 +667,17 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
     # Verify output
     html_files = list(html_dir.glob("**/*.html"))
     raw_files = list(raw_dir.glob("*.cov"))
+
+    if verbose:
+        print(f"[VERBOSE] Coverage output verification:")
+        print(f"[VERBOSE] HTML files found: {len(html_files)}")
+        for html_file in html_files[:5]:  # Show first 5
+            print(f"[VERBOSE]   - {html_file}")
+        if len(html_files) > 5:
+            print(f"[VERBOSE]   ... and {len(html_files) - 5} more")
+        print(f"[VERBOSE] Raw coverage files found: {len(raw_files)}")
+        for raw_file in raw_files:
+            print(f"[VERBOSE]   - {raw_file}")
 
     separator = "=" * 60
     print(f"\n{separator}")
