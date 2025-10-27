@@ -32,49 +32,7 @@ from common import (
     detect_compiler,
 )
 
-def discover_test_executables(build_dir: Path) -> List[Path]:
-    """Discover all test executables in the build directory.
 
-    Searches for executables matching common test patterns in bin and lib folders.
-
-    Args:
-        build_dir: Path to the build directory.
-
-    Returns:
-        List of Path objects pointing to test executables.
-    """
-    test_executables = []
-    config = get_platform_config()
-    exe_ext = config["exe_extension"]
-
-    # Search in common binary locations
-    search_dirs = [
-        build_dir / "bin",
-        build_dir / "lib",
-        build_dir / "bin" / "Debug",
-        build_dir / "bin" / "Release",
-    ]
-
-    test_patterns = ["*Test*", "*test*", "*CxxTests*"]
-
-    for search_dir in search_dirs:
-        if not search_dir.exists():
-            continue
-        for pattern in test_patterns:
-            for exe_file in search_dir.glob(f"{pattern}{exe_ext}"):
-                if exe_file.is_file():
-                    test_executables.append(exe_file)
-
-    # Remove duplicates while preserving order
-    seen = set()
-    unique_executables = []
-    for exe in test_executables:
-        exe_str = str(exe.resolve())
-        if exe_str not in seen:
-            seen.add(exe_str)
-            unique_executables.append(exe)
-
-    return unique_executables
 
 def get_coverage(
     compiler: str = "auto",

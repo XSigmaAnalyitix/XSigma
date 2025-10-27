@@ -202,14 +202,16 @@ def generate_lcov_coverage(build_dir: Path, modules: List[str],
     
     print("Coverage data captured successfully.")
     print(f"Filtering exclusions: {exclude_patterns}")
-    
-    # Remove excluded patterns
+
+    # Remove excluded patterns - each pattern as separate argument to preserve order
+    # and allow proper quoting of paths with spaces
     remove_cmd = ["lcov", "--remove", str(coverage_info)]
-    remove_cmd.extend(exclude_patterns)
+    for pattern in exclude_patterns:
+        remove_cmd.append(pattern)
     remove_cmd.extend([
         "--output-file", str(coverage_filtered)
     ])
-    
+
     result = subprocess.run(remove_cmd, capture_output=True, text=True)
     if result.returncode != 0:
         print(f"Error filtering coverage: {result.stderr}")
@@ -233,7 +235,7 @@ def generate_lcov_coverage(build_dir: Path, modules: List[str],
         print(f"Error generating HTML: {result.stderr}")
         return
 
-    print(f"✓ Coverage report generated at {coverage_report_dir}/index.html")
+    print(f"[OK] Coverage report generated at {coverage_report_dir}/index.html")
 
     # Generate JSON coverage report
     print("Generating JSON coverage report...")

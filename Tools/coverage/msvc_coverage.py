@@ -243,11 +243,14 @@ def _generate_detailed_html_reports(html_dir: Path, raw_dir: Path, source_root: 
             return False
 
         # Generate HTML reports using HtmlGenerator
-        print(f"Generating detailed HTML reports for {len(covered_lines)} file(s)...")
-        generator = HtmlGenerator(html_dir, source_root)
-        generator.generate_report(covered_lines, uncovered_lines, execution_counts)
-
-        print(f"Generated detailed HTML reports in: {html_dir}")
+        try:
+            print(f"Generating detailed HTML reports for {len(covered_lines)} file(s)...")
+            generator = HtmlGenerator(html_dir, source_root)
+            generator.generate_report(covered_lines, uncovered_lines, execution_counts)
+            print(f"Generated detailed HTML reports in: {html_dir}")
+        except Exception as e:
+            print(f"Error generating HTML reports: {e}")
+            raise RuntimeError(f"Failed to generate detailed HTML reports: {e}") from e
         return True
 
     except Exception as e:
@@ -492,10 +495,12 @@ def generate_msvc_coverage(build_dir: Path, modules: list[str],
         cov_cmd.append(f"--export_type=binary:{raw_file}")
 
         # Add source filter for specific folder (Windows path separators)
-        windows_source_path = str(source_folder).replace("/", "\\")
-        # Include source root and all subpaths (defensive: both directory and wildcard)
+        # Use Path to normalize and avoid duplicates if source_folder already has wildcard
+        source_path = Path(source_folder)
+        windows_source_path = str(source_path).replace("/", "\\")
+
+        # Add source directory - OpenCppCoverage will recursively include subdirectories
         cov_cmd.append(f"--sources={windows_source_path}")
-        cov_cmd.append(f"--sources={windows_source_path}\\*")
 
         # Add exclusion patterns with Windows path separators
         for exclude_pattern in excludes:

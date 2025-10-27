@@ -5,11 +5,11 @@ Provides shared functions used across multiple coverage modules to eliminate
 code duplication and improve maintainability.
 """
 
+import os
 import subprocess
 import platform
-import re
 from pathlib import Path
-from typing import List, Optional, Dict
+from typing import List, Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -39,6 +39,19 @@ CONFIG = {
 
     # Markers to detect project root
     "project_markers": [".git", ".gitignore", "pyproject.toml"],
+
+    # Search directories for test executables (relative to build_dir)
+    # Order matters: searched in this order to find tests
+    "test_search_dirs": [
+        "bin",
+        "bin/Debug",
+        "bin/Release",
+        "lib",
+        "tests",
+    ],
+
+    # Test executable name patterns
+    "test_patterns": ["*Test*", "*test*", "*CxxTests*"],
 }
 
 # ============================================================================
@@ -86,14 +99,27 @@ def get_platform_config() -> dict:
 
 
 def find_opencppcoverage() -> Optional[str]:
-    """Find OpenCppCoverage executable in system PATH.
+    """Find OpenCppCoverage executable in system PATH or environment variable.
 
-    Searches system PATH and common installation directories for the
-    OpenCppCoverage executable.
+    Searches for OpenCppCoverage in the following order:
+    1. OPENCPPCOVERAGE_PATH environment variable
+    2. System PATH
+    3. Common installation directories
 
     Returns:
         Path to OpenCppCoverage.exe or None if not found.
     """
+    # Check environment variable first
+    env_path = os.environ.get("OPENCPPCOVERAGE_PATH")
+    if env_path:
+        env_path_obj = Path(env_path)
+        if env_path_obj.exists():
+            logger.info(f"Found OpenCppCoverage via OPENCPPCOVERAGE_PATH: {env_path}")
+            return str(env_path_obj)
+        else:
+            logger.warning(f"OPENCPPCOVERAGE_PATH set but not found: {env_path}")
+
+    # Try system PATH
     try:
         result = subprocess.run(
             ["OpenCppCoverage.exe", "--help"],
@@ -101,6 +127,7 @@ def find_opencppcoverage() -> Optional[str]:
             check=True,
             text=True
         )
+        logger.info("Found OpenCppCoverage in system PATH")
         return "OpenCppCoverage.exe"
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
@@ -113,15 +140,18 @@ def find_opencppcoverage() -> Optional[str]:
 
     for path in common_paths:
         if path.exists():
+            logger.info(f"Found OpenCppCoverage at: {path}")
             return str(path)
 
+    logger.warning("OpenCppCoverage not found in PATH or common installation directories")
     return None
 
 
 def discover_test_executables(build_dir: Path) -> List[Path]:
     """Discover all test executables in the build directory.
 
-    Searches for executables matching common test patterns in bin and lib folders.
+    Searches for executables matching common test patterns in configured search
+    directories. Uses CONFIG["test_search_dirs"] and CONFIG["test_patterns"].
 
     Args:
         build_dir: Path to the build directory.
@@ -134,16 +164,9 @@ def discover_test_executables(build_dir: Path) -> List[Path]:
     config = get_platform_config()
     exe_ext = config["exe_extension"]
 
-    search_dirs = [
-        build_dir / "bin",
-        build_dir / "bin/Debug",
-        build_dir / "bin/Release",
-        build_dir / "bin",
-        build_dir / "lib",
-        build_dir / "tests",
-    ]
-
-    test_patterns = ["*Test*", "*test*", "*CxxTests*"]
+    # Use configured search directories and patterns
+    search_dirs = [build_dir / d for d in CONFIG["test_search_dirs"]]
+    test_patterns = CONFIG["test_patterns"]
 
     for search_dir in search_dirs:
         if not search_dir.exists():

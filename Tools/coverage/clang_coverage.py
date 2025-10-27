@@ -17,6 +17,27 @@ from common import CONFIG, get_platform_config, find_library
 
 logger = logging.getLogger(__name__)
 
+def _validate_llvm_tools() -> None:
+    """Validate that required LLVM tools are available.
+
+    Raises:
+        RuntimeError: If llvm-profdata or llvm-cov are not found.
+    """
+    for tool in ["llvm-profdata", "llvm-cov"]:
+        try:
+            subprocess.run(
+                [tool, "--version"],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            raise RuntimeError(
+                f"Required LLVM tool '{tool}' not found or not working. "
+                f"Please ensure LLVM tools are installed and in PATH. Error: {e}"
+            )
+
+
 def _generate_json_export(build_dir: Path, coverage_dir: Path, binaries: List[str],
                          profraw_files: List[str]) -> None:
     """Generate JSON coverage export using llvm-cov export with lcov format.
@@ -29,7 +50,13 @@ def _generate_json_export(build_dir: Path, coverage_dir: Path, binaries: List[st
         coverage_dir: Path to coverage report directory.
         binaries: List of binary objects to analyze.
         profraw_files: List of profraw files to use.
+
+    Raises:
+        RuntimeError: If LLVM tools are not available or export fails.
     """
+    # Validate LLVM tools are available
+    _validate_llvm_tools()
+
     try:
         # Use llvm-cov export with lcov format (supported in LLVM 21.1.0)
         lcov_file = coverage_dir / "coverage.lcov"
@@ -53,12 +80,13 @@ def _generate_json_export(build_dir: Path, coverage_dir: Path, binaries: List[st
             print(f"LCOV file generated: {lcov_file}")
             # Generate summary JSON from lcov data
             _generate_summary_json_from_lcov(lcov_file, coverage_dir)
+        else:
+            raise RuntimeError("llvm-cov export produced no output")
     except subprocess.CalledProcessError as e:
-        print(f"Warning: LCOV export failed: {e}")
+        error_msg = f"LLVM coverage export failed: {e}"
         if e.stderr:
-            print(f"Error details: {e.stderr}")
-    except Exception as e:
-        print(f"Warning: JSON generation from LCOV failed: {e}")
+            error_msg += f"\nError details: {e.stderr}"
+        raise RuntimeError(error_msg)
 
 
 def _parse_lcov_for_line_coverage(lcov_file: Path) -> Dict[str, Dict]:
@@ -198,8 +226,8 @@ def _generate_summary_json_from_lcov(lcov_file: Path, coverage_dir: Path) -> Non
         for filename, data in file_data.items():
             file_summary = {"file": filename}
 
-            # Line coverage
-            line_cov = data["line_coverage"]
+            # Line coverage - copy dict before mutating to prevent data leakage
+            line_cov = data["line_coverage"].copy()
             line_cov["uncovered"] = line_cov["total"] - line_cov["covered"]
             line_cov["percent"] = round(
                 (line_cov["covered"] / line_cov["total"] * 100) if line_cov["total"] > 0 else 0.0,
@@ -207,8 +235,8 @@ def _generate_summary_json_from_lcov(lcov_file: Path, coverage_dir: Path) -> Non
             )
             file_summary["line_coverage"] = line_cov
 
-            # Function coverage
-            func_cov = data["function_coverage"]
+            # Function coverage - copy dict before mutating to prevent data leakage
+            func_cov = data["function_coverage"].copy()
             func_cov["uncovered"] = func_cov["total"] - func_cov["covered"]
             func_cov["percent"] = round(
                 (func_cov["covered"] / func_cov["total"] * 100) if func_cov["total"] > 0 else 0.0,
@@ -282,7 +310,7 @@ def _generate_summary_json_from_lcov(lcov_file: Path, coverage_dir: Path) -> Non
         print(f"Warning: Failed to generate summary JSON from LCOV: {e}")
 
 
-def prepare_llvm_coverage(build_dir: Path, module_name: str, binaries_list: str, profraw_list: str) -> List[Path]:
+def prepare_llvm_coverage(build_dir: Path, module_name: str, binaries_list: str, profraw_list: str) -> bool:
     """Discover and run all test executables for a specific module.
 
     Searches for test executables containing the module name in their filename
@@ -291,9 +319,11 @@ def prepare_llvm_coverage(build_dir: Path, module_name: str, binaries_list: str,
     Args:
         build_dir: Path to build directory.
         module_name: Name of the module to find tests for.
+        binaries_list: Path to file for storing binary objects.
+        profraw_list: Path to file for storing profraw files.
 
     Returns:
-        List of Path objects pointing to test executables for the module.
+        True if coverage data was successfully generated, False otherwise.
     """
     config = get_platform_config()
     exe_extension = config["exe_extension"]
@@ -306,15 +336,17 @@ def prepare_llvm_coverage(build_dir: Path, module_name: str, binaries_list: str,
     test_dir = build_dir / "Library" / module_name / "Testing" / "Cxx"
     test_executable = build_dir / "bin" / f"{module_name}CxxTests{exe_extension}"
     profraw_file = build_dir / "coverage_report" / f"{module_name}CxxTests.profraw"
-    
+
+    # Validate that library was found
+    if dll_path is None:
+        print(f"Warning: Library not found for module {module_name}, skipping")
+        return False
+
     if not test_executable.exists():
         print(f"Warning: Test executable not found for {module_name}, skipping")
         return False
-    
-    with open(binaries_list, 'a') as f:
-        print(f"Adding {dll_path} to binaries list")    
-        f.write(f"-object={dll_path}\n")
-    
+
+    # Run test executable to generate profraw file
     env = os.environ.copy()
     env['LLVM_PROFILE_FILE'] = str(profraw_file)
     try:
@@ -325,14 +357,20 @@ def prepare_llvm_coverage(build_dir: Path, module_name: str, binaries_list: str,
     except FileNotFoundError as e:
         print(f"Warning: Could not execute {module_name}CxxTests: {e}")
         return False
-    
+
+    # Only write to files after all validations and successful test execution
+    with open(binaries_list, 'a') as f:
+        print(f"Adding {dll_path} to binaries list")
+        f.write(f"-object={dll_path}\n")
+
     with open(binaries_list, 'a') as f:
         print(f"Adding {test_executable} to binaries list")
         f.write(f"-object={test_executable}\n")
+
     with open(profraw_list, 'a') as f:
         print(f"Adding {profraw_file} to profraw list")
         f.write(f"{profraw_file}\n")
-    
+
     return True
 
 def generate_llvm_coverage(build_dir: Path, modules: List[str],
