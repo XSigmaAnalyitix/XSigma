@@ -48,16 +48,16 @@ brew install valgrind
 ### Standard Build
 ```bash
 cd Scripts
-python3 setup.py config.ninja.clang.valgrind.test
+python3 setup.py config.build.test.ninja.clang.valgrind
 ```
 
 ### Build with Specific Configuration
 ```bash
 # Debug build with Valgrind
-python3 setup.py config.ninja.clang.valgrind.test.debug
+python3 setup.py config.build.test.ninja.clang.debug.valgrind
 
 # Release build with Valgrind
-python3 setup.py config.ninja.clang.valgrind.test.release
+python3 setup.py config.build.test.ninja.clang.release.valgrind
 ```
 
 ## Running Valgrind Tests

@@ -64,6 +64,14 @@ git submodule update --init --recursive
 
 **Note**: The setup.py script requires `colorama` for colored terminal output. Install it before running any setup.py commands.
 
+### Understanding setup.py Flags
+
+The `setup.py` script uses a standardized flag ordering convention to organize build configuration:
+
+- **config** - Runs the CMake configuration phase to generate build files
+- **build** - Compiles the source code and builds the project
+- **test** - Runs the test suite after building
+
 ### Platform-Specific Build Instructions
 
 #### Unix/Linux (GCC and Clang)
@@ -73,13 +81,13 @@ git submodule update --init --recursive
 cd Scripts
 
 # Debug build with Clang
-python setup.py ninja.clang.debug.config.build
+python setup.py config.build.ninja.clang.debug
 
 # Release build with optimizations (LTO enabled by default)
-python setup.py ninja.clang.release.avx2.config.build
+python setup.py config.build.ninja.clang.release.avx2
 
 # With testing enabled
-python setup.py ninja.clang.debug.test.config.build.test
+python setup.py config.build.test.ninja.clang.debug
 ```
 
 **Using raw CMake:**
@@ -96,10 +104,10 @@ cmake --build . --parallel $(nproc)
 cd Scripts
 
 # Debug build with Apple Clang
-python setup.py ninja.clang.debug.config.build
+python setup.py config.build.ninja.clang.debug
 
 # Release build with optimizations (LTO enabled by default)
-python setup.py ninja.clang.release.config.build
+python setup.py config.build.ninja.clang.release
 ```
 
 **Using raw CMake:**
@@ -116,13 +124,13 @@ cmake --build . --parallel $(sysctl -n hw.ncpu)
 cd Scripts
 
 # Debug build with MSVC
-python setup.py vs22.debug.config.build
+python setup.py config.build.vs22.debug
 
 # Release build with Clang (LTO enabled by default)
-python setup.py ninja.clang.release.config.build
+python setup.py config.build.ninja.clang.release
 
 # With testing enabled
-python setup.py vs22.debug.test.config.build.test
+python setup.py config.build.test.vs22.debug
 ```
 
 **Using raw CMake:**
@@ -139,6 +147,59 @@ For detailed information about the `setup.py` script, available CMake flags, and
 📖 **[Setup Guide](Docs/readme/setup.md)** - Comprehensive guide to setup.py and all XSIGMA CMake flags
 
 ## Build Optimizations
+### Cache Build Systems
+
+XSigma supports multiple compiler caching systems to dramatically speed up incremental builds. Each caching solution is optimized for specific use cases:
+
+#### BuildCache (Windows)
+
+**BuildCache** is the recommended caching solution for Windows builds, providing incremental build caching with minimal configuration.
+
+```bash
+cd Scripts
+
+# Use BuildCache for Windows
+python setup.py config.build.ninja.clang.buildcache
+```
+
+**Use Case**: Windows developers working on local machines who want fast incremental builds with persistent caching.
+
+#### ccache (CI/CD Pipelines - Linux/macOS)
+
+**ccache** is a distributed compiler cache optimized for CI/CD pipelines on Linux and macOS, providing excellent performance for continuous integration environments.
+
+```bash
+cd Scripts
+
+# Use ccache for faster incremental builds (Linux/macOS CI)
+python setup.py config.build.ninja.clang.ccache
+```
+
+**Use Case**: CI/CD pipelines on Linux and macOS where multiple builds run on different machines and benefit from shared caching.
+
+#### sccache (Alternative CI/CD Caching)
+
+**sccache** is an alternative distributed cache with cloud storage support, providing flexibility for complex CI/CD environments with remote caching capabilities.
+
+```bash
+cd Scripts
+
+# Use sccache for distributed caching with cloud storage
+python setup.py config.build.ninja.clang.sccache
+```
+
+**Use Case**: CI/CD pipelines requiring cloud-based caching or distributed build environments across multiple machines.
+
+#### Disabling Caching
+
+```bash
+cd Scripts
+
+# Disable all caching (default)
+python setup.py config.build.ninja.clang.none
+```
+
+📖 **[Read more: Compiler Caching Guide](Docs/readme/cache.md)** - Complete caching configuration and performance tuning
 
 ### Link-Time Optimization (LTO)
 
@@ -148,10 +209,10 @@ Link-Time Optimization is **enabled by default** in release builds. Use the `lto
 cd Scripts
 
 # Release build with LTO enabled (default - no flag needed)
-python setup.py ninja.clang.release.config.build
+python setup.py config.build.ninja.clang.release
 
 # Disable LTO if needed (add 'lto' flag to toggle OFF)
-python setup.py ninja.clang.release.lto.config.build  # (LTO enabled by default in release builds)
+python setup.py config.build.ninja.clang.release.lto  # (LTO disabled - enabled by default in release builds)
 ```
 
 **LTO Behavior**:
@@ -160,72 +221,11 @@ python setup.py ninja.clang.release.lto.config.build  # (LTO enabled by default 
 - **Benefits**: 10-30% performance improvement in release builds
 - **Trade-off**: Increases build time (use for final releases)
 
-### Compiler Caching
+### Linker Optimizations
 
-XSigma supports multiple compiler caching systems to dramatically speed up incremental builds:
+The build system automatically detects and uses the fastest available linker for your platform and compiler combination, providing significant performance improvements during the linking phase.
 
-#### Cache Types
-
-- **ccache** - Local compilation cache (best for single-machine development)
-- **sccache** - Distributed cache with cloud storage support (best for CI/CD)
-- **buildcache** - Incremental build cache (best for CI/CD pipelines)
-- **none** - No caching (default)
-
-#### Quick Start
-
-```bash
-cd Scripts
-
-# Use ccache for faster incremental builds
-python setup.py ninja.clang.ccache.config.build
-
-# Use sccache for distributed caching
-python setup.py ninja.clang.sccache.config.build
-
-# Disable caching
-python setup.py ninja.clang.none.config.build
-```
-
-#### Expected Performance Improvements
-
-- **First build**: 5-15% faster with optimized linker
-- **Incremental builds**: 50-80% faster with compiler cache (for unchanged files)
-- **Clean rebuilds**: 10-30% faster with optimized linker
-
-#### Installation
-
-**Linux:**
-```bash
-# Install ccache
-sudo apt-get install ccache
-
-# Install faster linkers (mold, lld)
-sudo apt-get install lld mold
-```
-
-**macOS:**
-```bash
-# Install ccache
-brew install ccache
-
-# Install lld (optional)
-brew install llvm
-```
-
-**Windows:**
-```bash
-# Install ccache via Chocolatey
-choco install ccache
-
-# Or via vcpkg
-vcpkg install ccache:x64-windows
-```
-
-📖 **[Read more: Compiler Caching Guide](Docs/readme/cache.md)** - Complete caching configuration and performance tuning
-
-### Faster Linkers
-
-The build system automatically detects and uses the fastest available linker:
+#### Supported Linkers
 
 | Platform | Compiler | Preferred Linker | Fallback |
 |----------|----------|------------------|----------|
@@ -234,6 +234,23 @@ The build system automatically detects and uses the fastest available linker:
 | macOS | Clang/Apple Clang | lld | system linker |
 | Windows | Clang | lld-link | default |
 | Windows | MSVC | default | - |
+
+#### Installation
+
+**Linux:**
+```bash
+# Install faster linkers (mold, lld)
+sudo apt-get install lld mold
+```
+
+**macOS:**
+```bash
+# Install lld (optional)
+brew install llvm
+```
+
+**Windows:**
+Linker optimization is handled automatically by the build system. No additional installation required.
 
 ## Analysis Tools
 
@@ -249,16 +266,19 @@ Enable memory debugging and analysis with modern sanitizers:
 cd Scripts
 
 # Address Sanitizer (memory errors, buffer overflows)
-python setup.py ninja.clang.debug.sanitizer=address.config.build.test
+python setup.py config.build.test.ninja.clang.debug --sanitizer.address
 
 # Thread Sanitizer (data race detection)
-python setup.py ninja.clang.debug.sanitizer=thread.config.build.test
+python setup.py config.build.test.ninja.clang.debug --sanitizer.thread
 
 # Undefined Behavior Sanitizer
-python setup.py ninja.clang.debug.sanitizer=undefined.config.build.test
+python setup.py config.build.test.ninja.clang.debug --sanitizer.undefined
 
 # Memory Sanitizer (uninitialized memory reads)
-python setup.py ninja.clang.debug.sanitizer=memory.config.build.test
+python setup.py config.build.test.ninja.clang.debug --sanitizer.memory
+
+# Leak Sanitizer (memory leaks)
+python setup.py config.build.test.ninja.clang.debug --sanitizer.leak
 ```
 
 📖 **[Sanitizer Setup Guide](Docs/readme/sanitizer.md)** - Complete sanitizer configuration and usage
@@ -271,10 +291,10 @@ For detailed memory leak detection and profiling:
 cd Scripts
 
 # Enable Valgrind support
-python setup.py ninja.clang.debug.valgrind.config.build.test
+python setup.py config.build.test.ninja.clang.debug.valgrind
 ```
 
-📖 **[Valgrind Setup Guide](Docs/readme/VALGRIND_SETUP.md)** - Complete Valgrind configuration and usage
+📖 **[Valgrind Setup Guide](Docs/readme/valgrind.md)** - Complete Valgrind configuration and usage
 
 ### Static Analysis
 
@@ -286,10 +306,10 @@ Perform static code analysis and automatic fixes:
 cd Scripts
 
 # Run clang-tidy checks
-python setup.py ninja.clang.clangtidy.config.build
+python setup.py config.build.ninja.clang.clangtidy
 
 # Run with automatic fixes
-python setup.py ninja.clang.clangtidy.fix.config.build
+python setup.py config.build.ninja.clang.clangtidy.fix
 ```
 
 #### Cppcheck
@@ -300,7 +320,7 @@ Comprehensive static analysis for additional code quality checks:
 cd Scripts
 
 # Run cppcheck analysis
-python setup.py ninja.clang.cppcheck.config.build
+python setup.py config.build.ninja.clang.cppcheck
 ```
 
 #### Include-What-You-Use (IWYU)
@@ -311,7 +331,7 @@ Optimize header dependencies and reduce unnecessary includes:
 cd Scripts
 
 # Run IWYU analysis
-python setup.py ninja.clang.iwyu.config.build
+python setup.py config.build.ninja.clang.iwyu
 ```
 
 📖 **[Static Analysis Guide](Docs/readme/static-analysis.md)** - Complete configuration and usage
@@ -353,21 +373,21 @@ Generate comprehensive code coverage reports to measure test effectiveness and i
 **Generate coverage with Clang:**
 ```bash
 cd Scripts
-python setup.py ninja.clang.debug.coverage
+python setup.py config.build.test.ninja.clang.debug.coverage
 # View HTML report: ../build_ninja_coverage/coverage_report/html/index.html
 ```
 
 **Generate coverage with MSVC:**
 ```bash
 cd Scripts
-python setup.py vs22.debug.coverage
+python setup.py config.build.test.vs22.debug.coverage
 # View HTML report: ../build_vs22_coverage/coverage_report/html/index.html
 ```
 
 **Generate coverage with GCC:**
 ```bash
 cd Scripts
-python setup.py ninja.gcc.debug.coverage
+python setup.py config.build.test.ninja.gcc.debug.coverage
 # View HTML report: ../build_ninja_coverage/coverage_report/html/index.html
 ```
 
@@ -415,16 +435,16 @@ XSigma uses carefully selected third-party libraries to provide robust functiona
 cd Scripts
 
 # Enable CUDA support
-python setup.py ninja.clang.cuda.config.build
+python setup.py config.build.ninja.clang.cuda
 
 # Enable TBB for parallel computing
-python setup.py ninja.clang.tbb.config.build
+python setup.py config.build.ninja.clang.tbb
 
 # Use external system libraries instead of submodules
-python setup.py ninja.clang.external.config.build
+python setup.py config.build.ninja.clang.external
 
 # Disable optional features for minimal builds
-python setup.py ninja.clang.test.magic_enum.config.build
+python setup.py config.build.ninja.clang.test.magic_enum
 ```
 
 ### Logging System
@@ -443,10 +463,10 @@ XSigma provides a flexible logging system with multiple backend options to suit 
 cd Scripts
 
 # Use GLOG backend
-python setup.py ninja.clang.config.build.test --logging.GLOG
+python setup.py config.build.test.ninja.clang --logging.GLOG
 
 # Use native logging (no dependencies)
-python setup.py ninja.clang.config.build.test --logging.NATIVE
+python setup.py config.build.test.ninja.clang --logging.NATIVE
 ```
 
 📖 **[Logging System Guide](Docs/readme/logging.md)** - Complete logging documentation with configuration examples
@@ -463,16 +483,16 @@ XSigma provides comprehensive support for high-performance computing through CPU
 cd Scripts
 
 # CPU vectorization (AVX2 - recommended)
-python setup.py ninja.clang.release.avx2.config.build
+python setup.py config.build.ninja.clang.release.avx2
 
 # GPU acceleration (CUDA)
-python setup.py ninja.clang.release.cuda.config.build
+python setup.py config.build.ninja.clang.release.cuda
 
 # Multithreading (TBB)
-python setup.py ninja.clang.release.tbb.config.build
+python setup.py config.build.ninja.clang.release.tbb
 
 # Combined: CUDA + AVX2 + LTO (LTO enabled by default)
-python setup.py ninja.clang.release.cuda.avx2.config.build
+python setup.py config.build.ninja.clang.release.cuda.avx2
 ```
 
 ### Features
@@ -543,14 +563,14 @@ Full cross-platform compatibility across Windows, Linux, and macOS with platform
 
 <!-- [CI/CD Pipeline](Docs/ci/CI_CD_PIPELINE.md) - Continuous integration setup (File not found: Docs/ci/ directory does not exist) -->
 <!-- [CI Quick Start](Docs/ci/CI_QUICK_START.md) - Getting started with CI (File not found: Docs/ci/ directory does not exist) -->
-- **[Valgrind Setup](Docs/readme/VALGRIND_SETUP.md)** - Memory debugging with Valgrind
+- **[Valgrind Setup](Docs/readme/valgrind.md)** - Memory debugging with Valgrind
 
 ## Running Tests
 
 ```bash
 # Enable testing during configuration
 cd Scripts
-python setup.py ninja.clang.debug.test.gtest.config.build.test
+python setup.py config.build.test.ninja.clang.debug.gtest
 ```
 
 ## Troubleshooting
@@ -573,13 +593,13 @@ If you see warnings about missing third-party libraries:
 2. Use external system libraries:
    ```bash
    cd Scripts
-   python setup.py ninja.clang.external.config.build
+   python setup.py config.build.ninja.clang.external
    ```
 
 3. Disable unused features:
    ```bash
    cd Scripts
-   python setup.py ninja.clang.magic_enum.config.build
+   python setup.py config.build.ninja.clang.magic_enum
    ```
 
 **Vectorization Issues**
@@ -597,7 +617,7 @@ If Link-Time Optimization fails:
 1. **Disable LTO**: Add `lto` flag to setup.py command (toggles default ON to OFF)
    ```bash
    cd Scripts
-   python setup.py ninja.clang.release.lto.config.build  # (LTO enabled by default in release builds)
+   python setup.py config.build.ninja.clang.release.lto  # (LTO enabled by default in release builds)
    ```
 2. Check compiler version (GCC 5+, Clang 3.5+, MSVC 2015+)
 3. Increase available memory (LTO is memory-intensive)
@@ -646,19 +666,19 @@ The vectorization system supports CPU SIMD instruction sets:
 **For daily development:**
 ```bash
 cd Scripts
-python setup.py ninja.clang.debug.test.config.build
+python setup.py config.build.test.ninja.clang.debug
 ```
 
 **For production releases:**
 ```bash
 cd Scripts
-python setup.py ninja.clang.release.config.build  # (LTO enabled by default in release builds)
+python setup.py config.build.ninja.clang.release  # (LTO enabled by default in release builds)
 ```
 
 **For CI/CD pipelines:**
 ```bash
 cd Scripts
-python setup.py ninja.clang.external.test.config.build
+python setup.py config.build.test.ninja.clang.external
 ```
 
 ### Performance Optimization

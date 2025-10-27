@@ -23,7 +23,7 @@ XSigma provides a flexible logging system with multiple backend options to suit 
 **Configuration:**
 ```bash
 cd Scripts
-python setup.py ninja.clang.config.build --logging.loguru
+python setup.py config.build.ninja.clang --logging.loguru
 ```
 
 ### GLOG
@@ -43,7 +43,7 @@ python setup.py ninja.clang.config.build --logging.loguru
 **Configuration:**
 ```bash
 cd Scripts
-python setup.py ninja.clang.config.build --logging.glog
+python setup.py config.build.ninja.clang --logging.glog
 ```
 
 ### NATIVE
@@ -63,7 +63,7 @@ python setup.py ninja.clang.config.build --logging.glog
 **Configuration:**
 ```bash
 cd Scripts
-python setup.py ninja.clang.config.build --logging.native
+python setup.py config.build.ninja.clang --logging.native
 ```
 
 ## Logging Levels
@@ -242,11 +242,11 @@ To switch logging backends:
 ```bash
 # From LOGURU to GLOG
 cd Scripts
-python setup.py ninja.clang.config.build --logging.glog
+python setup.py config.build.ninja.clang --logging.glog
 
 # From GLOG to NATIVE
 cd Scripts
-python setup.py ninja.clang.config.build --logging.native
+python setup.py config.build.ninja.clang --logging.native
 ```
 
 No code changes are required - the logging API remains consistent across backends.

@@ -82,10 +82,10 @@ cmake --build build -j
 cd Scripts
 
 # Run clang-tidy checks
-python setup.py ninja.clang.clangtidy.config.build
+python setup.py config.build.ninja.clang.clangtidy
 
 # Run with automatic fixes
-python setup.py ninja.clang.clangtidy.fix.config.build
+python setup.py config.build.ninja.clang.clangtidy.fix
 ```
 
 ### Configuration

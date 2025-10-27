@@ -201,16 +201,16 @@ vcpkg install ccache:x64-windows
 cd Scripts
 
 # Use ccache
-python setup.py ninja.clang.ccache.config.build
+python setup.py config.build.ninja.clang.ccache
 
 # Use sccache
-python setup.py ninja.clang.sccache.config.build
+python setup.py config.build.ninja.clang.sccache
 
 # Use buildcache
-python setup.py ninja.clang.buildcache.config.build
+python setup.py config.build.ninja.clang.buildcache
 
 # Disable caching
-python setup.py ninja.clang.none.config.build
+python setup.py config.build.ninja.clang.none
 ```
 
 ### Using CMake
@@ -377,7 +377,7 @@ export BUILDCACHE_MAX_CACHE_SIZE=10G
 - name: Build
   run: |
     cd Scripts
-    python setup.py ninja.clang.ccache.config.build
+    python setup.py config.build.ninja.clang.ccache
 ```
 
 #### GitLab CI
@@ -395,7 +395,7 @@ before_script:
 build:
   script:
     - cd Scripts
-    - python setup.py ninja.clang.ccache.config.build
+    - python setup.py config.build.ninja.clang.ccache
 ```
 
 ### Multi-machine Setup with sccache
@@ -410,7 +410,7 @@ export SCCACHE_S3_REGION=us-west-2
 
 # Build with sccache
 cd Scripts
-python setup.py ninja.clang.sccache.config.build
+python setup.py config.build.ninja.clang.sccache
 ```
 
 ---

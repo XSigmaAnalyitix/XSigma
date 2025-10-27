@@ -67,15 +67,15 @@ The `setup.py` script provides convenient sanitizer configuration:
 
 ```bash
 # Using dot notation (recommended)
-python setup.py ninja.clang.config.build.test --sanitizer.address
-python setup.py ninja.clang.config.build.test --sanitizer.undefined
-python setup.py ninja.clang.config.build.test --sanitizer.thread
-python setup.py ninja.clang.config.build.test --sanitizer.memory
-python setup.py ninja.clang.config.build.test --sanitizer.leak
+python setup.py config.build.test.ninja.clang --sanitizer.address
+python setup.py config.build.test.ninja.clang --sanitizer.undefined
+python setup.py config.build.test.ninja.clang --sanitizer.thread
+python setup.py config.build.test.ninja.clang --sanitizer.memory
+python setup.py config.build.test.ninja.clang --sanitizer.leak
 
 # Using explicit flags
-python setup.py ninja.clang.config.build.test --enable-sanitizer --sanitizer-type=address
-python setup.py ninja.clang.config.build.test --sanitizer-type=undefined
+python setup.py config.build.test.ninja.clang --enable-sanitizer --sanitizer-type=address
+python setup.py config.build.test.ninja.clang --sanitizer-type=undefined
 ```
 
 ## Architecture

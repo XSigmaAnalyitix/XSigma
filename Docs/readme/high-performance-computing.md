@@ -29,16 +29,16 @@ CPU SIMD (Single Instruction, Multiple Data) instruction sets enable parallel pr
 cd Scripts
 
 # Build with AVX2 (recommended for modern CPUs)
-python setup.py ninja.clang.release.avx2.config.build
+python setup.py config.build.ninja.clang.release.avx2
 
 # Build with AVX-512 (for latest high-end systems)
-python setup.py ninja.clang.release.avx512.config.build
+python setup.py config.build.ninja.clang.release.avx512
 
 # Build with SSE (for legacy compatibility)
-python setup.py ninja.clang.release.sse.config.build
+python setup.py config.build.ninja.clang.release.sse
 
 # Build with AVX
-python setup.py ninja.clang.release.avx.config.build
+python setup.py config.build.ninja.clang.release.avx
 ```
 
 ### Performance Benefits
@@ -54,16 +54,16 @@ python setup.py ninja.clang.release.avx.config.build
 cd Scripts
 
 # Vectorization with LTO optimization (LTO enabled by default)
-python setup.py ninja.clang.release.avx2.config.build
+python setup.py config.build.ninja.clang.release.avx2
 
 # Vectorization with compiler caching
-python setup.py ninja.clang.release.avx2.ccache.config.build
+python setup.py config.build.ninja.clang.release.avx2.ccache
 
 # Vectorization with testing
-python setup.py ninja.clang.release.avx2.test.config.build.test
+python setup.py config.build.test.ninja.clang.release.avx2
 
 # Vectorization with code coverage
-python setup.py ninja.clang.debug.avx2.coverage.config.build.test
+python setup.py config.build.test.ninja.clang.debug.avx2.coverage
 ```
 
 ## GPU Acceleration
@@ -101,31 +101,31 @@ NVIDIA GPU acceleration for massive parallel computing.
 cd Scripts
 
 # Basic CUDA support
-python setup.py ninja.clang.cuda.config.build
+python setup.py config.build.ninja.clang.cuda
 
 # CUDA with optimizations
-python setup.py ninja.clang.release.cuda.config.build
+python setup.py config.build.ninja.clang.release.cuda
 
 # CUDA with testing
-python setup.py ninja.clang.debug.cuda.test.config.build.test
+python setup.py config.build.test.ninja.clang.debug.cuda
 
 # CUDA with code coverage
-python setup.py ninja.clang.debug.cuda.coverage.config.build.test
+python setup.py config.build.test.ninja.clang.debug.cuda.coverage
 
 # CUDA with sanitizers (use dot notation: sanitizer.address)
-python setup.py ninja.clang.debug.cuda.sanitizer.address.config.build.test
+python setup.py config.build.test.ninja.clang.debug.cuda --sanitizer.address
 
 # CUDA with compiler caching
-python setup.py ninja.clang.release.cuda.ccache.config.build
+python setup.py config.build.ninja.clang.release.cuda.ccache
 
 # CUDA with LTO (LTO enabled by default)
-python setup.py ninja.clang.release.cuda.config.build
+python setup.py config.build.ninja.clang.release.cuda
 
 # CUDA with vectorization
-python setup.py ninja.clang.release.cuda.avx2.config.build
+python setup.py config.build.ninja.clang.release.cuda.avx2
 
 # CUDA with TBB multithreading
-python setup.py ninja.clang.release.cuda.tbb.config.build
+python setup.py config.build.ninja.clang.release.cuda.tbb
 ```
 
 #### CUDA Configuration
@@ -179,13 +179,13 @@ AMD GPU acceleration through HIP (Heterogeneous-compute Interface for Portabilit
 cd Scripts
 
 # Basic HIP support
-python setup.py ninja.clang.hip.config.build
+python setup.py config.build.ninja.clang.hip
 
 # HIP with optimizations
-python setup.py ninja.clang.release.hip.config.build
+python setup.py config.build.ninja.clang.release.hip
 
 # HIP with testing
-python setup.py ninja.clang.debug.hip.test.config.build.test
+python setup.py config.build.test.ninja.clang.debug.hip
 ```
 
 **Note**: CUDA and HIP are mutually exclusive. Enable only one GPU backend.
@@ -211,19 +211,19 @@ High-level parallel programming framework with task-based parallelism.
 cd Scripts
 
 # Basic TBB support
-python setup.py ninja.clang.tbb.config.build
+python setup.py config.build.ninja.clang.tbb
 
 # TBB with optimizations
-python setup.py ninja.clang.release.tbb.config.build
+python setup.py config.build.ninja.clang.release.tbb
 
 # TBB with testing
-python setup.py ninja.clang.debug.tbb.test.config.build.test
+python setup.py config.build.test.ninja.clang.debug.tbb
 
 # TBB with CUDA
-python setup.py ninja.clang.release.cuda.tbb.config.build
+python setup.py config.build.ninja.clang.release.cuda.tbb
 
 # TBB with vectorization
-python setup.py ninja.clang.release.avx2.tbb.config.build
+python setup.py config.build.ninja.clang.release.avx2.tbb
 ```
 
 #### Use Cases
@@ -250,13 +250,13 @@ Standard C++17/20 threading with `std::thread`, `std::async`, and `std::future`.
 cd Scripts
 
 # Default build (uses native C++ threading)
-python setup.py ninja.clang.release.config.build
+python setup.py config.build.ninja.clang.release
 
 # With testing
-python setup.py ninja.clang.debug.test.config.build.test
+python setup.py config.build.test.ninja.clang.debug
 
 # With CUDA
-python setup.py ninja.clang.release.cuda.config.build
+python setup.py config.build.ninja.clang.release.cuda
 ```
 
 #### Use Cases
@@ -287,7 +287,7 @@ XSigma allows combining multiple HPC features for maximum performance.
 
 ```bash
 cd Scripts
-python setup.py ninja.clang.release.avx2.ccache.config.build
+python setup.py config.build.ninja.clang.release.avx2.ccache
 ```
 
 Features: AVX2 vectorization + LTO (enabled by default) + compiler caching
@@ -296,7 +296,7 @@ Features: AVX2 vectorization + LTO (enabled by default) + compiler caching
 
 ```bash
 cd Scripts
-python setup.py ninja.clang.release.cuda.avx2.ccache.config.build
+python setup.py config.build.ninja.clang.release.cuda.avx2.ccache
 ```
 
 Features: CUDA + AVX2 + LTO (enabled by default) + compiler caching
@@ -305,7 +305,7 @@ Features: CUDA + AVX2 + LTO (enabled by default) + compiler caching
 
 ```bash
 cd Scripts
-python setup.py ninja.clang.debug.cuda.test.coverage.config.build.test
+python setup.py config.build.test.ninja.clang.debug.cuda.coverage
 ```
 
 Features: CUDA + testing + code coverage
@@ -314,7 +314,7 @@ Features: CUDA + testing + code coverage
 
 ```bash
 cd Scripts
-python setup.py ninja.clang.release.cuda.avx2.tbb.config.build
+python setup.py config.build.ninja.clang.release.cuda.avx2.tbb
 ```
 
 Features: CUDA + AVX2 + LTO (enabled by default) + TBB multithreading
@@ -348,13 +348,13 @@ Features: CUDA + AVX2 + LTO (enabled by default) + TBB multithreading
 cd Scripts
 
 # Fastest incremental builds
-python setup.py ninja.clang.ccache.config.build
+python setup.py config.build.ninja.clang.ccache
 
 # Fastest clean builds
-python setup.py ninja.clang.release.config.build  # (LTO enabled by default in release builds)
+python setup.py config.build.ninja.clang.release  # (LTO enabled by default in release builds)
 
 # Balanced approach
-python setup.py ninja.clang.release.ccache.config.build  # (LTO enabled by default in release builds)
+python setup.py config.build.ninja.clang.release.ccache  # (LTO enabled by default in release builds)
 ```
 
 ## Troubleshooting

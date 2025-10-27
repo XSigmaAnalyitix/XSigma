@@ -10,33 +10,76 @@ The `Scripts/setup.py` script provides a convenient interface for configuring an
 
 ```bash
 cd Scripts
-python setup.py [builder].[compiler].[options].config.build.test
+python setup.py config.build.test.[builder].[compiler].[options]
 ```
 
 ### Components
 
-- **builder**: `ninja`, `vs22`, `xcode`, `cmake`
-- **compiler**: `clang`, `gcc`, `msvc` (compiler-specific)
-- **options**: Various feature flags (see below)
 - **config**: Configure the build
 - **build**: Build the project
 - **test**: Run tests
+- **builder**: `ninja`, `vs22`, `xcode`, `cmake`
+- **compiler**: `clang`, `gcc`, `msvc` (compiler-specific)
+- **options**: Various feature flags (see below)
 
 ### Examples
 
 ```bash
 # Debug build with Clang
-python setup.py ninja.clang.debug.config.build
+python setup.py config.build.ninja.clang.debug
 
 # Release build with optimizations (LTO enabled by default)
-python setup.py ninja.clang.release.avx2.config.build
+python setup.py config.build.ninja.clang.release.avx2
 
 # With testing enabled
-python setup.py ninja.clang.debug.test.config.build.test
+python setup.py config.build.test.ninja.clang.debug
 
 # MSVC with coverage
-python setup.py vs22.debug.coverage.config.build
+python setup.py config.build.vs22.debug.coverage
 ```
+## Build Directory Naming Convention
+
+The `setup.py` script automatically generates build directory names based on the flags you provide. This allows you to maintain multiple build configurations simultaneously without conflicts.
+
+**Base Naming Pattern:**
+- `build_[builder]` - Base directory name determined by the build system
+  - `build_ninja` - Ninja build system
+  - `build_vs22` - Visual Studio 2022
+  - `build_xcode` - Xcode (macOS)
+  - `build_eclipse` - Eclipse IDE
+
+**With Feature Suffixes:**
+- `build_[builder]_[suffix]` - Additional suffixes are appended for special configurations
+  - `build_ninja_coverage` - Ninja with code coverage enabled
+  - `build_ninja_address` - Ninja with AddressSanitizer
+  - `build_ninja_avx2` - Ninja with AVX2 vectorization
+  - `build_ninja_lto` - Ninja with Link-Time Optimization
+  - `build_vs22_debug_coverage` - Visual Studio with debug and coverage
+
+**Multiple Suffixes:**
+When multiple feature flags are used, they are concatenated:
+- `build_ninja_debug_coverage_avx2` - Ninja with debug, coverage, and AVX2
+- `build_vs22_release_lto` - Visual Studio with release and LTO
+
+**Examples of Build Directory Names:**
+
+| Command | Build Directory | Purpose |
+|---------|-----------------|---------|
+| `config.build.ninja.clang.debug` | `build_ninja` | Standard debug build |
+| `config.build.ninja.clang.release` | `build_ninja` | Standard release build |
+| `config.build.test.ninja.clang.debug.coverage` | `build_ninja_coverage` | Debug with code coverage |
+| `config.build.test.ninja.clang.debug --sanitizer.address` | `build_ninja_address` | Debug with AddressSanitizer |
+| `config.build.ninja.clang.release.avx2` | `build_ninja_avx2` | Release with AVX2 vectorization |
+| `config.build.vs22.debug` | `build_vs22` | MSVC debug build |
+| `config.build.vs22.debug.coverage` | `build_vs22_coverage` | MSVC with code coverage |
+| `config.build.test.xcode.release.lto` | `build_xcode_lto` | Xcode release with LTO |
+
+**Benefits of This Approach:**
+- ✅ **Multiple Configurations**: Keep debug, release, coverage, and sanitizer builds simultaneously
+- ✅ **Easy Cleanup**: Remove specific build configurations by deleting their directories
+- ✅ **Clear Organization**: Directory names clearly indicate what configuration they contain
+- ✅ **No Conflicts**: Different configurations don't interfere with each other
+- ✅ **Reproducibility**: Same command always produces the same directory name
 
 ## CMake Flags Reference
 
@@ -138,31 +181,31 @@ python setup.py vs22.debug.coverage.config.build
 ### Development Build
 
 ```bash
-python setup.py ninja.clang.debug.test.config.build
+python setup.py config.build.test.ninja.clang.debug
 ```
 
 ### Release Build
 
 ```bash
-python setup.py ninja.clang.release.avx2.config.build
+python setup.py config.build.ninja.clang.release.avx2
 ```
 
 ### With Coverage
 
 ```bash
-python setup.py ninja.clang.debug.coverage.config.build
+python setup.py config.build.ninja.clang.debug.coverage
 ```
 
 ### With Sanitizers
 
 ```bash
-python setup.py ninja.clang.debug.config.build.test --sanitizer.address
+python setup.py config.build.test.ninja.clang.debug --sanitizer.address
 ```
 
 ### Minimal Build
 
 ```bash
-python setup.py ninja.clang.release.config.build
+python setup.py config.build.ninja.clang.release
 ```
 
 ## Build Directory Naming
