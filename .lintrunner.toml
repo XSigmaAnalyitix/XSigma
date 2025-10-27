@@ -777,6 +777,35 @@ init_command = [
 ]
 
 [[linter]]
+code = 'CMAKEFORMAT'
+include_patterns = [
+    "**/*.cmake",
+    "**/*.cmake.in",
+    "**/CMakeLists.txt",
+]
+exclude_patterns = [
+    'ThirdParty/**',
+    'Tools/**',
+    '.vscode/**',
+    '.git/**',
+    '.augment/**',
+]
+command = [
+    'python3',
+    'Tools/linter/adapters/cmake_format_linter.py',
+    '--config=.cmake-format.yaml',
+    '--',
+    '@{{PATHSFILE}}',
+]
+init_command = [
+    'python3',
+    'Tools/linter/adapters/pip_init.py',
+    '--dry-run={{DRYRUN}}',
+    'cmakelang==0.6.13',
+]
+is_formatter = true
+
+[[linter]]
 code = 'SHELLCHECK'
 include_patterns = [
     'Scripts/**/*.sh',
