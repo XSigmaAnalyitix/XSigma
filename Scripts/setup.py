@@ -279,10 +279,14 @@ class SummaryReporter:
                     "line_coverage_percent": metrics.get("line_coverage_percent", 0.0),
                     "total_functions": metrics.get("total_functions", 0),
                     "covered_functions": metrics.get("covered_functions", 0),
-                    "function_coverage_percent": metrics.get("function_coverage_percent", 0.0),
+                    "function_coverage_percent": metrics.get(
+                        "function_coverage_percent", 0.0
+                    ),
                     "total_regions": metrics.get("total_regions", 0),
                     "covered_regions": metrics.get("covered_regions", 0),
-                    "region_coverage_percent": metrics.get("region_coverage_percent", 0.0),
+                    "region_coverage_percent": metrics.get(
+                        "region_coverage_percent", 0.0
+                    ),
                     "report_file": coverage_json,
                 }
             # Extract metrics from summary (alternative format)
@@ -1347,7 +1351,7 @@ class XsigmaConfiguration:
             self.summary_reporter.add_coverage_report(build_path, 0)
 
             # Display coverage summary automatically
-            #self._display_coverage_summary(build_path)
+            # self._display_coverage_summary(build_path)
 
             return 0
         else:
