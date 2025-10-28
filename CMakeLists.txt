@@ -7,10 +7,11 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 endif()
 
 # Set project name and version
-project(XSigma
-    VERSION 1.0.0
-    DESCRIPTION "XSigma High-Performance Computing Library"
-    LANGUAGES CXX C
+project(
+  XSigma
+  VERSION 1.0.0
+  DESCRIPTION "XSigma High-Performance Computing Library"
+  LANGUAGES CXX C
 )
 
 # Set version macros
@@ -45,138 +46,120 @@ endif()
 include(CMakeDependentOption)
 
 # Set C++ standard configuration
-set(XSIGMA_CXX_STANDARD
-    "17"
-    CACHE STRING
-    "C++ standard to use. Options are 11, 14, 17, 20, or 23"
-)
+set(XSIGMA_CXX_STANDARD "17" CACHE STRING "C++ standard to use. Options are 11, 14, 17, 20, or 23")
 mark_as_advanced(XSIGMA_CXX_STANDARD)
 
 # Validate C++ standard
 if(NOT XSIGMA_CXX_STANDARD MATCHES "^(11|14|17|20|23)$")
-    message(FATAL_ERROR "XSIGMA_CXX_STANDARD must be 11,14, 17, 20, or 23")
+  message(FATAL_ERROR "XSIGMA_CXX_STANDARD must be 11,14, 17, 20, or 23")
 endif()
 
 set(CMAKE_CXX_STANDARD ${XSIGMA_CXX_STANDARD})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# ============================================================================= General Project-Wide
+# Configuration Flags
 # =============================================================================
-# General Project-Wide Configuration Flags
-# =============================================================================
-# These flags control general project settings that are not specific to
-# individual feature modules. Feature-specific flags are declared in their
-# respective module files (Cmake/tools/*.cmake).
+# These flags control general project settings that are not specific to individual feature modules.
+# Feature-specific flags are declared in their respective module files (Cmake/tools/*.cmake).
 # =============================================================================
 
-# Enzyme Automatic Differentiation Support Flag
-# Controls whether Enzyme automatic differentiation is enabled.
-# Enzyme provides high-performance automatic differentiation capabilities.
+# Enzyme Automatic Differentiation Support Flag Controls whether Enzyme automatic differentiation is
+# enabled. Enzyme provides high-performance automatic differentiation capabilities.
 option(XSIGMA_ENABLE_ENZYME "Enable Enzyme" OFF)
 mark_as_advanced(XSIGMA_ENABLE_ENZYME)
 
-# GPU Allocation Strategy Configuration
-# This flag controls which GPU allocation functions are used by allocator_gpu (CUDA/HIP)
-set(XSIGMA_GPU_ALLOC
-    "POOL_ASYNC"
-    CACHE STRING "GPU allocation strategy to use. Options are SYNC, ASYNC, POOL_ASYNC")
-set_property(
-    CACHE XSIGMA_GPU_ALLOC
-    PROPERTY STRINGS
-             SYNC
-             ASYNC
-             POOL_ASYNC)
+# GPU Allocation Strategy Configuration This flag controls which GPU allocation functions are used
+# by allocator_gpu (CUDA/HIP)
+set(XSIGMA_GPU_ALLOC "POOL_ASYNC"
+    CACHE STRING "GPU allocation strategy to use. Options are SYNC, ASYNC, POOL_ASYNC"
+)
+set_property(CACHE XSIGMA_GPU_ALLOC PROPERTY STRINGS SYNC ASYNC POOL_ASYNC)
 
 # Validate CUDA allocation strategy
 if(NOT XSIGMA_GPU_ALLOC MATCHES "^(SYNC|ASYNC|POOL_ASYNC)$")
-    message(FATAL_ERROR "Invalid XSIGMA_GPU_ALLOC: ${XSIGMA_GPU_ALLOC}. Valid options are: SYNC, ASYNC, POOL_ASYNC")
+  message(
+    FATAL_ERROR
+      "Invalid XSIGMA_GPU_ALLOC: ${XSIGMA_GPU_ALLOC}. Valid options are: SYNC, ASYNC, POOL_ASYNC"
+  )
 endif()
 
-# =============================================================================
-# Algorithm and Feature Configuration Flags
+# ============================================================================= Algorithm and
+# Feature Configuration Flags
 # =============================================================================
 # These flags control specific algorithm implementations and optional features.
 # =============================================================================
 
-# Sobol Sequence 1111-Dimension Support Flag
-# Controls whether Sobol quasi-random sequence generation supports 1111 dimensions.
-# When enabled, provides extended Sobol sequence capabilities.
+# Sobol Sequence 1111-Dimension Support Flag Controls whether Sobol quasi-random sequence generation
+# supports 1111 dimensions. When enabled, provides extended Sobol sequence capabilities.
 option(XSIGMA_SOBOL_1111 "Build support sobol with 1111 dimension" ON)
 
-# LU Decomposition Pivoting Flag
-# Controls whether LU decomposition uses pivoting for numerical stability.
-# When enabled, improves numerical stability at the cost of additional computation.
+# LU Decomposition Pivoting Flag Controls whether LU decomposition uses pivoting for numerical
+# stability. When enabled, improves numerical stability at the cost of additional computation.
 option(XSIGMA_LU_PIVOTING "Enable LU PIVOTING" OFF)
 
-# =============================================================================
-# Testing and Quality Assurance Configuration Flags
+# ============================================================================= Testing and Quality
+# Assurance Configuration Flags
 # =============================================================================
 # These flags control testing infrastructure, benchmarking, and code quality tools.
 # =============================================================================
 
-# Build Testing Configuration
-# Controls whether test directories are built: ON (always), OFF (never), or WANT (optional).
-set(XSIGMA_BUILD_TESTING
-    "ON"
-    CACHE STRING "Build module testing directories")
+# Build Testing Configuration Controls whether test directories are built: ON (always), OFF (never),
+# or WANT (optional).
+set(XSIGMA_BUILD_TESTING "ON" CACHE STRING "Build module testing directories")
 set_property(CACHE XSIGMA_BUILD_TESTING PROPERTY STRINGS "ON;OFF;WANT")
 
-# Google Benchmark Support Flag
-# Controls whether Google Benchmark is enabled for performance benchmarking.
-# When enabled, allows creation of benchmark targets for performance analysis.
+# Google Benchmark Support Flag Controls whether Google Benchmark is enabled for performance
+# benchmarking. When enabled, allows creation of benchmark targets for performance analysis.
 option(XSIGMA_ENABLE_BENCHMARK "Enable google benchmark" OFF)
 
-# Google Test Support Flag
-# Controls whether Google Test framework is enabled for unit testing.
-# When enabled, provides comprehensive testing infrastructure.
+# Google Test Support Flag Controls whether Google Test framework is enabled for unit testing. When
+# enabled, provides comprehensive testing infrastructure.
 option(XSIGMA_ENABLE_GTEST "Enable google test" ON)
 
-# =============================================================================
-# Performance and Optimization Configuration Flags
+# ============================================================================= Performance and
+# Optimization Configuration Flags
 # =============================================================================
 # These flags control performance-related settings and optimization strategies.
 # =============================================================================
 
-# Vectorization Strategy Configuration
-# Specifies which SIMD vectorization to use: no, sse, avx, avx2, or avx512.
-# Enables platform-specific optimizations for numerical computations.
-set(XSIGMA_VECTORIZATION_TYPE
-    "avx2"
-    CACHE
-      STRING
-      "vectorization implementation to use. Options are no, sse, avx, avx2, or avx512"
+# Vectorization Strategy Configuration Specifies which SIMD vectorization to use: no, sse, avx,
+# avx2, or avx512. Enables platform-specific optimizations for numerical computations.
+set(XSIGMA_VECTORIZATION_TYPE "avx2"
+    CACHE STRING "vectorization implementation to use. Options are no, sse, avx, avx2, or avx512"
 )
 set_property(CACHE XSIGMA_VECTORIZATION_TYPE PROPERTY STRINGS no sse avx avx2 avx512)
 
+# ============================================================================= Third-Party Library
+# and Dependency Configuration Flags
 # =============================================================================
-# Third-Party Library and Dependency Configuration Flags
-# =============================================================================
-# These flags control the use of external libraries and optional dependencies.
-# Mandatory core dependencies: fmt (formatting), cpuinfo (CPU detection)
+# These flags control the use of external libraries and optional dependencies. Mandatory core
+# dependencies: fmt (formatting), cpuinfo (CPU detection)
 # =============================================================================
 
-# External Library Usage Flag
-# Controls whether external copies of third-party libraries are used by default.
-# When enabled, prefers external library versions over bundled versions.
+# External Library Usage Flag Controls whether external copies of third-party libraries are used by
+# default. When enabled, prefers external library versions over bundled versions.
 option(XSIGMA_ENABLE_EXTERNAL "Use external copies of third party libraries by default" OFF)
 
-# Magic Enum Static Reflection Flag
-# Controls whether magic_enum is enabled for compile-time enum reflection.
-# When enabled, provides powerful enum introspection capabilities.
+# Magic Enum Static Reflection Flag Controls whether magic_enum is enabled for compile-time enum
+# reflection. When enabled, provides powerful enum introspection capabilities.
 option(XSIGMA_ENABLE_MAGICENUM "Enable magic_enum static reflection for enums." ON)
 mark_as_advanced(XSIGMA_ENABLE_MAGICENUM)
 
-# Microsoft Mimalloc Memory Allocator Flag
-# Controls whether Microsoft's mimalloc high-performance allocator is enabled.
-# When enabled, provides faster memory allocation with better performance characteristics.
-option(XSIGMA_ENABLE_MIMALLOC "Enable Microsoft mimalloc high-performance memory allocator support." ON)
+# Microsoft Mimalloc Memory Allocator Flag Controls whether Microsoft's mimalloc high-performance
+# allocator is enabled. When enabled, provides faster memory allocation with better performance
+# characteristics.
+option(XSIGMA_ENABLE_MIMALLOC
+       "Enable Microsoft mimalloc high-performance memory allocator support." ON
+)
 mark_as_advanced(XSIGMA_ENABLE_MIMALLOC)
 
+# ============================================================================= Platform-Specific
+# Configuration and Feature Validation
 # =============================================================================
-# Platform-Specific Configuration and Feature Validation
-# =============================================================================
-# Adjusts feature availability based on platform constraints.
-# Some features are only available on specific operating systems.
+# Adjusts feature availability based on platform constraints. Some features are only available on
+# specific operating systems.
 # =============================================================================
 
 # NUMA is only available on Unix systems
@@ -189,8 +172,8 @@ if(NOT UNIX OR APPLE)
   set(XSIGMA_ENABLE_MEMKIND OFF)
 endif()
 
-# =============================================================================
-# Global Project Variables
+# ============================================================================= Global Project
+# Variables
 # =============================================================================
 # Set global variables used throughout the build system.
 # =============================================================================
@@ -199,15 +182,14 @@ set(XSIGMA_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(XSIGMA_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 set(XSIGMA_VERSION "${PROJECT_VERSION}")
 
+# ============================================================================= Build Library Type
+# Configuration
 # =============================================================================
-# Build Library Type Configuration
-# =============================================================================
-# Controls whether libraries are built as shared or static.
-# XSigma requires shared libraries (DLLs on Windows) for proper functionality.
+# Controls whether libraries are built as shared or static. XSigma requires shared libraries (DLLs
+# on Windows) for proper functionality.
 # =============================================================================
 
-# Build Shared Libraries Flag
-# Controls whether libraries are built as shared (ON) or static (OFF).
+# Build Shared Libraries Flag Controls whether libraries are built as shared (ON) or static (OFF).
 # XSigma requires shared libraries for proper DLL export/import handling.
 option(XSIGMA_BUILD_SHARED_LIBS "Build shared libraries" ON)
 set(BUILD_SHARED_LIBS ${XSIGMA_BUILD_SHARED_LIBS})
@@ -244,9 +226,8 @@ include(helper_macros)
 add_library(xsigmabuild INTERFACE)
 add_library(XSigma::build ALIAS xsigmabuild)
 
-# Include optimization modules AFTER xsigmabuild target is created
-# These modules apply flags to the xsigmabuild target to affect only XSigma targets,
-# not third-party dependencies
+# Include optimization modules AFTER xsigmabuild target is created These modules apply flags to the
+# xsigmabuild target to affect only XSigma targets, not third-party dependencies
 include(linker)
 
 # Include sanitizer configuration after xsigmabuild target is created
@@ -257,7 +238,7 @@ target_compile_features(xsigmabuild INTERFACE cxx_std_${XSIGMA_CXX_STANDARD})
 
 # Apply common linker flags
 if(DEFINED XSIGMA_LINKER_FLAGS_COMMON)
-    target_link_options(xsigmabuild INTERFACE ${XSIGMA_LINKER_FLAGS_COMMON})
+  target_link_options(xsigmabuild INTERFACE ${XSIGMA_LINKER_FLAGS_COMMON})
 endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${XSIGMA_BINARY_DIR}/bin")
@@ -266,8 +247,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${XSIGMA_BINARY_DIR}/lib")
 
 # Configure testing
 if(XSIGMA_BUILD_TESTING STREQUAL "ON" OR XSIGMA_BUILD_TESTING STREQUAL "WANT")
-    enable_testing()
-    include(CTest)
+  enable_testing()
+  include(CTest)
 endif()
 
 # Add third-party dependencies
@@ -276,10 +257,10 @@ add_subdirectory(ThirdParty)
 # Add subdirectories
 add_subdirectory(Library/Core)
 
-# Apply Valgrind timeout multiplier to all tests (if Valgrind is enabled)
-# This must be called after all tests are registered
+# Apply Valgrind timeout multiplier to all tests (if Valgrind is enabled) This must be called after
+# all tests are registered
 if(XSIGMA_ENABLE_VALGRIND AND XSIGMA_BUILD_TESTING)
-    xsigma_apply_valgrind_timeouts()
+  xsigma_apply_valgrind_timeouts()
 endif()
 
 # Include summary at the end
