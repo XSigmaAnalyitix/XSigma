@@ -1,31 +1,35 @@
+# ============================================================================= XSigma
+# Include-What-You-Use (IWYU) Configuration Module
 # =============================================================================
-# XSigma Include-What-You-Use (IWYU) Configuration Module
-# =============================================================================
-# This module configures include-what-you-use for analyzing include dependencies.
-# It detects unnecessary includes and suggests improvements to include structure.
+# This module configures include-what-you-use for analyzing include dependencies. It detects
+# unnecessary includes and suggests improvements to include structure.
 # =============================================================================
 
 # Include guard to prevent multiple inclusions
 include_guard(GLOBAL)
 
-# Include-What-You-Use Analysis Flag
-# Controls whether IWYU include analysis is enabled during compilation.
-# When enabled, analyzes include dependencies and suggests optimizations.
-# Helps maintain clean and efficient include hierarchies.
+# Include-What-You-Use Analysis Flag Controls whether IWYU include analysis is enabled during
+# compilation. When enabled, analyzes include dependencies and suggests optimizations. Helps
+# maintain clean and efficient include hierarchies.
 option(XSIGMA_ENABLE_IWYU "Enable include-what-you-use (iwyu) support." OFF)
 mark_as_advanced(XSIGMA_ENABLE_IWYU)
 
 if(NOT XSIGMA_ENABLE_IWYU)
-    return()
+  return()
 endif()
 
-find_program(XSIGMA_IWYU_EXECUTABLE NAMES include-what-you-use iwyu
-    PATHS "C:/Program Files (x86)/include-what-you-use/bin"
-          "C:/Program Files/include-what-you-use/bin"
-    PATH_SUFFIXES bin)
+find_program(
+  XSIGMA_IWYU_EXECUTABLE
+  NAMES include-what-you-use iwyu
+  PATHS "C:/Program Files (x86)/include-what-you-use/bin"
+        "C:/Program Files/include-what-you-use/bin"
+  PATH_SUFFIXES bin
+)
 
 if(NOT XSIGMA_IWYU_EXECUTABLE)
-    message(FATAL_ERROR "IWYU requested but not found!
+  message(
+    FATAL_ERROR
+      "IWYU requested but not found!
 
 Please install include-what-you-use:
 
@@ -35,94 +39,104 @@ Please install include-what-you-use:
   - Windows: Download from https://include-what-you-use.org/
   - Manual: Build from https://github.com/include-what-you-use/include-what-you-use
 
-Or set XSIGMA_ENABLE_IWYU=OFF to disable include analysis")
+Or set XSIGMA_ENABLE_IWYU=OFF to disable include analysis"
+  )
 else()
-    message(STATUS "IWYU found: ${XSIGMA_IWYU_EXECUTABLE}")
+  message(STATUS "IWYU found: ${XSIGMA_IWYU_EXECUTABLE}")
 
-    # Check if mapping file exists
-    set(IWYU_MAPPING_FILE "${CMAKE_SOURCE_DIR}/Scripts/iwyu/iwyu_exclusion.imp")
-    if(EXISTS "${IWYU_MAPPING_FILE}")
-        message(STATUS "Using IWYU mapping file: ${IWYU_MAPPING_FILE}")
-    else()
-        message(WARNING "IWYU mapping file not found: ${IWYU_MAPPING_FILE}")
-        set(IWYU_MAPPING_FILE "")
+  # Check if mapping file exists
+  set(IWYU_MAPPING_FILE "${CMAKE_SOURCE_DIR}/Scripts/iwyu/iwyu_exclusion.imp")
+  if(EXISTS "${IWYU_MAPPING_FILE}")
+    message(STATUS "Using IWYU mapping file: ${IWYU_MAPPING_FILE}")
+  else()
+    message(WARNING "IWYU mapping file not found: ${IWYU_MAPPING_FILE}")
+    set(IWYU_MAPPING_FILE "")
+  endif()
+
+  # Create IWYU log directory
+  set(IWYU_LOG_DIR "${CMAKE_BINARY_DIR}/iwyu_logs")
+  file(MAKE_DIRECTORY "${IWYU_LOG_DIR}")
+
+  # Set IWYU log file path
+  set(IWYU_LOG_FILE "${CMAKE_BINARY_DIR}/iwyu.log")
+
+  # Prepare IWYU arguments with crash-resistant settings
+  set(XSIGMA_IWYU_ARGS
+      "-Xiwyu"
+      "--cxx17ns"
+      "-Xiwyu"
+      "--max_line_length=120"
+      "-Xiwyu"
+      "--verbose=1"
+      "-Xiwyu"
+      "--comment_style=short"
+      "-Xiwyu"
+      "--error=0"
+      "-Xiwyu"
+      "--no_fwd_decls"
+      "-Xiwyu"
+      "--quoted_includes_first"
+  )
+
+  # Add system root for macOS to help IWYU find system headers
+  if(APPLE)
+    execute_process(
+      COMMAND xcrun --show-sdk-path OUTPUT_VARIABLE MACOS_SDK_PATH OUTPUT_STRIP_TRAILING_WHITESPACE
+                                                                   ERROR_QUIET
+    )
+    if(MACOS_SDK_PATH)
+      list(APPEND XSIGMA_IWYU_ARGS "-isysroot" "${MACOS_SDK_PATH}")
+      message(STATUS "IWYU using macOS SDK: ${MACOS_SDK_PATH}")
     endif()
+  endif()
 
-    # Create IWYU log directory
-    set(IWYU_LOG_DIR "${CMAKE_BINARY_DIR}/iwyu_logs")
-    file(MAKE_DIRECTORY "${IWYU_LOG_DIR}")
+  if(IWYU_MAPPING_FILE)
+    list(PREPEND XSIGMA_IWYU_ARGS "-Xiwyu" "--mapping_file=${IWYU_MAPPING_FILE}")
+  endif()
 
-    # Set IWYU log file path
-    set(IWYU_LOG_FILE "${CMAKE_BINARY_DIR}/iwyu.log")
+  # Create configure detector script path
+  set(CONFIGURE_DETECTOR_SCRIPT "${CMAKE_SOURCE_DIR}/Scripts/iwyu/iwyu_configure_detector.py")
 
-    # Prepare IWYU arguments with crash-resistant settings
-    set(XSIGMA_IWYU_ARGS
-        "-Xiwyu" "--cxx17ns"
-        "-Xiwyu" "--max_line_length=120"
-        "-Xiwyu" "--verbose=1"
-        "-Xiwyu" "--comment_style=short"
-        "-Xiwyu" "--error=0"
-        "-Xiwyu" "--no_fwd_decls"
-        "-Xiwyu" "--quoted_includes_first"
+  message(STATUS "IWYU will analyze include dependencies for XSigma targets only")
+  message(STATUS "IWYU analysis will be logged to: ${IWYU_LOG_FILE}")
+
+  # Run configure header detection analysis
+  if(EXISTS "${CONFIGURE_DETECTOR_SCRIPT}")
+    message(STATUS "Running XSigma configure header detection...")
+    execute_process(
+      COMMAND
+        ${CMAKE_COMMAND} -E env python "${CONFIGURE_DETECTOR_SCRIPT}" "${CMAKE_SOURCE_DIR}/Library"
+        --log-file "${CMAKE_BINARY_DIR}/configure_detection.log" --report-file
+        "${CMAKE_BINARY_DIR}/configure_analysis_report.txt" --recursive
+      WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+      RESULT_VARIABLE CONFIGURE_DETECTION_RESULT
+      OUTPUT_VARIABLE CONFIGURE_DETECTION_OUTPUT
+      ERROR_VARIABLE CONFIGURE_DETECTION_ERROR
     )
 
-    # Add system root for macOS to help IWYU find system headers
-    if(APPLE)
-        execute_process(
-            COMMAND xcrun --show-sdk-path
-            OUTPUT_VARIABLE MACOS_SDK_PATH
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            ERROR_QUIET
-        )
-        if(MACOS_SDK_PATH)
-            list(APPEND XSIGMA_IWYU_ARGS "-isysroot" "${MACOS_SDK_PATH}")
-            message(STATUS "IWYU using macOS SDK: ${MACOS_SDK_PATH}")
-        endif()
-    endif()
-
-    if(IWYU_MAPPING_FILE)
-        list(PREPEND XSIGMA_IWYU_ARGS "-Xiwyu" "--mapping_file=${IWYU_MAPPING_FILE}")
-    endif()
-
-    # Create configure detector script path
-    set(CONFIGURE_DETECTOR_SCRIPT "${CMAKE_SOURCE_DIR}/Scripts/iwyu/iwyu_configure_detector.py")
-
-    message(STATUS "IWYU will analyze include dependencies for XSigma targets only")
-    message(STATUS "IWYU analysis will be logged to: ${IWYU_LOG_FILE}")
-
-    # Run configure header detection analysis
-    if(EXISTS "${CONFIGURE_DETECTOR_SCRIPT}")
-        message(STATUS "Running XSigma configure header detection...")
-        execute_process(
-            COMMAND ${CMAKE_COMMAND} -E env python "${CONFIGURE_DETECTOR_SCRIPT}"
-                    "${CMAKE_SOURCE_DIR}/Library"
-                    --log-file "${CMAKE_BINARY_DIR}/configure_detection.log"
-                    --report-file "${CMAKE_BINARY_DIR}/configure_analysis_report.txt"
-                    --recursive
-            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-            RESULT_VARIABLE CONFIGURE_DETECTION_RESULT
-            OUTPUT_VARIABLE CONFIGURE_DETECTION_OUTPUT
-            ERROR_VARIABLE CONFIGURE_DETECTION_ERROR
-        )
-
-        if(CONFIGURE_DETECTION_RESULT EQUAL 0)
-            message(STATUS "Configure header detection completed successfully")
-        else()
-            message(WARNING "Configure header detection found issues - check ${CMAKE_BINARY_DIR}/configure_analysis_report.txt")
-        endif()
-
-        message(STATUS "Configure analysis report: ${CMAKE_BINARY_DIR}/configure_analysis_report.txt")
+    if(CONFIGURE_DETECTION_RESULT EQUAL 0)
+      message(STATUS "Configure header detection completed successfully")
     else()
-        message(WARNING "Configure detector script not found: ${CONFIGURE_DETECTOR_SCRIPT}")
+      message(
+        WARNING
+          "Configure header detection found issues - check ${CMAKE_BINARY_DIR}/configure_analysis_report.txt"
+      )
     endif()
+
+    message(STATUS "Configure analysis report: ${CMAKE_BINARY_DIR}/configure_analysis_report.txt")
+  else()
+    message(WARNING "Configure detector script not found: ${CONFIGURE_DETECTOR_SCRIPT}")
+  endif()
 endif()
 
 # Function to create IWYU wrapper script for enhanced logging
 function(xsigma_create_iwyu_wrapper target_name)
-    set(WRAPPER_SCRIPT "${CMAKE_BINARY_DIR}/iwyu_wrapper_${target_name}.cmake")
+  set(WRAPPER_SCRIPT "${CMAKE_BINARY_DIR}/iwyu_wrapper_${target_name}.cmake")
 
-    # Create wrapper script that logs IWYU output
-    file(WRITE "${WRAPPER_SCRIPT}" "
+  # Create wrapper script that logs IWYU output
+  file(
+    WRITE "${WRAPPER_SCRIPT}"
+    "
 # IWYU Wrapper Script for ${target_name}
 # This script captures IWYU output and appends it to the main log file
 
@@ -163,41 +177,46 @@ file(APPEND \"\${IWYU_LOG_FILE}\" \"=== End Analysis ===\\n\\n\")
 if(IWYU_RESULT)
     message(FATAL_ERROR \"IWYU failed with exit code \${IWYU_RESULT}\")
 endif()
-")
+"
+  )
 
-    return()
+  return()
 endfunction()
 
 # Function to apply IWYU to a target
 function(xsigma_apply_iwyu target_name)
-    if(NOT XSIGMA_ENABLE_IWYU OR NOT XSIGMA_IWYU_EXECUTABLE)
-        return()
-    endif()
+  if(NOT XSIGMA_ENABLE_IWYU OR NOT XSIGMA_IWYU_EXECUTABLE)
+    return()
+  endif()
 
-    # Skip third-party targets
-    get_target_property(target_source_dir ${target_name} SOURCE_DIR)
-    if(target_source_dir MATCHES ".*/ThirdParty/.*" OR
-       target_source_dir MATCHES ".*/third_party/.*" OR
-       target_source_dir MATCHES ".*/3rdparty/.*")
-        message(STATUS "Skipping IWYU for third-party target: ${target_name}")
-        return()
-    endif()
+  # Skip third-party targets
+  get_target_property(target_source_dir ${target_name} SOURCE_DIR)
+  if(target_source_dir MATCHES ".*/ThirdParty/.*" OR target_source_dir MATCHES ".*/third_party/.*"
+     OR target_source_dir MATCHES ".*/3rdparty/.*"
+  )
+    message(STATUS "Skipping IWYU for third-party target: ${target_name}")
+    return()
+  endif()
 
-    # Initialize the log file with basic header information
-    if(NOT EXISTS "${IWYU_LOG_FILE}")
-        file(WRITE "${IWYU_LOG_FILE}" "# IWYU Analysis Log for XSigma Project\n")
-        file(APPEND "${IWYU_LOG_FILE}" "# Generated by CMake IWYU integration\n")
-        file(APPEND "${IWYU_LOG_FILE}" "# IWYU executable: ${XSIGMA_IWYU_EXECUTABLE}\n")
-        file(APPEND "${IWYU_LOG_FILE}" "# Mapping file: ${IWYU_MAPPING_FILE}\n")
-        file(APPEND "${IWYU_LOG_FILE}" "# Use Scripts/run_iwyu_analysis.py for detailed analysis\n")
-        file(APPEND "${IWYU_LOG_FILE}" "\n")
-    endif()
+  # Initialize the log file with basic header information
+  if(NOT EXISTS "${IWYU_LOG_FILE}")
+    file(WRITE "${IWYU_LOG_FILE}" "# IWYU Analysis Log for XSigma Project\n")
+    file(APPEND "${IWYU_LOG_FILE}" "# Generated by CMake IWYU integration\n")
+    file(APPEND "${IWYU_LOG_FILE}" "# IWYU executable: ${XSIGMA_IWYU_EXECUTABLE}\n")
+    file(APPEND "${IWYU_LOG_FILE}" "# Mapping file: ${IWYU_MAPPING_FILE}\n")
+    file(APPEND "${IWYU_LOG_FILE}" "# Use Scripts/run_iwyu_analysis.py for detailed analysis\n")
+    file(APPEND "${IWYU_LOG_FILE}" "\n")
+  endif()
 
-    # Apply IWYU to the target with crash-resistant settings
-    set_target_properties(${target_name} PROPERTIES
-        CXX_INCLUDE_WHAT_YOU_USE "${XSIGMA_IWYU_EXECUTABLE};${XSIGMA_IWYU_ARGS};-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH;-D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING"
-        C_INCLUDE_WHAT_YOU_USE "${XSIGMA_IWYU_EXECUTABLE};${XSIGMA_IWYU_ARGS};-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
-    )
+  # Apply IWYU to the target with crash-resistant settings
+  set_target_properties(
+    ${target_name}
+    PROPERTIES
+      CXX_INCLUDE_WHAT_YOU_USE
+      "${XSIGMA_IWYU_EXECUTABLE};${XSIGMA_IWYU_ARGS};-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH;-D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING"
+      C_INCLUDE_WHAT_YOU_USE
+      "${XSIGMA_IWYU_EXECUTABLE};${XSIGMA_IWYU_ARGS};-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
+  )
 
-    message(STATUS "Applied IWYU to target: ${target_name}")
+  message(STATUS "Applied IWYU to target: ${target_name}")
 endfunction()

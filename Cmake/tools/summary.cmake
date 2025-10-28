@@ -1,9 +1,8 @@
+# ============================================================================= XSigma Configuration
+# Summary Module
 # =============================================================================
-# XSigma Configuration Summary Module
-# =============================================================================
-# This module provides a function to print a comprehensive summary of the
-# XSigma build configuration, including compiler settings, enabled features,
-# and optional dependencies.
+# This module provides a function to print a comprehensive summary of the XSigma build
+# configuration, including compiler settings, enabled features, and optional dependencies.
 # =============================================================================
 
 # Include guard to prevent multiple inclusions
@@ -12,34 +11,33 @@ include_guard(GLOBAL)
 # Prints accumulated XSigma configuration summary
 function(print_configuration_summary)
   message("")
-  message( "******** Summary ********")
-  message( "General:")
-  message( "  CMake version         : ${CMAKE_VERSION}")
-  message( "  CMake command         : ${CMAKE_COMMAND}")
-  message( "  System                : ${CMAKE_SYSTEM_NAME}")
-  message( "  C++ compiler          : ${CMAKE_CXX_COMPILER}")
-  message( "  C++ compiler id       : ${XSIGMA_COMPILER_ID}")
-  message( "  C++ compiler version  : ${CMAKE_CXX_COMPILER_VERSION}")
-  message( "  C++ standard          : ${XSIGMA_CXX_STANDARD}")
-  message( "  Compiler cache        : ${XSIGMA_CACHE_TYPE}")
-  message( "  Compiler cache program: ${XSIGMA_CACHE_PROGRAM}")
-  message( "  CXX flags             : ${CMAKE_CXX_FLAGS}")
-  message( "  Shared LD flags       : ${CMAKE_SHARED_LINKER_FLAGS}")
-  message( "  Static LD flags       : ${CMAKE_STATIC_LINKER_FLAGS}")
-  message( "  Module LD flags       : ${CMAKE_MODULE_LINKER_FLAGS}")
-  message( "  Build type            : ${CMAKE_BUILD_TYPE}")
+  message("******** Summary ********")
+  message("General:")
+  message("  CMake version         : ${CMAKE_VERSION}")
+  message("  CMake command         : ${CMAKE_COMMAND}")
+  message("  System                : ${CMAKE_SYSTEM_NAME}")
+  message("  C++ compiler          : ${CMAKE_CXX_COMPILER}")
+  message("  C++ compiler id       : ${XSIGMA_COMPILER_ID}")
+  message("  C++ compiler version  : ${CMAKE_CXX_COMPILER_VERSION}")
+  message("  C++ standard          : ${XSIGMA_CXX_STANDARD}")
+  message("  Compiler cache        : ${XSIGMA_CACHE_TYPE}")
+  message("  Compiler cache program: ${XSIGMA_CACHE_PROGRAM}")
+  message("  CXX flags             : ${CMAKE_CXX_FLAGS}")
+  message("  Shared LD flags       : ${CMAKE_SHARED_LINKER_FLAGS}")
+  message("  Static LD flags       : ${CMAKE_STATIC_LINKER_FLAGS}")
+  message("  Module LD flags       : ${CMAKE_MODULE_LINKER_FLAGS}")
+  message("  Build type            : ${CMAKE_BUILD_TYPE}")
   get_directory_property(tmp DIRECTORY ${PROJECT_SOURCE_DIR} COMPILE_DEFINITIONS)
-  message( "  Compile definitions   : ${tmp}")
-  message( "  CMAKE_PREFIX_PATH     : ${CMAKE_PREFIX_PATH}")
-  message( "  CMAKE_INSTALL_PREFIX  : ${CMAKE_INSTALL_PREFIX}")
-  message( "")
+  message("  Compile definitions   : ${tmp}")
+  message("  CMAKE_PREFIX_PATH     : ${CMAKE_PREFIX_PATH}")
+  message("  CMAKE_INSTALL_PREFIX  : ${CMAKE_INSTALL_PREFIX}")
+  message("")
   if(XSIGMA_ENABLE_IWYU)
     message("  IWYU:")
     message("    IWYU executable     : ${XSIGMA_IWYU_EXECUTABLE}")
     message("    IWYU arguments      : ${XSIGMA_IWYU_ARGS}")
   endif()
-  get_directory_property(tmp DIRECTORY ${PROJECT_SOURCE_DIR}
-                                       COMPILE_DEFINITIONS)
+  get_directory_property(tmp DIRECTORY ${PROJECT_SOURCE_DIR} COMPILE_DEFINITIONS)
   message("  CMake generator       : ${CMAKE_GENERATOR}")
   message("  CMake build tool      : ${CMAKE_BUILD_TOOL}")
   message("  CMake install prefix  : ${CMAKE_INSTALL_PREFIX}")
@@ -106,8 +104,7 @@ function(print_configuration_summary)
     message("    CUDA version        : ${CUDA_VERSION}")
     message("    CUDA library        : ${XSIGMA_CUDA_LIBRARIES}")
     message("    CUDA compiler       : ${CMAKE_CUDA_COMPILER}")
-    message(
-      "    CUDA includes       : ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
+    message("    CUDA includes       : ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
   else()
     message("  CUDA                  : OFF")
   endif()

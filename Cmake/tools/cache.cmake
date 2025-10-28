@@ -1,41 +1,34 @@
+# ============================================================================= XSigma Build Speed
+# Optimization Configuration Module
 # =============================================================================
-# XSigma Build Speed Optimization Configuration Module
-# =============================================================================
-# Enables configurable compiler caching (ccache, sccache, buildcache) and faster
-# linkers for improved build performance. Supports GCC, Clang, and MSVC on Linux,
-# macOS, and Windows.
+# Enables configurable compiler caching (ccache, sccache, buildcache) and faster linkers for
+# improved build performance. Supports GCC, Clang, and MSVC on Linux, macOS, and Windows.
 #
-# NOTE: This module applies faster linker configuration ONLY to the xsigmabuild
-# interface target, ensuring that third-party dependencies are not affected by
-# linker choices.
+# NOTE: This module applies faster linker configuration ONLY to the xsigmabuild interface target,
+# ensuring that third-party dependencies are not affected by linker choices.
 # =============================================================================
 
 # Include guard to prevent multiple inclusions
 include_guard(GLOBAL)
 
-# Build Speed Optimization Flag
-# Controls whether caching and faster linker optimizations are enabled.
-# When enabled, uses the selected cache type and selects faster linkers when available.
+# Build Speed Optimization Flag Controls whether caching and faster linker optimizations are
+# enabled. When enabled, uses the selected cache type and selects faster linkers when available.
 option(XSIGMA_ENABLE_CACHE "Enable compiler caching and faster linker for faster builds" ON)
 mark_as_advanced(XSIGMA_ENABLE_CACHE)
 
-# Cache Type Configuration
-# Selects which compiler cache to use: none, ccache, sccache, or buildcache
-set(XSIGMA_CACHE_TYPE
-    "none"
-    CACHE STRING "Compiler cache type to use. Options: none, ccache, sccache, buildcache")
-set_property(
-    CACHE XSIGMA_CACHE_TYPE
-    PROPERTY STRINGS
-             none
-             ccache
-             sccache
-             buildcache)
+# Cache Type Configuration Selects which compiler cache to use: none, ccache, sccache, or buildcache
+set(XSIGMA_CACHE_TYPE "none"
+    CACHE STRING "Compiler cache type to use. Options: none, ccache, sccache, buildcache"
+)
+set_property(CACHE XSIGMA_CACHE_TYPE PROPERTY STRINGS none ccache sccache buildcache)
 mark_as_advanced(XSIGMA_CACHE_TYPE)
 
 # Validate cache type
 if(NOT XSIGMA_CACHE_TYPE MATCHES "^(none|ccache|sccache|buildcache)$")
-    message(FATAL_ERROR "Invalid XSIGMA_CACHE_TYPE: ${XSIGMA_CACHE_TYPE}. Valid options are: none, ccache, sccache, buildcache")
+  message(
+    FATAL_ERROR
+      "Invalid XSIGMA_CACHE_TYPE: ${XSIGMA_CACHE_TYPE}. Valid options are: none, ccache, sccache, buildcache"
+  )
 endif()
 
 if(NOT XSIGMA_ENABLE_CACHE)
@@ -45,19 +38,18 @@ endif()
 
 message(STATUS "Configuring build speed optimizations with cache type: ${XSIGMA_CACHE_TYPE}")
 
-# Note: When LTO is enabled, faster linkers (especially gold) may run out of memory
-# during the linking phase. In such cases, it's better to use the default linker.
-# This is a known limitation of LTO with certain linkers.
+# Note: When LTO is enabled, faster linkers (especially gold) may run out of memory during the
+# linking phase. In such cases, it's better to use the default linker. This is a known limitation of
+# LTO with certain linkers.
 
-# ============================================================================
-# Compiler Cache Configuration
+# ============================================================================ Compiler Cache
+# Configuration
 # ============================================================================
 #
-# NOTE: Compiler caches are configured globally as compiler launchers because they
-# need to intercept all compilation commands, including those for third-party
-# dependencies. This is safe because caches only cache compilation results and
-# don't affect the actual compilation flags or behavior.
-SET(XSIGMA_CACHE_PROGRAM "none")
+# NOTE: Compiler caches are configured globally as compiler launchers because they need to intercept
+# all compilation commands, including those for third-party dependencies. This is safe because
+# caches only cache compilation results and don't affect the actual compilation flags or behavior.
+set(XSIGMA_CACHE_PROGRAM "none")
 if(XSIGMA_CACHE_TYPE STREQUAL "ccache")
   find_program(CCACHE_PROGRAM ccache)
   set(XSIGMA_CACHE_PROGRAM ${CCACHE_PROGRAM})
@@ -96,7 +88,9 @@ elseif(XSIGMA_CACHE_TYPE STREQUAL "buildcache")
     set(CMAKE_C_COMPILER_LAUNCHER "${BUILDCACHE_PROGRAM}" CACHE STRING "C compiler launcher")
     set(CMAKE_CXX_COMPILER_LAUNCHER "${BUILDCACHE_PROGRAM}" CACHE STRING "CXX compiler launcher")
     if(XSIGMA_ENABLE_CUDA)
-      set(CMAKE_CUDA_COMPILER_LAUNCHER "${BUILDCACHE_PROGRAM}" CACHE STRING "CUDA compiler launcher")
+      set(CMAKE_CUDA_COMPILER_LAUNCHER "${BUILDCACHE_PROGRAM}" CACHE STRING
+                                                                     "CUDA compiler launcher"
+      )
     endif()
     message(STATUS "buildcache enabled for C/C++ compilation")
   else()

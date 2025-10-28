@@ -1,8 +1,8 @@
+# ============================================================================= XSigma Helper Macros
+# Module
 # =============================================================================
-# XSigma Helper Macros Module
-# =============================================================================
-# This module provides utility macros for common CMake operations used throughout
-# the XSigma build system, including source file filtering and organization.
+# This module provides utility macros for common CMake operations used throughout the XSigma build
+# system, including source file filtering and organization.
 # =============================================================================
 
 # Include guard to prevent multiple inclusions
@@ -20,7 +20,8 @@ macro(xsigma_module_create_filters name)
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cxx"
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.hxx")
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.hxx"
+  )
 
   set(includ_dirs)
   foreach(_source IN ITEMS ${_source_list})
@@ -47,6 +48,5 @@ macro(xsigma_module_remove_underscores name_in name_out)
   string(REPLACE ";" "" name_splited_merge ${the_list})
   string(SUBSTRING ${name_splited_merge} 0 1 first_letter)
   string(TOLOWER ${first_letter} first_letter)
-  string(REGEX REPLACE "^.(.*)" "${first_letter}\\1" ${name_out}
-                       "${name_splited_merge}")
+  string(REGEX REPLACE "^.(.*)" "${first_letter}\\1" ${name_out} "${name_splited_merge}")
 endmacro()

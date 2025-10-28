@@ -1,19 +1,19 @@
+# ============================================================================= XSigma Faster Linker
+# Configuration Module
 # =============================================================================
-# XSigma Faster Linker Configuration Module
-# =============================================================================
-# Configures faster linker selection for improved build performance.
-# Supports mold, lld, gold, and lld-link linkers across different platforms.
+# Configures faster linker selection for improved build performance. Supports mold, lld, gold, and
+# lld-link linkers across different platforms.
 #
-# NOTE: Linker flags are applied ONLY to the xsigmabuild interface target.
-# This ensures that third-party dependencies use their default linker settings
-# and are not affected by XSigma's linker choices.
+# NOTE: Linker flags are applied ONLY to the xsigmabuild interface target. This ensures that
+# third-party dependencies use their default linker settings and are not affected by XSigma's linker
+# choices.
 # =============================================================================
 
 # Include guard to prevent multiple inclusions
 include_guard(GLOBAL)
 
 if(XSIGMA_ENABLE_COVERAGE)
-    return()
+  return()
 endif()
 # Determine which linker to use based on platform and compiler
 set(XSIGMA_LINKER_CHOICE "default" CACHE STRING "Linker to use: default, lld, mold, gold, lld-link")
@@ -26,8 +26,8 @@ function(xsigma_find_linker)
   set(LINKER_NAME "")
   set(LINKER_FLAGS)
 
-  # Skip faster linker selection if LTO is enabled
-  # LTO with faster linkers (especially gold) can cause out-of-memory errors
+  # Skip faster linker selection if LTO is enabled LTO with faster linkers (especially gold) can
+  # cause out-of-memory errors
   if(CMAKE_INTERPROCEDURAL_OPTIMIZATION)
     message("LTO is enabled - skipping faster linker configuration to avoid memory issues")
     return()
@@ -100,12 +100,12 @@ function(xsigma_find_linker)
   # Apply linker flags to xsigmabuild target if found
   if(LINKER_FOUND)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      # For Clang and GCC, use -fuse-ld flag
-      # Extract just the linker name (e.g., "mold" from "/usr/bin/mold")
+      # For Clang and GCC, use -fuse-ld flag Extract just the linker name (e.g., "mold" from
+      # "/usr/bin/mold")
       get_filename_component(LINKER_BASENAME "${LINKER_NAME}" NAME)
 
-      # Convert linker names to -fuse-ld compatible format
-      # ld.gold -> gold, ld.lld -> lld, mold -> mold
+      # Convert linker names to -fuse-ld compatible format ld.gold -> gold, ld.lld -> lld, mold ->
+      # mold
       string(REPLACE "ld." "" LINKER_SHORTNAME "${LINKER_BASENAME}")
       set(LINKER_FLAGS "-fuse-ld=${LINKER_SHORTNAME}")
 
@@ -128,31 +128,15 @@ endfunction()
 # Call the linker detection function
 xsigma_find_linker()
 
-# if(XSIGMA_ENABLE_GOLD_LINKER)
-#   if(USE_DISTRIBUTED AND USE_MPI)
-#     # Same issue as here with default MPI on Ubuntu
-#     # https://bugs.launchpad.net/ubuntu/+source/deal.ii/+bug/1841577
-#     message(WARNING "Refusing to use gold when USE_MPI=1")
-#   else()
-#     execute_process(
-#       COMMAND "${CMAKE_C_COMPILER}" -fuse-ld=gold -Wl,--version
-#       ERROR_QUIET
-#       OUTPUT_VARIABLE LD_VERSION)
-#     if(NOT "${LD_VERSION}" MATCHES "GNU gold")
-#       message(
-#         WARNING
-#           "USE_GOLD_LINKER was set but ld.gold isn't available, turning it off"
-#       )
-#       set(USE_GOLD_LINKER OFF)
-#     else()
-#       message("ld.gold is available, using it to link")
-#       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
-#       set(CMAKE_SHARED_LINKER_FLAGS
-#           "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold")
-#       set(CMAKE_MODULE_LINKER_FLAGS
-#           "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=gold")
-#     endif()
-#   endif()
+# if(XSIGMA_ENABLE_GOLD_LINKER) if(USE_DISTRIBUTED AND USE_MPI) # Same issue as here with default
+# MPI on Ubuntu # https://bugs.launchpad.net/ubuntu/+source/deal.ii/+bug/1841577 message(WARNING
+# "Refusing to use gold when USE_MPI=1") else() execute_process( COMMAND "${CMAKE_C_COMPILER}"
+# -fuse-ld=gold -Wl,--version ERROR_QUIET OUTPUT_VARIABLE LD_VERSION) if(NOT "${LD_VERSION}" MATCHES
+# "GNU gold") message( WARNING "USE_GOLD_LINKER was set but ld.gold isn't available, turning it off"
+# ) set(USE_GOLD_LINKER OFF) else() message("ld.gold is available, using it to link")
+# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
+# set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold")
+# set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=gold") endif() endif()
 # endif()
 # ============================================================================
 # Summary

@@ -15,53 +15,36 @@ include(CMakePushCheckState)
 if(EXISTS "/etc/os-release")
   execute_process(
     COMMAND "sed" "-ne" "s/^ID=\\([a-z]\\+\\)$/\\1/p" "/etc/os-release"
-    OUTPUT_VARIABLE OS_RELEASE_ID
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
+    OUTPUT_VARIABLE OS_RELEASE_ID OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
   execute_process(
-    COMMAND "sed" "-ne" "s/^VERSION_ID=\"\\([0-9\\.]\\+\\)\"$/\\1/p"
-            "/etc/os-release"
-    OUTPUT_VARIABLE OS_RELEASE_VERSION_ID
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
+    COMMAND "sed" "-ne" "s/^VERSION_ID=\"\\([0-9\\.]\\+\\)\"$/\\1/p" "/etc/os-release"
+    OUTPUT_VARIABLE OS_RELEASE_VERSION_ID OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
   if(OS_RELEASE_ID STREQUAL "ubuntu")
     if(OS_RELEASE_VERSION_ID VERSION_GREATER "17.04")
       if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "6.0.0")
-          message(
-            FATAL_ERROR
-              "Please use GCC 6 or higher on Ubuntu 17.04 and higher.")
+          message(FATAL_ERROR "Please use GCC 6 or higher on Ubuntu 17.04 and higher.")
         endif()
       endif()
     endif()
   endif()
 endif()
 
-# if(NOT INTERN_BUILD_MOBILE)
-#   # ---[ Check that our programs run.  This is different from the native CMake
-#   # compiler check, which just tests if the program compiles and links.  This is
-#   # important because with ASAN you might need to help the compiled library find
-#   # some dynamic libraries.
-#   cmake_push_check_state(RESET)
-#   check_c_source_runs(
-#     "
-#   int main() { return 0; }
-#   " COMPILER_WORKS)
-#   if(NOT COMPILER_WORKS)
-#     # Force cmake to retest next time around
-#     unset(COMPILER_WORKS CACHE)
-#     message(
-#       FATAL_ERROR
-#         "Could not run a simple program built with your compiler. "
-#         "If you are trying to use -fsanitize=address, make sure "
-#         "libasan is properly installed on your system (you can confirm "
-#         "if the problem is this by attempting to build and run a "
-#         "small program.)")
-#   endif()
-#   cmake_pop_check_state()
-# endif()
+# if(NOT INTERN_BUILD_MOBILE) # ---[ Check that our programs run.  This is different from the native
+# CMake # compiler check, which just tests if the program compiles and links.  This is # important
+# because with ASAN you might need to help the compiled library find # some dynamic libraries.
+# cmake_push_check_state(RESET) check_c_source_runs( " int main() { return 0; } " COMPILER_WORKS)
+# if(NOT COMPILER_WORKS) # Force cmake to retest next time around unset(COMPILER_WORKS CACHE)
+# message( FATAL_ERROR "Could not run a simple program built with your compiler. " "If you are
+# trying to use -fsanitize=address, make sure " "libasan is properly installed on your system (you
+# can confirm " "if the problem is this by attempting to build and run a " "small program.)")
+# endif() cmake_pop_check_state() endif()
 
 # ---[ Apply platform-specific optimization flags after compiler validation
 if(COMMAND xsigma_apply_platform_flags)
-    xsigma_apply_platform_flags()
+  xsigma_apply_platform_flags()
 endif()
 
 # ---[ Check if std::exception_ptr is supported.
@@ -78,7 +61,8 @@ check_cxx_source_compiles(
           eptr = std::current_exception();
       }
     }"
-  XSIGMA_EXCEPTION_PTR_SUPPORTED)
+  XSIGMA_EXCEPTION_PTR_SUPPORTED
+)
 
 if(XSIGMA_EXCEPTION_PTR_SUPPORTED)
   message("--std::exception_ptr is supported.")
@@ -98,7 +82,8 @@ if(XSIGMA_ENABLE_NUMA)
 
     int main(int argc, char** argv) {
     }"
-    XSIGMA_IS_NUMA_AVAILABLE)
+    XSIGMA_IS_NUMA_AVAILABLE
+  )
   if(XSIGMA_IS_NUMA_AVAILABLE)
     message("--NUMA is available")
   else()
@@ -111,14 +96,12 @@ else()
   set(XSIGMA_ENABLE_NUMA OFF)
 endif()
 
-# ---[ Check if we want to turn off deprecated warning due to glog. Note(jiayq):
-# on ubuntu 14.04, the default glog install uses ext/hash_set that is being
-# deprecated. As a result, we will test if this is the environment we are
-# building under. If yes, we will turn off deprecation warning for a cleaner
-# build output. cmake_push_check_state(RESET) set(CMAKE_REQUIRED_FLAGS
-# "-std=c++17") check_cxx_source_compiles( "#include <glog/stl_logging.h> int
-# main(int argc, char** argv) { return 0; }"
-# XSIGMA_NEED_TO_TURN_OFF_DEPRECATION_WARNING FAIL_REGEX
+# ---[ Check if we want to turn off deprecated warning due to glog. Note(jiayq): on ubuntu 14.04,
+# the default glog install uses ext/hash_set that is being deprecated. As a result, we will test if
+# this is the environment we are building under. If yes, we will turn off deprecation warning for a
+# cleaner build output. cmake_push_check_state(RESET) set(CMAKE_REQUIRED_FLAGS "-std=c++17")
+# check_cxx_source_compiles( "#include <glog/stl_logging.h> int main(int argc, char** argv) { return
+# 0; }" XSIGMA_NEED_TO_TURN_OFF_DEPRECATION_WARNING FAIL_REGEX
 # ".*-Wno-deprecated.*")
 
 if(NOT XSIGMA_NEED_TO_TURN_OFF_DEPRECATION_WARNING AND NOT MSVC)
@@ -142,7 +125,8 @@ if(NOT INTERN_BUILD_MOBILE)
         _mm_add_ps(a, a);
         return 0;
       }"
-    XSIGMA_COMPILER_SUPPORTS_SSE_EXTENSIONS)
+    XSIGMA_COMPILER_SUPPORTS_SSE_EXTENSIONS
+  )
   if(XSIGMA_COMPILER_SUPPORTS_SSE_EXTENSIONS)
     message("--Current compiler supports sse extension.")
     if(XSIGMA_VECTORIZATION_TYPE STREQUAL "sse")
@@ -169,7 +153,8 @@ if(NOT INTERN_BUILD_MOBILE)
         _mm256_add_ps (a,a);
         return 0;
       }"
-    XSIGMA_COMPILER_SUPPORTS_AVX_EXTENSIONS)
+    XSIGMA_COMPILER_SUPPORTS_AVX_EXTENSIONS
+  )
   if(XSIGMA_COMPILER_SUPPORTS_AVX_EXTENSIONS)
     message("--Current compiler supports avx extension.")
     if(XSIGMA_VECTORIZATION_TYPE STREQUAL "avx")
@@ -198,7 +183,8 @@ if(NOT INTERN_BUILD_MOBILE)
         _mm256_extract_epi64(x, 0); // we rely on this in our AVX2 code
         return 0;
       }"
-    XSIGMA_COMPILER_SUPPORTS_AVX2_EXTENSIONS)
+    XSIGMA_COMPILER_SUPPORTS_AVX2_EXTENSIONS
+  )
   if(XSIGMA_COMPILER_SUPPORTS_AVX2_EXTENSIONS)
     message("--Current compiler supports avx2 extension.")
     if(XSIGMA_VECTORIZATION_TYPE STREQUAL "avx2")
@@ -212,8 +198,7 @@ if(NOT INTERN_BUILD_MOBILE)
   # ---[ Check if the compiler has AVX512 support.
   cmake_push_check_state(RESET)
   if(MSVC)
-    set(CMAKE_REQUIRED_FLAGS
-        "/D__AVX512F__ /D__AVX512DQ__ /D__AVX512VL__ /D__F16C__")
+    set(CMAKE_REQUIRED_FLAGS "/D__AVX512F__ /D__AVX512DQ__ /D__AVX512VL__ /D__F16C__")
   else()
     set(CMAKE_REQUIRED_FLAGS "-mavx512f -mavx512dq -mavx512vl -mf16c")
   endif()
@@ -238,7 +223,8 @@ if(NOT INTERN_BUILD_MOBILE)
        __mmask16 m = _mm512_cmp_epi32_mask(a, a, _MM_CMPINT_EQ);
        __m512i r = _mm512_andnot_si512(a, a);
      }"
-    XSIGMA_COMPILER_SUPPORTS_AVX512_EXTENSIONS)
+    XSIGMA_COMPILER_SUPPORTS_AVX512_EXTENSIONS
+  )
   if(XSIGMA_COMPILER_SUPPORTS_AVX512_EXTENSIONS)
     message("--Current compiler supports avx512f extension.")
     if(XSIGMA_VECTORIZATION_TYPE STREQUAL "avx512")
@@ -271,7 +257,8 @@ if(NOT INTERN_BUILD_MOBILE)
         a = _mm_fmadd_ps(a,b,b);
         return 0;
       }"
-    XSIGMA_COMPILER_SUPPORTS_FMA_EXTENSIONS)
+    XSIGMA_COMPILER_SUPPORTS_FMA_EXTENSIONS
+  )
   if(XSIGMA_COMPILER_SUPPORTS_FMA_EXTENSIONS)
     message("--Current compiler supports fma extension.")
     set(VECTORIZATION_COMPILER_FLAGS "${CMAKE_REQUIRED_FLAGS}")
@@ -296,16 +283,14 @@ if(NOT INTERN_BUILD_MOBILE)
         b = _mm256_tanh_ps(a);
         return 0;
       }"
-    XSIGMA_COMPILER_SUPPORTS_SVML_EXTENSIONS)
+    XSIGMA_COMPILER_SUPPORTS_SVML_EXTENSIONS
+  )
 
   if(NOT XSIGMA_COMPILER_SUPPORTS_SVML_EXTENSIONS AND VECTORIZATION)
-    message(
-      "--Current compiler does not supports SVML functoins. Turn ON XSIGMA_ENABLE_SVML"
-    )
+    message("--Current compiler does not supports SVML functoins. Turn ON XSIGMA_ENABLE_SVML")
     set(XSIGMA_ENABLE_SVML 1)
   else()
-    message(
-      "--Current compiler supports SVML functoins. Turn OFF XSIGMA_ENABLE_SVML")
+    message("--Current compiler supports SVML functoins. Turn OFF XSIGMA_ENABLE_SVML")
   endif()
   cmake_pop_check_state()
 endif()
@@ -315,9 +300,8 @@ if(USE_NATIVE_ARCH)
   if(COMPILER_SUPPORTS_MARCH_NATIVE)
     add_definitions("-march=native")
   else()
-    message(
-      WARNING
-        "Your compiler does not support -march=native. Turn off this warning "
-        "by setting -DUSE_NATIVE_ARCH=OFF.")
+    message(WARNING "Your compiler does not support -march=native. Turn off this warning "
+                    "by setting -DUSE_NATIVE_ARCH=OFF."
+    )
   endif()
 endif()
