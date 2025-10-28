@@ -464,7 +464,7 @@ allocator_bfc::ChunkHandle allocator_bfc::AllocateChunk()
     if (free_chunks_list_ != kInvalidChunkHandle)
     {
         ChunkHandle const h = free_chunks_list_;
-        Chunk*            c = ChunkFromHandle(h);  //NOLINT
+        const Chunk* c = ChunkFromHandle(h);
         free_chunks_list_   = c->next;
         return h;
     }
