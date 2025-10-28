@@ -205,6 +205,8 @@ exclude_patterns = [
     '.vscode/**',
     '.git/**',
     '.augment/**',
+    'Library/**/Testing/**/*.cxx',
+
 ]
 init_command = [
     'python3',
