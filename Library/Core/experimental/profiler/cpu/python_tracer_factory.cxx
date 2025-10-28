@@ -33,10 +33,10 @@ limitations under the License.
 ==============================================================================*/
 #include <memory>  // for unique_ptr
 
-#include "common/macros.h"                                  // for XSIGMA_UNUSED
 #include "experimental/profiler/core/profiler_factory.h"    // for register_profiler_factory
 #include "experimental/profiler/core/profiler_interface.h"  // for profiler_interface
 #include "experimental/profiler/core/profiler_options.h"    // for profile_options
+#include "logging/logger.h"
 
 namespace xsigma
 {
@@ -45,14 +45,36 @@ namespace profiler
 namespace
 {
 
-std::unique_ptr<profiler_interface> CreatePythonTracer(
-    XSIGMA_UNUSED const profile_options& profile_options)
+class python_tracer_stub : public profiler_interface
 {
-    /*PythonTracerOptions options;
-    options.enable_trace_python_function = profile_options.python_tracer_level();
-    options.enable_python_traceme        = profile_options.host_tracer_level();
-    return CreatePythonTracer(options);*/
-    return nullptr;
+public:
+    explicit python_tracer_stub(int level) : requested_level_(level) {}
+
+    bool start() override
+    {
+        XSIGMA_LOG_WARNING(
+            "Python tracing requested at level {}, but Python integration is not available in "
+            "this build.",
+            requested_level_);
+        return true;
+    }
+
+    bool stop() override { return true; }
+
+    bool collect_data(x_space* /*space*/) override { return true; }
+
+private:
+    int requested_level_;
+};
+
+std::unique_ptr<profiler_interface> CreatePythonTracer(const profile_options& profile_options)
+{
+    int const requested_level = static_cast<int>(profile_options.python_tracer_level());
+    if (requested_level <= 0)
+    {
+        return nullptr;
+    }
+    return std::make_unique<python_tracer_stub>(requested_level);
 }
 
 auto register_python_tracer_factory = []

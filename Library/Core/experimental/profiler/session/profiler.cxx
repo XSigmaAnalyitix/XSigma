@@ -32,6 +32,7 @@
 #include "profiler.h"
 
 #include <atomic>
+#include <array>
 #include <chrono>
 #include <cstdint>
 #include <memory>
@@ -57,7 +58,7 @@ namespace xsigma
 {
 
 // Static thread-local storage for current scope (DLL-compatible implementation)
-xsigma::profiler_scope_data* profiler_session::thread_current_scope_ = nullptr;
+thread_local xsigma::profiler_scope_data* profiler_session::thread_current_scope_ = nullptr;
 
 // Static current session management with atomic operations for thread safety
 static std::atomic<xsigma::profiler_session*> g_current_session{nullptr};
@@ -72,6 +73,7 @@ void timing_stats::add_sample(double time_ms)
     max_time_ = std::max(time_ms, max_time_);
     total_time_ += time_ms;
     ++sample_count_;
+    samples_.push_back(time_ms);
 }
 
 void timing_stats::calculate_statistics()
@@ -83,14 +85,41 @@ void timing_stats::calculate_statistics()
 
     mean_time_ = total_time_ / sample_count_;
 
-    // For standard deviation calculation, we would need to store all samples
-    // This is a simplified implementation that could be enhanced with sample storage
-    std_deviation_ = 0.0;  // Would need sample storage for proper calculation
+    // Compute variance/standard deviation using collected samples
+    double variance_sum = 0.0;
+    for (double sample : samples_)
+    {
+        double const diff = sample - mean_time_;
+        variance_sum += diff * diff;
+    }
+    std_deviation_ = sample_count_ > 0 ? std::sqrt(variance_sum / sample_count_) : 0.0;
 
     // Initialize percentiles vector if needed (25th, 50th, 75th, 90th, 95th, 99th)
-    if (percentiles_.empty())
+    std::array<double, 6> percentile_targets = {25.0, 50.0, 75.0, 90.0, 95.0, 99.0};
+    std::vector<double>   sorted_samples     = samples_;
+    std::sort(sorted_samples.begin(), sorted_samples.end());
+    percentiles_.assign(percentile_targets.begin(), percentile_targets.end());
+    for (size_t i = 0; i < percentile_targets.size(); ++i)
     {
-        percentiles_.resize(6, 0.0);
+        double const percentile = percentile_targets[i];
+        if (sorted_samples.empty())
+        {
+            percentiles_[i] = 0.0;
+            continue;
+        }
+        double const index = (percentile / 100.0) * (sorted_samples.size() - 1);
+        auto const   lower = static_cast<size_t>(std::floor(index));
+        auto const   upper = static_cast<size_t>(std::ceil(index));
+        if (lower == upper)
+        {
+            percentiles_[i] = sorted_samples[lower];
+        }
+        else
+        {
+            double const weight = index - lower;
+            percentiles_[i] =
+                (sorted_samples[lower] * (1.0 - weight)) + (sorted_samples[upper] * weight);
+        }
     }
 }
 
@@ -103,6 +132,7 @@ void timing_stats::reset()
     std_deviation_ = 0.0;
     sample_count_  = 0;
     percentiles_.clear();
+    samples_.clear();
 }
 
 //=============================================================================
@@ -179,6 +209,8 @@ bool profiler_session::start()
         statistical_analyzer_->start_analysis();
     }
 
+    set_current_session(this);
+
     return true;
 }
 
@@ -209,6 +241,11 @@ bool profiler_session::stop()
     if (options_.enable_statistical_analysis_ && statistical_analyzer_)
     {
         statistical_analyzer_->stop_analysis();
+    }
+
+    if (current_session() == this)
+    {
+        set_current_session(nullptr);
     }
 
     return true;
@@ -368,7 +405,9 @@ void profiler_scope::start()
         // Start memory tracking for this scope
         if (session_->options_.enable_memory_tracking_ && session_->memory_tracker_)
         {
-            data_->memory_stats_ = session_->memory_tracker_->get_current_stats();
+            start_memory_stats_ = session_->memory_tracker_->get_current_stats();
+            data_->memory_stats_ = start_memory_stats_;
+            has_start_memory_stats_ = true;
         }
     }
 }
@@ -394,9 +433,14 @@ void profiler_scope::stop()
         if (session_->options_.enable_memory_tracking_ && session_->memory_tracker_)
         {
             auto current_stats = session_->memory_tracker_->get_current_stats();
+            data_->memory_stats_ = current_stats;
             data_->memory_stats_.delta_since_start_ =
-                static_cast<int64_t>(current_stats.current_usage_) -
-                static_cast<int64_t>(data_->memory_stats_.current_usage_);
+                has_start_memory_stats_
+                    ? static_cast<int64_t>(current_stats.current_usage_) -
+                          static_cast<int64_t>(start_memory_stats_.current_usage_)
+                    : static_cast<int64_t>(current_stats.current_usage_);
+            data_->memory_stats_.peak_usage_ =
+                (std::max)(current_stats.peak_usage_, start_memory_stats_.peak_usage_);
         }
 
         // Add timing sample to statistical analyzer

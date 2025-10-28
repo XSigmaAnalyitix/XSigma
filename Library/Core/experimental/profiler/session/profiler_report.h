@@ -138,24 +138,24 @@ private:
     bool        include_hierarchical_data_ = true;
 
     // Helper methods for report generation
-    std::string        format_duration(double duration_ns) const;
-    std::string        format_memory_size(size_t bytes) const;
+    std::string format_duration(double duration_ns) const;
+    std::string format_memory_size(size_t bytes) const;
+    std::string format_memory_delta(int64_t bytes) const;
     static std::string format_percentage(double value);
     static std::string format_thread_id(const std::thread::id& thread_id);
 
+    std::string format_double(double value) const;
     // Section generators
-    static std::string generate_header_section();
-    static std::string generate_summary_section();
-    static std::string generate_timing_section();
-    static std::string generate_memory_section();
-    static std::string generate_hierarchical_section();
-    static std::string generate_statistical_section();
-    static std::string generate_thread_section();
+    std::string generate_header_section() const;
+    std::string generate_summary_section() const;
+    std::string generate_timing_section() const;
+    std::string generate_memory_section() const;
+    std::string generate_hierarchical_section() const;
+    std::string generate_statistical_section() const;
+    std::string generate_thread_section() const;
 
     // JSON helpers
     static std::string escape_json_string(const std::string& str);
-    static std::string generate_json_object(const std::string& content);
-    static std::string generate_json_array(const std::vector<std::string>& items);
 
     // CSV helpers
     static std::string escape_csv_field(const std::string& field);
@@ -168,12 +168,14 @@ private:
     static std::string generate_xml_attribute(const std::string& name, const std::string& value);
 
     // Hierarchical data processing
-    static void process_scope_data_recursive(
-        const xsigma::profiler_scope_data& scope, std::stringstream& ss, int indent = 0);
-    static void process_scope_data_json_recursive(
-        const xsigma::profiler_scope_data& scope, std::stringstream& ss, int indent = 0);
-    static void process_scope_data_csv_recursive(
-        const xsigma::profiler_scope_data& scope, std::vector<std::string>& rows);
+    void process_scope_data_recursive(
+        const xsigma::profiler_scope_data& scope, std::stringstream& ss, int indent = 0) const;
+    void process_scope_data_json_recursive(
+        const xsigma::profiler_scope_data& scope, std::stringstream& ss, int indent = 0) const;
+    void process_scope_data_csv_recursive(
+        const xsigma::profiler_scope_data& scope,
+        std::vector<std::string>&          rows,
+        int                                 depth = 0) const;
 };
 
 // Report builder with fluent interface

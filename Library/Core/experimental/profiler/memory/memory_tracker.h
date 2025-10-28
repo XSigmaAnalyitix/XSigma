@@ -41,8 +41,11 @@
 
 #include <atomic>
 #include <cstdint>
+#include <cstdlib>
+#include <limits>
 #include <memory>
 #include <mutex>
+#include <new>
 #include <vector>
 
 #include "experimental/profiler/session/profiler.h"
@@ -340,6 +343,11 @@ public:
         using other = tracked_allocator<U>;
     };
 
+    size_type max_size() const noexcept
+    {
+        return std::numeric_limits<size_type>::max() / (sizeof(T) == 0 ? 1 : sizeof(T));
+    }
+
     /**
      * @brief Construct allocator with optional memory tracker
      * @param tracker Pointer to memory tracker (nullptr to disable tracking)
@@ -363,8 +371,18 @@ public:
      */
     pointer allocate(size_type n)
     {
+        if (n > max_size())
+        {
+            throw std::bad_array_new_length();
+        }
+
         pointer ptr = static_cast<pointer>(std::malloc(n * sizeof(T)));
-        if (tracker_ && ptr)
+        if (ptr == nullptr)
+        {
+            throw std::bad_alloc();
+        }
+
+        if (tracker_ != nullptr)
         {
             tracker_->track_allocation(ptr, n * sizeof(T), "tracked_allocator");
         }

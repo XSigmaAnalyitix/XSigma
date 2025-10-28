@@ -44,7 +44,9 @@
 #include <windows.h>
 #endif
 
+#include <algorithm>
 #include <atomic>
+#include <cmath>
 #include <chrono>
 #include <limits>
 #include <memory>
@@ -54,6 +56,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "common/macros.h"
 #include "experimental/profiler/core/profiler_interface.h"
 #include "logging/tracing/traceme.h"
 
@@ -191,6 +194,9 @@ struct timing_stats
 
     /// Percentile values: 25th, 50th, 75th, 90th, 95th, 99th
     std::vector<double> percentiles_;
+
+    /// Raw timing samples collected for this scope
+    std::vector<double> samples_;
 
     /**
      * @brief Add a new timing sample to the statistics
@@ -342,6 +348,37 @@ public:
     XSIGMA_API void print_report() const;
 
     /**
+     * @brief Retrieve the session start timestamp (nanoseconds)
+     * @return Start timestamp
+     */
+    std::chrono::high_resolution_clock::time_point session_start_time() const
+    {
+        return start_time_;
+    }
+
+    /**
+     * @brief Retrieve the session end timestamp (nanoseconds)
+     * @return End timestamp
+     */
+    std::chrono::high_resolution_clock::time_point session_end_time() const
+    {
+        return end_time_;
+    }
+
+    /**
+     * @brief Access the memory tracker in read-only form
+     */
+    const xsigma::memory_tracker* memory_tracker_ptr() const { return memory_tracker_.get(); }
+
+    /**
+     * @brief Access the statistical analyzer in read-only form
+     */
+    const xsigma::statistical_analyzer* statistical_analyzer_ptr() const
+    {
+        return statistical_analyzer_.get();
+    }
+
+    /**
      * @brief Get the current active profiling session (thread-safe)
      * @return Pointer to current session or nullptr if none active
      */
@@ -390,7 +427,7 @@ private:
     xsigma::profiler_scope_data* current_scope_ = nullptr;
 
     /// Thread-local storage for current scope (DLL-compatible implementation)
-    static xsigma::profiler_scope_data* thread_current_scope_;
+    static thread_local xsigma::profiler_scope_data* thread_current_scope_;
 
     /**
      * @brief Initialize all profiler components
@@ -640,6 +677,12 @@ private:
     /// Pointer to the profiler session managing this scope
     xsigma::profiler_session* session_;
 
+    /// Memory stats snapshot captured at scope start (for delta computation)
+    xsigma::memory_stats start_memory_stats_;
+
+    /// Whether start_memory_stats_ contains valid data
+    bool has_start_memory_stats_ = false;
+
     /// Flag indicating if profiling has been started
     bool started_ = false;
 
@@ -654,8 +697,8 @@ private:
  * Creates a profiler_scope object that will automatically profile
  * the current code block until the scope ends.
  */
-#define XSIGMA_PROFILE_SCOPE(name)
-//xsigma::profiler_scope _xsigma_profile_scope(name)
+#define XSIGMA_PROFILE_SCOPE(name)                                                                \
+    XSIGMA_UNUSED xsigma::profiler_scope XSIGMA_ANONYMOUS_VARIABLE(_xsigma_profile_scope_)(name)
 
 /**
  * @brief Convenience macro for profiling the current function
@@ -663,7 +706,9 @@ private:
  * Creates a profiler_scope object using the current function name
  * as the scope name. Profiles the entire function execution.
  */
-#define XSIGMA_PROFILE_FUNCTION() xsigma::profiler_scope _xsigma_profile_scope(__FUNCTION__)
+#define XSIGMA_PROFILE_FUNCTION()                                                                 \
+    XSIGMA_UNUSED                                                                                 \
+    xsigma::profiler_scope XSIGMA_ANONYMOUS_VARIABLE(_xsigma_profile_scope_)(__FUNCTION__)
 
 /**
  * @brief Convenience macro for profiling a specific code block
@@ -672,8 +717,9 @@ private:
  * Creates a profiler_scope that profiles only the code within
  * the immediately following block or statement.
  */
-#define XSIGMA_PROFILE_BLOCK(name)                                                             \
-    for (bool _xsigma_profile_once = true; _xsigma_profile_once; _xsigma_profile_once = false) \
-        if (xsigma::profiler_scope _xsigma_profile_scope##name(name); true)
+#define XSIGMA_PROFILE_BLOCK(name)                                                                \
+    if (XSIGMA_UNUSED                                                                             \
+            xsigma::profiler_scope XSIGMA_ANONYMOUS_VARIABLE(_xsigma_profile_scope_)(name);        \
+        true)
 
 }  // namespace xsigma

@@ -35,6 +35,7 @@ limitations under the License.
 
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -42,6 +43,7 @@ limitations under the License.
 #include "experimental/profiler/core/profiler_collection.h"
 #include "experimental/profiler/core/profiler_interface.h"
 #include "experimental/profiler/exporters/xplane/xplane.h"
+#include "experimental/profiler/exporters/xplane/xplane_builder.h"
 #include "experimental/profiler/exporters/xplane/xplane_schema.h"
 #include "experimental/profiler/exporters/xplane/xplane_utils.h"
 #include "logging/logger.h"
@@ -134,9 +136,54 @@ bool host_tracer::collect_data(XSIGMA_UNUSED x_space* space)
     {
         return true;
     }
-    //XSIGMA_UNUSED xplane* plane = find_or_add_mutable_plane_with_name(space, kHostThreadsPlaneName);
+    xplane* plane = find_or_add_mutable_plane_with_name(space, kHostThreadsPlaneName);
+    if (plane == nullptr)
+    {
+        XSIGMA_LOG_ERROR("Failed to obtain host threads XPlane.");
+        return false;
+    }
 
-    //convert_complete_events_to_xplane(start_timestamp_ns_, std::exchange(events_, {}), plane);
+    xplane_builder plane_builder(plane);
+    plane_builder.SetName(kHostThreadsPlaneName);
+
+    for (const auto& thread_events : events_)
+    {
+        if (thread_events.events.empty())
+        {
+            continue;
+        }
+
+        xline_builder line_builder =
+            plane_builder.get_or_create_line(static_cast<int64_t>(thread_events.thread.tid));
+
+        std::string const line_name = !thread_events.thread.name.empty()
+                                          ? thread_events.thread.name
+                                          : ("Thread " + std::to_string(thread_events.thread.tid));
+        line_builder.SetNameIfEmpty(line_name);
+        line_builder.SetDisplayNameIfEmpty(line_name);
+
+        if (line_builder.NumEvents() == 0)
+        {
+            line_builder.SetTimestampNs(start_timestamp_ns_);
+        }
+
+        line_builder.ReserveEvents(thread_events.events.size());
+
+        for (const auto& event : thread_events.events)
+        {
+            if (!event.is_complete() || event.end_time <= event.start_time)
+            {
+                continue;
+            }
+
+            xevent_metadata* metadata = plane_builder.get_or_create_event_metadata(event.name);
+            xevent_builder   event_builder = line_builder.add_event(*metadata);
+            event_builder.SetTimestampNs(event.start_time);
+            event_builder.SetDurationNs(event.end_time - event.start_time);
+        }
+    }
+
+    events_.clear();
 
     return true;
 }

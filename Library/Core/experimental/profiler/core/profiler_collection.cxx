@@ -50,31 +50,40 @@ profiler_collection::profiler_collection(std::vector<std::unique_ptr<profiler_in
 
 bool profiler_collection::start()
 {
-    bool status = false;
+    bool status = true;
     for (auto& profiler : profilers_)
     {
-        status = profiler->start();
+        if (!profiler->start())
+        {
+            status = false;
+        }
     }
     return status;
 }
 
 bool profiler_collection::stop()
 {
-    bool status = false;
+    bool status = true;
     for (auto& profiler : profilers_)
     {
-        status = profiler->stop();
+        if (!profiler->stop())
+        {
+            status = false;
+        }
     }
     return status;
 }
 
 bool profiler_collection::collect_data(x_space* space)
 {
-    bool status = false;
+    bool status = true;
 
     for (auto& profiler : profilers_)
     {
-        status = profiler->collect_data(space);
+        if (!profiler->collect_data(space))
+        {
+            status = false;
+        }
     }
     profilers_.clear();  // data has been collected
     return status;
