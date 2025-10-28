@@ -2,4 +2,3 @@ colorama
 psutil
 cmake-format
 numpy
-

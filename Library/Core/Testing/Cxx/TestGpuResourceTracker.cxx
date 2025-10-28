@@ -43,10 +43,10 @@ XSIGMATEST(GpuResourceTracker, provides_singleton_instance)
     // Test singleton access
     auto& tracker1 = gpu_resource_tracker::instance();
     auto& tracker2 = gpu_resource_tracker::instance();
-    
+
     // Should be the same instance
     EXPECT_EQ(&tracker1, &tracker2);
-    
+
     XSIGMA_LOG_INFO("GPU resource tracker singleton test passed");
 }
 
@@ -56,7 +56,7 @@ XSIGMATEST(GpuResourceTracker, provides_singleton_instance)
 XSIGMATEST(GpuResourceTracker, configures_leak_detection)
 {
     auto& tracker = gpu_resource_tracker::instance();
-    
+
     // Test leak detection configuration
     leak_detection_config config;
     config.enabled = true;
@@ -64,12 +64,12 @@ XSIGMATEST(GpuResourceTracker, configures_leak_detection)
     config.max_call_stack_depth = 5;
     config.enable_periodic_scan = false;  // Disable for testing
     config.enable_auto_reporting = true;
-    
+
     try
     {
         tracker.configure_leak_detection(config);
         EXPECT_TRUE(true);  // Configuration succeeded
-        
+
         XSIGMA_LOG_INFO("GPU resource tracker leak detection configuration test passed");
     }
     catch (const std::exception& e)
@@ -84,21 +84,21 @@ XSIGMATEST(GpuResourceTracker, configures_leak_detection)
 XSIGMATEST(GpuResourceTracker, tracks_allocations)
 {
     auto& tracker = gpu_resource_tracker::instance();
-    
+
     // Enable tracking
     tracker.set_tracking_enabled(true);
     EXPECT_TRUE(tracker.is_tracking_enabled());
-    
+
     // Create test allocation (using host memory for simplicity)
     void* test_ptr = malloc(1024);
     EXPECT_NE(nullptr, test_ptr);
-    
+
     // Track allocation
     size_t alloc_id = tracker.track_allocation(
         test_ptr, 1024, device_enum::CPU, 0, "test_allocation");
-    
+
     EXPECT_GT(alloc_id, 0);
-    
+
     // Get allocation info
     auto alloc_info = tracker.get_allocation_info(test_ptr);
     if (alloc_info)
@@ -109,14 +109,14 @@ XSIGMATEST(GpuResourceTracker, tracks_allocations)
         EXPECT_TRUE(alloc_info->is_active);
         EXPECT_EQ("test_allocation", alloc_info->tag);
     }
-    
+
     // Track deallocation
     bool dealloc_tracked = tracker.track_deallocation(test_ptr);
     EXPECT_TRUE(dealloc_tracked);
-    
+
     // Clean up
     free(test_ptr);
-    
+
     XSIGMA_LOG_INFO("GPU resource tracker allocation tracking test passed");
 }
 
@@ -126,28 +126,28 @@ XSIGMATEST(GpuResourceTracker, tracks_allocations)
 XSIGMATEST(GpuResourceTracker, records_memory_access)
 {
     auto& tracker = gpu_resource_tracker::instance();
-    
+
     // Create and track allocation
     void* test_ptr = malloc(512);
     EXPECT_NE(nullptr, test_ptr);
-    
+
     size_t alloc_id = tracker.track_allocation(
         test_ptr, 512, device_enum::CPU, 0, "access_test");
-    
+
     // Record memory access
     tracker.record_access(test_ptr);
-    
+
     // Get allocation info to check access was recorded
     auto alloc_info = tracker.get_allocation_info(test_ptr);
     if (alloc_info)
     {
         EXPECT_GT(alloc_info->access_count.load(), 0);
     }
-    
+
     // Clean up
     tracker.track_deallocation(test_ptr);
     free(test_ptr);
-    
+
     XSIGMA_LOG_INFO("GPU resource tracker memory access recording test passed");
 }
 
@@ -157,10 +157,10 @@ XSIGMATEST(GpuResourceTracker, records_memory_access)
 XSIGMATEST(GpuResourceTracker, provides_resource_statistics)
 {
     auto& tracker = gpu_resource_tracker::instance();
-    
+
     // Get initial statistics
     auto initial_stats = tracker.get_statistics();
-    
+
     // Create multiple allocations
     std::vector<void*> test_ptrs;
     for (int i = 0; i < 3; ++i)
@@ -172,7 +172,7 @@ XSIGMATEST(GpuResourceTracker, provides_resource_statistics)
             tracker.track_allocation(ptr, 256 * (i + 1), device_enum::CPU, 0, "stats_test");
         }
     }
-    
+
     // Get updated statistics
     auto updated_stats = tracker.get_statistics();
     if (!test_ptrs.empty())
@@ -180,14 +180,14 @@ XSIGMATEST(GpuResourceTracker, provides_resource_statistics)
         EXPECT_GE(updated_stats.total_allocations, initial_stats.total_allocations);
         //EXPECT_GE(updated_stats.current_bytes_in_use, initial_stats.current_bytes_in_use);
     }
-    
+
     // Clean up
     for (void* ptr : test_ptrs)
     {
         tracker.track_deallocation(ptr);
         free(ptr);
     }
-    
+
     XSIGMA_LOG_INFO("GPU resource tracker statistics test passed");
 }
 
@@ -197,19 +197,19 @@ XSIGMATEST(GpuResourceTracker, provides_resource_statistics)
 XSIGMATEST(GpuResourceTracker, retrieves_active_allocations)
 {
     auto& tracker = gpu_resource_tracker::instance();
-    
+
     // Create test allocations
     void* ptr1 = malloc(128);
     void* ptr2 = malloc(256);
-    
+
     if (ptr1 && ptr2)
     {
         tracker.track_allocation(ptr1, 128, device_enum::CPU, 0, "active_test_1");
         tracker.track_allocation(ptr2, 256, device_enum::CPU, 0, "active_test_2");
-        
+
         // Get active allocations
         auto active_allocations = tracker.get_active_allocations();
-        
+
         // Should have at least our test allocations
         bool found_ptr1 = false, found_ptr2 = false;
         for (const auto& alloc : active_allocations)
@@ -217,17 +217,17 @@ XSIGMATEST(GpuResourceTracker, retrieves_active_allocations)
             if (alloc->ptr == ptr1) found_ptr1 = true;
             if (alloc->ptr == ptr2) found_ptr2 = true;
         }
-        
+
         EXPECT_TRUE(found_ptr1);
         EXPECT_TRUE(found_ptr2);
-        
+
         // Clean up
         tracker.track_deallocation(ptr1);
         tracker.track_deallocation(ptr2);
         free(ptr1);
         free(ptr2);
     }
-    
+
     XSIGMA_LOG_INFO("GPU resource tracker active allocations test passed");
 }
 
@@ -237,21 +237,21 @@ XSIGMATEST(GpuResourceTracker, retrieves_active_allocations)
 XSIGMATEST(GpuResourceTracker, retrieves_allocations_by_tag)
 {
     auto& tracker = gpu_resource_tracker::instance();
-    
+
     // Create allocations with specific tags
     void* ptr1 = malloc(64);
     void* ptr2 = malloc(128);
     void* ptr3 = malloc(192);
-    
+
     if (ptr1 && ptr2 && ptr3)
     {
         tracker.track_allocation(ptr1, 64, device_enum::CPU, 0, "tag_test");
         tracker.track_allocation(ptr2, 128, device_enum::CPU, 0, "tag_test");
         tracker.track_allocation(ptr3, 192, device_enum::CPU, 0, "other_tag");
-        
+
         // Get allocations by tag
         auto tag_allocations = tracker.get_allocations_by_tag("tag_test");
-        
+
         // Should find exactly 2 allocations with "tag_test"
         int found_count = 0;
         for (const auto& alloc : tag_allocations)
@@ -261,9 +261,9 @@ XSIGMATEST(GpuResourceTracker, retrieves_allocations_by_tag)
                 found_count++;
             }
         }
-        
+
         EXPECT_GE(found_count, 2);  // At least our 2 test allocations
-        
+
         // Clean up
         tracker.track_deallocation(ptr1);
         tracker.track_deallocation(ptr2);
@@ -272,7 +272,7 @@ XSIGMATEST(GpuResourceTracker, retrieves_allocations_by_tag)
         free(ptr2);
         free(ptr3);
     }
-    
+
     XSIGMA_LOG_INFO("GPU resource tracker allocations by tag test passed");
 }
 
@@ -282,19 +282,19 @@ XSIGMATEST(GpuResourceTracker, retrieves_allocations_by_tag)
 XSIGMATEST(GpuResourceTracker, retrieves_allocations_by_device)
 {
     auto& tracker = gpu_resource_tracker::instance();
-    
+
     // Create allocations on different devices
     void* cpu_ptr = malloc(256);
     void* gpu_ptr = malloc(512);  // Simulated GPU allocation
-    
+
     if (cpu_ptr && gpu_ptr)
     {
         tracker.track_allocation(cpu_ptr, 256, device_enum::CPU, 0, "cpu_alloc");
         tracker.track_allocation(gpu_ptr, 512, device_enum::CUDA, 0, "gpu_alloc");
-        
+
         // Get CPU allocations
         auto cpu_allocations = tracker.get_allocations_by_device(device_enum::CPU, 0);
-        
+
         // Should find at least our CPU allocation
         bool found_cpu = false;
         for (const auto& alloc : cpu_allocations)
@@ -305,12 +305,12 @@ XSIGMATEST(GpuResourceTracker, retrieves_allocations_by_device)
                 break;
             }
         }
-        
+
         EXPECT_TRUE(found_cpu);
-        
+
         // Get CUDA allocations
         auto cuda_allocations = tracker.get_allocations_by_device(device_enum::CUDA, 0);
-        
+
         // Should find at least our CUDA allocation
         bool found_cuda = false;
         for (const auto& alloc : cuda_allocations)
@@ -321,16 +321,16 @@ XSIGMATEST(GpuResourceTracker, retrieves_allocations_by_device)
                 break;
             }
         }
-        
+
         EXPECT_TRUE(found_cuda);
-        
+
         // Clean up
         tracker.track_deallocation(cpu_ptr);
         tracker.track_deallocation(gpu_ptr);
         free(cpu_ptr);
         free(gpu_ptr);
     }
-    
+
     XSIGMA_LOG_INFO("GPU resource tracker allocations by device test passed");
 }
 
@@ -340,27 +340,27 @@ XSIGMATEST(GpuResourceTracker, retrieves_allocations_by_device)
 XSIGMATEST(GpuResourceTracker, detects_memory_leaks)
 {
     auto& tracker = gpu_resource_tracker::instance();
-    
+
     // Configure leak detection with very short threshold for testing
     leak_detection_config config;
     config.enabled = true;
     config.leak_threshold_ms = 100.0;  // 100ms threshold
     config.enable_periodic_scan = false;
-    
+
     tracker.configure_leak_detection(config);
-    
+
     // Create allocation and don't deallocate it
     void* leak_ptr = malloc(1024);
     if (leak_ptr)
     {
         tracker.track_allocation(leak_ptr, 1024, device_enum::CPU, 0, "potential_leak");
-        
+
         // Wait longer than leak threshold
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
-        
+
         // Detect leaks
         auto leaks = tracker.detect_leaks();
-        
+
         // Should detect our allocation as a potential leak
         bool found_leak = false;
         for (const auto& leak : leaks)
@@ -371,14 +371,14 @@ XSIGMATEST(GpuResourceTracker, detects_memory_leaks)
                 break;
             }
         }
-        
+
         EXPECT_TRUE(found_leak);
-        
+
         // Clean up
         tracker.track_deallocation(leak_ptr);
         free(leak_ptr);
     }
-    
+
     XSIGMA_LOG_INFO("GPU resource tracker leak detection test passed");
 }
 
@@ -388,36 +388,36 @@ XSIGMATEST(GpuResourceTracker, detects_memory_leaks)
 XSIGMATEST(GpuResourceTracker, generates_resource_reports)
 {
     auto& tracker = gpu_resource_tracker::instance();
-    
+
     // Create some allocations for reporting
     void* ptr1 = malloc(512);
     void* ptr2 = malloc(1024);
-    
+
     if (ptr1 && ptr2)
     {
         tracker.track_allocation(ptr1, 512, device_enum::CPU, 0, "report_test_1");
         tracker.track_allocation(ptr2, 1024, device_enum::CPU, 0, "report_test_2");
-        
+
         // Generate basic report
         std::string basic_report = tracker.generate_report(false);
         EXPECT_FALSE(basic_report.empty());
-        
+
         // Generate detailed report with call stacks
         std::string detailed_report = tracker.generate_report(true);
         EXPECT_FALSE(detailed_report.empty());
         EXPECT_GE(detailed_report.length(), basic_report.length());
-        
+
         // Generate leak report
         std::string leak_report = tracker.generate_leak_report();
         EXPECT_FALSE(leak_report.empty());
-        
+
         // Clean up
         tracker.track_deallocation(ptr1);
         tracker.track_deallocation(ptr2);
         free(ptr1);
         free(ptr2);
     }
-    
+
     XSIGMA_LOG_INFO("GPU resource tracker report generation test passed");
 }
 
@@ -427,19 +427,19 @@ XSIGMATEST(GpuResourceTracker, generates_resource_reports)
 XSIGMATEST(GpuResourceTracker, controls_tracking_state)
 {
     auto& tracker = gpu_resource_tracker::instance();
-    
+
     // Test enabling tracking
     tracker.set_tracking_enabled(true);
     EXPECT_TRUE(tracker.is_tracking_enabled());
-    
+
     // Test disabling tracking
     tracker.set_tracking_enabled(false);
     EXPECT_FALSE(tracker.is_tracking_enabled());
-    
+
     // Re-enable for other tests
     tracker.set_tracking_enabled(true);
     EXPECT_TRUE(tracker.is_tracking_enabled());
-    
+
     XSIGMA_LOG_INFO("GPU resource tracker tracking control test passed");
 }
 
@@ -449,32 +449,32 @@ XSIGMATEST(GpuResourceTracker, controls_tracking_state)
 XSIGMATEST(GpuResourceTracker, clears_tracking_data)
 {
     auto& tracker = gpu_resource_tracker::instance();
-    
+
     // Create some allocations
     void* ptr1 = malloc(256);
     void* ptr2 = malloc(512);
-    
+
     if (ptr1 && ptr2)
     {
         tracker.track_allocation(ptr1, 256, device_enum::CPU, 0, "clear_test_1");
         tracker.track_allocation(ptr2, 512, device_enum::CPU, 0, "clear_test_2");
-        
+
         // Verify allocations are tracked
         auto active_before = tracker.get_active_allocations();
         EXPECT_GE(active_before.size(), 2);
-        
+
         // Clear all data
         tracker.clear_all_data();
-        
+
         // Verify data was cleared
         auto active_after = tracker.get_active_allocations();
         EXPECT_LT(active_after.size(), active_before.size());
-        
+
         // Clean up (even though tracking data was cleared)
         free(ptr1);
         free(ptr2);
     }
-    
+
     XSIGMA_LOG_INFO("GPU resource tracker data clearing test passed");
 }
 

@@ -252,4 +252,3 @@ echo "  - Added '-o -' flag to cmake-format command"
 echo "  - Ensures output goes to stdout instead of in-place modification"
 echo "  - Prevents empty replacement field in linter output"
 echo ""
-

@@ -325,40 +325,41 @@ thread_pool::ThreadData* thread_pool::GetCallerThreadData() const noexcept
 
 std::thread thread_pool::MakeThread()
 {
-    return std::thread{[this]()
-                       {
-                           while (!this->Initialized.load(std::memory_order_acquire)) {}
+    return std::thread{
+        [this]()
+        {
+            while (!this->Initialized.load(std::memory_order_acquire)) {}
 
-                           ThreadData& threadData = *this->GetCallerThreadData();
+            ThreadData& threadData = *this->GetCallerThreadData();
 
-                           // Main loop for threads of the pool
-                           // When they are woke up, they check for new job and stop if "this->Joining" is true
-                           // and no more jobs are running
-                           while (true)
-                           {
-                               std::unique_lock<std::mutex> lock{threadData.Mutex};
+            // Main loop for threads of the pool
+            // When they are woke up, they check for new job and stop if "this->Joining" is true
+            // and no more jobs are running
+            while (true)
+            {
+                std::unique_lock<std::mutex> lock{threadData.Mutex};
 
-                               // Job stealing could be implemented but it will requires some changes in the process
-                               // A thread that as no longer work to do could look at other threads jobs to "steal" a job
-                               // from them and thus increase parallelism. This must take care of not generating deadlocks
-                               // and should not increase Proxy parallelism above requested thread count.
-                               // This goes out of the scope of current implementation.
-                               threadData.ConditionVariable.wait(
-                                   lock,
-                                   [this, &threadData]
-                                   {
-                                       return !threadData.Jobs.empty() ||
-                                              this->Joining.load(std::memory_order_acquire);
-                                   });
+                // Job stealing could be implemented but it will requires some changes in the process
+                // A thread that as no longer work to do could look at other threads jobs to "steal" a job
+                // from them and thus increase parallelism. This must take care of not generating deadlocks
+                // and should not increase Proxy parallelism above requested thread count.
+                // This goes out of the scope of current implementation.
+                threadData.ConditionVariable.wait(
+                    lock,
+                    [this, &threadData]
+                    {
+                        return !threadData.Jobs.empty() ||
+                               this->Joining.load(std::memory_order_acquire);
+                    });
 
-                               if (threadData.Jobs.empty())
-                               {
-                                   break;  // joining
-                               }
+                if (threadData.Jobs.empty())
+                {
+                    break;  // joining
+                }
 
-                               RunJob(threadData, threadData.Jobs.size() - 1, lock);
-                           }
-                       }};
+                RunJob(threadData, threadData.Jobs.size() - 1, lock);
+            }
+        }};
 }
 
 void thread_pool::FillThreadsForNestedProxy(ProxyData* proxy, std::size_t maxCount)

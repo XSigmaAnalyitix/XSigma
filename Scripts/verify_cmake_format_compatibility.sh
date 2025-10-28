@@ -135,4 +135,3 @@ echo "  Format files:  cmake-format -i --config-file=.cmake-format.yaml CMakeLis
 echo "  Lint files:    cmakelint --config=.cmakelintrc CMakeLists.txt"
 echo "  Lintrunner:    lintrunner --take CMAKEFORMAT --apply-patches"
 echo ""
-

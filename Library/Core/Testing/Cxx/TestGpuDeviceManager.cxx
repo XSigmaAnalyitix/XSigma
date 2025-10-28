@@ -239,7 +239,7 @@ XSIGMATEST(GpuDeviceManager, refreshes_device_information)
     auto& manager = gpu_device_manager::instance();
     manager.initialize();
 
-    
+
         // Test refresh operation
         manager.refresh_device_info();
         EXPECT_TRUE(true);  // Should not throw
