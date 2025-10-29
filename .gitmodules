@@ -23,3 +23,9 @@
 [submodule "ThirdParty/benchmark"]
 	path = ThirdParty/benchmark
 	url = https://github.com/google/benchmark.git
+[submodule "ThirdParty/kineto"]
+	path = ThirdParty/kineto
+	url = https://github.com/pytorch/kineto.git
+[submodule "ThirdParty/ittapi"]
+	path = ThirdParty/ittapi
+	url = https://github.com/intel/ittapi.git

@@ -303,13 +303,13 @@ The Enhanced Profiler is an experimental feature providing:
 
 ### Location
 
-- **Source**: `Library/Core/experimental/profiler`
+- **Source**: `Library/Core/profiler`
 - **Tests**: `Library/Core/Testing/Cxx/TestEnhancedProfiler.cxx`
 
 ### Usage Example
 
 ```cpp
-#include "experimental/profiler/core/profiler.h"
+#include "profiler/core/profiler.h"
 
 void example_function() {
     // Profile entire function

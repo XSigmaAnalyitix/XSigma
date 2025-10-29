@@ -38,12 +38,12 @@
 #include <vector>
 
 #include "common/macros.h"
-#include "experimental/profiler/platform/env_var.h"
 #include "logging/logger.h"
 #include "memory/backend/allocator_bfc.h"
 #include "memory/backend/allocator_pool.h"
 #include "memory/backend/allocator_tracking.h"
 #include "memory/cpu/allocator.h"
+#include "profiler/platform/env_var.h"
 #include "util/exception.h"
 #include "util/string_util.h"
 

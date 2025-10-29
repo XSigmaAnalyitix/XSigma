@@ -37,13 +37,13 @@
 #include <string_view>
 
 #include "common/macros.h"
-#include "experimental/profiler/memory/scoped_memory_debug_annotation.h"
 #include "logging/logger.h"
 #include "logging/tracing/traceme.h"
 #include "logging/tracing/traceme_encode.h"
 #include "memory/cpu/allocator.h"
 #include "memory/helper/memory_allocator.h"
 #include "memory/helper/memory_info.h"
+#include "profiler/memory/scoped_memory_debug_annotation.h"
 
 namespace xsigma
 {

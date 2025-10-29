@@ -41,7 +41,7 @@ file(
   "${CMAKE_CURRENT_SOURCE_DIR}/common/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/logging/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/experimental/profiler/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/profiler/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/c17/*.h"
   ${xsigma_headers}
@@ -54,7 +54,7 @@ file(
   "${CMAKE_CURRENT_SOURCE_DIR}/util/*.cxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/logging/*.cxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.cxx"
-  "${CMAKE_CURRENT_SOURCE_DIR}/experimental/profiler/*.cxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/profiler/*.cxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.cxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/c17/*.h"
   ${xsigma_sources}
@@ -231,6 +231,29 @@ if(XSIGMA_ENABLE_MIMALLOC)
   target_link_libraries(Core PRIVATE XSigma::mimalloc)
 
   add_dependencies(Core XSigma::mimalloc)
+endif()
+
+# PyTorch Kineto profiling library support
+if(XSIGMA_ENABLE_KINETO)
+  if(TARGET XSigma::kineto)
+    target_link_libraries(Core PUBLIC XSigma::kineto)
+    target_compile_definitions(Core PUBLIC XSIGMA_HAS_KINETO)
+    message(STATUS "Core library linked with PyTorch Kineto")
+  else()
+    message(STATUS "XSIGMA_ENABLE_KINETO is ON but XSigma::kineto target not available (wrapper mode)")
+  endif()
+endif()
+
+# Intel ITT API support
+# Provides task/frame annotations for Intel VTune profiling
+if(XSIGMA_ENABLE_ITTAPI)
+  if(TARGET XSigma::ittapi)
+    target_link_libraries(Core PUBLIC XSigma::ittapi)
+    target_compile_definitions(Core PUBLIC XSIGMA_HAS_ITTAPI)
+    message(STATUS "Core library linked with Intel ITT API")
+  else()
+    message(WARNING "XSIGMA_ENABLE_ITTAPI is ON but XSigma::ittapi target not found")
+  endif()
 endif()
 
 # GPU support (CUDA or HIP)

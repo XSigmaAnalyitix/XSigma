@@ -171,7 +171,7 @@ void free_tbb(XSIGMA_UNUSED void* ptr, XSIGMA_UNUSED std::size_t nbytes) noexcep
 #endif
 }
 
-void* allocate_mi(std::size_t nbytes, std::size_t alignment)
+void* allocate_mi(XSIGMA_UNUSED std::size_t nbytes, XSIGMA_UNUSED std::size_t alignment)
 {
 #ifdef XSIGMA_ENABLE_MIMALLOC
     return mi_malloc_aligned(nbytes, alignment);
@@ -180,7 +180,7 @@ void* allocate_mi(std::size_t nbytes, std::size_t alignment)
 #endif
 }
 
-void free_mi(void* ptr, XSIGMA_UNUSED std::size_t nbytes) noexcept
+void free_mi(XSIGMA_UNUSED void* ptr, XSIGMA_UNUSED std::size_t nbytes) noexcept
 {
 #ifdef XSIGMA_ENABLE_MIMALLOC
     mi_free(ptr);

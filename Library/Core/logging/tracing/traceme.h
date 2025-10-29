@@ -35,6 +35,7 @@ limitations under the License.
 
 #include <chrono>
 #include <cstdint>
+#include <limits>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -66,7 +67,7 @@ namespace xsigma
  */
 XSIGMA_FORCE_INLINE int64_t get_current_time_nanos()
 {
-    auto now = std::chrono::high_resolution_clock::now();
+    auto now = std::chrono::system_clock::now();
     auto nanos =
         std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
     return nanos;
@@ -170,6 +171,8 @@ inline int get_tf_traceme_level(bool is_expensive)
 class XSIGMA_VISIBILITY traceme
 {
 public:
+    static constexpr uint64_t kTraceFilterDefaultMask = traceme_recorder::kDefaultTraceFilter;
+
     /**
      * @brief Constructs a scoped trace event with the specified name and priority level.
      *
@@ -199,11 +202,13 @@ public:
      * } // Timing automatically recorded here
      * ```
      */
-    explicit traceme(std::string_view name, int level = 1)
+    explicit traceme(
+        std::string_view name, int level = 1, uint64_t filter_mask = kTraceFilterDefaultMask)
     {
         XSIGMA_CHECK_DEBUG(level >= 1, "level is less than 1");
 #if !defined(IS_MOBILE_PLATFORM)
-        if XSIGMA_UNLIKELY (traceme_recorder::active(level))
+        if XSIGMA_UNLIKELY (
+            traceme_recorder::active(level) && traceme_recorder::check_filter(filter_mask))
         {
             name_.Emplace(std::string(name));
             start_time_ = get_current_time_nanos();
@@ -297,11 +302,15 @@ public:
     template <
         typename NameGeneratorT,
         std::enable_if_t<std::is_invocable_v<NameGeneratorT>, bool> = true>
-    explicit traceme(NameGeneratorT&& name_generator, int level = 1)
+    explicit traceme(
+        NameGeneratorT&& name_generator,
+        int              level       = 1,
+        uint64_t         filter_mask = kTraceFilterDefaultMask)
     {
         XSIGMA_CHECK_DEBUG(level >= 1, "level is less than 1");
 #if !defined(IS_MOBILE_PLATFORM)
-        if XSIGMA_UNLIKELY (traceme_recorder::active(level))
+        if XSIGMA_UNLIKELY (
+            traceme_recorder::active(level) && traceme_recorder::check_filter(filter_mask))
         {
             name_.Emplace(std::forward<NameGeneratorT>(name_generator)());
             start_time_ = get_current_time_nanos();
@@ -507,10 +516,14 @@ public:
     template <
         typename NameGeneratorT,
         std::enable_if_t<std::is_invocable_v<NameGeneratorT>, bool> = true>
-    static int64_t activity_start(NameGeneratorT&& name_generator, int level = 1)
+    static int64_t activity_start(
+        NameGeneratorT&& name_generator,
+        int              level       = 1,
+        uint64_t         filter_mask = kTraceFilterDefaultMask)
     {
 #if !defined(IS_MOBILE_PLATFORM)
-        if XSIGMA_UNLIKELY (traceme_recorder::active(level))
+        if XSIGMA_UNLIKELY (
+            traceme_recorder::active(level) && traceme_recorder::check_filter(filter_mask))
         {
             int64_t activity_id = traceme_recorder::new_activity_id();
             traceme_recorder::record(
@@ -537,10 +550,12 @@ public:
      * **Performance**: Minimal overhead - no string allocation required
      * **Lifetime**: The string_view must remain valid until activity_end() is called
      */
-    static int64_t activity_start(std::string_view name, int level = 1)
+    static int64_t activity_start(
+        std::string_view name, int level = 1, uint64_t filter_mask = kTraceFilterDefaultMask)
     {
 #if !defined(IS_MOBILE_PLATFORM)
-        if XSIGMA_UNLIKELY (traceme_recorder::active(level))
+        if XSIGMA_UNLIKELY (
+            traceme_recorder::active(level) && traceme_recorder::check_filter(filter_mask))
         {
             int64_t activity_id = traceme_recorder::new_activity_id();
             traceme_recorder::record({std::string(name), get_current_time_nanos(), -activity_id});
@@ -557,9 +572,10 @@ public:
      * @param level Trace priority level (default: 1)
      * @return Activity ID for use with activity_end()
      */
-    static int64_t activity_start(const std::string& name, int level = 1)
+    static int64_t activity_start(
+        const std::string& name, int level = 1, uint64_t filter_mask = kTraceFilterDefaultMask)
     {
-        return activity_start(std::string_view(name), level);
+        return activity_start(std::string_view(name), level, filter_mask);
     }
 
     /**
@@ -569,9 +585,10 @@ public:
      * @param level Trace priority level (default: 1)
      * @return Activity ID for use with activity_end()
      */
-    static int64_t activity_start(const char* name, int level = 1)
+    static int64_t activity_start(
+        const char* name, int level = 1, uint64_t filter_mask = kTraceFilterDefaultMask)
     {
-        return activity_start(std::string_view(name), level);
+        return activity_start(std::string_view(name), level, filter_mask);
     }
 
     /**
@@ -636,10 +653,14 @@ public:
     template <
         typename NameGeneratorT,
         std::enable_if_t<std::is_invocable_v<NameGeneratorT>, bool> = true>
-    static void instant_activity(NameGeneratorT&& name_generator, int level = 1)
+    static void instant_activity(
+        NameGeneratorT&& name_generator,
+        int              level       = 1,
+        uint64_t         filter_mask = kTraceFilterDefaultMask)
     {
 #if !defined(IS_MOBILE_PLATFORM)
-        if XSIGMA_UNLIKELY (traceme_recorder::active(level))
+        if XSIGMA_UNLIKELY (
+            traceme_recorder::active(level) && traceme_recorder::check_filter(filter_mask))
         {
             int64_t now = get_current_time_nanos();
             traceme_recorder::record(

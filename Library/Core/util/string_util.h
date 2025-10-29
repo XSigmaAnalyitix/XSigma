@@ -17,6 +17,8 @@
 
 #include <stdarg.h>  // for va_list
 
+#include <algorithm>  // for transform
+#include <cctype>
 #include <cstddef>      // for size_t
 #include <cstdint>      // for int64_t, uint64_t, uint32_t, int32_t
 #include <filesystem>   // for path (C++17)
@@ -401,6 +403,16 @@ void str_append(std::string* result, const Args&... args)
     *result += oss.str();
 }
 
+XSIGMA_FORCE_INLINE std::string to_lower(std::string_view input)
+{
+    std::string result(input);
+    std::transform(
+        result.begin(),
+        result.end(),
+        result.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+    return result;
+}
 }  // namespace strings
 }  // namespace xsigma
 

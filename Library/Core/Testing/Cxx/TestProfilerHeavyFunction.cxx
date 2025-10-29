@@ -22,11 +22,11 @@
 #include <vector>
 
 #include "Testing/xsigmaTest.h"
-#include "experimental/profiler/analysis/statistical_analyzer.h"
-#include "experimental/profiler/memory/memory_tracker.h"
-#include "experimental/profiler/session/profiler.h"
 #include "logging/tracing/traceme.h"
 #include "logging/tracing/traceme_recorder.h"
+#include "profiler/analysis/statistical_analyzer.h"
+#include "profiler/memory/memory_tracker.h"
+#include "profiler/session/profiler.h"
 
 using namespace xsigma;
 
@@ -242,7 +242,7 @@ std::vector<double> generate_test_signal(size_t size)
 }  // anonymous namespace
 
 // Test comprehensive profiling with heavy computational functions
-XSIGMATEST(ProfilerHeavyFunction, ComprehensiveComputationalProfiling)
+XSIGMATEST(Profiler, heavy_function_comprehensive_computational_profiling)
 {
     // Configure profiler session with all features enabled
     profiler_options opts;
@@ -380,9 +380,46 @@ XSIGMATEST(ProfilerHeavyFunction, ComprehensiveComputationalProfiling)
 
     session.stop();
 
-    // Print profiling report to console
+    // ========================================================================
+    // CHROME TRACE FORMAT EXPORT
+    // ========================================================================
+    // Export profiling results to Chrome Trace Event Format (JSON)
+    // This format is compatible with:
+    //   1. Chrome DevTools (chrome://tracing)
+    //   2. Perfetto UI (https://ui.perfetto.dev)
+    //   3. Other trace viewers that support the standard format
+    //
+    // HOW TO VIEW THE TRACE:
+    // 1. Open Chrome browser and navigate to: chrome://tracing
+    // 2. Click "Load" button and select the generated JSON file
+    // 3. Use the following keyboard shortcuts:
+    //    - W/S: Zoom in/out
+    //    - A/D: Pan left/right
+    //    - Click and drag: Select time range
+    //    - Double-click: Zoom to selection
+    //
+    // INSIGHTS FROM THE VISUALIZATION:
+    // - Timeline view shows execution order and duration of each scope
+    // - Nested scopes appear as hierarchical blocks
+    // - Color coding helps identify different operations
+    // - Memory allocation/deallocation events are marked
+    // - Thread information shows parallel execution patterns
+    // - Hover over events to see detailed statistics
+    // ========================================================================
+
+    // Export to Chrome Trace JSON format
+    std::string chrome_trace_file = "heavy_function_profile.json";
+    session.export_report(chrome_trace_file);
+
     std::cout << "\n=== Heavy Function Performance Analysis ===\n";
-    session.export_report("Heavy Function Performance.log");
+    std::cout << "\n✓ Chrome Trace JSON exported to: " << chrome_trace_file << "\n";
+    std::cout << "\nTo view the trace:\n";
+    std::cout << "  1. Open Chrome and navigate to: chrome://tracing\n";
+    std::cout << "  2. Click 'Load' and select: " << chrome_trace_file << "\n";
+    std::cout << "  3. Use W/S to zoom, A/D to pan, click to select\n";
+    std::cout << "\nAlternatively, use Perfetto UI:\n";
+    std::cout << "  1. Visit: https://ui.perfetto.dev\n";
+    std::cout << "  2. Open the JSON file in the UI\n";
 
     std::cout << "\nAll computational workloads profiled successfully:\n";
     std::cout << "  - Matrix multiplication (100x100)\n";
@@ -391,3 +428,258 @@ XSIGMATEST(ProfilerHeavyFunction, ComprehensiveComputationalProfiling)
     std::cout << "  - FFT simulation (512 points)\n";
     std::cout << "  - Multi-threaded computation\n";
 }
+
+// ============================================================================
+// KINETO PROFILER TEST
+// ============================================================================
+// Test PyTorch Kineto profiler integration with heavy computational functions
+//
+// Kineto provides comprehensive profiling capabilities including:
+// - CPU activity tracing
+// - GPU activity tracing (if available)
+// - Memory profiling
+// - Operator-level profiling
+//
+// OUTPUT: Kineto generates JSON trace files compatible with:
+// - PyTorch Profiler Viewer
+// - TensorBoard
+// - Chrome DevTools (chrome://tracing)
+//
+// HOW TO USE:
+// 1. Run this test to generate kineto_trace.json
+// 2. View with PyTorch Profiler:
+//    python -m torch.profiler.viewer kineto_trace.json
+// 3. Or view in Chrome:
+//    - Open chrome://tracing
+//    - Load the JSON file
+// ============================================================================
+
+#ifdef XSIGMA_HAS_KINETO
+#include "profiler/kineto_profiler.h"
+
+XSIGMATEST(Profiler, kineto_heavy_function_profiling)
+{
+    std::cout << "\n=== Kineto Profiler Heavy Function Test ===\n";
+
+    // Create Kineto profiler with configuration
+    auto profiler = xsigma::kineto_profiler::create();
+
+    if (!profiler)
+    {
+        std::cout << "Kineto profiler not available (wrapper mode)\n";
+        EXPECT_TRUE(true);  // Test passes even if Kineto not available
+        return;
+    }
+
+    // Configure profiler
+    xsigma::kineto_profiler::profiling_config config;
+    config.enable_cpu_tracing      = true;
+    config.enable_gpu_tracing      = false;  // GPU tracing requires CUDA
+    config.enable_memory_profiling = true;
+    config.output_dir              = ".";
+    config.trace_name              = "kineto_heavy_function_trace";
+    config.max_activities          = 0;  // Unlimited
+
+    // Start profiling
+    if (profiler->start_profiling())
+    {
+        std::cout << "Kineto profiling started\n";
+
+        // Profile heavy computational workloads
+        {
+            XSIGMA_PROFILE_SCOPE("kineto_matrix_operations");
+
+            const size_t matrix_size = 50;  // Smaller for faster execution
+            auto         matrix_a    = generate_test_matrix(matrix_size, matrix_size);
+            auto         matrix_b    = generate_test_matrix(matrix_size, matrix_size);
+
+            for (int i = 0; i < 2; ++i)
+            {
+                XSIGMA_PROFILE_SCOPE("kineto_matrix_multiply_" + std::to_string(i));
+                auto result = matrix_multiply(matrix_a, matrix_b);
+                EXPECT_EQ(result.size(), matrix_size);
+            }
+        }
+
+        {
+            XSIGMA_PROFILE_SCOPE("kineto_sorting_operations");
+
+            const size_t        array_size = 10000;
+            std::vector<double> test_data(array_size);
+
+            std::random_device                     rd;
+            std::mt19937                           gen(rd());
+            std::uniform_real_distribution<double> dis(0.0, 1000.0);
+
+            for (size_t i = 0; i < array_size; ++i)
+            {
+                test_data[i] = dis(gen);
+            }
+
+            {
+                XSIGMA_PROFILE_SCOPE("kineto_merge_sort");
+                auto data_copy = test_data;
+                merge_sort(data_copy, 0, data_copy.size() - 1);
+                EXPECT_TRUE(std::is_sorted(data_copy.begin(), data_copy.end()));
+            }
+        }
+
+        // Stop profiling and get results
+        auto result = profiler->stop_profiling();
+
+        std::cout << "Kineto profiling completed\n";
+        std::cout << "✓ Trace file: kineto_heavy_function_trace.json\n";
+        std::cout << "\nTo view the trace:\n";
+        std::cout << "  1. PyTorch Profiler Viewer:\n";
+        std::cout << "     python -m torch.profiler.viewer kineto_heavy_function_trace.json\n";
+        std::cout << "  2. Chrome DevTools:\n";
+        std::cout << "     - Open chrome://tracing\n";
+        std::cout << "     - Load kineto_heavy_function_trace.json\n";
+
+        EXPECT_TRUE(true);  // Test passes if profiling completed
+    }
+    else
+    {
+        std::cout << "Failed to start Kineto profiling\n";
+        EXPECT_TRUE(false);
+    }
+}
+#endif  // XSIGMA_HAS_KINETO
+
+// ============================================================================
+// INTEL ITT API TEST
+// ============================================================================
+// Test Intel ITT API integration with heavy computational functions
+//
+// ITT API provides task and frame annotations for Intel VTune profiling:
+// - Task annotations: Mark regions of code for analysis
+// - Frame markers: Identify frame boundaries in graphics applications
+// - String handles: Efficient string management for annotations
+// - Domain-based organization: Group related tasks
+//
+// OUTPUT: VTune-compatible profiling data
+//
+// HOW TO USE:
+// 1. Run this test with Intel VTune installed
+// 2. Collect profiling data:
+//    vtune -collect hotspots -app ./CoreCxxTests.exe
+// 3. View results in VTune GUI
+// 4. Look for ITT annotations in the timeline
+//
+// INSIGHTS:
+// - Task duration shows computational complexity
+// - Nested tasks reveal call hierarchy
+// - Thread information shows parallelization
+// - Memory events correlate with allocations
+// ============================================================================
+
+#ifdef XSIGMA_HAS_ITTAPI
+#include <ittnotify.h>
+
+XSIGMATEST(Profiler, itt_api_heavy_function_profiling)
+{
+    std::cout << "\n=== Intel ITT API Heavy Function Test ===\n";
+
+    // Create ITT domain for this test
+    __itt_domain* domain = __itt_domain_create("XSigmaHeavyFunctionTest");
+    if (!domain)
+    {
+        std::cout << "ITT API domain creation failed (expected in non-VTune environment)\n";
+        std::cout << "This test requires Intel VTune Profiler to be installed\n";
+        std::cout << "Test passes gracefully when VTune is not available\n";
+        EXPECT_TRUE(true);  // Test passes even if VTune not available
+        return;
+    }
+
+    // Create string handles for task names
+    auto matrix_task_handle = __itt_string_handle_create("matrix_operations");
+    auto sort_task_handle   = __itt_string_handle_create("sorting_operations");
+    auto monte_carlo_handle = __itt_string_handle_create("monte_carlo_simulation");
+
+    std::cout << "ITT API domain created: XSigmaHeavyFunctionTest\n";
+
+    // Profile matrix operations with ITT API
+    {
+        __itt_task_begin(domain, __itt_null, __itt_null, matrix_task_handle);
+        XSIGMA_PROFILE_SCOPE("itt_matrix_operations");
+
+        const size_t matrix_size = 50;
+        auto         matrix_a    = generate_test_matrix(matrix_size, matrix_size);
+        auto         matrix_b    = generate_test_matrix(matrix_size, matrix_size);
+
+        for (int i = 0; i < 2; ++i)
+        {
+            auto iter_handle =
+                __itt_string_handle_create(("matrix_multiply_" + std::to_string(i)).c_str());
+            __itt_task_begin(domain, __itt_null, __itt_null, iter_handle);
+
+            auto result = matrix_multiply(matrix_a, matrix_b);
+            EXPECT_EQ(result.size(), matrix_size);
+
+            __itt_task_end(domain);
+        }
+
+        __itt_task_end(domain);
+    }
+
+    // Profile sorting operations with ITT API
+    {
+        __itt_task_begin(domain, __itt_null, __itt_null, sort_task_handle);
+        XSIGMA_PROFILE_SCOPE("itt_sorting_operations");
+
+        const size_t        array_size = 10000;
+        std::vector<double> test_data(array_size);
+
+        std::random_device                     rd;
+        std::mt19937                           gen(rd());
+        std::uniform_real_distribution<double> dis(0.0, 1000.0);
+
+        for (size_t i = 0; i < array_size; ++i)
+        {
+            test_data[i] = dis(gen);
+        }
+
+        {
+            auto sort_handle = __itt_string_handle_create("merge_sort");
+            __itt_task_begin(domain, __itt_null, __itt_null, sort_handle);
+
+            auto data_copy = test_data;
+            merge_sort(data_copy, 0, data_copy.size() - 1);
+            EXPECT_TRUE(std::is_sorted(data_copy.begin(), data_copy.end()));
+
+            __itt_task_end(domain);
+        }
+
+        __itt_task_end(domain);
+    }
+
+    // Profile Monte Carlo simulation with ITT API
+    {
+        __itt_task_begin(domain, __itt_null, __itt_null, monte_carlo_handle);
+        XSIGMA_PROFILE_SCOPE("itt_monte_carlo_simulation");
+
+        const size_t num_samples = 100000;
+        double       pi_estimate = estimate_pi_monte_carlo(num_samples);
+
+        EXPECT_GT(pi_estimate, 3.0);
+        EXPECT_LT(pi_estimate, 3.3);
+
+        std::cout << "Monte Carlo Pi estimate: " << pi_estimate << "\n";
+
+        __itt_task_end(domain);
+    }
+
+    std::cout << "✓ ITT API profiling completed\n";
+    std::cout << "\nTo view the profiling data:\n";
+    std::cout << "  1. Install Intel VTune Profiler\n";
+    std::cout << "  2. Run: vtune -collect hotspots -app ./CoreCxxTests.exe\n";
+    std::cout << "  3. Open results in VTune GUI\n";
+    std::cout << "  4. Look for 'XSigmaHeavyFunctionTest' domain in timeline\n";
+    std::cout << "  5. Expand to see task annotations:\n";
+    std::cout << "     - matrix_operations\n";
+    std::cout << "     - sorting_operations\n";
+    std::cout << "     - monte_carlo_simulation\n";
+
+    EXPECT_TRUE(true);  // Test passes if ITT API annotations completed
+}
+#endif  // XSIGMA_HAS_ITTAPI

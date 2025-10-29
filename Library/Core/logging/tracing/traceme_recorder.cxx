@@ -26,6 +26,7 @@
 #include <deque>
 #include <functional>
 #include <iostream>
+#include <limits>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -42,6 +43,10 @@
 #include <windows.h>
 #else
 #include <pthread.h>
+#if defined(__linux__)
+#include <sys/syscall.h>
+#include <unistd.h>
+#endif
 #endif
 
 namespace xsigma
@@ -82,6 +87,7 @@ namespace internal
 // DLL imported variables cannot be initialized on Windows. This file is
 // included only on DLL exports.
 XSIGMA_API std::atomic<int> g_trace_level(traceme_recorder::kTracingDisabled);
+XSIGMA_API std::atomic<uint64_t> g_trace_filter_bitmap{(std::numeric_limits<uint64_t>::max)()};
 
 // g_trace_level implementation must be lock-free for faster execution of the
 // TraceMe API. This can be commented (if compilation is failing) but execution
@@ -164,7 +170,23 @@ public:
         info_.tid = env->GetCurrentThreadId();
         env->GetCurrentThreadName(&info_.name);*/
 
-        info_.tid = static_cast<uint32_t>(std::hash<std::thread::id>{}(std::this_thread::get_id()));
+#if defined(_WIN32)
+        info_.tid = static_cast<uint64_t>(::GetCurrentThreadId());
+#elif defined(__APPLE__)
+        uint64_t tid = 0;
+        if (pthread_threadid_np(nullptr, &tid) == 0)
+        {
+            info_.tid = tid;
+        }
+        else
+        {
+            info_.tid = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(pthread_self()));
+        }
+#elif defined(__linux__)
+        info_.tid = static_cast<uint64_t>(::syscall(SYS_gettid));
+#else
+        info_.tid = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(pthread_self()));
+#endif
         info_.name = get_thread_name();
     }
 
@@ -238,8 +260,16 @@ private:
 
 /* static */ bool traceme_recorder::start(int level)
 {
+    return start(level, kDefaultTraceFilter);
+}
+
+/* static */ bool traceme_recorder::start(int level, uint64_t filter_mask)
+{
     level = level > 0 ? level : 0;
-    //std::max(0, level);
+
+    // Set the filter bitmap
+    internal::g_trace_filter_bitmap.store(filter_mask, std::memory_order_relaxed);
+
     int        expected = kTracingDisabled;
     bool const started =
         internal::g_trace_level.compare_exchange_strong(expected, level, std::memory_order_acq_rel);
@@ -264,6 +294,8 @@ private:
     {
         events = consume();
     }
+    // Clear the filter bitmap
+    internal::g_trace_filter_bitmap.store(kDefaultTraceFilter, std::memory_order_relaxed);
     return events;
 }
 

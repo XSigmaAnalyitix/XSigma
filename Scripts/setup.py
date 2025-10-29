@@ -683,6 +683,8 @@ class XsigmaFlags:
             "lto": "XSIGMA_ENABLE_LTO",
             "magic_enum": "XSIGMA_ENABLE_MAGICENUM",
             "mimalloc": "XSIGMA_ENABLE_MIMALLOC",
+            "kineto": "XSIGMA_ENABLE_KINETO",
+            "ittapi": "XSIGMA_ENABLE_ITTAPI",
             "external": "XSIGMA_ENABLE_EXTERNAL",
             "cxxstd": "XSIGMA_CXX_STANDARD",
             "cppcheck": "XSIGMA_ENABLE_CPPCHECK",
@@ -745,8 +747,10 @@ class XsigmaFlags:
                 "magic_enum": self.ON,  # XSIGMA_ENABLE_MAGIC_ENUM default is ON
                 "loguru": self.ON,  # XSIGMA_ENABLE_LOGURU default is ON
                 "mimalloc": self.ON,  # XSIGMA_ENABLE_MIMALLOC default is ON
+                "kineto": self.ON,  # XSIGMA_ENABLE_KINETO default is ON
                 # CMake options with default OFF - keep OFF in setup.py
                 # (already set by dict.fromkeys above)
+                # "ittapi": self.OFF,  # XSIGMA_ENABLE_ITTAPI default is OFF (STATIC library, MSVC incompatible)
                 # "benchmark": self.OFF,  # XSIGMA_ENABLE_BENCHMARK default is OFF (changed from ON)
                 # "cuda": self.OFF,  # XSIGMA_ENABLE_CUDA default is OFF
                 # "mkl": self.OFF,  # XSIGMA_ENABLE_MKL default is OFF

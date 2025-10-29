@@ -22,6 +22,7 @@
 #include <atomic>
 #include <cstdint>
 #include <deque>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -47,6 +48,22 @@ namespace internal
  * **Performance**: Lock-free design enables sub-nanosecond access times
  */
 XSIGMA_API extern std::atomic<int> g_trace_level;
+
+/**
+ * @brief Global atomic filter bitmap for selective trace event recording.
+ *
+ * This atomic uint64_t stores a bitmap that can be used to filter trace events
+ * during recording. Each bit can represent a category or type of event to include.
+ * By default, all bits are set (all events pass the filter).
+ *
+ * **Values**:
+ * - 0xFFFFFFFFFFFFFFFF (default): All events pass the filter
+ * - Custom bitmask: Only events matching the mask are recorded
+ *
+ * **Thread Safety**: Atomic operations ensure thread-safe access
+ * **Performance**: Lock-free design enables fast filtering checks
+ */
+XSIGMA_API extern std::atomic<uint64_t> g_trace_filter_bitmap;
 
 }  // namespace internal
 
@@ -138,7 +155,7 @@ public:
      */
     struct ThreadInfo
     {
-        uint32_t    tid;   ///< Thread identifier (hash of std::thread::id)
+        uint64_t    tid;   ///< Thread identifier (OS thread ID)
         std::string name;  ///< Human-readable thread name (if available)
     };
 
@@ -177,6 +194,24 @@ public:
     XSIGMA_API static bool start(int level);
 
     /**
+     * @brief Starts trace event recording with level and filter mask.
+     *
+     * Begins a new tracing session with both level-based and bitmap-based filtering.
+     * This allows for more selective event recording based on event categories.
+     *
+     * @param level Maximum trace level to record (1-3 typical, 0 disables all tracing)
+     * @param filter_mask Bitmap filter for selective event recording (default: all bits set)
+     * @return true if tracing was successfully started, false if already active
+     *
+     * **Thread Safety**: Safe to call from any thread, but only one session can be active
+     * **Performance**: Clears any stale events from previous sessions
+     * **Filtering**: Events must pass both level check AND filter mask check
+     *
+     * **Example**: `traceme_recorder::start(2, 0x0F)` records level 1-2 events matching mask
+     */
+    XSIGMA_API static bool start(int level, uint64_t filter_mask);
+
+    /**
      * @brief Stops trace recording and returns all collected events.
      *
      * Ends the current tracing session and returns all events collected since
@@ -213,8 +248,21 @@ public:
         return internal::g_trace_level.load(std::memory_order_acquire) >= level;
     }
 
+    /**
+     * @brief Fast check whether the provided filter mask passes the current filter.
+     *
+     * @param filter Bitmap describing the event category
+     * @return true if the event should be recorded
+     */
+    static inline bool check_filter(uint64_t filter)
+    {
+        return (internal::g_trace_filter_bitmap.load(std::memory_order_acquire) & filter) != 0;
+    }
+
     /// Sentinel value indicating tracing is disabled
     static constexpr int kTracingDisabled = -1;
+    /// Default filter mask enabling all events
+    static constexpr uint64_t kDefaultTraceFilter = std::numeric_limits<uint64_t>::max();
 
     /**
      * @brief Records a trace event to the thread-local buffer.

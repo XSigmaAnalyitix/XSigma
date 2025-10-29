@@ -18,15 +18,15 @@
 
 #include "Testing/xsigmaTest.h"
 #include "common/pointer.h"
-#include "experimental/profiler/analysis/statistical_analyzer.h"
-#include "experimental/profiler/memory/memory_tracker.h"
-#include "experimental/profiler/session/profiler.h"
 #include "logging/tracing/traceme.h"
 #include "logging/tracing/traceme_encode.h"
 #include "logging/tracing/traceme_recorder.h"
 #include "memory/backend/allocator_bfc.h"
 #include "memory/backend/allocator_pool.h"
 #include "memory/helper/memory_allocator.h"
+#include "profiler/analysis/statistical_analyzer.h"
+#include "profiler/memory/memory_tracker.h"
+#include "profiler/session/profiler.h"
 
 using namespace xsigma;
 
