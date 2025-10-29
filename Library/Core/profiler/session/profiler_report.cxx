@@ -219,7 +219,7 @@ std::string profiler_report::generate_json_report() const
     }
     ss << "  ],\n";
 
-    ss << ",\n  \"memory\": {\n";
+    ss << "  \"memory\": {\n";
     if (auto const* tracker = session_.memory_tracker_ptr())
     {
         auto const stats = tracker->get_current_stats();
