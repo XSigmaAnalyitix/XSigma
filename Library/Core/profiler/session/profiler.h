@@ -58,12 +58,12 @@
 #include <vector>
 
 #include "common/macros.h"
+#include "logging/tracing/traceme.h"
 #include "profiler/core/profiler_interface.h"
 #include "profiler/core/profiler_lock.h"
 #include "profiler/core/profiler_options.h"
 #include "profiler/exporters/xplane/xplane.h"
 #include "profiler/memory/scoped_memory_debug_annotation.h"
-#include "logging/tracing/traceme.h"
 
 namespace xsigma
 {

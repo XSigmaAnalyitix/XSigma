@@ -37,9 +37,9 @@ limitations under the License.
 #include <string>
 #include <utility>
 
+#include "logging/logger.h"
 #include "profiler/core/profiler_interface.h"
 #include "profiler/exporters/xplane/xplane.h"
-#include "logging/logger.h"
 
 namespace xsigma
 {

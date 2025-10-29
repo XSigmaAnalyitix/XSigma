@@ -33,10 +33,10 @@ limitations under the License.
 ==============================================================================*/
 #include <memory>  // for unique_ptr
 
+#include "logging/logger.h"
 #include "profiler/core/profiler_factory.h"    // for register_profiler_factory
 #include "profiler/core/profiler_interface.h"  // for profiler_interface
 #include "profiler/core/profiler_options.h"    // for profile_options
-#include "logging/logger.h"
 
 namespace xsigma
 {

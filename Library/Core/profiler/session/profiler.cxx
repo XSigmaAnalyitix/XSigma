@@ -45,13 +45,13 @@
 #include <utility>
 
 #include "common/macros.h"
+#include "logging/logger.h"
 #include "profiler/analysis/statistical_analyzer.h"
 #include "profiler/core/profiler_collection.h"
 #include "profiler/core/profiler_factory.h"
 #include "profiler/exporters/xplane/xplane_schema.h"
 #include "profiler/memory/memory_tracker.h"
 #include "profiler/session/profiler_report.h"
-#include "logging/logger.h"
 
 // Prevent Windows min/max macros from interfering with std::numeric_limits
 #ifdef _WIN32

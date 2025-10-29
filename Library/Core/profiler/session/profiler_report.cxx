@@ -33,9 +33,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "logging/logger.h"
 #include "profiler/analysis/statistical_analyzer.h"
 #include "profiler/session/profiler.h"
-#include "logging/logger.h"
 
 namespace xsigma
 {
