@@ -49,16 +49,18 @@ int64_t get_current_time_nanos()
 
 void sleep_for_nanos(int64_t ns)
 {
-    if (ns <= 0)
+    if (ns <= 0) {
         return;
+}
     std::this_thread::sleep_for(std::chrono::nanoseconds(ns));
 }
 
 void spin_for_nanos(int64_t ns)
 {
-    if (ns <= 0)
+    if (ns <= 0) {
         return;
-    int64_t deadline = get_current_time_nanos() + ns;
+}
+    int64_t const deadline = get_current_time_nanos() + ns;
     while (get_current_time_nanos() < deadline)
     {
         // Busy-wait (spin)

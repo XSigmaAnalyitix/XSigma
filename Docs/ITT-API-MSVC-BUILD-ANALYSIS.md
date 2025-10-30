@@ -254,4 +254,3 @@ python setup.py config.build.ninja.clang.debug
 ✅ **Workaround**: Use Clang compiler on Windows for full ITT API support
 ✅ **Alternative**: Disable ITT API and use other profiling methods (Kineto, Chrome Trace)
 ✅ **Tests**: ITT API tests gracefully handle unavailable profiler (test passes with message)
-

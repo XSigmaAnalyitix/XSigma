@@ -40,6 +40,9 @@ limitations under the License.
 #include <vector>
 
 #include "common/macros.h"
+#include "logging/logger.h"
+#include "logging/tracing/traceme.h"
+#include "logging/tracing/traceme_recorder.h"
 #include "profiler/core/profiler_collection.h"
 #include "profiler/core/profiler_interface.h"
 #include "profiler/cpu/host_tracer_utils.h"
@@ -48,9 +51,6 @@ limitations under the License.
 #include "profiler/exporters/xplane/xplane_builder.h"
 #include "profiler/exporters/xplane/xplane_schema.h"
 #include "profiler/exporters/xplane/xplane_utils.h"
-#include "logging/logger.h"
-#include "logging/tracing/traceme.h"
-#include "logging/tracing/traceme_recorder.h"
 
 namespace xsigma::profiler
 {

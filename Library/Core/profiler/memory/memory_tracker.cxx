@@ -217,7 +217,7 @@ size_t memory_tracker::get_available_system_memory()
             KERN_SUCCESS)
     {
         // Available memory = free pages + inactive pages + purgeable pages
-        uint64_t available_pages =
+        uint64_t const available_pages =
             vm_stat.free_count + vm_stat.inactive_count + vm_stat.purgeable_count;
         return static_cast<size_t>(available_pages * page_size);
     }

@@ -44,6 +44,7 @@ limitations under the License.
 #include <vector>
 
 #include "common/macros.h"
+#include "logging/logger.h"
 #include "profiler/analysis/stats_calculator.h"
 #include "profiler/core/timespan.h"
 #include "profiler/exporters/xplane/tf_xplane_visitor.h"
@@ -51,7 +52,6 @@ limitations under the License.
 #include "profiler/exporters/xplane/xplane_builder.h"
 #include "profiler/exporters/xplane/xplane_schema.h"
 #include "profiler/exporters/xplane/xplane_visitor.h"
-#include "logging/logger.h"
 #include "util/exception.h"
 #include "util/flat_hash.h"
 

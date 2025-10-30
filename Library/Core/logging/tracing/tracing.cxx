@@ -77,20 +77,20 @@ uint64_t get_unique_arg()
 
 uint64_t get_arg_for_name(std::string_view name)
 {
-    std::lock_guard<std::mutex> lock(g_name_mutex);
+    std::scoped_lock const lock(g_name_mutex);
     auto                        it = g_name_to_ids.find(std::string(name));
     if (it != g_name_to_ids.end())
     {
         return it->second;
     }
-    uint64_t id = get_unique_arg();
+    uint64_t const id = get_unique_arg();
     g_name_to_ids.emplace(name, id);
     return id;
 }
 
 void record_event(event_category category, uint64_t arg)
 {
-    if (auto* collector = get_event_collector(category))
+    if (const auto* collector = get_event_collector(category))
     {
         collector->record_event(arg);
     }

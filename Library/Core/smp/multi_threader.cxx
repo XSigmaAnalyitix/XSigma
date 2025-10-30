@@ -94,7 +94,7 @@ int multi_threader::GetGlobalDefaultNumberOfThreads()
         // hw.logicalcpu takes into account cores/CPUs that are
         // disabled because of power management.
         size_t dataLen = sizeof(int);  // 'num' is an 'int'
-        int    result  = sysctlbyname("hw.logicalcpu", &num, &dataLen, nullptr, 0);
+        int    const result  = sysctlbyname("hw.logicalcpu", &num, &dataLen, nullptr, 0);
         if (result == -1)
         {
             num = 1;

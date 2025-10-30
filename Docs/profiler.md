@@ -125,7 +125,7 @@ int main() {
     // Profile a function
     {
         XSIGMA_PROFILE_FUNCTION();
-        
+
         // Your code here
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
@@ -1104,4 +1104,3 @@ Timing Statistics:
 - [PyTorch Kineto](https://github.com/pytorch/kineto)
 - [Chrome Trace Format](https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU)
 - [XPlane Format](Library/Core/profiler/exporters/xplane/)
-

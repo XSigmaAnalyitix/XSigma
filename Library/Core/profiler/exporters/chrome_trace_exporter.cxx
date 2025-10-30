@@ -42,7 +42,7 @@ std::string escape_json_string(std::string_view str)
     std::string result;
     result.reserve(str.size());
 
-    for (char c : str)
+    for (char const c : str)
     {
         switch (c)
         {
@@ -106,8 +106,8 @@ std::string xstat_value_to_json(const xstat& stat)
 std::string export_to_chrome_trace_json(const x_space& space, bool pretty_print)
 {
     std::ostringstream json;
-    std::string        indent  = pretty_print ? "  " : "";
-    std::string        newline = pretty_print ? "\n" : "";
+    std::string        const indent  = pretty_print ? "  " : "";
+    std::string        const newline = pretty_print ? "\n" : "";
 
     json << "{" << newline;
     json << indent << "\"traceEvents\": [" << newline;
@@ -119,34 +119,35 @@ std::string export_to_chrome_trace_json(const x_space& space, bool pretty_print)
     for (size_t plane_idx = 0; plane_idx < planes.size(); ++plane_idx)
     {
         const auto& plane = planes[plane_idx];
-        int64_t     pid   = plane.id() > 0 ? plane.id() : static_cast<int64_t>(plane_idx + 1);
+        int64_t     const pid   = plane.id() > 0 ? plane.id() : static_cast<int64_t>(plane_idx + 1);
 
         // Add process name metadata event
-        if (!first_event)
+        if (!first_event) {
             json << "," << newline;
+}
         first_event = false;
 
         json << indent << indent << "{";
-        json << "\"name\":\"process_name\",";
-        json << "\"ph\":\"M\",";
+        json << R"("name":"process_name",)";
+        json << R"("ph":"M",)";
         json << "\"pid\":" << pid << ",";
-        json << "\"args\":{\"name\":\"" << escape_json_string(plane.name()) << "\"}";
+        json << R"("args":{"name":")" << escape_json_string(plane.name()) << "\"}";
         json << "}";
 
         // Iterate through all lines (threads) in the plane
         for (size_t line_idx = 0; line_idx < plane.lines_size(); ++line_idx)
         {
             const auto& line = plane.lines(line_idx);
-            int64_t     tid  = line.id() > 0 ? line.id() : static_cast<int64_t>(line_idx + 1);
+            int64_t     const tid  = line.id() > 0 ? line.id() : static_cast<int64_t>(line_idx + 1);
 
             // Add thread name metadata event
             json << "," << newline;
             json << indent << indent << "{";
-            json << "\"name\":\"thread_name\",";
-            json << "\"ph\":\"M\",";
+            json << R"("name":"thread_name",)";
+            json << R"("ph":"M",)";
             json << "\"pid\":" << pid << ",";
             json << "\"tid\":" << tid << ",";
-            json << "\"args\":{\"name\":\"" << escape_json_string(line.name()) << "\"}";
+            json << R"("args":{"name":")" << escape_json_string(line.name()) << "\"}";
             json << "}";
 
             // Get event metadata map for name lookup
@@ -167,30 +168,31 @@ std::string export_to_chrome_trace_json(const x_space& space, bool pretty_print)
                     event_name = it->second.name();
                 }
 
-                json << "\"name\":\"" << escape_json_string(event_name) << "\",";
-                json << "\"ph\":\"X\",";  // Duration event (complete)
+                json << R"("name":")" << escape_json_string(event_name) << "\",";
+                json << R"("ph":"X",)";  // Duration event (complete)
                 json << "\"pid\":" << pid << ",";
                 json << "\"tid\":" << tid << ",";
 
                 // Calculate timestamp in microseconds (Chrome expects microseconds)
                 // XPlane stores: timestamp_ns (line base) + offset_ps (event offset)
-                int64_t timestamp_ns = line.timestamp_ns() + (event.offset_ps() / 1000);
-                int64_t timestamp_us = timestamp_ns / 1000;
+                int64_t const timestamp_ns = line.timestamp_ns() + (event.offset_ps() / 1000);
+                int64_t const timestamp_us = timestamp_ns / 1000;
                 json << "\"ts\":" << timestamp_us << ",";
 
                 // Duration in microseconds
-                int64_t duration_us = event.duration_ps() / 1000000;
+                int64_t const duration_us = event.duration_ps() / 1000000;
                 json << "\"dur\":" << duration_us;
 
                 // Add event stats as args
-                if (event.stats().size() > 0)
+                if (!event.stats().empty())
                 {
                     json << ",\"args\":{";
                     bool first_arg = true;
                     for (const auto& stat : event.stats())
                     {
-                        if (!first_arg)
+                        if (!first_arg) {
                             json << ",";
+}
                         first_arg = false;
 
                         // Get stat name from metadata
@@ -213,7 +215,7 @@ std::string export_to_chrome_trace_json(const x_space& space, bool pretty_print)
     }
 
     json << newline << indent << "]," << newline;
-    json << indent << "\"displayTimeUnit\": \"ns\"" << newline;
+    json << indent << R"("displayTimeUnit": "ns")" << newline;
     json << "}" << newline;
 
     return json.str();
@@ -224,7 +226,7 @@ bool export_to_chrome_trace_json_file(
 {
     try
     {
-        std::string json = export_to_chrome_trace_json(space, pretty_print);
+        std::string const json = export_to_chrome_trace_json(space, pretty_print);
 
         std::ofstream file(filename);
         if (!file.is_open())

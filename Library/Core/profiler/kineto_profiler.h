@@ -173,7 +173,7 @@ public:
 
 private:
     /// Private constructor - use factory methods instead.
-    explicit kineto_profiler(const profiling_config& config);
+    explicit kineto_profiler(profiling_config  config);
 
     /// Current profiling configuration
     profiling_config config_;

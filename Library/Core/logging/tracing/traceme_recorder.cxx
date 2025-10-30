@@ -43,7 +43,7 @@
 #include <windows.h>
 #else
 #include <pthread.h>
-#if defined(__linux__)
+#ifdef __linux__
 #include <sys/syscall.h>
 #include <unistd.h>
 #endif
@@ -170,7 +170,7 @@ public:
         info_.tid = env->GetCurrentThreadId();
         env->GetCurrentThreadName(&info_.name);*/
 
-#if defined(_WIN32)
+#ifdef _WIN32
         info_.tid = static_cast<uint64_t>(::GetCurrentThreadId());
 #elif defined(__APPLE__)
         uint64_t tid = 0;

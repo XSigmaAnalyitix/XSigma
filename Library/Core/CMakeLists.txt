@@ -240,12 +240,13 @@ if(XSIGMA_ENABLE_KINETO)
     target_compile_definitions(Core PUBLIC XSIGMA_HAS_KINETO)
     message(STATUS "Core library linked with PyTorch Kineto")
   else()
-    message(STATUS "XSIGMA_ENABLE_KINETO is ON but XSigma::kineto target not available (wrapper mode)")
+    message(
+      STATUS "XSIGMA_ENABLE_KINETO is ON but XSigma::kineto target not available (wrapper mode)"
+    )
   endif()
 endif()
 
-# Intel ITT API support
-# Provides task/frame annotations for Intel VTune profiling
+# Intel ITT API support Provides task/frame annotations for Intel VTune profiling
 if(XSIGMA_ENABLE_ITTAPI)
   if(TARGET XSigma::ittapi)
     target_link_libraries(Core PUBLIC XSigma::ittapi)

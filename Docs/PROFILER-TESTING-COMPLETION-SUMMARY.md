@@ -194,4 +194,3 @@ To enable ITT API on Windows:
 The XSigma profiler testing and integration improvements are complete. All profiler tests now use consistent naming, heavy function profiling exports Chrome Trace JSON, and optional profiling backends (Kineto, ITT API) are properly integrated with graceful degradation when unavailable.
 
 **Status**: ✅ **READY FOR PRODUCTION**
-

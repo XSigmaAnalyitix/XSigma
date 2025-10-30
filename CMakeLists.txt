@@ -147,8 +147,8 @@ option(XSIGMA_ENABLE_EXTERNAL "Use external copies of third party libraries by d
 option(XSIGMA_ENABLE_MAGICENUM "Enable magic_enum static reflection for enums." ON)
 mark_as_advanced(XSIGMA_ENABLE_MAGICENUM)
 
-# PyTorch Kineto Profiling Library Flag Controls whether Kineto profiling library is enabled.
-# When enabled, provides advanced profiling capabilities for performance analysis.
+# PyTorch Kineto Profiling Library Flag Controls whether Kineto profiling library is enabled. When
+# enabled, provides advanced profiling capabilities for performance analysis.
 option(XSIGMA_ENABLE_KINETO "Enable PyTorch Kineto profiling library." ON)
 mark_as_advanced(XSIGMA_ENABLE_KINETO)
 

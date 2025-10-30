@@ -69,7 +69,7 @@ static auto get_annotation_data(const std::atomic<int>& atomic)
         std::vector<int64_t> scope_range_id_stack;
     } data;
 
-    int generation = atomic.load(std::memory_order_acquire);
+    int const generation = atomic.load(std::memory_order_acquire);
     if (generation != data.generation)
     {
         // Generation changed (enable/disable), reset the data

@@ -33,9 +33,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "logging/logger.h"
 #include "profiler/analysis/statistical_analyzer.h"
 #include "profiler/session/profiler.h"
-#include "logging/logger.h"
 
 namespace xsigma
 {
@@ -681,7 +681,7 @@ std::string profiler_report::escape_json_string(const std::string& str)
 {
     std::ostringstream ss;
     ss << '"';
-    for (char c : str)
+    for (char const c : str)
     {
         switch (c)
         {
@@ -722,13 +722,13 @@ std::string profiler_report::escape_json_string(const std::string& str)
 
 std::string profiler_report::escape_csv_field(const std::string& field)
 {
-    bool requires_quotes = field.find_first_of(",\"\n") != std::string::npos;
+    bool const requires_quotes = field.find_first_of(",\"\n") != std::string::npos;
     if (!requires_quotes)
     {
         return field;
     }
     std::string escaped = "\"";
-    for (char c : field)
+    for (char const c : field)
     {
         if (c == '"')
         {
@@ -766,7 +766,7 @@ std::string profiler_report::escape_xml_string(const std::string& str)
 {
     std::string result;
     result.reserve(str.size());
-    for (char c : str)
+    for (char const c : str)
     {
         switch (c)
         {

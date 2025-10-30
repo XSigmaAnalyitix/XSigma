@@ -48,7 +48,7 @@
 #include <cstdlib>
 #else
 // Unix/Linux-specific includes
-#if defined(__linux__)
+#ifdef __linux__
 #include <sched.h>
 #include <sys/sysinfo.h>
 #else
@@ -94,7 +94,7 @@ memory_info GetMemoryInfo()
         mem_info.total = statex.ullTotalPhys;
     }
 #else
-#if defined(__linux__)
+#ifdef __linux__
     struct sysinfo info;
     int const      err = sysinfo(&info);
     if (err == 0)

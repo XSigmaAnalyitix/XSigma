@@ -42,6 +42,8 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "util/exception.h"
+
 namespace xsigma
 {
 namespace profiler
@@ -54,14 +56,14 @@ std::string_view strip_whitespace(std::string_view str)
 {
     // Strip leading whitespace
     size_t start = 0;
-    while (start < str.size() && std::isspace(static_cast<unsigned char>(str[start])))
+    while (start < str.size() && (std::isspace(static_cast<unsigned char>(str[start])) != 0))
     {
         ++start;
     }
 
     // Strip trailing whitespace
     size_t end = str.size();
-    while (end > start && std::isspace(static_cast<unsigned char>(str[end - 1])))
+    while (end > start && (std::isspace(static_cast<unsigned char>(str[end - 1])) != 0))
     {
         --end;
     }
@@ -139,7 +141,7 @@ std::vector<std::string_view> split_pairs(std::string_view metadata)
 
     for (; end < metadata.size(); ++end)
     {
-        char ch = metadata[end];
+        char const ch = metadata[end];
         switch (ch)
         {
         case '\"':
@@ -186,6 +188,8 @@ std::vector<std::string_view> split_pairs(std::string_view metadata)
                 start = end + 1;  // Skip the current ','.
             }
             break;
+        default:
+            XSIGMA_THROW("Invalid character in metadata: {}", ch);
         }
     }
 
@@ -202,18 +206,18 @@ std::vector<std::pair<std::string_view, std::string_view>> parse_metadata(std::s
 {
     std::vector<std::pair<std::string_view, std::string_view>> key_values;
 
-    for (std::string_view pair : split_pairs(metadata))
+    for (std::string_view const pair : split_pairs(metadata))
     {
         std::vector<std::string_view> parts = split_string(pair, '=', 1);
 
         if (parts.size() == 2)
         {
-            std::string_view key   = strip_whitespace(parts[0]);
-            std::string_view value = strip_whitespace(parts[1]);
+            std::string_view const key   = strip_whitespace(parts[0]);
+            std::string_view const value = strip_whitespace(parts[1]);
 
             if (!key.empty() && !value.empty())
             {
-                key_values.push_back({key, value});
+                key_values.emplace_back(key, value);
             }
         }
     }
@@ -252,7 +256,7 @@ std::vector<annotation> parse_annotation_stack(std::string_view annotation_stack
 
     while ((pos = annotation_stack.find(kAnnotationDelimiter, start)) != std::string_view::npos)
     {
-        std::string_view part = annotation_stack.substr(start, pos - start);
+        std::string_view const part = annotation_stack.substr(start, pos - start);
         if (!part.empty())
         {
             annotations.emplace_back(parse_annotation(part));
@@ -261,7 +265,7 @@ std::vector<annotation> parse_annotation_stack(std::string_view annotation_stack
     }
 
     // Add the last part
-    std::string_view last_part = annotation_stack.substr(start);
+    std::string_view const last_part = annotation_stack.substr(start);
     if (!last_part.empty())
     {
         annotations.emplace_back(parse_annotation(last_part));

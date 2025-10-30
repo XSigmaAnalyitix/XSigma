@@ -55,7 +55,7 @@ profiler_status profiler_collection::start()
     std::string errors;
     for (auto& profiler : profilers_)
     {
-        profiler_status status = profiler->start();
+        profiler_status const status = profiler->start();
         if (!status.ok())
         {
             ok = false;
@@ -83,7 +83,7 @@ profiler_status profiler_collection::stop()
     std::string errors;
     for (auto& profiler : profilers_)
     {
-        profiler_status status = profiler->stop();
+        profiler_status const status = profiler->stop();
         if (!status.ok())
         {
             ok = false;
@@ -112,7 +112,7 @@ profiler_status profiler_collection::collect_data(x_space* space)
 
     for (auto& profiler : profilers_)
     {
-        profiler_status status = profiler->collect_data(space);
+        profiler_status const status = profiler->collect_data(space);
         if (!status.ok())
         {
             ok = false;

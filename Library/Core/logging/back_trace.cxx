@@ -68,7 +68,7 @@ std::optional<FrameInformation> parse_frame_information(const std::string& frame
     // https://itanium-cxx-abi.github.io/cxx-abi/abi.html#mangling
     std::string mangled_function_name;
 
-#if defined(__GLIBCXX__)
+#ifdef __GLIBCXX__
     // In GLIBCXX, `frame_string` follows the pattern
     // `<object-file>(<mangled-function-name>+<offset-into-function>)
     // [<return-address>]`

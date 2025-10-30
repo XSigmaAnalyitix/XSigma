@@ -68,15 +68,15 @@ void may_add_display_name(xevent_metadata* xevent_metadata)
 
     // Example: Extract operation type from names like "MatMul:forward"
     std::string_view name = xevent_metadata->name();
-    while (!name.empty() && std::isspace(static_cast<unsigned char>(name.back())))
+    while (!name.empty() && (std::isspace(static_cast<unsigned char>(name.back())) != 0))
     {
         name.remove_suffix(1);
     }
 
-    size_t colon_pos = name.find(':');
+    size_t const colon_pos = name.find(':');
     if (colon_pos != std::string_view::npos)
     {
-        std::string_view op_type = name.substr(colon_pos + 1);
+        std::string_view const op_type = name.substr(colon_pos + 1);
         if (!op_type.empty())
         {
             xevent_metadata->set_display_name(std::string(op_type));
@@ -87,7 +87,7 @@ void may_add_display_name(xevent_metadata* xevent_metadata)
     constexpr std::string_view kIteratorPrefix = "Iterator::";
     if (name.rfind(kIteratorPrefix, 0) == 0)
     {
-        size_t separator = name.rfind("::");
+        size_t const separator = name.rfind("::");
         if (separator != std::string_view::npos && separator + 2 < name.size())
         {
             xevent_metadata->set_display_name(std::string(name.substr(separator + 2)));
@@ -103,32 +103,32 @@ void parse_and_add_stat_value(
     try
     {
         size_t  pos;
-        int64_t int_value = std::stoll(std::string(value_str), &pos);
+        int64_t const int_value = std::stoll(std::string(value_str), &pos);
         if (pos == value_str.size())
         {
             xevent.add_stat_value(stat_metadata, int_value);
             return;
         }
     }
-    catch (...)
+    catch (...)//NOLINT
     {
-        // Not an integer, continue
+        //throw;  // Not an integer, continue
     }
 
     // Try to parse as double
     try
     {
         size_t pos;
-        double double_value = std::stod(std::string(value_str), &pos);
+        double const double_value = std::stod(std::string(value_str), &pos);
         if (pos == value_str.size())
         {
             xevent.add_stat_value(stat_metadata, double_value);
             return;
         }
     }
-    catch (...)
+    catch (...)//NOLINT
     {
-        // Not a double, continue
+        //throw;  // Not a double, continue
     }
 
     // Treat as string
@@ -181,7 +181,7 @@ void convert_complete_events_to_xplane(
             }
 
             // Parse annotated event
-            annotation annot = parse_annotation(event.name);
+            annotation const annot = parse_annotation(event.name);
 
             xevent_metadata* xevent_metadata =
                 xplane.get_or_create_event_metadata(std::string(annot.name));
@@ -197,7 +197,7 @@ void convert_complete_events_to_xplane(
             // Add metadata as stats
             for (const auto& metadata : annot.metadata)
             {
-                x_stat_metadata* xstat_metadata =
+                x_stat_metadata const* xstat_metadata =
                     xplane.get_or_create_stat_metadata(std::string(metadata.key));
                 parse_and_add_stat_value(xevent, *xstat_metadata, metadata.value);
             }

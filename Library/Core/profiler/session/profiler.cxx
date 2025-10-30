@@ -31,6 +31,7 @@
 
 #include "profiler.h"
 
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -45,13 +46,13 @@
 #include <utility>
 
 #include "common/macros.h"
+#include "logging/logger.h"
 #include "profiler/analysis/statistical_analyzer.h"
 #include "profiler/core/profiler_collection.h"
 #include "profiler/core/profiler_factory.h"
 #include "profiler/exporters/xplane/xplane_schema.h"
 #include "profiler/memory/memory_tracker.h"
 #include "profiler/session/profiler_report.h"
-#include "logging/logger.h"
 
 // Prevent Windows min/max macros from interfering with std::numeric_limits
 #ifdef _WIN32
@@ -60,7 +61,6 @@
 #endif
 #endif
 
-#include <algorithm>
 #include <limits>
 
 namespace xsigma
@@ -72,7 +72,7 @@ std::string JsonQuote(std::string_view value)
     std::string escaped;
     escaped.reserve(value.size() + 2);
     escaped.push_back('"');
-    for (char c : value)
+    for (char const c : value)
     {
         switch (c)
         {
@@ -132,10 +132,10 @@ std::string ConvertXSpaceToChromeTrace(const x_space& space)
     };
 
     append_event(
-        std::string("{\"ph\":\"M\",\"pid\":0,\"name\":\"process_name\",\"args\":{\"name\":") +
+        std::string(R"({"ph":"M","pid":0,"name":"process_name","args":{"name":)") +
         JsonQuote("XSigma CPU Profiler") + "}}");
     append_event(
-        "{\"ph\":\"M\",\"pid\":0,\"name\":\"process_sort_index\",\"args\":{\"sort_index\":0}}");
+        R"({"ph":"M","pid":0,"name":"process_sort_index","args":{"sort_index":0}})");
 
     for (const xplane& plane : space.planes())
     {
@@ -164,15 +164,15 @@ std::string ConvertXSpaceToChromeTrace(const x_space& space)
             }
 
             append_event(
-                std::string("{\"ph\":\"M\",\"pid\":") + std::to_string(kPid) +
+                std::string(R"({"ph":"M","pid":)") + std::to_string(kPid) +
                 ",\"tid\":" + std::to_string(tid) +
-                ",\"name\":\"thread_name\",\"args\":{\"name\":" + JsonQuote(thread_name) + "}}");
+                R"(,"name":"thread_name","args":{"name":)" + JsonQuote(thread_name) + "}}");
             append_event(
-                std::string("{\"ph\":\"M\",\"pid\":") + std::to_string(kPid) + ",\"tid\":" +
-                std::to_string(tid) + ",\"name\":\"thread_sort_index\",\"args\":{\"sort_index\":" +
+                std::string(R"({"ph":"M","pid":)") + std::to_string(kPid) + ",\"tid\":" +
+                std::to_string(tid) + R"(,"name":"thread_sort_index","args":{"sort_index":)" +
                 std::to_string(thread_index) + "}}");
 
-            int64_t line_timestamp_ns = line.timestamp_ns();
+            int64_t const line_timestamp_ns = line.timestamp_ns();
             for (const xevent& event : line.events())
             {
                 if (event.data_case() == xevent::data_case_type::kNumOccurrences)
@@ -192,20 +192,20 @@ std::string ConvertXSpaceToChromeTrace(const x_space& space)
                     event_name = "TraceEvent";
                 }
 
-                uint64_t offset_ps = static_cast<uint64_t>(std::max<int64_t>(0, event.offset_ps()));
-                uint64_t start_ps =
-                    static_cast<uint64_t>(std::max<int64_t>(0, line_timestamp_ns)) * 1000ULL +
+                uint64_t const offset_ps = static_cast<uint64_t>(std::max<int64_t>(0, event.offset_ps()));
+                uint64_t const start_ps =
+                    (static_cast<uint64_t>(std::max<int64_t>(0, line_timestamp_ns)) * 1000ULL) +
                     offset_ps;
-                uint64_t ts_us       = start_ps / 1000ULL;
-                uint64_t duration_ps = static_cast<uint64_t>(event.duration_ps());
+                uint64_t const ts_us       = start_ps / 1000ULL;
+                auto duration_ps = static_cast<uint64_t>(event.duration_ps());
                 if (duration_ps == 0)
                 {
                     duration_ps = 1000ULL;  // 1 ns to ensure visibility
                 }
-                uint64_t dur_us = std::max<uint64_t>(1, duration_ps / 1000ULL);
+                uint64_t const dur_us = std::max<uint64_t>(1, duration_ps / 1000ULL);
 
                 append_event(
-                    std::string("{\"ph\":\"X\",\"pid\":") + std::to_string(kPid) +
+                    std::string(R"({"ph":"X","pid":)") + std::to_string(kPid) +
                     ",\"tid\":" + std::to_string(tid) + ",\"ts\":" + std::to_string(ts_us) +
                     ",\"dur\":" + std::to_string(dur_us) + ",\"name\":" + JsonQuote(event_name) +
                     "}");
@@ -249,7 +249,7 @@ void timing_stats::calculate_statistics()
 
     // Compute variance/standard deviation using collected samples
     double variance_sum = 0.0;
-    for (double sample : samples_)
+    for (double const sample : samples_)
     {
         double const diff = sample - mean_time_;
         variance_sum += diff * diff;
@@ -353,7 +353,7 @@ bool profiler_session::start()
     profiler_lock_ = std::move(*maybe_lock);
 
     backend_profile_options_ = build_backend_profile_options();
-    uint64_t const start_ns  = static_cast<uint64_t>(get_current_time_nanos());
+    auto const start_ns  = static_cast<uint64_t>(get_current_time_nanos());
     backend_profile_options_.set_start_timestamp_ns(start_ns);
     start_time_ns_ = start_ns;
     xspace_ready_  = false;
@@ -362,7 +362,7 @@ bool profiler_session::start()
     if (!profilers.empty())
     {
         backend_profilers_ = std::make_unique<profiler_collection>(std::move(profilers));
-        profiler_status backend_status = backend_profilers_->start();
+        profiler_status const backend_status = backend_profilers_->start();
         if (!backend_status.ok())
         {
             XSIGMA_LOG_ERROR(
@@ -443,7 +443,7 @@ bool profiler_session::stop()
     if (backend_profilers_)
     {
         std::string     backend_errors;
-        profiler_status stop_status = backend_profilers_->stop();
+        profiler_status const stop_status = backend_profilers_->stop();
         if (!stop_status.ok() && !stop_status.message().empty())
         {
             backend_errors = stop_status.message();
@@ -451,7 +451,7 @@ bool profiler_session::stop()
 
         x_space collected_space;
         xspace_                        = x_space();
-        profiler_status collect_status = backend_profilers_->collect_data(&collected_space);
+        profiler_status const collect_status = backend_profilers_->collect_data(&collected_space);
         if (collect_status.ok())
         {
             xspace_ = std::move(collected_space);
@@ -578,16 +578,13 @@ void profiler_session::normalize_xspace(x_space* space) const
     {
         return;
     }
-    int64_t const base_time = static_cast<int64_t>(start_time_ns_);
+    auto const base_time = static_cast<int64_t>(start_time_ns_);
     for (auto& plane : *space->mutable_planes())
     {
         for (auto& line : *plane.mutable_lines())
         {
             int64_t ts = line.timestamp_ns() - base_time;
-            if (ts < 0)
-            {
-                ts = 0;
-            }
+            ts = std::max<int64_t>(ts, 0);
             line.set_timestamp_ns(ts);
         }
     }

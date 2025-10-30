@@ -59,7 +59,7 @@ static Slot* LookupSlot(HashTableArray* array, ThreadIdType threadId, size_t has
     }
 
     const auto mask = array->Size - 1U;
-    Slot*      slot = nullptr;
+    Slot *      slot = nullptr;//NOLINT
 
     // since load factor is maintained below 0.5, this loop should hit an
     // empty slot if the queried slot does not exist in this array
@@ -97,7 +97,7 @@ static Slot* AcquireSlot(
         const auto slotThreadId = slot->ThreadId.load();
         if (slotThreadId == 0)  // unused?
         {
-            const std::lock_guard<std::mutex> lguard(slot->Mutex);
+            const std::scoped_lock lguard(slot->Mutex);
 
             const auto size = array->NumberOfEntries++;
             if ((size * 2) > array->Size)  // load factor is above threshold
@@ -148,10 +148,10 @@ ThreadSpecific::ThreadSpecific(unsigned numThreads) : Size(0)
 
 ThreadSpecific::~ThreadSpecific()
 {
-    HashTableArray* array = this->Root;
+    HashTableArray const* array = this->Root;
     while (array != nullptr)
     {
-        HashTableArray* tofree = array;
+        HashTableArray const* tofree = array;
         array                  = array->Prev;
         delete tofree;
     }
@@ -170,7 +170,7 @@ StoragePointerType& ThreadSpecific::GetStorage()
         slot                        = AcquireSlot(array, threadId, hash, firstAccess);
         if (slot == nullptr)  // not enough room, resize
         {
-            const std::lock_guard<std::mutex> lguard(this->Mutex);
+            const std::scoped_lock lguard(this->Mutex);
 
             if (this->Root == array)
             {
