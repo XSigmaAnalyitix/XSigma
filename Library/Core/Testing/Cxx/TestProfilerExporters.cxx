@@ -197,3 +197,153 @@ XSIGMATEST(Profiler, chrome_trace_export_large_timestamps)
     EXPECT_FALSE(json.empty());
     EXPECT_NE(json.find("compute"), std::string::npos);
 }
+
+XSIGMATEST(Profiler, chrome_trace_export_special_characters_in_names)
+{
+    x_space space;
+    auto*   plane = space.add_planes();
+    plane->set_id(1);
+    plane->set_name("CPU");
+
+    auto* line = plane->add_lines();
+    line->set_id(100);
+    line->set_name("Thread\\with\\backslash");
+
+    auto* event = line->add_events();
+    event->set_offset_ps(0);
+    event->set_duration_ps(500000);
+    event->set_metadata_id(1);
+
+    auto* metadata = plane->mutable_event_metadata();
+    (*metadata)[1].set_name("func\nwith\nnewlines");
+
+    std::string json = export_to_chrome_trace_json(space);
+
+    EXPECT_FALSE(json.empty());
+    // Should properly escape special characters
+    EXPECT_NE(json.find("\\\\"), std::string::npos);
+}
+
+XSIGMATEST(Profiler, chrome_trace_export_zero_duration_events)
+{
+    x_space space;
+    auto*   plane = space.add_planes();
+    plane->set_id(1);
+    plane->set_name("CPU");
+
+    auto* line = plane->add_lines();
+    line->set_id(100);
+    line->set_name("Thread-1");
+
+    auto* event = line->add_events();
+    event->set_offset_ps(0);
+    event->set_duration_ps(0);  // Zero duration
+    event->set_metadata_id(1);
+
+    auto* metadata = plane->mutable_event_metadata();
+    (*metadata)[1].set_name("instant_event");
+
+    std::string json = export_to_chrome_trace_json(space);
+
+    EXPECT_NE(json.find("instant_event"), std::string::npos);
+    EXPECT_NE(json.find("\"dur\":0"), std::string::npos);
+}
+
+XSIGMATEST(Profiler, chrome_trace_export_many_events)
+{
+    x_space space;
+    auto*   plane = space.add_planes();
+    plane->set_id(1);
+    plane->set_name("CPU");
+
+    auto* line = plane->add_lines();
+    line->set_id(100);
+    line->set_name("Thread-1");
+
+    // Add many events
+    for (int i = 0; i < 100; ++i)
+    {
+        auto* event = line->add_events();
+        event->set_offset_ps(i * 1000000);
+        event->set_duration_ps(500000);
+        event->set_metadata_id(1);
+    }
+
+    auto* metadata = plane->mutable_event_metadata();
+    (*metadata)[1].set_name("event");
+
+    std::string json = export_to_chrome_trace_json(space);
+
+    EXPECT_FALSE(json.empty());
+    EXPECT_NE(json.find("event"), std::string::npos);
+}
+
+XSIGMATEST(Profiler, chrome_trace_export_file_write)
+{
+    x_space space;
+    auto*   plane = space.add_planes();
+    plane->set_id(1);
+    plane->set_name("CPU");
+
+    auto* line = plane->add_lines();
+    line->set_id(100);
+    line->set_name("Thread-1");
+
+    auto* event = line->add_events();
+    event->set_offset_ps(0);
+    event->set_duration_ps(500000);
+    event->set_metadata_id(1);
+
+    auto* metadata = plane->mutable_event_metadata();
+    (*metadata)[1].set_name("compute");
+
+    // Try to write to invalid path (should fail gracefully)
+    bool result = export_to_chrome_trace_json_file(space, "/invalid/path/trace.json");
+    EXPECT_FALSE(result);
+}
+
+XSIGMATEST(Profiler, chrome_trace_export_display_time_unit)
+{
+    x_space space;
+    auto*   plane = space.add_planes();
+    plane->set_id(1);
+    plane->set_name("CPU");
+
+    std::string json = export_to_chrome_trace_json(space);
+
+    // Should contain displayTimeUnit
+    EXPECT_NE(json.find("displayTimeUnit"), std::string::npos);
+    EXPECT_NE(json.find("\"ns\""), std::string::npos);
+}
+
+XSIGMATEST(Profiler, chrome_trace_export_process_metadata)
+{
+    x_space space;
+    auto*   plane = space.add_planes();
+    plane->set_id(42);
+    plane->set_name("CustomProcess");
+
+    std::string json = export_to_chrome_trace_json(space);
+
+    // Should contain process metadata
+    EXPECT_NE(json.find("process_name"), std::string::npos);
+    EXPECT_NE(json.find("CustomProcess"), std::string::npos);
+}
+
+XSIGMATEST(Profiler, chrome_trace_export_thread_metadata)
+{
+    x_space space;
+    auto*   plane = space.add_planes();
+    plane->set_id(1);
+    plane->set_name("CPU");
+
+    auto* line = plane->add_lines();
+    line->set_id(123);
+    line->set_name("CustomThread");
+
+    std::string json = export_to_chrome_trace_json(space);
+
+    // Should contain thread metadata
+    EXPECT_NE(json.find("thread_name"), std::string::npos);
+    EXPECT_NE(json.find("CustomThread"), std::string::npos);
+}

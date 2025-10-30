@@ -38,6 +38,8 @@
 #include <cstdint>
 #include <cstdio>
 #include <fstream>
+#include <functional>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <sstream>
@@ -112,6 +114,105 @@ std::string JsonQuote(std::string_view value)
     }
     escaped.push_back('"');
     return escaped;
+}
+
+/**
+ * @brief Convert hierarchical profiler_scope_data to Chrome Trace Event Format JSON
+ *
+ * Recursively traverses the scope hierarchy and generates Chrome Trace Event Format
+ * events for each scope, with proper timestamp and duration calculations.
+ */
+std::string ConvertScopeDataToChromeTrace(
+    const profiler_scope_data* root_scope, uint64_t base_time_ns)
+{
+    std::ostringstream out;
+    out << R"({"displayTimeUnit":"ns","metadata":{"highres-ticks":true},"traceEvents":[)";
+
+    bool first        = true;
+    auto append_event = [&](const std::string& event_json)
+    {
+        if (!first)
+        {
+            out << ',';
+        }
+        first = false;
+        out << event_json;
+    };
+
+    // Add process metadata
+    append_event(
+        std::string("{\"ph\":\"M\",\"pid\":0,\"name\":\"process_name\",\"args\":{\"name\":") +
+        JsonQuote("XSigma CPU Profiler") + "}}");
+
+    // Track threads we've seen
+    std::map<std::thread::id, int64_t> thread_to_tid;
+    int64_t                            next_tid = 1;
+
+    // Recursive function to process scope and its children
+    std::function<void(const profiler_scope_data*)> process_scope =
+        [&](const profiler_scope_data* scope)
+    {
+        if (scope == nullptr)
+        {
+            return;
+        }
+
+        // Get or assign thread ID
+        auto it = thread_to_tid.find(scope->thread_id_);
+        if (it == thread_to_tid.end())
+        {
+            thread_to_tid[scope->thread_id_] = next_tid++;
+
+            // Add thread metadata event
+            append_event(
+                std::string("{\"ph\":\"M\",\"pid\":0,\"tid\":") +
+                std::to_string(thread_to_tid[scope->thread_id_]) +
+                ",\"name\":\"thread_name\",\"args\":{\"name\":\"Thread " +
+                std::to_string(thread_to_tid[scope->thread_id_]) + "\"}}");
+        }
+
+        int64_t tid = thread_to_tid[scope->thread_id_];
+
+        // Calculate timestamps in nanoseconds
+        auto start_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                            scope->start_time_.time_since_epoch())
+                            .count();
+        auto end_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                          scope->end_time_.time_since_epoch())
+                          .count();
+
+        // Adjust for base time
+        start_ns -= base_time_ns;
+        end_ns -= base_time_ns;
+
+        if (start_ns < 0)
+            start_ns = 0;
+        if (end_ns < start_ns)
+            end_ns = start_ns;
+
+        int64_t duration_ns = end_ns - start_ns;
+
+        // Add duration event for this scope
+        append_event(
+            std::string("{\"name\":") + JsonQuote(scope->name_) +
+            ",\"ph\":\"X\",\"pid\":0,\"tid\":" + std::to_string(tid) + ",\"ts\":" +
+            std::to_string(start_ns) + ",\"dur\":" + std::to_string(duration_ns) + "}");
+
+        // Process children
+        for (const auto& child : scope->children_)
+        {
+            process_scope(child.get());
+        }
+    };
+
+    // Process root scope and all children
+    if (root_scope != nullptr)
+    {
+        process_scope(root_scope);
+    }
+
+    out << "]}";
+    return out.str();
 }
 
 std::string ConvertXSpaceToChromeTrace(const x_space& space)
@@ -746,25 +847,48 @@ void profiler_scope::stop()
 
 std::string profiler_session::generate_chrome_trace_json() const
 {
-    if (!xspace_ready_)
+    // Prefer hierarchical scope data if available, otherwise use xspace
+    if (root_scope_ != nullptr && options_.enable_hierarchical_profiling_)
     {
-        return "{}";
+        uint64_t base_time_ns =
+            std::chrono::duration_cast<std::chrono::nanoseconds>(start_time_.time_since_epoch())
+                .count();
+        return ConvertScopeDataToChromeTrace(root_scope_.get(), base_time_ns);
     }
-    return ConvertXSpaceToChromeTrace(xspace_);
+    else if (xspace_ready_)
+    {
+        return ConvertXSpaceToChromeTrace(xspace_);
+    }
+    return "{}";
 }
 
 bool profiler_session::write_chrome_trace(const std::string& filename) const
 {
-    if (!xspace_ready_)
-    {
-        return false;
-    }
     std::ofstream out(filename, std::ios::out | std::ios::binary);
     if (!out)
     {
         return false;
     }
-    out << ConvertXSpaceToChromeTrace(xspace_);
+
+    // Prefer hierarchical scope data if available, otherwise use xspace
+    std::string json;
+    if (root_scope_ != nullptr && options_.enable_hierarchical_profiling_)
+    {
+        uint64_t base_time_ns =
+            std::chrono::duration_cast<std::chrono::nanoseconds>(start_time_.time_since_epoch())
+                .count();
+        json = ConvertScopeDataToChromeTrace(root_scope_.get(), base_time_ns);
+    }
+    else if (xspace_ready_)
+    {
+        json = ConvertXSpaceToChromeTrace(xspace_);
+    }
+    else
+    {
+        return false;
+    }
+
+    out << json;
     return out.good();
 }
 
