@@ -252,12 +252,14 @@ def _generate_json_from_lcov(lcov_file: Path, output_dir: Path) -> Dict:
         return {}
 
 
-def _generate_html_from_lcov(lcov_file: Path, output_dir: Path) -> None:
+def _generate_html_from_lcov(lcov_file: Path, output_dir: Path,
+                             source_root: str = "") -> None:
     """Generate HTML coverage report directly from LCOV data using custom templates.
 
     Args:
         lcov_file: Path to the LCOV coverage file.
         output_dir: Directory where HTML report will be saved.
+        source_root: Root directory for source files (for relative paths).
     """
     try:
         from html_report import HtmlGenerator
@@ -278,7 +280,7 @@ def _generate_html_from_lcov(lcov_file: Path, output_dir: Path) -> None:
         # Generate custom HTML reports
         html_dir = output_dir / "html"
         html_dir.mkdir(exist_ok=True)
-        generator = HtmlGenerator(html_dir)
+        generator = HtmlGenerator(html_dir, source_root, preserve_hierarchy=True)
         generator.generate_report(covered_lines, uncovered_lines, execution_counts)
         print(f"HTML coverage report generated at: {html_dir}/index.html")
 
@@ -308,7 +310,8 @@ def _generate_html_from_json(json_file: Path, output_dir: Path) -> None:
 def generate_lcov_coverage(build_dir: Path, modules: List[str],
                           exclude_patterns: List[str] = None,
                           verbose: bool = False,
-                          output_format: str = "json") -> None:
+                          output_format: str = "json",
+                          source_root: str = "") -> None:
     """
     Generate LCOV coverage report from build directory.
 
@@ -318,6 +321,7 @@ def generate_lcov_coverage(build_dir: Path, modules: List[str],
         exclude_patterns: List of patterns to exclude (e.g., ['/usr/*', '*/ThirdParty/*'])
         verbose: Enable verbose output for debugging
         output_format: Output format - 'json', 'html', or 'html-and-json'
+        source_root: Root directory for source files (for relative paths).
     """
     import subprocess
 
@@ -439,7 +443,7 @@ def generate_lcov_coverage(build_dir: Path, modules: List[str],
 
     elif output_format == "html":
         print(f"Generating HTML report to {coverage_report_dir}...")
-        _generate_html_from_lcov(coverage_filtered, coverage_report_dir)
+        _generate_html_from_lcov(coverage_filtered, coverage_report_dir, source_root)
         print(f"[OK] HTML coverage report generated at {coverage_report_dir}/html/index.html")
 
     elif output_format == "html-and-json":
@@ -447,7 +451,7 @@ def generate_lcov_coverage(build_dir: Path, modules: List[str],
         _generate_json_from_lcov(coverage_filtered, coverage_report_dir)
         print(f"[OK] JSON coverage report generated at {coverage_report_dir}/coverage_summary.json")
         print(f"Generating HTML report to {coverage_report_dir}...")
-        _generate_html_from_lcov(coverage_filtered, coverage_report_dir)
+        _generate_html_from_lcov(coverage_filtered, coverage_report_dir, source_root)
         print(f"[OK] HTML coverage report generated at {coverage_report_dir}/html/index.html")
 
     else:

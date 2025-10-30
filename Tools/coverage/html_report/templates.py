@@ -55,7 +55,8 @@ body { font-family: 'Courier New', monospace; margin: 0; background-color: #f5f5
 
 def get_index_html_template(coverage_percent: float, total_covered: int,
                             total_uncovered: int, total_lines: int,
-                            files_table_rows: str) -> str:
+                            files_table_rows: str,
+                            dirs_table_rows: str = "") -> str:
     """Generate HTML content for the index/summary page.
 
     Args:
@@ -64,22 +65,39 @@ def get_index_html_template(coverage_percent: float, total_covered: int,
         total_uncovered: Total number of uncovered lines.
         total_lines: Total number of lines.
         files_table_rows: HTML table rows for files.
+        dirs_table_rows: Optional HTML table rows for directories.
 
     Returns:
         Complete HTML content for the index page.
     """
+    dirs_section = ""
+    if dirs_table_rows:
+        dirs_section = f"""
+        <h2>Directories</h2>
+        <table>
+            <tr>
+                <th>Directory</th>
+                <th>Coverage</th>
+                <th>Covered</th>
+                <th>Uncovered</th>
+                <th>Total</th>
+            </tr>
+{dirs_table_rows}        </table>
+"""
+
     return f"""<!DOCTYPE html>
 <html>
 <head>
     <title>Code Coverage Report</title>
     <style>
         {COMMON_CSS}
+        h2 {{ margin-top: 30px; }}
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Code Coverage Report</h1>
-        
+
         <div class="summary">
             <div class="metric">
                 <div class="metric-label">Overall Coverage</div>
@@ -101,7 +119,7 @@ def get_index_html_template(coverage_percent: float, total_covered: int,
                 <div class="metric-value">{total_lines}</div>
             </div>
         </div>
-
+{dirs_section}
         <h2>Files</h2>
         <table>
             <tr>
@@ -120,7 +138,8 @@ def get_index_html_template(coverage_percent: float, total_covered: int,
 
 def get_file_html_template(file_path: str, coverage_percent: float,
                           covered_count: int, uncovered_count: int,
-                          total_lines: int, lines_html: str) -> str:
+                          total_lines: int, lines_html: str,
+                          back_link: str = "index.html") -> str:
     """Generate HTML content for a file detail page.
 
     Args:
@@ -130,6 +149,7 @@ def get_file_html_template(file_path: str, coverage_percent: float,
         uncovered_count: Number of uncovered lines.
         total_lines: Total number of lines.
         lines_html: HTML content for code lines.
+        back_link: Relative path to the index/summary page (default: "index.html").
 
     Returns:
         Complete HTML content for the file page.
@@ -148,7 +168,7 @@ def get_file_html_template(file_path: str, coverage_percent: float,
             <h1>Coverage Report: {file_path}</h1>
             <p>Line-by-line coverage analysis</p>
         </div>
-        
+
         <div class="stats">
             <div class="stat">
                 <div class="stat-label">Coverage</div>
@@ -170,9 +190,87 @@ def get_file_html_template(file_path: str, coverage_percent: float,
 
         <div class="code">
 {lines_html}        </div>
-        
+
         <div class="back-link">
-            <a href="index.html">← Back to Summary</a>
+            <a href="{back_link}">← Back to Summary</a>
+        </div>
+    </div>
+</body>
+</html>
+"""
+
+
+def get_directory_html_template(dir_path: str, coverage_percent: float,
+                               covered_count: int, uncovered_count: int,
+                               total_lines: int, breadcrumb_html: str,
+                               subdirs_table_rows: str,
+                               files_table_rows: str,
+                               back_link: str = "index.html") -> str:
+    """Generate HTML content for a directory summary page.
+
+    Args:
+        dir_path: Path to the directory.
+        coverage_percent: Coverage percentage for the directory.
+        covered_count: Number of covered lines.
+        uncovered_count: Number of uncovered lines.
+        total_lines: Total number of lines.
+        breadcrumb_html: HTML for breadcrumb navigation.
+        subdirs_table_rows: HTML table rows for subdirectories.
+        files_table_rows: HTML table rows for files.
+        back_link: Relative path to parent directory or index.
+
+    Returns:
+        Complete HTML content for the directory page.
+    """
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+    <title>Coverage: {dir_path}</title>
+    <style>
+        {COMMON_CSS}
+        .breadcrumb {{ padding: 10px 0; margin-bottom: 20px; }}
+        .breadcrumb a {{ color: #007bff; text-decoration: none; margin: 0 5px; }}
+        .breadcrumb a:hover {{ text-decoration: underline; }}
+        .breadcrumb span {{ margin: 0 5px; color: #666; }}
+        .section-title {{ margin-top: 30px; margin-bottom: 15px; font-size: 18px; font-weight: bold; color: #333; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Coverage Report: {dir_path}</h1>
+
+        <div class="breadcrumb">
+            {breadcrumb_html}
+        </div>
+
+        <div class="summary">
+            <div class="metric">
+                <div class="metric-label">Coverage</div>
+                <div class="metric-value">{coverage_percent:.1f}%</div>
+                <div class="coverage-bar">
+                    <div class="coverage-fill" style="width: {coverage_percent}%;"></div>
+                </div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Lines Covered</div>
+                <div class="metric-value">{covered_count}</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Lines Uncovered</div>
+                <div class="metric-value">{uncovered_count}</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Total Lines</div>
+                <div class="metric-value">{total_lines}</div>
+            </div>
+        </div>
+
+        {f'<h2 class="section-title">Subdirectories</h2><table><tr><th>Directory</th><th>Coverage</th><th>Covered</th><th>Uncovered</th><th>Total</th></tr>{subdirs_table_rows}</table>' if subdirs_table_rows else ''}
+
+        {f'<h2 class="section-title">Files</h2><table><tr><th>File</th><th>Coverage</th><th>Covered</th><th>Uncovered</th><th>Total</th></tr>{files_table_rows}</table>' if files_table_rows else ''}
+
+        <div class="back-link">
+            <a href="{back_link}">← Back</a>
         </div>
     </div>
 </body>

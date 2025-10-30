@@ -19,14 +19,63 @@ class JsonHtmlGenerator:
     including summary metrics and per-file coverage details.
     """
 
-    def __init__(self, output_dir: Path):
+    def __init__(self, output_dir: Path, source_root: str = "",
+                 preserve_hierarchy: bool = True):
         """Initialize the HTML generator.
 
         Args:
             output_dir: Directory where HTML reports will be generated.
+            source_root: Root directory for source files (for relative paths).
+            preserve_hierarchy: If True, preserve directory hierarchy in output.
+                               If False, use flat structure (legacy behavior).
         """
         self.output_dir = Path(output_dir)
+        self.source_root = source_root
+        self.preserve_hierarchy = preserve_hierarchy
         self.output_dir.mkdir(parents=True, exist_ok=True)
+
+    def _normalize_path(self, path: str) -> str:
+        """Normalize path to use forward slashes for cross-platform compatibility.
+
+        Args:
+            path: Path string to normalize.
+
+        Returns:
+            Normalized path using forward slashes.
+        """
+        return Path(path).as_posix()
+
+    def _resolve_relative_path(self, file_path: str) -> Path:
+        """Resolve relative path from source_root.
+
+        Extracts the relative path of a file from the source_root directory.
+        Handles both Windows and Unix paths correctly.
+
+        Args:
+            file_path: Absolute path to source file.
+
+        Returns:
+            Path object relative to source_root.
+
+        Raises:
+            ValueError: If file_path is not under source_root.
+        """
+        if not self.source_root:
+            return Path(file_path).name
+
+        file_norm = self._normalize_path(file_path)
+        root_norm = self._normalize_path(self.source_root)
+
+        # Ensure root_norm ends with / for proper prefix matching
+        if not root_norm.endswith('/'):
+            root_norm += '/'
+
+        # Handle case-insensitive comparison on Windows
+        if file_norm.lower().startswith(root_norm.lower()):
+            rel = file_norm[len(root_norm):]
+            return Path(rel)
+
+        raise ValueError(f"{file_path} not under {self.source_root}")
 
     def generate_from_json(self, json_file: Path) -> Path:
         """Generate HTML report from JSON coverage file.
@@ -64,9 +113,22 @@ class JsonHtmlGenerator:
         # Generate per-file pages
         if "files" in data:
             for file_info in data["files"]:
-                file_html = self._generate_file_page(file_info)
-                file_name = Path(file_info.get("file", "unknown")).name
-                file_path = self.output_dir / f"{file_name}.html"
+                file_name = file_info.get("file", "unknown")
+                file_html = self._generate_file_page(file_info, file_name)
+
+                # Generate output file path using hierarchical or flat structure
+                if self.preserve_hierarchy and self.source_root:
+                    try:
+                        rel_path = self._resolve_relative_path(file_name)
+                        output_dir = self.output_dir / rel_path.parent
+                        output_dir.mkdir(parents=True, exist_ok=True)
+                        file_path = output_dir / f"{rel_path.name}.html"
+                    except ValueError:
+                        # Fallback to flat structure if path resolution fails
+                        file_path = self.output_dir / f"{Path(file_name).name}.html"
+                else:
+                    file_path = self.output_dir / f"{Path(file_name).name}.html"
+
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(file_html)
 
@@ -159,7 +221,17 @@ class JsonHtmlGenerator:
             func_percent_file = func_cov_file.get("percent", 0.0)
             region_percent_file = region_cov_file.get("percent", 0.0)
 
-            file_link = f"{Path(file_name).name}.html"
+            # Generate link using hierarchical or flat structure
+            if self.preserve_hierarchy and self.source_root:
+                try:
+                    rel_path = self._resolve_relative_path(file_name)
+                    file_link = str(rel_path.with_suffix(
+                        rel_path.suffix + '.html')).replace('\\', '/')
+                except ValueError:
+                    # Fallback to flat structure if path resolution fails
+                    file_link = f"{Path(file_name).name}.html"
+            else:
+                file_link = f"{Path(file_name).name}.html"
 
             html += f"""            <tr>
                 <td><a href="{file_link}">{file_name}</a></td>
@@ -180,11 +252,12 @@ class JsonHtmlGenerator:
 """
         return html
 
-    def _generate_file_page(self, file_info: dict) -> str:
+    def _generate_file_page(self, file_info: dict, file_path: str = "") -> str:
         """Generate a per-file coverage report page.
 
         Args:
             file_info: Dictionary containing file coverage information.
+            file_path: Full path to the source file (for calculating back link).
 
         Returns:
             HTML content for the file page.
@@ -193,6 +266,19 @@ class JsonHtmlGenerator:
         line_cov = file_info.get("line_coverage", {})
         func_cov = file_info.get("function_coverage", {})
         region_cov = file_info.get("region_coverage", {})
+
+        # Calculate relative path to index.html from this file
+        back_link = "index.html"
+        if self.preserve_hierarchy and self.source_root and file_path:
+            try:
+                rel_path = self._resolve_relative_path(file_path)
+                # Calculate how many levels deep this file is
+                depth = len(rel_path.parent.parts)
+                if depth > 0:
+                    # Go up the required number of levels
+                    back_link = "/".join([".."] * depth) + "/index.html"
+            except ValueError:
+                pass
 
         line_percent = line_cov.get("percent", 0.0)
         func_percent = func_cov.get("percent", 0.0)
@@ -269,9 +355,9 @@ class JsonHtmlGenerator:
                 </div>
             </div>
         </div>
-        
+
         <div class="back-link">
-            <a href="index.html">← Back to Summary</a>
+            <a href="{back_link}">← Back to Summary</a>
         </div>
     </div>
 </body>

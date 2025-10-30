@@ -189,7 +189,9 @@ std::vector<std::string_view> split_pairs(std::string_view metadata)
             }
             break;
         default:
-            XSIGMA_THROW("Invalid character in metadata: {}", ch);
+            // Regular characters (alphanumeric, spaces, etc.) are allowed
+            // They are part of the current key-value pair
+            break;
         }
     }
 

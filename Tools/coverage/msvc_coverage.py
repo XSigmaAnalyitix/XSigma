@@ -247,7 +247,7 @@ def _generate_detailed_html_reports(html_dir: Path, raw_dir: Path, source_root: 
         # Generate HTML reports using HtmlGenerator
         try:
             print(f"Generating detailed HTML reports for {len(covered_lines)} file(s)...")
-            generator = HtmlGenerator(html_dir, source_root)
+            generator = HtmlGenerator(html_dir, source_root, preserve_hierarchy=True)
             generator.generate_report(covered_lines, uncovered_lines, execution_counts)
             print(f"Generated detailed HTML reports in: {html_dir}")
         except Exception as e:
