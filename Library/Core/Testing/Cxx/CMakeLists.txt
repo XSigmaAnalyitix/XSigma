@@ -45,6 +45,14 @@ foreach(_test_source IN ITEMS ${test_sources})
     endif()
   endif()
 
+  # When Kineto is disabled, exclude Kineto-specific tests
+  if(NOT XSIGMA_ENABLE_KINETO)
+    if(file_name MATCHES "TestKineto")
+      message(STATUS "Excluding Kineto test (Kineto disabled): ${file_name}")
+      continue()
+    endif()
+  endif()
+
   list(APPEND TestFiles "${_test_source}")
 endforeach()
 
@@ -57,11 +65,8 @@ add_executable(CoreCxxTests ${TestFiles})
 target_compile_definitions(CoreCxxTests PRIVATE XSIGMA_GOOGLE_TEST USE_GTEST _VARIADIC_MAX=10)
 
 # Link libraries
-target_link_libraries(CoreCxxTests PRIVATE gtest gtest_main XSigma::Core ${XSIGMA_CUDA_LIBRARIES})
-
-if(XSIGMA_ENABLE_CUDA)
-  target_link_libraries(CoreCxxTests PRIVATE CUDA::cudart)
-endif()
+# Core library is linked which transitively brings in all centralized dependencies via XSIGMA_DEPENDENCY_LIBS
+target_link_libraries(CoreCxxTests PRIVATE gtest gtest_main XSigma::Core)
 
 # Set target properties
 set_target_properties(
@@ -98,34 +103,6 @@ if(COMMAND xsigma_set_target_output_directories)
   xsigma_set_target_output_directories(CoreCxxTests)
 endif()
 
-# ============================================================================= TBB Support
-# =============================================================================
-if(XSIGMA_ENABLE_TBB)
-  # TBB targets should be available from the tbb.cmake module
-  if(TARGET TBB::tbb)
-    target_link_libraries(CoreCxxTests PRIVATE TBB::tbb)
-    if(TARGET TBB::tbbmalloc)
-      target_link_libraries(CoreCxxTests PRIVATE TBB::tbbmalloc)
-    endif()
-    message(STATUS "CoreCxxTests linked with TBB")
-  else()
-    message(WARNING "XSIGMA_ENABLE_TBB is ON but TBB::tbb target is not available for tests")
-  endif()
-endif()
-
-# ============================================================================= Mimalloc Support
-# =============================================================================
-if(XSIGMA_ENABLE_MIMALLOC)
-  if(TARGET XSigma::mimalloc)
-    target_link_libraries(CoreCxxTests PRIVATE XSigma::mimalloc)
-    message(STATUS "CoreCxxTests linked with XSigma::mimalloc")
-  else()
-    message(
-      WARNING "XSIGMA_ENABLE_MIMALLOC is ON but XSigma::mimalloc target is not available for tests"
-    )
-  endif()
-endif()
-
 # ============================================================================= BenchmarkSimple
 # Executable (following cpuinfo pattern)
 # =============================================================================
@@ -153,13 +130,8 @@ if(XSIGMA_ENABLE_BENCHMARK)
   add_executable(CoreCxxBenchmark ${bench_sources})
 
   # Link libraries
-  target_link_libraries(CoreCxxBenchmark PRIVATE benchmark XSigma::Core ${XSIGMA_CUDA_LIBRARIES})
-
-  # Add mimalloc support for benchmarks
-  if(XSIGMA_ENABLE_MIMALLOC AND TARGET XSigma::mimalloc)
-    target_link_libraries(CoreCxxBenchmark PRIVATE XSigma::mimalloc)
-    message(STATUS "CoreCxxBenchmark linked with XSigma::mimalloc")
-  endif()
+  # Core library is linked which transitively brings in all centralized dependencies via XSIGMA_DEPENDENCY_LIBS
+  target_link_libraries(CoreCxxBenchmark PRIVATE benchmark XSigma::Core)
 
   # Set target properties
   set_target_properties(CoreCxxBenchmark PROPERTIES FOLDER "Benchmarks")
@@ -170,18 +142,4 @@ if(XSIGMA_ENABLE_BENCHMARK)
   endif()
 
   message(STATUS "✓ BenchmarkSimple executable configured")
-  # ============================================================================= TBB Support
-  # =============================================================================
-  if(XSIGMA_ENABLE_TBB)
-    # TBB targets should be available from the tbb.cmake module
-    if(TARGET TBB::tbb)
-      target_link_libraries(CoreCxxBenchmark PRIVATE TBB::tbb)
-      if(TARGET TBB::tbbmalloc)
-        target_link_libraries(CoreCxxBenchmark PRIVATE TBB::tbbmalloc)
-      endif()
-      message(STATUS "CoreCxxBenchmark linked with TBB")
-    else()
-      message(WARNING "XSIGMA_ENABLE_TBB is ON but TBB::tbb target is not available for tests")
-    endif()
-  endif()
 endif()

@@ -58,6 +58,9 @@ set(CMAKE_CXX_STANDARD ${XSIGMA_CXX_STANDARD})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(XSIGMA_DEPENDENCY_LIBS "")
+mark_as_advanced(XSIGMA_DEPENDENCY_LIBS)
+
 # ============================================================================= General Project-Wide
 # Configuration Flags
 # =============================================================================
@@ -147,16 +150,6 @@ option(XSIGMA_ENABLE_EXTERNAL "Use external copies of third party libraries by d
 option(XSIGMA_ENABLE_MAGICENUM "Enable magic_enum static reflection for enums." ON)
 mark_as_advanced(XSIGMA_ENABLE_MAGICENUM)
 
-# PyTorch Kineto Profiling Library Flag Controls whether Kineto profiling library is enabled. When
-# enabled, provides advanced profiling capabilities for performance analysis.
-option(XSIGMA_ENABLE_KINETO "Enable PyTorch Kineto profiling library." ON)
-mark_as_advanced(XSIGMA_ENABLE_KINETO)
-
-# Intel ITT API (Instrumentation and Tracing Technology) Flag Controls whether Intel ITT API is
-# enabled. When enabled, provides task/frame annotations for Intel VTune profiling.
-option(XSIGMA_ENABLE_ITTAPI "Enable Intel ITT API for VTune profiling." OFF)
-mark_as_advanced(XSIGMA_ENABLE_ITTAPI)
-
 # Microsoft Mimalloc Memory Allocator Flag Controls whether Microsoft's mimalloc high-performance
 # allocator is enabled. When enabled, provides faster memory allocation with better performance
 # characteristics.
@@ -165,8 +158,19 @@ option(XSIGMA_ENABLE_MIMALLOC
 )
 mark_as_advanced(XSIGMA_ENABLE_MIMALLOC)
 
-# ============================================================================= Platform-Specific
-# Configuration and Feature Validation
+#profiling libreray
+# PyTorch Kineto Profiling Library Flag Controls whether Kineto profiling library is enabled. When
+# enabled, provides advanced profiling capabilities for performance analysis.
+option(XSIGMA_ENABLE_KINETO "Enable PyTorch Kineto profiling library." OFF)
+mark_as_advanced(XSIGMA_ENABLE_KINETO)
+
+# Intel ITT API (Instrumentation and Tracing Technology) Flag Controls whether Intel ITT API is
+# enabled. When enabled, provides task/frame annotations for Intel VTune profiling.
+option(XSIGMA_ENABLE_ITTAPI "Enable Intel ITT API for VTune profiling." ON)
+mark_as_advanced(XSIGMA_ENABLE_ITTAPI)
+
+# ============================================================================= 
+# Platform-Specific Configuration and Feature Validation
 # =============================================================================
 # Adjusts feature availability based on platform constraints. Some features are only available on
 # specific operating systems.
@@ -182,8 +186,8 @@ if(NOT UNIX OR APPLE)
   set(XSIGMA_ENABLE_MEMKIND OFF)
 endif()
 
-# ============================================================================= Global Project
-# Variables
+# ============================================================================= 
+# Global Project Variables
 # =============================================================================
 # Set global variables used throughout the build system.
 # =============================================================================
@@ -192,8 +196,8 @@ set(XSIGMA_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(XSIGMA_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 set(XSIGMA_VERSION "${PROJECT_VERSION}")
 
-# ============================================================================= Build Library Type
-# Configuration
+# ============================================================================= 
+# Build Library Type Configuration
 # =============================================================================
 # Controls whether libraries are built as shared or static. XSigma requires shared libraries (DLLs
 # on Windows) for proper functionality.
@@ -263,6 +267,13 @@ endif()
 
 # Add third-party dependencies
 add_subdirectory(ThirdParty)
+
+# Centralized dependency linking module
+# This must be included AFTER ThirdParty subdirectory is added so that all third-party targets
+# (XSigma::fmt, XSigma::cpuinfo, XSigma::loguru, XSigma::glog, XSigma::kineto, etc.) are available.
+# It must also be AFTER all feature modules (cuda, hip, tbb, etc.) are loaded so that
+# XSIGMA_DEPENDENCY_LIBS can aggregate all enabled dependencies.
+include(dependencies)
 
 # Add subdirectories
 add_subdirectory(Library/Core)

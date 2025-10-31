@@ -110,6 +110,15 @@ else()
   list(REMOVE_ITEM templates ${TBB_HEADER_FILES})
 endif()
 
+# Remove Kineto files if Kineto is disabled
+if(NOT XSIGMA_ENABLE_KINETO)
+  file(GLOB_RECURSE KINETO_SOURCE_FILES profiler/kineto_*.cxx)
+  file(GLOB_RECURSE KINETO_HEADER_FILES profiler/kineto_*.h)
+  list(REMOVE_ITEM sources ${KINETO_SOURCE_FILES})
+  list(REMOVE_ITEM headers ${KINETO_HEADER_FILES})
+  message(STATUS "Kineto disabled: Excluding Kineto source files from build")
+endif()
+
 # Create the Core library Respect BUILD_SHARED_LIBS setting for library type
 add_library(Core ${sources} ${headers} ${templates})
 
@@ -148,7 +157,12 @@ if(MSVC)
   target_compile_options(Core PRIVATE /WX)
 endif()
 
-# Include directories
+# ============================================================================= Include Directories
+# =============================================================================
+# Core library include directories are split into:
+# 1. Core's own directories (PUBLIC for external consumers)
+# 2. Centralized third-party include directories (PUBLIC to propagate to dependent targets like tests)
+
 target_include_directories(
   Core
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -157,113 +171,53 @@ target_include_directories(
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+# Add centralized third-party include directories as PUBLIC so they propagate to dependent targets
+# (e.g., test executables that link to XSigma::Core)
+if(XSIGMA_DEPENDENCY_INCLUDE_DIRS)
+  target_include_directories(Core PUBLIC ${XSIGMA_DEPENDENCY_INCLUDE_DIRS})
+  message(STATUS "Core library include directories: ${XSIGMA_DEPENDENCY_INCLUDE_DIRS}")
+endif()
+
 # Link with build interface target
 target_link_libraries(Core PUBLIC XSigma::build)
 if(COMMAND xsigma_target_clang_tidy)
   xsigma_target_clang_tidy(Core)
 endif()
 
-# Link with third-party dependencies Mandatory core dependencies (always linked)
-if(TARGET XSigma::fmt)
-  target_link_libraries(Core PUBLIC XSigma::fmt)
+# ============================================================================= Link with
+# Centralized Dependencies
+# =============================================================================
+# All third-party and system library dependencies are now managed centrally via
+# XSIGMA_DEPENDENCY_LIBS, which is populated by Cmake/tools/dependencies.cmake
+# based on enabled feature flags. This ensures consistent linking across all targets.
+#
+# Dependencies are linked as PUBLIC so they propagate to dependent targets (e.g., test executables)
+# that link to XSigma::Core. This is necessary because Core's public headers include headers from
+# these dependencies (e.g., fmt/format.h in logger.h), so consumers of Core must also link with them.
+
+# Link with centralized dependency list
+if(XSIGMA_DEPENDENCY_LIBS)
+  target_link_libraries(Core PUBLIC ${XSIGMA_DEPENDENCY_LIBS})
+  message(STATUS "Core library linked with centralized dependencies: ${XSIGMA_DEPENDENCY_LIBS}")
 endif()
 
-if(TARGET XSigma::cpuinfo)
-  target_link_libraries(Core PRIVATE XSigma::cpuinfo)
+# ============================================================================= Compile
+# Definitions for Optional Features
+# =============================================================================
+# Feature-related compile definitions are now centrally managed via
+# XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS, which is populated by Cmake/tools/dependencies.cmake
+# based on enabled feature flags. These definitions are PUBLIC to propagate to dependent targets,
+# ensuring feature macros are available in test files and other dependent code.
+
+# Apply centralized compile definitions
+if(XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS)
+  target_compile_definitions(Core PUBLIC ${XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS})
+  message(STATUS "Core library compile definitions: ${XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS}")
 endif()
 
-# Optional dependencies (based on XSIGMA_ENABLE_XXX options)
-
-if(XSIGMA_ENABLE_MAGICENUM AND TARGET XSigma::magic_enum)
-  target_link_libraries(Core PUBLIC XSigma::magic_enum)
-  target_compile_definitions(Core PUBLIC XSIGMA_USE_MAGICENUM)
-endif()
-
-# Logging backend dependencies (mutually exclusive based on XSIGMA_LOGGING_BACKEND) Note: Compile
-# definitions are PUBLIC so they propagate to all targets that link to Core This ensures logging
-# macros are available in test files and other dependent code
-if(XSIGMA_USE_NATIVE_LOGGING)
-  target_compile_definitions(Core PUBLIC XSIGMA_USE_NATIVE_LOGGING)
-  message(STATUS "Core library using NATIVE logging backend")
-elseif(XSIGMA_USE_LOGURU AND TARGET XSigma::loguru)
-  target_link_libraries(Core PRIVATE XSigma::loguru)
-  target_compile_definitions(Core PUBLIC XSIGMA_USE_LOGURU)
-  message(STATUS "Core library using LOGURU logging backend")
-elseif(XSIGMA_USE_GLOG AND TARGET XSigma::glog)
-  target_link_libraries(Core PRIVATE XSigma::glog)
-  target_compile_definitions(Core PUBLIC XSIGMA_USE_GLOG)
-  message(STATUS "Core library using GLOG logging backend")
-endif()
-
-# Compression support configuration
-if(XSIGMA_ENABLE_COMPRESSION)
-  target_compile_definitions(Core PUBLIC XSIGMA_ENABLE_COMPRESSION)
-  if(XSIGMA_COMPRESSION_TYPE_SNAPPY)
-    target_compile_definitions(Core PUBLIC XSIGMA_COMPRESSION_TYPE_SNAPPY)
-    # TODO: Add Snappy library dependency when available target_link_libraries(Core PRIVATE
-    # snappy::snappy)
-  endif()
-endif()
-
-# Optional dependencies
-if(XSIGMA_ENABLE_TBB)
-  # TBB targets should be available from the tbb.cmake module
-  if(NOT TARGET TBB::tbb)
-    message(
-      FATAL_ERROR
-        "XSIGMA_ENABLE_TBB is ON but TBB::tbb target is not available. This indicates a configuration error."
-    )
-  endif()
-
-  # Link with TBB
-  target_link_libraries(Core PRIVATE TBB::tbb)
-
-  # Link with TBB malloc if available
-  if(TARGET TBB::tbbmalloc)
-    target_link_libraries(Core PRIVATE TBB::tbbmalloc)
-    message(STATUS "Core library linked with TBB and TBB malloc")
-  else()
-    message(STATUS "Core library linked with TBB (TBB malloc not available)")
-  endif()
-endif()
-
-if(XSIGMA_ENABLE_MIMALLOC)
-  target_link_libraries(Core PRIVATE XSigma::mimalloc)
-
+# Handle Mimalloc dependency tracking
+if(XSIGMA_ENABLE_MIMALLOC AND TARGET XSigma::mimalloc)
   add_dependencies(Core XSigma::mimalloc)
-endif()
-
-# PyTorch Kineto profiling library support
-if(XSIGMA_ENABLE_KINETO)
-  if(TARGET XSigma::kineto)
-    target_link_libraries(Core PUBLIC XSigma::kineto)
-    target_compile_definitions(Core PUBLIC XSIGMA_HAS_KINETO)
-    message(STATUS "Core library linked with PyTorch Kineto")
-  else()
-    message(
-      STATUS "XSIGMA_ENABLE_KINETO is ON but XSigma::kineto target not available (wrapper mode)"
-    )
-  endif()
-endif()
-
-# Intel ITT API support Provides task/frame annotations for Intel VTune profiling
-if(XSIGMA_ENABLE_ITTAPI)
-  if(TARGET XSigma::ittapi)
-    target_link_libraries(Core PUBLIC XSigma::ittapi)
-    target_compile_definitions(Core PUBLIC XSIGMA_HAS_ITTAPI)
-    message(STATUS "Core library linked with Intel ITT API")
-  else()
-    message(WARNING "XSIGMA_ENABLE_ITTAPI is ON but XSigma::ittapi target not found")
-  endif()
-endif()
-
-# GPU support (CUDA or HIP)
-if(XSIGMA_ENABLE_CUDA)
-  target_link_libraries(Core PRIVATE CUDA::cudart)
-endif()
-
-if(XSIGMA_ENABLE_HIP)
-  target_link_libraries(Core PRIVATE ${XSIGMA_HIP_LIBRARIES})
 endif()
 
 # Install targets

@@ -1,5 +1,6 @@
 # Third-party dependencies for XSigma
 cmake_minimum_required(VERSION 3.16)
+cmake_policy(SET CMP0069 NEW)
 message(STATUS "DEBUG: Processing ThirdParty/CMakeLists.txt")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -72,10 +73,6 @@ set(MI_INSTALL_TOPLEVEL OFF CACHE BOOL "Disable mimalloc top-level install" FORC
 set(MI_OVERRIDE OFF CACHE BOOL "Disable mimalloc malloc override" FORCE)
 set(MI_BUILD_SHARED OFF CACHE BOOL "Build mimalloc as static library" FORCE)
 set(MI_BUILD_STATIC ON CACHE BOOL "Build mimalloc as static library" FORCE)
-
-# Intel ITT API-specific options
-set(ITT_API_IPT_SUPPORT OFF CACHE BOOL "Disable ITT API ptmarks support" FORCE)
-set(ITT_API_FORTRAN_SUPPORT OFF CACHE BOOL "Disable ITT API Fortran support" FORCE)
 
 # Function to add third-party library with external option
 function(add_third_party_library name)
@@ -238,14 +235,6 @@ if(TARGET benchmark_main)
     set_target_properties(benchmark_main PROPERTIES FOLDER "ThirdParty/benchmark")
 endif()
 
-# Set folder properties for ITT API targets
-if(TARGET ittnotify)
-    set_target_properties(ittnotify PROPERTIES FOLDER "ThirdParty/ittapi")
-endif()
-if(TARGET jitprofiling)
-    set_target_properties(jitprofiling PROPERTIES FOLDER "ThirdParty/ittapi")
-endif()
-
 # Set folder properties for googletest targets
 if(TARGET gtest)
     set_target_properties(gtest PROPERTIES FOLDER "ThirdParty/googletest")
@@ -282,45 +271,42 @@ if(TARGET cpuinfo)
 endif()
 
 # Kineto - PyTorch profiling library
-# Note: Kineto has complex dependencies (CUPTI, ROCm, etc.) and is provided as a wrapper interface.
-# Full Kineto integration requires manual setup of dependencies.
-if(XSIGMA_ENABLE_KINETO)
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/kineto/libkineto/CMakeLists.txt")
-        message(STATUS "PyTorch Kineto found - wrapper interface enabled")
-        message(STATUS "Note: Full Kineto integration requires manual dependency setup")
-        # Kineto wrapper is always available; actual Kineto library linking is optional
-        # The wrapper provides graceful degradation if Kineto is not fully available
-    else()
-        message(WARNING "PyTorch Kineto not found in ${CMAKE_CURRENT_SOURCE_DIR}/kineto")
-    endif()
+# Aligned with PyTorch's XSIGMA_ENABLE_KINETO configuration for feature parity.
+# Supports GPU backends: CUPTI (NVIDIA), ROCtracer (AMD), XPUPTI (Intel XPU), AIUPTI (AI accelerators)
+
+# Configure GPU backend support based on enabled platforms
+set(LIBKINETO_NOAIUPTI ON CACHE STRING "" FORCE)
+if(NOT XSIGMA_ENABLE_CUDA)
+    set(LIBKINETO_NOCUPTI ON CACHE STRING "" FORCE)
+else()
+    set(LIBKINETO_NOCUPTI OFF CACHE STRING "")
+    message(STATUS "Using Kineto with CUPTI support")
 endif()
 
-# Intel ITT API - Instrumentation and Tracing Technology API
-# Used for task/frame annotations in Intel VTune profiling
-if(XSIGMA_ENABLE_ITTAPI)
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ittapi/CMakeLists.txt")
-        message(STATUS "Intel ITT API found - building as shared library")
-
-        # Save the current BUILD_SHARED_LIBS state
-        set(_saved_build_shared_libs ${BUILD_SHARED_LIBS})
-
-        # Force ITT API to be built as shared library (XSigma requirement)
-        set(BUILD_SHARED_LIBS ON)
-
-        # Add ITT API subdirectory
-        add_subdirectory(ittapi ${CMAKE_CURRENT_BINARY_DIR}/ittapi_build)
-
-        # Restore the original BUILD_SHARED_LIBS state
-        set(BUILD_SHARED_LIBS ${_saved_build_shared_libs})
-
-        message(STATUS "✓ Intel ITT API targets created: ittnotify, jitprofiling")
-    else()
-        message(WARNING "Intel ITT API not found in ${CMAKE_CURRENT_SOURCE_DIR}/ittapi")
-    endif()
+if(NOT USE_ROCM)
+    set(LIBKINETO_NOROCTRACER ON CACHE STRING "" FORCE)
+else()
+    set(LIBKINETO_NOROCTRACER OFF CACHE STRING "")
+    message(STATUS "Using Kineto with Roctracer support")
 endif()
+
+if(LIBKINETO_NOCUPTI AND LIBKINETO_NOROCTRACER AND LIBKINETO_NOXPUPTI)
+    message(STATUS "Using CPU-only version of Kineto")
+endif()
+
+# Configure Kineto library
+set(KINETO_BUILD_TESTS OFF CACHE BOOL "")
+set(KINETO_LIBRARY_TYPE "static" CACHE STRING "")
+
+message(STATUS "Configuring Kineto dependency:")
+message(STATUS "  KINETO_BUILD_TESTS = ${KINETO_BUILD_TESTS}")
+message(STATUS "  KINETO_LIBRARY_TYPE = ${KINETO_LIBRARY_TYPE}")
+
+add_third_party_library(kineto  
+    CONDITION XSIGMA_ENABLE_KINETO)
+
 
 # Optional dependencies (only if enabled)
-
 if(XSIGMA_ENABLE_MAGICENUM)
     if(TARGET magic_enum::magic_enum)
         # magic_enum::magic_enum might be an alias, so we need to get the actual target
@@ -422,17 +408,5 @@ if(XSIGMA_ENABLE_GTEST)
         if(TARGET gtest_main)
             add_library(XSigma::gtest_main ALIAS gtest_main)
         endif()
-    endif()
-endif()
-
-# Intel ITT API target aliases
-if(XSIGMA_ENABLE_ITTAPI)
-    if(TARGET ittnotify)
-        add_library(XSigma::ittapi ALIAS ittnotify)
-        message(STATUS "Created XSigma::ittapi target alias")
-    endif()
-    if(TARGET jitprofiling)
-        add_library(XSigma::jitprofiling ALIAS jitprofiling)
-        message(STATUS "Created XSigma::jitprofiling target alias")
     endif()
 endif()

@@ -40,4 +40,9 @@
 #cmakedefine XSIGMA_AVX512
 
 #cmakedefine XSIGMA_LU_PIVOTING
+
+#cmakedefine XSIGMA_ENABLE_KINETO
+
+#cmakedefine XSIGMA_ENABLE_ITTAPI
+
 #endif

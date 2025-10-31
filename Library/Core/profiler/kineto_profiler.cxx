@@ -11,7 +11,6 @@
 #include <chrono>
 #include <iostream>
 #include <sstream>
-#include <utility>
 
 // Kineto headers are conditionally included based on build configuration
 // Note: libkineto.h is only included if Kineto is fully available
@@ -35,7 +34,7 @@ std::mutex kineto_profiler::init_mutex_;
 
 std::unique_ptr<kineto_profiler> kineto_profiler::create()
 {
-    profiling_config const default_config;
+    profiling_config default_config;
     return create_with_config(default_config);
 }
 
@@ -59,8 +58,8 @@ std::unique_ptr<kineto_profiler> kineto_profiler::create_with_config(const profi
 // Constructor and Destructor
 // ============================================================================
 
-kineto_profiler::kineto_profiler(profiling_config  config)
-    : config_(std::move(config)) 
+kineto_profiler::kineto_profiler(const profiling_config& config)
+    : config_(config), is_profiling_(false)
 {
 }
 
@@ -79,7 +78,7 @@ kineto_profiler::~kineto_profiler()
 
 bool kineto_profiler::start_profiling()
 {
-    std::scoped_lock const lock(profiling_mutex_);
+    std::lock_guard<std::mutex> lock(profiling_mutex_);
 
     if (is_profiling_)
     {
@@ -141,7 +140,7 @@ profiling_result kineto_profiler::stop_profiling()
     result.success        = false;
     result.activity_count = 0;
 
-    std::scoped_lock const lock(profiling_mutex_);
+    std::lock_guard<std::mutex> lock(profiling_mutex_);
 
     if (!is_profiling_)
     {
@@ -204,7 +203,7 @@ profiling_result kineto_profiler::stop_profiling()
 
 bool kineto_profiler::is_profiling() const
 {
-    std::scoped_lock const lock(profiling_mutex_);
+    std::lock_guard<std::mutex> lock(profiling_mutex_);
     return is_profiling_;
 }
 
@@ -219,7 +218,7 @@ const profiling_config& kineto_profiler::get_config() const
 
 bool kineto_profiler::set_config(const profiling_config& config)
 {
-    std::scoped_lock const lock(profiling_mutex_);
+    std::lock_guard<std::mutex> lock(profiling_mutex_);
 
     if (is_profiling_)
     {
@@ -236,7 +235,7 @@ bool kineto_profiler::set_config(const profiling_config& config)
 
 bool kineto_profiler::initialize(bool cpu_only)
 {
-    std::scoped_lock const lock(init_mutex_);
+    std::lock_guard<std::mutex> lock(init_mutex_);
 
     if (initialized_)
     {
@@ -266,7 +265,7 @@ bool kineto_profiler::initialize(bool cpu_only)
 
 bool kineto_profiler::is_initialized()
 {
-    std::scoped_lock const lock(init_mutex_);
+    std::lock_guard<std::mutex> lock(init_mutex_);
     return initialized_;
 }
 

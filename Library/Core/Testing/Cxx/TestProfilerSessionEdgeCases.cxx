@@ -329,7 +329,7 @@ XSIGMATEST(Profiler, session_collected_xspace_access)
     EXPECT_TRUE(session->stop());
 
     // Access collected xspace
-    const auto& xspace = session->collected_xspace();
+    XSIGMA_UNUSED const auto& xspace = session->collected_xspace();
     // Should not crash
     EXPECT_TRUE(true);
 }

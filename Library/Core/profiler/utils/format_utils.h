@@ -55,9 +55,9 @@ namespace internal
  */
 inline std::string format_double(const char* fmt, double d)
 {
-    constexpr int kBufferSize = 32;
-    char          buffer[kBufferSize];
-    int           result = snprintf(buffer, kBufferSize, fmt, d);
+    constexpr int     kBufferSize = 32;
+    char              buffer[kBufferSize];
+    XSIGMA_UNUSED int result = snprintf(buffer, kBufferSize, fmt, d);
     assert(result > 0 && result < kBufferSize);
     return std::string(buffer);
 }
