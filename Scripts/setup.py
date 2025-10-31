@@ -747,7 +747,7 @@ class XsigmaFlags:
                 "magic_enum": self.ON,  # XSIGMA_ENABLE_MAGIC_ENUM default is ON
                 "loguru": self.ON,  # XSIGMA_ENABLE_LOGURU default is ON
                 "mimalloc": self.ON,  # XSIGMA_ENABLE_MIMALLOC default is ON
-                "kineto": self.ON,  # XSIGMA_ENABLE_KINETO default is ON
+                #"kineto": self.ON,  # XSIGMA_ENABLE_KINETO default is ON
                 # CMake options with default OFF - keep OFF in setup.py
                 # (already set by dict.fromkeys above)
                 # "ittapi": self.OFF,  # XSIGMA_ENABLE_ITTAPI default is OFF (STATIC library, MSVC incompatible)
