@@ -102,7 +102,7 @@ void parse_and_add_stat_value(
     // Try to parse as integer
     try
     {
-        size_t  pos;
+        size_t        pos;
         int64_t const int_value = std::stoll(std::string(value_str), &pos);
         if (pos == value_str.size())
         {
@@ -110,7 +110,7 @@ void parse_and_add_stat_value(
             return;
         }
     }
-    catch (...)//NOLINT
+    catch (...)  //NOLINT
     {
         //throw;  // Not an integer, continue
     }
@@ -118,7 +118,7 @@ void parse_and_add_stat_value(
     // Try to parse as double
     try
     {
-        size_t pos;
+        size_t       pos;
         double const double_value = std::stod(std::string(value_str), &pos);
         if (pos == value_str.size())
         {
@@ -126,7 +126,7 @@ void parse_and_add_stat_value(
             return;
         }
     }
-    catch (...)//NOLINT
+    catch (...)  //NOLINT
     {
         //throw;  // Not a double, continue
     }

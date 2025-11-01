@@ -224,7 +224,7 @@ void ProfilerSession::initialize_kineto()
 
 void ProfilerSession::initialize_itt()
 {
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
     itt_init();
 #endif
 }

@@ -78,7 +78,7 @@ uint64_t get_unique_arg()
 uint64_t get_arg_for_name(std::string_view name)
 {
     std::scoped_lock const lock(g_name_mutex);
-    auto                        it = g_name_to_ids.find(std::string(name));
+    auto                   it = g_name_to_ids.find(std::string(name));
     if (it != g_name_to_ids.end())
     {
         return it->second;

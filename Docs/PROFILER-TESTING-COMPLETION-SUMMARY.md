@@ -101,7 +101,7 @@ All five tasks for improving XSigma profiler testing and integration have been c
    - Usage instructions for PyTorch Profiler Viewer and Chrome DevTools
 
 2. **`XSIGMATEST(Profiler, itt_api_heavy_function_profiling)`**
-   - Wrapped in `#ifdef XSIGMA_HAS_ITTAPI`
+   - Wrapped in `#ifdef XSIGMA_HAS_ITT`
    - Uses ITT API domain and task annotations
    - Profiles matrix operations, sorting, and Monte Carlo simulation
    - Gracefully handles non-VTune environment (test passes with message)

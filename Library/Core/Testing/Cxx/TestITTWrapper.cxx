@@ -12,7 +12,7 @@
 
 #include "xsigmaTest.h"
 
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
 
 #include "profiler/itt_wrapper.h"
 
@@ -268,4 +268,4 @@ XSIGMATEST(ITTWrapper, LongEventNames)
     EXPECT_TRUE(true);
 }
 
-#endif  // XSIGMA_HAS_ITTAPI
+#endif  // XSIGMA_HAS_ITT

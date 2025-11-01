@@ -29,7 +29,7 @@ This document summarizes the changes made to align XSigma's Kineto and ITTAPI im
 
 #### XSigma/Library/Core/CMakeLists.txt
 - **Changed**: Compile definitions from `XSIGMA_HAS_KINETO` → `XSIGMA_ENABLE_KINETO`
-- **Changed**: Compile definitions from `XSIGMA_HAS_ITTAPI` → `XSIGMA_ENABLE_ITT`
+- **Changed**: Compile definitions from `XSIGMA_HAS_ITT` → `XSIGMA_ENABLE_ITT`
 - **Changed**: Target linking from `XSigma::kineto` → `kineto`
 - **Changed**: Target linking from `XSigma::ittapi` → `ittnotify`
 - **Added**: Conditional source file inclusion for new wrappers
@@ -311,4 +311,3 @@ All requested alignment tasks have been completed:
 - [x] Default configurations matched
 
 XSigma now has feature parity with PyTorch for Kineto and ITTAPI profiling.
-

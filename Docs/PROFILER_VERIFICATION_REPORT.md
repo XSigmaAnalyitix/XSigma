@@ -1,6 +1,6 @@
 # XSigma Profiler Verification Report
 
-**Date:** 2025-10-30  
+**Date:** 2025-10-30
 **Status:** ✅ **VERIFICATION COMPLETE - ALL CHECKS PASSED**
 
 ---
@@ -26,7 +26,7 @@ Comprehensive verification of the XSigma profiler changes has been completed suc
 
 #### Compile Definitions
 - ✅ Kineto: `XSIGMA_HAS_KINETO` (Library/Core/CMakeLists.txt:241)
-- ✅ ITT API: `XSIGMA_HAS_ITTAPI` (Library/Core/CMakeLists.txt:253)
+- ✅ ITT API: `XSIGMA_HAS_ITT` (Library/Core/CMakeLists.txt:253)
 
 #### Target Names
 - ✅ Kineto: `XSigma::kineto` (Library/Core/CMakeLists.txt:240)
@@ -169,7 +169,6 @@ The XSigma profiler implementation is production-ready and fully compliant with 
 
 ---
 
-**Verified by:** Augment Agent  
-**Verification Date:** 2025-10-30  
+**Verified by:** Augment Agent
+**Verification Date:** 2025-10-30
 **Build Configuration:** Ninja + Clang + Release + LTO
-

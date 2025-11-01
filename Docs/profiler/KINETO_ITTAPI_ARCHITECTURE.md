@@ -169,7 +169,7 @@ XSigma/Library/Core/CMakeLists.txt
     │   └─ Define XSIGMA_HAS_KINETO
     │
     └─ Link XSigma::ittapi (if available)
-        └─ Define XSIGMA_HAS_ITTAPI
+        └─ Define XSIGMA_HAS_ITT
     ↓
 Compilation with -DXSIGMA_HAS_KINETO and/or -DXSIGMA_HAS_ITTAPI
 ```
@@ -305,7 +305,7 @@ XSIGMA_ENABLE_ITT                      # ITT API enabled
 
 ```
 XSIGMA_HAS_KINETO            # Kineto available
-XSIGMA_HAS_ITTAPI            # ITT API available
+XSIGMA_HAS_ITT            # ITT API available
 XSIGMA_ENABLE_KINETO         # Kineto enabled (CMake)
 XSIGMA_ENABLE_ITTAPI         # ITT API enabled (CMake)
 ```
@@ -357,4 +357,3 @@ Observer callbacks:
 - Mutex-protected initialization in `kineto_profiler`
 - User responsible for thread safety in ITT API usage
 - Shared library ITT API handles thread safety internally
-

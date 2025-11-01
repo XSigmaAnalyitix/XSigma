@@ -59,7 +59,7 @@ static Slot* LookupSlot(HashTableArray* array, ThreadIdType threadId, size_t has
     }
 
     const auto mask = array->Size - 1U;
-    Slot *      slot = nullptr;//NOLINT
+    Slot*      slot = nullptr;  //NOLINT
 
     // since load factor is maintained below 0.5, this loop should hit an
     // empty slot if the queried slot does not exist in this array
@@ -152,7 +152,7 @@ ThreadSpecific::~ThreadSpecific()
     while (array != nullptr)
     {
         HashTableArray const* tofree = array;
-        array                  = array->Prev;
+        array                        = array->Prev;
         delete tofree;
     }
 }

@@ -1,21 +1,20 @@
-# - Try to find ITT
+# * Try to find ITT
 #
-# The following are set after configuration is done:
-#  ITT_FOUND          : set to true if ITT is found.
-#  ITT_INCLUDE_DIR    : path to ITT include dir.
-#  ITT_LIBRARIES      : list of libraries for ITT
+# The following are set after configuration is done: ITT_FOUND          : set to true if ITT is
+# found. ITT_INCLUDE_DIR    : path to ITT include dir. ITT_LIBRARIES      : list of libraries for
+# ITT
 
-IF (NOT ITT_FOUND)
-  SET(ITT_FOUND OFF)
+if(NOT ITT_FOUND)
+  set(ITT_FOUND OFF)
 
-  SET(ITT_INCLUDE_DIR)
-  SET(ITT_LIBRARIES)
+  set(ITT_INCLUDE_DIR)
+  set(ITT_LIBRARIES)
 
-  SET(ITT_ROOT "${PROJECT_SOURCE_DIR}/ThirdParty/ittapi")
-  FIND_PATH(ITT_INCLUDE_DIR ittnotify.h PATHS ${ITT_ROOT} PATH_SUFFIXES include)
-  IF (ITT_INCLUDE_DIR)
-    ADD_SUBDIRECTORY(${ITT_ROOT})
-    SET(ITT_LIBRARIES ittnotify)
-    SET(ITT_FOUND ON)
-  ENDIF (ITT_INCLUDE_DIR)
-ENDIF(NOT ITT_FOUND)
+  set(ITT_ROOT "${PROJECT_SOURCE_DIR}/ThirdParty/ittapi")
+  find_path(ITT_INCLUDE_DIR ittnotify.h PATHS ${ITT_ROOT} PATH_SUFFIXES include)
+  if(ITT_INCLUDE_DIR)
+    add_subdirectory(${ITT_ROOT})
+    set(ITT_LIBRARIES ittnotify)
+    set(ITT_FOUND ON)
+  endif(ITT_INCLUDE_DIR)
+endif(NOT ITT_FOUND)

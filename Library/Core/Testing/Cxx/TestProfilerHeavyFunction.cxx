@@ -574,7 +574,7 @@ XSIGMATEST(Profiler, kineto_heavy_function_profiling)
 // - Memory events correlate with allocations
 // ============================================================================
 
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
 #include <ittnotify.h>
 
 XSIGMATEST(Profiler, itt_api_heavy_function_profiling)
@@ -683,4 +683,4 @@ XSIGMATEST(Profiler, itt_api_heavy_function_profiling)
 
     EXPECT_TRUE(true);  // Test passes if ITT API annotations completed
 }
-#endif  // XSIGMA_HAS_ITTAPI
+#endif  // XSIGMA_HAS_ITT

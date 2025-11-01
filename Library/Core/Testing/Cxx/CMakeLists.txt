@@ -64,8 +64,8 @@ add_executable(CoreCxxTests ${TestFiles})
 # Compile definitions
 target_compile_definitions(CoreCxxTests PRIVATE XSIGMA_GOOGLE_TEST USE_GTEST _VARIADIC_MAX=10)
 
-# Link libraries
-# Core library is linked which transitively brings in all centralized dependencies via XSIGMA_DEPENDENCY_LIBS
+# Link libraries Core library is linked which transitively brings in all centralized dependencies
+# via XSIGMA_DEPENDENCY_LIBS
 target_link_libraries(CoreCxxTests PRIVATE gtest gtest_main XSigma::Core)
 
 # Set target properties
@@ -129,8 +129,8 @@ if(XSIGMA_ENABLE_BENCHMARK)
 
   add_executable(CoreCxxBenchmark ${bench_sources})
 
-  # Link libraries
-  # Core library is linked which transitively brings in all centralized dependencies via XSIGMA_DEPENDENCY_LIBS
+  # Link libraries Core library is linked which transitively brings in all centralized dependencies
+  # via XSIGMA_DEPENDENCY_LIBS
   target_link_libraries(CoreCxxBenchmark PRIVATE benchmark XSigma::Core)
 
   # Set target properties

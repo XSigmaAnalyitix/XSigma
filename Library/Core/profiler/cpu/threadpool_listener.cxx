@@ -35,7 +35,7 @@ namespace
 {
 threadpool_event_collector* get_threadpool_event_collector()
 {
-    static auto *collector = new threadpool_event_collector();
+    static auto* collector = new threadpool_event_collector();
     return collector;
 }
 

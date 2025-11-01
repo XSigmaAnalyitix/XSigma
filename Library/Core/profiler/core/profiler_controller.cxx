@@ -72,10 +72,9 @@ profiler_status profiler_controller::start()
             }
             return status_;
         }
-        
-                    XSIGMA_LOG_ERROR("Previous call returned an error: {}", status_.message());
-            return status_;
-       
+
+        XSIGMA_LOG_ERROR("Previous call returned an error: {}", status_.message());
+        return status_;
     }
     XSIGMA_LOG_ERROR("start called in the wrong order");
     status_ = profiler_status::Error("start called in the wrong order");
@@ -96,10 +95,9 @@ profiler_status profiler_controller::stop()
             }
             return status_;
         }
-        
-                    XSIGMA_LOG_ERROR("Previous call returned an error: {}", status_.message());
-            return status_;
-       
+
+        XSIGMA_LOG_ERROR("Previous call returned an error: {}", status_.message());
+        return status_;
     }
     XSIGMA_LOG_ERROR("stop called in the wrong order");
     status_ = profiler_status::Error("stop called in the wrong order");
@@ -120,10 +118,9 @@ profiler_status profiler_controller::collect_data(x_space* space)
             }
             return status_;
         }
-        
-                    XSIGMA_LOG_ERROR("Previous call returned an error: {}", status_.message());
-            return status_;
-       
+
+        XSIGMA_LOG_ERROR("Previous call returned an error: {}", status_.message());
+        return status_;
     }
     XSIGMA_LOG_ERROR("collect_data called in the wrong order.");
     status_ = profiler_status::Error("collect_data called in the wrong order.");

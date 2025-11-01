@@ -487,14 +487,14 @@ python setup.py config.build.ninja.clang.debug
 ### Using ITT API with Profiler
 
 ```cpp
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
 #include <ittnotify.h>
 #endif
 
 #include "profiler/session/profiler.h"
 
 void profile_with_itt() {
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
     __itt_domain* domain = __itt_domain_create("XSigmaProfiler");
     auto handle = __itt_string_handle_create("ProfiledTask");
     __itt_task_begin(domain, __itt_null, __itt_null, handle);
@@ -511,7 +511,7 @@ void profile_with_itt() {
     }
     session->stop();
 
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
     __itt_task_end(domain);
 #endif
 }

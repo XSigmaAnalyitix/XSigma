@@ -219,14 +219,14 @@ torch.profiler._itt.mark("marker_name")
 - `jitprofiling` - JIT profiling support
 
 #### Compile Definitions
-- `XSIGMA_HAS_ITTAPI` (when enabled)
+- `XSIGMA_HAS_ITT` (when enabled)
 
 #### Initialization Pattern
 - **Domain Creation**: Same as PyTorch
 - **Location**: User code (not pre-initialized)
 - **Example**:
   ```cpp
-  #ifdef XSIGMA_HAS_ITTAPI
+  #ifdef XSIGMA_HAS_ITT
   __itt_domain* domain = __itt_domain_create("XSigmaProfiler");
   auto handle = __itt_string_handle_create("ProfiledTask");
   __itt_task_begin(domain, __itt_null, __itt_null, handle);
@@ -235,7 +235,7 @@ torch.profiler._itt.mark("marker_name")
 
 #### Usage Pattern (XSigma)
 ```cpp
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
 __itt_domain* domain = __itt_domain_create("XSigmaProfiler");
 auto handle = __itt_string_handle_create("ProfiledTask");
 __itt_task_begin(domain, __itt_null, __itt_null, handle);
@@ -315,7 +315,7 @@ __itt_task_end(domain);
     // Kineto code
 #endif
 
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
     // ITT code
 #endif
 ```
@@ -357,4 +357,3 @@ __itt_task_end(domain);
 2. **For XSigma Users**: Enable `XSIGMA_ENABLE_KINETO=ON` for profiling; enable `XSIGMA_ENABLE_ITTAPI=ON` for VTune integration
 3. **GPU Profiling**: Ensure CUDA/ROCm/XPU toolkits are available for GPU-specific profiling
 4. **Windows Deployment**: Note XSigma's ITT API shared library requirement for DLL distribution
-

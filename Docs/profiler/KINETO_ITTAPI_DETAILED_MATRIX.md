@@ -62,7 +62,7 @@
 | `KINETO_NAMESPACE=libkineto` | ✓ | ✓ | Namespace |
 | `ENABLE_IPC_FABRIC` | ✓ | ✓ | IPC support |
 | `XSIGMA_ENABLE_ITT` | ✓ | - | Enable ITT |
-| `XSIGMA_HAS_ITTAPI` | - | ✓ | ITT available |
+| `XSIGMA_HAS_ITT` | - | ✓ | ITT available |
 
 ---
 
@@ -285,4 +285,3 @@
 - Windows DLL distribution required
 - VTune integration primary goal
 - Lightweight profiling sufficient
-

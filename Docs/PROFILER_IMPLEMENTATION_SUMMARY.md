@@ -243,4 +243,3 @@ void my_function() {
 ## Conclusion
 
 The XSigma profiler implementation is complete, fully tested, and ready for production use. All components have been successfully implemented and verified through comprehensive unit testing.
-

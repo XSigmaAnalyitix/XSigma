@@ -49,7 +49,7 @@ RecordFunction::RecordFunction(const char* name) : name_(name)
     start_time_ns_ = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
     // Emit ITT range push if available
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
     itt_range_push(name_);
 #endif
 
@@ -67,7 +67,7 @@ RecordFunction::~RecordFunction()
     end_time_ns_ = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
     // Emit ITT range pop if available
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
     itt_range_pop();
 #endif
 
@@ -86,7 +86,7 @@ RecordFunction::~RecordFunction()
 ScopedActivity::ScopedActivity(const char* name) : name_(name)
 {
     // Emit ITT range push if available
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
     itt_range_push(name_);
 #endif
 }
@@ -94,7 +94,7 @@ ScopedActivity::ScopedActivity(const char* name) : name_(name)
 ScopedActivity::~ScopedActivity()
 {
     // Emit ITT range pop if available
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
     itt_range_pop();
 #endif
 }

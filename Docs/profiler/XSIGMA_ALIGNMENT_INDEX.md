@@ -87,7 +87,7 @@ XSigma/
 | Old | New |
 |-----|-----|
 | `XSIGMA_HAS_KINETO` | `XSIGMA_ENABLE_KINETO` |
-| `XSIGMA_HAS_ITTAPI` | `XSIGMA_ENABLE_ITT` |
+| `XSIGMA_HAS_ITT` | `XSIGMA_ENABLE_ITT` |
 
 ### Target Names
 | Old | New |
@@ -314,4 +314,3 @@ xsigma::profiler::itt_range_pop();
 **Last Updated**: 2025-10-30
 **Status**: ✅ COMPLETE
 **Alignment Level**: 100% Feature Parity with PyTorch
-

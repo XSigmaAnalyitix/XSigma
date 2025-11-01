@@ -159,9 +159,9 @@ endif()
 
 # ============================================================================= Include Directories
 # =============================================================================
-# Core library include directories are split into:
-# 1. Core's own directories (PUBLIC for external consumers)
-# 2. Centralized third-party include directories (PUBLIC to propagate to dependent targets like tests)
+# Core library include directories are split into: 1. Core's own directories (PUBLIC for external
+# consumers) 2. Centralized third-party include directories (PUBLIC to propagate to dependent
+# targets like tests)
 
 target_include_directories(
   Core
@@ -188,12 +188,13 @@ endif()
 # Centralized Dependencies
 # =============================================================================
 # All third-party and system library dependencies are now managed centrally via
-# XSIGMA_DEPENDENCY_LIBS, which is populated by Cmake/tools/dependencies.cmake
-# based on enabled feature flags. This ensures consistent linking across all targets.
+# XSIGMA_DEPENDENCY_LIBS, which is populated by Cmake/tools/dependencies.cmake based on enabled
+# feature flags. This ensures consistent linking across all targets.
 #
 # Dependencies are linked as PUBLIC so they propagate to dependent targets (e.g., test executables)
 # that link to XSigma::Core. This is necessary because Core's public headers include headers from
-# these dependencies (e.g., fmt/format.h in logger.h), so consumers of Core must also link with them.
+# these dependencies (e.g., fmt/format.h in logger.h), so consumers of Core must also link with
+# them.
 
 # Link with centralized dependency list
 if(XSIGMA_DEPENDENCY_LIBS)
@@ -201,13 +202,13 @@ if(XSIGMA_DEPENDENCY_LIBS)
   message(STATUS "Core library linked with centralized dependencies: ${XSIGMA_DEPENDENCY_LIBS}")
 endif()
 
-# ============================================================================= Compile
-# Definitions for Optional Features
+# ============================================================================= Compile Definitions
+# for Optional Features
 # =============================================================================
 # Feature-related compile definitions are now centrally managed via
-# XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS, which is populated by Cmake/tools/dependencies.cmake
-# based on enabled feature flags. These definitions are PUBLIC to propagate to dependent targets,
-# ensuring feature macros are available in test files and other dependent code.
+# XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS, which is populated by Cmake/tools/dependencies.cmake based
+# on enabled feature flags. These definitions are PUBLIC to propagate to dependent targets, ensuring
+# feature macros are available in test files and other dependent code.
 
 # Apply centralized compile definitions
 if(XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS)

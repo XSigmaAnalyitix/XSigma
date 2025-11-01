@@ -36,7 +36,7 @@ cmake -DUSE_KINETO=ON -DUSE_ITT=ON ..
 ### Old Definitions (Deprecated)
 ```cpp
 #ifdef XSIGMA_HAS_KINETO
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
 ```
 
 ### New Definitions (PyTorch-Compatible)
@@ -138,7 +138,7 @@ auto trace = xsigma::profiler::kineto_stop_trace();
 ### If You Were Using ITT Directly
 ```cpp
 // OLD CODE (manual domain management)
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
 __itt_domain* domain = __itt_domain_create("MyDomain");
 __itt_task_begin(domain, ...);
 // ...
@@ -230,4 +230,3 @@ For detailed information, see:
 - `XSIGMA_PYTORCH_ALIGNMENT_SUMMARY.md` - Complete alignment details
 - `KINETO_ITTAPI_USAGE_GUIDE.md` - Practical usage examples
 - `KINETO_ITTAPI_TECHNICAL_REFERENCE.md` - Technical deep dive
-

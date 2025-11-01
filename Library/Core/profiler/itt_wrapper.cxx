@@ -7,7 +7,7 @@
 
 #include "itt_wrapper.h"
 
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
 #include <ittnotify.h>
 
 #include <mutex>
@@ -19,7 +19,7 @@ namespace xsigma
 namespace profiler
 {
 
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
 
 namespace
 {
@@ -87,7 +87,7 @@ __itt_domain* itt_get_domain()
     return g_itt_domain;
 }
 
-#endif  // XSIGMA_HAS_ITTAPI
+#endif  // XSIGMA_HAS_ITT
 
 }  // namespace profiler
 }  // namespace xsigma

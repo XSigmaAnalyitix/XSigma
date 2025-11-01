@@ -158,9 +158,8 @@ option(XSIGMA_ENABLE_MIMALLOC
 )
 mark_as_advanced(XSIGMA_ENABLE_MIMALLOC)
 
-#profiling libreray
-# PyTorch Kineto Profiling Library Flag Controls whether Kineto profiling library is enabled. When
-# enabled, provides advanced profiling capabilities for performance analysis.
+# profiling libreray PyTorch Kineto Profiling Library Flag Controls whether Kineto profiling library
+# is enabled. When enabled, provides advanced profiling capabilities for performance analysis.
 option(XSIGMA_ENABLE_KINETO "Enable PyTorch Kineto profiling library." OFF)
 mark_as_advanced(XSIGMA_ENABLE_KINETO)
 
@@ -169,8 +168,8 @@ mark_as_advanced(XSIGMA_ENABLE_KINETO)
 option(XSIGMA_ENABLE_ITTAPI "Enable Intel ITT API for VTune profiling." ON)
 mark_as_advanced(XSIGMA_ENABLE_ITTAPI)
 
-# ============================================================================= 
-# Platform-Specific Configuration and Feature Validation
+# ============================================================================= Platform-Specific
+# Configuration and Feature Validation
 # =============================================================================
 # Adjusts feature availability based on platform constraints. Some features are only available on
 # specific operating systems.
@@ -186,8 +185,8 @@ if(NOT UNIX OR APPLE)
   set(XSIGMA_ENABLE_MEMKIND OFF)
 endif()
 
-# ============================================================================= 
-# Global Project Variables
+# ============================================================================= Global Project
+# Variables
 # =============================================================================
 # Set global variables used throughout the build system.
 # =============================================================================
@@ -196,8 +195,8 @@ set(XSIGMA_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(XSIGMA_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 set(XSIGMA_VERSION "${PROJECT_VERSION}")
 
-# ============================================================================= 
-# Build Library Type Configuration
+# ============================================================================= Build Library Type
+# Configuration
 # =============================================================================
 # Controls whether libraries are built as shared or static. XSigma requires shared libraries (DLLs
 # on Windows) for proper functionality.
@@ -268,11 +267,10 @@ endif()
 # Add third-party dependencies
 add_subdirectory(ThirdParty)
 
-# Centralized dependency linking module
-# This must be included AFTER ThirdParty subdirectory is added so that all third-party targets
-# (XSigma::fmt, XSigma::cpuinfo, XSigma::loguru, XSigma::glog, XSigma::kineto, etc.) are available.
-# It must also be AFTER all feature modules (cuda, hip, tbb, etc.) are loaded so that
-# XSIGMA_DEPENDENCY_LIBS can aggregate all enabled dependencies.
+# Centralized dependency linking module This must be included AFTER ThirdParty subdirectory is added
+# so that all third-party targets (XSigma::fmt, XSigma::cpuinfo, XSigma::loguru, XSigma::glog,
+# XSigma::kineto, etc.) are available. It must also be AFTER all feature modules (cuda, hip, tbb,
+# etc.) are loaded so that XSIGMA_DEPENDENCY_LIBS can aggregate all enabled dependencies.
 include(dependencies)
 
 # Add subdirectories

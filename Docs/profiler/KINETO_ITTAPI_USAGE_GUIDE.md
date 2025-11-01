@@ -57,14 +57,14 @@ import torch.profiler as profiler
 if profiler._itt.is_available():
     # Push range
     profiler._itt.rangePush("my_operation")
-    
+
     # Your code
     x = torch.randn(100, 100)
     y = torch.mm(x, x)
-    
+
     # Pop range
     profiler._itt.rangePop()
-    
+
     # Mark event
     profiler._itt.mark("checkpoint")
 ```
@@ -81,32 +81,32 @@ if profiler._itt.is_available():
 int main() {
     // Initialize Kineto
     libkineto_init(false, true);  // false=GPU, true=logOnError
-    
+
     // Get profiler
     auto& profiler = libkineto::api().activityProfiler();
-    
+
     // Initialize if needed
     libkineto::api().initProfilerIfRegistered();
-    
+
     // Prepare trace
     std::set<libkineto::ActivityType> activities;
     activities.insert(libkineto::ActivityType::CPU_OP);
     activities.insert(libkineto::ActivityType::CUDA_KERNEL);
-    
+
     profiler.prepareTrace(activities);
-    
+
     // Start profiling
     profiler.startTrace();
-    
+
     // Your code here
     // ... GPU operations ...
-    
+
     // Stop and get trace
     auto trace = profiler.stopTrace();
-    
+
     // Save trace
     trace->save("trace.json");
-    
+
     return 0;
 }
 ```
@@ -119,26 +119,26 @@ int main() {
 int main() {
     // Create domain
     __itt_domain* domain = __itt_domain_create("MyApp");
-    
+
     // Create string handle
-    __itt_string_handle* task_handle = 
+    __itt_string_handle* task_handle =
         __itt_string_handle_create("MyTask");
-    
+
     // Begin task
     __itt_task_begin(domain, __itt_null, __itt_null, task_handle);
-    
+
     // Your code here
     // ... work ...
-    
+
     // End task
     __itt_task_end(domain);
-    
+
     // Mark event
-    __itt_string_handle* mark_handle = 
+    __itt_string_handle* mark_handle =
         __itt_string_handle_create("Checkpoint");
     __itt_task_begin(domain, __itt_null, __itt_null, mark_handle);
     __itt_task_end(domain);
-    
+
     return 0;
 }
 ```
@@ -155,13 +155,13 @@ int main() {
 int main() {
     // Create profiler
     auto profiler = xsigma::kineto_profiler::create();
-    
+
     if (profiler) {
         // Start profiling
         if (profiler->start_profiling()) {
             // Your code here
             // ... operations ...
-            
+
             // Stop profiling
             profiler->stop_profiling();
         }
@@ -169,7 +169,7 @@ int main() {
         // Graceful degradation - Kineto not available
         std::cerr << "Kineto profiler not available\n";
     }
-    
+
     return 0;
 }
 ```
@@ -188,15 +188,15 @@ int main() {
     config.output_dir = "./kineto_profiles";
     config.trace_name = "xsigma_trace";
     config.max_activities = 0;  // Unlimited
-    
+
     // Create profiler with config
     auto profiler = xsigma::kineto_profiler::create_with_config(config);
-    
+
     if (profiler && profiler->start_profiling()) {
         // Your code
         profiler->stop_profiling();
     }
-    
+
     return 0;
 }
 ```
@@ -204,26 +204,26 @@ int main() {
 ### ITT API Usage (XSigma)
 
 ```cpp
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
 #include <ittnotify.h>
 
 int main() {
     // Create domain
     __itt_domain* domain = __itt_domain_create("XSigmaApp");
-    
+
     // Create string handle
-    __itt_string_handle* handle = 
+    __itt_string_handle* handle =
         __itt_string_handle_create("ProcessingTask");
-    
+
     // Begin task
     __itt_task_begin(domain, __itt_null, __itt_null, handle);
-    
+
     // Your code
     // ... processing ...
-    
+
     // End task
     __itt_task_end(domain);
-    
+
     return 0;
 }
 #else
@@ -448,4 +448,3 @@ ldd ./CoreCxxTests | grep ittnotify
 3. Avoid creating handles in hot loops
 4. Use task nesting for hierarchical profiling
 5. Synchronize with VTune collection
-

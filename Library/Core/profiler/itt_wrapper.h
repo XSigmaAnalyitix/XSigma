@@ -11,7 +11,7 @@
  * - Thread-safe operations
  *
  * Usage:
- *   #ifdef XSIGMA_HAS_ITTAPI
+ *   #ifdef XSIGMA_HAS_ITT
  *   itt_range_push("my_operation");
  *   // ... code to profile ...
  *   itt_range_pop();
@@ -25,7 +25,7 @@
 
 #include "common/export.h"
 
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
 #include <ittnotify.h>
 #endif
 
@@ -34,7 +34,7 @@ namespace xsigma
 namespace profiler
 {
 
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
 constexpr bool kITTAvailable{true};
 #else
 constexpr bool kITTAvailable{false};
@@ -44,7 +44,7 @@ constexpr bool kITTAvailable{false};
 // ITT API Wrapper Functions
 // ============================================================================
 
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
 
 /**
  * @brief Initialize ITT API
@@ -88,7 +88,7 @@ XSIGMA_API __itt_domain* itt_get_domain();
 
 #else
 
-// Stub implementations when XSIGMA_HAS_ITTAPI is not defined
+// Stub implementations when XSIGMA_HAS_ITT is not defined
 inline void  itt_init() {}
 inline void  itt_range_push(const char*) {}
 inline void  itt_range_pop() {}
@@ -98,7 +98,7 @@ inline void* itt_get_domain()
     return nullptr;
 }
 
-#endif  // XSIGMA_HAS_ITTAPI
+#endif  // XSIGMA_HAS_ITT
 
 }  // namespace profiler
 }  // namespace xsigma

@@ -137,7 +137,7 @@ __itt_task_end(domain);
 
 ### XSigma ITT Init
 ```cpp
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
 __itt_domain* domain = __itt_domain_create("XSigmaApp");
 __itt_task_begin(domain, __itt_null, __itt_null, handle);
 // ... work ...
@@ -314,4 +314,3 @@ XSigma/ThirdParty/
 - Kineto: https://github.com/pytorch/kineto
 - Intel ITT API: https://github.com/intel/ittapi
 - Intel VTune: https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html
-

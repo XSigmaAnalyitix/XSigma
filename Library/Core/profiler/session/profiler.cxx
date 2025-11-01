@@ -235,8 +235,7 @@ std::string ConvertXSpaceToChromeTrace(const x_space& space)
     append_event(
         std::string(R"({"ph":"M","pid":0,"name":"process_name","args":{"name":)") +
         JsonQuote("XSigma CPU Profiler") + "}}");
-    append_event(
-        R"({"ph":"M","pid":0,"name":"process_sort_index","args":{"sort_index":0}})");
+    append_event(R"({"ph":"M","pid":0,"name":"process_sort_index","args":{"sort_index":0}})");
 
     for (const xplane& plane : space.planes())
     {
@@ -266,8 +265,8 @@ std::string ConvertXSpaceToChromeTrace(const x_space& space)
 
             append_event(
                 std::string(R"({"ph":"M","pid":)") + std::to_string(kPid) +
-                ",\"tid\":" + std::to_string(tid) +
-                R"(,"name":"thread_name","args":{"name":)" + JsonQuote(thread_name) + "}}");
+                ",\"tid\":" + std::to_string(tid) + R"(,"name":"thread_name","args":{"name":)" +
+                JsonQuote(thread_name) + "}}");
             append_event(
                 std::string(R"({"ph":"M","pid":)") + std::to_string(kPid) + ",\"tid\":" +
                 std::to_string(tid) + R"(,"name":"thread_sort_index","args":{"sort_index":)" +
@@ -293,12 +292,13 @@ std::string ConvertXSpaceToChromeTrace(const x_space& space)
                     event_name = "TraceEvent";
                 }
 
-                uint64_t const offset_ps = static_cast<uint64_t>(std::max<int64_t>(0, event.offset_ps()));
+                uint64_t const offset_ps =
+                    static_cast<uint64_t>(std::max<int64_t>(0, event.offset_ps()));
                 uint64_t const start_ps =
                     (static_cast<uint64_t>(std::max<int64_t>(0, line_timestamp_ns)) * 1000ULL) +
                     offset_ps;
                 uint64_t const ts_us       = start_ps / 1000ULL;
-                auto duration_ps = static_cast<uint64_t>(event.duration_ps());
+                auto           duration_ps = static_cast<uint64_t>(event.duration_ps());
                 if (duration_ps == 0)
                 {
                     duration_ps = 1000ULL;  // 1 ns to ensure visibility
@@ -454,7 +454,7 @@ bool profiler_session::start()
     profiler_lock_ = std::move(*maybe_lock);
 
     backend_profile_options_ = build_backend_profile_options();
-    auto const start_ns  = static_cast<uint64_t>(get_current_time_nanos());
+    auto const start_ns      = static_cast<uint64_t>(get_current_time_nanos());
     backend_profile_options_.set_start_timestamp_ns(start_ns);
     start_time_ns_ = start_ns;
     xspace_ready_  = false;
@@ -543,7 +543,7 @@ bool profiler_session::stop()
 
     if (backend_profilers_)
     {
-        std::string     backend_errors;
+        std::string           backend_errors;
         profiler_status const stop_status = backend_profilers_->stop();
         if (!stop_status.ok() && !stop_status.message().empty())
         {
@@ -551,7 +551,7 @@ bool profiler_session::stop()
         }
 
         x_space collected_space;
-        xspace_                        = x_space();
+        xspace_                              = x_space();
         profiler_status const collect_status = backend_profilers_->collect_data(&collected_space);
         if (collect_status.ok())
         {
@@ -685,7 +685,7 @@ void profiler_session::normalize_xspace(x_space* space) const
         for (auto& line : *plane.mutable_lines())
         {
             int64_t ts = line.timestamp_ns() - base_time;
-            ts = std::max<int64_t>(ts, 0);
+            ts         = std::max<int64_t>(ts, 0);
             line.set_timestamp_ns(ts);
         }
     }

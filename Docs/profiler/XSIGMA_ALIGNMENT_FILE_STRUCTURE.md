@@ -352,6 +352,5 @@ itt_wrapper.cpp
 
 ---
 
-**Last Updated**: 2025-10-30  
+**Last Updated**: 2025-10-30
 **Status**: ✅ COMPLETE
-

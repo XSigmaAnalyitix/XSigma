@@ -37,14 +37,14 @@ int main() {
     xsigma::profiler::ProfilerConfig config;
     config.activities = {xsigma::profiler::ActivityType::CPU};
     config.output_file = "trace.json";
-    
+
     xsigma::profiler::ProfilerGuard guard(config);
-    
+
     // Your code here
     for (int i = 0; i < 1000; ++i) {
         volatile int x = i * i;
     }
-    
+
     guard.export_trace(config.output_file);
 }
 ```
@@ -469,5 +469,3 @@ XSigma/Library/Core/profiler/
 - Intel ITT API: https://github.com/intel/ittapi
 - Chrome Tracing: https://www.chromium.org/developers/how-tos/trace-event-profiling-tool
 - Perfetto: https://ui.perfetto.dev/
-
-

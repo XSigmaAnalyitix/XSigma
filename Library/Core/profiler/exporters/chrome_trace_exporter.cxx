@@ -106,8 +106,8 @@ std::string xstat_value_to_json(const xstat& stat)
 std::string export_to_chrome_trace_json(const x_space& space, bool pretty_print)
 {
     std::ostringstream json;
-    std::string        const indent  = pretty_print ? "  " : "";
-    std::string        const newline = pretty_print ? "\n" : "";
+    std::string const  indent  = pretty_print ? "  " : "";
+    std::string const  newline = pretty_print ? "\n" : "";
 
     json << "{" << newline;
     json << indent << "\"traceEvents\": [" << newline;
@@ -118,13 +118,14 @@ std::string export_to_chrome_trace_json(const x_space& space, bool pretty_print)
     const auto& planes = space.planes();
     for (size_t plane_idx = 0; plane_idx < planes.size(); ++plane_idx)
     {
-        const auto& plane = planes[plane_idx];
-        int64_t     const pid   = plane.id() > 0 ? plane.id() : static_cast<int64_t>(plane_idx + 1);
+        const auto&   plane = planes[plane_idx];
+        int64_t const pid   = plane.id() > 0 ? plane.id() : static_cast<int64_t>(plane_idx + 1);
 
         // Add process name metadata event
-        if (!first_event) {
+        if (!first_event)
+        {
             json << "," << newline;
-}
+        }
         first_event = false;
 
         json << indent << indent << "{";
@@ -137,8 +138,8 @@ std::string export_to_chrome_trace_json(const x_space& space, bool pretty_print)
         // Iterate through all lines (threads) in the plane
         for (size_t line_idx = 0; line_idx < plane.lines_size(); ++line_idx)
         {
-            const auto& line = plane.lines(line_idx);
-            int64_t     const tid  = line.id() > 0 ? line.id() : static_cast<int64_t>(line_idx + 1);
+            const auto&   line = plane.lines(line_idx);
+            int64_t const tid  = line.id() > 0 ? line.id() : static_cast<int64_t>(line_idx + 1);
 
             // Add thread name metadata event
             json << "," << newline;
@@ -190,9 +191,10 @@ std::string export_to_chrome_trace_json(const x_space& space, bool pretty_print)
                     bool first_arg = true;
                     for (const auto& stat : event.stats())
                     {
-                        if (!first_arg) {
+                        if (!first_arg)
+                        {
                             json << ",";
-}
+                        }
                         first_arg = false;
 
                         // Get stat name from metadata

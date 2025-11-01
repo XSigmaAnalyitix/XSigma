@@ -57,25 +57,25 @@ if(XSIGMA_ENABLE_KINETO)
     else()
         set(LIBKINETO_NOCUPTI OFF CACHE STRING "")
     endif()
-    
+
     if(NOT USE_ROCM)
         set(LIBKINETO_NOROCTRACER ON CACHE STRING "" FORCE)
     else()
         set(LIBKINETO_NOROCTRACER OFF CACHE STRING "")
     endif()
-    
+
     if(NOT USE_XPU)
         set(LIBKINETO_NOXPUPTI ON CACHE STRING "" FORCE)
     else()
         set(LIBKINETO_NOXPUPTI OFF CACHE STRING "")
     endif()
-    
+
     # Configure Kineto library
     set(CAFFE2_THIRD_PARTY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}" CACHE STRING "")
     set(KINETO_SOURCE_DIR "${CAFFE2_THIRD_PARTY_ROOT}/kineto/libkineto" CACHE STRING "")
     set(KINETO_BUILD_TESTS OFF CACHE BOOL "")
     set(KINETO_LIBRARY_TYPE "static" CACHE STRING "")
-    
+
     if(NOT TARGET kineto)
         if(EXISTS "${KINETO_SOURCE_DIR}/CMakeLists.txt")
             add_subdirectory("${KINETO_SOURCE_DIR}")
@@ -106,7 +106,7 @@ endif()
 if(XSIGMA_ENABLE_ITT)
     set(ITT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/ittapi")
     find_path(ITT_INCLUDE_DIR ittnotify.h PATHS ${ITT_ROOT} PATH_SUFFIXES include)
-    
+
     if(ITT_INCLUDE_DIR)
         if(NOT TARGET ittnotify)
             add_subdirectory(ittapi ${CMAKE_CURRENT_BINARY_DIR}/ittapi_build)
@@ -155,7 +155,7 @@ endif()
 if(XSIGMA_ENABLE_ITTAPI)
   if(TARGET XSigma::ittapi)
     target_link_libraries(Core PUBLIC XSigma::ittapi)
-    target_compile_definitions(Core PUBLIC XSIGMA_HAS_ITTAPI)
+    target_compile_definitions(Core PUBLIC XSIGMA_HAS_ITT)
   endif()
 endif()
 ```
@@ -223,7 +223,7 @@ endif()
 ### Old Definitions
 ```cpp
 #ifdef XSIGMA_HAS_KINETO
-#ifdef XSIGMA_HAS_ITTAPI
+#ifdef XSIGMA_HAS_ITT
 ```
 
 ### New Definitions
@@ -307,4 +307,3 @@ All changes have been applied and verified:
 - `XSIGMA_PYTORCH_ALIGNMENT_SUMMARY.md` - Detailed summary
 - `XSIGMA_ALIGNMENT_QUICK_REFERENCE.md` - Quick reference
 - `KINETO_ITTAPI_COMPARISON.md` - Detailed comparison
-

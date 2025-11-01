@@ -208,7 +208,7 @@ Expected output (when ITT API enabled):
 
 ## Troubleshooting
 
-### Issue: "XSIGMA_HAS_ITTAPI not defined" with MSVC
+### Issue: "XSIGMA_HAS_ITT not defined" with MSVC
 
 **Cause**: ITT API is disabled by default with MSVC due to linking constraints
 
