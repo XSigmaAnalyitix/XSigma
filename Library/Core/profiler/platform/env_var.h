@@ -39,6 +39,8 @@ limitations under the License.
 #include <string_view>
 #include <vector>
 
+#include "common/export.h"
+
 namespace xsigma
 {
 
@@ -47,25 +49,28 @@ namespace xsigma
 // case insensitive "false" is interpreted as false. A string "1" or a case
 // insensitive "true" is interpreted as true. Otherwise, an error status is
 // returned.
-bool read_bool_from_env_var(std::string_view env_var_name, bool default_val, bool* value);
+XSIGMA_API bool read_bool_from_env_var(
+    std::string_view env_var_name, bool default_val, bool* value);
 
 // Returns an int64 into "value" from the environmental variable "env_var_name".
 // If it is unset, the default value is used.
 // If the string cannot be parsed into int64, an error status is returned.
-bool read_int64_from_env_var(std::string_view env_var_name, int64_t default_val, int64_t* value);
+XSIGMA_API bool read_int64_from_env_var(
+    std::string_view env_var_name, int64_t default_val, int64_t* value);
 // Returns a float into "value" from the environmental variable "env_var_name".
 // If it is unset, the default value is used.
 // If the string cannot be parsed into float, an error status is returned.
-bool read_float_from_env_var(std::string_view env_var_name, float default_val, float* value);
+XSIGMA_API bool read_float_from_env_var(
+    std::string_view env_var_name, float default_val, float* value);
 
 // Returns a string into "value" from the environmental variable "env_var_name".
 // If it is unset, the default value is used.
-bool read_string_from_env_var(
+XSIGMA_API bool read_string_from_env_var(
     std::string_view env_var_name, std::string_view default_val, std::string& value);
 
 // Returns a comma separated string into "value" from the environmental variable
 // "env_var_name". If it is unset, the default value is comma split and used.
-bool read_strings_from_env_var(
+XSIGMA_API bool read_strings_from_env_var(
     std::string_view env_var_name, std::string_view default_val, std::vector<std::string>& value);
 
 }  // namespace xsigma

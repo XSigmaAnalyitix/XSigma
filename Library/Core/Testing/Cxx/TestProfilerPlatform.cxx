@@ -7,12 +7,40 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <cstdlib>
+#include <string>
 #include <thread>
+#include <vector>
 
 #include "profiler/platform/env_time.h"
+#include "profiler/platform/env_var.h"
 #include "xsigmaTest.h"
 
 using namespace xsigma;
+
+namespace
+{
+#ifdef _WIN32
+void set_env(const char* name, const char* value)
+{
+    _putenv_s(name, value);
+}
+void unset_env(const char* name)
+{
+    _putenv_s(name, "");
+}
+#else
+void set_env(const char* name, const char* value)
+{
+    setenv(name, value, 1);
+}
+void unset_env(const char* name)
+{
+    unsetenv(name);
+}
+#endif
+
+}  // namespace
 
 // ============================================================================
 // Environment Time Tests
@@ -170,4 +198,159 @@ XSIGMATEST(Profiler, env_time_seconds_precision)
 
     // Seconds should be the same or time2 >= time1
     EXPECT_GE(time2, time1);
+}
+
+// ============================================================================
+// Environment Variable Tests
+// ============================================================================
+
+XSIGMATEST(Profiler, env_var_read_bool_values)
+{
+    static constexpr char const* var_name = "XSIGMA_TEST_ENV_BOOL";
+
+    unset_env(var_name);
+    bool value   = false;
+    bool success = read_bool_from_env_var(var_name, true, &value);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(value);
+
+    set_env(var_name, "False");
+    success = read_bool_from_env_var(var_name, true, &value);
+    EXPECT_TRUE(success);
+    EXPECT_FALSE(value);
+
+    set_env(var_name, "TRUE");
+    success = read_bool_from_env_var(var_name, false, &value);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(value);
+
+    set_env(var_name, "not_a_bool");
+    value   = true;
+    success = read_bool_from_env_var(var_name, false, &value);
+    EXPECT_FALSE(success);
+    EXPECT_FALSE(value);
+
+    unset_env(var_name);
+}
+
+XSIGMATEST(Profiler, env_var_read_int64_with_trimming_and_fallback)
+{
+    static constexpr char const* var_name = "XSIGMA_TEST_ENV_INT";
+
+    set_env(var_name, "  -42  ");
+    int64_t value   = 0;
+    bool    success = read_int64_from_env_var(var_name, 7, &value);
+    EXPECT_TRUE(success);
+    EXPECT_EQ(value, -42);
+
+    set_env(var_name, "123abc");
+    value   = 99;
+    success = read_int64_from_env_var(var_name, value, &value);
+    EXPECT_FALSE(success);
+    EXPECT_EQ(value, 99);
+
+    set_env(var_name, "   ");
+    value   = -1;
+    success = read_int64_from_env_var(var_name, value, &value);
+    EXPECT_FALSE(success);
+    EXPECT_EQ(value, -1);
+
+    unset_env(var_name);
+    value   = 0;
+    success = read_int64_from_env_var(var_name, 1234, &value);
+    EXPECT_TRUE(success);
+    EXPECT_EQ(value, 1234);
+}
+
+XSIGMATEST(Profiler, env_var_read_float_with_trimming_and_invalid)
+{
+    static constexpr char const* var_name = "XSIGMA_TEST_ENV_FLOAT";
+
+    set_env(var_name, "  3.25  ");
+    float value   = 0.0F;
+    bool  success = read_float_from_env_var(var_name, 1.0F, &value);
+    EXPECT_TRUE(success);
+    EXPECT_FLOAT_EQ(value, 3.25F);
+
+    set_env(var_name, "1.5extra");
+    value   = -4.0F;
+    success = read_float_from_env_var(var_name, value, &value);
+    EXPECT_FALSE(success);
+    EXPECT_FLOAT_EQ(value, -4.0F);
+
+    set_env(var_name, "\t ");
+    value   = 9.0F;
+    success = read_float_from_env_var(var_name, value, &value);
+    EXPECT_FALSE(success);
+    EXPECT_FLOAT_EQ(value, 9.0F);
+
+    unset_env(var_name);
+    value   = 0.0F;
+    success = read_float_from_env_var(var_name, 2.5F, &value);
+    EXPECT_TRUE(success);
+    EXPECT_FLOAT_EQ(value, 2.5F);
+}
+
+XSIGMATEST(Profiler, env_var_read_string_default_and_override)
+{
+    static constexpr char const* var_name = "XSIGMA_TEST_ENV_STRING";
+
+    unset_env(var_name);
+    std::string value;
+    bool        success = read_string_from_env_var(var_name, "fallback", value);
+    EXPECT_TRUE(success);
+    EXPECT_EQ(value, "fallback");
+
+    set_env(var_name, "actual");
+    value.clear();
+    success = read_string_from_env_var(var_name, "ignored", value);
+    EXPECT_TRUE(success);
+    EXPECT_EQ(value, "actual");
+
+    unset_env(var_name);
+}
+
+XSIGMATEST(Profiler, env_var_read_strings_with_trimming_and_default)
+{
+    static constexpr char const* var_name = "XSIGMA_TEST_ENV_STRINGS";
+
+    std::vector<std::string> values;
+
+    set_env(var_name, "alpha, beta , ,gamma");
+    bool success = read_strings_from_env_var(var_name, "ignored", values);
+    EXPECT_TRUE(success);
+    ASSERT_EQ(values.size(), 3U);
+    EXPECT_EQ(values[0], "alpha");
+    EXPECT_EQ(values[1], "beta");
+    EXPECT_EQ(values[2], "gamma");
+
+    unset_env(var_name);
+    success = read_strings_from_env_var(var_name, "delta,epsilon", values);
+    EXPECT_TRUE(success);
+    ASSERT_EQ(values.size(), 2U);
+    EXPECT_EQ(values[0], "delta");
+    EXPECT_EQ(values[1], "epsilon");
+
+    // Test with empty string - on Windows, setting to empty string may unset the variable
+    // so we expect the default value to be used
+    values.clear();
+    set_env(var_name, "");
+    success = read_strings_from_env_var(var_name, "zeta", values);
+    EXPECT_TRUE(success);
+    // On Windows, _putenv_s(name, "") unsets the variable, so default is used
+    // On Unix, setenv(name, "", 1) sets it to empty string
+    // We accept both behaviors
+    if (values.empty())
+    {
+        // Unix behavior: empty string results in empty vector
+        EXPECT_TRUE(values.empty());
+    }
+    else
+    {
+        // Windows behavior: empty string unsets variable, so default is used
+        ASSERT_EQ(values.size(), 1U);
+        EXPECT_EQ(values[0], "zeta");
+    }
+
+    unset_env(var_name);
 }

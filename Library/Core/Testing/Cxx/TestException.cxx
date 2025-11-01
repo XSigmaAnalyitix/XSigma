@@ -391,3 +391,130 @@ XSIGMATEST(Exception, memory_safety)
 
     END_TEST();
 }
+
+// ============================================================================
+// Exception Base Constructor Tests
+// ============================================================================
+
+XSIGMATEST(Exception, base_constructor)
+{
+    xsigma::set_exception_mode(xsigma::exception_mode::THROW);
+
+    // Test base constructor with all parameters
+    xsigma::exception ex(
+        "Test message", "Test backtrace", nullptr, xsigma::exception_category::VALUE_ERROR);
+
+    ASSERT_EQ(std::string(ex.msg()), "Test message");
+    ASSERT_EQ(std::string(ex.backtrace()), "Test backtrace");
+    ASSERT_EQ(ex.caller(), nullptr);
+    ASSERT_EQ(ex.category(), xsigma::exception_category::VALUE_ERROR);
+
+    END_TEST();
+}
+
+XSIGMATEST(Exception, base_constructor_with_caller)
+{
+    xsigma::set_exception_mode(xsigma::exception_mode::THROW);
+
+    // Test base constructor with caller pointer
+    int               dummy_obj = 42;
+    xsigma::exception ex(
+        "Test message", "Test backtrace", &dummy_obj, xsigma::exception_category::RUNTIME_ERROR);
+
+    ASSERT_EQ(ex.caller(), &dummy_obj);
+    ASSERT_EQ(ex.category(), xsigma::exception_category::RUNTIME_ERROR);
+
+    END_TEST();
+}
+
+// ============================================================================
+// Exception Accessor Tests
+// ============================================================================
+
+XSIGMATEST(Exception, accessors)
+{
+    xsigma::set_exception_mode(xsigma::exception_mode::THROW);
+
+    xsigma::source_location loc{__func__, __FILE__, __LINE__};
+    xsigma::exception       ex(loc, "Test message", xsigma::exception_category::LOGIC_ERROR);
+
+    // Test msg() accessor
+    ASSERT_EQ(std::string(ex.msg()), "Test message");
+
+    // Test category() accessor
+    ASSERT_EQ(ex.category(), xsigma::exception_category::LOGIC_ERROR);
+
+    // Test backtrace() accessor
+    ASSERT_FALSE(ex.backtrace().empty());
+    ASSERT_TRUE(ex.backtrace().find("Exception raised from") != std::string::npos);
+
+    // Test context() accessor
+    ASSERT_TRUE(ex.context().empty());  // No context added yet
+
+    // Test caller() accessor
+    ASSERT_EQ(ex.caller(), nullptr);
+
+    // Test nested() accessor
+    ASSERT_EQ(ex.nested(), nullptr);
+
+    END_TEST();
+}
+
+// ============================================================================
+// Exception Compute What Tests
+// ============================================================================
+
+XSIGMATEST(Exception, compute_what_with_context)
+{
+    xsigma::set_exception_mode(xsigma::exception_mode::THROW);
+
+    xsigma::source_location loc{__func__, __FILE__, __LINE__};
+    xsigma::exception       ex(loc, "Base message", xsigma::exception_category::GENERIC);
+
+    ex.add_context("Context line 1");
+    ex.add_context("Context line 2");
+
+    std::string what_str(ex.what());
+    ASSERT_TRUE(what_str.find("Base message") != std::string::npos);
+    ASSERT_TRUE(what_str.find("Context line 1") != std::string::npos);
+    ASSERT_TRUE(what_str.find("Context line 2") != std::string::npos);
+
+    END_TEST();
+}
+
+// ============================================================================
+// Exception Category Enum Tests
+// ============================================================================
+
+XSIGMATEST(Exception, all_exception_categories)
+{
+    xsigma::set_exception_mode(xsigma::exception_mode::THROW);
+
+    // Test all exception categories
+    const std::vector<xsigma::exception_category> all_categories = {
+        xsigma::exception_category::GENERIC,
+        xsigma::exception_category::VALUE_ERROR,
+        xsigma::exception_category::TYPE_ERROR,
+        xsigma::exception_category::INDEX_ERROR,
+        xsigma::exception_category::NOT_IMPLEMENTED,
+        xsigma::exception_category::ENFORCE_FINITE,
+        xsigma::exception_category::RUNTIME_ERROR,
+        xsigma::exception_category::LOGIC_ERROR,
+        xsigma::exception_category::SYSTEM_ERROR,
+        xsigma::exception_category::MEMORY_ERROR};
+
+    for (const auto& cat : all_categories)
+    {
+        try
+        {
+            xsigma::source_location loc{__func__, __FILE__, __LINE__};
+            throw xsigma::exception(loc, "Test", cat);
+        }
+        catch (const xsigma::exception& e)
+        {
+            ASSERT_EQ(e.category(), cat);
+        }
+    }
+
+    END_TEST();
+}
