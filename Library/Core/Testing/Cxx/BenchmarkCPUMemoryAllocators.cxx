@@ -295,14 +295,14 @@ BENCHMARK_TEMPLATE(benchmark_simple_allocation, standard_aligned_benchmark_alloc
     ->Range(64, 64 << 10)
     ->Unit(benchmark::kMicrosecond);
 
-#ifdef XSIGMA_ENABLE_MIMALLOC
+#if XSIGMA_HAS_MIMALLOC
 BENCHMARK_TEMPLATE(benchmark_simple_allocation, mimalloc_benchmark_allocator)
     ->Name("BM_Mimalloc_SimpleAllocation")
     ->Range(64, 64 << 10)
     ->Unit(benchmark::kMicrosecond);
 #endif
 
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
 BENCHMARK_TEMPLATE(benchmark_simple_allocation, tbb_scalable_benchmark_allocator)
     ->Name("BM_TBBScalable_SimpleAllocation")
     ->Range(64, 64 << 10)
@@ -331,7 +331,7 @@ BENCHMARK_TEMPLATE(benchmark_batch_allocation, standard_aligned_benchmark_alloca
     ->Args({1000, 4096})
     ->Unit(benchmark::kMicrosecond);
 
-#ifdef XSIGMA_ENABLE_MIMALLOC
+#if XSIGMA_HAS_MIMALLOC
 BENCHMARK_TEMPLATE(benchmark_batch_allocation, mimalloc_benchmark_allocator)
     ->Name("BM_Mimalloc_BatchAllocation")
     ->Args({100, 1024})
@@ -341,7 +341,7 @@ BENCHMARK_TEMPLATE(benchmark_batch_allocation, mimalloc_benchmark_allocator)
     ->Unit(benchmark::kMicrosecond);
 #endif
 
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
 BENCHMARK_TEMPLATE(benchmark_batch_allocation, tbb_scalable_benchmark_allocator)
     ->Name("BM_TBBScalable_BatchAllocation")
     ->Args({100, 1024})
@@ -371,7 +371,7 @@ BENCHMARK_TEMPLATE(benchmark_mixed_sizes, standard_aligned_benchmark_allocator)
     ->Arg(1000)
     ->Unit(benchmark::kMicrosecond);
 
-#ifdef XSIGMA_ENABLE_MIMALLOC
+#if XSIGMA_HAS_MIMALLOC
 BENCHMARK_TEMPLATE(benchmark_mixed_sizes, mimalloc_benchmark_allocator)
     ->Name("BM_Mimalloc_MixedSizes")
     ->Arg(100)
@@ -380,7 +380,7 @@ BENCHMARK_TEMPLATE(benchmark_mixed_sizes, mimalloc_benchmark_allocator)
     ->Unit(benchmark::kMicrosecond);
 #endif
 
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
 BENCHMARK_TEMPLATE(benchmark_mixed_sizes, tbb_scalable_benchmark_allocator)
     ->Name("BM_TBBScalable_MixedSizes")
     ->Arg(100)
@@ -405,14 +405,14 @@ BENCHMARK_TEMPLATE(benchmark_memory_access_pattern, standard_aligned_benchmark_a
     ->Range(1024, 1024 << 10)
     ->Unit(benchmark::kMicrosecond);
 
-#ifdef XSIGMA_ENABLE_MIMALLOC
+#if XSIGMA_HAS_MIMALLOC
 BENCHMARK_TEMPLATE(benchmark_memory_access_pattern, mimalloc_benchmark_allocator)
     ->Name("BM_Mimalloc_MemoryAccess")
     ->Range(1024, 1024 << 10)
     ->Unit(benchmark::kMicrosecond);
 #endif
 
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
 BENCHMARK_TEMPLATE(benchmark_memory_access_pattern, tbb_scalable_benchmark_allocator)
     ->Name("BM_TBBScalable_MemoryAccess")
     ->Range(1024, 1024 << 10)
@@ -466,7 +466,7 @@ BENCHMARK_TEMPLATE(benchmark_aligned_allocation, standard_aligned_benchmark_allo
     ->Arg(512)
     ->Unit(benchmark::kMicrosecond);
 
-#ifdef XSIGMA_ENABLE_MIMALLOC
+#if XSIGMA_HAS_MIMALLOC
 BENCHMARK_TEMPLATE(benchmark_aligned_allocation, mimalloc_benchmark_allocator)
     ->Name("BM_Mimalloc_AlignedAllocation")
     ->Arg(16)
@@ -478,7 +478,7 @@ BENCHMARK_TEMPLATE(benchmark_aligned_allocation, mimalloc_benchmark_allocator)
     ->Unit(benchmark::kMicrosecond);
 #endif
 
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
 BENCHMARK_TEMPLATE(benchmark_aligned_allocation, tbb_scalable_benchmark_allocator)
     ->Name("BM_TBBScalable_AlignedAllocation")
     ->Arg(16)
@@ -568,7 +568,7 @@ BENCHMARK_TEMPLATE(benchmark_fragmentation_pattern, standard_aligned_benchmark_a
     ->Arg(5000)
     ->Unit(benchmark::kMicrosecond);
 
-#ifdef XSIGMA_ENABLE_MIMALLOC
+#if XSIGMA_HAS_MIMALLOC
 BENCHMARK_TEMPLATE(benchmark_fragmentation_pattern, mimalloc_benchmark_allocator)
     ->Name("BM_Mimalloc_Fragmentation")
     ->Arg(1000)
@@ -576,7 +576,7 @@ BENCHMARK_TEMPLATE(benchmark_fragmentation_pattern, mimalloc_benchmark_allocator
     ->Unit(benchmark::kMicrosecond);
 #endif
 
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
 BENCHMARK_TEMPLATE(benchmark_fragmentation_pattern, tbb_scalable_benchmark_allocator)
     ->Name("BM_TBBScalable_Fragmentation")
     ->Arg(1000)

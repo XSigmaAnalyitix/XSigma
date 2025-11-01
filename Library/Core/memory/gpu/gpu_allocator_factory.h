@@ -32,10 +32,10 @@ namespace gpu
 
 /**
  * @brief GPU memory allocation strategies for different use cases
- * 
+ *
  * Each strategy is optimized for specific allocation patterns common
  * in quantitative finance applications:
- * 
+ *
  * - DIRECT: Direct CUDA malloc/free for simple, infrequent allocations
  * - POOL: Memory pool for frequent allocations of similar sizes
  * - CACHING: Intelligent caching for complex allocation patterns
@@ -49,7 +49,7 @@ enum class gpu_allocation_strategy
 
 /**
  * @brief Configuration for GPU allocator creation
- * 
+ *
  * Provides comprehensive configuration options for different allocation
  * strategies, allowing fine-tuning for specific quantitative applications.
  */
@@ -95,18 +95,18 @@ struct XSIGMA_VISIBILITY gpu_allocator_config
 
 /**
  * @brief Factory for creating GPU allocators with different strategies
- * 
+ *
  * This factory provides a unified interface for creating GPU allocators
  * optimized for different use cases in quantitative finance. It handles
  * device validation, configuration optimization, and allocator lifecycle.
- * 
+ *
  * Features:
  * - Strategy-based allocator selection
  * - Device validation and management
  * - Configuration optimization for specific use cases
  * - Thread-safe allocator creation
  * - Comprehensive error handling
- * 
+ *
  * @note All allocators created by this factory are thread-safe
  */
 class XSIGMA_API gpu_allocator_factory

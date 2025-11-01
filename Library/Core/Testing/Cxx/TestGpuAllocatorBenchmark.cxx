@@ -20,7 +20,7 @@
 #include "memory/gpu/allocator_gpu.h"
 #include "memory/gpu/cuda_caching_allocator.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -70,7 +70,7 @@ class gpu_timer
 public:
     gpu_timer()
     {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         cudaEventCreate(&start_event_);
         cudaEventCreate(&stop_event_);
 #endif
@@ -78,7 +78,7 @@ public:
 
     ~gpu_timer()
     {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         cudaEventDestroy(start_event_);
         cudaEventDestroy(stop_event_);
 #endif
@@ -86,7 +86,7 @@ public:
 
     void start()
     {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         cudaEventRecord(start_event_);
 #endif
         cpu_start_ = std::chrono::high_resolution_clock::now();
@@ -95,7 +95,7 @@ public:
     void stop()
     {
         cpu_end_ = std::chrono::high_resolution_clock::now();
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         cudaEventRecord(stop_event_);
         cudaEventSynchronize(stop_event_);
 #endif
@@ -103,7 +103,7 @@ public:
 
     double elapsed_ms() const
     {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         float gpu_time_ms = 0.0f;
         cudaEventElapsedTime(&gpu_time_ms, start_event_, stop_event_);
         return static_cast<double>(gpu_time_ms);
@@ -116,7 +116,7 @@ public:
     double elapsed_ns() const { return elapsed_ms() * 1000000.0; }
 
 private:
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     cudaEvent_t start_event_;
     cudaEvent_t stop_event_;
 #endif
@@ -317,7 +317,7 @@ class direct_cuda_allocator_wrapper : public gpu_allocator_interface
 public:
     void* allocate(size_t size) override
     {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         void*       ptr   = nullptr;
         cudaError_t error = cudaMalloc(&ptr, size);
         return (error == cudaSuccess) ? ptr : nullptr;
@@ -330,7 +330,7 @@ public:
     void deallocate(void* ptr, size_t size) override
     {
         (void)size;
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         if (ptr != nullptr)
         {
             cudaFree(ptr);
@@ -505,7 +505,7 @@ void print_gpu_benchmark_results(const std::vector<gpu_benchmark_results>& resul
 
 int get_cuda_device_count()
 {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     int         device_count = 0;
     cudaError_t error        = cudaGetDeviceCount(&device_count);
     return (error == cudaSuccess) ? device_count : 0;

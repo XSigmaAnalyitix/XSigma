@@ -2,7 +2,7 @@
 
 #include "common/configure.h"  // IWYU pragma: keep
 
-#ifdef XSIGMA_NUMA_ENABLED
+#if XSIGMA_HAS_NUMA
 
 #include <cstddef>
 
@@ -39,4 +39,4 @@ XSIGMA_API void NUMAMove(void* ptr, size_t size, int numa_node_id);
 XSIGMA_API int GetCurrentNUMANode();
 
 }  // namespace xsigma
-#endif  // XSIGMA_NUMA_ENABLED
+#endif  // XSIGMA_HAS_NUMA

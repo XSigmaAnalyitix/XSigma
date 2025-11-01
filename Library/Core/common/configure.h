@@ -6,21 +6,25 @@
 #ifndef __xsigma_configure_h__
 #define __xsigma_configure_h__
 
-#include "xsigma_features.h"
+// Feature flags are now defined via CMake compile definitions (XSIGMA_HAS_*)
+// See Cmake/tools/dependencies.cmake for the mapping from XSIGMA_ENABLE_* to XSIGMA_HAS_*
+
 #include "xsigma_threads.h"
 #include "xsigma_version_macros.h"
 
-#if defined(__linux__) && defined(XSIGMA_ENABLE_NUMA)
+// NUMA is only enabled on Linux
+#if defined(__linux__) && XSIGMA_HAS_NUMA
 #define XSIGMA_NUMA_ENABLED
 #endif
 
-#if defined(XSIGMA_AVX512) || defined(XSIGMA_AVX2) || defined(XSIGMA_AVX) || defined(XSIGMA_SSE)
+// Vectorization support
+#if (XSIGMA_AVX512 == 1) || (XSIGMA_AVX2 == 1) || (XSIGMA_AVX == 1) || (XSIGMA_SSE == 1)
 #define XSIGMA_VECTORIZED
 #endif
 
 // Compression configuration
-#ifdef XSIGMA_ENABLE_COMPRESSION
-#ifdef XSIGMA_COMPRESSION_TYPE_SNAPPY
+#if XSIGMA_HAS_COMPRESSION == 1
+#if XSIGMA_COMPRESSION_TYPE_SNAPPY == 1
 #define XSIGMA_COMPRESSION_TYPE_SNAPPY
 #endif
 #endif

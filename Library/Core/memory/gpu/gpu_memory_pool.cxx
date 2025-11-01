@@ -12,7 +12,7 @@
 #include "util/exception.h"
 #include "util/flat_hash.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -124,7 +124,7 @@ private:
 
         switch (device_type)
         {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         case device_enum::CUDA:
         {
             // Set the device context
@@ -183,7 +183,7 @@ private:
 
         switch (block.device.type())
         {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         case device_enum::CUDA:
         {
             cudaSetDevice(block.device.index());

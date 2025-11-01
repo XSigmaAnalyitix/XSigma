@@ -10,7 +10,7 @@
 
 #include "xsigmaTest.h"
 
-#ifdef XSIGMA_HAS_KINETO
+#if XSIGMA_HAS_KINETO
 
 #include <chrono>
 #include <thread>

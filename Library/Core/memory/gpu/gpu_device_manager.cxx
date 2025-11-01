@@ -10,7 +10,7 @@
 #include "logging/logger.h"
 #include "util/exception.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda_runtime.h>
 // #ifdef _WIN32
 // // NVML is available on Windows
@@ -29,7 +29,7 @@ namespace
 
 /**
  * @brief Internal implementation of GPU device manager
- * 
+ *
  * Provides concrete implementation of device detection, enumeration,
  * and management for CUDA backend.
  */
@@ -56,7 +56,7 @@ private:
      */
     void initialize_cuda()
     {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         // Check CUDA runtime availability
         cudaError_t result = cudaGetDeviceCount(&runtime_info_.cuda_device_count);
         if (result == cudaSuccess && runtime_info_.cuda_device_count > 0)
@@ -442,7 +442,7 @@ public:
         // Set device context based on type
         switch (device_type)
         {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         case device_enum::CUDA:
         {
             cudaError_t const result = cudaSetDevice(device_index);

@@ -12,7 +12,7 @@
 
 #include "xsigmaTest.h"
 
-#ifdef XSIGMA_HAS_ITT
+#if XSIGMA_HAS_ITT
 
 #include "profiler/itt_wrapper.h"
 

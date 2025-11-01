@@ -68,7 +68,7 @@
 #include <thread>
 #endif
 
-#if XSIGMA_ENABLE_NUMA
+#if XSIGMA_HAS_NUMA
 #include "hwloc.h"  // from @hwloc
 #endif
 

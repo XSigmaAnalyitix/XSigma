@@ -36,7 +36,7 @@
 #include "memory/helper/process_state.h"  // for process_state
 
 // GPU support includes
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -76,7 +76,7 @@ public:
     using const_pointer   = const T*;
 
     // Stream type for asynchronous operations
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     using stream_t = cudaStream_t;
 #else
     using stream_t = void*;
@@ -111,7 +111,7 @@ public:
                     alignment, n * scalar_size));
         }
         // GPU allocation using direct CUDA calls
-#if defined(XSIGMA_ENABLE_CUDA)
+#if XSIGMA_HAS_CUDA
         else if (type == device_enum::CUDA || type == device_enum::HIP)
         {
             // Set the device
@@ -162,7 +162,7 @@ public:
         // CPU deallocation
         if (type == device_enum::CPU)
         {
-#ifdef XSIGMA_NUMA_ENABLED
+#if XSIGMA_HAS_NUMA
             int numa_node = GetCurrentNUMANode();
 #else
             int numa_node = 0;
@@ -170,7 +170,7 @@ public:
             xsigma::process_state::singleton()->GetCPUAllocator(numa_node)->deallocate_raw(ptr);
         }
         // GPU deallocation using direct CUDA calls
-#if defined(XSIGMA_ENABLE_CUDA)
+#if XSIGMA_HAS_CUDA
         else if (type == device_enum::CUDA || type == device_enum::HIP)
         {
             // Set the device
@@ -232,7 +232,7 @@ public:
         }
 
         // GPU-involved copies using direct CUDA operations
-#if defined(XSIGMA_ENABLE_CUDA)
+#if XSIGMA_HAS_CUDA
         if (from_type == device_enum::CUDA || to_type == device_enum::CUDA ||
             from_type == device_enum::HIP || to_type == device_enum::HIP)
         {
@@ -315,7 +315,7 @@ public:
     }
 
     // GPU-specific convenience methods
-#if defined(XSIGMA_ENABLE_CUDA)
+#if XSIGMA_HAS_CUDA
 
     /**
      * @brief Allocate pinned CPU memory for efficient GPU transfers
@@ -423,7 +423,7 @@ inline constexpr bool is_gpu_device(device_enum device_type)
  */
 inline constexpr bool has_gpu_support()
 {
-#if defined(XSIGMA_ENABLE_CUDA)
+#if XSIGMA_HAS_CUDA
     return true;
 #else
     return false;

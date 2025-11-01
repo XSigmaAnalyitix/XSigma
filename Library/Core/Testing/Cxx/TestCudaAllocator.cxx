@@ -15,7 +15,7 @@
 #include "memory/gpu/cuda_caching_allocator.h"
 #include "memory/helper/memory_allocator.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -30,7 +30,7 @@ namespace
  */
 int get_cuda_device_count()
 {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     int         device_count = 0;
     cudaError_t error        = cudaGetDeviceCount(&device_count);
     if (error != cudaSuccess)
@@ -51,7 +51,7 @@ class cuda_memory_validator
 public:
     explicit cuda_memory_validator(void* ptr, size_t size) : ptr_(ptr), size_(size)
     {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         if (ptr_ != nullptr)
         {
             // Verify pointer is valid GPU memory
@@ -66,7 +66,7 @@ public:
 
     bool test_memory_access() const
     {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         if (!valid_ || ptr_ == nullptr || size_ == 0)
         {
             return false;

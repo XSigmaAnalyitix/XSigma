@@ -35,7 +35,7 @@ namespace gpu
 
 /**
  * @brief GPU memory alignment constants
- * 
+ *
  * These constants define optimal alignment boundaries for different
  * GPU architectures and memory access patterns, ensuring coalesced
  * memory access for maximum bandwidth utilization.
@@ -63,7 +63,7 @@ constexpr size_t PAGE_SIZE = 4096;
 
 /**
  * @brief Memory access pattern enumeration
- * 
+ *
  * Defines different memory access patterns that affect optimal
  * alignment strategies for GPU kernels and data structures.
  */
@@ -80,7 +80,7 @@ enum class memory_access_pattern
 
 /**
  * @brief GPU architecture enumeration
- * 
+ *
  * Different GPU architectures have different optimal alignment
  * requirements and memory access characteristics.
  */
@@ -98,7 +98,7 @@ enum class gpu_architecture
 
 /**
  * @brief Memory alignment configuration
- * 
+ *
  * Contains alignment parameters optimized for specific GPU
  * architectures and memory access patterns.
  */
@@ -128,11 +128,11 @@ struct XSIGMA_VISIBILITY alignment_config
 
 /**
  * @brief GPU memory alignment utilities
- * 
+ *
  * Provides comprehensive memory alignment functions optimized for
  * GPU architectures, ensuring optimal memory access patterns for
  * Monte Carlo simulations and PDE solvers.
- * 
+ *
  * Key features:
  * - Architecture-specific alignment optimization
  * - SIMD vector alignment for CPU-GPU interoperability
@@ -140,23 +140,23 @@ struct XSIGMA_VISIBILITY alignment_config
  * - Coalesced memory access pattern optimization
  * - Template-based type-safe alignment functions
  * - Compile-time alignment calculations where possible
- * 
+ *
  * Mathematical foundation:
  * Aligned address calculation: addr_aligned = (addr + alignment - 1) & ~(alignment - 1)
  * Padding calculation: padding = (alignment - (size % alignment)) % alignment
  * Stride calculation for bank conflict avoidance: stride = lcm(bank_size, element_size)
- * 
+ *
  * @example
  * ```cpp
  * // Align memory for CUDA coalesced access
  * size_t aligned_size = gpu_memory_alignment::align_size_for_coalescing<float>(1000);
- * 
+ *
  * // Get optimal configuration for Monte Carlo simulation
  * auto config = gpu_memory_alignment::get_optimal_config(
  *     gpu_architecture::CUDA_COMPUTE_80,
  *     memory_access_pattern::SEQUENTIAL
  * );
- * 
+ *
  * // Calculate padding for 2D array to avoid bank conflicts
  * size_t padded_width = gpu_memory_alignment::calculate_padded_width<double>(
  *     width, config

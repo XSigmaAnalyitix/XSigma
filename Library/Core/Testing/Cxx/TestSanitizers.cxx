@@ -1,7 +1,7 @@
 /**
  * @file TestSanitizers.cxx
  * @brief Test cases to verify sanitizer functionality
- * 
+ *
  * This file contains test cases that intentionally trigger sanitizer
  * detections to verify that the sanitizer configuration is working correctly.
  * These tests should only be run when sanitizers are enabled.

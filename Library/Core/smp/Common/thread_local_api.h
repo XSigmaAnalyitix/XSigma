@@ -14,7 +14,7 @@
 #include "smp/Common/thread_local_impl_abstract.h"
 #include "smp/Common/tools_api.h"  // For GetBackendType(), DefaultBackend
 #include "smp/STDThread/thread_local_impl.h"
-#if defined(XSIGMA_ENABLE_TBB)
+#if XSIGMA_HAS_TBB
 #include "smp/TBB/thread_local_impl.h"
 #endif
 
@@ -29,7 +29,7 @@ template <typename T>
 class thread_local_api
 {
     using ThreadLocalSTDThread = thread_local_impl<BackendType::STDThread, T>;
-#if defined(XSIGMA_ENABLE_TBB)
+#if XSIGMA_HAS_TBB
     using ThreadLocalTBB = thread_local_impl<BackendType::TBB, T>;
 #endif
 
@@ -41,7 +41,7 @@ public:
     {
         this->BackendsImpl[static_cast<std::size_t>(BackendType::STDThread)] =
             std::make_unique<ThreadLocalSTDThread>();
-#if defined(XSIGMA_ENABLE_TBB)
+#if XSIGMA_HAS_TBB
         this->BackendsImpl[static_cast<std::size_t>(BackendType::TBB)] =
             std::make_unique<ThreadLocalTBB>();
 #endif
@@ -52,7 +52,7 @@ public:
     {
         this->BackendsImpl[static_cast<std::size_t>(BackendType::STDThread)] =
             std::make_unique<ThreadLocalSTDThread>(exemplar);
-#if defined(XSIGMA_ENABLE_TBB)
+#if XSIGMA_HAS_TBB
         this->BackendsImpl[static_cast<std::size_t>(BackendType::TBB)] =
             std::make_unique<ThreadLocalTBB>(exemplar);
 #endif

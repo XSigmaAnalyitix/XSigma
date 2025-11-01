@@ -27,7 +27,7 @@
 #include "common/macros.h"
 #include "memory/device.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -38,7 +38,7 @@ namespace gpu
 
 /**
  * @brief GPU device capabilities and properties
- * 
+ *
  * Contains detailed information about a GPU device including compute
  * capabilities, memory specifications, and performance characteristics
  * relevant for Monte Carlo simulations and PDE solvers.
@@ -120,7 +120,7 @@ struct XSIGMA_VISIBILITY gpu_device_info
 
 /**
  * @brief GPU runtime environment information
- * 
+ *
  * Contains information about the available GPU runtime environments
  * and their capabilities for optimal backend selection.
  */
@@ -144,11 +144,11 @@ struct XSIGMA_VISIBILITY gpu_runtime_info
 
 /**
  * @brief GPU device manager for runtime detection and device selection
- * 
+ *
  * Provides comprehensive GPU device management capabilities including
  * runtime detection, device enumeration, capability querying, and
  * optimal device selection for Monte Carlo simulations and PDE solvers.
- * 
+ *
  * Key features:
  * - Automatic CUDA runtime detection
  * - Device capability enumeration and comparison
@@ -156,23 +156,23 @@ struct XSIGMA_VISIBILITY gpu_runtime_info
  * - Device health monitoring and utilization tracking
  * - Thread-safe device context management
  * - Performance benchmarking for device ranking
- * 
+ *
  * The manager uses heuristics to select the best available device
  * based on memory capacity, compute capability, and current utilization.
  * For Monte Carlo simulations, it prioritizes devices with high memory
  * bandwidth and many cores. For PDE solvers, it considers shared memory
  * capacity and double precision performance.
- * 
+ *
  * @example
  * ```cpp
  * auto& manager = gpu_device_manager::instance();
- * 
+ *
  * // Get runtime information
  * auto runtime_info = manager.get_runtime_info();
  * if (runtime_info.cuda_available) {
  *     std::cout << "CUDA " << runtime_info.cuda_runtime_version << " available\n";
  * }
- * 
+ *
  * // Find best device for Monte Carlo simulation
  * auto device = manager.select_optimal_device_for_monte_carlo(1024ULL * 1024); // 1GB
  * if (device.device_index >= 0) {

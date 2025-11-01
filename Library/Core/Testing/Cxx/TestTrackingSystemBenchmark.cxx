@@ -232,7 +232,7 @@ tracking_benchmark_results benchmark_gpu_tracking_allocator(const tracking_bench
     tracking_benchmark_results results;
     results.system_name = "GPU-Tracking-" + config.test_name;
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     int         device_count = 0;
     cudaError_t error        = cudaGetDeviceCount(&device_count);
     if (error != cudaSuccess || device_count == 0)

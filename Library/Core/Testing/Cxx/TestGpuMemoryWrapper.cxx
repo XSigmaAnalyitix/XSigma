@@ -21,7 +21,7 @@
 #include "common/macros.h"
 #include "xsigmaTest.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 
 #include <memory>
 #include <vector>
@@ -451,4 +451,4 @@ XSIGMATEST(GpuMemoryWrapper, supports_swap_operation)
     }
 }
 
-#endif  // XSIGMA_ENABLE_CUDA
+#endif  // XSIGMA_HAS_CUDA

@@ -27,7 +27,7 @@
 #include "memory/helper/memory_allocator.h"  // for allocate, free
 #include "util/exception.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -51,7 +51,7 @@ void* allocator_device::allocate_raw(size_t alignment, size_t num_bytes)
 
     void* ptr = nullptr;  //NOLINT
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     cudaError_t const result = cudaMallocHost(&ptr, num_bytes);
     if (result != cudaSuccess)
     {
@@ -71,7 +71,7 @@ void allocator_device::deallocate_raw(void* ptr)
         return;
     }
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     cudaError_t const result = cudaFreeHost(ptr);
     if (result != cudaSuccess)
     {

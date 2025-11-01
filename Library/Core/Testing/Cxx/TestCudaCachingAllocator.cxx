@@ -21,7 +21,7 @@
 #include "common/macros.h"
 #include "xsigmaTest.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 
 #include <cuda_runtime.h>
 
@@ -316,4 +316,4 @@ XSIGMATEST(CudaCachingAllocatorTemplate, provides_statistics_and_cache_control)
     XSIGMA_LOG_INFO("CUDA caching allocator template statistics test passed");
 }
 
-#endif  // XSIGMA_ENABLE_CUDA
+#endif  // XSIGMA_HAS_CUDA

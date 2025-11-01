@@ -3,7 +3,7 @@
  */
 
 #include "profiler_api.h"
-#ifdef XSIGMA_HAS_KINETO
+#if XSIGMA_HAS_KINETO
 #include "kineto_shim.h"
 #endif
 #include <chrono>
@@ -217,21 +217,21 @@ void ProfilerSession::reset()
 
 void ProfilerSession::initialize_kineto()
 {
-#ifdef XSIGMA_HAS_KINETO
+#if XSIGMA_HAS_KINETO
     kineto_init(false, config_.verbose);
 #endif
 }
 
 void ProfilerSession::initialize_itt()
 {
-#ifdef XSIGMA_HAS_ITT
+#if XSIGMA_HAS_ITT
     itt_init();
 #endif
 }
 
 void ProfilerSession::finalize_kineto()
 {
-#ifdef XSIGMA_HAS_KINETO
+#if XSIGMA_HAS_KINETO
     kineto_reset_tls();
 #endif
 }

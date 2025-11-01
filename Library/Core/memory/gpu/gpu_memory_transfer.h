@@ -29,7 +29,7 @@
 #include "common/macros.h"
 #include "memory/device.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -63,7 +63,7 @@ enum class transfer_status
 
 /**
  * @brief Memory transfer operation metadata
- * 
+ *
  * Contains information about a memory transfer operation including
  * timing, bandwidth, and status for performance monitoring and debugging.
  */
@@ -126,7 +126,7 @@ using transfer_callback = std::function<void(const gpu_transfer_info& info)>;
 
 /**
  * @brief GPU stream handle abstraction
- * 
+ *
  * Provides a unified interface for GPU streams across different backends
  * (CUDA streams, etc.).
  */
@@ -178,11 +178,11 @@ protected:
 
 /**
  * @brief High-performance GPU memory transfer manager
- * 
+ *
  * Provides efficient asynchronous memory transfer capabilities between
  * host and device memory with stream management, bandwidth optimization,
  * and comprehensive performance monitoring.
- * 
+ *
  * Key features:
  * - Asynchronous transfers with callback support
  * - Multi-stream management for overlapping transfers
@@ -191,19 +191,19 @@ protected:
  * - Memory coalescing for optimal transfer patterns
  * - Transfer queue management and prioritization
  * - Comprehensive error handling and recovery
- * 
+ *
  * Mathematical foundation:
  * Transfer bandwidth is calculated as: BW = Size / Time
  * Optimal transfer size follows: S_opt = min(max_transfer_size, align(requested_size, alignment))
  * where alignment ensures coalesced memory access patterns.
- * 
+ *
  * @example
  * ```cpp
  * auto& transfer_manager = gpu_memory_transfer::instance();
- * 
+ *
  * // Create a high-priority stream for critical transfers
  * auto stream = gpu_stream::create(device_enum::CUDA, 0, 1);
- * 
+ *
  * // Asynchronous transfer with callback
  * auto future = transfer_manager.transfer_async(
  *     host_data, device_data, size,
@@ -213,7 +213,7 @@ protected:
  *         std::cout << "Transfer completed: " << info.bandwidth_gbps << " GB/s\n";
  *     }
  * );
- * 
+ *
  * // Continue with other work...
  * future.wait(); // Wait for completion if needed
  * ```

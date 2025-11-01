@@ -16,12 +16,12 @@
 #include "memory/cpu/allocator.h"
 #include "memory/sub_allocator.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda.h>  // For CUDA Driver API
 #include <cuda_runtime.h>
 #endif
 
-#ifdef XSIGMA_ENABLE_HIP
+#if XSIGMA_HAS_HIP
 #include <hip/hip_runtime.h>
 #endif
 
@@ -194,7 +194,7 @@ public:
 
     /**
      * @brief Returns the human-readable name of this allocator.
-     * 
+     *
      * @return Allocator name for debugging and profiling
      */
     std::string Name() const override { return name_; }
@@ -215,7 +215,7 @@ public:
 
     /**
      * @brief Allocates GPU memory with allocation attributes.
-     * 
+     *
      * @param alignment Required alignment in bytes
      * @param num_bytes Size of memory block to allocate
      * @param allocation_attr Attributes controlling allocation behavior
@@ -237,14 +237,14 @@ public:
 
     /**
      * @brief Indicates whether this allocator tracks allocation sizes.
-     * 
+     *
      * @return true if backend supports size tracking
      */
     bool tracks_allocation_sizes() const noexcept override;
 
     /**
      * @brief Returns requested size for a given allocation.
-     * 
+     *
      * @param ptr Pointer to allocated memory
      * @return Originally requested size in bytes
      */
@@ -252,7 +252,7 @@ public:
 
     /**
      * @brief Returns actual allocated size for a given allocation.
-     * 
+     *
      * @param ptr Pointer to allocated memory
      * @return Actual allocated size in bytes
      */
@@ -260,7 +260,7 @@ public:
 
     /**
      * @brief Returns unique allocation ID for debugging.
-     * 
+     *
      * @param ptr Pointer to allocated memory
      * @return Unique allocation identifier
      */
@@ -268,21 +268,21 @@ public:
 
     /**
      * @brief Returns comprehensive allocator statistics.
-     * 
+     *
      * @return Statistics structure with memory usage metrics
      */
     std::optional<allocator_stats> GetStats() const override;
 
     /**
      * @brief Clears statistics counters.
-     * 
+     *
      * @return true if statistics were successfully cleared
      */
     bool ClearStats() override;
 
     /**
      * @brief Returns memory type managed by this allocator.
-     * 
+     *
      * @return GPU device memory type
      */
     allocator_memory_enum GetMemoryType() const noexcept override

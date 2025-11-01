@@ -192,7 +192,7 @@ inline constexpr int XSIGMA_COMPILE_TIME_MAX_GPUS = 16;
 #endif
 
 //----------------------------------------------------------------------------
-#ifndef XSIGMA_HAS_THREE_WAY_COMPARISON
+#if !XSIGMA_HAS_THREE_WAY_COMPARISON
 #if defined(__cpp_impl_three_way_comparison) && __cpp_impl_three_way_comparison >= 201907L && \
     defined(__cpp_lib_three_way_comparison) && __cpp_lib_three_way_comparison >= 201907L
 #define XSIGMA_HAS_THREE_WAY_COMPARISON 1

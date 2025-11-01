@@ -28,7 +28,7 @@ struct hash<std::pair<xsigma::device_enum, int>>
 };
 }  // namespace std
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -43,7 +43,7 @@ namespace
 /**
  * @brief CUDA stream implementation
  */
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 class cuda_stream_impl : public gpu_stream
 {
 private:
@@ -213,7 +213,7 @@ private:
         {
             switch (op.direction)
             {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
             case transfer_direction::HOST_TO_DEVICE:
             case transfer_direction::DEVICE_TO_HOST:
             case transfer_direction::DEVICE_TO_DEVICE:
@@ -534,13 +534,13 @@ public:
 std::unique_ptr<gpu_stream> gpu_stream::create(
     device_enum device_type, int device_index, int priority)
 {
-#ifndef XSIGMA_ENABLE_CUDA
+#if !XSIGMA_HAS_CUDA
     (void)device_index;
     (void)priority;
 #endif
     switch (device_type)
     {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     case device_enum::CUDA:
         return std::make_unique<cuda_stream_impl>(device_type, device_index, priority);
 #endif

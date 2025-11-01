@@ -1,6 +1,6 @@
 #include "memory/numa.h"
 
-#ifdef XSIGMA_NUMA_ENABLED
+#if XSIGMA_HAS_NUMA
 
 #include <numa.h>
 #include <numaif.h>

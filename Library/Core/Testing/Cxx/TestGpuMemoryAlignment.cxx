@@ -21,7 +21,7 @@
 #include "common/macros.h"
 #include "xsigmaTest.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 
 #include <string>
 #include <vector>
@@ -334,4 +334,4 @@ XSIGMATEST(GpuMemoryAlignment, generates_alignment_reports)
     XSIGMA_LOG_INFO("GPU memory alignment report generation test passed");
 }
 
-#endif  // XSIGMA_ENABLE_CUDA
+#endif  // XSIGMA_HAS_CUDA

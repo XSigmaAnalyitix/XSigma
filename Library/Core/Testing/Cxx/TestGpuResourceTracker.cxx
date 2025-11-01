@@ -21,7 +21,7 @@
 #include "common/macros.h"
 #include "xsigmaTest.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 
 #include <chrono>
 #include <memory>
@@ -478,5 +478,5 @@ XSIGMATEST(GpuResourceTracker, clears_tracking_data)
     XSIGMA_LOG_INFO("GPU resource tracker data clearing test passed");
 }
 
-#endif  // XSIGMA_ENABLE_CUDA
+#endif  // XSIGMA_HAS_CUDA
 #endif

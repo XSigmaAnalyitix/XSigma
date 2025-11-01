@@ -46,7 +46,7 @@
 #include "memory/gpu/gpu_resource_tracker.h"
 #include "memory/unified_memory_stats.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -100,7 +100,7 @@ struct XSIGMA_VISIBILITY cuda_error_info
      * @param size Size of allocation that failed
      * @param device Device index where error occurred
      */
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     cuda_error_info(
         cudaError_t cuda_error, const char* function_name, size_t size, int device) noexcept;
 #endif
@@ -555,7 +555,7 @@ private:
 
     // ========== CUDA-Specific Members ==========
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     cudaEvent_t start_event_;                     ///< CUDA event for timing start
     cudaEvent_t end_event_;                       ///< CUDA event for timing end
     bool        cuda_events_initialized_{false};  ///< CUDA events initialization flag

@@ -30,7 +30,7 @@
 #include "common/macros.h"
 #include "memory/device.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -41,7 +41,7 @@ namespace gpu
 
 /**
  * @brief Configuration parameters for GPU memory pools
- * 
+ *
  * This structure defines the configuration parameters used to initialize
  * and manage GPU memory pools, including block sizes, pool limits, and
  * allocation strategies optimized for Monte Carlo simulations and PDE solvers.
@@ -191,12 +191,12 @@ struct XSIGMA_VISIBILITY gpu_memory_block
 
 /**
  * @brief High-performance GPU memory pool manager
- * 
+ *
  * Provides efficient memory pool management for GPU computations with support
  * for both CUDA and HIP backends. Optimized for Monte Carlo simulations
  * and PDE solvers with configurable block sizes, memory alignment, and
  * resource tracking capabilities.
- * 
+ *
  * Key features:
  * - Configurable block size pools to minimize allocation overhead
  * - SIMD-aligned memory allocation for coalesced GPU access patterns
@@ -204,12 +204,12 @@ struct XSIGMA_VISIBILITY gpu_memory_block
  * - Memory usage tracking and leak detection
  * - Exception-safe resource management
  * - Support for both CUDA and HIP backends
- * 
+ *
  * Mathematical foundation:
  * The pool uses a geometric progression for block sizes: S_i = S_0 * r^i
  * where S_0 is the minimum block size and r is the growth factor.
  * This ensures efficient memory utilization while minimizing fragmentation.
- * 
+ *
  * @example
  * ```cpp
  * // Configure memory pool for Monte Carlo simulations
@@ -217,9 +217,9 @@ struct XSIGMA_VISIBILITY gpu_memory_block
  * config.min_block_size = 4096;        // 4KB minimum
  * config.max_block_size = 128 * 1024ULL;  // 128MB maximum
  * config.block_growth_factor = 1.5;    // Moderate growth
- * 
+ *
  * auto pool = gpu_memory_pool::create(config);
- * 
+ *
  * // Allocate memory for simulation data
  * auto block = pool->allocate(1024ULL, device_enum::CUDA);
  * // ... use memory for computations ...

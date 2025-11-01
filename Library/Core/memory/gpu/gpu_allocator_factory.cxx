@@ -8,7 +8,7 @@
 #include "logging/logger.h"
 #include "memory/gpu/gpu_device_manager.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -120,7 +120,7 @@ bool gpu_allocator_factory::validate_device_support(
         return false;
     }
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     // Validate CUDA device exists
     int               device_count = 0;
     cudaError_t const result       = cudaGetDeviceCount(&device_count);

@@ -359,7 +359,7 @@ public:
     /**
    * /!\ This method is not thread safe.
    * Change the backend in use.
-   * The options can be: "STDThread" (default) or "TBB" (when XSIGMA_ENABLE_TBB is enabled)
+   * The options can be: "STDThread" (default) or "TBB" (when XSIGMA_HAS_TBB is enabled)
    *
    * XSIGMA_SMP_BACKEND_IN_USE env variable can also be used to set the default SMPTools
    * backend, in that case SetBackend() doesn't need to be called.

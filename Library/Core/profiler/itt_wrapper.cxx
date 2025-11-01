@@ -7,7 +7,7 @@
 
 #include "itt_wrapper.h"
 
-#ifdef XSIGMA_HAS_ITT
+#if XSIGMA_HAS_ITT
 #include <ittnotify.h>
 
 #include <mutex>
@@ -19,7 +19,7 @@ namespace xsigma
 namespace profiler
 {
 
-#ifdef XSIGMA_HAS_ITT
+#if XSIGMA_HAS_ITT
 
 namespace
 {

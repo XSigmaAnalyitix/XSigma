@@ -19,7 +19,7 @@
 #include "util/exception.h"
 #include "util/flat_hash.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -30,7 +30,7 @@ namespace gpu
 namespace
 {
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 inline void throw_on_cuda_error(cudaError_t result, const char* what)
 {
     if (result != cudaSuccess)
@@ -91,7 +91,7 @@ struct cuda_caching_allocator::Impl
     {
         void*  ptr  = nullptr;
         size_t size = 0;
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         cudaStream_t last_stream = nullptr;
         cudaEvent_t  event       = nullptr;
 #else
@@ -109,7 +109,7 @@ struct cuda_caching_allocator::Impl
         // Log info (simplified for build compatibility)
 
         // Validate device
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         int device_count = 0;
         throw_on_cuda_error(cudaGetDeviceCount(&device_count), "cudaGetDeviceCount");
         XSIGMA_CHECK(  //NOLINT

@@ -21,7 +21,7 @@
 #include "common/macros.h"
 #include "xsigmaTest.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 
 #include <cuda_runtime.h>
 
@@ -481,7 +481,7 @@ void TestGPUStatsThreadSafety()
     test_gpu_memory_stats::test_gpu_stats_thread_safety();
 }
 
-#else  // !XSIGMA_ENABLE_CUDA
+#else  // !XSIGMA_HAS_CUDA
 
 // Stub implementations when CUDA is not available
 void TestGPUTimingStats()
@@ -509,7 +509,7 @@ void TestGPUStatsThreadSafety()
     XSIGMA_LOG_INFO("⚠ CUDA not enabled - GPU thread safety tests skipped");
 }
 
-#endif  // XSIGMA_ENABLE_CUDA
+#endif  // XSIGMA_HAS_CUDA
 
 // Main test function expected by the test framework
 XSIGMATEST(TestGPUMemoryStats, test)

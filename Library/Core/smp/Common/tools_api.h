@@ -12,7 +12,7 @@
 #include "common/pointer.h"
 #include "smp/Common/tools_impl.h"
 
-#if defined(XSIGMA_ENABLE_TBB)
+#if XSIGMA_HAS_TBB
 #include "smp/TBB/tools_impl.hxx"
 #else
 #include "smp/STDThread/tools_impl.hxx"
@@ -86,7 +86,7 @@ public:
     template <typename FunctorInternal>
     void For(int first, int last, int grain, FunctorInternal& fi)
     {
-#if defined(XSIGMA_ENABLE_TBB)
+#if XSIGMA_HAS_TBB
         this->TBBBackend->For(first, last, grain, fi);
 #else
         this->STDThreadBackend->For(first, last, grain, fi);
@@ -97,7 +97,7 @@ public:
     template <typename InputIt, typename OutputIt, typename Functor>
     void Transform(InputIt inBegin, InputIt inEnd, OutputIt outBegin, Functor& transform)
     {
-#if defined(XSIGMA_ENABLE_TBB)
+#if XSIGMA_HAS_TBB
         this->TBBBackend->Transform(inBegin, inEnd, outBegin, transform);
 #else
         this->STDThreadBackend->Transform(inBegin, inEnd, outBegin, transform);
@@ -109,7 +109,7 @@ public:
     void Transform(
         InputIt1 inBegin1, InputIt1 inEnd, InputIt2 inBegin2, OutputIt outBegin, Functor& transform)
     {
-#if defined(XSIGMA_ENABLE_TBB)
+#if XSIGMA_HAS_TBB
         this->TBBBackend->Transform(inBegin1, inEnd, inBegin2, outBegin, transform);
 #else
         this->STDThreadBackend->Transform(inBegin1, inEnd, inBegin2, outBegin, transform);
@@ -120,7 +120,7 @@ public:
     template <typename Iterator, typename T>
     void Fill(Iterator begin, Iterator end, const T& value)
     {
-#if defined(XSIGMA_ENABLE_TBB)
+#if XSIGMA_HAS_TBB
         this->TBBBackend->Fill(begin, end, value);
 #else
         this->STDThreadBackend->Fill(begin, end, value);
@@ -131,7 +131,7 @@ public:
     template <typename RandomAccessIterator>
     void Sort(RandomAccessIterator begin, RandomAccessIterator end)
     {
-#if defined(XSIGMA_ENABLE_TBB)
+#if XSIGMA_HAS_TBB
         this->TBBBackend->Sort(begin, end);
 #else
         this->STDThreadBackend->Sort(begin, end);
@@ -142,7 +142,7 @@ public:
     template <typename RandomAccessIterator, typename Compare>
     void Sort(RandomAccessIterator begin, RandomAccessIterator end, Compare comp)
     {
-#if defined(XSIGMA_ENABLE_TBB)
+#if XSIGMA_HAS_TBB
         this->TBBBackend->Sort(begin, end, comp);
 #else
         this->STDThreadBackend->Sort(begin, end, comp);
@@ -190,7 +190,7 @@ private:
    */
     int DesiredNumberOfThread = 0;
 
-#if defined(XSIGMA_ENABLE_TBB)
+#if XSIGMA_HAS_TBB
     /**
    * TBB backend
    */

@@ -11,7 +11,7 @@
 
 #include "xsigmaTest.h"
 
-#ifdef XSIGMA_HAS_PROFILER
+#if XSIGMA_HAS_PROFILER
 
 #include <chrono>
 #include <thread>

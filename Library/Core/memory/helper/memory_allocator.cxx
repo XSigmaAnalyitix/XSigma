@@ -26,7 +26,7 @@
 #include "common/macros.h"
 #include "util/exception.h"
 
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
 
 #ifdef _MSC_VER
 #pragma push_macro("__TBB_NO_IMPLICIT_LINKAGE")
@@ -40,20 +40,20 @@
 #endif
 #endif
 
-#ifdef XSIGMA_NUMA_ENABLED
+#if XSIGMA_HAS_NUMA
 #include "memory/numa.h"
-#endif  // XSIGMA_NUMA_ENABLED
+#endif  // XSIGMA_HAS_NUMA
 
-#ifdef XSIGMA_ENABLE_MIMALLOC
+#if XSIGMA_HAS_MIMALLOC
 #include <mimalloc.h>
 #endif
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda.h>  // For CUDA Driver API
 #include <cuda_runtime.h>
 #endif
 
-#ifdef XSIGMA_ENABLE_HIP
+#if XSIGMA_HAS_HIP
 #include <hip/hip_runtime.h>
 #endif
 
@@ -78,9 +78,9 @@ void* allocate(std::size_t nbytes, std::size_t alignment, init_policy_enum init)
     void* ptr = nullptr;
 
     // Platform-specific allocation
-#ifdef XSIGMA_ENABLE_MIMALLOC
+#if XSIGMA_HAS_MIMALLOC
     ptr = mi_aligned_alloc(alignment, nbytes);
-#elif defined(XSIGMA_ENABLE_TBB)
+#elif XSIGMA_HAS_TBB
     ptr = scalable_aligned_malloc(nbytes, alignment);
 #elif defined(__ANDROID__)
     ptr = memalign(alignment, nbytes);
@@ -108,7 +108,7 @@ void* allocate(std::size_t nbytes, std::size_t alignment, init_policy_enum init)
     }
 
     // NUMA optimization
-#ifdef XSIGMA_NUMA_ENABLED
+#if XSIGMA_HAS_NUMA
     NUMAMove(ptr, nbytes, GetCurrentNUMANode());
 #endif
 
@@ -136,9 +136,9 @@ void free(void* ptr, XSIGMA_UNUSED std::size_t nbytes) noexcept
 {
     if XSIGMA_LIKELY (ptr != nullptr)
     {
-#ifdef XSIGMA_ENABLE_MIMALLOC
+#if XSIGMA_HAS_MIMALLOC
         mi_free(ptr);
-#elif defined(XSIGMA_ENABLE_TBB)
+#elif XSIGMA_HAS_TBB
         scalable_aligned_free(ptr);
 #elif defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
         _aligned_free(ptr);  // Fixed syntax error
@@ -146,7 +146,7 @@ void free(void* ptr, XSIGMA_UNUSED std::size_t nbytes) noexcept
         ::free(ptr);
 #endif
 
-#ifdef XSIGMA_ENABLE_ALLOCATION_STATS
+#if XSIGMA_HAS_ALLOCATION_STATS
         if (nbytes > 0)
         {
             update_free_stats(nbytes);
@@ -157,7 +157,7 @@ void free(void* ptr, XSIGMA_UNUSED std::size_t nbytes) noexcept
 
 void* allocate_tbb(XSIGMA_UNUSED std::size_t nbytes, XSIGMA_UNUSED std::size_t alignment)
 {
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
     return scalable_aligned_malloc(nbytes, alignment);
 #else
     return nullptr;
@@ -166,14 +166,14 @@ void* allocate_tbb(XSIGMA_UNUSED std::size_t nbytes, XSIGMA_UNUSED std::size_t a
 
 void free_tbb(XSIGMA_UNUSED void* ptr, XSIGMA_UNUSED std::size_t nbytes) noexcept
 {
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
     scalable_aligned_free(ptr);
 #endif
 }
 
 void* allocate_mi(XSIGMA_UNUSED std::size_t nbytes, XSIGMA_UNUSED std::size_t alignment)
 {
-#ifdef XSIGMA_ENABLE_MIMALLOC
+#if XSIGMA_HAS_MIMALLOC
     return mi_malloc_aligned(nbytes, alignment);
 #else
     return nullptr;
@@ -182,7 +182,7 @@ void* allocate_mi(XSIGMA_UNUSED std::size_t nbytes, XSIGMA_UNUSED std::size_t al
 
 void free_mi(XSIGMA_UNUSED void* ptr, XSIGMA_UNUSED std::size_t nbytes) noexcept
 {
-#ifdef XSIGMA_ENABLE_MIMALLOC
+#if XSIGMA_HAS_MIMALLOC
     mi_free(ptr);
 #endif
 }
@@ -192,7 +192,7 @@ namespace xsigma::gpu::memory_allocator
 {
 
 // CUDA error checking helper macros
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #define CUDA_CHECK_RETURN_NULL(call)                                                    \
     do                                                                                  \
     {                                                                                   \
@@ -220,7 +220,7 @@ namespace xsigma::gpu::memory_allocator
 #endif
 
 // HIP error checking helper macros
-#ifdef XSIGMA_ENABLE_HIP
+#if XSIGMA_HAS_HIP
 #define HIP_CHECK_RETURN_NULL(call)                                                   \
     do                                                                                \
     {                                                                                 \
@@ -268,7 +268,7 @@ void* allocate(
 
     void* ptr = nullptr;  //NOLINT
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 
 #ifdef XSIGMA_CUDA_ALLOC_SYNC
     // Use synchronous CUDA Runtime API allocation (more commonly available)
@@ -337,7 +337,7 @@ void* allocate(
     }
 #endif
 
-#elif defined(XSIGMA_ENABLE_HIP)
+#elif XSIGMA_HAS_HIP
 
 #if defined(XSIGMA_HIP_ALLOC_SYNC)
     // Use synchronous HIP allocation
@@ -426,7 +426,7 @@ void free(
     // Set device context (ignore errors in free)
     set_device(device_id);
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 
 #ifdef XSIGMA_CUDA_ALLOC_SYNC
     // Use synchronous CUDA Runtime API deallocation
@@ -483,7 +483,7 @@ void free(
     }
 #endif
 
-#elif defined(XSIGMA_ENABLE_HIP)
+#elif XSIGMA_HAS_HIP
 
 #if defined(XSIGMA_HIP_ALLOC_SYNC)
     // Use synchronous HIP deallocation
@@ -549,10 +549,10 @@ void free(
 
 bool set_device(int device_id) noexcept
 {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     CUDA_CHECK_RETURN_FALSE(cudaSetDevice(device_id));
     return true;
-#elif defined(XSIGMA_ENABLE_HIP)
+#elif XSIGMA_HAS_HIP
     HIP_CHECK_RETURN_FALSE(hipSetDevice(device_id));
     return true;
 #else
@@ -563,7 +563,7 @@ bool set_device(int device_id) noexcept
 
 int get_current_device() noexcept
 {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     int               device_id = -1;
     cudaError_t const error     = cudaGetDevice(&device_id);
     if (error != cudaSuccess)
@@ -572,7 +572,7 @@ int get_current_device() noexcept
         return -1;
     }
     return device_id;
-#elif defined(XSIGMA_ENABLE_HIP)
+#elif XSIGMA_HAS_HIP
     int        device_id = -1;
     hipError_t error     = hipGetDevice(&device_id);
     if (error != hipSuccess)

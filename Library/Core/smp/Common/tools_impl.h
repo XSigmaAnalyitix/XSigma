@@ -26,7 +26,7 @@ enum class BackendType : std::uint8_t
 
 inline constexpr std::size_t BackendSlotCount = 2;
 
-#if defined(XSIGMA_ENABLE_TBB)
+#if XSIGMA_HAS_TBB
 inline constexpr BackendType DefaultBackend = BackendType::TBB;
 #else
 inline constexpr BackendType DefaultBackend = BackendType::STDThread;

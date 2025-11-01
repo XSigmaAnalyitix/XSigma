@@ -2,11 +2,14 @@
 """
 IWYU Configure Header Detector for XSigma Project
 
-This script analyzes C++ source files to detect usage of XSIGMA_ENABLE_* macros
+This script analyzes C++ source files to detect usage of XSIGMA_HAS_* macros
 and automatically suggests including "common/configure.h" when needed.
 
 It works in conjunction with IWYU to provide enhanced analysis for XSigma-specific
 patterns and generates detailed logging of the analysis process.
+
+Note: Feature flags use XSIGMA_HAS_* in C++ code (e.g., XSIGMA_HAS_CUDA)
+      while CMake uses XSIGMA_ENABLE_* (e.g., XSIGMA_ENABLE_CUDA)
 """
 
 import argparse
@@ -19,17 +22,19 @@ from typing import Any, Optional
 
 
 class XSigmaConfigureDetector:
-    """Detects files that need common/configure.h based on XSIGMA_ENABLE_* usage."""
+    """Detects files that need common/configure.h based on XSIGMA_HAS_* usage."""
 
-    # Pattern to match XSIGMA_ENABLE_* macros in various forms
+    # Pattern to match XSIGMA_HAS_* macros in various forms
     XSIGMA_PATTERNS = [
-        r"#ifdef\s+XSIGMA_ENABLE_\w+",
-        r"#ifndef\s+XSIGMA_ENABLE_\w+",
-        r"#if\s+defined\s*\(\s*XSIGMA_ENABLE_\w+\s*\)",
-        r"#if\s+!defined\s*\(\s*XSIGMA_ENABLE_\w+\s*\)",
-        r"#elif\s+defined\s*\(\s*XSIGMA_ENABLE_\w+\s*\)",
-        r"#elif\s+!defined\s*\(\s*XSIGMA_ENABLE_\w+\s*\)",
-        r"XSIGMA_ENABLE_\w+",  # Direct usage
+        r"#ifdef\s+XSIGMA_HAS_\w+",
+        r"#ifndef\s+XSIGMA_HAS_\w+",
+        r"#if\s+defined\s*\(\s*XSIGMA_HAS_\w+\s*\)",
+        r"#if\s+!defined\s*\(\s*XSIGMA_HAS_\w+\s*\)",
+        r"#elif\s+defined\s*\(\s*XSIGMA_HAS_\w+\s*\)",
+        r"#elif\s+!defined\s*\(\s*XSIGMA_HAS_\w+\s*\)",
+        r"XSIGMA_HAS_\w+\s*==\s*1",  # Direct usage with comparison
+        r"XSIGMA_HAS_\w+\s*==\s*0",  # Direct usage with comparison
+        r"XSIGMA_HAS_\w+",  # Direct usage
     ]
 
     # Pattern to detect if common/configure.h is already included
@@ -66,14 +71,14 @@ class XSigmaConfigureDetector:
         self.logger = logging.getLogger(__name__)
 
     def extract_xsigma_macros(self, content: str) -> set[str]:
-        """Extract all XSIGMA_ENABLE_* macros found in the content."""
+        """Extract all XSIGMA_HAS_* macros found in the content."""
         macros = set()
 
         for pattern in self.XSIGMA_PATTERNS:
             matches = re.findall(pattern, content, re.MULTILINE)
             for match in matches:
                 # Extract just the macro name from the match
-                macro_match = re.search(r"XSIGMA_ENABLE_\w+", match)
+                macro_match = re.search(r"XSIGMA_HAS_\w+", match)
                 if macro_match:
                     macros.add(macro_match.group())
 

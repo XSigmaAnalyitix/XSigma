@@ -35,7 +35,7 @@
 #include "memory/backend/allocator_tracking.h"  // for allocator_tracking, enhanced_alloc_record, tracking_log_level
 #include "memory/cpu/allocator.h"  // for sub_allocator, allocation_attributes, Allocator, allocator_m...
 
-#if defined(XSIGMA_ENABLE_CUDA) || defined(XSIGMA_ENABLE_HIP)
+#if XSIGMA_HAS_CUDA || XSIGMA_HAS_HIP
 #include "memory/cpu/allocator_device.h"  // for allocator_device
 #endif
 
@@ -49,7 +49,7 @@ using namespace xsigma;
 // ============================================================================
 // ALLOCATOR_DEVICE TESTS
 // ============================================================================
-#if defined(XSIGMA_ENABLE_CUDA) || defined(XSIGMA_ENABLE_HIP)
+#if XSIGMA_HAS_CUDA || XSIGMA_HAS_HIP
 XSIGMATEST(AllocatorDevice, basic_allocation)
 {
     auto allocator = std::make_unique<allocator_device>();
@@ -1256,7 +1256,7 @@ XSIGMATEST(AllocatorBenchmark, PerformanceBenchmark)
         }
 
 // ========== ALLOCATOR_DEVICE ==========
-#if defined(XSIGMA_ENABLE_CUDA) || defined(XSIGMA_ENABLE_HIP)
+#if XSIGMA_HAS_CUDA || XSIGMA_HAS_HIP
         {
             auto               device_allocator = std::make_unique<allocator_device>();
             std::vector<void*> ptrs;

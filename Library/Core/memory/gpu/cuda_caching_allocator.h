@@ -29,7 +29,7 @@
 #include "memory/device.h"
 #include "memory/unified_memory_stats.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda_runtime_api.h>
 #endif
 
@@ -57,7 +57,7 @@ namespace gpu
 class XSIGMA_VISIBILITY cuda_caching_allocator
 {
 public:
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     using stream_type = cudaStream_t;
 #else
     using stream_type = void*;

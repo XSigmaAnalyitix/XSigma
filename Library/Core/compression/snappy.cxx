@@ -34,7 +34,7 @@
 #include "common/configure.h"
 #include "common/macros.h"
 
-#ifdef XSIGMA_ENABLE_COMPRESSION
+#if XSIGMA_HAS_COMPRESSION
 #if defined(XSIGMA_COMPRESSION_TYPE_SNAPPY)
 #include "snappy.h"
 #endif
@@ -49,7 +49,7 @@ namespace snappy
 
 bool compress(const char* input, size_t length, std::string* output)
 {
-#ifdef XSIGMA_ENABLE_COMPRESSION
+#if XSIGMA_HAS_COMPRESSION
 #if defined(XSIGMA_COMPRESSION_TYPE_SNAPPY)
     output->resize(::snappy::MaxCompressedLength(length));
     size_t outlen;
@@ -74,7 +74,7 @@ bool compress(const char* input, size_t length, std::string* output)
 
 bool compress_from_io_vec(const struct iovec* iov, size_t uncompressed_length, std::string* output)
 {
-#ifdef XSIGMA_ENABLE_COMPRESSION
+#if XSIGMA_HAS_COMPRESSION
 #if defined(XSIGMA_COMPRESSION_TYPE_SNAPPY)
     output->resize(::snappy::MaxCompressedLength(uncompressed_length));
     size_t outlen;
@@ -109,7 +109,7 @@ bool compress_from_io_vec(const struct iovec* iov, size_t uncompressed_length, s
 
 bool get_uncompressed_length(const char* input, size_t length, size_t* result)
 {
-#ifdef XSIGMA_ENABLE_COMPRESSION
+#if XSIGMA_HAS_COMPRESSION
 #if defined(XSIGMA_COMPRESSION_TYPE_SNAPPY)
     return ::snappy::GetUncompressedLength(input, length, result);
 #else
@@ -130,7 +130,7 @@ bool get_uncompressed_length(const char* input, size_t length, size_t* result)
 
 bool uncompress(const char* input, size_t length, char* output)
 {
-#ifdef XSIGMA_ENABLE_COMPRESSION
+#if XSIGMA_HAS_COMPRESSION
 #if defined(XSIGMA_COMPRESSION_TYPE_SNAPPY)
     return ::snappy::RawUncompress(input, length, output);
 #else
@@ -152,7 +152,7 @@ bool uncompress(const char* input, size_t length, char* output)
 bool uncompress_to_io_vec(
     const char* compressed, size_t compressed_length, const struct iovec* iov, size_t iov_cnt)
 {
-#ifdef XSIGMA_ENABLE_COMPRESSION
+#if XSIGMA_HAS_COMPRESSION
 #if defined(XSIGMA_COMPRESSION_TYPE_SNAPPY)
     // Platform-specific handling of iovec structure
 #ifdef _WIN32

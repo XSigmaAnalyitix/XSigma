@@ -455,7 +455,7 @@ XSIGMATEST(Profiler, heavy_function_comprehensive_computational_profiling)
 //    - Load the JSON file
 // ============================================================================
 
-#ifdef XSIGMA_HAS_KINETO
+#if XSIGMA_HAS_KINETO
 #include "profiler/kineto_profiler.h"
 
 XSIGMATEST(Profiler, kineto_heavy_function_profiling)
@@ -574,7 +574,7 @@ XSIGMATEST(Profiler, kineto_heavy_function_profiling)
 // - Memory events correlate with allocations
 // ============================================================================
 
-#ifdef XSIGMA_HAS_ITT
+#if XSIGMA_HAS_ITT
 #include <ittnotify.h>
 
 XSIGMATEST(Profiler, itt_api_heavy_function_profiling)

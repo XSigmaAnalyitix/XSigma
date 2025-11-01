@@ -45,7 +45,7 @@ namespace gpu
 
 // ========== CUDA Error Info Implementation ==========
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 cuda_error_info::cuda_error_info(
     cudaError_t cuda_error, const char* function_name, size_t size, int device) noexcept
     : error_code(static_cast<int>(cuda_error)),
@@ -217,7 +217,7 @@ gpu_allocator_tracking::~gpu_allocator_tracking()
 
 void gpu_allocator_tracking::InitializeCUDAEvents()
 {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     if (device_type_ == device_enum::CUDA)
     {
         // Set device context
@@ -251,7 +251,7 @@ void gpu_allocator_tracking::InitializeCUDAEvents()
 
 void gpu_allocator_tracking::CleanupCUDAEvents() noexcept
 {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     if (cuda_events_initialized_)
     {
         cudaEventDestroy(start_event_);
@@ -290,7 +290,7 @@ void* gpu_allocator_tracking::allocate_raw(
             tag);
     }
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     // Record CUDA event for GPU-side timing if available
     if (cuda_events_initialized_ && (stream != nullptr))
     {
@@ -313,7 +313,7 @@ void* gpu_allocator_tracking::allocate_raw(
         else
         {
             // Use direct CUDA allocation (replacing gpu_allocator)
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
             if (device_type_ == device_enum::CUDA || device_type_ == device_enum::HIP)
             {
                 cudaError_t result = cudaSetDevice(device_index_);
@@ -332,7 +332,7 @@ void* gpu_allocator_tracking::allocate_raw(
     catch (const std::exception& e)
     {
         // Capture allocation failure information
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         if (device_type_ == device_enum::CUDA)
         {
             cudaError_t const cuda_error = cudaGetLastError();
@@ -355,7 +355,7 @@ void* gpu_allocator_tracking::allocate_raw(
     auto duration_us =
         std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     // Get GPU-side timing if CUDA events are available
     if (cuda_events_initialized_ && (stream != nullptr))
     {
@@ -455,7 +455,7 @@ void gpu_allocator_tracking::deallocate_raw(void* ptr, size_t bytes, void* strea
             device_index_);
     }
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     // Record CUDA event for GPU-side timing if available
     if (cuda_events_initialized_ && (stream != nullptr))
     {
@@ -483,7 +483,7 @@ void gpu_allocator_tracking::deallocate_raw(void* ptr, size_t bytes, void* strea
     }
 
     // Perform actual GPU deallocation using direct CUDA calls
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     if (device_type_ == device_enum::CUDA || device_type_ == device_enum::HIP)
     {
         cudaError_t result = cudaSetDevice(device_index_);
@@ -510,7 +510,7 @@ void gpu_allocator_tracking::deallocate_raw(void* ptr, size_t bytes, void* strea
     auto duration_us =
         std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
     // Get GPU-side timing if CUDA events are available
     if (cuda_events_initialized_ && (stream != nullptr))
     {
@@ -717,7 +717,7 @@ std::string gpu_allocator_tracking::GenerateGPUReport(
     if (include_cuda_info && device_type_ == device_enum::CUDA)
     {
         report << "CUDA-Specific Information:\n";
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         report << "  CUDA Events Initialized: " << (cuda_events_initialized_ ? "Yes" : "No")
                << "\n";
 #else

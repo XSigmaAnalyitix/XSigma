@@ -30,12 +30,12 @@
 #include "common/export.h"
 #include "common/macros.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda.h>  // For CUDA Driver API
 #include <cuda_runtime.h>
 #endif
 
-#ifdef XSIGMA_ENABLE_HIP
+#if XSIGMA_HAS_HIP
 #include <hip/hip_runtime.h>
 #endif
 

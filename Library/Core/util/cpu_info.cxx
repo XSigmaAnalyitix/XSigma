@@ -128,12 +128,12 @@ void cpu_info::info()
     fmt::print("                     Flags                        \n");
     fmt::print("==================================================\n");
 
-#ifdef XSIGMA_ENABLE_MKL
+#if XSIGMA_HAS_MKL
     fmt::print("MKL is enabled!\n");
-#endif  // XSIGMA_ENABLE_MKL
-#ifdef XSIGMA_ENABLE_TBB
+#endif  // XSIGMA_HAS_MKL
+#if XSIGMA_HAS_TBB
     fmt::print("TBB is enabled!\n");
-#endif  // XSIGMA_ENABLE_MKL
+#endif  // XSIGMA_HAS_MKL
 }
 
 void cpu_info::cpuinfo_cach(

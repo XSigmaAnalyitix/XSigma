@@ -14,7 +14,7 @@
 
 // Kineto headers are conditionally included based on build configuration
 // Note: libkineto.h is only included if Kineto is fully available
-#ifdef XSIGMA_HAS_KINETO
+#if XSIGMA_HAS_KINETO
 // Uncomment the following line when Kineto is fully integrated:
 // #include <libkineto.h>
 #endif
@@ -40,7 +40,7 @@ std::unique_ptr<kineto_profiler> kineto_profiler::create()
 
 std::unique_ptr<kineto_profiler> kineto_profiler::create_with_config(const profiling_config& config)
 {
-#ifdef XSIGMA_HAS_KINETO
+#if XSIGMA_HAS_KINETO
     if (!initialize(config.enable_cpu_tracing && !config.enable_gpu_tracing))
     {
         return nullptr;
@@ -93,7 +93,7 @@ bool kineto_profiler::start_profiling()
     // Kineto not available - simulate profiling for testing
     // When full Kineto integration is available, uncomment the code below:
     /*
-#ifdef XSIGMA_HAS_KINETO
+#if XSIGMA_HAS_KINETO
   try {
     // Get the Kineto API singleton
     auto& api = libkineto::api();
@@ -151,7 +151,7 @@ profiling_result kineto_profiler::stop_profiling()
     // Kineto not available - simulate profiling for testing
     // When full Kineto integration is available, uncomment the code below:
     /*
-#ifdef XSIGMA_HAS_KINETO
+#if XSIGMA_HAS_KINETO
   try {
     // Get the Kineto API singleton
     auto& api = libkineto::api();
@@ -245,7 +245,7 @@ bool kineto_profiler::initialize(bool cpu_only)
     // Kineto not available - mark as initialized anyway for graceful degradation
     // When full Kineto integration is available, uncomment the code below:
     /*
-#ifdef XSIGMA_HAS_KINETO
+#if XSIGMA_HAS_KINETO
   try {
     // Initialize Kineto library
     libkineto_init(cpu_only, false);

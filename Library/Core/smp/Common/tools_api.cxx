@@ -16,7 +16,7 @@ namespace xsigma::detail::smp
 //------------------------------------------------------------------------------
 tools_api::tools_api()
     :
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
       TBBBackend(std::make_unique<tools_impl<BackendType::TBB>>())
 #else
       STDThreadBackend(std::make_unique<tools_impl<BackendType::STDThread>>())
@@ -66,7 +66,7 @@ BackendType tools_api::GetBackendType()
 //------------------------------------------------------------------------------
 const char* tools_api::GetBackend()
 {
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
     return "TBB";
 #else
     return "STDThread";
@@ -79,7 +79,7 @@ bool tools_api::SetBackend(const char* type)
     std::string backend((type != nullptr) ? type : "");
     std::transform(backend.cbegin(), backend.cend(), backend.begin(), ::toupper);
 
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
     this->ActivatedBackend = BackendType::TBB;
 #else
     this->ActivatedBackend = BackendType::STDThread;
@@ -101,7 +101,7 @@ void tools_api::RefreshNumberOfThread()
 {
     const int numThreads = this->DesiredNumberOfThread;
 
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
     this->TBBBackend->Initialize(numThreads);
 #else
     this->STDThreadBackend->Initialize(numThreads);
@@ -111,7 +111,7 @@ void tools_api::RefreshNumberOfThread()
 //------------------------------------------------------------------------------
 int tools_api::GetEstimatedDefaultNumberOfThreads()
 {
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
     return this->TBBBackend->GetEstimatedDefaultNumberOfThreads();
 #else
     return this->STDThreadBackend->GetEstimatedDefaultNumberOfThreads();
@@ -121,7 +121,7 @@ int tools_api::GetEstimatedDefaultNumberOfThreads()
 //------------------------------------------------------------------------------
 int tools_api::GetEstimatedNumberOfThreads()
 {
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
     return this->TBBBackend->GetEstimatedNumberOfThreads();
 #else
     return this->STDThreadBackend->GetEstimatedNumberOfThreads();
@@ -131,7 +131,7 @@ int tools_api::GetEstimatedNumberOfThreads()
 //------------------------------------------------------------------------------
 void tools_api::SetNestedParallelism(bool isNested)
 {
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
     return this->TBBBackend->SetNestedParallelism(isNested);
 #else
     return this->STDThreadBackend->SetNestedParallelism(isNested);
@@ -141,7 +141,7 @@ void tools_api::SetNestedParallelism(bool isNested)
 //------------------------------------------------------------------------------
 bool tools_api::GetNestedParallelism()
 {
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
     return this->TBBBackend->GetNestedParallelism();
 #else
     return this->STDThreadBackend->GetNestedParallelism();
@@ -151,7 +151,7 @@ bool tools_api::GetNestedParallelism()
 //------------------------------------------------------------------------------
 bool tools_api::IsParallelScope()
 {
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
     return this->TBBBackend->IsParallelScope();
 #else
     return this->STDThreadBackend->IsParallelScope();
@@ -161,7 +161,7 @@ bool tools_api::IsParallelScope()
 //------------------------------------------------------------------------------
 bool tools_api::GetSingleThread()
 {
-#ifdef XSIGMA_ENABLE_TBB
+#if XSIGMA_HAS_TBB
     return this->TBBBackend->GetSingleThread();
 #else
     return this->STDThreadBackend->GetSingleThread();

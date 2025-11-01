@@ -56,7 +56,7 @@ namespace xsigma
  * **Example Usage**:
  * ```cpp
  * auto allocator = std::make_unique<allocator_device>();
- * 
+ *
  * // Allocate 1MB of pinned memory
  * void* ptr = allocator->allocate_raw(64, 1024ULL);
  * if (ptr) {

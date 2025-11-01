@@ -31,7 +31,7 @@
 #include "memory/gpu/gpu_memory_pool.h"
 #include "memory/gpu/gpu_resource_tracker.h"
 
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -276,7 +276,7 @@ private:
     {
         switch (device_.type())
         {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
         case device_enum::CUDA:
             cudaFree(ptr_);
             break;
@@ -314,7 +314,7 @@ private:
             case deallocation_strategy::USE_ALLOCATOR:
             {
                 // Direct CUDA deallocation (gpu_allocator removed)
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
                 if (device_.type() == device_enum::CUDA)
                 {
                     cudaError_t result = cudaSetDevice(device_.index());
@@ -544,7 +544,7 @@ public:
         case allocation_strategy::USE_DIRECT:
         {
             // Direct CUDA allocation (gpu_allocator removed)
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
             if (device_type == device_enum::CUDA)
             {
                 cudaError_t cuda_result = cudaSetDevice(device_index);
@@ -568,7 +568,7 @@ public:
         case allocation_strategy::FALLBACK_DIRECT:
         {
             // Pool was requested but not suitable, use direct allocation
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
             if (device_type == device_enum::CUDA)
             {
                 cudaError_t cuda_result = cudaSetDevice(device_index);
@@ -918,7 +918,7 @@ private:
             {
                 switch (device_.type())
                 {
-#ifdef XSIGMA_ENABLE_CUDA
+#if XSIGMA_HAS_CUDA
                 case device_enum::CUDA:
                     cudaFree(ptr_);
                     break;
