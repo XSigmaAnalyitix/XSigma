@@ -160,7 +160,7 @@ mark_as_advanced(XSIGMA_ENABLE_MIMALLOC)
 
 # profiling libreray PyTorch Kineto Profiling Library Flag Controls whether Kineto profiling library
 # is enabled. When enabled, provides advanced profiling capabilities for performance analysis.
-option(XSIGMA_ENABLE_KINETO "Enable PyTorch Kineto profiling library." OFF)
+option(XSIGMA_ENABLE_KINETO "Enable PyTorch Kineto profiling library." ON)
 mark_as_advanced(XSIGMA_ENABLE_KINETO)
 
 # Intel ITT API (Instrumentation and Tracing Technology) Flag Controls whether Intel ITT API is

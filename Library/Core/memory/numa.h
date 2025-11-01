@@ -1,10 +1,9 @@
 #pragma once
 
-#include "common/configure.h"  // IWYU pragma: keep
-
-#if XSIGMA_HAS_NUMA
-
 #include <cstddef>
+
+#include "common/configure.h"  // IWYU pragma: keep
+#include "common/export.h"
 
 namespace xsigma
 {
@@ -39,4 +38,3 @@ XSIGMA_API void NUMAMove(void* ptr, size_t size, int numa_node_id);
 XSIGMA_API int GetCurrentNUMANode();
 
 }  // namespace xsigma
-#endif  // XSIGMA_HAS_NUMA

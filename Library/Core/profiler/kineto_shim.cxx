@@ -9,7 +9,21 @@
 
 #include "kineto_shim.h"
 
+// Suppress MSVC warnings for Kineto headers
+// Kineto headers have several issues that trigger MSVC warnings:
+// - C4100: unreferenced formal parameter
+// - C4245: conversion from 'int' to 'uint8_t', signed/unsigned mismatch
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4100)  // unreferenced formal parameter
+#pragma warning(disable : 4245)  // signed/unsigned mismatch
+#endif
+
 #include <libkineto.h>
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #include <mutex>
 
@@ -83,9 +97,11 @@ void kineto_start_trace()
     libkineto::api().activityProfiler().startTrace();
 }
 
-std::unique_ptr<libkineto::ActivityTraceInterface> kineto_stop_trace()
+void* kineto_stop_trace()
 {
-    return libkineto::api().activityProfiler().stopTrace();
+    auto trace = libkineto::api().activityProfiler().stopTrace();
+    // Return raw pointer - caller is responsible for cleanup
+    return trace.release();
 }
 
 void kineto_reset_tls()

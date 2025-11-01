@@ -16,5 +16,19 @@ if(NOT ITT_FOUND)
     add_subdirectory(${ITT_ROOT})
     set(ITT_LIBRARIES ittnotify)
     set(ITT_FOUND ON)
+
+    # Set FOLDER property for all ITT API targets
+    # The ITT API library creates multiple targets: ittnotify, jitprofiling, and optionally advisor
+    if(TARGET ittnotify)
+      set_target_properties(ittnotify PROPERTIES FOLDER "ThirdParty/ittapi")
+    endif()
+
+    if(TARGET jitprofiling)
+      set_target_properties(jitprofiling PROPERTIES FOLDER "ThirdParty/ittapi")
+    endif()
+
+    if(TARGET advisor)
+      set_target_properties(advisor PROPERTIES FOLDER "ThirdParty/ittapi")
+    endif()
   endif(ITT_INCLUDE_DIR)
 endif(NOT ITT_FOUND)

@@ -168,10 +168,13 @@ endif()
 # =============================================================================
 # These libraries are always linked regardless of feature flags
 
+# fmt - Header-only formatting library
+# XSigma::fmt is an alias to fmt::fmt-header-only (set in ThirdParty/CMakeLists.txt)
+# This ensures compatibility with Kineto and avoids shared library issues
 if(TARGET XSigma::fmt)
   list(APPEND XSIGMA_DEPENDENCY_LIBS XSigma::fmt)
   list(APPEND XSIGMA_DEPENDENCY_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/fmt/include")
-  message(STATUS "Dependency: XSigma::fmt added to XSIGMA_DEPENDENCY_LIBS")
+  message(STATUS "Dependency: XSigma::fmt (header-only) added to XSIGMA_DEPENDENCY_LIBS")
 endif()
 
 if(TARGET XSigma::cpuinfo)
@@ -238,11 +241,16 @@ endif()
 # PyTorch Kineto profiling library support Note: XSIGMA_HAS_KINETO is defined via configure_file()
 # in xsigma_features.h
 if(XSIGMA_ENABLE_KINETO)
+  # Always add the compile definition and include directories when Kineto is enabled
+  # This allows Kineto-specific code to be compiled
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_HAS_KINETO)
+  list(APPEND XSIGMA_DEPENDENCY_INCLUDE_DIRS
+       "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/kineto/libkineto/include"
+  )
+
+  # If the Kineto target exists, also link with it
   if(TARGET XSigma::kineto)
     list(APPEND XSIGMA_DEPENDENCY_LIBS XSigma::kineto)
-    list(APPEND XSIGMA_DEPENDENCY_INCLUDE_DIRS
-         "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/kineto/libkineto/include"
-    )
     message(STATUS "Dependency: XSigma::kineto added to XSIGMA_DEPENDENCY_LIBS")
   else()
     message(

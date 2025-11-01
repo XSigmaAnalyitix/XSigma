@@ -131,6 +131,15 @@ endif()
 # Create alias for consistent naming
 add_library(XSigma::Core ALIAS Core)
 
+# Enable Link Time Optimization (LTO) for Core library if enabled
+# LTO is disabled for third-party libraries via FILTER_FLAGS to avoid conflicts
+if(XSIGMA_ENABLE_LTO)
+  set_target_properties(Core PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+  message(STATUS "Core library: Link Time Optimization (LTO) enabled")
+else()
+  message(STATUS "Core library: Link Time Optimization (LTO) disabled")
+endif()
+
 # Apply IWYU to the Core target (if available)
 if(COMMAND xsigma_apply_iwyu)
   xsigma_apply_iwyu(Core)

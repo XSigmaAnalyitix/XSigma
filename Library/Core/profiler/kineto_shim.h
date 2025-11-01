@@ -101,9 +101,9 @@ XSIGMA_API void kineto_start_trace();
 /**
  * @brief Stop profiling trace and return trace interface
  *
- * @return Unique pointer to ActivityTraceInterface
+ * @return Void pointer to ActivityTraceInterface (caller must cast to libkineto::ActivityTraceInterface*)
  */
-XSIGMA_API std::unique_ptr<libkineto::ActivityTraceInterface> kineto_stop_trace();
+XSIGMA_API void* kineto_stop_trace();
 
 /**
  * @brief Reset Kineto thread-local state

@@ -1,22 +1,27 @@
 #include "memory/numa.h"
 
-#if XSIGMA_HAS_NUMA
+#include "common/macros.h"
 
+#if XSIGMA_HAS_NUMA
 #include <numa.h>
 #include <numaif.h>
 #include <unistd.h>
 
-#include "common/configure.h"
 #include "util/exception.h"
+#endif
 
 namespace xsigma
 {
 bool IsNUMAEnabled()
 {
+#if XSIGMA_HAS_NUMA
     return numa_available() >= 0;
+#else
+    return false;
+#endif
 }
 
-void NUMABind(int numa_node_id)
+void NUMABind(XSIGMA_UNUSED int numa_node_id)
 {
     if (numa_node_id < 0)
     {
@@ -26,21 +31,23 @@ void NUMABind(int numa_node_id)
     {
         return;
     }
-
+#if XSIGMA_HAS_NUMA
     XSIGMA_CHECK(numa_node_id <= numa_max_node(), "NUMA node id ", numa_node_id, " is unavailable");
 
     auto* bm = numa_allocate_nodemask();
     numa_bitmask_setbit(bm, numa_node_id);
     numa_bind(bm);
     numa_bitmask_free(bm);
+#endif
 }
 
-int GetNUMANode(const void* ptr)
+int GetNUMANode(XSIGMA_UNUSED const void* ptr)
 {
     if (!IsNUMAEnabled())
     {
         return -1;
     }
+#if XSIGMA_HAS_NUMA
     XSIGMA_CHECK(ptr != nullptr, "");
 
     int numa_node = -1;
@@ -50,6 +57,9 @@ int GetNUMANode(const void* ptr)
         "Unable to get memory policy, errno:",
         errno);
     return numa_node;
+#else
+    return -1;
+#endif
 }
 
 int GetNumNUMANodes()
@@ -58,11 +68,14 @@ int GetNumNUMANodes()
     {
         return -1;
     }
-
+#if XSIGMA_HAS_NUMA
     return numa_num_configured_nodes();
+#else
+    return -1;
+#endif
 }
 
-void NUMAMove(void* ptr, size_t size, int numa_node_id)
+void NUMAMove(XSIGMA_UNUSED void* ptr, XSIGMA_UNUSED size_t size, int numa_node_id)
 {
     if (numa_node_id < 0)
     {
@@ -72,6 +85,7 @@ void NUMAMove(void* ptr, size_t size, int numa_node_id)
     {
         return;
     }
+#if XSIGMA_HAS_NUMA
     XSIGMA_CHECK(ptr != nullptr, "");
 
     uintptr_t page_start_ptr = ((reinterpret_cast<uintptr_t>(ptr)) & ~(getpagesize() - 1));
@@ -88,6 +102,7 @@ void NUMAMove(void* ptr, size_t size, int numa_node_id)
             sizeof(mask) * 8,
             MPOL_MF_MOVE | MPOL_MF_STRICT) == 0,
         "Could not move memory to a NUMA node");
+#endif
 }
 
 int GetCurrentNUMANode()
@@ -96,10 +111,12 @@ int GetCurrentNUMANode()
     {
         return -1;
     }
-
+#if XSIGMA_HAS_NUMA
     auto n = numa_node_of_cpu(sched_getcpu());
     return n;
+#else
+    return -1;
+#endif
 }
 
 }  // namespace xsigma
-#endif
