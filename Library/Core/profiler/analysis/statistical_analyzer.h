@@ -141,6 +141,9 @@ public:
     XSIGMA_API void set_outlier_threshold(double threshold);
     XSIGMA_API void set_percentiles(const std::vector<double>& percentiles);
 
+    // Optional threading hint (no-op placeholder for future parallel analysis)
+    XSIGMA_API void set_worker_threads_hint(size_t threads);
+
     // Public helper for external use
     XSIGMA_API xsigma::statistical_metrics calculate_metrics(const std::vector<double>& data) const;
 
@@ -162,6 +165,7 @@ private:
     size_t              max_samples_per_series_ = 10000;
     double              outlier_threshold_      = 2.0;
     std::vector<double> percentiles_            = {25.0, 50.0, 75.0, 90.0, 95.0, 99.0};
+    size_t              worker_threads_hint_    = 0;
 
     // Helper methods
     static std::vector<double> calculate_percentiles(

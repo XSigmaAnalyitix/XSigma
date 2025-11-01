@@ -213,7 +213,7 @@ struct timing_stats
     /**
      * @brief Calculate statistical metrics from collected samples
      */
-    void calculate_statistics();
+    void calculate_statistics(bool include_percentiles = true);
 
     /**
      * @brief Reset all timing statistics to initial state

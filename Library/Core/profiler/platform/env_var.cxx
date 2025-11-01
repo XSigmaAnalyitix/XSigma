@@ -54,7 +54,8 @@ bool read_bool_from_env_var(std::string_view env_var_name, bool default_val, boo
     const char* env_val = std::getenv(env_var_name.data());  //NOLINT
     if (env_val == nullptr)
     {
-        return false;
+        // Treat unset as success with default
+        return true;
     }
     std::string str_value = env_val;
 

@@ -67,7 +67,8 @@ namespace xsigma
  */
 XSIGMA_FORCE_INLINE int64_t get_current_time_nanos()
 {
-    auto now = std::chrono::system_clock::now();
+    // Monotonic clock for consistent relative timing
+    auto now = std::chrono::steady_clock::now();
     auto nanos =
         std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
     return nanos;

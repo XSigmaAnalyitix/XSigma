@@ -126,6 +126,7 @@ std::string ConvertScopeDataToChromeTrace(
     const profiler_scope_data* root_scope, uint64_t base_time_ns)
 {
     std::ostringstream out;
+    // Use nanoseconds consistently for Chrome Trace output
     out << R"({"displayTimeUnit":"ns","metadata":{"highres-ticks":true},"traceEvents":[)";
 
     bool first        = true;
@@ -191,6 +192,8 @@ std::string ConvertScopeDataToChromeTrace(
             end_ns = start_ns;
 
         int64_t duration_ns = end_ns - start_ns;
+        // Ensure non-zero duration for visibility
+        duration_ns = std::max<int64_t>(1, duration_ns);
 
         // Add duration event for this scope
         append_event(
@@ -220,6 +223,7 @@ std::string ConvertXSpaceToChromeTrace(const x_space& space)
     constexpr uint32_t kPid = 0;
 
     std::ostringstream out;
+    // Use nanoseconds consistently for Chrome Trace output
     out << R"({"displayTimeUnit":"ns","metadata":{"highres-ticks":true},"traceEvents":[)";
     bool first        = true;
     auto append_event = [&](const std::string& event_json)
@@ -297,18 +301,18 @@ std::string ConvertXSpaceToChromeTrace(const x_space& space)
                 uint64_t const start_ps =
                     (static_cast<uint64_t>(std::max<int64_t>(0, line_timestamp_ns)) * 1000ULL) +
                     offset_ps;
-                uint64_t const ts_us       = start_ps / 1000ULL;
+                uint64_t const ts_ns       = start_ps / 1000ULL;  // ps -> ns
                 auto           duration_ps = static_cast<uint64_t>(event.duration_ps());
                 if (duration_ps == 0)
                 {
                     duration_ps = 1000ULL;  // 1 ns to ensure visibility
                 }
-                uint64_t const dur_us = std::max<uint64_t>(1, duration_ps / 1000ULL);
+                uint64_t const dur_ns = std::max<uint64_t>(1, duration_ps / 1000ULL);  // ps->ns
 
                 append_event(
                     std::string(R"({"ph":"X","pid":)") + std::to_string(kPid) +
-                    ",\"tid\":" + std::to_string(tid) + ",\"ts\":" + std::to_string(ts_us) +
-                    ",\"dur\":" + std::to_string(dur_us) + ",\"name\":" + JsonQuote(event_name) +
+                    ",\"tid\":" + std::to_string(tid) + ",\"ts\":" + std::to_string(ts_ns) +
+                    ",\"dur\":" + std::to_string(dur_ns) + ",\"name\":" + JsonQuote(event_name) +
                     "}");
             }
         }
@@ -339,7 +343,7 @@ void timing_stats::add_sample(double time_ms)
     samples_.push_back(time_ms);
 }
 
-void timing_stats::calculate_statistics()
+void timing_stats::calculate_statistics(bool include_percentiles)
 {
     if (sample_count_ == 0)
     {
@@ -357,31 +361,35 @@ void timing_stats::calculate_statistics()
     }
     std_deviation_ = sample_count_ > 0 ? std::sqrt(variance_sum / sample_count_) : 0.0;
 
-    // Initialize percentiles vector if needed (25th, 50th, 75th, 90th, 95th, 99th)
-    std::array<double, 6> percentile_targets = {25.0, 50.0, 75.0, 90.0, 95.0, 99.0};
-    std::vector<double>   sorted_samples     = samples_;
-    std::sort(sorted_samples.begin(), sorted_samples.end());
-    percentiles_.assign(percentile_targets.begin(), percentile_targets.end());
-    for (size_t i = 0; i < percentile_targets.size(); ++i)
+    // Optionally compute percentiles (25th, 50th, 75th, 90th, 95th, 99th)
+    percentiles_.clear();
+    if (include_percentiles)
     {
-        double const percentile = percentile_targets[i];
-        if (sorted_samples.empty())
+        std::array<double, 6> percentile_targets = {25.0, 50.0, 75.0, 90.0, 95.0, 99.0};
+        std::vector<double>   sorted_samples     = samples_;
+        std::sort(sorted_samples.begin(), sorted_samples.end());
+        percentiles_.assign(percentile_targets.begin(), percentile_targets.end());
+        for (size_t i = 0; i < percentile_targets.size(); ++i)
         {
-            percentiles_[i] = 0.0;
-            continue;
-        }
-        double const index = (percentile / 100.0) * (sorted_samples.size() - 1);
-        auto const   lower = static_cast<size_t>(std::floor(index));
-        auto const   upper = static_cast<size_t>(std::ceil(index));
-        if (lower == upper)
-        {
-            percentiles_[i] = sorted_samples[lower];
-        }
-        else
-        {
-            double const weight = index - lower;
-            percentiles_[i] =
-                (sorted_samples[lower] * (1.0 - weight)) + (sorted_samples[upper] * weight);
+            double const percentile = percentile_targets[i];
+            if (sorted_samples.empty())
+            {
+                percentiles_[i] = 0.0;
+                continue;
+            }
+            double const index = (percentile / 100.0) * (sorted_samples.size() - 1);
+            auto const   lower = static_cast<size_t>(std::floor(index));
+            auto const   upper = static_cast<size_t>(std::ceil(index));
+            if (lower == upper)
+            {
+                percentiles_[i] = sorted_samples[lower];
+            }
+            else
+            {
+                double const weight = index - lower;
+                percentiles_[i] =
+                    (sorted_samples[lower] * (1.0 - weight)) + (sorted_samples[upper] * weight);
+            }
         }
     }
 }
@@ -635,6 +643,8 @@ void profiler_session::initialize_components()
     if (options_.enable_statistical_analysis_)
     {
         statistical_analyzer_ = std::make_unique<xsigma::statistical_analyzer>();
+        statistical_analyzer_->set_max_samples_per_series(options_.max_samples_);
+        statistical_analyzer_->set_worker_threads_hint(options_.thread_pool_size_);
     }
 
     backend_profile_options_ = build_backend_profile_options();
@@ -776,6 +786,12 @@ profiler_scope::~profiler_scope()
 
 void profiler_scope::start()
 {
+    // Skip all work if no session or hierarchical profiling disabled
+    if (session_ == nullptr || (session_ && !session_->options_.enable_hierarchical_profiling_))
+    {
+        return;
+    }
+
     if (started_)
     {
         return;
@@ -803,6 +819,12 @@ void profiler_scope::start()
 
 void profiler_scope::stop()
 {
+    // Skip all work if no session or hierarchical profiling disabled
+    if (session_ == nullptr || (session_ && !session_->options_.enable_hierarchical_profiling_))
+    {
+        return;
+    }
+
     if (!started_ || stopped_)
     {
         return;
@@ -814,7 +836,7 @@ void profiler_scope::stop()
     // Calculate timing statistics
     double const duration_ms = data_->get_duration_ms();
     data_->timing_stats_.add_sample(duration_ms);
-    data_->timing_stats_.calculate_statistics();
+    data_->timing_stats_.calculate_statistics(session_->options_.calculate_percentiles_);
 
     // Update memory statistics
     if (session_ != nullptr)
@@ -823,13 +845,24 @@ void profiler_scope::stop()
         {
             auto current_stats   = session_->memory_tracker_->get_current_stats();
             data_->memory_stats_ = current_stats;
-            data_->memory_stats_.delta_since_start_ =
-                has_start_memory_stats_
-                    ? static_cast<int64_t>(current_stats.current_usage_) -
-                          static_cast<int64_t>(start_memory_stats_.current_usage_)
-                    : static_cast<int64_t>(current_stats.current_usage_);
-            data_->memory_stats_.peak_usage_ =
-                (std::max)(current_stats.peak_usage_, start_memory_stats_.peak_usage_);
+            if (session_->options_.track_memory_deltas_)
+            {
+                data_->memory_stats_.delta_since_start_ =
+                    has_start_memory_stats_
+                        ? static_cast<int64_t>(current_stats.current_usage_) -
+                              static_cast<int64_t>(start_memory_stats_.current_usage_)
+                        : static_cast<int64_t>(current_stats.current_usage_);
+            }
+            else
+            {
+                data_->memory_stats_.delta_since_start_ = 0;
+            }
+
+            if (session_->options_.track_peak_memory_)
+            {
+                data_->memory_stats_.peak_usage_ =
+                    (std::max)(current_stats.peak_usage_, start_memory_stats_.peak_usage_);
+            }
         }
 
         // Add timing sample to statistical analyzer

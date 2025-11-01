@@ -46,6 +46,10 @@ The Enhanced Profiler is a comprehensive performance analysis system for the XSi
 - **CSV**: Spreadsheet-compatible format
 - **XML**: Structured markup for integration
 
+#### Chrome Trace Export (JSON)
+
+Chrome Trace Event JSON produced by the profiler uses nanoseconds for timestamps and durations and sets `displayTimeUnit` to `"ns"`. This applies to both hierarchical traces and XPlane-derived traces and ensures consistent interpretation in Chrome/Perfetto.
+
 ## Quick Start
 
 ### Basic Usage

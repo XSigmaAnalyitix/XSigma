@@ -42,7 +42,8 @@ namespace xsigma::profiler
 
 int64_t get_current_time_nanos()
 {
-    auto now      = std::chrono::system_clock::now();
+    // Use steady_clock to guarantee monotonic progression for duration math
+    auto now      = std::chrono::steady_clock::now();
     auto duration = now.time_since_epoch();
     return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
 }

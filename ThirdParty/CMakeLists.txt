@@ -8,6 +8,11 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Option to use external libraries instead of bundled ones
 option(XSIGMA_ENABLE_EXTERNAL "Use external copies of third party libraries by default" OFF)
 
+# Global option to control third-party library type (STATIC, SHARED, or DEFAULT)
+# DEFAULT means respect each library's own settings or BUILD_SHARED_LIBS
+set(XSIGMA_THIRDPARTY_TYPE "DEFAULT" CACHE STRING "Default library type for third-party libraries (STATIC, SHARED, or DEFAULT)")
+set_property(CACHE XSIGMA_THIRDPARTY_TYPE PROPERTY STRINGS "STATIC" "SHARED" "DEFAULT")
+
 # Configure Visual Studio folder structure to match file system
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -73,23 +78,295 @@ set(MI_INSTALL_TOPLEVEL OFF CACHE BOOL "Disable mimalloc top-level install" FORC
 set(MI_OVERRIDE OFF CACHE BOOL "Disable mimalloc malloc override" FORCE)
 set(MI_BUILD_SHARED OFF CACHE BOOL "Build mimalloc as static library" FORCE)
 set(MI_BUILD_STATIC ON CACHE BOOL "Build mimalloc as static library" FORCE)
+# Note: MI_BUILD_STATIC is now controlled by add_third_party_library LIBRARY_TYPE parameter
 
-# Function to add third-party library with external option
+# =============================================================================
+# Helper Functions for Third-Party Library Management
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# _filter_flags_internal: Remove specified flags from a flag string
+# -----------------------------------------------------------------------------
+# Internal helper to filter out specific flags from a string of compiler/linker flags
+#
+# Parameters:
+#   input_flags - The flag string to filter
+#   flags_to_remove - List of flags to remove (can be regex patterns)
+#   output_var - Variable name to store the filtered result
+#
+function(_filter_flags_internal input_flags flags_to_remove output_var)
+    set(result "${input_flags}")
+
+    foreach(flag_pattern ${flags_to_remove})
+        # Remove the flag pattern from the string
+        string(REGEX REPLACE "${flag_pattern}( |$)" "" result "${result}")
+    endforeach()
+
+    # Clean up multiple spaces
+    string(REGEX REPLACE "  +" " " result "${result}")
+    string(STRIP "${result}" result)
+
+    set(${output_var} "${result}" PARENT_SCOPE)
+endfunction()
+
+# -----------------------------------------------------------------------------
+# _save_third_party_flags: Save and optionally filter compiler/linker flags
+# -----------------------------------------------------------------------------
+# Saves current CMAKE_CXX_FLAGS, CMAKE_C_FLAGS, and linker flags, then optionally
+# filters out problematic flags that shouldn't be applied to third-party libraries
+#
+# Parameters:
+#   name - Library name (for namespacing saved variables)
+#   filter_flags - List of flag patterns to remove (optional)
+#
+function(_save_third_party_flags name filter_flags)
+    # Save original flags to parent scope
+    set(_SAVED_CMAKE_CXX_FLAGS_${name} "${CMAKE_CXX_FLAGS}" PARENT_SCOPE)
+    set(_SAVED_CMAKE_C_FLAGS_${name} "${CMAKE_C_FLAGS}" PARENT_SCOPE)
+    set(_SAVED_CMAKE_EXE_LINKER_FLAGS_${name} "${CMAKE_EXE_LINKER_FLAGS}" PARENT_SCOPE)
+    set(_SAVED_CMAKE_SHARED_LINKER_FLAGS_${name} "${CMAKE_SHARED_LINKER_FLAGS}" PARENT_SCOPE)
+    set(_SAVED_CMAKE_MODULE_LINKER_FLAGS_${name} "${CMAKE_MODULE_LINKER_FLAGS}" PARENT_SCOPE)
+    set(_SAVED_CMAKE_STATIC_LINKER_FLAGS_${name} "${CMAKE_STATIC_LINKER_FLAGS}" PARENT_SCOPE)
+
+    # If filter flags are provided, filter them out
+    if(filter_flags)
+        _filter_flags_internal("${CMAKE_CXX_FLAGS}" "${filter_flags}" filtered_cxx_flags)
+        _filter_flags_internal("${CMAKE_C_FLAGS}" "${filter_flags}" filtered_c_flags)
+        _filter_flags_internal("${CMAKE_EXE_LINKER_FLAGS}" "${filter_flags}" filtered_exe_linker_flags)
+        _filter_flags_internal("${CMAKE_SHARED_LINKER_FLAGS}" "${filter_flags}" filtered_shared_linker_flags)
+        _filter_flags_internal("${CMAKE_MODULE_LINKER_FLAGS}" "${filter_flags}" filtered_module_linker_flags)
+        _filter_flags_internal("${CMAKE_STATIC_LINKER_FLAGS}" "${filter_flags}" filtered_static_linker_flags)
+
+        # Apply filtered flags to parent scope
+        set(CMAKE_CXX_FLAGS "${filtered_cxx_flags}" PARENT_SCOPE)
+        set(CMAKE_C_FLAGS "${filtered_c_flags}" PARENT_SCOPE)
+        set(CMAKE_EXE_LINKER_FLAGS "${filtered_exe_linker_flags}" PARENT_SCOPE)
+        set(CMAKE_SHARED_LINKER_FLAGS "${filtered_shared_linker_flags}" PARENT_SCOPE)
+        set(CMAKE_MODULE_LINKER_FLAGS "${filtered_module_linker_flags}" PARENT_SCOPE)
+        set(CMAKE_STATIC_LINKER_FLAGS "${filtered_static_linker_flags}" PARENT_SCOPE)
+
+        message(STATUS "Filtered flags for ${name}: removed ${filter_flags}")
+    endif()
+endfunction()
+
+# -----------------------------------------------------------------------------
+# _restore_third_party_flags: Restore original compiler/linker flags
+# -----------------------------------------------------------------------------
+# Restores the compiler and linker flags that were saved before building
+# a third-party library
+#
+# Parameters:
+#   name - Library name (for namespacing saved variables)
+#
+function(_restore_third_party_flags name)
+    # Restore original flags to parent scope
+    set(CMAKE_CXX_FLAGS "${_SAVED_CMAKE_CXX_FLAGS_${name}}" PARENT_SCOPE)
+    set(CMAKE_C_FLAGS "${_SAVED_CMAKE_C_FLAGS_${name}}" PARENT_SCOPE)
+    set(CMAKE_EXE_LINKER_FLAGS "${_SAVED_CMAKE_EXE_LINKER_FLAGS_${name}}" PARENT_SCOPE)
+    set(CMAKE_SHARED_LINKER_FLAGS "${_SAVED_CMAKE_SHARED_LINKER_FLAGS_${name}}" PARENT_SCOPE)
+    set(CMAKE_MODULE_LINKER_FLAGS "${_SAVED_CMAKE_MODULE_LINKER_FLAGS_${name}}" PARENT_SCOPE)
+    set(CMAKE_STATIC_LINKER_FLAGS "${_SAVED_CMAKE_STATIC_LINKER_FLAGS_${name}}" PARENT_SCOPE)
+endfunction()
+
+# -----------------------------------------------------------------------------
+# _set_third_party_folder_properties: Set FOLDER property for all targets
+# -----------------------------------------------------------------------------
+# Automatically discovers all targets created by a third-party library and
+# sets their FOLDER property for IDE organization
+#
+# Parameters:
+#   name - Library name
+#   binary_dir - Binary directory where the library was built
+#
+function(_set_third_party_folder_properties name binary_dir)
+    # Get all targets in the directory
+    get_property(all_targets DIRECTORY "${binary_dir}" PROPERTY BUILDSYSTEM_TARGETS)
+
+    if(all_targets)
+        message(STATUS "Setting FOLDER property for ${name} targets: ${all_targets}")
+        foreach(target ${all_targets})
+            if(TARGET ${target})
+                set_target_properties(${target} PROPERTIES FOLDER "ThirdParty/${name}")
+            endif()
+        endforeach()
+    endif()
+endfunction()
+
+# -----------------------------------------------------------------------------
+# _create_third_party_aliases: Create library aliases
+# -----------------------------------------------------------------------------
+# Creates alias targets for a third-party library to provide consistent
+# naming conventions (e.g., fmt::fmt as an alias for fmt)
+#
+# Parameters:
+#   name - Library name
+#   aliases - List of alias names to create
+#
+function(_create_third_party_aliases name aliases)
+    if(NOT aliases)
+        return()
+    endif()
+
+    foreach(alias ${aliases})
+        # Check if the alias already exists
+        if(NOT TARGET ${alias})
+            # Check if the base target exists
+            if(TARGET ${name})
+                add_library(${alias} ALIAS ${name})
+                message(STATUS "Created alias ${alias} for ${name}")
+            else()
+                message(WARNING "Cannot create alias ${alias}: target ${name} does not exist")
+            endif()
+        else()
+            message(STATUS "Alias ${alias} already exists, skipping")
+        endif()
+    endforeach()
+endfunction()
+
+# -----------------------------------------------------------------------------
+# _create_third_party_interface_targets: Create XSigma:: namespace aliases
+# -----------------------------------------------------------------------------
+# Creates XSigma:: namespace aliases for third-party library targets.
+# This provides a consistent interface for linking against third-party libraries
+# throughout the XSigma project.
+#
+# The function handles multiple scenarios:
+# 1. Target with namespace alias (e.g., fmt::fmt) - resolves the actual target
+# 2. Plain target (e.g., fmt) - creates alias directly
+# 3. Multiple possible target names - tries each in order
+#
+# Parameters:
+#   xsigma_targets - List of XSigma target specifications in format:
+#                    "XSigma::name=target1|target2|..."
+#                    where target1, target2, etc. are tried in order
+#
+# Example:
+#   _create_third_party_interface_targets(
+#       "XSigma::fmt=fmt::fmt|fmt"
+#       "XSigma::gtest=GTest::gtest|gtest;XSigma::gtest_main=GTest::gtest_main|gtest_main"
+#   )
+#
+function(_create_third_party_interface_targets xsigma_targets)
+    if(NOT xsigma_targets)
+        return()
+    endif()
+
+    foreach(target_spec ${xsigma_targets})
+        # Parse the specification: "XSigma::name=target1|target2|..."
+        string(REPLACE "=" ";" spec_parts "${target_spec}")
+        list(LENGTH spec_parts spec_parts_len)
+
+        if(NOT spec_parts_len EQUAL 2)
+            message(WARNING "Invalid XSigma target specification: ${target_spec}")
+            continue()
+        endif()
+
+        list(GET spec_parts 0 xsigma_name)
+        list(GET spec_parts 1 source_targets)
+
+        # Check if XSigma target already exists
+        if(TARGET ${xsigma_name})
+            message(STATUS "XSigma target ${xsigma_name} already exists, skipping")
+            continue()
+        endif()
+
+        # Split source targets by pipe (|) to get alternatives
+        string(REPLACE "|" ";" source_target_list "${source_targets}")
+
+        set(target_created FALSE)
+        foreach(source_target ${source_target_list})
+            if(TARGET ${source_target})
+                # Check if source target is an alias and resolve it
+                get_target_property(aliased_target ${source_target} ALIASED_TARGET)
+
+                if(aliased_target)
+                    # Source is an alias, create XSigma alias to the actual target
+                    add_library(${xsigma_name} ALIAS ${aliased_target})
+                    message(STATUS "Created ${xsigma_name} -> ${source_target} (resolved to ${aliased_target})")
+                else()
+                    # Source is a real target, create alias directly
+                    add_library(${xsigma_name} ALIAS ${source_target})
+                    message(STATUS "Created ${xsigma_name} -> ${source_target}")
+                endif()
+
+                set(target_created TRUE)
+                break()
+            endif()
+        endforeach()
+
+        if(NOT target_created)
+            message(STATUS "Could not create ${xsigma_name}: none of the source targets exist (${source_targets})")
+        endif()
+    endforeach()
+endfunction()
+
+# =============================================================================
+# Main Function: add_third_party_library
+# =============================================================================
+# Enhanced function to add third-party libraries with comprehensive configuration
+# options including flag filtering, automatic target organization, and alias creation
+#
+# Parameters:
+#   name - Name of the third-party library (required)
+#
+# Optional Parameters:
+#   EXTERNAL_NAME <name>        - Name to use when searching for external package
+#   CONDITION <variable>        - CMake variable that must be true to add the library
+#   LIBRARY_TYPE <type>         - Type of library: STATIC, SHARED, or DEFAULT
+#                                 If not specified, uses XSIGMA_THIRDPARTY_TYPE
+#   LIBRARY_TYPE_VAR <var>      - CMake variable name for library-specific control
+#                                 Example: MI_BUILD_STATIC for mimalloc
+#   FILTER_FLAGS <flags...>     - List of compiler/linker flags to filter out
+#                                 Example: "-fno-exceptions" "-Werror"
+#   ALIASES <aliases...>        - List of alias names to create for the library
+#                                 Example: "fmt::fmt" for fmt library
+#   XSIGMA_TARGETS <specs...>   - List of XSigma:: namespace target specifications
+#                                 Format: "XSigma::name=target1|target2|..."
+#                                 Example: "XSigma::fmt=fmt::fmt|fmt"
+#   AUTO_FOLDER <ON|OFF>        - Automatically set FOLDER property (default: ON)
+#
+# Example Usage:
+#   add_third_party_library(fmt
+#       LIBRARY_TYPE STATIC
+#       FILTER_FLAGS "-fno-exceptions" "-Werror"
+#       ALIASES "fmt::fmt"
+#       XSIGMA_TARGETS "XSigma::fmt=fmt::fmt|fmt"
+#       AUTO_FOLDER ON
+#   )
+#
 function(add_third_party_library name)
-    cmake_parse_arguments(TPL "" "EXTERNAL_NAME;CONDITION" "" ${ARGN})
+    # Parse function arguments
+    cmake_parse_arguments(
+        TPL                                                    # Prefix
+        "AUTO_FOLDER"                                          # Options (boolean flags)
+        "EXTERNAL_NAME;CONDITION;LIBRARY_TYPE;LIBRARY_TYPE_VAR" # One-value keywords
+        "FILTER_FLAGS;ALIASES;XSIGMA_TARGETS"                  # Multi-value keywords
+        ${ARGN}                                                # Arguments to parse
+    )
 
+    # Set default values for optional parameters
     if(NOT DEFINED TPL_EXTERNAL_NAME)
         set(TPL_EXTERNAL_NAME ${name})
     endif()
 
-    # Check condition if provided
+    # AUTO_FOLDER defaults to ON if not specified
+    if(NOT DEFINED TPL_AUTO_FOLDER)
+        set(TPL_AUTO_FOLDER ON)
+    endif()
+
+    # -------------------------------------------------------------------------
+    # Step 1: Check condition (early return pattern)
+    # -------------------------------------------------------------------------
     if(DEFINED TPL_CONDITION)
         if(NOT ${TPL_CONDITION})
+            message(STATUS "Skipping ${name}: condition ${TPL_CONDITION} is not met")
             return()
         endif()
     endif()
 
-    # Check if already processed to avoid duplicates
+    # -------------------------------------------------------------------------
+    # Step 2: Check if already processed to avoid duplicates
+    # -------------------------------------------------------------------------
     get_property(XSIGMA_${name}_PROCESSED GLOBAL PROPERTY XSIGMA_${name}_PROCESSED)
     if(XSIGMA_${name}_PROCESSED)
         message(STATUS "Third-party library ${name} already processed, skipping")
@@ -97,7 +374,9 @@ function(add_third_party_library name)
     endif()
     set_property(GLOBAL PROPERTY XSIGMA_${name}_PROCESSED TRUE)
 
-    # Try to find external library first if requested
+    # -------------------------------------------------------------------------
+    # Step 3: Try to find external library first if requested
+    # -------------------------------------------------------------------------
     if(XSIGMA_ENABLE_EXTERNAL)
         find_package(${TPL_EXTERNAL_NAME} QUIET)
         if(${TPL_EXTERNAL_NAME}_FOUND OR ${name}_FOUND)
@@ -106,169 +385,141 @@ function(add_third_party_library name)
         endif()
     endif()
 
-    # Use bundled version
+    # -------------------------------------------------------------------------
+    # Step 4: Determine library type
+    # -------------------------------------------------------------------------
+    # Priority: LIBRARY_TYPE parameter > XSIGMA_THIRDPARTY_TYPE global > DEFAULT
+    set(lib_type "DEFAULT")
+    if(DEFINED TPL_LIBRARY_TYPE)
+        set(lib_type ${TPL_LIBRARY_TYPE})
+    elseif(NOT XSIGMA_THIRDPARTY_TYPE STREQUAL "DEFAULT")
+        set(lib_type ${XSIGMA_THIRDPARTY_TYPE})
+    endif()
+
+    # -------------------------------------------------------------------------
+    # Step 5: Save current state (BUILD_SHARED_LIBS and flags)
+    # -------------------------------------------------------------------------
+    set(_saved_build_shared_libs ${BUILD_SHARED_LIBS})
+
+    # Save and filter compiler/linker flags if requested
+    if(TPL_FILTER_FLAGS)
+        _save_third_party_flags(${name} "${TPL_FILTER_FLAGS}")
+    endif()
+
+    # -------------------------------------------------------------------------
+    # Step 6: Configure library type
+    # -------------------------------------------------------------------------
+    if(lib_type STREQUAL "STATIC")
+        set(BUILD_SHARED_LIBS OFF)
+        message(STATUS "Configuring ${name} as STATIC library")
+
+        # Set library-specific variable if provided
+        if(DEFINED TPL_LIBRARY_TYPE_VAR)
+            set(${TPL_LIBRARY_TYPE_VAR} ON CACHE BOOL "Build ${name} as static library" FORCE)
+        endif()
+    elseif(lib_type STREQUAL "SHARED")
+        set(BUILD_SHARED_LIBS ON)
+        message(STATUS "Configuring ${name} as SHARED library")
+
+        # Set library-specific variable if provided
+        if(DEFINED TPL_LIBRARY_TYPE_VAR)
+            set(${TPL_LIBRARY_TYPE_VAR} OFF CACHE BOOL "Build ${name} as shared library" FORCE)
+        endif()
+    else()
+        message(STATUS "Configuring ${name} with DEFAULT library type")
+    endif()
+
+    # -------------------------------------------------------------------------
+    # Step 7: Add the third-party library subdirectory
+    # -------------------------------------------------------------------------
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${name}/CMakeLists.txt")
         message(STATUS "Using bundled ${name}")
+
+        # Store the binary directory for later use
+        set(lib_binary_dir "${CMAKE_CURRENT_BINARY_DIR}/${name}_build")
+
         # Add the library
-        add_subdirectory(${name} ${CMAKE_CURRENT_BINARY_DIR}/${name}_build)
+        add_subdirectory(${name} ${lib_binary_dir})
+
+        # -------------------------------------------------------------------------
+        # Step 8: Automatically set FOLDER properties for IDE organization
+        # -------------------------------------------------------------------------
+        if(TPL_AUTO_FOLDER)
+            _set_third_party_folder_properties(${name} "${CMAKE_CURRENT_SOURCE_DIR}/${name}")
+        endif()
+
+        # -------------------------------------------------------------------------
+        # Step 9: Create library aliases if requested
+        # -------------------------------------------------------------------------
+        if(TPL_ALIASES)
+            _create_third_party_aliases(${name} "${TPL_ALIASES}")
+        endif()
+
+        # -------------------------------------------------------------------------
+        # Step 10: Create XSigma:: namespace interface targets if requested
+        # -------------------------------------------------------------------------
+        if(TPL_XSIGMA_TARGETS)
+            _create_third_party_interface_targets("${TPL_XSIGMA_TARGETS}")
+        endif()
     else()
         message(WARNING "Third-party library ${name} not found in ${CMAKE_CURRENT_SOURCE_DIR}/${name}")
     endif()
+
+    # -------------------------------------------------------------------------
+    # Step 11: Restore original state
+    # -------------------------------------------------------------------------
+    # Restore BUILD_SHARED_LIBS
+    set(BUILD_SHARED_LIBS ${_saved_build_shared_libs})
+
+    # Restore compiler/linker flags if they were filtered
+    if(TPL_FILTER_FLAGS)
+        _restore_third_party_flags(${name})
+    endif()
 endfunction()
 
+# =============================================================================
+# Third-Party Library Declarations
+# =============================================================================
+
 # Add third-party libraries conditionally based on XSIGMA_ENABLE_XXX options
-add_third_party_library(fmt)
-if(TARGET fmt)
-    set_target_properties(fmt PROPERTIES FOLDER "ThirdParty/fmt")
-endif()
-if(TARGET fmt-header-only)
-    set_target_properties(fmt-header-only PROPERTIES FOLDER "ThirdParty/fmt")
-endif()
+
+# fmt - Modern formatting library
+add_third_party_library(fmt
+    XSIGMA_TARGETS "XSigma::fmt=fmt::fmt|fmt"
+)
 
 # cpuinfo - CPU feature detection library (mandatory dependency)
-add_third_party_library(cpuinfo)
-if(TARGET cpuinfo)
-    set_target_properties(cpuinfo PROPERTIES FOLDER "ThirdParty/cpuinfo")
-endif()
-if(TARGET cpuinfo_internals)
-    set_target_properties(cpuinfo_internals PROPERTIES FOLDER "ThirdParty/cpuinfo")
-endif()
+add_third_party_library(cpuinfo
+    XSIGMA_TARGETS "XSigma::cpuinfo=cpuinfo"
+)
 
 # magic_enum - Static reflection for enums in C++
 add_third_party_library(magic_enum
     CONDITION XSIGMA_ENABLE_MAGICENUM
+    XSIGMA_TARGETS "XSigma::magic_enum=magic_enum::magic_enum|magic_enum"
 )
-if(TARGET magic_enum)
-    set_target_properties(magic_enum PROPERTIES FOLDER "ThirdParty/magic_enum")
-endif()
 
-# Logging backend libraries (conditionally added based on XSIGMA_LOGGING_BACKEND)
-if(XSIGMA_USE_LOGURU)
-    # Save the current BUILD_SHARED_LIBS state
-    set(_saved_build_shared_libs ${BUILD_SHARED_LIBS})
-    
-    # Force loguru to be static
-    set(BUILD_SHARED_LIBS OFF)
-    # loguru - Lightweight C++ logging library
-    add_third_party_library(loguru)
-    # Restore the original BUILD_SHARED_LIBS state
-    set(BUILD_SHARED_LIBS ${_saved_build_shared_libs})
-    set_target_properties(loguru PROPERTIES FOLDER "ThirdParty/loguru")
-endif()
+# loguru - Lightweight C++ logging library (forced to static)
+add_third_party_library(loguru
+    CONDITION XSIGMA_USE_LOGURU
+    LIBRARY_TYPE STATIC
+    XSIGMA_TARGETS "XSigma::loguru=loguru::loguru|loguru"
+)
 
 # glog - Google logging library
 add_third_party_library(glog
     CONDITION XSIGMA_USE_GLOG
+    XSIGMA_TARGETS "XSigma::glog=glog::glog|glog"
 )
-if(TARGET glog)
-    set_target_properties(glog PROPERTIES FOLDER "ThirdParty/glog")
-    set_target_properties(glog_internal PROPERTIES FOLDER "ThirdParty/glog")
-endif()
 
 # mimalloc - Microsoft's high-performance memory allocator (conditional)
-
+# By default builds as static library, controlled by LIBRARY_TYPE parameter
 add_third_party_library(mimalloc
     CONDITION XSIGMA_ENABLE_MIMALLOC
+    LIBRARY_TYPE STATIC
+    LIBRARY_TYPE_VAR MI_BUILD_STATIC
+    XSIGMA_TARGETS "XSigma::mimalloc=mimalloc|mimalloc-static"
 )
-if(TARGET mimalloc)
-    set_target_properties(mimalloc PROPERTIES FOLDER "ThirdParty/mimalloc")
-endif()
-if(TARGET mimalloc-static)
-    set_target_properties(mimalloc-static PROPERTIES FOLDER "ThirdParty/mimalloc")
-endif()
-
-# =============================================================================
-# Google Test and Google Benchmark Integration
-# =============================================================================
-
-# Google Test - Unit testing framework
-if(XSIGMA_ENABLE_GTEST)
-    # Check if gtest target already exists (avoid duplicate add_subdirectory)
-    if(NOT TARGET gtest)
-        message(STATUS "Adding Google Test from ThirdParty/googletest")
-
-        # Set options before adding subdirectory
-        # Force shared CRT on MSVC to match XSigma's runtime library settings
-        if(MSVC)
-            set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-        endif()
-
-        # Add googletest subdirectory
-        # This creates targets: gtest, gtest_main, gmock, gmock_main
-        add_subdirectory(
-            "${CMAKE_CURRENT_SOURCE_DIR}/googletest"
-            "${CMAKE_CURRENT_BINARY_DIR}/googletest"
-            EXCLUDE_FROM_ALL
-        )
-
-        message(STATUS "✓ Google Test targets created: gtest, gtest_main")
-    else()
-        message(STATUS "Google Test targets already exist, skipping add_subdirectory")
-    endif()
-endif()
-
-# Google Benchmark - Microbenchmarking framework
-if(XSIGMA_ENABLE_BENCHMARK)
-    # Check if benchmark target already exists (avoid duplicate add_subdirectory)
-    if(NOT TARGET benchmark)
-        message(STATUS "Adding Google Benchmark from ThirdParty/benchmark")
-
-        # Add benchmark subdirectory
-        # This creates targets: benchmark, benchmark_main
-        add_subdirectory(
-            "${CMAKE_CURRENT_SOURCE_DIR}/benchmark"
-            "${CMAKE_CURRENT_BINARY_DIR}/benchmark"
-            EXCLUDE_FROM_ALL
-        )
-
-        message(STATUS "✓ Google Benchmark targets created: benchmark, benchmark_main")
-    else()
-        message(STATUS "Google Benchmark targets already exist, skipping add_subdirectory")
-    endif()
-endif()
-
-# Set folder properties for Visual Studio organization
-if(TARGET benchmark)
-    set_target_properties(benchmark PROPERTIES FOLDER "ThirdParty/benchmark")
-endif()
-if(TARGET benchmark_main)
-    set_target_properties(benchmark_main PROPERTIES FOLDER "ThirdParty/benchmark")
-endif()
-
-# Set folder properties for googletest targets
-if(TARGET gtest)
-    set_target_properties(gtest PROPERTIES FOLDER "ThirdParty/googletest")
-endif()
-if(TARGET gtest_main)
-    set_target_properties(gtest_main PROPERTIES FOLDER "ThirdParty/googletest")
-endif()
-if(TARGET gmock)
-    set_target_properties(gmock PROPERTIES FOLDER "ThirdParty/googletest")
-endif()
-if(TARGET gmock_main)
-    set_target_properties(gmock_main PROPERTIES FOLDER "ThirdParty/googletest")
-endif()
-
-# Create interface targets for easier linking
-# Mandatory dependencies (always created)
-if(TARGET fmt::fmt)
-    # fmt::fmt might be an alias, so we need to get the actual target
-    get_target_property(fmt_aliased_target fmt::fmt ALIASED_TARGET)
-    if(fmt_aliased_target)
-        add_library(XSigma::fmt ALIAS ${fmt_aliased_target})
-    else()
-        add_library(XSigma::fmt ALIAS fmt::fmt)
-    endif()
-    message(STATUS "Created XSigma::fmt target alias")
-elseif(TARGET fmt)
-    add_library(XSigma::fmt ALIAS fmt)
-    message(STATUS "Created XSigma::fmt target alias")
-endif()
-
-if(TARGET cpuinfo)
-    add_library(XSigma::cpuinfo ALIAS cpuinfo)
-    message(STATUS "Created XSigma::cpuinfo target alias")
-endif()
 
 # Kineto - PyTorch profiling library
 # Aligned with PyTorch's XSIGMA_ENABLE_KINETO configuration for feature parity.
@@ -302,111 +553,88 @@ message(STATUS "Configuring Kineto dependency:")
 message(STATUS "  KINETO_BUILD_TESTS = ${KINETO_BUILD_TESTS}")
 message(STATUS "  KINETO_LIBRARY_TYPE = ${KINETO_LIBRARY_TYPE}")
 
-add_third_party_library(kineto  
-    CONDITION XSIGMA_ENABLE_KINETO)
+add_third_party_library(kineto
+    CONDITION XSIGMA_ENABLE_KINETO
+    LIBRARY_TYPE STATIC
+)
 
+# =============================================================================
+# Google Test and Google Benchmark Integration
+# =============================================================================
 
-# Optional dependencies (only if enabled)
-if(XSIGMA_ENABLE_MAGICENUM)
-    if(TARGET magic_enum::magic_enum)
-        # magic_enum::magic_enum might be an alias, so we need to get the actual target
-        get_target_property(magic_enum_aliased_target magic_enum::magic_enum ALIASED_TARGET)
-        if(magic_enum_aliased_target)
-            add_library(XSigma::magic_enum ALIAS ${magic_enum_aliased_target})
-        else()
-            add_library(XSigma::magic_enum ALIAS magic_enum::magic_enum)
-        endif()
-        message(STATUS "Created XSigma::magic_enum target alias")
-    elseif(TARGET magic_enum)
-        add_library(XSigma::magic_enum ALIAS magic_enum)
-        message(STATUS "Created XSigma::magic_enum target alias")
-    endif()
-endif()
+# Note: googletest and benchmark require special handling due to EXCLUDE_FROM_ALL
+# and MSVC-specific settings, so they use manual add_subdirectory calls
 
-# Logging backend aliases (only create for the selected backend)
-if(XSIGMA_USE_LOGURU)
-    if(TARGET loguru::loguru)
-        # loguru::loguru might be an alias, so we need to get the actual target
-        get_target_property(loguru_aliased_target loguru::loguru ALIASED_TARGET)
-        if(loguru_aliased_target)
-            add_library(XSigma::loguru ALIAS ${loguru_aliased_target})
-        else()
-            add_library(XSigma::loguru ALIAS loguru::loguru)
-        endif()
-        message(STATUS "Created XSigma::loguru target alias")
-    elseif(TARGET loguru)
-        add_library(XSigma::loguru ALIAS loguru)
-        message(STATUS "Created XSigma::loguru target alias")
-    endif()
-endif()
-
-if(XSIGMA_USE_GLOG)
-    if(TARGET glog::glog)
-        # glog::glog might be an alias, so we need to get the actual target
-        get_target_property(glog_aliased_target glog::glog ALIASED_TARGET)
-        if(glog_aliased_target)
-            add_library(XSigma::glog ALIAS ${glog_aliased_target})
-        else()
-            add_library(XSigma::glog ALIAS glog::glog)
-        endif()
-        message(STATUS "Created XSigma::glog target alias")
-    elseif(TARGET glog)
-        add_library(XSigma::glog ALIAS glog)
-        message(STATUS "Created XSigma::glog target alias")
-    endif()
-endif()
-
-if(XSIGMA_ENABLE_MIMALLOC)
-    if(TARGET mimalloc)
-        add_library(XSigma::mimalloc ALIAS mimalloc)
-        message(STATUS "Created XSigma::mimalloc target alias")
-    elseif(TARGET mimalloc-static)
-        add_library(XSigma::mimalloc ALIAS mimalloc-static)
-        message(STATUS "Created XSigma::mimalloc target alias")
-    endif()
-endif()
-
-if(XSIGMA_ENABLE_BENCHMARK)
-    if(TARGET benchmark::benchmark)
-        # Get the actual target that benchmark::benchmark points to
-        get_target_property(benchmark_aliased_target benchmark::benchmark ALIASED_TARGET)
-        if(benchmark_aliased_target)
-            add_library(XSigma::benchmark ALIAS ${benchmark_aliased_target})
-        else()
-            # If it's not an alias, create alias directly
-            add_library(XSigma::benchmark ALIAS benchmark::benchmark)
-        endif()
-        message(STATUS "Created XSigma::benchmark target alias")
-    elseif(TARGET benchmark)
-        add_library(XSigma::benchmark ALIAS benchmark)
-        message(STATUS "Created XSigma::benchmark target alias")
-    endif()
-endif()
-
+# Google Test - Unit testing framework
 if(XSIGMA_ENABLE_GTEST)
-    if(TARGET GTest::gtest)
-        # Get the actual targets that GTest aliases point to
-        get_target_property(gtest_aliased_target GTest::gtest ALIASED_TARGET)
-        get_target_property(gtest_main_aliased_target GTest::gtest_main ALIASED_TARGET)
+    # Check if gtest target already exists (avoid duplicate add_subdirectory)
+    if(NOT TARGET gtest)
+        message(STATUS "Adding Google Test from ThirdParty/googletest")
 
-        if(gtest_aliased_target)
-            add_library(XSigma::gtest ALIAS ${gtest_aliased_target})
-        else()
-            add_library(XSigma::gtest ALIAS GTest::gtest)
+        # Set options before adding subdirectory
+        # Force shared CRT on MSVC to match XSigma's runtime library settings
+        if(MSVC)
+            set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
         endif()
 
-        if(gtest_main_aliased_target)
-            add_library(XSigma::gtest_main ALIAS ${gtest_main_aliased_target})
-        else()
-            add_library(XSigma::gtest_main ALIAS GTest::gtest_main)
-        endif()
+        # Add googletest subdirectory
+        # This creates targets: gtest, gtest_main, gmock, gmock_main
+        add_subdirectory(
+            "${CMAKE_CURRENT_SOURCE_DIR}/googletest"
+            "${CMAKE_CURRENT_BINARY_DIR}/googletest"
+            EXCLUDE_FROM_ALL
+        )
 
-        message(STATUS "Created XSigma::gtest target aliases")
-    elseif(TARGET gtest)
-        add_library(XSigma::gtest ALIAS gtest)
-        message(STATUS "Created XSigma::gtest target alias")
-        if(TARGET gtest_main)
-            add_library(XSigma::gtest_main ALIAS gtest_main)
-        endif()
+        # Set folder properties for all googletest targets
+        _set_third_party_folder_properties("googletest" "${CMAKE_CURRENT_SOURCE_DIR}/googletest")
+
+        message(STATUS "✓ Google Test targets created: gtest, gtest_main")
+    else()
+        message(STATUS "Google Test targets already exist, skipping add_subdirectory")
     endif()
+
+    # Create XSigma:: namespace aliases for googletest
+    _create_third_party_interface_targets(
+        "XSigma::gtest=GTest::gtest|gtest"
+        "XSigma::gtest_main=GTest::gtest_main|gtest_main"
+    )
 endif()
+
+# Google Benchmark - Microbenchmarking framework
+if(XSIGMA_ENABLE_BENCHMARK)
+    # Check if benchmark target already exists (avoid duplicate add_subdirectory)
+    if(NOT TARGET benchmark)
+        message(STATUS "Adding Google Benchmark from ThirdParty/benchmark")
+
+        # Add benchmark subdirectory
+        # This creates targets: benchmark, benchmark_main
+        add_subdirectory(
+            "${CMAKE_CURRENT_SOURCE_DIR}/benchmark"
+            "${CMAKE_CURRENT_BINARY_DIR}/benchmark"
+            EXCLUDE_FROM_ALL
+        )
+
+        # Set folder properties for all benchmark targets
+        _set_third_party_folder_properties("benchmark" "${CMAKE_CURRENT_SOURCE_DIR}/benchmark")
+
+        message(STATUS "✓ Google Benchmark targets created: benchmark, benchmark_main")
+    else()
+        message(STATUS "Google Benchmark targets already exist, skipping add_subdirectory")
+    endif()
+
+    # Create XSigma:: namespace alias for benchmark
+    _create_third_party_interface_targets(
+        "XSigma::benchmark=benchmark::benchmark|benchmark"
+    )
+endif()
+
+# =============================================================================
+# XSigma Interface Targets
+# =============================================================================
+# All XSigma:: namespace interface targets are now created automatically
+# by the add_third_party_library() function using the XSIGMA_TARGETS parameter.
+# This eliminates code duplication and provides a consistent interface for
+# linking against third-party libraries throughout the XSigma project.
+#
+# See the library declarations above for XSIGMA_TARGETS specifications.
+# =============================================================================

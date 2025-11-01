@@ -62,5 +62,5 @@ std::unique_ptr<profiler_interface> create_python_tracer(
 }  // namespace profiler
 }  // namespace xsigma
 
+#endif  // 0 (python tracer stub disabled)
 #endif  // XLA_BACKENDS_PROFILER_CPU_PYTHON_TRACER_H_
-#endif
