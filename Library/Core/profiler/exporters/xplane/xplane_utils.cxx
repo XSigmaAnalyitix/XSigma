@@ -36,6 +36,7 @@ limitations under the License.
 #include <algorithm>
 #include <cstdint>
 #include <limits>
+#include <numeric>
 #include <optional>
 #include <set>
 #include <string>
@@ -317,10 +318,12 @@ std::vector<const xline*> find_lines_with_id(const xplane& plane, int64_t id)
         FindAll(plane.lines(), [id](const xline* line) { return line->id() == id; });
     std::vector<const xline*> lines;
     lines.reserve(indices.size());
-    for (int const index : indices)
-    {
-        lines.push_back(&plane.lines(index));
-    }
+    // Use std::transform to convert indices to line pointers
+    std::transform(
+        indices.begin(),
+        indices.end(),
+        std::back_inserter(lines),
+        [&plane](int index) { return &plane.lines(index); });
     return lines;
 }
 
@@ -487,27 +490,24 @@ int64_t GetStartTimestampNs(const xplane& plane)
     {
         return 0LL;
     }
-    int64_t plane_timestamp = std::numeric_limits<int64_t>::max();
-    for (const auto& line : plane.lines())
-    {
-        plane_timestamp = std::min(plane_timestamp, line.timestamp_ns());
-    }
+    // Use std::accumulate to find minimum timestamp
+    int64_t plane_timestamp = std::accumulate(
+        plane.lines().begin(),
+        plane.lines().end(),
+        std::numeric_limits<int64_t>::max(),
+        [](int64_t min_ts, const xline& line) { return std::min(min_ts, line.timestamp_ns()); });
     return plane_timestamp;
 }
 
 bool IsEmpty(const x_space& space)
 {
-    for (const auto& plane : space.planes())
-    {
-        for (const auto& line : plane.lines())
-        {
-            if (!line.events().empty())
-            {
-                return false;
-            }
-        }
-    }
-    return true;
+    // Use std::all_of to check if all planes have empty events
+    return std::all_of(space.planes().begin(), space.planes().end(), [](const xplane& plane) {
+        return std::all_of(
+            plane.lines().begin(), plane.lines().end(), [](const xline& line) {
+                return line.events().empty();
+            });
+    });
 }
 
 bool IsXSpaceGrouped(const x_space& space)

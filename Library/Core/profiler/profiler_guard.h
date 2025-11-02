@@ -73,7 +73,7 @@ public:
    * @param path Output file path
    * @return true if export successful
    */
-    bool export_trace(const std::string& path);
+    static bool export_trace(const std::string& path);
 
 private:
     bool           was_profiling_ = false;

@@ -68,6 +68,7 @@ public:
 
     profiler_status start() override;
 
+    // cppcheck-suppress virtualCallInConstructor
     profiler_status stop() override;
 
     profiler_status collect_data(x_space* space) override;
@@ -96,8 +97,11 @@ host_tracer::host_tracer(int host_trace_level, uint64_t filter_mask)
 
 host_tracer::~host_tracer()
 {
+    // Call stop directly without virtual dispatch since we're in destructor
+    // NOLINTNEXTLINE(clang-analyzer-optin.cplusplus.VirtualCall)
+    // cppcheck-suppress virtualCallInConstructor
     stop();
-}  // NOLINT
+}
 
 profiler_status host_tracer::start()
 {

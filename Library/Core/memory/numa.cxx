@@ -23,6 +23,7 @@ bool IsNUMAEnabled()
 
 void NUMABind(XSIGMA_UNUSED int numa_node_id)
 {
+#if XSIGMA_HAS_NUMA
     if (numa_node_id < 0)
     {
         return;
@@ -31,7 +32,6 @@ void NUMABind(XSIGMA_UNUSED int numa_node_id)
     {
         return;
     }
-#if XSIGMA_HAS_NUMA
     XSIGMA_CHECK(numa_node_id <= numa_max_node(), "NUMA node id ", numa_node_id, " is unavailable");
 
     auto* bm = numa_allocate_nodemask();
@@ -41,13 +41,13 @@ void NUMABind(XSIGMA_UNUSED int numa_node_id)
 #endif
 }
 
-int GetNUMANode(XSIGMA_UNUSED const void* ptr)
+int GetNUMANode(const void* ptr)
 {
+#if XSIGMA_HAS_NUMA
     if (!IsNUMAEnabled())
     {
         return -1;
     }
-#if XSIGMA_HAS_NUMA
     XSIGMA_CHECK(ptr != nullptr, "");
 
     int numa_node = -1;
@@ -58,25 +58,27 @@ int GetNUMANode(XSIGMA_UNUSED const void* ptr)
         errno);
     return numa_node;
 #else
+    (void)ptr;  // Suppress unused parameter warning
     return -1;
 #endif
 }
 
 int GetNumNUMANodes()
 {
+#if XSIGMA_HAS_NUMA
     if (!IsNUMAEnabled())
     {
         return -1;
     }
-#if XSIGMA_HAS_NUMA
     return numa_num_configured_nodes();
 #else
     return -1;
 #endif
 }
 
-void NUMAMove(XSIGMA_UNUSED void* ptr, XSIGMA_UNUSED size_t size, int numa_node_id)
+void NUMAMove(void* ptr, size_t size, int numa_node_id)
 {
+#if XSIGMA_HAS_NUMA
     if (numa_node_id < 0)
     {
         return;
@@ -85,7 +87,6 @@ void NUMAMove(XSIGMA_UNUSED void* ptr, XSIGMA_UNUSED size_t size, int numa_node_
     {
         return;
     }
-#if XSIGMA_HAS_NUMA
     XSIGMA_CHECK(ptr != nullptr, "");
 
     uintptr_t page_start_ptr = ((reinterpret_cast<uintptr_t>(ptr)) & ~(getpagesize() - 1));
@@ -102,16 +103,20 @@ void NUMAMove(XSIGMA_UNUSED void* ptr, XSIGMA_UNUSED size_t size, int numa_node_
             sizeof(mask) * 8,
             MPOL_MF_MOVE | MPOL_MF_STRICT) == 0,
         "Could not move memory to a NUMA node");
+#else
+    (void)ptr;           // Suppress unused parameter warning
+    (void)size;          // Suppress unused parameter warning
+    (void)numa_node_id;  // Suppress unused parameter warning
 #endif
 }
 
 int GetCurrentNUMANode()
 {
+#if XSIGMA_HAS_NUMA
     if (!IsNUMAEnabled())
     {
         return -1;
     }
-#if XSIGMA_HAS_NUMA
     auto n = numa_node_of_cpu(sched_getcpu());
     return n;
 #else

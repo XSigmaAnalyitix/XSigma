@@ -115,6 +115,11 @@ int tools_impl<BackendType::TBB>::GetEstimatedDefaultNumberOfThreads()
 template <>
 bool tools_impl<BackendType::TBB>::GetSingleThread()
 {
+    std::lock_guard<std::mutex> lock(*threadIdStackLock);
+    if (threadIdStack->empty())
+    {
+        return false;
+    }
     return threadIdStack->top() == tbb::this_task_arena::current_thread_index();
 }
 

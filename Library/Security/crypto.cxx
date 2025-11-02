@@ -6,7 +6,7 @@
 #include <sstream>
 
 // Platform-specific includes for secure random
-#if defined(_WIN32)
+#ifdef _WIN32
 // Must come first - defines base Windows types
 #include <windows.h>
 
@@ -37,7 +37,7 @@ bool crypto::generate_random_bytes(uint8_t* buffer, size_t size)
         return false;
     }
 
-#if defined(_WIN32)
+#ifdef _WIN32
     // Windows: Use BCryptGenRandom
     NTSTATUS status =
         BCryptGenRandom(nullptr, buffer, static_cast<ULONG>(size), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
@@ -147,15 +147,23 @@ void crypto::sha256_init(sha256_context* ctx)
 void crypto::sha256_transform(sha256_context* ctx, const uint8_t* data)
 {
     uint32_t m[64];
-    uint32_t a, b, c, d, e, f, g, h, t1, t2;
+    uint32_t a;
+    uint32_t b;
+    uint32_t c;
+    uint32_t d;
+    uint32_t e;
+    uint32_t f;
+    uint32_t g;
+    uint32_t h;
 
     // Prepare message schedule
     for (int i = 0; i < 16; ++i)
     {
-        m[i] = (static_cast<uint32_t>(data[i * 4]) << 24) |
-               (static_cast<uint32_t>(data[i * 4 + 1]) << 16) |
-               (static_cast<uint32_t>(data[i * 4 + 2]) << 8) |
-               (static_cast<uint32_t>(data[i * 4 + 3]));
+        const size_t offset = static_cast<size_t>(i) * 4;
+        m[i]                = (static_cast<uint32_t>(data[offset]) << 24) |
+               (static_cast<uint32_t>(data[offset + 1]) << 16) |
+               (static_cast<uint32_t>(data[offset + 2]) << 8) |
+               (static_cast<uint32_t>(data[offset + 3]));
     }
 
     for (int i = 16; i < 64; ++i)
@@ -176,16 +184,16 @@ void crypto::sha256_transform(sha256_context* ctx, const uint8_t* data)
     // Main loop
     for (int i = 0; i < 64; ++i)
     {
-        t1 = h + EP1(e) + CH(e, f, g) + K[i] + m[i];
-        t2 = EP0(a) + MAJ(a, b, c);
-        h  = g;
-        g  = f;
-        f  = e;
-        e  = d + t1;
-        d  = c;
-        c  = b;
-        b  = a;
-        a  = t1 + t2;
+        uint32_t const t1 = h + EP1(e) + CH(e, f, g) + K[i] + m[i];
+        uint32_t const t2 = EP0(a) + MAJ(a, b, c);
+        h                 = g;
+        g                 = f;
+        f                 = e;
+        e                 = d + t1;
+        d                 = c;
+        c                 = b;
+        b                 = a;
+        a                 = t1 + t2;
     }
 
     // Update state
@@ -231,9 +239,9 @@ void crypto::sha256_update(sha256_context* ctx, const uint8_t* data, size_t size
 
 void crypto::sha256_final(sha256_context* ctx, uint8_t* hash)
 {
-    size_t   i        = ctx->count % 64;
-    uint8_t* p        = ctx->buffer.data() + i;
-    size_t   pad_size = (i < 56) ? (56 - i) : (120 - i);
+    size_t const i        = ctx->count % 64;
+    uint8_t*     p        = ctx->buffer.data() + i;
+    size_t const pad_size = (i < 56) ? (56 - i) : (120 - i);
 
     *p++ = 0x80;
     std::memset(p, 0, pad_size - 1);
@@ -245,7 +253,7 @@ void crypto::sha256_final(sha256_context* ctx, uint8_t* hash)
     }
 
     // Append length in bits
-    uint64_t bit_count = ctx->count * 8;
+    uint64_t const bit_count = ctx->count * 8;
     for (int j = 7; j >= 0; --j)
     {
         ctx->buffer[56 + j] = static_cast<uint8_t>(bit_count >> ((7 - j) * 8));
@@ -256,10 +264,11 @@ void crypto::sha256_final(sha256_context* ctx, uint8_t* hash)
     // Produce final hash
     for (int j = 0; j < 8; ++j)
     {
-        hash[j * 4]     = static_cast<uint8_t>(ctx->state[j] >> 24);
-        hash[j * 4 + 1] = static_cast<uint8_t>(ctx->state[j] >> 16);
-        hash[j * 4 + 2] = static_cast<uint8_t>(ctx->state[j] >> 8);
-        hash[j * 4 + 3] = static_cast<uint8_t>(ctx->state[j]);
+        const size_t offset = static_cast<size_t>(j) * 4;
+        hash[offset]        = static_cast<uint8_t>(ctx->state[j] >> 24);
+        hash[offset + 1]    = static_cast<uint8_t>(ctx->state[j] >> 16);
+        hash[offset + 2]    = static_cast<uint8_t>(ctx->state[j] >> 8);
+        hash[offset + 3]    = static_cast<uint8_t>(ctx->state[j]);
     }
 }
 
@@ -353,9 +362,9 @@ std::optional<std::vector<uint8_t>> crypto::hex_to_bytes(std::string_view hex)
 
     for (size_t i = 0; i < hex.length(); i += 2)
     {
-        std::string byte_str(hex.substr(i, 2));
-        char*       end;
-        long        value = std::strtol(byte_str.c_str(), &end, 16);
+        std::string const byte_str(hex.substr(i, 2));
+        char*             end;
+        long              value = std::strtol(byte_str.c_str(), &end, 16);
 
         if (end != byte_str.c_str() + 2)
         {
@@ -375,11 +384,11 @@ void crypto::secure_zero_memory(void* ptr, size_t size)
         return;
     }
 
-#if defined(_WIN32)
+#ifdef _WIN32
     SecureZeroMemory(ptr, size);
 #else
     // Use volatile to prevent compiler optimization
-    volatile uint8_t* p = static_cast<volatile uint8_t*>(ptr);
+    volatile auto* p = static_cast<volatile uint8_t*>(ptr);
     for (size_t i = 0; i < size; ++i)
     {
         p[i] = 0;

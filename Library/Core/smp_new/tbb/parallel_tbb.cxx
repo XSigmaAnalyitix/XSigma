@@ -30,8 +30,8 @@ namespace xsigma::smp_new::tbb
 {
 
 // TBB backend state
-std::atomic<bool> g_tbb_initialized{false};
-std::atomic<int>  g_num_threads{-1};
+std::atomic<bool>       g_tbb_initialized{false};
+static std::atomic<int> g_num_threads{-1};
 
 #if XSIGMA_HAS_TBB
 // TBB global control for thread count

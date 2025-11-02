@@ -30,7 +30,7 @@ ProfilerSession& ProfilerSession::instance()
 
 bool ProfilerSession::start(const ProfilerConfig& config)
 {
-    std::lock_guard<std::mutex> lock(state_mutex_);
+    std::scoped_lock const lock(state_mutex_);
 
     if (state_ != ProfilerState::Disabled)
     {
@@ -45,8 +45,9 @@ bool ProfilerSession::start(const ProfilerConfig& config)
     state_  = ProfilerState::Ready;
 
     // Initialize Kineto if needed
-    if (config_.activities.count(ActivityType::CUDA) ||
-        config_.activities.count(ActivityType::ROCM) || config_.activities.count(ActivityType::XPU))
+    if ((config_.activities.count(ActivityType::CUDA) != 0u) ||
+        (config_.activities.count(ActivityType::ROCM) != 0u) ||
+        (config_.activities.count(ActivityType::XPU) != 0u))
     {
         initialize_kineto();
     }
@@ -73,7 +74,7 @@ bool ProfilerSession::start(const ProfilerConfig& config)
 
 bool ProfilerSession::stop()
 {
-    std::lock_guard<std::mutex> lock(state_mutex_);
+    std::scoped_lock const lock(state_mutex_);
 
     if (state_ != ProfilerState::Recording)
     {
@@ -91,8 +92,9 @@ bool ProfilerSession::stop()
     collect_events();
 
     // Finalize Kineto
-    if (config_.activities.count(ActivityType::CUDA) ||
-        config_.activities.count(ActivityType::ROCM) || config_.activities.count(ActivityType::XPU))
+    if ((config_.activities.count(ActivityType::CUDA) != 0u) ||
+        (config_.activities.count(ActivityType::ROCM) != 0u) ||
+        (config_.activities.count(ActivityType::XPU) != 0u))
     {
         finalize_kineto();
     }
@@ -112,25 +114,25 @@ bool ProfilerSession::stop()
 
 bool ProfilerSession::is_profiling() const
 {
-    std::lock_guard<std::mutex> lock(state_mutex_);
+    std::scoped_lock const lock(state_mutex_);
     return state_ == ProfilerState::Recording;
 }
 
 ProfilerState ProfilerSession::get_state() const
 {
-    std::lock_guard<std::mutex> lock(state_mutex_);
+    std::scoped_lock const lock(state_mutex_);
     return state_;
 }
 
 const ProfilerConfig& ProfilerSession::get_config() const
 {
-    std::lock_guard<std::mutex> lock(state_mutex_);
+    std::scoped_lock const lock(state_mutex_);
     return config_;
 }
 
 bool ProfilerSession::export_trace(const std::string& path)
 {
-    std::lock_guard<std::mutex> lock(state_mutex_);
+    std::scoped_lock const lock(state_mutex_);
 
     if (state_ == ProfilerState::Recording)
     {
@@ -170,7 +172,7 @@ bool ProfilerSession::export_trace(const std::string& path)
 
         file << "  ],\n";
         file << "  \"displayTimeUnit\": \"ns\",\n";
-        file << "  \"traceID\": \"" << config_.trace_id << "\"\n";
+        file << R"(  "traceID": ")" << config_.trace_id << "\"\n";
         file << "}\n";
 
         file.close();
@@ -194,7 +196,7 @@ bool ProfilerSession::export_trace(const std::string& path)
 
 void ProfilerSession::clear()
 {
-    std::lock_guard<std::mutex> lock(state_mutex_);
+    std::scoped_lock const lock(state_mutex_);
     events_.clear();
     start_time_ns_ = 0;
     end_time_ns_   = 0;
@@ -202,20 +204,20 @@ void ProfilerSession::clear()
 
 size_t ProfilerSession::event_count() const
 {
-    std::lock_guard<std::mutex> lock(state_mutex_);
+    std::scoped_lock const lock(state_mutex_);
     return events_.size();
 }
 
 void ProfilerSession::reset()
 {
-    std::lock_guard<std::mutex> lock(state_mutex_);
+    std::scoped_lock const lock(state_mutex_);
     state_ = ProfilerState::Disabled;
     events_.clear();
     start_time_ns_ = 0;
     end_time_ns_   = 0;
 }
 
-void ProfilerSession::initialize_kineto()
+void ProfilerSession::initialize_kineto() const
 {
 #if XSIGMA_HAS_KINETO
     kineto_init(false, config_.verbose);
@@ -241,7 +243,7 @@ void ProfilerSession::finalize_itt()
     // ITT cleanup is automatic
 }
 
-void ProfilerSession::collect_events()
+void ProfilerSession::collect_events() const
 {
     // Simplified event collection
     // In a full implementation, this would:

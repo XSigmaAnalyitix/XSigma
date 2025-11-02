@@ -19,13 +19,13 @@ namespace internal
 
 void WorkStealingDeque::push_back(const WorkItem& item)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock const lock(mutex_);
     items_.push_back(item);
 }
 
 bool WorkStealingDeque::pop_back(WorkItem& item)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock const lock(mutex_);
     if (items_.empty())
     {
         return false;
@@ -37,7 +37,7 @@ bool WorkStealingDeque::pop_back(WorkItem& item)
 
 bool WorkStealingDeque::steal_front(WorkItem& item)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock const lock(mutex_);
     if (items_.empty())
     {
         return false;
@@ -49,19 +49,19 @@ bool WorkStealingDeque::steal_front(WorkItem& item)
 
 bool WorkStealingDeque::empty() const
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock const lock(mutex_);
     return items_.empty();
 }
 
 size_t WorkStealingDeque::size() const
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock const lock(mutex_);
     return items_.size();
 }
 
 void WorkStealingDeque::clear()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock const lock(mutex_);
     items_.clear();
 }
 
@@ -82,8 +82,8 @@ void Parallelize1DCoordinator::execute()
         return;
     }
 
-    auto&  pool        = internal::GetIntraopPool();
-    size_t num_threads = std::max<size_t>(1, pool.Size());
+    auto&        pool        = internal::GetIntraopPool();
+    size_t const num_threads = std::max<size_t>(1, pool.Size());
 
     if (deques_.size() != num_threads)
     {
@@ -103,22 +103,22 @@ void Parallelize1DCoordinator::execute()
     pending_work_.store(0, std::memory_order_relaxed);
     active_workers_.store(num_threads, std::memory_order_relaxed);
     {
-        std::lock_guard<std::mutex> lock(exception_mutex_);
+        std::scoped_lock const lock(exception_mutex_);
         exception_ = nullptr;
     }
 
     // Distribute work evenly across threads
     // Each thread gets a chunk of work to start with
-    size_t chunk_size = (range_ + num_threads - 1) / num_threads;
+    size_t const chunk_size = (range_ + num_threads - 1) / num_threads;
 
     for (size_t i = 0; i < num_threads; ++i)
     {
-        size_t begin = i * chunk_size;
+        size_t const begin = i * chunk_size;
         if (begin >= range_)
         {
             break;
         }
-        size_t end = std::min(begin + chunk_size, range_);
+        size_t const end = std::min(begin + chunk_size, range_);
         enqueue_work(i, {begin, end});
     }
 
@@ -133,7 +133,7 @@ void Parallelize1DCoordinator::execute()
     // Check for exceptions
     std::exception_ptr captured_exception;
     {
-        std::lock_guard<std::mutex> lock(exception_mutex_);
+        std::scoped_lock const lock(exception_mutex_);
         captured_exception = exception_;
         exception_         = nullptr;
     }
@@ -146,10 +146,10 @@ void Parallelize1DCoordinator::execute()
 
 void Parallelize1DCoordinator::mark_complete()
 {
-    size_t previous = pending_work_.fetch_sub(1, std::memory_order_acq_rel);
+    size_t const previous = pending_work_.fetch_sub(1, std::memory_order_acq_rel);
     if (previous == 1)
     {
-        std::lock_guard<std::mutex> lock(completion_mutex_);
+        std::scoped_lock const lock(completion_mutex_);
         completion_cv_.notify_all();
     }
 }
@@ -168,10 +168,10 @@ void Parallelize1DCoordinator::wait_complete()
 
 void Parallelize1DCoordinator::mark_worker_finished()
 {
-    size_t previous = active_workers_.fetch_sub(1, std::memory_order_acq_rel);
+    size_t const previous = active_workers_.fetch_sub(1, std::memory_order_acq_rel);
     if (previous == 1)
     {
-        std::lock_guard<std::mutex> lock(completion_mutex_);
+        std::scoped_lock const lock(completion_mutex_);
         completion_cv_.notify_all();
     }
 }
@@ -184,7 +184,7 @@ void Parallelize1DCoordinator::enqueue_work(size_t thread_id, const WorkItem& it
 
 void Parallelize1DCoordinator::set_exception(std::exception_ptr ex)
 {
-    std::lock_guard<std::mutex> lock(exception_mutex_);
+    std::scoped_lock const lock(exception_mutex_);
     if (!exception_)
     {
         exception_ = ex;
@@ -197,8 +197,8 @@ void Parallelize1DCoordinator::set_exception(std::exception_ptr ex)
 
 void worker_thread_func(Parallelize1DCoordinator& coordinator, size_t thread_id)
 {
-    const auto& function    = coordinator.get_function();
-    size_t      num_threads = coordinator.get_num_threads();
+    const auto&  function    = coordinator.get_function();
+    size_t const num_threads = coordinator.get_num_threads();
 
     auto process_work_item = [&](internal::WorkItem work)
     {
@@ -243,7 +243,7 @@ void worker_thread_func(Parallelize1DCoordinator& coordinator, size_t thread_id)
                     found_work = true;
 
                     // Split the stolen work
-                    size_t mid = (item.begin + item.end) / 2;
+                    size_t const mid = (item.begin + item.end) / 2;
                     if (mid > item.begin)
                     {
                         // Put second half back for other threads to steal

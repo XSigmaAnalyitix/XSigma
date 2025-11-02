@@ -19,7 +19,7 @@ std::atomic<int> g_num_interop_threads{kNotSet};
 
 task_thread_pool_base& GetInteropPool()
 {
-    static std::shared_ptr<task_thread_pool_base> pool =
+    static std::shared_ptr<task_thread_pool_base> const pool =
         create_task_thread_pool(g_num_interop_threads.exchange(kConsumed));
     return *pool;
 }
@@ -37,7 +37,7 @@ void set_num_interop_threads(int nthreads)
 
 size_t get_num_interop_threads()
 {
-    int nthreads = g_num_interop_threads.load();
+    int const nthreads = g_num_interop_threads.load();
     if (nthreads > 0)
     {
         return static_cast<size_t>(nthreads);

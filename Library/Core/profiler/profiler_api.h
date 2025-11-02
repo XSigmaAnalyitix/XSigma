@@ -204,11 +204,11 @@ private:
     uint64_t                 end_time_ns_   = 0;
 
     // Helper methods
-    void initialize_kineto();
-    void initialize_itt();
-    void finalize_kineto();
-    void finalize_itt();
-    void collect_events();
+    void        initialize_kineto() const;
+    static void initialize_itt();
+    static void finalize_kineto();
+    void        finalize_itt();
+    void        collect_events() const;
 };
 
 // ============================================================================

@@ -635,7 +635,7 @@ add_third_party_library(magic_enum
 
 # loguru - Lightweight C++ logging library (forced to static)
 add_third_party_library(loguru
-    CONDITION XSIGMA_USE_LOGURU
+    CONDITION XSIGMA_ENABLE_LOGURU
     LIBRARY_TYPE STATIC
     FILTER_FLAGS "-flto=thin" "-flto=full"
     XSIGMA_TARGETS "XSigma::loguru=loguru::loguru|loguru"
@@ -643,7 +643,7 @@ add_third_party_library(loguru
 
 # glog - Google logging library
 add_third_party_library(glog
-    CONDITION XSIGMA_USE_GLOG
+    CONDITION XSIGMA_ENABLE_GLOG
     FILTER_FLAGS "-flto=thin" "-flto=full"
     XSIGMA_TARGETS "XSigma::glog=glog::glog|glog"
 )

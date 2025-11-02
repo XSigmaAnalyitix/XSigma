@@ -23,7 +23,7 @@ namespace xsigma::detail::smp::Advanced
  * @note Thread-safe. Each thread can set its own name independently.
  * @note Platform-dependent. Only works on Linux with glibc 2.12+.
  */
-XSIGMA_API void set_thread_name(std::string name);
+XSIGMA_API void set_thread_name(const std::string& name);
 
 /**
  * @brief Gets the name of the current thread.

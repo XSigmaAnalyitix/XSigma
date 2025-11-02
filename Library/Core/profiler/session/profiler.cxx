@@ -142,7 +142,7 @@ std::string ConvertScopeDataToChromeTrace(
 
     // Add process metadata
     append_event(
-        std::string("{\"ph\":\"M\",\"pid\":0,\"name\":\"process_name\",\"args\":{\"name\":") +
+        std::string(R"({"ph":"M","pid":0,"name":"process_name","args":{"name":)") +
         JsonQuote("XSigma CPU Profiler") + "}}");
 
     // Track threads we've seen
@@ -166,13 +166,13 @@ std::string ConvertScopeDataToChromeTrace(
 
             // Add thread metadata event
             append_event(
-                std::string("{\"ph\":\"M\",\"pid\":0,\"tid\":") +
+                std::string(R"({"ph":"M","pid":0,"tid":)") +
                 std::to_string(thread_to_tid[scope->thread_id_]) +
-                ",\"name\":\"thread_name\",\"args\":{\"name\":\"Thread " +
+                R"(,"name":"thread_name","args":{"name":"Thread )" +
                 std::to_string(thread_to_tid[scope->thread_id_]) + "\"}}");
         }
 
-        int64_t tid = thread_to_tid[scope->thread_id_];
+        int64_t const tid = thread_to_tid[scope->thread_id_];
 
         // Calculate timestamps in nanoseconds
         auto start_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -186,10 +186,8 @@ std::string ConvertScopeDataToChromeTrace(
         start_ns -= base_time_ns;
         end_ns -= base_time_ns;
 
-        if (start_ns < 0)
-            start_ns = 0;
-        if (end_ns < start_ns)
-            end_ns = start_ns;
+        start_ns = std::max<int64_t>(start_ns, 0);
+        end_ns   = std::max(end_ns, start_ns);
 
         int64_t duration_ns = end_ns - start_ns;
         // Ensure non-zero duration for visibility
@@ -197,9 +195,9 @@ std::string ConvertScopeDataToChromeTrace(
 
         // Add duration event for this scope
         append_event(
-            std::string("{\"name\":") + JsonQuote(scope->name_) +
-            ",\"ph\":\"X\",\"pid\":0,\"tid\":" + std::to_string(tid) + ",\"ts\":" +
-            std::to_string(start_ns) + ",\"dur\":" + std::to_string(duration_ns) + "}");
+            std::string("{\"name\":") + JsonQuote(scope->name_) + R"(,"ph":"X","pid":0,"tid":)" +
+            std::to_string(tid) + ",\"ts\":" + std::to_string(start_ns) +
+            ",\"dur\":" + std::to_string(duration_ns) + "}");
 
         // Process children
         for (const auto& child : scope->children_)
@@ -359,6 +357,8 @@ void timing_stats::calculate_statistics(bool include_percentiles)
         double const diff = sample - mean_time_;
         variance_sum += diff * diff;
     }
+    // sample_count_ is guaranteed > 0 here due to check at line 346
+    // cppcheck-suppress knownConditionTrueFalse
     std_deviation_ = sample_count_ > 0 ? std::sqrt(variance_sum / sample_count_) : 0.0;
 
     // Optionally compute percentiles (25th, 50th, 75th, 90th, 95th, 99th)
@@ -704,7 +704,7 @@ void profiler_session::normalize_xspace(x_space* space) const
         space->add_hostname("localhost");
     }
 }
-void profiler_session::register_scope_start(xsigma::profiler_scope* scope)
+void profiler_session::register_scope_start(const xsigma::profiler_scope* scope)
 {
     if (!options_.enable_hierarchical_profiling_ || !active_.load())
     {
@@ -738,7 +738,7 @@ void profiler_session::register_scope_start(xsigma::profiler_scope* scope)
     }
 }
 
-void profiler_session::register_scope_end(xsigma::profiler_scope* scope)
+void profiler_session::register_scope_end(const xsigma::profiler_scope* scope)
 {
     if (!options_.enable_hierarchical_profiling_ || !active_.load())
     {
@@ -763,9 +763,9 @@ void profiler_session::register_scope_end(xsigma::profiler_scope* scope)
 //=============================================================================
 
 profiler_scope::profiler_scope(const std::string& name, xsigma::profiler_session* session)
-    : session_((session != nullptr) ? session : xsigma::profiler_session::current_session())
+    : session_((session != nullptr) ? session : xsigma::profiler_session::current_session()),
+      data_(std::make_unique<xsigma::profiler_scope_data>())
 {
-    data_             = std::make_unique<xsigma::profiler_scope_data>();
     data_->name_      = name;
     data_->thread_id_ = std::this_thread::get_id();
 
@@ -787,7 +787,7 @@ profiler_scope::~profiler_scope()
 void profiler_scope::start()
 {
     // Skip all work if no session or hierarchical profiling disabled
-    if (session_ == nullptr || (session_ && !session_->options_.enable_hierarchical_profiling_))
+    if (session_ == nullptr || !session_->options_.enable_hierarchical_profiling_)
     {
         return;
     }
@@ -801,6 +801,8 @@ void profiler_scope::start()
     data_->start_time_ = std::chrono::high_resolution_clock::now();
 
     // Register with session for hierarchical tracking
+    // session_ is guaranteed non-null here due to check at line 788
+    // cppcheck-suppress knownConditionTrueFalse
     if (session_ != nullptr)
     {
         session_->register_scope_start(this);
@@ -820,7 +822,7 @@ void profiler_scope::start()
 void profiler_scope::stop()
 {
     // Skip all work if no session or hierarchical profiling disabled
-    if (session_ == nullptr || (session_ && !session_->options_.enable_hierarchical_profiling_))
+    if (session_ == nullptr || !session_->options_.enable_hierarchical_profiling_)
     {
         return;
     }
@@ -839,6 +841,8 @@ void profiler_scope::stop()
     data_->timing_stats_.calculate_statistics(session_->options_.calculate_percentiles_);
 
     // Update memory statistics
+    // session_ is guaranteed non-null here due to check at line 821
+    // cppcheck-suppress knownConditionTrueFalse
     if (session_ != nullptr)
     {
         if (session_->options_.enable_memory_tracking_ && session_->memory_tracker_)
@@ -883,12 +887,12 @@ std::string profiler_session::generate_chrome_trace_json() const
     // Prefer hierarchical scope data if available, otherwise use xspace
     if (root_scope_ != nullptr && options_.enable_hierarchical_profiling_)
     {
-        uint64_t base_time_ns =
+        uint64_t const base_time_ns =
             std::chrono::duration_cast<std::chrono::nanoseconds>(start_time_.time_since_epoch())
                 .count();
         return ConvertScopeDataToChromeTrace(root_scope_.get(), base_time_ns);
     }
-    else if (xspace_ready_)
+    if (xspace_ready_)
     {
         return ConvertXSpaceToChromeTrace(xspace_);
     }
@@ -907,7 +911,7 @@ bool profiler_session::write_chrome_trace(const std::string& filename) const
     std::string json;
     if (root_scope_ != nullptr && options_.enable_hierarchical_profiling_)
     {
-        uint64_t base_time_ns =
+        uint64_t const base_time_ns =
             std::chrono::duration_cast<std::chrono::nanoseconds>(start_time_.time_since_epoch())
                 .count();
         json = ConvertScopeDataToChromeTrace(root_scope_.get(), base_time_ns);

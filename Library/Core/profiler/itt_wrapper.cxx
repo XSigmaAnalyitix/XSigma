@@ -33,7 +33,7 @@ thread_local std::unordered_map<std::string, __itt_string_handle*> g_string_hand
 
 void itt_init()
 {
-    std::lock_guard<std::mutex> lock(g_itt_init_mutex);
+    std::scoped_lock const lock(g_itt_init_mutex);
 
     if (g_itt_domain == nullptr)
     {

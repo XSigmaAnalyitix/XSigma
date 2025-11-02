@@ -15,7 +15,7 @@ std::string sanitizer::remove_null_bytes(std::string_view str)
     std::string result;
     result.reserve(str.length());
 
-    for (char c : str)
+    for (char const c : str)
     {
         if (c != '\0')
         {
@@ -31,7 +31,7 @@ std::string sanitizer::remove_non_printable(std::string_view str)
     std::string result;
     result.reserve(str.length());
 
-    for (unsigned char c : str)
+    for (unsigned char const c : str)
     {
         // Keep only printable ASCII (32-126)
         if (c >= 32 && c <= 126)
@@ -47,24 +47,24 @@ std::string sanitizer::trim(std::string_view str)
 {
     if (str.empty())
     {
-        return std::string();
+        return {};
     }
 
     // Find first non-whitespace character
-    auto start =
+    const auto* start =
         std::find_if(str.begin(), str.end(), [](unsigned char c) { return !std::isspace(c); });
 
     // Find last non-whitespace character
-    auto end =
+    const auto* end =
         std::find_if(str.rbegin(), str.rend(), [](unsigned char c) { return !std::isspace(c); })
             .base();
 
     if (start >= end)
     {
-        return std::string();
+        return {};
     }
 
-    return std::string(start, end);
+    return {start, end};
 }
 
 std::string sanitizer::truncate(std::string_view str, size_t max_length)
@@ -82,7 +82,7 @@ std::string sanitizer::escape_html(std::string_view str)
     std::string result;
     result.reserve(str.length() * 2);  // Reserve extra space for escapes
 
-    for (char c : str)
+    for (char const c : str)
     {
         switch (c)
         {
@@ -115,7 +115,7 @@ std::string sanitizer::escape_sql(std::string_view str)
     std::string result;
     result.reserve(str.length() * 2);
 
-    for (char c : str)
+    for (char const c : str)
     {
         if (c == '\'')
         {
@@ -144,7 +144,7 @@ std::string sanitizer::escape_shell(std::string_view str)
     std::string result;
     result.reserve(str.length() * 2);
 
-    for (char c : str)
+    for (char const c : str)
     {
         // Escape shell special characters
         if (c == '$' || c == '`' || c == '\\' || c == '"' || c == '\'' || c == '!' || c == '&' ||
@@ -165,7 +165,7 @@ std::string sanitizer::escape_json(std::string_view str)
     std::string result;
     result.reserve(str.length() * 2);
 
-    for (char c : str)
+    for (char const c : str)
     {
         switch (c)
         {
@@ -213,13 +213,13 @@ std::string sanitizer::escape_json(std::string_view str)
 std::string sanitizer::escape_url(std::string_view str)
 {
     std::ostringstream escaped;
-    escaped.fill('0');
+    (void)escaped.fill('0');  // Explicitly ignore return value
     escaped << std::hex;
 
-    for (unsigned char c : str)
+    for (unsigned char const c : str)
     {
         // Keep alphanumeric and safe characters
-        if (std::isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~')
+        if ((std::isalnum(c) != 0) || c == '-' || c == '_' || c == '.' || c == '~')
         {
             escaped << c;
         }
@@ -283,10 +283,10 @@ std::string sanitizer::sanitize_filename(std::string_view filename)
     std::string result;
     result.reserve(filename.length());
 
-    for (unsigned char c : filename)
+    for (unsigned char const c : filename)
     {
         // Keep only safe characters: alphanumeric, underscore, hyphen, dot
-        if (std::isalnum(c) || c == '_' || c == '-' || c == '.')
+        if ((std::isalnum(c) != 0) || c == '_' || c == '-' || c == '.')
         {
             result += static_cast<char>(c);
         }

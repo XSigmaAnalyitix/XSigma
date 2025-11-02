@@ -259,10 +259,12 @@ xsigma::statistical_metrics statistical_analyzer::analyze_time_series(
 
     std::vector<double> values;
     values.reserve(it->second.size());
-    for (const auto& point : it->second)
-    {
-        values.push_back(point.value_);
-    }
+    // Use std::transform to extract values
+    std::transform(
+        it->second.begin(),
+        it->second.end(),
+        std::back_inserter(values),
+        [](const xsigma::time_series_point& point) { return point.value_; });
 
     return calculate_metrics(values);
 }
@@ -619,9 +621,10 @@ void statistical_analyzer::trim_time_series_if_needed(
 
 statistical_analysis_scope::statistical_analysis_scope(
     xsigma::statistical_analyzer& analyzer, std::string name)
-    : analyzer_(analyzer), name_(std::move(name))
+    : analyzer_(analyzer),
+      name_(std::move(name)),
+      start_time_(std::chrono::high_resolution_clock::now())
 {
-    start_time_ = std::chrono::high_resolution_clock::now();
 }
 
 statistical_analysis_scope::~statistical_analysis_scope()

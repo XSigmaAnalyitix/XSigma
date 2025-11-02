@@ -19,10 +19,11 @@
 
 include_guard(GLOBAL)
 
-# ============================================================================= Early Dependency Checks
+# ============================================================================= Early Dependency
+# Checks
 # =============================================================================
-# Check for optional dependencies and disable features if libraries are not found
-# This must happen before feature flag mapping to ensure correct XSIGMA_HAS_* values
+# Check for optional dependencies and disable features if libraries are not found This must happen
+# before feature flag mapping to ensure correct XSIGMA_HAS_* values
 
 # Intel ITT API support - check if library is available
 if(XSIGMA_ENABLE_ITTAPI)
@@ -109,8 +110,8 @@ else()
   list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_HAS_GTEST=0)
 endif()
 
-# Kineto profiling support
-# Note: XSIGMA_ENABLE_KINETO may have been disabled in ThirdParty/CMakeLists.txt if library not found
+# Kineto profiling support Note: XSIGMA_ENABLE_KINETO may have been disabled in
+# ThirdParty/CMakeLists.txt if library not found
 if(XSIGMA_ENABLE_KINETO)
   list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_HAS_KINETO=1)
 else()
@@ -184,9 +185,8 @@ endif()
 # =============================================================================
 # These libraries are always linked regardless of feature flags
 
-# fmt - Header-only formatting library
-# XSigma::fmt is an alias to fmt::fmt-header-only (set in ThirdParty/CMakeLists.txt)
-# This ensures compatibility with Kineto and avoids shared library issues
+# fmt - Header-only formatting library XSigma::fmt is an alias to fmt::fmt-header-only (set in
+# ThirdParty/CMakeLists.txt) This ensures compatibility with Kineto and avoids shared library issues
 if(TARGET XSigma::fmt)
   list(APPEND XSIGMA_DEPENDENCY_LIBS XSigma::fmt)
   list(APPEND XSIGMA_DEPENDENCY_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/fmt/include")
@@ -212,24 +212,36 @@ if(XSIGMA_ENABLE_MAGICENUM AND TARGET XSigma::magic_enum)
   list(APPEND XSIGMA_DEPENDENCY_INCLUDE_DIRS
        "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/magic_enum/include"
   )
-  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_MAGICENUM)
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_MAGICENUM=1)
   message(STATUS "Dependency: XSigma::magic_enum added to XSIGMA_DEPENDENCY_LIBS")
+else()
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_MAGICENUM=0)
 endif()
 
 # Logging backend dependencies (mutually exclusive)
-if(XSIGMA_USE_LOGURU AND TARGET XSigma::loguru)
+if(XSIGMA_ENABLE_LOGURU AND TARGET XSigma::loguru)
   list(APPEND XSIGMA_DEPENDENCY_LIBS XSigma::loguru)
   list(APPEND XSIGMA_DEPENDENCY_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/loguru")
-  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_LOGURU)
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_LOGURU=1)
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_GLOG=0)
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_NATIVE_LOGGING=0)
   message(STATUS "Dependency: XSigma::loguru added to XSIGMA_DEPENDENCY_LIBS")
-elseif(XSIGMA_USE_GLOG AND TARGET XSigma::glog)
+elseif(XSIGMA_ENABLE_GLOG AND TARGET XSigma::glog)
   list(APPEND XSIGMA_DEPENDENCY_LIBS XSigma::glog)
   list(APPEND XSIGMA_DEPENDENCY_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/glog/src")
-  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_GLOG)
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_GLOG=1)
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_LOGURU=0)
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_NATIVE_LOGGING=0)
   message(STATUS "Dependency: XSigma::glog added to XSIGMA_DEPENDENCY_LIBS")
-elseif(XSIGMA_USE_NATIVE_LOGGING)
-  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_NATIVE_LOGGING)
+elseif(XSIGMA_ENABLE_NATIVE_LOGGING)
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_NATIVE_LOGGING=1)
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_LOGURU=0)
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_GLOG=0)
   message(STATUS "Dependency: NATIVE logging backend selected")
+else()
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_NATIVE_LOGGING=0)
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_LOGURU=0)
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_USE_GLOG=0)
 endif()
 
 # TBB (Threading Building Blocks) support
@@ -254,12 +266,10 @@ if(XSIGMA_ENABLE_MIMALLOC AND TARGET XSigma::mimalloc)
   message(STATUS "Dependency: XSigma::mimalloc added to XSIGMA_DEPENDENCY_LIBS")
 endif()
 
-# PyTorch Kineto profiling library support Note: XSIGMA_HAS_KINETO is defined via configure_file()
-# in xsigma_features.h
+# PyTorch Kineto profiling library support
 if(XSIGMA_ENABLE_KINETO)
-  # Always add the compile definition and include directories when Kineto is enabled
-  # This allows Kineto-specific code to be compiled
-  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_HAS_KINETO)
+  # Always add the compile definition and include directories when Kineto is enabled This allows
+  # Kineto-specific code to be compiled
   list(APPEND XSIGMA_DEPENDENCY_INCLUDE_DIRS
        "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/kineto/libkineto/include"
   )

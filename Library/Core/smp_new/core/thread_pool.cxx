@@ -42,7 +42,7 @@ ThreadPool::ThreadPool(int pool_size, int numa_node_id)
 ThreadPool::~ThreadPool()
 {
     {
-        std::unique_lock<std::mutex> lock(mutex_);
+        std::unique_lock<std::mutex> const lock(mutex_);
         running_ = false;
     }
     condition_.notify_all();
@@ -58,28 +58,24 @@ ThreadPool::~ThreadPool()
 
 size_t ThreadPool::Size() const
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock const lock(mutex_);
     return total_;
 }
 
 size_t ThreadPool::NumAvailable() const
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock const lock(mutex_);
     return available_;
 }
 
 bool ThreadPool::InThreadPool() const
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    auto                        current_id = std::this_thread::get_id();
-    for (const auto& thread : threads_)
-    {
-        if (thread.get_id() == current_id)
-        {
-            return true;
-        }
-    }
-    return false;
+    std::scoped_lock const lock(mutex_);
+    const auto             current_id = std::this_thread::get_id();
+    return std::any_of(
+        threads_.begin(),
+        threads_.end(),
+        [current_id](const std::thread& thread) { return thread.get_id() == current_id; });
 }
 
 void ThreadPool::Run(std::function<void()> func)
@@ -129,7 +125,7 @@ void ThreadPool::MainLoop(std::size_t index)
 
         if (!tasks_.empty())
         {
-            TaskElement task = std::move(tasks_.front());
+            TaskElement const task = std::move(tasks_.front());
             tasks_.pop();
             available_--;
 

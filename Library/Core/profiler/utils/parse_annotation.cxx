@@ -234,14 +234,12 @@ annotation parse_annotation(std::string_view annotation_str)
     annotation                    result;
     std::vector<std::string_view> parts = split_name_and_metadata(annotation_str);
 
-    if (!parts.empty())
-    {
-        result.name = strip_whitespace(parts[0]);
+    // parts is guaranteed to have at least 2 elements from split_name_and_metadata
+    result.name = strip_whitespace(parts[0]);
 
-        for (const auto& key_value : parse_metadata(parts[1]))
-        {
-            result.metadata.push_back({key_value.first, key_value.second});
-        }
+    for (const auto& key_value : parse_metadata(parts[1]))
+    {
+        result.metadata.push_back({key_value.first, key_value.second});
     }
 
     return result;

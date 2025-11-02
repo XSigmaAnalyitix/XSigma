@@ -1,5 +1,6 @@
 #include "smp/Advanced/thread_pool.h"
 
+#include <algorithm>
 #include <utility>
 
 #include "logging/logger.h"
@@ -21,8 +22,8 @@ size_t task_thread_pool_base::DefaultNumThreads()
     {
         // In cpuinfo parlance cores are physical ones and processors are virtual
         // thread_pool should be defaulted to number of physical cores
-        size_t num_cores = cpuinfo_get_cores_count();
-        num_threads      = cpuinfo_get_processors_count();
+        size_t const num_cores = cpuinfo_get_cores_count();
+        num_threads            = cpuinfo_get_processors_count();
         if (num_cores > 0 && num_cores < num_threads)
         {
             return num_cores;
@@ -68,7 +69,7 @@ thread_pool::~thread_pool()
 {
     // Set running flag to false then notify all threads.
     {
-        std::unique_lock<std::mutex> lock(mutex_);
+        std::unique_lock<std::mutex> const lock(mutex_);
         running_ = false;
         condition_.notify_all();
     }
@@ -91,26 +92,23 @@ size_t thread_pool::Size() const
 
 size_t thread_pool::NumAvailable() const
 {
-    std::unique_lock<std::mutex> lock(mutex_);
+    std::unique_lock<std::mutex> const lock(mutex_);
     return available_;
 }
 
 bool thread_pool::InThreadPool() const
 {
-    for (auto& thread : threads_)
-    {
-        if (thread.get_id() == std::this_thread::get_id())
-        {
-            return true;
-        }
-    }
-    return false;
+    const auto current_id = std::this_thread::get_id();
+    return std::any_of(
+        threads_.begin(),
+        threads_.end(),
+        [current_id](const std::thread& thread) { return thread.get_id() == current_id; });
 }
 
 void thread_pool::Run(std::function<void()> func)
 {
     XSIGMA_CHECK(!threads_.empty(), "No threads available to run a task");
-    std::unique_lock<std::mutex> lock(mutex_);
+    std::unique_lock<std::mutex> const lock(mutex_);
 
     // Set task and signal condition variable so that a worker thread will
     // wake up and use the task.
@@ -145,7 +143,7 @@ void thread_pool::MainLoop(std::size_t index)
         // useful in the event that the function contains
         // shared_ptr arguments bound via bind.
         {
-            TaskElement tasks = std::move(tasks_.front());
+            TaskElement const tasks = std::move(tasks_.front());
             tasks_.pop();
             // Decrement count, indicating thread is no longer available.
             --available_;

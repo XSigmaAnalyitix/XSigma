@@ -56,19 +56,13 @@ public:
 
     profiler_status start() override
     {
-        if (!trace_active_)
-        {
-            trace_active_ = true;
-        }
+        trace_active_ = true;
         return profiler_status::Ok();
     }
 
     profiler_status stop() override
     {
-        if (trace_active_)
-        {
-            trace_active_ = false;
-        }
+        trace_active_ = false;
         return profiler_status::Ok();
     }
 

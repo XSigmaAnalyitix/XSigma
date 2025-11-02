@@ -195,11 +195,9 @@ void example_parallel_reduction()
         100000,
         [&data, &total_sum](int64_t begin, int64_t end)
         {
-            double local_sum = 0.0;
-            for (int64_t i = begin; i < end; ++i)
-            {
-                local_sum += data[i];
-            }
+            // Use std::accumulate for summing range
+            double const local_sum = std::accumulate(
+                data.begin() + begin, data.begin() + end, 0.0);
             // Atomic update
             double current = total_sum.load();
             while (!total_sum.compare_exchange_weak(current, current + local_sum))

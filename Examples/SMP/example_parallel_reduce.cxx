@@ -39,15 +39,12 @@ void example_basic_sum_reduction()
         data[i] = std::sin(i * 0.0001f);
     }
 
-    // Sequential sum for comparison
+    // Sequential sum for comparison using std::accumulate
     auto  start_seq = std::chrono::high_resolution_clock::now();
-    float seq_sum   = 0.0f;
-    for (float value : data)
-    {
-        seq_sum += value;
-    }
-    auto end_seq      = std::chrono::high_resolution_clock::now();
-    auto seq_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_seq - start_seq);
+    float seq_sum   = std::accumulate(data.begin(), data.end(), 0.0f);
+    auto  end_seq   = std::chrono::high_resolution_clock::now();
+    auto  seq_duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end_seq - start_seq);
 
     // Parallel sum using parallel_reduce
     auto  start_par = std::chrono::high_resolution_clock::now();
@@ -57,12 +54,8 @@ void example_basic_sum_reduction()
         0.0f,
         [&data](int64_t begin, int64_t end, float init)
         {
-            float local_sum = init;
-            for (int64_t i = begin; i < end; ++i)
-            {
-                local_sum += data[i];
-            }
-            return local_sum;
+            // Use std::accumulate for summing range
+            return std::accumulate(data.begin() + begin, data.begin() + end, init);
         },
         [](float a, float b) { return a + b; });
     auto end_par      = std::chrono::high_resolution_clock::now();
@@ -102,12 +95,9 @@ void example_min_max_reduction()
         std::numeric_limits<float>::max(),
         [&data](int64_t begin, int64_t end, float init)
         {
-            float local_min = init;
-            for (int64_t i = begin; i < end; ++i)
-            {
-                local_min = std::min(local_min, data[i]);
-            }
-            return local_min;
+            // Use std::min_element for finding minimum
+            auto const it = std::min_element(data.begin() + begin, data.begin() + end);
+            return (it != data.begin() + end) ? std::min(init, *it) : init;
         },
         [](float a, float b) { return std::min(a, b); });
 
@@ -118,12 +108,9 @@ void example_min_max_reduction()
         std::numeric_limits<float>::lowest(),
         [&data](int64_t begin, int64_t end, float init)
         {
-            float local_max = init;
-            for (int64_t i = begin; i < end; ++i)
-            {
-                local_max = std::max(local_max, data[i]);
-            }
-            return local_max;
+            // Use std::max_element for finding maximum
+            auto const it = std::max_element(data.begin() + begin, data.begin() + end);
+            return (it != data.begin() + end) ? std::max(init, *it) : init;
         },
         [](float a, float b) { return std::max(a, b); });
 

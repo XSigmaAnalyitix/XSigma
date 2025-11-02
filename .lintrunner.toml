@@ -221,7 +221,7 @@ command = [
     'python3',
     'Tools/linter/adapters/clangtidy_linter.py',
     '--binary=.lintbin/clang-tidy',
-    '--build_dir=./build',
+    '--build_dir=./build_ninja',
     '--',
     '@{{PATHSFILE}}'
 ]

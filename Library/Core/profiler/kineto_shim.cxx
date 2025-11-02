@@ -41,7 +41,7 @@ std::mutex        g_kineto_init_mutex;
 
 void kineto_init(bool cpu_only, bool log_on_error)
 {
-    std::lock_guard<std::mutex> lock(g_kineto_init_mutex);
+    std::scoped_lock const lock(g_kineto_init_mutex);
 
     if (g_kineto_initialized)
     {

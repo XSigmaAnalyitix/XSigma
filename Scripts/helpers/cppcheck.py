@@ -98,7 +98,9 @@ def build_cppcheck_command(
 
     cmd = [
         "cppcheck",
-        ".",
+        # Only scan Library and Examples directories (not entire project)
+        "Library",
+        "Examples",
         "--platform=unspecified",
         "--enable=all",
         "--inline-suppr",
@@ -121,12 +123,26 @@ def build_cppcheck_command(
         f"--output-file={output_file}",
     ]
 
-    # Exclude build directories (all folders starting with "build")
+    # Exclude build directories (all folders starting with "build") and third-party code
     default_excludes = [
         "-ibuild",
         "-ibuild_*",
         "-i./build",
         "-i./build_*",
+        "-iThirdParty",
+        "-i./ThirdParty",
+        "-iTools",
+        "-i./Tools",
+        "-i.git",
+        "-i./.git",
+        "-i.augment",
+        "-i./.augment",
+        "-i.vscode",
+        "-i./.vscode",
+        "-i.lintbin",
+        "-i./.lintbin",
+        "-i.ruff_cache",
+        "-i./.ruff_cache",
     ]
     cmd.extend(default_excludes)
 

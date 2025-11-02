@@ -78,12 +78,14 @@ std::vector<scope_snapshot> collect_scope_snapshots(const profiler_scope_data* r
 
 size_t compute_max_depth(const std::vector<scope_snapshot>& snapshots)
 {
-    size_t max_depth = 0;
-    for (const auto& snapshot : snapshots)
-    {
-        max_depth = (std::max)(max_depth, snapshot.depth);
-    }
-    return max_depth;
+    // Use std::accumulate to find maximum depth
+    return std::accumulate(
+        snapshots.begin(),
+        snapshots.end(),
+        size_t{0},
+        [](size_t max_depth, const scope_snapshot& snapshot) {
+            return (std::max)(max_depth, snapshot.depth);
+        });
 }
 
 std::unordered_map<std::string, size_t> build_thread_histogram(

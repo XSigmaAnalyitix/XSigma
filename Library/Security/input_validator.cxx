@@ -91,7 +91,7 @@ bool input_validator::has_allowed_extension(
         return false;  // No extension found
     }
 
-    std::string_view extension = filename.substr(dot_pos);
+    std::string_view const extension = filename.substr(dot_pos);
 
     // Check if extension is in allowed list
     return std::any_of(

@@ -4,10 +4,10 @@
 #include <array>
 
 #ifndef __GLIBC_PREREQ
-#define __GLIBC_PREREQ(x, y) 0
+#define GLIBC_PREREQ(x, y) 0
 #endif
 
-#if defined(__GLIBC__) && __GLIBC_PREREQ(2, 12) && !defined(__APPLE__) && !defined(__ANDROID__)
+#if defined(__GLIBC__) && GLIBC_PREREQ(2, 12) && !defined(__APPLE__) && !defined(__ANDROID__)
 #define XSIGMA_HAS_PTHREAD_SETNAME_NP
 #endif
 
@@ -26,12 +26,13 @@ constexpr size_t kMaxThreadName = 15;
 }  // namespace
 #endif
 
-void set_thread_name(std::string name)
+void set_thread_name(const std::string& name)
 {
 #ifdef XSIGMA_HAS_PTHREAD_SETNAME_NP
-    name.resize(std::min(name.size(), kMaxThreadName));
+    std::string truncated_name = name;
+    truncated_name.resize(std::min(truncated_name.size(), kMaxThreadName));
 
-    pthread_setname_np(pthread_self(), name.c_str());
+    pthread_setname_np(pthread_self(), truncated_name.c_str());
 #else
     (void)name;
 #endif

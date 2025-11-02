@@ -92,7 +92,7 @@ void set_num_intraop_threads(int nthreads)
 
 size_t get_num_intraop_threads()
 {
-    int num_threads = g_num_intraop_threads.load();
+    int const num_threads = g_num_intraop_threads.load();
     if (num_threads == kNotSet || num_threads == kConsumed)
     {
         return core::TaskThreadPoolBase::DefaultNumThreads();
@@ -121,7 +121,7 @@ void set_num_interop_threads(int nthreads)
 
 size_t get_num_interop_threads()
 {
-    int num_threads = g_num_interop_threads.load();
+    int const num_threads = g_num_interop_threads.load();
     if (num_threads == kNotSet || num_threads == kConsumed)
     {
         return core::TaskThreadPoolBase::DefaultNumThreads();
@@ -168,6 +168,7 @@ std::string get_parallel_info()
     ss << "Backend: " << native::GetBackendInfo() << "\n";
     ss << "Intra-op threads: " << get_num_intraop_threads() << "\n";
     ss << "Inter-op threads: " << get_num_interop_threads() << "\n";
+    // cppcheck-suppress knownConditionTrueFalse
     ss << "In parallel region: " << (in_parallel_region() ? "yes" : "no") << "\n";
     ss << "Current thread ID: " << get_thread_num();
     return ss.str();
@@ -193,8 +194,10 @@ core::TaskThreadPoolBase& GetIntraopPool()
 {
     if (!g_intraop_pool)
     {
-        std::lock_guard<std::mutex> lock(g_pool_mutex);
-        if (!g_intraop_pool)
+        std::scoped_lock const lock(g_pool_mutex);
+        // Double-checked locking pattern - recheck after acquiring lock
+        // cppcheck-suppress identicalInnerCondition
+        if (!g_intraop_pool)  // NOLINT(clang-analyzer-core.NullDereference)
         {
             int num_threads = g_num_intraop_threads.exchange(kConsumed);
             if (num_threads == kNotSet)
@@ -211,8 +214,10 @@ core::TaskThreadPoolBase& GetInteropPool()
 {
     if (!g_interop_pool)
     {
-        std::lock_guard<std::mutex> lock(g_pool_mutex);
-        if (!g_interop_pool)
+        std::scoped_lock const lock(g_pool_mutex);
+        // Double-checked locking pattern - recheck after acquiring lock
+        // cppcheck-suppress identicalInnerCondition
+        if (!g_interop_pool)  // NOLINT(clang-analyzer-core.NullDereference)
         {
             int num_threads = g_num_interop_threads.exchange(kConsumed);
             if (num_threads == kNotSet)

@@ -150,7 +150,7 @@ def check_file(
 ) -> list[LintMessage]:
     try:
         proc = run_command(
-            [binary, f"-p={build_dir}", *include_args, filename],
+            [binary, f"-p={build_dir}", "-warnings-as-errors=*", *include_args, filename],
         )
     except OSError as err:
         return [

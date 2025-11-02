@@ -491,13 +491,13 @@ private:
      * @brief Register the start of a profiling scope
      * @param scope Pointer to the scope being started
      */
-    void register_scope_start(xsigma::profiler_scope* scope);
+    void register_scope_start(const xsigma::profiler_scope* scope);
 
     /**
      * @brief Register the end of a profiling scope
      * @param scope Pointer to the scope being ended
      */
-    void register_scope_end(xsigma::profiler_scope* scope);
+    void register_scope_end(const xsigma::profiler_scope* scope);
 };
 
 /**

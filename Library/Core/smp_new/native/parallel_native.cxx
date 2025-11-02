@@ -66,7 +66,7 @@ void InitializeNativeBackend()
 
 void ShutdownBackend()
 {
-    BackendType backend = g_current_backend.load();
+    BackendType const backend = g_current_backend.load();
 
     switch (backend)
     {
@@ -112,7 +112,7 @@ std::string GetBackendInfo()
     oss << "XSigma SMP_NEW Backend Information:\n";
     oss << "  Current Backend: ";
 
-    BackendType backend = g_current_backend.load();
+    BackendType const backend = g_current_backend.load();
     switch (backend)
     {
     case BackendType::NATIVE:

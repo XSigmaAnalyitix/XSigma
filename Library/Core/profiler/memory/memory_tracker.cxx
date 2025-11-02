@@ -258,10 +258,12 @@ std::vector<xsigma::memory_allocation> memory_tracker::get_active_allocations() 
     std::vector<xsigma::memory_allocation> allocations;
     allocations.reserve(active_allocations_.size());
 
-    for (const auto& pair : active_allocations_)
-    {
-        allocations.push_back(pair.second);
-    }
+    // Use std::transform to extract allocation values
+    std::transform(
+        active_allocations_.begin(),
+        active_allocations_.end(),
+        std::back_inserter(allocations),
+        [](const auto& pair) { return pair.second; });
 
     return allocations;
 }
@@ -359,7 +361,7 @@ size_t memory_tracker::get_process_peak_memory_usage()
     std::string line;
     while (std::getline(status_file, line))
     {
-        if (line.substr(0, 10) == "VmHWM:")
+        if (line.size() >= 6 && line.substr(0, 6) == "VmHWM:")
         {
             size_t kb = 0;
             if (sscanf(line.c_str(), "VmHWM: %zu kB", &kb) == 1)
