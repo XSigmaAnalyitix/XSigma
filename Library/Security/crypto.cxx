@@ -7,8 +7,11 @@
 
 // Platform-specific includes for secure random
 #if defined(_WIN32)
-#include <bcrypt.h>
+// Must come first - defines base Windows types
 #include <windows.h>
+
+// Must come after windows.h - depends on Windows types
+#include <bcrypt.h>
 #pragma comment(lib, "bcrypt.lib")
 #elif defined(__APPLE__)
 #include <Security/SecRandom.h>

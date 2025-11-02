@@ -93,16 +93,18 @@ std::vector<const xplane*> find_planes_with_names(
 
 // Returns the plane with the given name in the container. If necessary, adds a
 // new plane to the container.
-xplane* find_or_add_mutable_plane_with_name(x_space* space, std::string_view name);
+XSIGMA_API xplane* find_or_add_mutable_plane_with_name(x_space* space, std::string_view name);
 
 // Returns all the planes with a given prefix.
-std::vector<const xplane*> find_planes_with_prefix(const x_space& space, std::string_view prefix);
-std::vector<xplane*>       find_mutable_planes_with_prefix(x_space* space, std::string_view prefix);
+XSIGMA_API std::vector<const xplane*> find_planes_with_prefix(
+    const x_space& space, std::string_view prefix);
+XSIGMA_API std::vector<xplane*> find_mutable_planes_with_prefix(
+    x_space* space, std::string_view prefix);
 
 // Returns the plane with the given id/name or nullptr if not found.
-const xline*              find_line_with_id(const xplane& plane, int64_t id);
-std::vector<const xline*> find_lines_with_id(const xplane& plane, int64_t id);
-const xline*              find_line_with_name(const xplane& plane, std::string_view name);
+XSIGMA_API const xline* find_line_with_id(const xplane& plane, int64_t id);
+XSIGMA_API std::vector<const xline*> find_lines_with_id(const xplane& plane, int64_t id);
+XSIGMA_API const xline* find_line_with_name(const xplane& plane, std::string_view name);
 
 xstat* find_or_add_mutable_stat(const x_stat_metadata& stat_metadata, xevent* event);
 
@@ -141,7 +143,7 @@ void sort_x_space(x_space* space);
 // Functor that compares xevents for sorting by timespan.
 struct xevents_comparator
 {
-    bool operator()(const xevent& a, const xevent& b) const;
+    XSIGMA_API bool operator()(const xevent& a, const xevent& b) const;
 };
 
 // Returns a sorted vector of all XEvents in the given XPlane.
@@ -181,10 +183,10 @@ void MergePlanes(const std::vector<const xplane*>& src_planes, xplane* dst_plane
 int64_t GetStartTimestampNs(const xplane& plane);
 
 // Returns true if there are no XEvents.
-bool IsEmpty(const x_space& space);
+XSIGMA_API bool IsEmpty(const x_space& space);
 
 // Return true if grouping/step-tracking is done on the Xspace already.
-bool IsXSpaceGrouped(const x_space& space);
+XSIGMA_API bool IsXSpaceGrouped(const x_space& space);
 
 // Mutate the XPlane by adding predefined XFlow. e.g. GPU kernel launches =>
 // GPU kernel events.
@@ -241,12 +243,12 @@ private:
 void AggregateXPlane(const xplane& full_trace, xplane& aggregated_trace);
 
 // Return whether this is a custom plan.
-bool IsCustomPlane(const xplane& plane);
+XSIGMA_API bool IsCustomPlane(const xplane& plane);
 
 // Return whether this is a host plan.
-bool IsHostPlane(const xplane& plane);
+XSIGMA_API bool IsHostPlane(const xplane& plane);
 
 // Return whether this is a device plan.
-bool IsDevicePlane(const xplane& plane);
+XSIGMA_API bool IsDevicePlane(const xplane& plane);
 
 }  // namespace xsigma

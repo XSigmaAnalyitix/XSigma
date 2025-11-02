@@ -70,27 +70,6 @@ XSIGMA_API void InitializeBackend(BackendType backend = BackendType::AUTO);
 XSIGMA_API void InitializeNativeBackend();
 
 /**
- * @brief Initialize the OpenMP parallel backend.
- *
- * This function initializes OpenMP for parallel execution.
- * Requires OpenMP support at compile time.
- *
- * @note Thread-safe. Can be called multiple times.
- * @throws std::runtime_error if OpenMP is not available.
- */
-XSIGMA_API void InitializeOpenMPBackend();
-
-/**
- * @brief Initialize the TBB parallel backend.
- *
- * This function initializes Intel TBB for parallel execution.
- * Requires TBB support at compile time.
- *
- * @note Thread-safe. Can be called multiple times.
- */
-XSIGMA_API void InitializeTBBBackend();
-
-/**
  * @brief Shutdown the parallel backend.
  *
  * This function shuts down the thread pools and releases resources.
@@ -113,24 +92,6 @@ XSIGMA_API void ShutdownBackend();
 XSIGMA_API void ShutdownNativeBackend();
 
 /**
- * @brief Shutdown the OpenMP parallel backend.
- *
- * This function shuts down OpenMP resources.
- *
- * @note Thread-safe. Can be called multiple times.
- */
-XSIGMA_API void ShutdownOpenMPBackend();
-
-/**
- * @brief Shutdown the TBB parallel backend.
- *
- * This function shuts down TBB resources.
- *
- * @note Thread-safe. Can be called multiple times.
- */
-XSIGMA_API void ShutdownTBBBackend();
-
-/**
  * @brief Check if the backend is initialized.
  *
  * @return true if the backend is initialized, false otherwise.
@@ -143,34 +104,6 @@ XSIGMA_API bool IsBackendInitialized();
  * @return true if the native backend is initialized, false otherwise.
  */
 XSIGMA_API bool IsNativeBackendInitialized();
-
-/**
- * @brief Check if the OpenMP backend is initialized.
- *
- * @return true if the OpenMP backend is initialized, false otherwise.
- */
-XSIGMA_API bool IsOpenMPBackendInitialized();
-
-/**
- * @brief Check if the TBB backend is initialized.
- *
- * @return true if the TBB backend is initialized, false otherwise.
- */
-XSIGMA_API bool IsTBBBackendInitialized();
-
-/**
- * @brief Check if OpenMP is available.
- *
- * @return true if OpenMP support is compiled in, false otherwise.
- */
-XSIGMA_API bool IsOpenMPAvailable();
-
-/**
- * @brief Check if TBB is available.
- *
- * @return true if TBB support is compiled in, false otherwise.
- */
-XSIGMA_API bool IsTBBAvailable();
 
 /**
  * @brief Get the current backend type.
@@ -192,19 +125,5 @@ XSIGMA_API std::string GetBackendInfo();
  * @return A string containing native backend information (version, configuration, etc.)
  */
 XSIGMA_API std::string GetNativeBackendInfo();
-
-/**
- * @brief Get information about the OpenMP backend.
- *
- * @return A string containing OpenMP backend information (version, configuration, etc.)
- */
-XSIGMA_API std::string GetOpenMPBackendInfo();
-
-/**
- * @brief Get information about the TBB backend.
- *
- * @return A string containing TBB backend information (version, configuration, etc.)
- */
-XSIGMA_API std::string GetTBBBackendInfo();
 
 }  // namespace xsigma::smp_new::native

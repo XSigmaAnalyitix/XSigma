@@ -528,7 +528,7 @@ inline std::string GpuPlaneName(int32_t device_ordinal)
     return strings::str_cat(kGpuPlanePrefix, device_ordinal);
 }
 
-std::string_view GetHostEventTypeStr(HostEventType event_type);
+XSIGMA_API std::string_view GetHostEventTypeStr(HostEventType event_type);
 
 bool IsHostEventType(HostEventType event_type, std::string_view event_name);
 
@@ -537,44 +537,44 @@ inline bool IsHostEventType(HostEventType event_type, std::string_view event_nam
     return GetHostEventTypeStr(event_type) == event_name;
 }
 
-std::optional<int64_t> FindHostEventType(std::string_view event_name);
+XSIGMA_API std::optional<int64_t> FindHostEventType(std::string_view event_name);
 
-std::optional<int64_t> FindTfOpEventType(std::string_view event_name);
+XSIGMA_API std::optional<int64_t> FindTfOpEventType(std::string_view event_name);
 
-std::string_view GetStatTypeStr(StatType stat_type);
+XSIGMA_API std::string_view GetStatTypeStr(StatType stat_type);
 
-bool IsStatType(StatType stat_type, std::string_view stat_name);
+XSIGMA_API bool IsStatType(StatType stat_type, std::string_view stat_name);
 
 inline bool IsStatType(StatType stat_type, std::string_view stat_name)
 {
     return GetStatTypeStr(stat_type) == stat_name;
 }
 
-std::optional<int64_t> FindStatType(std::string_view stat_name);
+XSIGMA_API std::optional<int64_t> FindStatType(std::string_view stat_name);
 
-std::string_view GetMegaScaleStatTypeStr(MegaScaleStatType stat_type);
+XSIGMA_API std::string_view GetMegaScaleStatTypeStr(MegaScaleStatType stat_type);
 
 inline bool IsMegaScaleStatType(MegaScaleStatType stat_type, std::string_view stat_name)
 {
     return GetMegaScaleStatTypeStr(stat_type) == stat_name;
 }
 
-std::optional<int64_t> FindMegaScaleStatType(std::string_view stat_name);
+XSIGMA_API std::optional<int64_t> FindMegaScaleStatType(std::string_view stat_name);
 
 // Returns true if the given event shouldn't be shown in the trace viewer.
-bool IsInternalEvent(std::optional<int64_t> event_type);
+XSIGMA_API bool IsInternalEvent(std::optional<int64_t> event_type);
 
 // Returns true if the given stat shouldn't be shown in the trace viewer.
-bool IsInternalStat(std::optional<int64_t> stat_type);
+XSIGMA_API bool IsInternalStat(std::optional<int64_t> stat_type);
 
-std::string_view GetTaskEnvStatTypeStr(TaskEnvStatType stat_type);
+XSIGMA_API std::string_view GetTaskEnvStatTypeStr(TaskEnvStatType stat_type);
 
-std::optional<int64_t> FindTaskEnvStatType(std::string_view stat_name);
+XSIGMA_API std::optional<int64_t> FindTaskEnvStatType(std::string_view stat_name);
 
 // Support for flow events:
 // This class enables encoding/decoding the flow id and direction, stored as
 // XStat value. The flow id are limited to 56 bits.
-class XFlow
+class XSIGMA_VISIBILITY XFlow
 {
 public:
     enum FlowDirection
@@ -625,8 +625,8 @@ public:
 
 private:
     explicit XFlow(uint64_t encoded) { encoded_.whole = encoded; }
-    static constexpr uint64_t    kFlowMask = (1ULL << 56) - 1;
-    static std::atomic<uint64_t> next_flow_id_;
+    static constexpr uint64_t               kFlowMask = (1ULL << 56) - 1;
+    XSIGMA_API static std::atomic<uint64_t> next_flow_id_;
 
     union
     {

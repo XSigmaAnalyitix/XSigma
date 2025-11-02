@@ -67,11 +67,11 @@ public:
      *
      * Join must have been called since the last DoJob before destroying the proxy.
      */
-        ~Proxy();
-        Proxy(const Proxy&)            = delete;
-        Proxy& operator=(const Proxy&) = delete;
-        Proxy(Proxy&&) noexcept;
-        Proxy& operator=(Proxy&&) noexcept;
+        XSIGMA_API ~Proxy();
+        Proxy(const Proxy&)                       = delete;
+        Proxy&            operator=(const Proxy&) = delete;
+        XSIGMA_API        Proxy(Proxy&&) noexcept;
+        XSIGMA_API Proxy& operator=(Proxy&&) noexcept;
 
         /**
      * @brief Blocks calling thread until all jobs are done.
@@ -79,14 +79,14 @@ public:
      * Note: nested proxies may execute jobs on calling thread during this function to maximize
      * parallelism.
      */
-        void Join();
+        XSIGMA_API void Join();
 
         /**
      * @brief Add a job to the thread pool queue
      *
      * @param job Function object to be executed by a thread in the pool
      */
-        void DoJob(std::function<void()> job);
+        XSIGMA_API void DoJob(std::function<void()> job);
 
         /**
      * @brief Get a reference on all system threads used by this proxy
@@ -150,7 +150,7 @@ public:
    * If greater than the number of thread of the pool, uses the number of thread of the pool.
    * @return A proxy.
    */
-    Proxy AllocateThreads(std::size_t threadCount = 0);
+    XSIGMA_API Proxy AllocateThreads(std::size_t threadCount = 0);
 
     /**
    * Value returned by `GetThreadID` when called by a thread that does not belong to the pool.
@@ -166,14 +166,14 @@ public:
    *
    * @return The thread ID of the current thread within the pool, or ExternalThreadID if called from outside
    */
-    std::size_t GetThreadId() const;
+    XSIGMA_API std::size_t GetThreadId() const;
 
     /**
    * @brief Returns true when called from a proxy thread, false otherwise.
    *
    * @return true if the current thread is a pool thread within a proxy scope
    */
-    bool IsParallelScope() const noexcept;
+    XSIGMA_API bool IsParallelScope() const noexcept;
 
     /**
    * @brief Returns true for a single proxy thread, false for the others.
@@ -182,14 +182,14 @@ public:
    *
    * @return true if the current thread is designated as the "single thread" in the proxy
    */
-    bool GetSingleThread() const;
+    XSIGMA_API bool GetSingleThread() const;
 
     /**
    * @brief Returns number of system thread used by the thread pool.
    *
    * @return The total number of threads managed by this pool
    */
-    std::size_t ThreadCount() const noexcept;
+    XSIGMA_API std::size_t ThreadCount() const noexcept;
 
 private:
     /**
@@ -241,7 +241,7 @@ public:
      *
      * @return Reference to the global thread pool instance
      */
-    static thread_pool& GetInstance();
+    XSIGMA_API static thread_pool& GetInstance();
 };
 
 }  // namespace smp

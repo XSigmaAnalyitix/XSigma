@@ -64,16 +64,6 @@ void InitializeNativeBackend()
     g_native_backend_initialized.compare_exchange_strong(expected, true);
 }
 
-void InitializeOpenMPBackend()
-{
-    openmp::InitializeOpenMPBackend();
-}
-
-void InitializeTBBBackend()
-{
-    tbb::InitializeTBBBackend();
-}
-
 void ShutdownBackend()
 {
     BackendType backend = g_current_backend.load();
@@ -101,16 +91,6 @@ void ShutdownNativeBackend()
     g_native_backend_initialized = false;
 }
 
-void ShutdownOpenMPBackend()
-{
-    openmp::ShutdownOpenMPBackend();
-}
-
-void ShutdownTBBBackend()
-{
-    tbb::ShutdownTBBBackend();
-}
-
 bool IsBackendInitialized()
 {
     return g_backend_initialized.load();
@@ -119,26 +99,6 @@ bool IsBackendInitialized()
 bool IsNativeBackendInitialized()
 {
     return g_native_backend_initialized.load();
-}
-
-bool IsOpenMPBackendInitialized()
-{
-    return openmp::IsOpenMPBackendInitialized();
-}
-
-bool IsTBBBackendInitialized()
-{
-    return tbb::IsTBBBackendInitialized();
-}
-
-bool IsOpenMPAvailable()
-{
-    return openmp::IsOpenMPAvailable();
-}
-
-bool IsTBBAvailable()
-{
-    return tbb::IsTBBAvailable();
 }
 
 BackendType GetCurrentBackend()
@@ -170,8 +130,8 @@ std::string GetBackendInfo()
     }
 
     oss << "  Initialized: " << (IsBackendInitialized() ? "Yes" : "No") << "\n";
-    oss << "  OpenMP Available: " << (IsOpenMPAvailable() ? "Yes" : "No") << "\n";
-    oss << "  TBB Available: " << (IsTBBAvailable() ? "Yes" : "No") << "\n";
+    oss << "  OpenMP Available: " << (openmp::IsOpenMPAvailable() ? "Yes" : "No") << "\n";
+    oss << "  TBB Available: " << (tbb::IsTBBAvailable() ? "Yes" : "No") << "\n";
     oss << "\n";
 
     if (backend == BackendType::NATIVE)
@@ -180,11 +140,11 @@ std::string GetBackendInfo()
     }
     else if (backend == BackendType::OPENMP)
     {
-        oss << GetOpenMPBackendInfo();
+        oss << openmp::GetOpenMPBackendInfo();
     }
     else if (backend == BackendType::TBB)
     {
-        oss << GetTBBBackendInfo();
+        oss << tbb::GetTBBBackendInfo();
     }
 
     return oss.str();
@@ -205,16 +165,6 @@ std::string GetNativeBackendInfo()
     oss << "  Status: " << (IsNativeBackendInitialized() ? "Initialized" : "Not initialized")
         << "\n";
     return oss.str();
-}
-
-std::string GetOpenMPBackendInfo()
-{
-    return openmp::GetOpenMPBackendInfo();
-}
-
-std::string GetTBBBackendInfo()
-{
-    return tbb::GetTBBBackendInfo();
 }
 
 }  // namespace xsigma::smp_new::native

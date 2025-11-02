@@ -7,14 +7,14 @@
  * Tests utility functions for XPlane manipulation
  */
 
+#include <string>
+#include <vector>
+
 #include "Testing/xsigmaTest.h"
 #include "profiler/exporters/xplane/xplane.h"
 #include "profiler/exporters/xplane/xplane_builder.h"
 #include "profiler/exporters/xplane/xplane_utils.h"
 #include "profiler/exporters/xplane/xplane_visitor.h"
-
-#include <string>
-#include <vector>
 
 using namespace xsigma;
 
@@ -150,8 +150,6 @@ XSIGMATEST(XPlaneUtils, find_line_with_id_empty_plane)
     EXPECT_EQ(found, nullptr);
 }
 
-
-
 // ============================================================================
 // find_line_with_name Tests
 // ============================================================================
@@ -183,8 +181,6 @@ XSIGMATEST(XPlaneUtils, find_line_with_name_not_found)
     const xline* found = find_line_with_name(*plane, "Thread-99");
     EXPECT_EQ(found, nullptr);
 }
-
-
 
 // Note: remove_plane and remove_empty_planes functions are declared but not
 // implemented in xplane_utils.cxx, so we skip testing them for now

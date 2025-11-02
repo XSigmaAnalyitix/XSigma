@@ -38,6 +38,8 @@ limitations under the License.
 #include <string>
 #include <utility>
 
+#include "common/export.h"
+
 namespace xsigma
 {
 
@@ -121,7 +123,7 @@ public:
 
 private:
     // Returns a pointer to the memory_debug_annotation for the current thread.
-    static memory_debug_annotation* thread_memory_debug_annotation();
+    XSIGMA_API static memory_debug_annotation* thread_memory_debug_annotation();
 
     // Stores the previous values in case the annotations are nested.
     memory_debug_annotation last_annotation_;

@@ -354,7 +354,7 @@ public:
     /**
    * Get the backend in use.
    */
-    static const char* GetBackend();
+    XSIGMA_API static const char* GetBackend();
 
     /**
    * /!\ This method is not thread safe.
@@ -367,7 +367,7 @@ public:
    *
    * SetBackend() will return true if the backend was found and available.
    */
-    static bool SetBackend(const char* backend);
+    XSIGMA_API static bool SetBackend(const char* backend);
 
     /**
    * /!\ This method is not thread safe.
@@ -384,7 +384,7 @@ public:
    * to use it to set the maximum number of threads. Initialize() doesn't
    * need to be called.
    */
-    static void Initialize(int numThreads = 0);
+    XSIGMA_API static void Initialize(int numThreads = 0);
 
     /**
    * Get the estimated number of threads being used by the backend.
@@ -392,7 +392,7 @@ public:
    * vary dynamically and a particular task may not be executed on all the
    * available threads.
    */
-    static int GetEstimatedNumberOfThreads();
+    XSIGMA_API static int GetEstimatedNumberOfThreads();
 
     /**
    * Get the estimated number of threads being used by the backend by default.
@@ -400,7 +400,7 @@ public:
    * vary dynamically and a particular task may not be executed on all the
    * available threads.
    */
-    static int GetEstimatedDefaultNumberOfThreads();
+    XSIGMA_API static int GetEstimatedDefaultNumberOfThreads();
 
     /**
    * /!\ This method is not thread safe.
@@ -411,24 +411,24 @@ public:
    *
    * Default to false except for TBB.
    */
-    static void SetNestedParallelism(bool isNested);
+    XSIGMA_API static void SetNestedParallelism(bool isNested);
 
     /**
    * Get true if the nested parallelism is enabled.
    * By default, nested parallelism is enabled only for TBB.
    */
-    static bool GetNestedParallelism();
+    XSIGMA_API static bool GetNestedParallelism();
 
     /**
    * Return true if it is called from a parallel scope.
    */
-    static bool IsParallelScope();
+    XSIGMA_API static bool IsParallelScope();
 
     /**
    * Returns true if the given thread is specified thread
    * for single scope. Returns false otherwise.
    */
-    static bool GetSingleThread();
+    XSIGMA_API static bool GetSingleThread();
 
     /**
    * Structure used to specify configuration for LocalScope() method.

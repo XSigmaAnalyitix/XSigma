@@ -12,9 +12,9 @@ namespace xsigma::smp_new::parallel
 // Forward declarations for internal functions
 namespace internal
 {
-void set_thread_num(int thread_id);
-void set_in_parallel_region(bool in_region);
-core::TaskThreadPoolBase& GetInteropPool();
+XSIGMA_API void set_thread_num(int thread_id);
+XSIGMA_API void set_in_parallel_region(bool in_region);
+XSIGMA_API core::TaskThreadPoolBase& GetInteropPool();
 }  // namespace internal
 
 template <typename Functor>
@@ -126,9 +126,9 @@ T parallel_reduce(
     }
 
     // Calculate number of chunks
-    int64_t num_chunks = (n + grain_size - 1) / grain_size;
+    int64_t        num_chunks = (n + grain_size - 1) / grain_size;
     std::vector<T> partial_results(num_chunks, identity);
-    std::mutex results_mutex;
+    std::mutex     results_mutex;
 
     // Parallel reduction
     auto&            pool = internal::GetInteropPool();

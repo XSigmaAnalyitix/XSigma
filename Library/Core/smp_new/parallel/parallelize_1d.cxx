@@ -222,6 +222,8 @@ void worker_thread_func(Parallelize1DCoordinator& coordinator, size_t thread_id)
 
 void parallelize_1d(const std::function<void(size_t)>& function, size_t range, uint32_t flags)
 {
+    (void)flags;  // Suppress unused parameter warning
+
     if (range == 0)
     {
         return;

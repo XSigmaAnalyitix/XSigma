@@ -8,7 +8,7 @@
 #include <omp.h>
 #endif
 
-#ifdef AT_MKL_ENABLED
+#if XSIGMA_HAS_MKL
 #include <mkl.h>
 #endif
 
@@ -83,11 +83,12 @@ void SetNumOpenMPThreads(int nthreads)
         }
     }
 
-#ifdef AT_MKL_ENABLED
+#if XSIGMA_HAS_MKL
     mkl_set_num_threads_local(nthreads);
     mkl_set_dynamic(false);
 #endif
 #else
+    (void)nthreads;  // Suppress unused parameter warning
     throw std::runtime_error("OpenMP is not available");
 #endif
 }
@@ -156,7 +157,7 @@ std::string GetOpenMPBackendInfo()
     ss << "  OpenMP Version: Not available\n";
 #endif
 
-#ifdef AT_MKL_ENABLED
+#if XSIGMA_HAS_MKL
     ss << "  MKL Integration: Yes\n";
 #else
     ss << "  MKL Integration: No\n";

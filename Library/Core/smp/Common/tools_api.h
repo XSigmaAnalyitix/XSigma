@@ -29,7 +29,7 @@ class XSIGMA_VISIBILITY tools_api
 {
 public:
     //--------------------------------------------------------------------------------
-    static tools_api& GetInstance();
+    XSIGMA_API static tools_api& GetInstance();
 
     //--------------------------------------------------------------------------------
     BackendType GetBackendType();
@@ -207,8 +207,8 @@ private:
 class XSIGMA_VISIBILITY toolsAPIInitialize
 {
 public:
-    toolsAPIInitialize();
-    ~toolsAPIInitialize();
+    XSIGMA_API toolsAPIInitialize();
+    XSIGMA_API ~toolsAPIInitialize();
 };
 
 //--------------------------------------------------------------------------------

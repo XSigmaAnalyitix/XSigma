@@ -91,7 +91,7 @@ public:
 
     // Returns a string view.
     // REQUIRED: the value type should be string type or reference type.
-    std::string_view str_or_ref_value() const;
+    XSIGMA_API std::string_view str_or_ref_value() const;
 
     const xstat& raw_stat() const { return *stat_; }
 
@@ -339,20 +339,20 @@ public:
     }
 
     // Returns event metadata given its id. Returns a default value if not found.
-    const xevent_metadata* get_event_metadata(int64_t event_metadata_id) const;
+    XSIGMA_API const xevent_metadata* get_event_metadata(int64_t event_metadata_id) const;
 
     // Returns the type of an event given its id.
-    std::optional<int64_t> get_event_type(int64_t event_metadata_id) const;
+    XSIGMA_API std::optional<int64_t> get_event_type(int64_t event_metadata_id) const;
 
     // Returns stat metadata given its id. Returns a default value if not found.
-    const x_stat_metadata* get_stat_metadata(int64_t stat_metadata_id) const;
+    XSIGMA_API const x_stat_metadata* get_stat_metadata(int64_t stat_metadata_id) const;
 
     // Returns stat metadata given its type. Returns nullptr if not found.
     // Use as an alternative to get_stat_metadata above.
-    const x_stat_metadata* get_stat_metadata_by_type(int64_t stat_type) const;
+    XSIGMA_API const x_stat_metadata* get_stat_metadata_by_type(int64_t stat_type) const;
 
     // Returns the type of an stat given its id.
-    std::optional<int64_t> get_stat_type(int64_t stat_metadata_id) const;
+    XSIGMA_API std::optional<int64_t> get_stat_type(int64_t stat_metadata_id) const;
 
 private:
     void build_event_type_map(const xplane* plane, const TypeGetterList& event_type_getter_list);

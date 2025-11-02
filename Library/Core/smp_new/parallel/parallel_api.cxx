@@ -7,7 +7,9 @@
 
 #include "smp_new/core/thread_pool.h"
 #include "smp_new/native/parallel_native.h"
+#include "smp_new/openmp/parallel_openmp.h"
 #include "smp_new/parallel/parallelize_1d.h"
+#include "smp_new/tbb/parallel_tbb.h"
 
 namespace xsigma::smp_new::parallel
 {
@@ -147,12 +149,12 @@ int get_backend()
 
 bool is_openmp_available()
 {
-    return native::IsOpenMPAvailable();
+    return openmp::IsOpenMPAvailable();
 }
 
 bool is_tbb_available()
 {
-    return native::IsTBBAvailable();
+    return tbb::IsTBBAvailable();
 }
 
 int get_thread_num()

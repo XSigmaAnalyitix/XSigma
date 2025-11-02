@@ -7,14 +7,14 @@
  * Tests builder pattern implementation for XPlane data structures
  */
 
-#include "Testing/xsigmaTest.h"
-#include "profiler/exporters/xplane/xplane.h"
-#include "profiler/exporters/xplane/xplane_builder.h"
-#include "profiler/core/timespan.h"
-
 #include <limits>
 #include <string>
 #include <vector>
+
+#include "Testing/xsigmaTest.h"
+#include "profiler/core/timespan.h"
+#include "profiler/exporters/xplane/xplane.h"
+#include "profiler/exporters/xplane/xplane_builder.h"
 
 using namespace xsigma;
 
@@ -321,7 +321,7 @@ XSIGMATEST(XPlaneBuilder, xplane_builder_get_or_create_event_metadata_string_mov
     xplane         plane;
     xplane_builder builder(&plane);
 
-    std::string name = "movable_event";
+    std::string name     = "movable_event";
     auto*       metadata = builder.get_or_create_event_metadata(std::move(name));
 
     EXPECT_NE(metadata, nullptr);
@@ -591,5 +591,3 @@ XSIGMATEST(XPlaneBuilder, xevent_builder_add_stat_value_double)
     event.add_stat_value(*stat_metadata, 3.14);
     EXPECT_TRUE(true);
 }
-
-

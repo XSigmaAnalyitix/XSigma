@@ -7,10 +7,10 @@
  * Tests schema definitions, enums, and utility functions
  */
 
+#include <string>
+
 #include "Testing/xsigmaTest.h"
 #include "profiler/exporters/xplane/xplane_schema.h"
-
-#include <string>
 
 using namespace xsigma;
 
@@ -127,9 +127,9 @@ XSIGMATEST(XPlaneSchema, find_stat_type_empty_string)
 
 XSIGMATEST(XPlaneSchema, xflow_construction_and_encoding)
 {
-    uint64_t              flow_id  = 12345;
-    XFlow::FlowDirection  direction = XFlow::kFlowIn;
-    ContextType           context   = ContextType::kGpuLaunch;  // Use valid context type
+    uint64_t             flow_id   = 12345;
+    XFlow::FlowDirection direction = XFlow::kFlowIn;
+    ContextType          context   = ContextType::kGpuLaunch;  // Use valid context type
 
     XFlow flow(flow_id, direction, context);
 
@@ -158,10 +158,7 @@ XSIGMATEST(XPlaneSchema, xflow_all_directions)
     uint64_t flow_id = 99999;
 
     std::vector<XFlow::FlowDirection> directions = {
-        XFlow::kFlowIn,
-        XFlow::kFlowOut,
-        XFlow::kFlowInOut
-    };
+        XFlow::kFlowIn, XFlow::kFlowOut, XFlow::kFlowInOut};
 
     for (auto direction : directions)
     {
@@ -255,8 +252,8 @@ XSIGMATEST(XPlaneSchema, hash_of_different_values_different)
 
 XSIGMATEST(XPlaneSchema, hash_combine_basic)
 {
-    size_t hash1 = HashOf(int64_t(123));
-    size_t hash2 = HashOf(int64_t(456));
+    size_t hash1    = HashOf(int64_t(123));
+    size_t hash2    = HashOf(int64_t(456));
     size_t combined = hash1;
     HashCombine(combined, hash2);
     EXPECT_NE(combined, hash1);
@@ -383,23 +380,22 @@ XSIGMATEST(XPlaneSchema, context_type_to_string_pjrt_library_call)
 
 XSIGMATEST(XPlaneSchema, hash_of_string_view_additional)
 {
-    std::string_view sv = "test_string";
-    size_t hash = HashOf(sv);
+    std::string_view sv   = "test_string";
+    size_t           hash = HashOf(sv);
     EXPECT_NE(hash, 0);
 }
 
 XSIGMATEST(XPlaneSchema, hash_of_string_additional)
 {
-    std::string str = "test_string";
-    size_t hash = HashOf(str);
+    std::string str  = "test_string";
+    size_t      hash = HashOf(str);
     EXPECT_NE(hash, 0);
 }
 
 XSIGMATEST(XPlaneSchema, hash_of_string_view_consistency)
 {
-    std::string str = "test";
-    std::string_view sv = str;
+    std::string      str = "test";
+    std::string_view sv  = str;
     // Hash of string and string_view should be the same
     EXPECT_EQ(HashOf(str), HashOf(sv));
 }
-

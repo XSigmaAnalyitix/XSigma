@@ -181,4 +181,45 @@ void worker_thread_func(Parallelize1DCoordinator& coordinator, size_t thread_id)
 
 }  // namespace internal
 
+/**
+ * @brief Optimized 1D data-parallel work distribution with work-stealing.
+ *
+ * This function provides high-performance data-parallel execution equivalent to
+ * PyTorch's pthreadpool_parallelize_1d(). It distributes a 1D range across
+ * multiple threads with minimal overhead using work-stealing for load balancing.
+ *
+ * Key Features:
+ * - Range-based work distribution (not task-based)
+ * - Work-stealing deque for load balancing
+ * - Minimal overhead per work item (~0.1-0.2 μs)
+ * - Blocking execution (waits for all work to complete)
+ * - Exception handling and propagation
+ *
+ * Performance:
+ * - Target: Within 2x of PyTorch's pthreadpool_parallelize_1d
+ * - Expected improvement: 10-100x faster than task-based parallel_for
+ *
+ * @param function Function to execute for each item in the range.
+ *                 Signature: void(size_t item_index)
+ * @param range    Number of items to process (0 to range-1)
+ * @param flags    Flags for future extensions (currently unused, pass 0)
+ *
+ * @note Thread-safe. Can be called from multiple threads (calls are serialized).
+ * @note Blocking function - returns only after all work is complete.
+ * @note Exceptions thrown in worker threads are captured and rethrown.
+ *
+ * Example:
+ * @code
+ * std::vector<float> data(1000000);
+ * xsigma::smp_new::parallel::parallelize_1d(
+ *     [&data](size_t i) {
+ *         data[i] = std::sin(i * 0.001f);
+ *     },
+ *     data.size()
+ * );
+ * @endcode
+ */
+XSIGMA_API void parallelize_1d(
+    const std::function<void(size_t)>& function, size_t range, uint32_t flags = 0);
+
 }  // namespace xsigma::smp_new::parallel
