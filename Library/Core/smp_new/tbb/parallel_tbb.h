@@ -6,6 +6,17 @@
 
 #include "common/macros.h"
 
+#ifndef XSIGMA_HAS_TBB
+#define XSIGMA_HAS_TBB 0
+#endif
+
+#if XSIGMA_HAS_TBB
+#include <tbb/blocked_range.h>
+#include <tbb/parallel_reduce.h>
+#endif
+
+#include <atomic>
+
 namespace xsigma::smp_new::tbb
 {
 
@@ -151,44 +162,6 @@ XSIGMA_API void ParallelForTBB(
  * @note Thread-safe.
  * @note Requires TBB support at compile time.
  */
-template <typename T>
-XSIGMA_API T ParallelReduceTBB(
-    int64_t                                      begin,
-    int64_t                                      end,
-    int64_t                                      grain_size,
-    T                                            ident,
-    const std::function<T(int64_t, int64_t, T)>& func,
-    const std::function<T(T, T)>&                reduce);
-
-/**
- * @brief Get information about the TBB backend.
- *
- * @return A string containing TBB backend information (version, configuration, etc.)
- */
-XSIGMA_API std::string GetTBBBackendInfo();
-
-}  // namespace xsigma::smp_new::tbb
-
-// ============================================================================
-// Template Implementation
-// ============================================================================
-
-// Check if XSIGMA_HAS_TBB is defined, default to 0 if not
-#ifndef XSIGMA_HAS_TBB
-#define XSIGMA_HAS_TBB 0
-#endif
-
-#if XSIGMA_HAS_TBB
-#include <tbb/blocked_range.h>
-#include <tbb/parallel_reduce.h>
-#endif
-
-#include <atomic>
-
-namespace xsigma::smp_new::tbb
-{
-
-// Forward declare the global state (defined in parallel_tbb.cxx)
 #if XSIGMA_HAS_TBB
 extern std::atomic<bool> g_tbb_initialized;
 extern thread_local bool g_in_parallel_region;
@@ -234,5 +207,12 @@ T ParallelReduceTBB(
     return func(begin, end, ident);
 #endif
 }
+
+/**
+ * @brief Get information about the TBB backend.
+ *
+ * @return A string containing TBB backend information (version, configuration, etc.)
+ */
+XSIGMA_API std::string GetTBBBackendInfo();
 
 }  // namespace xsigma::smp_new::tbb

@@ -2,7 +2,31 @@ Executive Summary
 
 Modular design with clear separation: core thread pool, high-level parallel API, specialized 1D work-stealing, and optional OpenMP/TBB backends.
 Strengths: good docs/tests, NUMA hooks, exception propagation, lazy pool init, backend info surfaces.
-Key issues to address:
+
+## Implementation Status
+
+The following critical fixes have been implemented:
+
+✅ **FIXED: ThreadPool exception_ data race** (Library/Core/smp_new/core/thread_pool.cxx)
+   - Protected exception_ writes with mutex lock to prevent concurrent access
+   - Exception is now safely captured and rethrown without data races
+
+✅ **FIXED: intraop_launch availability check** (Library/Core/smp_new/parallel/parallel_api.cxx)
+   - Changed from checking inter-op pool availability to intra-op pool availability
+   - Now correctly checks GetIntraopPool().NumAvailable() instead of GetInteropPool().NumAvailable()
+
+✅ **FIXED: TLS region flag restoration** (Library/Core/smp_new/parallel/parallel_api.hxx)
+   - Save and restore g_in_parallel_region flag on exit in both parallel_for and parallel_reduce
+   - Properly handles nested parallel regions by preserving previous state
+   - Applied to both serial execution paths and worker thread lambdas
+
+✅ **FIXED: Input validation for thread count setters** (Library/Core/smp_new/parallel/parallel_api.cxx)
+   - Added validation in set_num_intraop_threads() to reject thread counts <= 0
+   - Added validation in set_num_interop_threads() to reject thread counts <= 0
+
+## Remaining Issues to Address
+
+Key issues still requiring attention (updated with fixes applied):
 parallel_for/parallel_reduce use the global inter-op pool and a global barrier; can deadlock/block unrelated tasks and ignores backend selection.
 intraop_launch checks the wrong pool and doesn’t properly handle nested TLS.
 Data race on thread_pool’s exception_ and unused state/params.

@@ -16,9 +16,8 @@ size_t TaskThreadPoolBase::DefaultNumThreads()
     return num_threads > 0 ? num_threads : 1;
 }
 
-ThreadPool::ThreadPool(int pool_size, int numa_node_id, const std::function<void()>& init_thread)
+ThreadPool::ThreadPool(int pool_size, int numa_node_id)
     : running_(true),
-      complete_(true),
       available_(0),
       total_(0),
       pending_tasks_(0),
@@ -36,7 +35,7 @@ ThreadPool::ThreadPool(int pool_size, int numa_node_id, const std::function<void
     // Create worker threads
     for (int i = 0; i < pool_size; ++i)
     {
-        threads_.emplace_back([this, i, init_thread]() { MainLoop(i); });
+        threads_.emplace_back([this, i]() { MainLoop(i); });
     }
 }
 
@@ -88,7 +87,6 @@ void ThreadPool::Run(std::function<void()> func)
     std::unique_lock<std::mutex> lock(mutex_);
     tasks_.emplace(std::move(func));
     pending_tasks_++;
-    complete_ = false;
     lock.unlock();
     condition_.notify_one();
 }
@@ -144,23 +142,24 @@ void ThreadPool::MainLoop(std::size_t index)
             }
             catch (...)
             {
+                // Protect exception_ write with lock to prevent data race
+                lock.lock();
                 if (!exception_)
                 {
                     exception_ = std::current_exception();
                 }
+                lock.unlock();
             }
 
             lock.lock();
             available_++;
             pending_tasks_--;
 
-            // Mark as complete if no pending tasks
+            // Notify if all tasks are complete
             if (pending_tasks_ == 0)
             {
-                complete_ = true;
+                completed_.notify_one();
             }
-
-            completed_.notify_one();
         }
     }
 }

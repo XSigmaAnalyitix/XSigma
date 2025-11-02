@@ -204,5 +204,316 @@ XSIGMA_API std::string get_parallel_info();
 
 }  // namespace xsigma::smp_new::parallel
 
-// Include template implementations
-#include "smp_new/parallel/parallel_api.hxx"
+// ============================================================================
+// Template Implementations
+// ============================================================================
+
+#include <algorithm>
+#include <atomic>
+#include <condition_variable>
+#include <limits>
+#include <mutex>
+#include <vector>
+
+#include "smp_new/core/thread_pool.h"
+#include "smp_new/native/parallel_native.h"
+#include "smp_new/tbb/parallel_tbb.h"
+
+namespace xsigma::smp_new::parallel
+{
+
+// Forward declarations for internal functions
+namespace internal
+{
+XSIGMA_API void set_thread_num(int thread_id);
+XSIGMA_API void set_in_parallel_region(bool in_region);
+XSIGMA_API core::TaskThreadPoolBase& GetInteropPool();
+XSIGMA_API core::TaskThreadPoolBase& GetIntraopPool();
+}  // namespace internal
+
+template <typename Functor>
+void parallel_for(int64_t begin, int64_t end, int64_t grain_size, const Functor& f)
+{
+    if (begin >= end)
+    {
+        return;
+    }
+
+    // Route to appropriate backend based on current selection
+    native::BackendType backend = native::GetCurrentBackend();
+    if (backend == native::BackendType::TBB)
+    {
+        // Convert functor to std::function and delegate to TBB backend
+        std::function<void(int64_t, int64_t)> func = f;
+        tbb::ParallelForTBB(begin, end, grain_size, func);
+        return;
+    }
+    // For NATIVE and OPENMP backends, use the native implementation below
+
+    int64_t n = end - begin;
+
+    // Determine grain size
+    if (grain_size <= 0)
+    {
+        auto num_threads = static_cast<int64_t>(internal::GetInteropPool().Size());
+        grain_size       = std::max(static_cast<int64_t>(1), n / (num_threads * 4));
+    }
+
+    // If work is small enough, execute serially
+    if (grain_size >= n)
+    {
+        // Save previous parallel region state for proper restoration in nested calls
+        bool prev_in_parallel = in_parallel_region();
+        int  prev_thread_id   = get_thread_num();
+        internal::set_in_parallel_region(true);
+        internal::set_thread_num(0);
+        try
+        {
+            f(begin, end);
+        }
+        catch (...)
+        {
+            internal::set_in_parallel_region(prev_in_parallel);
+            internal::set_thread_num(prev_thread_id);
+            throw;
+        }
+        internal::set_in_parallel_region(prev_in_parallel);
+        internal::set_thread_num(prev_thread_id);
+        return;
+    }
+
+    // Parallel execution with local barrier
+    auto&                   pool = internal::GetIntraopPool();
+    std::atomic<int64_t>    tasks_completed{0};
+    std::atomic<int64_t>    task_counter{0};
+    std::atomic<bool>       exception_occurred{false};
+    std::exception_ptr      captured_exception;
+    std::mutex              exception_mutex;
+    std::condition_variable barrier_cv;
+    std::mutex              barrier_mutex;
+
+    // Count total number of tasks
+    int64_t num_tasks = (n + grain_size - 1) / grain_size;
+
+    for (int64_t i = begin; i < end; i += grain_size)
+    {
+        int64_t chunk_end = std::min(i + grain_size, end);
+        int64_t task_id   = task_counter.fetch_add(1, std::memory_order_relaxed);
+
+        pool.Run(
+            [&f,
+             i,
+             chunk_end,
+             task_id,
+             &tasks_completed,
+             &exception_occurred,
+             &captured_exception,
+             &exception_mutex,
+             &barrier_cv,
+             &barrier_mutex,
+             num_tasks]()
+            {
+                // Save previous parallel region state for proper restoration
+                bool prev_in_parallel = in_parallel_region();
+                int  prev_thread_id   = get_thread_num();
+                internal::set_in_parallel_region(true);
+                const int thread_slot =
+                    static_cast<int>(std::min<int64_t>(task_id, std::numeric_limits<int>::max()));
+                internal::set_thread_num(thread_slot);
+                try
+                {
+                    f(i, chunk_end);
+                }
+                catch (...)
+                {
+                    exception_occurred.store(true);
+                    {
+                        std::lock_guard<std::mutex> lock(exception_mutex);
+                        if (!captured_exception)
+                        {
+                            captured_exception = std::current_exception();
+                        }
+                    }
+                }
+                internal::set_in_parallel_region(prev_in_parallel);
+                internal::set_thread_num(prev_thread_id);
+
+                // Increment completion counter and notify barrier
+                int64_t completed = tasks_completed.fetch_add(1, std::memory_order_acq_rel) + 1;
+                if (completed == num_tasks)
+                {
+                    std::lock_guard<std::mutex> lock(barrier_mutex);
+                    barrier_cv.notify_all();
+                }
+            });
+    }
+
+    // Wait for all tasks to complete using local barrier
+    {
+        std::unique_lock<std::mutex> lock(barrier_mutex);
+        barrier_cv.wait(
+            lock,
+            [&tasks_completed, num_tasks]()
+            { return tasks_completed.load(std::memory_order_acquire) == num_tasks; });
+    }
+
+    // Rethrow any captured exception
+    if (exception_occurred.load() && captured_exception)
+    {
+        std::rethrow_exception(captured_exception);
+    }
+}
+
+template <typename T, typename ReduceFunctor, typename CombineFunctor>
+T parallel_reduce(
+    int64_t               begin,
+    int64_t               end,
+    int64_t               grain_size,
+    const T&              identity,
+    const ReduceFunctor&  reduce_fn,
+    const CombineFunctor& combine_fn)
+{
+    if (begin >= end)
+    {
+        return identity;
+    }
+
+    // Route to appropriate backend based on current selection
+    native::BackendType backend = native::GetCurrentBackend();
+    if (backend == native::BackendType::TBB)
+    {
+        // Convert functors to std::function and delegate to TBB backend
+        std::function<T(int64_t, int64_t, T)> reduce_func  = reduce_fn;
+        std::function<T(T, T)>                combine_func = combine_fn;
+        return tbb::ParallelReduceTBB(begin, end, grain_size, identity, reduce_func, combine_func);
+    }
+    // For NATIVE and OPENMP backends, use the native implementation below
+
+    int64_t n = end - begin;
+
+    // Determine grain size
+    if (grain_size <= 0)
+    {
+        auto num_threads = static_cast<int64_t>(internal::GetInteropPool().Size());
+        grain_size       = std::max(static_cast<int64_t>(1), n / (num_threads * 4));
+    }
+
+    // If work is small enough, execute serially
+    if (grain_size >= n)
+    {
+        // Save previous parallel region state for proper restoration in nested calls
+        bool prev_in_parallel = in_parallel_region();
+        int  prev_thread_id   = get_thread_num();
+        internal::set_in_parallel_region(true);
+        internal::set_thread_num(0);
+        T result{};
+        try
+        {
+            result = reduce_fn(begin, end, identity);
+        }
+        catch (...)
+        {
+            internal::set_in_parallel_region(prev_in_parallel);
+            internal::set_thread_num(prev_thread_id);
+            throw;
+        }
+        internal::set_in_parallel_region(prev_in_parallel);
+        internal::set_thread_num(prev_thread_id);
+        return result;
+    }
+
+    // Calculate number of chunks
+    int64_t        num_chunks = (n + grain_size - 1) / grain_size;
+    std::vector<T> partial_results(num_chunks, identity);
+
+    // Parallel reduction with local barrier
+    auto&                   pool = internal::GetIntraopPool();
+    std::atomic<int64_t>    tasks_completed{0};
+    std::atomic<int64_t>    task_counter{0};
+    std::atomic<bool>       exception_occurred{false};
+    std::exception_ptr      captured_exception;
+    std::mutex              exception_mutex;
+    std::condition_variable barrier_cv;
+    std::mutex              barrier_mutex;
+
+    for (int64_t i = begin; i < end; i += grain_size)
+    {
+        int64_t chunk_end = std::min(i + grain_size, end);
+        int64_t task_id   = task_counter.fetch_add(1, std::memory_order_relaxed);
+
+        pool.Run(
+            [&reduce_fn,
+             &partial_results,
+             i,
+             chunk_end,
+             &identity,
+             task_id,
+             &tasks_completed,
+             &exception_occurred,
+             &captured_exception,
+             &exception_mutex,
+             &barrier_cv,
+             &barrier_mutex,
+             num_chunks]()
+            {
+                // Save previous parallel region state for proper restoration
+                bool prev_in_parallel = in_parallel_region();
+                int  prev_thread_id   = get_thread_num();
+                internal::set_in_parallel_region(true);
+                const int thread_slot =
+                    static_cast<int>(std::min<int64_t>(task_id, std::numeric_limits<int>::max()));
+                internal::set_thread_num(thread_slot);
+                try
+                {
+                    partial_results[static_cast<size_t>(task_id)] =
+                        reduce_fn(i, chunk_end, identity);
+                }
+                catch (...)
+                {
+                    exception_occurred.store(true);
+                    {
+                        std::lock_guard<std::mutex> lock(exception_mutex);
+                        if (!captured_exception)
+                        {
+                            captured_exception = std::current_exception();
+                        }
+                    }
+                }
+                internal::set_in_parallel_region(prev_in_parallel);
+                internal::set_thread_num(prev_thread_id);
+
+                // Increment completion counter and notify barrier
+                int64_t completed = tasks_completed.fetch_add(1, std::memory_order_acq_rel) + 1;
+                if (completed == num_chunks)
+                {
+                    std::lock_guard<std::mutex> lock(barrier_mutex);
+                    barrier_cv.notify_all();
+                }
+            });
+    }
+
+    // Wait for all tasks to complete using local barrier
+    {
+        std::unique_lock<std::mutex> lock(barrier_mutex);
+        barrier_cv.wait(
+            lock,
+            [&tasks_completed, num_chunks]()
+            { return tasks_completed.load(std::memory_order_acquire) == num_chunks; });
+    }
+
+    // Rethrow any captured exception
+    if (exception_occurred.load() && captured_exception)
+    {
+        std::rethrow_exception(captured_exception);
+    }
+
+    // Combine partial results
+    T result = partial_results[0];
+    for (int64_t i = 1; i < num_chunks; ++i)
+    {
+        result = combine_fn(result, partial_results[static_cast<size_t>(i)]);
+    }
+    return result;
+}
+
+}  // namespace xsigma::smp_new::parallel

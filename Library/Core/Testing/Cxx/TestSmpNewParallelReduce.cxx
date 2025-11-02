@@ -382,4 +382,55 @@ XSIGMATEST(SmpNewParallelReduce, multiple_reductions)
     EXPECT_EQ(product, 120);
 }
 
+XSIGMATEST(SmpNewParallelReduce, restores_thread_state_serial)
+{
+    EXPECT_FALSE(in_parallel_region());
+    EXPECT_EQ(get_thread_num(), 0);
+
+    int result = parallel_reduce(
+        0,
+        4,
+        16,
+        0,
+        [](int64_t begin, int64_t end, int identity)
+        {
+            int total = identity;
+            for (int64_t i = begin; i < end; ++i)
+            {
+                total += static_cast<int>(i);
+            }
+            return total;
+        },
+        [](int a, int b) { return a + b; });
+
+    EXPECT_EQ(result, 6);
+    EXPECT_FALSE(in_parallel_region());
+    EXPECT_EQ(get_thread_num(), 0);
+}
+
+XSIGMATEST(SmpNewParallelReduce, restores_thread_state_parallel)
+{
+    EXPECT_FALSE(in_parallel_region());
+
+    int result = parallel_reduce(
+        0,
+        256,
+        1,
+        0,
+        [](int64_t begin, int64_t end, int identity)
+        {
+            int total = identity;
+            for (int64_t i = begin; i < end; ++i)
+            {
+                total += static_cast<int>(i);
+            }
+            return total;
+        },
+        [](int a, int b) { return a + b; });
+
+    EXPECT_GT(result, 0);
+    EXPECT_FALSE(in_parallel_region());
+    EXPECT_EQ(get_thread_num(), 0);
+}
+
 }  // namespace xsigma::smp_new::parallel

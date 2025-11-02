@@ -1,10 +1,10 @@
-#include <gtest/gtest.h>
-
 #include <atomic>
 #include <chrono>
 #include <cmath>
+#include <thread>
 #include <vector>
 
+#include "Testing/xsigmaTest.h"
 #include "smp_new/parallel/parallel_api.h"
 
 namespace xsigma::smp_new::parallel
@@ -14,7 +14,7 @@ namespace xsigma::smp_new::parallel
 // Test: Basic Functionality
 // ============================================================================
 
-TEST(Parallelize1D, BasicFunctionality)
+XSIGMATEST(Parallelize1D, BasicFunctionality)
 {
     const size_t     kSize = 1000;
     std::vector<int> data(kSize);
@@ -31,7 +31,7 @@ TEST(Parallelize1D, BasicFunctionality)
 // Test: Large Data Set
 // ============================================================================
 
-TEST(Parallelize1D, LargeDataSet)
+XSIGMATEST(Parallelize1D, LargeDataSet)
 {
     const size_t       kSize = 1000000;
     std::vector<float> data(kSize);
@@ -48,7 +48,7 @@ TEST(Parallelize1D, LargeDataSet)
 // Test: Exception Handling
 // ============================================================================
 
-TEST(Parallelize1D, ExceptionHandling)
+XSIGMATEST(Parallelize1D, ExceptionHandling)
 {
     EXPECT_THROW(
         {
@@ -69,7 +69,7 @@ TEST(Parallelize1D, ExceptionHandling)
 // Test: Empty Range
 // ============================================================================
 
-TEST(Parallelize1D, EmptyRange)
+XSIGMATEST(Parallelize1D, EmptyRange)
 {
     std::atomic<int> count{0};
 
@@ -82,7 +82,7 @@ TEST(Parallelize1D, EmptyRange)
 // Test: Single Item
 // ============================================================================
 
-TEST(Parallelize1D, SingleItem)
+XSIGMATEST(Parallelize1D, SingleItem)
 {
     std::atomic<int> count{0};
 
@@ -95,7 +95,7 @@ TEST(Parallelize1D, SingleItem)
 // Test: Atomic Operations
 // ============================================================================
 
-TEST(Parallelize1D, AtomicOperations)
+XSIGMATEST(Parallelize1D, AtomicOperations)
 {
     const size_t     kSize = 10000;
     std::atomic<int> sum{0};
@@ -109,7 +109,7 @@ TEST(Parallelize1D, AtomicOperations)
 // Test: Load Balancing (Work-Stealing)
 // ============================================================================
 
-TEST(Parallelize1D, LoadBalancing)
+XSIGMATEST(Parallelize1D, LoadBalancing)
 {
     const size_t     kSize = 100000;
     std::vector<int> data(kSize);
@@ -137,10 +137,60 @@ TEST(Parallelize1D, LoadBalancing)
 }
 
 // ============================================================================
+// Test: Does Not Wait For Unrelated Intra-op Work
+// ============================================================================
+
+XSIGMATEST(Parallelize1D, DoesNotWaitForExternalIntraopWork)
+{
+    std::atomic<bool> long_task_started{false};
+    std::atomic<bool> long_task_finished{false};
+    std::atomic<bool> allow_finish{false};
+
+    intraop_launch(
+        [&]()
+        {
+            long_task_started.store(true, std::memory_order_release);
+            while (!allow_finish.load(std::memory_order_acquire))
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+            long_task_finished.store(true, std::memory_order_release);
+        });
+
+    // Wait until the long task starts executing
+    for (int attempt = 0; attempt < 1000; ++attempt)
+    {
+        if (long_task_started.load(std::memory_order_acquire))
+        {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    ASSERT_TRUE(long_task_started.load(std::memory_order_acquire));
+
+    // parallelize_1d should complete even though the other task is still running
+    parallelize_1d([](size_t) {}, 256);
+
+    EXPECT_FALSE(long_task_finished.load(std::memory_order_acquire));
+
+    // Allow the long task to finish before leaving the test
+    allow_finish.store(true, std::memory_order_release);
+    for (int attempt = 0; attempt < 1000; ++attempt)
+    {
+        if (long_task_finished.load(std::memory_order_acquire))
+        {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    EXPECT_TRUE(long_task_finished.load(std::memory_order_acquire));
+}
+
+// ============================================================================
 // Test: Performance Benchmark
 // ============================================================================
 
-TEST(Parallelize1D, PerformanceBenchmark)
+XSIGMATEST(Parallelize1D, PerformanceBenchmark)
 {
     const size_t       kSize = 10000000;  // 10M items
     std::vector<float> data(kSize);
@@ -172,7 +222,7 @@ TEST(Parallelize1D, PerformanceBenchmark)
 // Test: Multiple Calls
 // ============================================================================
 
-TEST(Parallelize1D, MultipleCalls)
+XSIGMATEST(Parallelize1D, MultipleCalls)
 {
     const size_t     kSize = 1000;
     std::vector<int> data1(kSize);
@@ -192,7 +242,7 @@ TEST(Parallelize1D, MultipleCalls)
 // Test: Nested Lambdas
 // ============================================================================
 
-TEST(Parallelize1D, NestedLambdas)
+XSIGMATEST(Parallelize1D, NestedLambdas)
 {
     const size_t     kSize = 1000;
     std::vector<int> data(kSize);
@@ -215,7 +265,7 @@ TEST(Parallelize1D, NestedLambdas)
 // Test: Thread Safety
 // ============================================================================
 
-TEST(Parallelize1D, ThreadSafety)
+XSIGMATEST(Parallelize1D, ThreadSafety)
 {
     const size_t                  kSize = 100000;
     std::vector<std::atomic<int>> data(kSize);
@@ -235,9 +285,3 @@ TEST(Parallelize1D, ThreadSafety)
 }
 
 }  // namespace xsigma::smp_new::parallel
-
-int main(int argc, char** argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

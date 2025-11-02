@@ -97,6 +97,11 @@ public:
      */
     size_t size() const;
 
+    /**
+     * @brief Remove all items from deque.
+     */
+    void clear();
+
 private:
     mutable std::mutex   mutex_;
     std::deque<WorkItem> items_;
@@ -136,6 +141,11 @@ public:
     WorkStealingDeque& get_deque(size_t thread_id) { return *deques_[thread_id]; }
 
     /**
+     * @brief Enqueue work for a specific thread and update bookkeeping.
+     */
+    void enqueue_work(size_t thread_id, const WorkItem& item);
+
+    /**
      * @brief Get number of threads.
      */
     size_t get_num_threads() const { return deques_.size(); }
@@ -160,12 +170,20 @@ public:
      */
     void set_exception(std::exception_ptr ex);
 
+    /**
+     * @brief Mark a worker thread as finished.
+     *
+     * Called by worker threads when they complete execution.
+     * Signals the completion condition variable if all workers are done.
+     */
+    void mark_worker_finished();
+
 private:
     const std::function<void(size_t)>&              function_;
     size_t                                          range_;
     std::vector<std::unique_ptr<WorkStealingDeque>> deques_;
     std::atomic<size_t>                             pending_work_{0};
-    std::atomic<bool>                               all_work_queued_{false};
+    std::atomic<size_t>                             active_workers_{0};
     std::mutex                                      completion_mutex_;
     std::condition_variable                         completion_cv_;
     std::exception_ptr                              exception_;
@@ -203,7 +221,6 @@ void worker_thread_func(Parallelize1DCoordinator& coordinator, size_t thread_id)
  * @param function Function to execute for each item in the range.
  *                 Signature: void(size_t item_index)
  * @param range    Number of items to process (0 to range-1)
- * @param flags    Flags for future extensions (currently unused, pass 0)
  *
  * @note Thread-safe. Can be called from multiple threads (calls are serialized).
  * @note Blocking function - returns only after all work is complete.
@@ -220,7 +237,6 @@ void worker_thread_func(Parallelize1DCoordinator& coordinator, size_t thread_id)
  * );
  * @endcode
  */
-XSIGMA_API void parallelize_1d(
-    const std::function<void(size_t)>& function, size_t range, uint32_t flags = 0);
+XSIGMA_API void parallelize_1d(const std::function<void(size_t)>& function, size_t range);
 
 }  // namespace xsigma::smp_new::parallel

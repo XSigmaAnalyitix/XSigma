@@ -40,24 +40,6 @@ thread_local bool g_in_parallel_region = false;
 // Backend state
 std::atomic<int> g_backend_initialized{0};
 
-core::TaskThreadPoolBase& GetIntraopPool()
-{
-    if (!g_intraop_pool)
-    {
-        std::lock_guard<std::mutex> lock(g_pool_mutex);
-        if (!g_intraop_pool)
-        {
-            int num_threads = g_num_intraop_threads.exchange(kConsumed);
-            if (num_threads == kNotSet)
-            {
-                num_threads = static_cast<int>(core::TaskThreadPoolBase::DefaultNumThreads());
-            }
-            g_intraop_pool = core::CreateThreadPool(num_threads);
-        }
-    }
-    return *g_intraop_pool;
-}
-
 }  // namespace
 
 void launch(std::function<void()> fn)
@@ -67,12 +49,13 @@ void launch(std::function<void()> fn)
 
 void intraop_launch(std::function<void()> fn)
 {
-    if (!g_in_intraop_region && internal::GetInteropPool().NumAvailable() > 0)
+    // Check intra-op pool availability (not inter-op pool)
+    if (!g_in_intraop_region && internal::GetIntraopPool().NumAvailable() > 0)
     {
         g_in_intraop_region = true;
         try
         {
-            GetIntraopPool().Run(std::move(fn));
+            internal::GetIntraopPool().Run(std::move(fn));
         }
         catch (...)
         {
@@ -90,6 +73,12 @@ void intraop_launch(std::function<void()> fn)
 
 void set_num_intraop_threads(int nthreads)
 {
+    // Validate input: thread count must be positive
+    if (nthreads <= 0)
+    {
+        return;
+    }
+
     int expected = kNotSet;
     if (!g_num_intraop_threads.compare_exchange_strong(expected, nthreads))
     {
@@ -113,6 +102,12 @@ size_t get_num_intraop_threads()
 
 void set_num_interop_threads(int nthreads)
 {
+    // Validate input: thread count must be positive
+    if (nthreads <= 0)
+    {
+        return;
+    }
+
     int expected = kNotSet;
     if (!g_num_interop_threads.compare_exchange_strong(expected, nthreads))
     {
@@ -192,6 +187,24 @@ void set_thread_num(int thread_id)
 void set_in_parallel_region(bool in_region)
 {
     g_in_parallel_region = in_region;
+}
+
+core::TaskThreadPoolBase& GetIntraopPool()
+{
+    if (!g_intraop_pool)
+    {
+        std::lock_guard<std::mutex> lock(g_pool_mutex);
+        if (!g_intraop_pool)
+        {
+            int num_threads = g_num_intraop_threads.exchange(kConsumed);
+            if (num_threads == kNotSet)
+            {
+                num_threads = static_cast<int>(core::TaskThreadPoolBase::DefaultNumThreads());
+            }
+            g_intraop_pool = core::CreateThreadPool(num_threads);
+        }
+    }
+    return *g_intraop_pool;
 }
 
 core::TaskThreadPoolBase& GetInteropPool()

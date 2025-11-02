@@ -336,4 +336,45 @@ XSIGMATEST(SmpNewParallelFor, different_data_types)
     }
 }
 
+XSIGMATEST(SmpNewParallelFor, restores_thread_state_serial)
+{
+    EXPECT_FALSE(in_parallel_region());
+    EXPECT_EQ(get_thread_num(), 0);
+
+    parallel_for(
+        0,
+        4,
+        16,
+        [](int64_t begin, int64_t end)
+        {
+            for (int64_t i = begin; i < end; ++i)
+            {
+                (void)i;
+            }
+        });
+
+    EXPECT_FALSE(in_parallel_region());
+    EXPECT_EQ(get_thread_num(), 0);
+}
+
+XSIGMATEST(SmpNewParallelFor, restores_thread_state_parallel)
+{
+    EXPECT_FALSE(in_parallel_region());
+
+    parallel_for(
+        0,
+        256,
+        1,
+        [](int64_t begin, int64_t end)
+        {
+            for (int64_t i = begin; i < end; ++i)
+            {
+                (void)i;
+            }
+        });
+
+    EXPECT_FALSE(in_parallel_region());
+    EXPECT_EQ(get_thread_num(), 0);
+}
+
 }  // namespace xsigma::smp_new::parallel

@@ -5,6 +5,7 @@
 #include <thread>
 
 #include "smp_new/core/thread_pool.h"
+#include "smp_new/parallel/parallel_api.h"
 
 namespace xsigma::smp_new::parallel
 {
@@ -58,6 +59,12 @@ size_t WorkStealingDeque::size() const
     return items_.size();
 }
 
+void WorkStealingDeque::clear()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    items_.clear();
+}
+
 // ============================================================================
 // Parallelize1DCoordinator Implementation
 // ============================================================================
@@ -66,16 +73,6 @@ Parallelize1DCoordinator::Parallelize1DCoordinator(
     const std::function<void(size_t)>& function, size_t range)
     : function_(function), range_(range)
 {
-    // Create work-stealing dequeues for each thread
-    // Use default number of threads
-    size_t num_threads = core::TaskThreadPoolBase::DefaultNumThreads();
-    deques_.reserve(num_threads);
-    for (size_t i = 0; i < num_threads; ++i)
-    {
-        deques_.push_back(std::make_unique<WorkStealingDeque>());
-    }
-    pending_work_.store(0);
-    all_work_queued_.store(false);
 }
 
 void Parallelize1DCoordinator::execute()
@@ -85,7 +82,30 @@ void Parallelize1DCoordinator::execute()
         return;
     }
 
-    size_t num_threads = deques_.size();
+    auto&  pool        = internal::GetIntraopPool();
+    size_t num_threads = std::max<size_t>(1, pool.Size());
+
+    if (deques_.size() != num_threads)
+    {
+        deques_.clear();
+        deques_.reserve(num_threads);
+        for (size_t i = 0; i < num_threads; ++i)
+        {
+            deques_.push_back(std::make_unique<WorkStealingDeque>());
+        }
+    }
+
+    for (auto& deque : deques_)
+    {
+        deque->clear();
+    }
+
+    pending_work_.store(0, std::memory_order_relaxed);
+    active_workers_.store(num_threads, std::memory_order_relaxed);
+    {
+        std::lock_guard<std::mutex> lock(exception_mutex_);
+        exception_ = nullptr;
+    }
 
     // Distribute work evenly across threads
     // Each thread gets a chunk of work to start with
@@ -99,36 +119,37 @@ void Parallelize1DCoordinator::execute()
             break;
         }
         size_t end = std::min(begin + chunk_size, range_);
-        deques_[i]->push_back({begin, end});
-        pending_work_++;
+        enqueue_work(i, {begin, end});
     }
-
-    all_work_queued_.store(true);
-
-    // Get the thread pool and submit worker threads
-    auto pool = core::CreateThreadPool(static_cast<int>(num_threads));
 
     for (size_t i = 0; i < num_threads; ++i)
     {
-        pool->Run([this, i]() { worker_thread_func(*this, i); });
+        pool.Run([this, i]() { worker_thread_func(*this, i); });
     }
 
-    // Wait for all work to complete
-    pool->WaitWorkComplete();
+    // Wait for coordinator-tracked work to complete and all workers to finish
+    wait_complete();
 
     // Check for exceptions
-    if (exception_)
+    std::exception_ptr captured_exception;
     {
-        std::rethrow_exception(exception_);
+        std::lock_guard<std::mutex> lock(exception_mutex_);
+        captured_exception = exception_;
+        exception_         = nullptr;
+    }
+
+    if (captured_exception)
+    {
+        std::rethrow_exception(captured_exception);
     }
 }
 
 void Parallelize1DCoordinator::mark_complete()
 {
-    std::unique_lock<std::mutex> lock(completion_mutex_);
-    pending_work_--;
-    if (pending_work_ == 0)
+    size_t previous = pending_work_.fetch_sub(1, std::memory_order_acq_rel);
+    if (previous == 1)
     {
+        std::lock_guard<std::mutex> lock(completion_mutex_);
         completion_cv_.notify_all();
     }
 }
@@ -136,7 +157,29 @@ void Parallelize1DCoordinator::mark_complete()
 void Parallelize1DCoordinator::wait_complete()
 {
     std::unique_lock<std::mutex> lock(completion_mutex_);
-    completion_cv_.wait(lock, [this]() { return pending_work_ == 0; });
+    completion_cv_.wait(
+        lock,
+        [this]()
+        {
+            return pending_work_.load(std::memory_order_acquire) == 0 &&
+                   active_workers_.load(std::memory_order_acquire) == 0;
+        });
+}
+
+void Parallelize1DCoordinator::mark_worker_finished()
+{
+    size_t previous = active_workers_.fetch_sub(1, std::memory_order_acq_rel);
+    if (previous == 1)
+    {
+        std::lock_guard<std::mutex> lock(completion_mutex_);
+        completion_cv_.notify_all();
+    }
+}
+
+void Parallelize1DCoordinator::enqueue_work(size_t thread_id, const WorkItem& item)
+{
+    deques_[thread_id]->push_back(item);
+    pending_work_.fetch_add(1, std::memory_order_relaxed);
 }
 
 void Parallelize1DCoordinator::set_exception(std::exception_ptr ex)
@@ -157,17 +200,28 @@ void worker_thread_func(Parallelize1DCoordinator& coordinator, size_t thread_id)
     const auto& function    = coordinator.get_function();
     size_t      num_threads = coordinator.get_num_threads();
 
+    auto process_work_item = [&](internal::WorkItem work)
+    {
+        try
+        {
+            for (size_t j = work.begin; j < work.end; ++j)
+            {
+                function(j);
+            }
+        }
+        catch (...)
+        {
+            coordinator.set_exception(std::current_exception());
+        }
+        coordinator.mark_complete();
+    };
+
     try
     {
-        // Process work from own deque
         WorkItem item;
         while (coordinator.get_deque(thread_id).pop_back(item))
         {
-            for (size_t i = item.begin; i < item.end; ++i)
-            {
-                function(i);
-            }
-            coordinator.mark_complete();
+            process_work_item(item);
         }
 
         // Try to steal work from other threads
@@ -193,16 +247,12 @@ void worker_thread_func(Parallelize1DCoordinator& coordinator, size_t thread_id)
                     if (mid > item.begin)
                     {
                         // Put second half back for other threads to steal
-                        coordinator.get_deque(i).push_back({mid, item.end});
+                        coordinator.enqueue_work(i, {mid, item.end});
                         item.end = mid;
                     }
 
                     // Process first half
-                    for (size_t j = item.begin; j < item.end; ++j)
-                    {
-                        function(j);
-                    }
-                    coordinator.mark_complete();
+                    process_work_item(item);
                     break;
                 }
             }
@@ -212,6 +262,9 @@ void worker_thread_func(Parallelize1DCoordinator& coordinator, size_t thread_id)
     {
         coordinator.set_exception(std::current_exception());
     }
+
+    // Mark this worker thread as finished
+    coordinator.mark_worker_finished();
 }
 
 }  // namespace internal
@@ -220,10 +273,8 @@ void worker_thread_func(Parallelize1DCoordinator& coordinator, size_t thread_id)
 // Public API
 // ============================================================================
 
-void parallelize_1d(const std::function<void(size_t)>& function, size_t range, uint32_t flags)
+void parallelize_1d(const std::function<void(size_t)>& function, size_t range)
 {
-    (void)flags;  // Suppress unused parameter warning
-
     if (range == 0)
     {
         return;

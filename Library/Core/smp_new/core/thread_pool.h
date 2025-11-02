@@ -122,7 +122,6 @@ protected:
     std::condition_variable  condition_;
     std::condition_variable  completed_;
     std::atomic_bool         running_;
-    bool                     complete_;
     std::size_t              available_;
     std::size_t              total_;
     std::size_t              pending_tasks_;  // Number of tasks queued or executing
@@ -138,12 +137,10 @@ public:
      * @param pool_size The number of worker threads. If negative, uses the
      *                  default number of threads based on hardware concurrency.
      * @param numa_node_id The NUMA node to bind threads to. -1 means no binding.
-     * @param init_thread Optional callback to initialize each worker thread.
      *
      * @note The pool starts running immediately after construction.
      */
-    XSIGMA_API explicit ThreadPool(
-        int pool_size, int numa_node_id = -1, const std::function<void()>& init_thread = nullptr);
+    XSIGMA_API explicit ThreadPool(int pool_size, int numa_node_id = -1);
 
     /**
      * @brief Destructs the thread pool and joins all worker threads.
