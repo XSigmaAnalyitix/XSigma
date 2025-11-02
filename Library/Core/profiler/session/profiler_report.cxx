@@ -83,9 +83,8 @@ size_t compute_max_depth(const std::vector<scope_snapshot>& snapshots)
         snapshots.begin(),
         snapshots.end(),
         size_t{0},
-        [](size_t max_depth, const scope_snapshot& snapshot) {
-            return (std::max)(max_depth, snapshot.depth);
-        });
+        [](size_t max_depth, const scope_snapshot& snapshot)
+        { return (std::max)(max_depth, snapshot.depth); });
 }
 
 std::unordered_map<std::string, size_t> build_thread_histogram(

@@ -502,12 +502,16 @@ int64_t GetStartTimestampNs(const xplane& plane)
 bool IsEmpty(const x_space& space)
 {
     // Use std::all_of to check if all planes have empty events
-    return std::all_of(space.planes().begin(), space.planes().end(), [](const xplane& plane) {
-        return std::all_of(
-            plane.lines().begin(), plane.lines().end(), [](const xline& line) {
-                return line.events().empty();
-            });
-    });
+    return std::all_of(
+        space.planes().begin(),
+        space.planes().end(),
+        [](const xplane& plane)
+        {
+            return std::all_of(
+                plane.lines().begin(),
+                plane.lines().end(),
+                [](const xline& line) { return line.events().empty(); });
+        });
 }
 
 bool IsXSpaceGrouped(const x_space& space)

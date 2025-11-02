@@ -284,7 +284,9 @@ add_subdirectory(Library/Core)
 # Add examples if enabled
 if(XSIGMA_ENABLE_EXAMPLES)
   add_subdirectory(Examples/SMP)
+  add_subdirectory(Examples/Profiling)
   message(STATUS "✓ SMP Examples enabled")
+  message(STATUS "✓ Profiling Examples enabled")
 endif()
 
 # Apply Valgrind timeout multiplier to all tests (if Valgrind is enabled) This must be called after

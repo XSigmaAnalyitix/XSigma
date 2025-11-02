@@ -40,11 +40,10 @@ void example_basic_sum_reduction()
     }
 
     // Sequential sum for comparison using std::accumulate
-    auto  start_seq = std::chrono::high_resolution_clock::now();
-    float seq_sum   = std::accumulate(data.begin(), data.end(), 0.0f);
-    auto  end_seq   = std::chrono::high_resolution_clock::now();
-    auto  seq_duration =
-        std::chrono::duration_cast<std::chrono::milliseconds>(end_seq - start_seq);
+    auto  start_seq    = std::chrono::high_resolution_clock::now();
+    float seq_sum      = std::accumulate(data.begin(), data.end(), 0.0f);
+    auto  end_seq      = std::chrono::high_resolution_clock::now();
+    auto  seq_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_seq - start_seq);
 
     // Parallel sum using parallel_reduce
     auto  start_par = std::chrono::high_resolution_clock::now();
