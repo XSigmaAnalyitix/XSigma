@@ -4,10 +4,10 @@
 #include <array>
 
 #ifndef __GLIBC_PREREQ
-#define GLIBC_PREREQ(x, y) 0
+#define __GLIBC_PREREQ(x, y) 0
 #endif
 
-#if defined(__GLIBC__) && GLIBC_PREREQ(2, 12) && !defined(__APPLE__) && !defined(__ANDROID__)
+#if defined(__GLIBC__) && __GLIBC_PREREQ(2, 12) && !defined(__APPLE__) && !defined(__ANDROID__)
 #define XSIGMA_HAS_PTHREAD_SETNAME_NP
 #endif
 
