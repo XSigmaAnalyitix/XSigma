@@ -274,6 +274,7 @@ add_subdirectory(ThirdParty)
 include(dependencies)
 
 # Add subdirectories
+add_subdirectory(Library/Security)
 add_subdirectory(Library/Core)
 
 # Apply Valgrind timeout multiplier to all tests (if Valgrind is enabled) This must be called after

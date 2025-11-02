@@ -38,6 +38,7 @@ file(
   "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/profiler/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/smp_new/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/c17/*.h"
   ${xsigma_headers}
 )
@@ -51,6 +52,7 @@ file(
   "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.cxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/profiler/*.cxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.cxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/smp_new/*.cxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/c17/*.h"
   ${xsigma_sources}
 )
@@ -58,9 +60,13 @@ file(
 file(
   GLOB_RECURSE templates
   LIST_DIRECTORIES false
-  "${CMAKE_CURRENT_SOURCE_DIR}/util/*.hxx" "${CMAKE_CURRENT_SOURCE_DIR}/common/*.hxx"
-  "${CMAKE_CURRENT_SOURCE_DIR}/logging/*.hxx" "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.hxx"
-  "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.hxx" ${xsigma_templates}
+  "${CMAKE_CURRENT_SOURCE_DIR}/util/*.hxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/common/*.hxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/logging/*.hxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.hxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.hxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/smp_new/*.hxx"
+  ${xsigma_templates}
 )
 
 # Remove GPU files if neither CUDA nor HIP is enabled
@@ -131,8 +137,8 @@ endif()
 # Create alias for consistent naming
 add_library(XSigma::Core ALIAS Core)
 
-# Enable Link Time Optimization (LTO) for Core library if enabled
-# LTO is disabled for third-party libraries via FILTER_FLAGS to avoid conflicts
+# Enable Link Time Optimization (LTO) for Core library if enabled LTO is disabled for third-party
+# libraries via FILTER_FLAGS to avoid conflicts
 if(XSIGMA_ENABLE_LTO)
   set_target_properties(Core PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
   message(STATUS "Core library: Link Time Optimization (LTO) enabled")

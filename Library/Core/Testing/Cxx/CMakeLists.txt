@@ -130,8 +130,9 @@ if(XSIGMA_ENABLE_BENCHMARK)
   add_executable(CoreCxxBenchmark ${bench_sources})
 
   # Link libraries Core library is linked which transitively brings in all centralized dependencies
-  # via XSIGMA_DEPENDENCY_LIBS
-  target_link_libraries(CoreCxxBenchmark PRIVATE benchmark XSigma::Core)
+  # via XSIGMA_DEPENDENCY_LIBS Link benchmark_main to provide main() function (instead of
+  # BENCHMARK_MAIN() in each file)
+  target_link_libraries(CoreCxxBenchmark PRIVATE benchmark benchmark_main XSigma::Core)
 
   # Set target properties
   set_target_properties(CoreCxxBenchmark PROPERTIES FOLDER "Benchmarks")

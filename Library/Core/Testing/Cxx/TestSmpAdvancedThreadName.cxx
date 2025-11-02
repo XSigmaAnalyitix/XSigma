@@ -1,3 +1,5 @@
+#include <array>
+#include <atomic>
 #include <string>
 #include <thread>
 #include <vector>
@@ -41,18 +43,21 @@ XSIGMATEST(SmpAdvancedThreadName, long_name)
 // Test setting name in different threads
 XSIGMATEST(SmpAdvancedThreadName, different_threads)
 {
-    std::vector<std::thread> threads;
-    std::vector<std::string> names;
+    std::vector<std::thread>         threads;
+    std::array<std::string, 4>       names;
+    std::array<std::atomic<bool>, 4> done{};
 
     for (int i = 0; i < 4; ++i)
     {
+        done[i].store(false);
         threads.emplace_back(
-            [i, &names]()
+            [i, &names, &done]()
             {
                 std::string thread_name = "Thread" + std::to_string(i);
                 set_thread_name(thread_name);
                 std::string retrieved_name = get_thread_name();
-                names.push_back(retrieved_name);
+                names[i]                   = retrieved_name;
+                done[i].store(true);
             });
     }
 
@@ -61,8 +66,11 @@ XSIGMATEST(SmpAdvancedThreadName, different_threads)
         t.join();
     }
 
-    // Should have 4 names (may be empty on unsupported systems)
-    EXPECT_EQ(names.size(), 4);
+    // Verify all threads completed
+    for (int i = 0; i < 4; ++i)
+    {
+        EXPECT_TRUE(done[i].load());
+    }
 }
 
 // Test getting name without setting

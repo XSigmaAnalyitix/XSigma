@@ -1,0 +1,237 @@
+#pragma once
+
+#include <cstdint>
+#include <functional>
+#include <string>
+
+#include "common/macros.h"
+
+namespace xsigma::smp_new::tbb
+{
+
+/**
+ * @brief Intel Threading Building Blocks (TBB) parallel execution backend.
+ *
+ * This module provides TBB-based parallel execution for XSigma's
+ * parallel APIs, offering high-performance task-based parallelism.
+ *
+ * Features:
+ * - Task-based parallelism with work-stealing scheduler
+ * - Automatic load balancing
+ * - Nested parallelism support
+ * - Cache-aware scheduling
+ * - Integration with TBB's parallel algorithms
+ * - Scalable performance on multi-core systems
+ * - Exception propagation
+ *
+ * Requirements:
+ * - Intel TBB library at compile time
+ * - CMake configuration with XSIGMA_HAS_TBB=1
+ *
+ * Usage:
+ * @code
+ * // Initialize TBB backend
+ * xsigma::smp_new::parallel::set_backend(3);  // TBB
+ *
+ * // Use parallel_for with TBB
+ * xsigma::smp_new::parallel::parallel_for(
+ *     0, 1000, 100,
+ *     [](int64_t begin, int64_t end) {
+ *         // Parallel work
+ *     }
+ * );
+ * @endcode
+ */
+
+/**
+ * @brief Initialize the TBB parallel backend.
+ *
+ * This function initializes TBB's task scheduler and sets up
+ * the thread pool for parallel execution.
+ *
+ * @note Thread-safe. Can be called multiple times (idempotent).
+ * @note Requires TBB support at compile time (XSIGMA_HAS_TBB=1).
+ */
+XSIGMA_API void InitializeTBBBackend();
+
+/**
+ * @brief Shutdown the TBB parallel backend.
+ *
+ * This function shuts down TBB's task scheduler and releases resources.
+ * After calling this function, the backend must be reinitialized before
+ * using parallel APIs.
+ *
+ * @note Thread-safe. Can be called multiple times.
+ */
+XSIGMA_API void ShutdownTBBBackend();
+
+/**
+ * @brief Check if the TBB backend is initialized.
+ *
+ * @return true if the TBB backend is initialized, false otherwise.
+ */
+XSIGMA_API bool IsTBBBackendInitialized();
+
+/**
+ * @brief Check if TBB is available.
+ *
+ * @return true if TBB support is compiled in, false otherwise.
+ */
+XSIGMA_API bool IsTBBAvailable();
+
+/**
+ * @brief Set the number of TBB worker threads.
+ *
+ * This function configures the number of threads in TBB's task scheduler.
+ *
+ * @param nthreads Number of threads to use. Must be positive.
+ *
+ * @note Thread-safe.
+ * @note Requires TBB support at compile time.
+ */
+XSIGMA_API void SetNumTBBThreads(int nthreads);
+
+/**
+ * @brief Get the number of TBB worker threads.
+ *
+ * @return The number of threads configured for TBB, or -1 if not initialized.
+ */
+XSIGMA_API int GetNumTBBThreads();
+
+/**
+ * @brief Get the current TBB thread ID.
+ *
+ * @return The thread ID within the TBB task arena, or 0 if not in a TBB task.
+ */
+XSIGMA_API int GetTBBThreadNum();
+
+/**
+ * @brief Check if currently executing within a TBB parallel region.
+ *
+ * @return true if inside a TBB parallel region, false otherwise.
+ */
+XSIGMA_API bool InTBBParallelRegion();
+
+/**
+ * @brief Execute a parallel for loop using TBB.
+ *
+ * This function divides the iteration space [begin, end) into chunks
+ * and executes them in parallel using TBB's parallel_for algorithm.
+ *
+ * @param begin Start of iteration range (inclusive).
+ * @param end End of iteration range (exclusive).
+ * @param grain_size Minimum chunk size for parallel execution.
+ * @param func Function to execute for each chunk. Signature: void(int64_t begin, int64_t end)
+ *
+ * @note Thread-safe.
+ * @note Requires TBB support at compile time.
+ */
+XSIGMA_API void ParallelForTBB(int64_t                                          begin,
+                               int64_t                                          end,
+                               int64_t                                          grain_size,
+                               const std::function<void(int64_t, int64_t)>& func);
+
+/**
+ * @brief Execute a parallel reduce operation using TBB.
+ *
+ * This function performs a parallel reduction over the range [begin, end)
+ * using TBB's parallel_reduce algorithm.
+ *
+ * @tparam T The type of the reduction result.
+ * @param begin Start of iteration range (inclusive).
+ * @param end End of iteration range (exclusive).
+ * @param grain_size Minimum chunk size for parallel execution.
+ * @param ident Identity value for the reduction operation.
+ * @param func Reduction function. Signature: T(int64_t begin, int64_t end, T ident)
+ * @param reduce Combine function. Signature: T(T a, T b)
+ *
+ * @return The result of the parallel reduction.
+ *
+ * @note Thread-safe.
+ * @note Requires TBB support at compile time.
+ */
+template <typename T>
+XSIGMA_API T ParallelReduceTBB(int64_t                                          begin,
+                               int64_t                                          end,
+                               int64_t                                          grain_size,
+                               T                                                ident,
+                               const std::function<T(int64_t, int64_t, T)>& func,
+                               const std::function<T(T, T)>&                reduce);
+
+/**
+ * @brief Get information about the TBB backend.
+ *
+ * @return A string containing TBB backend information (version, configuration, etc.)
+ */
+XSIGMA_API std::string GetTBBBackendInfo();
+
+}  // namespace xsigma::smp_new::tbb
+
+// ============================================================================
+// Template Implementation
+// ============================================================================
+
+// Check if XSIGMA_HAS_TBB is defined, default to 0 if not
+#ifndef XSIGMA_HAS_TBB
+#define XSIGMA_HAS_TBB 0
+#endif
+
+#if XSIGMA_HAS_TBB
+#include <tbb/blocked_range.h>
+#include <tbb/parallel_reduce.h>
+#endif
+
+#include <atomic>
+
+namespace xsigma::smp_new::tbb
+{
+
+// Forward declare the global state (defined in parallel_tbb.cxx)
+#if XSIGMA_HAS_TBB
+extern std::atomic<bool> g_tbb_initialized;
+extern thread_local bool g_in_parallel_region;
+#endif
+
+template <typename T>
+T ParallelReduceTBB(int64_t                                          begin,
+                    int64_t                                          end,
+                    int64_t                                          grain_size,
+                    T                                                ident,
+                    const std::function<T(int64_t, int64_t, T)>& func,
+                    const std::function<T(T, T)>&                reduce)
+{
+#if XSIGMA_HAS_TBB
+    // Initialize TBB backend if not already initialized
+    if (!g_tbb_initialized.load())
+    {
+        InitializeTBBBackend();
+    }
+
+    // Set parallel region flag
+    bool was_in_parallel = g_in_parallel_region;
+    g_in_parallel_region = true;
+
+    // Execute parallel reduce
+    // Note: TBB may throw exceptions internally, but we let them propagate
+    // as this is a template function and TBB's exception handling is part
+    // of its contract. The calling code should handle exceptions if needed.
+    T result = ::tbb::parallel_reduce(
+        ::tbb::blocked_range<int64_t>(begin, end, grain_size),
+        ident,
+        [&func](const ::tbb::blocked_range<int64_t>& range, T init) -> T {
+            return func(range.begin(), range.end(), init);
+        },
+        [&reduce](T a, T b) -> T { return reduce(a, b); });
+
+    // Restore parallel region flag
+    g_in_parallel_region = was_in_parallel;
+    return result;
+#else
+    // TBB is not available - fallback to serial execution
+    (void)grain_size;  // Suppress unused parameter warning
+    return func(begin, end, ident);
+#endif
+}
+
+}  // namespace xsigma::smp_new::tbb
+

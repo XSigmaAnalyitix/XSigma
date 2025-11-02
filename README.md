@@ -2,8 +2,11 @@
 
 [![CI Status](https://github.com/XSigmaAnalyitix/XSigma/actions/workflows/ci.yml/badge.svg)](https://github.com/XSigmaAnalyitix/XSigma/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/XSigmaAnalyitix/XSigma/branch/main/graph/badge.svg)](https://codecov.io/gh/XSigmaAnalyitix/XSigma)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/PENDING/badge)](https://www.bestpractices.dev/projects/PENDING)
 [![License: GPL-3.0 or Commercial](https://img.shields.io/badge/License-GPL--3.0%20or%20Commercial-blue.svg)](LICENSE)
 
+
+> **Note**: The OpenSSF Best Practices badge is pending project registration. See [Docs/OPENSSF_COMPLIANCE.md](Docs/OPENSSF_COMPLIANCE.md) for our current compliance status and roadmap.
 ## Project Introduction
 
 **XSigma** is a modern, high-performance quantitative analysis library designed for both CPU and GPU computing. Built with a production-ready C++ foundation and a modern CMake build system, XSigma provides cross-platform compatibility, advanced optimization capabilities, and flexible dependency management for demanding computational workloads.

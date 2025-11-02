@@ -16,10 +16,6 @@ void cpu_info::info()
     {
         fmt::print("-- Running on {} CPU", package->name);
     }
-    else
-    {
-        fmt::print("-- Running on unknown CPU");
-    }
     fmt::print("-- support f16c:     {}\n", cpuinfo_has_x86_f16c() ? "True" : "False");
     fmt::print("-- support sse:      {}\n", cpuinfo_has_x86_sse() ? "True" : "False");
     fmt::print("-- support sse2:     {}\n", cpuinfo_has_x86_sse2() ? "True" : "False");
@@ -54,10 +50,6 @@ void cpu_info::info()
             l1d_cache->processor_start,
             l1d_cache->processor_count);
     }
-    else
-    {
-        fmt::print("-- Cache L1d: not available\n");
-    }
 
     const struct cpuinfo_cache* l1i_cache = cpuinfo_get_l1i_caches();
     if (l1i_cache != nullptr)
@@ -74,10 +66,6 @@ void cpu_info::info()
             l1i_cache->flags,
             l1i_cache->processor_start,
             l1i_cache->processor_count);
-    }
-    else
-    {
-        fmt::print("-- Cache L1i: not available\n");
     }
 
     const struct cpuinfo_cache* l2_cache = cpuinfo_get_l2_caches();
@@ -96,10 +84,6 @@ void cpu_info::info()
             l2_cache->processor_start,
             l2_cache->processor_count);
     }
-    else
-    {
-        fmt::print("-- Cache L2: not available\n");
-    }
 
     const struct cpuinfo_cache* l3_cache = cpuinfo_get_l3_caches();
     if (l3_cache != nullptr)
@@ -116,10 +100,6 @@ void cpu_info::info()
             l3_cache->flags,
             l3_cache->processor_start,
             l3_cache->processor_count);
-    }
-    else
-    {
-        fmt::print("-- Cache L3: not available\n");
     }
 
     cpuinfo_deinitialize();

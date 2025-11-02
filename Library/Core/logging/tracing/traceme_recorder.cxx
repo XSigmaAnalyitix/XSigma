@@ -232,7 +232,7 @@ private:
 // when tracing starts.
 /* static */ void traceme_recorder::clear()
 {
-    auto recorders = PerThread<ThreadLocalRecorder>::StartRecording();
+    auto recorders = per_thread<ThreadLocalRecorder>::StartRecording();
     for (auto& recorder : recorders)
     {
         recorder->Clear();
@@ -245,7 +245,7 @@ private:
 {
     traceme_recorder::Events result;
     SplitEventTracker        split_event_tracker;
-    auto                     recorders = PerThread<ThreadLocalRecorder>::StopRecording();
+    auto                     recorders = per_thread<ThreadLocalRecorder>::StopRecording();
     for (auto& recorder : recorders)
     {
         auto events = recorder->Consume(&split_event_tracker);
@@ -283,7 +283,7 @@ private:
 
 /* static */ void traceme_recorder::record(Event&& event)
 {
-    PerThread<ThreadLocalRecorder>::Get().Record(std::move(event));
+    per_thread<ThreadLocalRecorder>::Get().Record(std::move(event));
 }
 
 /* static */ traceme_recorder::Events traceme_recorder::stop()

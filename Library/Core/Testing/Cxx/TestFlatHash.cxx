@@ -630,6 +630,191 @@ XSIGMATEST(FlatHash, insert_const_value)
     END_TEST();
 }
 
+XSIGMATEST(FlatHash, map_insert_or_assign_and_contains)
+{
+    flat_hash_map<int, std::string> map;
+
+    // Insert new key
+    auto it_new = map.insert_or_assign(1, std::string("one"));
+    EXPECT_EQ(map.size(), 1);
+    EXPECT_TRUE(map.contains(1));
+    EXPECT_EQ(map.find(1)->second, "one");
+
+    // Assign existing key (value should be updated, size unchanged)
+    auto it_upd = map.insert_or_assign(1, std::string("ONE"));
+    EXPECT_EQ(map.size(), 1);
+    EXPECT_TRUE(map.contains(1));
+    EXPECT_EQ(map.find(1)->second, "ONE");
+
+    // Insert another key via iterator overload
+    auto it2 = map.insert_or_assign(map.cbegin(), 2, std::string("two"));
+    EXPECT_EQ(map.size(), 2);
+    EXPECT_TRUE(map.contains(2));
+    EXPECT_EQ(map.find(2)->second, "two");
+
+    END_TEST();
+}
+
+XSIGMATEST(FlatHash, map_at_accessors)
+{
+    flat_hash_map<int, int> map;
+    map[10]          = 42;
+    const auto& cmap = map;
+
+    // Positive at() on present key
+    EXPECT_EQ(map.at(10), 42);
+    EXPECT_EQ(cmap.at(10), 42);
+
+    END_TEST();
+}
+
+// ============================================================================
+// Erase iterator/range, rehash/reserve, equality, swap
+// ============================================================================
+
+XSIGMATEST(FlatHash, map_erase_by_iterator_and_range)
+{
+    flat_hash_map<int, int> map;
+    for (int i = 0; i < 5; ++i)
+    {
+        map[i] = i * 10;
+    }
+    EXPECT_EQ(map.size(), 5);
+
+    // Erase begin iterator
+    auto old_begin = map.begin();
+    map.erase(old_begin);
+    EXPECT_EQ(map.size(), 4);
+
+    // Erase [begin, end)
+    auto it = map.begin();
+    ++it;  // leave one element
+    map.erase(it, map.end());
+    EXPECT_EQ(map.size(), 1);
+
+    END_TEST();
+}
+
+XSIGMATEST(FlatHash, map_rehash_reserve_and_load_factor)
+{
+    flat_hash_map<int, int> map;
+    map.reserve(8);
+    auto initial_buckets = map.bucket_count();
+    for (int i = 0; i < 16; ++i)
+    {
+        map[i] = i;
+    }
+    EXPECT_EQ(map.size(), 16);
+    EXPECT_GE(map.bucket_count(), initial_buckets);
+    EXPECT_LE(map.load_factor(), map.max_load_factor());
+
+    // Rehash up
+    map.rehash(64);
+    EXPECT_GE(map.bucket_count(), 64);
+    EXPECT_LE(map.load_factor(), map.max_load_factor());
+
+    END_TEST();
+}
+
+XSIGMATEST(FlatHash, map_equality_and_swap)
+{
+    flat_hash_map<int, int> a;
+    flat_hash_map<int, int> b;
+    for (int i = 0; i < 5; ++i)
+    {
+        a[i] = i;
+        b[i] = i;
+    }
+    EXPECT_TRUE(a == b);
+    b[99] = 7;
+    EXPECT_TRUE(a != b);
+
+    a.swap(b);
+    EXPECT_TRUE(a.contains(99));
+    EXPECT_FALSE(b.contains(99));
+
+    END_TEST();
+}
+
+XSIGMATEST(FlatHash, set_equality_and_swap)
+{
+    flat_hash_set<int> s1;
+    flat_hash_set<int> s2;
+    for (int i = 0; i < 5; ++i)
+    {
+        s1.insert(i);
+        s2.insert(i);
+    }
+    EXPECT_TRUE(s1 == s2);
+    s2.insert(99);
+    EXPECT_TRUE(s1 != s2);
+
+    s1.swap(s2);
+    EXPECT_TRUE(s1.contains(99));
+    EXPECT_FALSE(s2.contains(99));
+
+    END_TEST();
+}
+
+// ============================================================================
+// Custom hash/equal and alternative hash policy wiring
+// ============================================================================
+
+struct ci_hash
+{
+    size_t operator()(const std::string& s) const noexcept
+    {
+        std::string lower(s);
+        std::transform(
+            lower.begin(),
+            lower.end(),
+            lower.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        return std::hash<std::string>{}(lower);
+    }
+};
+struct ci_equal
+{
+    bool operator()(const std::string& a, const std::string& b) const noexcept
+    {
+        if (a.size() != b.size())
+            return false;
+        for (size_t i = 0; i < a.size(); ++i)
+        {
+            if (std::tolower(static_cast<unsigned char>(a[i])) !=
+                std::tolower(static_cast<unsigned char>(b[i])))
+                return false;
+        }
+        return true;
+    }
+};
+
+XSIGMATEST(FlatHash, map_custom_hash_and_equal)
+{
+    flat_hash_map<std::string, int, ci_hash, ci_equal> cmap;
+    cmap["Hello"] = 1;
+    EXPECT_TRUE(cmap.contains("hello"));
+    EXPECT_EQ(cmap.find("heLLo")->second, 1);
+
+    // insert_or_assign should use custom equal
+    cmap.insert_or_assign("HELLO", 7);
+    EXPECT_EQ(cmap.size(), 1);
+    EXPECT_EQ(cmap.find("hello")->second, 7);
+
+    END_TEST();
+}
+
+XSIGMATEST(FlatHash, set_power_of_two_hash_policy_instantiation)
+{
+    // Ensure alternate hash policy alias compiles and works
+    flat_hash_set<int, power_of_two_std_hash<int>> s;
+    s.insert(1);
+    s.insert(2);
+    EXPECT_TRUE(s.contains(1));
+    EXPECT_TRUE(s.contains(2));
+    END_TEST();
+}
+
 XSIGMATEST(FlatHash, insert_rvalue)
 {
     flat_hash_map<int, std::string> map;
@@ -806,6 +991,98 @@ XSIGMATEST(FlatHash, prime_number_hash_policy_keep_in_range)
 
     uint64_t index = policy.keep_in_range(12345, 100);
     EXPECT_LE(index, 100);
+
+    END_TEST();
+}
+
+// ============================================================================
+// Prime Number Hash Policy - Complete Coverage
+// ============================================================================
+
+XSIGMATEST(FlatHash, prime_number_hash_policy_next_size_over_small)
+{
+    xsigma::prime_number_hash_policy policy;
+
+    uint64_t size = 1;  // very small
+    auto     f    = policy.next_size_over(size);
+    // size should be updated to the first prime in the list; f is corresponding mod function
+    EXPECT_GT(size, 1ULL);
+    EXPECT_EQ(f(size), 0ULL);  // n % n == 0
+
+    END_TEST();
+}
+
+XSIGMATEST(FlatHash, prime_number_hash_policy_next_size_over_between_primes)
+{
+    xsigma::prime_number_hash_policy policy;
+
+    uint64_t size = 6;  // between 5 and 7 -> should become 7
+    auto     f    = policy.next_size_over(size);
+    EXPECT_GE(size, 6ULL);
+    // Verify returned function behaves like modulo 'size'
+    EXPECT_EQ(f(size), 0ULL);
+    EXPECT_EQ(f(size + 1), 1ULL);
+
+    END_TEST();
+}
+
+XSIGMATEST(FlatHash, prime_number_hash_policy_commit_and_index_for_hash)
+{
+    xsigma::prime_number_hash_policy policy;
+
+    // Acquire a modulus function for a known target size
+    uint64_t size = 1000;
+    auto     f    = policy.next_size_over(size);
+    // Commit the modulus function; index_for_hash must now use it
+    policy.commit(f);
+
+    uint64_t h = 1234567890123456789ULL;
+    EXPECT_EQ(policy.index_for_hash(h, 0), f(h));
+
+    // keep_in_range: below threshold returns unchanged
+    EXPECT_EQ(policy.keep_in_range(42, 100), 42ULL);
+    // keep_in_range: above threshold returns reduced via current mod function
+    uint64_t big = size * 3 + 5;  // guarantee > size
+    EXPECT_EQ(policy.keep_in_range(big, size - 1), f(big));
+
+    END_TEST();
+}
+
+XSIGMATEST(FlatHash, prime_number_hash_policy_reset_restores_mod0)
+{
+    xsigma::prime_number_hash_policy policy;
+
+    // Commit a non-default mod function first
+    uint64_t size = 50;
+    auto     f    = policy.next_size_over(size);
+    policy.commit(f);
+    uint64_t h = 987654321ULL;
+    EXPECT_EQ(policy.index_for_hash(h, 0), f(h));
+
+    // Reset -> mod0 -> always 0
+    policy.reset();
+    EXPECT_EQ(policy.index_for_hash(h, 0), 0ULL);
+    EXPECT_EQ(policy.keep_in_range(h, 0ULL), 0ULL);  // since index > 0, reduced via mod0
+
+    END_TEST();
+}
+
+XSIGMATEST(FlatHash, prime_number_hash_policy_next_size_over_large)
+{
+    xsigma::prime_number_hash_policy policy;
+
+    // Use a very large request; should clamp to a large prime in the list
+    uint64_t requested = std::numeric_limits<uint64_t>::max() - 12345ULL;
+    uint64_t size      = requested;
+    auto     f         = policy.next_size_over(size);
+
+    EXPECT_GE(size, requested);
+    EXPECT_EQ(f(size), 0ULL);  // modulo by itself
+
+    // Commit and validate index_for_hash with large inputs
+    policy.commit(f);
+    uint64_t h1 = requested - 777ULL;
+    EXPECT_EQ(policy.index_for_hash(h1, 0), f(h1));
 
     END_TEST();
 }

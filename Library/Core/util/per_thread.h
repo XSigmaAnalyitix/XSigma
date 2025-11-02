@@ -45,7 +45,7 @@ limitations under the License.
 namespace xsigma
 {
 
-// PerThread<T> provides a thread-local instance of T accessible to each
+// per_thread<T> provides a thread-local instance of T accessible to each
 // application application thread, and provides the profiler thread access to
 // all thread-local instances of T.
 //
@@ -55,7 +55,7 @@ namespace xsigma
 // StartRecording has been called. During recording, if a thread exits, its
 // thread-local instance of T is kept alive until StopRecording is called.
 template <typename T>
-class PerThread
+class per_thread
 {
 public:
     // Returns the thread-local instance of T.
@@ -81,8 +81,8 @@ public:
 
 private:
     // Prevent instantiation.
-    PerThread()  = delete;
-    ~PerThread() = delete;
+    per_thread()  = delete;
+    ~per_thread() = delete;
 
     // Singleton registry of all thread-local instances of T.
     class Registry

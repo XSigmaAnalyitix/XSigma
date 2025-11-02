@@ -500,4 +500,4 @@ BENCHMARK(BM_PoolAllocator_SmallAllocation)
 
 #endif
 
-BENCHMARK_MAIN();
+// BENCHMARK_MAIN() removed - using benchmark_main library instead
