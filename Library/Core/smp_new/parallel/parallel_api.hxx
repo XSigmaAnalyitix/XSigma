@@ -31,7 +31,7 @@ void parallel_for(int64_t begin, int64_t end, int64_t grain_size, const Functor&
     if (grain_size <= 0)
     {
         auto num_threads = static_cast<int64_t>(internal::GetInteropPool().Size());
-        grain_size       = std::max(1LL, n / (num_threads * 4));
+        grain_size       = std::max(static_cast<int64_t>(1), n / (num_threads * 4));
     }
 
     // If work is small enough, execute serially
@@ -105,7 +105,7 @@ T parallel_reduce(
     if (grain_size <= 0)
     {
         auto num_threads = static_cast<int64_t>(internal::GetInteropPool().Size());
-        grain_size       = std::max(1LL, n / (num_threads * 4));
+        grain_size       = std::max(static_cast<int64_t>(1), n / (num_threads * 4));
     }
 
     // If work is small enough, execute serially

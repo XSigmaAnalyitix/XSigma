@@ -36,7 +36,8 @@ endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANGXX)
   if(XSIGMA_ENABLE_SANITIZER)
-    set(XSIGMA_SANITIZER "address" CACHE STRING "The sanitizer to use")
+    # Use XSIGMA_SANITIZER_TYPE instead of hardcoded "address"
+    set(XSIGMA_SANITIZER "${XSIGMA_SANITIZER_TYPE}" CACHE STRING "The sanitizer to use")
     mark_as_advanced(XSIGMA_SANITIZER)
 
     if(UNIX AND NOT APPLE)
@@ -68,4 +69,6 @@ endif()
 
 if(XSIGMA_ENABLE_SANITIZER)
   set(XSIGMA_ENABLE_MIMALLOC OFF)
+  # Disable LTO for sanitizer builds to avoid linker crashes with Clang
+  set(XSIGMA_ENABLE_LTO OFF)
 endif()

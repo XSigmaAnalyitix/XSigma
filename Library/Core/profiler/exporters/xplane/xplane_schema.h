@@ -165,6 +165,7 @@ inline const char* GetContextTypeString(ContextType context_type)
     case ContextType::kThreadpoolEvent:
         return "threadpool_event";
     }
+    return "unknown";  // Fallback for any unhandled enum values
 }
 
 inline ContextType GetSafeContextType(uint32_t context_type)

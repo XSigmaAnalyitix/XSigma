@@ -705,6 +705,12 @@ add_third_party_library(kineto
     XSIGMA_TARGETS "XSigma::kineto=kineto"
 )
 
+# Disable Kineto if the library was not found
+if(XSIGMA_ENABLE_KINETO AND NOT TARGET XSigma::kineto)
+    message(STATUS "Kineto library not found - disabling XSIGMA_ENABLE_KINETO")
+    set(XSIGMA_ENABLE_KINETO OFF CACHE BOOL "Enable PyTorch Kineto profiling library." FORCE)
+endif()
+
 # =============================================================================
 # Google Test and Google Benchmark Integration
 # =============================================================================

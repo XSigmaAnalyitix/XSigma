@@ -19,6 +19,20 @@
 
 include_guard(GLOBAL)
 
+# ============================================================================= Early Dependency Checks
+# =============================================================================
+# Check for optional dependencies and disable features if libraries are not found
+# This must happen before feature flag mapping to ensure correct XSIGMA_HAS_* values
+
+# Intel ITT API support - check if library is available
+if(XSIGMA_ENABLE_ITTAPI)
+  find_package(ITT)
+  if(NOT ITT_FOUND)
+    message(STATUS "ITT API not found - disabling XSIGMA_ENABLE_ITTAPI")
+    set(XSIGMA_ENABLE_ITTAPI OFF CACHE BOOL "Enable Intel ITT API for VTune profiling." FORCE)
+  endif()
+endif()
+
 # ============================================================================= Feature Flag Mapping
 # =============================================================================
 # Map CMake XSIGMA_ENABLE_* variables to XSIGMA_HAS_* compile definitions This ensures consistent
@@ -96,6 +110,7 @@ else()
 endif()
 
 # Kineto profiling support
+# Note: XSIGMA_ENABLE_KINETO may have been disabled in ThirdParty/CMakeLists.txt if library not found
 if(XSIGMA_ENABLE_KINETO)
   list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_HAS_KINETO=1)
 else()
@@ -103,6 +118,7 @@ else()
 endif()
 
 # Intel ITT API support Note: CMake uses XSIGMA_ENABLE_ITTAPI, but C++ code uses XSIGMA_HAS_ITT
+# Note: XSIGMA_ENABLE_ITTAPI may have been disabled in dependencies.cmake if library not found
 if(XSIGMA_ENABLE_ITTAPI)
   list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_HAS_ITT=1)
 else()
@@ -260,13 +276,11 @@ if(XSIGMA_ENABLE_KINETO)
 endif()
 
 # Intel ITT API support Note: XSIGMA_HAS_ITTAPI is defined via configure_file() in xsigma_features.h
-if(XSIGMA_ENABLE_ITTAPI)
-  find_package(ITT)
-  if(ITT_FOUND)
-    list(APPEND XSIGMA_DEPENDENCY_LIBS ${ITT_LIBRARIES})
-    list(APPEND XSIGMA_DEPENDENCY_INCLUDE_DIRS ${ITT_INCLUDE_DIR})
-    message(STATUS "Dependency: ITT libraries added to XSIGMA_DEPENDENCY_LIBS")
-  endif()
+# ITT library check already performed in early dependency checks section
+if(XSIGMA_ENABLE_ITTAPI AND ITT_FOUND)
+  list(APPEND XSIGMA_DEPENDENCY_LIBS ${ITT_LIBRARIES})
+  list(APPEND XSIGMA_DEPENDENCY_INCLUDE_DIRS ${ITT_INCLUDE_DIR})
+  message(STATUS "Dependency: ITT libraries added to XSIGMA_DEPENDENCY_LIBS")
 endif()
 
 # GPU support (CUDA or HIP) Note: CUDA and HIP libraries are already added by cuda.cmake and
