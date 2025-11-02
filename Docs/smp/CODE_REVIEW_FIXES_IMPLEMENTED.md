@@ -288,4 +288,3 @@ The implementation maintains backward compatibility, follows XSigma coding stand
 - Parallelize 1D: `Library/Core/smp_new/parallel/parallelize_1d.{h,cxx}`
 - TBB Backend: `Library/Core/smp_new/tbb/parallel_tbb.{h,cxx}`
 - Tests: `Library/Core/Testing/Cxx/TestSmpNew*.cxx`
-

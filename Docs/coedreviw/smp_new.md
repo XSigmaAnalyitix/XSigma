@@ -11,5 +11,5 @@
 - The per-task counters in `parallel_for` / `parallel_reduce` are `std::atomic<int>` (`Library/Core/smp_new/parallel/parallel_api.hxx:84-101`, `Library/Core/smp_new/parallel/parallel_api.hxx:208-219`). Large iteration spaces easily exceed `INT_MAX`, causing overflow and undefined behaviour while indexing the per-chunk buffers.
 
 ## Additional Observations
-- `Parallelize1DCoordinator` sizes its work-stealing deques using `DefaultNumThreads()` instead of the actual intra-op pool size (`Library/Core/smp_new/parallel/parallelize_1d.cxx:72`), so it may spawn more coordinator tasks than worker threads. Consider querying the pool for consistency once the pool access bug is fixed.
+- `Parallelize1DCoordinator` sizes its work-stealing dequeues using `DefaultNumThreads()` instead of the actual intra-op pool size (`Library/Core/smp_new/parallel/parallelize_1d.cxx:72`), so it may spawn more coordinator tasks than worker threads. Consider querying the pool for consistency once the pool access bug is fixed.
 - The thread-local helpers for the TBB backend never populate `g_thread_id`, so `GetTBBThreadNum()` always reports `0` (`Library/Core/smp_new/tbb/parallel_tbb.cxx:94`). If the API needs real thread ids, that logic still has to be implemented.

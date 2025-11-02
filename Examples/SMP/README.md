@@ -257,4 +257,3 @@ To add new examples:
 ## License
 
 These examples are part of the XSigma project and follow the same license terms.
-

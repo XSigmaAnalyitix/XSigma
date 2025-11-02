@@ -114,4 +114,3 @@ The XSigma SMP module has been successfully refactored to:
 - Pass all 111 SMP tests on both Visual Studio 2022 and Clang compilers
 
 **Zero regressions detected. All architectural improvements working correctly.**
-
