@@ -1,10 +1,10 @@
-# =============================================================================
-# Security Library C++ Tests
+# ============================================================================= Security Library C++
+# Tests
 # =============================================================================
 # Following Core's simple pattern for test integration
 
-# =============================================================================
-# Test Source Files Discovery
+# ============================================================================= Test Source Files
+# Discovery
 # =============================================================================
 file(GLOB_RECURSE test_sources LIST_DIRECTORIES false "${CMAKE_CURRENT_SOURCE_DIR}/Test*.cxx")
 
@@ -14,16 +14,16 @@ foreach(_test_source IN ITEMS ${test_sources})
   list(APPEND TestFiles "${_test_source}")
 endforeach()
 
-# =============================================================================
-# SecurityCxxTests Executable
+# ============================================================================= SecurityCxxTests
+# Executable
 # =============================================================================
 add_executable(SecurityCxxTests ${TestFiles})
 
 # Compile definitions
 target_compile_definitions(SecurityCxxTests PRIVATE XSIGMA_GOOGLE_TEST USE_GTEST _VARIADIC_MAX=10)
 
-# Link libraries
-# Security library is linked which transitively brings in all centralized dependencies
+# Link libraries Security library is linked which transitively brings in all centralized
+# dependencies
 target_link_libraries(SecurityCxxTests PRIVATE gtest gtest_main XSigma::Security XSigma::Core)
 
 # Set target properties
@@ -32,8 +32,8 @@ set_target_properties(
                                              "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
 )
 
-# =============================================================================
-# Google Test Discovery for CTest and Visual Studio Test Explorer
+# ============================================================================= Google Test
+# Discovery for CTest and Visual Studio Test Explorer
 # =============================================================================
 
 # Register test with CTest
@@ -54,10 +54,9 @@ endif()
 message(STATUS "✓ SecurityCxxTests registered with CTest")
 message(STATUS "  - Working directory: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
-# =============================================================================
-# Output Directory Configuration
+# ============================================================================= Output Directory
+# Configuration
 # =============================================================================
 if(COMMAND xsigma_set_target_output_directories)
   xsigma_set_target_output_directories(SecurityCxxTests)
 endif()
-

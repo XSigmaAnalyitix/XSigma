@@ -33,7 +33,7 @@ namespace security
  */
 class XSIGMA_VISIBILITY input_validator
 {
-  public:
+public:
     // ========================================================================
     // String Validation
     // ========================================================================
@@ -221,8 +221,7 @@ class XSIGMA_VISIBILITY input_validator
                 {
                     return std::nullopt;
                 }
-                if (value < std::numeric_limits<T>::min() ||
-                    value > std::numeric_limits<T>::max())
+                if (value < std::numeric_limits<T>::min() || value > std::numeric_limits<T>::max())
                 {
                     return std::nullopt;
                 }
@@ -291,4 +290,3 @@ class XSIGMA_VISIBILITY input_validator
 
 }  // namespace security
 }  // namespace xsigma
-

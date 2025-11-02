@@ -1,8 +1,8 @@
 # OpenSSF Best Practices Compliance Report
 
-**Project**: XSigma  
-**Report Date**: 2025-11-02  
-**Status**: In Progress - Pending OpenSSF Registration  
+**Project**: XSigma
+**Report Date**: 2025-11-02
+**Status**: In Progress - Pending OpenSSF Registration
 **Target Level**: Passing Badge (with roadmap to Silver/Gold)
 
 ---
@@ -546,7 +546,6 @@ See [.augment/rules/coding.md](.augment/rules/coding.md) for complete standards.
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2025-11-02  
+**Document Version**: 1.0
+**Last Updated**: 2025-11-02
 **Maintained By**: XSigma Development Team
-

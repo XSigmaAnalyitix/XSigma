@@ -31,7 +31,7 @@ namespace security
  */
 class XSIGMA_VISIBILITY crypto
 {
-  public:
+public:
     // ========================================================================
     // Secure Random Number Generation
     // ========================================================================
@@ -85,7 +85,7 @@ class XSIGMA_VISIBILITY crypto
 
         // Use unsigned type for random generation to avoid signed overflow issues
         using unsigned_t = typename std::make_unsigned<T>::type;
-        auto random_val = generate_random_int<unsigned_t>();
+        auto random_val  = generate_random_int<unsigned_t>();
         if (!random_val.has_value())
         {
             return std::nullopt;
@@ -103,8 +103,9 @@ class XSIGMA_VISIBILITY crypto
      * @return Random string
      */
     static XSIGMA_API std::optional<std::string> generate_random_string(
-        size_t             length,
-        std::string_view charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
+        size_t           length,
+        std::string_view charset =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
 
     // ========================================================================
     // Secure Hashing
@@ -154,8 +155,7 @@ class XSIGMA_VISIBILITY crypto
      * Uses constant-time comparison to prevent timing attacks.
      * Always compares all bytes regardless of differences.
      */
-    static XSIGMA_API bool constant_time_compare(
-        const uint8_t* a, const uint8_t* b, size_t size);
+    static XSIGMA_API bool constant_time_compare(const uint8_t* a, const uint8_t* b, size_t size);
 
     /**
      * @brief Constant-time comparison of two strings
@@ -194,12 +194,12 @@ class XSIGMA_VISIBILITY crypto
      */
     static XSIGMA_API void secure_zero_memory(void* ptr, size_t size);
 
-  private:
+private:
     // Internal SHA-256 implementation
     struct sha256_context
     {
-        uint32_t              state[8];
-        uint64_t              count;
+        uint32_t                state[8];
+        uint64_t                count;
         std::array<uint8_t, 64> buffer;
     };
 
@@ -211,4 +211,3 @@ class XSIGMA_VISIBILITY crypto
 
 }  // namespace security
 }  // namespace xsigma
-

@@ -258,7 +258,7 @@ The CMake build system automatically discovers and builds test files:
 
 ```cmake
 # Pattern: Test*.cxx in Library/Core/Testing/Cxx/
-file(GLOB_RECURSE test_sources 
+file(GLOB_RECURSE test_sources
      "${CMAKE_CURRENT_SOURCE_DIR}/Test*.cxx")
 ```
 
@@ -273,7 +273,7 @@ Benchmarks are built when `XSIGMA_ENABLE_BENCHMARK=ON`:
 
 ```cmake
 # Pattern: Benchmark*.cxx in Library/Core/Testing/Benchmark/
-file(GLOB_RECURSE bench_sources 
+file(GLOB_RECURSE bench_sources
      "${CMAKE_CURRENT_SOURCE_DIR}/Benchmark*.cxx")
 ```
 
@@ -350,7 +350,6 @@ cd build_ninja
 
 ---
 
-**Report Generated:** 2025-11-01  
-**Author:** XSigma Development Team  
+**Report Generated:** 2025-11-01
+**Author:** XSigma Development Team
 **Status:** ✅ APPROVED FOR PRODUCTION
-

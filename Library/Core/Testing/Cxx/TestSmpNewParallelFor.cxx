@@ -15,7 +15,9 @@ XSIGMATEST(SmpNewParallelFor, basic)
     std::vector<int> data(100, 0);
 
     parallel_for(
-        0, 100, 10,
+        0,
+        100,
+        10,
         [&data](int64_t begin, int64_t end)
         {
             for (int64_t i = begin; i < end; ++i)
@@ -35,8 +37,7 @@ XSIGMATEST(SmpNewParallelFor, empty_range)
 {
     std::atomic<int> counter{0};
 
-    parallel_for(
-        0, 0, 10, [&counter](int64_t begin, int64_t end) { ++counter; });
+    parallel_for(0, 0, 10, [&counter](int64_t begin, int64_t end) { ++counter; });
 
     EXPECT_EQ(counter.load(), 0);
 }
@@ -47,7 +48,9 @@ XSIGMATEST(SmpNewParallelFor, single_element)
     std::vector<int> data(1, 0);
 
     parallel_for(
-        0, 1, 10,
+        0,
+        1,
+        10,
         [&data](int64_t begin, int64_t end)
         {
             for (int64_t i = begin; i < end; ++i)
@@ -65,7 +68,9 @@ XSIGMATEST(SmpNewParallelFor, small_grain_size)
     std::vector<int> data(50, 0);
 
     parallel_for(
-        0, 50, 1,
+        0,
+        50,
+        1,
         [&data](int64_t begin, int64_t end)
         {
             for (int64_t i = begin; i < end; ++i)
@@ -86,7 +91,9 @@ XSIGMATEST(SmpNewParallelFor, large_grain_size)
     std::vector<int> data(100, 0);
 
     parallel_for(
-        0, 100, 100,
+        0,
+        100,
+        100,
         [&data](int64_t begin, int64_t end)
         {
             for (int64_t i = begin; i < end; ++i)
@@ -107,11 +114,13 @@ XSIGMATEST(SmpNewParallelFor, auto_grain_size)
     std::vector<int> data(100, 0);
 
     parallel_for(
-        0, 100, 0,
+        0,
+        100,
+        0,
         [&data](int64_t begin, int64_t end)
         {
             for (int64_t i = begin; i < end; ++i)
-                {
+            {
                 data[i] = static_cast<int>(i);
             }
         });
@@ -129,7 +138,9 @@ XSIGMATEST(SmpNewParallelFor, large_workload)
     std::vector<int> data(size, 0);
 
     parallel_for(
-        0, size, 1000,
+        0,
+        size,
+        1000,
         [&data](int64_t begin, int64_t end)
         {
             for (int64_t i = begin; i < end; ++i)
@@ -150,7 +161,9 @@ XSIGMATEST(SmpNewParallelFor, atomic_operations)
     std::atomic<int> counter{0};
 
     parallel_for(
-        0, 1000, 10,
+        0,
+        1000,
+        10,
         [&counter](int64_t begin, int64_t end)
         {
             for (int64_t i = begin; i < end; ++i)
@@ -169,7 +182,9 @@ XSIGMATEST(SmpNewParallelFor, computation_workload)
     std::vector<double> data(size, 0.0);
 
     parallel_for(
-        0, size, 100,
+        0,
+        size,
+        100,
         [&data](int64_t begin, int64_t end)
         {
             for (int64_t i = begin; i < end; ++i)
@@ -194,7 +209,9 @@ XSIGMATEST(SmpNewParallelFor, thread_safety_mutex)
     std::mutex       data_mutex;
 
     parallel_for(
-        0, 100, 10,
+        0,
+        100,
+        10,
         [&data, &data_mutex](int64_t begin, int64_t end)
         {
             for (int64_t i = begin; i < end; ++i)
@@ -217,8 +234,7 @@ XSIGMATEST(SmpNewParallelFor, negative_range)
 {
     std::atomic<int> counter{0};
 
-    parallel_for(
-        10, 5, 10, [&counter](int64_t begin, int64_t end) { ++counter; });
+    parallel_for(10, 5, 10, [&counter](int64_t begin, int64_t end) { ++counter; });
 
     EXPECT_EQ(counter.load(), 0);
 }
@@ -229,7 +245,9 @@ XSIGMATEST(SmpNewParallelFor, very_large_grain_size)
     std::vector<int> data(10, 0);
 
     parallel_for(
-        0, 10, 1000,
+        0,
+        10,
+        1000,
         [&data](int64_t begin, int64_t end)
         {
             for (int64_t i = begin; i < end; ++i)
@@ -251,7 +269,9 @@ XSIGMATEST(SmpNewParallelFor, multiple_calls)
     std::vector<int> data2(100, 0);
 
     parallel_for(
-        0, 100, 10,
+        0,
+        100,
+        10,
         [&data1](int64_t begin, int64_t end)
         {
             for (int64_t i = begin; i < end; ++i)
@@ -261,7 +281,9 @@ XSIGMATEST(SmpNewParallelFor, multiple_calls)
         });
 
     parallel_for(
-        0, 100, 10,
+        0,
+        100,
+        10,
         [&data2](int64_t begin, int64_t end)
         {
             for (int64_t i = begin; i < end; ++i)
@@ -280,11 +302,13 @@ XSIGMATEST(SmpNewParallelFor, multiple_calls)
 // Test 14: Different data types
 XSIGMATEST(SmpNewParallelFor, different_data_types)
 {
-    std::vector<float> floats(100, 0.0f);
+    std::vector<float>   floats(100, 0.0f);
     std::vector<int64_t> longs(100, 0);
 
     parallel_for(
-        0, 100, 10,
+        0,
+        100,
+        10,
         [&floats](int64_t begin, int64_t end)
         {
             for (int64_t i = begin; i < end; ++i)
@@ -294,7 +318,9 @@ XSIGMATEST(SmpNewParallelFor, different_data_types)
         });
 
     parallel_for(
-        0, 100, 10,
+        0,
+        100,
+        10,
         [&longs](int64_t begin, int64_t end)
         {
             for (int64_t i = begin; i < end; ++i)
@@ -311,4 +337,3 @@ XSIGMATEST(SmpNewParallelFor, different_data_types)
 }
 
 }  // namespace xsigma::smp_new::parallel
-

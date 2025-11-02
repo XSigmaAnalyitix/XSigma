@@ -30,13 +30,9 @@ namespace xsigma
 XSIGMATEST(SMPEnhanced, parallel_for_empty_range)
 {
     std::atomic<int> counter{0};
-    
-    tools::For(
-        0,
-        0,
-        10,
-        [&counter](int begin, int end) { ++counter; });
-    
+
+    tools::For(0, 0, 10, [&counter](int begin, int end) { ++counter; });
+
     EXPECT_EQ(counter.load(), 0);
 }
 
@@ -44,7 +40,7 @@ XSIGMATEST(SMPEnhanced, parallel_for_empty_range)
 XSIGMATEST(SMPEnhanced, parallel_for_single_item)
 {
     std::vector<int> data(1, 0);
-    
+
     tools::For(
         0,
         1,
@@ -56,7 +52,7 @@ XSIGMATEST(SMPEnhanced, parallel_for_single_item)
                 data[i] = 42;
             }
         });
-    
+
     EXPECT_EQ(data[0], 42);
 }
 
@@ -64,13 +60,9 @@ XSIGMATEST(SMPEnhanced, parallel_for_single_item)
 XSIGMATEST(SMPEnhanced, parallel_for_negative_range)
 {
     std::atomic<int> counter{0};
-    
-    tools::For(
-        10,
-        5,
-        1,
-        [&counter](int begin, int end) { ++counter; });
-    
+
+    tools::For(10, 5, 1, [&counter](int begin, int end) { ++counter; });
+
     EXPECT_EQ(counter.load(), 0);
 }
 
@@ -78,7 +70,7 @@ XSIGMATEST(SMPEnhanced, parallel_for_negative_range)
 XSIGMATEST(SMPEnhanced, parallel_for_large_grain)
 {
     std::vector<int> data(10, 0);
-    
+
     tools::For(
         0,
         10,
@@ -90,7 +82,7 @@ XSIGMATEST(SMPEnhanced, parallel_for_large_grain)
                 data[i] = i;
             }
         });
-    
+
     for (int i = 0; i < 10; ++i)
     {
         EXPECT_EQ(data[i], i);
@@ -101,7 +93,7 @@ XSIGMATEST(SMPEnhanced, parallel_for_large_grain)
 XSIGMATEST(SMPEnhanced, parallel_for_zero_grain)
 {
     std::vector<int> data(100, 0);
-    
+
     tools::For(
         0,
         100,
@@ -113,7 +105,7 @@ XSIGMATEST(SMPEnhanced, parallel_for_zero_grain)
                 data[i] = i * 2;
             }
         });
-    
+
     for (int i = 0; i < 100; ++i)
     {
         EXPECT_EQ(data[i], i * 2);
@@ -124,7 +116,7 @@ XSIGMATEST(SMPEnhanced, parallel_for_zero_grain)
 XSIGMATEST(SMPEnhanced, parallel_for_fine_grain)
 {
     std::vector<int> data(50, 0);
-    
+
     tools::For(
         0,
         50,
@@ -136,7 +128,7 @@ XSIGMATEST(SMPEnhanced, parallel_for_fine_grain)
                 data[i] = i + 1;
             }
         });
-    
+
     for (int i = 0; i < 50; ++i)
     {
         EXPECT_EQ(data[i], i + 1);
@@ -151,7 +143,7 @@ XSIGMATEST(SMPEnhanced, parallel_for_fine_grain)
 XSIGMATEST(SMPEnhanced, parallel_for_iterator_vector)
 {
     std::vector<int> data(100, 0);
-    
+
     tools::For(
         data.begin(),
         data.end(),
@@ -164,7 +156,7 @@ XSIGMATEST(SMPEnhanced, parallel_for_iterator_vector)
                 *it = idx;
             }
         });
-    
+
     // Verify some values (order may vary due to parallelism)
     bool all_set = true;
     for (const auto& val : data)
@@ -186,9 +178,9 @@ XSIGMATEST(SMPEnhanced, parallel_for_iterator_set)
     {
         data.insert(i);
     }
-    
+
     std::atomic<int> sum{0};
-    
+
     tools::For(
         data.begin(),
         data.end(),
@@ -200,7 +192,7 @@ XSIGMATEST(SMPEnhanced, parallel_for_iterator_set)
                 sum.fetch_add(*it, std::memory_order_relaxed);
             }
         });
-    
+
     // Sum of 0..49 = 49*50/2 = 1225
     EXPECT_EQ(sum.load(), 1225);
 }
@@ -210,16 +202,14 @@ XSIGMATEST(SMPEnhanced, parallel_for_iterator_empty)
 {
     std::vector<int> data;
     std::atomic<int> counter{0};
-    
+
     tools::For(
         data.begin(),
         data.end(),
         10,
         [&counter](std::vector<int>::iterator begin, std::vector<int>::iterator end)
-        {
-            ++counter;
-        });
-    
+        { ++counter; });
+
     EXPECT_EQ(counter.load(), 0);
 }
 
@@ -228,9 +218,9 @@ XSIGMATEST(SMPEnhanced, parallel_for_iterator_lambda)
 {
     std::vector<int> data(100);
     std::iota(data.begin(), data.end(), 0);
-    
+
     std::atomic<int64_t> sum{0};
-    
+
     tools::For(
         data.begin(),
         data.end(),
@@ -241,7 +231,7 @@ XSIGMATEST(SMPEnhanced, parallel_for_iterator_lambda)
                 sum.fetch_add(*it, std::memory_order_relaxed);
             }
         });
-    
+
     // Sum of 0..99 = 99*100/2 = 4950
     EXPECT_EQ(sum.load(), 4950);
 }
@@ -255,7 +245,7 @@ XSIGMATEST(SMPEnhanced, parallel_for_atomic_operations)
 {
     const int        size = 10000;
     std::atomic<int> counter{0};
-    
+
     tools::For(
         0,
         size,
@@ -267,7 +257,7 @@ XSIGMATEST(SMPEnhanced, parallel_for_atomic_operations)
                 counter.fetch_add(1, std::memory_order_relaxed);
             }
         });
-    
+
     EXPECT_EQ(counter.load(), size);
 }
 
@@ -305,11 +295,7 @@ XSIGMATEST(SMPEnhanced, transform_unary_empty)
     std::vector<int> input;
     std::vector<int> output;
 
-    tools::Transform(
-        input.begin(),
-        input.end(),
-        output.begin(),
-        [](int x) { return x * 2; });
+    tools::Transform(input.begin(), input.end(), output.begin(), [](int x) { return x * 2; });
 
     EXPECT_TRUE(output.empty());
 }
@@ -320,11 +306,7 @@ XSIGMATEST(SMPEnhanced, transform_unary_single)
     std::vector<int> input{5};
     std::vector<int> output(1, 0);
 
-    tools::Transform(
-        input.begin(),
-        input.end(),
-        output.begin(),
-        [](int x) { return x * 3; });
+    tools::Transform(input.begin(), input.end(), output.begin(), [](int x) { return x * 3; });
 
     EXPECT_EQ(output[0], 15);
 }
@@ -337,11 +319,7 @@ XSIGMATEST(SMPEnhanced, transform_unary_large)
     std::iota(input.begin(), input.end(), 0);
     std::vector<int> output(size, 0);
 
-    tools::Transform(
-        input.begin(),
-        input.end(),
-        output.begin(),
-        [](int x) { return x * 2; });
+    tools::Transform(input.begin(), input.end(), output.begin(), [](int x) { return x * 2; });
 
     for (int i = 0; i < size; ++i)
     {
@@ -358,10 +336,7 @@ XSIGMATEST(SMPEnhanced, transform_unary_float)
     std::vector<double> output(size, 0.0);
 
     tools::Transform(
-        input.begin(),
-        input.end(),
-        output.begin(),
-        [](double x) { return std::sqrt(x); });
+        input.begin(), input.end(), output.begin(), [](double x) { return std::sqrt(x); });
 
     for (int i = 0; i < size; ++i)
     {
@@ -582,4 +557,3 @@ XSIGMATEST(SMPEnhanced, sort_duplicates)
 }
 
 }  // namespace xsigma
-

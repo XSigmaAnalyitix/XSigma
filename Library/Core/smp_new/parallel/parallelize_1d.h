@@ -39,7 +39,7 @@ struct WorkItem
  * @brief Work-stealing deque for load balancing.
  *
  * Each worker thread has its own deque. When a thread runs out of work,
- * it steals from other threads' deques.
+ * it steals from other threads' dequeues.
  */
 class WorkStealingDeque
 {
@@ -97,7 +97,7 @@ public:
     size_t size() const;
 
 private:
-    mutable std::mutex mutex_;
+    mutable std::mutex   mutex_;
     std::deque<WorkItem> items_;
 };
 
@@ -112,9 +112,7 @@ public:
     /**
      * @brief Initialize coordinator with function and range.
      */
-    Parallelize1DCoordinator(
-        const std::function<void(size_t)>& function,
-        size_t range);
+    Parallelize1DCoordinator(const std::function<void(size_t)>& function, size_t range);
 
     /**
      * @brief Execute the parallel work.
@@ -162,28 +160,25 @@ public:
     void set_exception(std::exception_ptr ex);
 
 private:
-    const std::function<void(size_t)>& function_;
-    size_t range_;
+    const std::function<void(size_t)>&              function_;
+    size_t                                          range_;
     std::vector<std::unique_ptr<WorkStealingDeque>> deques_;
-    std::atomic<size_t> pending_work_{0};
-    std::atomic<bool> all_work_queued_{false};
-    std::mutex completion_mutex_;
-    std::condition_variable completion_cv_;
-    std::exception_ptr exception_;
-    std::mutex exception_mutex_;
+    std::atomic<size_t>                             pending_work_{0};
+    std::atomic<bool>                               all_work_queued_{false};
+    std::mutex                                      completion_mutex_;
+    std::condition_variable                         completion_cv_;
+    std::exception_ptr                              exception_;
+    std::mutex                                      exception_mutex_;
 };
 
 /**
  * @brief Worker thread function for parallelize_1d.
  *
  * Each worker thread runs this function, processing work from its deque
- * and stealing from other threads' deques when idle.
+ * and stealing from other threads' dequeues when idle.
  */
-void worker_thread_func(
-    Parallelize1DCoordinator& coordinator,
-    size_t thread_id);
+void worker_thread_func(Parallelize1DCoordinator& coordinator, size_t thread_id);
 
 }  // namespace internal
 
 }  // namespace xsigma::smp_new::parallel
-

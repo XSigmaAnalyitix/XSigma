@@ -56,7 +56,7 @@ XSIGMATEST(SMPComprehensive, get_estimated_default_threads)
 XSIGMATEST(SMPComprehensive, parallel_for_basic)
 {
     std::vector<int> data(100, 0);
-    
+
     tools::For(
         0,
         100,
@@ -68,7 +68,7 @@ XSIGMATEST(SMPComprehensive, parallel_for_basic)
                 data[i] = i * 2;
             }
         });
-    
+
     // Verify results
     for (int i = 0; i < 100; ++i)
     {
@@ -80,7 +80,7 @@ XSIGMATEST(SMPComprehensive, parallel_for_basic)
 XSIGMATEST(SMPComprehensive, parallel_for_small_grain)
 {
     std::vector<int> data(50, 0);
-    
+
     tools::For(
         0,
         50,
@@ -92,7 +92,7 @@ XSIGMATEST(SMPComprehensive, parallel_for_small_grain)
                 data[i] = i + 1;
             }
         });
-    
+
     for (int i = 0; i < 50; ++i)
     {
         EXPECT_EQ(data[i], i + 1);
@@ -103,7 +103,7 @@ XSIGMATEST(SMPComprehensive, parallel_for_small_grain)
 XSIGMATEST(SMPComprehensive, parallel_for_large_grain)
 {
     std::vector<int> data(100, 0);
-    
+
     tools::For(
         0,
         100,
@@ -115,7 +115,7 @@ XSIGMATEST(SMPComprehensive, parallel_for_large_grain)
                 data[i] = i * 3;
             }
         });
-    
+
     for (int i = 0; i < 100; ++i)
     {
         EXPECT_EQ(data[i], i * 3);
@@ -126,13 +126,9 @@ XSIGMATEST(SMPComprehensive, parallel_for_large_grain)
 XSIGMATEST(SMPComprehensive, parallel_for_empty_range)
 {
     std::atomic<int> counter{0};
-    
-    tools::For(
-        10,
-        10,
-        1,
-        [&counter](int begin, int end) { counter++; });
-    
+
+    tools::For(10, 10, 1, [&counter](int begin, int end) { counter++; });
+
     // Should not execute
     EXPECT_EQ(counter.load(), 0);
 }
@@ -141,7 +137,7 @@ XSIGMATEST(SMPComprehensive, parallel_for_empty_range)
 XSIGMATEST(SMPComprehensive, parallel_for_single_element)
 {
     std::vector<int> data(1, 0);
-    
+
     tools::For(
         0,
         1,
@@ -153,7 +149,7 @@ XSIGMATEST(SMPComprehensive, parallel_for_single_element)
                 data[i] = 42;
             }
         });
-    
+
     EXPECT_EQ(data[0], 42);
 }
 
@@ -162,7 +158,7 @@ XSIGMATEST(SMPComprehensive, parallel_for_atomic_operations)
 {
     std::atomic<int> counter{0};
     const int        iterations = 1000;
-    
+
     tools::For(
         0,
         iterations,
@@ -174,7 +170,7 @@ XSIGMATEST(SMPComprehensive, parallel_for_atomic_operations)
                 counter.fetch_add(1, std::memory_order_relaxed);
             }
         });
-    
+
     EXPECT_EQ(counter.load(), iterations);
 }
 
@@ -183,7 +179,7 @@ XSIGMATEST(SMPComprehensive, parallel_for_large_workload)
 {
     const int        size = 100000;
     std::vector<int> data(size, 0);
-    
+
     tools::For(
         0,
         size,
@@ -195,7 +191,7 @@ XSIGMATEST(SMPComprehensive, parallel_for_large_workload)
                 data[i] = i;
             }
         });
-    
+
     // Spot check
     EXPECT_EQ(data[0], 0);
     EXPECT_EQ(data[size / 2], size / 2);
@@ -207,7 +203,7 @@ XSIGMATEST(SMPComprehensive, parallel_for_computation)
 {
     const int           size = 1000;
     std::vector<double> data(size, 0.0);
-    
+
     tools::For(
         0,
         size,
@@ -219,7 +215,7 @@ XSIGMATEST(SMPComprehensive, parallel_for_computation)
                 data[i] = static_cast<double>(i) * 1.5;
             }
         });
-    
+
     EXPECT_DOUBLE_EQ(data[0], 0.0);
     EXPECT_DOUBLE_EQ(data[100], 150.0);
     EXPECT_DOUBLE_EQ(data[999], 1498.5);
@@ -230,7 +226,7 @@ XSIGMATEST(SMPComprehensive, parallel_for_thread_safety)
 {
     std::vector<int> data;
     std::mutex       mutex;
-    
+
     tools::For(
         0,
         100,
@@ -243,7 +239,7 @@ XSIGMATEST(SMPComprehensive, parallel_for_thread_safety)
                 data.push_back(i);
             }
         });
-    
+
     EXPECT_EQ(data.size(), 100);
 }
 
@@ -261,7 +257,7 @@ XSIGMATEST(SMPComprehensive, enable_nested_parallelism)
     tools::SetNestedParallelism(true);
     bool nested = tools::GetNestedParallelism();
     EXPECT_TRUE(nested);
-    
+
     // Restore default
     tools::SetNestedParallelism(false);
 }
@@ -291,4 +287,3 @@ XSIGMATEST(SMPComprehensive, is_parallel_scope_outside)
 }
 
 }  // namespace xsigma
-

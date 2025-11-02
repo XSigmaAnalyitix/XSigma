@@ -1,9 +1,8 @@
-#include "crypto.h"
-
 #include <algorithm>
 #include <cstring>
 
 #include "Core/Testing/xsigmaTest.h"
+#include "crypto.h"
 
 using namespace xsigma::security;
 
@@ -119,10 +118,10 @@ XSIGMATEST(crypto_test, sha256_empty_string)
     EXPECT_EQ(hash.size(), 32);
 
     // Known SHA-256 hash of empty string
-    std::array<uint8_t, 32> expected = {
-        0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14, 0x9a, 0xfb, 0xf4,
-        0xc8, 0x99, 0x6f, 0xb9, 0x24, 0x27, 0xae, 0x41, 0xe4, 0x64, 0x9b,
-        0x93, 0x4c, 0xa4, 0x95, 0x99, 0x1b, 0x78, 0x52, 0xb8, 0x55};
+    std::array<uint8_t, 32> expected = {0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14,
+                                        0x9a, 0xfb, 0xf4, 0xc8, 0x99, 0x6f, 0xb9, 0x24,
+                                        0x27, 0xae, 0x41, 0xe4, 0x64, 0x9b, 0x93, 0x4c,
+                                        0xa4, 0x95, 0x99, 0x1b, 0x78, 0x52, 0xb8, 0x55};
 
     EXPECT_EQ(hash, expected);
 }
@@ -133,10 +132,10 @@ XSIGMATEST(crypto_test, sha256_known_value)
     EXPECT_EQ(hash.size(), 32);
 
     // Known SHA-256 hash of "hello"
-    std::array<uint8_t, 32> expected = {
-        0x2c, 0xf2, 0x4d, 0xba, 0x5f, 0xb0, 0xa3, 0x0e, 0x26, 0xe8, 0x3b,
-        0x2a, 0xc5, 0xb9, 0xe2, 0x9e, 0x1b, 0x16, 0x1e, 0x5c, 0x1f, 0xa7,
-        0x42, 0x5e, 0x73, 0x04, 0x33, 0x62, 0x93, 0x8b, 0x98, 0x24};
+    std::array<uint8_t, 32> expected = {0x2c, 0xf2, 0x4d, 0xba, 0x5f, 0xb0, 0xa3, 0x0e,
+                                        0x26, 0xe8, 0x3b, 0x2a, 0xc5, 0xb9, 0xe2, 0x9e,
+                                        0x1b, 0x16, 0x1e, 0x5c, 0x1f, 0xa7, 0x42, 0x5e,
+                                        0x73, 0x04, 0x33, 0x62, 0x93, 0x8b, 0x98, 0x24};
 
     EXPECT_EQ(hash, expected);
 }
@@ -145,16 +144,14 @@ XSIGMATEST(crypto_test, sha256_hex_empty_string)
 {
     std::string hash_hex = crypto::sha256_hex("");
     EXPECT_EQ(hash_hex.length(), 64);  // 32 bytes = 64 hex chars
-    EXPECT_EQ(
-        hash_hex, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+    EXPECT_EQ(hash_hex, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
 }
 
 XSIGMATEST(crypto_test, sha256_hex_known_value)
 {
     std::string hash_hex = crypto::sha256_hex("hello");
     EXPECT_EQ(hash_hex.length(), 64);
-    EXPECT_EQ(
-        hash_hex, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
+    EXPECT_EQ(hash_hex, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
 }
 
 XSIGMATEST(crypto_test, sha256_different_inputs)
@@ -224,8 +221,8 @@ XSIGMATEST(crypto_test, constant_time_compare_strings_different_length)
 
 XSIGMATEST(crypto_test, bytes_to_hex)
 {
-    uint8_t data[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef};
-    std::string hex = crypto::bytes_to_hex(data, sizeof(data));
+    uint8_t     data[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef};
+    std::string hex    = crypto::bytes_to_hex(data, sizeof(data));
     EXPECT_EQ(hex, "0123456789abcdef");
 }
 
@@ -274,9 +271,9 @@ XSIGMATEST(crypto_test, hex_to_bytes_empty)
 
 XSIGMATEST(crypto_test, hex_roundtrip)
 {
-    uint8_t original[] = {0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0};
-    std::string hex = crypto::bytes_to_hex(original, sizeof(original));
-    auto        result = crypto::hex_to_bytes(hex);
+    uint8_t     original[] = {0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0};
+    std::string hex        = crypto::bytes_to_hex(original, sizeof(original));
+    auto        result     = crypto::hex_to_bytes(hex);
 
     EXPECT_TRUE(result.has_value());
     EXPECT_EQ(result.value().size(), sizeof(original));
@@ -343,4 +340,3 @@ XSIGMATEST(crypto_test, compare_hashes)
     EXPECT_TRUE(crypto::constant_time_compare(hash1.data(), hash2.data(), 32));
     EXPECT_FALSE(crypto::constant_time_compare(hash1.data(), hash3.data(), 32));
 }
-

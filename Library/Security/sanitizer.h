@@ -25,7 +25,7 @@ namespace security
  */
 class XSIGMA_VISIBILITY sanitizer
 {
-  public:
+public:
     // ========================================================================
     // String Sanitization
     // ========================================================================
@@ -162,13 +162,11 @@ class XSIGMA_VISIBILITY sanitizer
         return std::isfinite(value) ? value : default_value;
     }
 
-  private:
+private:
     // Helper function for character replacement
     static std::string replace_chars(
-        std::string_view                                    str,
-        const std::unordered_map<char, std::string_view>& replacements);
+        std::string_view str, const std::unordered_map<char, std::string_view>& replacements);
 };
 
 }  // namespace security
 }  // namespace xsigma
-

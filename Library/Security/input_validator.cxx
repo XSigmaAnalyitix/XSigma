@@ -23,16 +23,18 @@ bool input_validator::is_alphanumeric(std::string_view str)
         return false;
     }
 
-    return std::all_of(str.begin(), str.end(), [](unsigned char c) {
-        return std::isalnum(c);
-    });
+    return std::all_of(str.begin(), str.end(), [](unsigned char c) { return std::isalnum(c); });
 }
 
 bool input_validator::is_printable_ascii(std::string_view str)
 {
-    return std::all_of(str.begin(), str.end(), [](unsigned char c) {
-        return c >= 32 && c <= 126;  // Printable ASCII range
-    });
+    return std::all_of(
+        str.begin(),
+        str.end(),
+        [](unsigned char c)
+        {
+            return c >= 32 && c <= 126;  // Printable ASCII range
+        });
 }
 
 bool input_validator::matches_pattern(std::string_view str, const std::regex& pattern)
@@ -100,4 +102,3 @@ bool input_validator::has_allowed_extension(
 
 }  // namespace security
 }  // namespace xsigma
-

@@ -331,10 +331,10 @@ See [README.md](README.md#prerequisites) for detailed platform-specific requirem
 4. **Build the project** (choose your configuration):
    ```bash
    cd Scripts
-   
+
    # Debug build with tests
    python setup.py config.build.test.ninja.clang.debug
-   
+
    # Release build with tests
    python setup.py config.build.test.ninja.clang.release
    ```
@@ -372,7 +372,7 @@ See [README.md](README.md#prerequisites) for detailed platform-specific requirem
    # Format code
    cd Tools/linter
    python -m lintrunner --fix
-   
+
    # Check for issues
    python -m lintrunner
    ```

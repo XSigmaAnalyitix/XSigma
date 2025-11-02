@@ -5,24 +5,15 @@ set(xsigma_security_headers)
 set(xsigma_security_sources)
 
 # Collect all header and source files
-file(
-  GLOB_RECURSE headers
-  LIST_DIRECTORIES false
-  "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
-)
+file(GLOB_RECURSE headers LIST_DIRECTORIES false "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 
-file(
-  GLOB_RECURSE sources
-  LIST_DIRECTORIES false
-  "${CMAKE_CURRENT_SOURCE_DIR}/*.cxx"
-)
+file(GLOB_RECURSE sources LIST_DIRECTORIES false "${CMAKE_CURRENT_SOURCE_DIR}/*.cxx")
 
 # Remove test files from the library sources
 list(FILTER sources EXCLUDE REGEX ".*/Testing/.*")
 list(FILTER headers EXCLUDE REGEX ".*/Testing/.*")
 
-# Create the Security library
-# Respect BUILD_SHARED_LIBS setting for library type
+# Create the Security library Respect BUILD_SHARED_LIBS setting for library type
 add_library(Security ${sources} ${headers})
 
 # Set appropriate compile definitions based on library type
@@ -57,19 +48,19 @@ xsigma_module_create_filters("${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Set target properties
 set_target_properties(
-  Security PROPERTIES CXX_STANDARD ${XSIGMA_CXX_STANDARD} CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF
+  Security PROPERTIES CXX_STANDARD ${XSIGMA_CXX_STANDARD} CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS
+                                                                                   OFF
 )
 
 if(MSVC)
   target_compile_options(Security PRIVATE /WX)
 endif()
 
+# ============================================================================= Include Directories
 # =============================================================================
-# Include Directories
-# =============================================================================
-# Security library include directories are split into:
-# 1. Security's own directories (PUBLIC for external consumers)
-# 2. Centralized third-party include directories (PUBLIC to propagate to dependent targets)
+# Security library include directories are split into: 1. Security's own directories (PUBLIC for
+# external consumers) 2. Centralized third-party include directories (PUBLIC to propagate to
+# dependent targets)
 
 target_include_directories(
   Security
@@ -95,8 +86,8 @@ if(COMMAND xsigma_target_clang_tidy)
   xsigma_target_clang_tidy(Security)
 endif()
 
-# =============================================================================
-# Link with Centralized Dependencies
+# ============================================================================= Link with
+# Centralized Dependencies
 # =============================================================================
 # Link with centralized dependency list (if needed)
 if(XSIGMA_DEPENDENCY_LIBS)
@@ -113,8 +104,8 @@ elseif(APPLE)
   message(STATUS "Security library: Linked with Security framework (macOS)")
 endif()
 
-# =============================================================================
-# Compile Definitions for Optional Features
+# ============================================================================= Compile Definitions
+# for Optional Features
 # =============================================================================
 # Apply centralized compile definitions
 if(XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS)
@@ -140,4 +131,3 @@ install(FILES ${headers} DESTINATION include/XSigma/Security COMPONENT Developme
 if(XSIGMA_BUILD_TESTING STREQUAL "ON" OR XSIGMA_BUILD_TESTING STREQUAL "WANT")
   add_subdirectory(Testing/Cxx)
 endif()
-

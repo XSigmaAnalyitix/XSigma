@@ -37,7 +37,7 @@ Backend selection surfaces but not honored by templates:
 set_backend() initializes OpenMP/TBB, but parallel_for/reduce always use native pool and never call TBB/OpenMP paths.
 parallelize_1d (Work-Stealing)
 
-Coordinator initializes deques with DefaultNumThreads (ignores configured intra/inter op counts): Library/Core/smp_new/parallel/parallelize_1d.cxx (line 72).
+Coordinator initializes dequeues with DefaultNumThreads (ignores configured intra/inter op counts): Library/Core/smp_new/parallel/parallelize_1d.cxx (line 72).
 Spawns a brand-new pool per call (heavy thread creation/teardown, adds latency): Library/Core/smp_new/parallel/parallelize_1d.cxx (line 110).
 pending_work_ is incremented only for initial chunks; when stealing splits work, new chunks are enqueued without incrementing the counter: Library/Core/smp_new/parallel/parallelize_1d.cxx (line 195) to Library/Core/smp_new/parallel/parallelize_1d.cxx (line 201). Also, coordinator doesn’t use wait_complete(); relies on pool-wide barrier, so pending_work_ isn’t authoritative.
 Deque ops are fully locked (owner pop and steal both lock), which is simple but reduces throughput for fine-grained tasks.

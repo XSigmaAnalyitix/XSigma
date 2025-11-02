@@ -222,4 +222,3 @@ Potential future additions:
 ## License
 
 This module is part of the XSigma project and follows the same license.
-

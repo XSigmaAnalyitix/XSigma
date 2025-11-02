@@ -106,7 +106,9 @@ XSIGMATEST(SmpNewBackend, in_parallel_region_inside)
     std::atomic<bool> in_region{false};
 
     parallel::parallel_for(
-        0, 10, 5,
+        0,
+        10,
+        5,
         [&in_region](int64_t begin, int64_t end)
         {
             if (!in_region.load())
@@ -211,10 +213,12 @@ XSIGMATEST(SmpNewBackend, thread_num_in_parallel_region)
     std::mutex       mutex;
 
     parallel::parallel_for(
-        0, 100, 10,
+        0,
+        100,
+        10,
         [&thread_nums, &mutex](int64_t begin, int64_t end)
         {
-            int thread_num = parallel::get_thread_num();
+            int                         thread_num = parallel::get_thread_num();
             std::lock_guard<std::mutex> lock(mutex);
             thread_nums.push_back(thread_num);
         });
@@ -233,7 +237,9 @@ XSIGMATEST(SmpNewBackend, parallel_work_after_init)
 
     std::vector<int> data(100, 0);
     parallel::parallel_for(
-        0, 100, 10,
+        0,
+        100,
+        10,
         [&data](int64_t begin, int64_t end)
         {
             for (int64_t i = begin; i < end; ++i)
@@ -337,4 +343,3 @@ XSIGMATEST(SmpNewBackend, concurrent_parallel_info_queries)
 }
 
 }  // namespace xsigma::smp_new
-

@@ -348,7 +348,6 @@ This governance model is inspired by best practices from successful open-source 
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2025-11-02  
+**Document Version**: 1.0
+**Last Updated**: 2025-11-02
 **Maintained By**: XSigma Maintainers
-

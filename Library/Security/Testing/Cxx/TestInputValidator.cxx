@@ -1,10 +1,9 @@
-#include "input_validator.h"
-
 #include <limits>
 #include <regex>
 #include <vector>
 
 #include "Core/Testing/xsigmaTest.h"
+#include "input_validator.h"
 
 using namespace xsigma::security;
 
@@ -270,4 +269,3 @@ XSIGMATEST(input_validator_test, safe_string_to_float_edge_cases)
     EXPECT_TRUE(scientific.has_value());
     EXPECT_NEAR(scientific.value(), 0.000123, 0.0000001);
 }
-

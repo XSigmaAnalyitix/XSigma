@@ -126,10 +126,11 @@ XSIGMA_API bool InTBBParallelRegion();
  * @note Thread-safe.
  * @note Requires TBB support at compile time.
  */
-XSIGMA_API void ParallelForTBB(int64_t                                          begin,
-                               int64_t                                          end,
-                               int64_t                                          grain_size,
-                               const std::function<void(int64_t, int64_t)>& func);
+XSIGMA_API void ParallelForTBB(
+    int64_t                                      begin,
+    int64_t                                      end,
+    int64_t                                      grain_size,
+    const std::function<void(int64_t, int64_t)>& func);
 
 /**
  * @brief Execute a parallel reduce operation using TBB.
@@ -151,12 +152,13 @@ XSIGMA_API void ParallelForTBB(int64_t                                          
  * @note Requires TBB support at compile time.
  */
 template <typename T>
-XSIGMA_API T ParallelReduceTBB(int64_t                                          begin,
-                               int64_t                                          end,
-                               int64_t                                          grain_size,
-                               T                                                ident,
-                               const std::function<T(int64_t, int64_t, T)>& func,
-                               const std::function<T(T, T)>&                reduce);
+XSIGMA_API T ParallelReduceTBB(
+    int64_t                                      begin,
+    int64_t                                      end,
+    int64_t                                      grain_size,
+    T                                            ident,
+    const std::function<T(int64_t, int64_t, T)>& func,
+    const std::function<T(T, T)>&                reduce);
 
 /**
  * @brief Get information about the TBB backend.
@@ -193,12 +195,13 @@ extern thread_local bool g_in_parallel_region;
 #endif
 
 template <typename T>
-T ParallelReduceTBB(int64_t                                          begin,
-                    int64_t                                          end,
-                    int64_t                                          grain_size,
-                    T                                                ident,
-                    const std::function<T(int64_t, int64_t, T)>& func,
-                    const std::function<T(T, T)>&                reduce)
+T ParallelReduceTBB(
+    int64_t                                      begin,
+    int64_t                                      end,
+    int64_t                                      grain_size,
+    T                                            ident,
+    const std::function<T(int64_t, int64_t, T)>& func,
+    const std::function<T(T, T)>&                reduce)
 {
 #if XSIGMA_HAS_TBB
     // Initialize TBB backend if not already initialized
@@ -218,9 +221,8 @@ T ParallelReduceTBB(int64_t                                          begin,
     T result = ::tbb::parallel_reduce(
         ::tbb::blocked_range<int64_t>(begin, end, grain_size),
         ident,
-        [&func](const ::tbb::blocked_range<int64_t>& range, T init) -> T {
-            return func(range.begin(), range.end(), init);
-        },
+        [&func](const ::tbb::blocked_range<int64_t>& range, T init) -> T
+        { return func(range.begin(), range.end(), init); },
         [&reduce](T a, T b) -> T { return reduce(a, b); });
 
     // Restore parallel region flag
@@ -234,4 +236,3 @@ T ParallelReduceTBB(int64_t                                          begin,
 }
 
 }  // namespace xsigma::smp_new::tbb
-

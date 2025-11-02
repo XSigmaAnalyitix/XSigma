@@ -63,11 +63,10 @@ size_t WorkStealingDeque::size() const
 // ============================================================================
 
 Parallelize1DCoordinator::Parallelize1DCoordinator(
-    const std::function<void(size_t)>& function,
-    size_t range)
+    const std::function<void(size_t)>& function, size_t range)
     : function_(function), range_(range)
 {
-    // Create work-stealing deques for each thread
+    // Create work-stealing dequeues for each thread
     // Use default number of threads
     size_t num_threads = core::TaskThreadPoolBase::DefaultNumThreads();
     deques_.reserve(num_threads);
@@ -153,12 +152,10 @@ void Parallelize1DCoordinator::set_exception(std::exception_ptr ex)
 // Worker Thread Function
 // ============================================================================
 
-void worker_thread_func(
-    Parallelize1DCoordinator& coordinator,
-    size_t thread_id)
+void worker_thread_func(Parallelize1DCoordinator& coordinator, size_t thread_id)
 {
-    const auto& function = coordinator.get_function();
-    size_t num_threads = coordinator.get_num_threads();
+    const auto& function    = coordinator.get_function();
+    size_t      num_threads = coordinator.get_num_threads();
 
     try
     {
@@ -223,10 +220,7 @@ void worker_thread_func(
 // Public API
 // ============================================================================
 
-void parallelize_1d(
-    const std::function<void(size_t)>& function,
-    size_t range,
-    uint32_t flags)
+void parallelize_1d(const std::function<void(size_t)>& function, size_t range, uint32_t flags)
 {
     if (range == 0)
     {
@@ -239,4 +233,3 @@ void parallelize_1d(
 }
 
 }  // namespace xsigma::smp_new::parallel
-

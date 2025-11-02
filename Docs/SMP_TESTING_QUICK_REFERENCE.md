@@ -129,13 +129,13 @@ cd ../build_ninja
 XSIGMATEST(MyTest, parallel_for_test)
 {
     std::vector<int> data(100, 0);
-    
+
     tools::For(0, 100, 10, [&data](int begin, int end) {
         for (int i = begin; i < end; ++i) {
             data[i] = i * 2;
         }
     });
-    
+
     // Verify results
     for (int i = 0; i < 100; ++i) {
         EXPECT_EQ(data[i], i * 2);
@@ -150,10 +150,10 @@ XSIGMATEST(MyTest, transform_test)
     std::vector<int> input(100);
     std::iota(input.begin(), input.end(), 0);
     std::vector<int> output(100, 0);
-    
+
     tools::Transform(input.begin(), input.end(), output.begin(),
                      [](int x) { return x * 2; });
-    
+
     for (int i = 0; i < 100; ++i) {
         EXPECT_EQ(output[i], i * 2);
     }
@@ -165,13 +165,13 @@ XSIGMATEST(MyTest, transform_test)
 XSIGMATEST(MyTest, thread_safety_test)
 {
     std::atomic<int> counter{0};
-    
+
     tools::For(0, 1000, 10, [&counter](int begin, int end) {
         for (int i = begin; i < end; ++i) {
             counter.fetch_add(1, std::memory_order_relaxed);
         }
     });
-    
+
     EXPECT_EQ(counter.load(), 1000);
 }
 ```
@@ -185,7 +185,7 @@ XSIGMATEST(MyTest, thread_safety_test)
 static void BM_MyOperation(benchmark::State& state)
 {
     std::vector<int> data(1000, 0);
-    
+
     for (auto _ : state) {
         tools::For(0, 1000, 100, [&data](int begin, int end) {
             for (int i = begin; i < end; ++i) {
@@ -194,7 +194,7 @@ static void BM_MyOperation(benchmark::State& state)
         });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * 1000);
 }
 BENCHMARK(BM_MyOperation);
@@ -207,7 +207,7 @@ static void BM_GrainSize(benchmark::State& state)
     const int size = 100000;
     const int grain_size = state.range(0);
     std::vector<int> data(size, 0);
-    
+
     for (auto _ : state) {
         tools::For(0, size, grain_size, [&data](int begin, int end) {
             for (int i = begin; i < end; ++i) {
@@ -216,7 +216,7 @@ static void BM_GrainSize(benchmark::State& state)
         });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_GrainSize)->Arg(10)->Arg(100)->Arg(1000)->Arg(10000);
@@ -370,6 +370,5 @@ stage('Test SMP Module') {
 
 ---
 
-**Last Updated:** 2025-11-01  
+**Last Updated:** 2025-11-01
 **Version:** 1.0.0
-

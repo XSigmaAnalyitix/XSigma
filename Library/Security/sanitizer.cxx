@@ -51,14 +51,13 @@ std::string sanitizer::trim(std::string_view str)
     }
 
     // Find first non-whitespace character
-    auto start = std::find_if(str.begin(), str.end(), [](unsigned char c) {
-        return !std::isspace(c);
-    });
+    auto start =
+        std::find_if(str.begin(), str.end(), [](unsigned char c) { return !std::isspace(c); });
 
     // Find last non-whitespace character
-    auto end = std::find_if(str.rbegin(), str.rend(), [](unsigned char c) {
-                   return !std::isspace(c);
-               }).base();
+    auto end =
+        std::find_if(str.rbegin(), str.rend(), [](unsigned char c) { return !std::isspace(c); })
+            .base();
 
     if (start >= end)
     {
@@ -87,24 +86,24 @@ std::string sanitizer::escape_html(std::string_view str)
     {
         switch (c)
         {
-            case '<':
-                result += "&lt;";
-                break;
-            case '>':
-                result += "&gt;";
-                break;
-            case '&':
-                result += "&amp;";
-                break;
-            case '"':
-                result += "&quot;";
-                break;
-            case '\'':
-                result += "&#39;";
-                break;
-            default:
-                result += c;
-                break;
+        case '<':
+            result += "&lt;";
+            break;
+        case '>':
+            result += "&gt;";
+            break;
+        case '&':
+            result += "&amp;";
+            break;
+        case '"':
+            result += "&quot;";
+            break;
+        case '\'':
+            result += "&#39;";
+            break;
+        default:
+            result += c;
+            break;
         }
     }
 
@@ -148,10 +147,10 @@ std::string sanitizer::escape_shell(std::string_view str)
     for (char c : str)
     {
         // Escape shell special characters
-        if (c == '$' || c == '`' || c == '\\' || c == '"' || c == '\'' || c == '!' ||
-            c == '&' || c == '|' || c == ';' || c == '<' || c == '>' || c == '(' ||
-            c == ')' || c == '{' || c == '}' || c == '[' || c == ']' || c == '*' ||
-            c == '?' || c == '~' || c == '#' || c == ' ' || c == '\t' || c == '\n')
+        if (c == '$' || c == '`' || c == '\\' || c == '"' || c == '\'' || c == '!' || c == '&' ||
+            c == '|' || c == ';' || c == '<' || c == '>' || c == '(' || c == ')' || c == '{' ||
+            c == '}' || c == '[' || c == ']' || c == '*' || c == '?' || c == '~' || c == '#' ||
+            c == ' ' || c == '\t' || c == '\n')
         {
             result += '\\';
         }
@@ -170,41 +169,41 @@ std::string sanitizer::escape_json(std::string_view str)
     {
         switch (c)
         {
-            case '"':
-                result += "\\\"";
-                break;
-            case '\\':
-                result += "\\\\";
-                break;
-            case '\b':
-                result += "\\b";
-                break;
-            case '\f':
-                result += "\\f";
-                break;
-            case '\n':
-                result += "\\n";
-                break;
-            case '\r':
-                result += "\\r";
-                break;
-            case '\t':
-                result += "\\t";
-                break;
-            default:
-                if (static_cast<unsigned char>(c) < 32)
-                {
-                    // Escape control characters
-                    std::ostringstream oss;
-                    oss << "\\u" << std::hex << std::setw(4) << std::setfill('0')
-                        << static_cast<int>(static_cast<unsigned char>(c));
-                    result += oss.str();
-                }
-                else
-                {
-                    result += c;
-                }
-                break;
+        case '"':
+            result += "\\\"";
+            break;
+        case '\\':
+            result += "\\\\";
+            break;
+        case '\b':
+            result += "\\b";
+            break;
+        case '\f':
+            result += "\\f";
+            break;
+        case '\n':
+            result += "\\n";
+            break;
+        case '\r':
+            result += "\\r";
+            break;
+        case '\t':
+            result += "\\t";
+            break;
+        default:
+            if (static_cast<unsigned char>(c) < 32)
+            {
+                // Escape control characters
+                std::ostringstream oss;
+                oss << "\\u" << std::hex << std::setw(4) << std::setfill('0')
+                    << static_cast<int>(static_cast<unsigned char>(c));
+                result += oss.str();
+            }
+            else
+            {
+                result += c;
+            }
+            break;
         }
     }
 
@@ -308,4 +307,3 @@ std::string sanitizer::sanitize_filename(std::string_view filename)
 
 }  // namespace security
 }  // namespace xsigma
-

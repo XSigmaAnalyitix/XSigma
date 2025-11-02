@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -15,12 +16,10 @@ namespace xsigma::smp_new::parallel
 
 TEST(Parallelize1D, BasicFunctionality)
 {
-    const size_t kSize = 1000;
+    const size_t     kSize = 1000;
     std::vector<int> data(kSize);
 
-    parallelize_1d(
-        [&data](size_t i) { data[i] = static_cast<int>(i); },
-        kSize);
+    parallelize_1d([&data](size_t i) { data[i] = static_cast<int>(i); }, kSize);
 
     for (size_t i = 0; i < kSize; ++i)
     {
@@ -34,12 +33,10 @@ TEST(Parallelize1D, BasicFunctionality)
 
 TEST(Parallelize1D, LargeDataSet)
 {
-    const size_t kSize = 1000000;
+    const size_t       kSize = 1000000;
     std::vector<float> data(kSize);
 
-    parallelize_1d(
-        [&data](size_t i) { data[i] = std::sin(i * 0.001f); },
-        kSize);
+    parallelize_1d([&data](size_t i) { data[i] = std::sin(i * 0.001f); }, kSize);
 
     // Verify a few samples
     EXPECT_NEAR(data[0], std::sin(0.0f), 1e-6f);
@@ -56,7 +53,8 @@ TEST(Parallelize1D, ExceptionHandling)
     EXPECT_THROW(
         {
             parallelize_1d(
-                [](size_t i) {
+                [](size_t i)
+                {
                     if (i == 500)
                     {
                         throw std::runtime_error("Test exception");
@@ -99,12 +97,10 @@ TEST(Parallelize1D, SingleItem)
 
 TEST(Parallelize1D, AtomicOperations)
 {
-    const size_t kSize = 10000;
+    const size_t     kSize = 10000;
     std::atomic<int> sum{0};
 
-    parallelize_1d(
-        [&sum](size_t i) { sum.fetch_add(1, std::memory_order_relaxed); },
-        kSize);
+    parallelize_1d([&sum](size_t i) { sum.fetch_add(1, std::memory_order_relaxed); }, kSize);
 
     EXPECT_EQ(sum, static_cast<int>(kSize));
 }
@@ -115,14 +111,15 @@ TEST(Parallelize1D, AtomicOperations)
 
 TEST(Parallelize1D, LoadBalancing)
 {
-    const size_t kSize = 100000;
+    const size_t     kSize = 100000;
     std::vector<int> data(kSize);
 
     // Simulate uneven work distribution
     parallelize_1d(
-        [&data](size_t i) {
+        [&data](size_t i)
+        {
             // Simulate variable work per item
-            int work = (i % 10 == 0) ? 1000 : 1;
+            int work   = (i % 10 == 0) ? 1000 : 1;
             int result = 0;
             for (int j = 0; j < work; ++j)
             {
@@ -145,22 +142,19 @@ TEST(Parallelize1D, LoadBalancing)
 
 TEST(Parallelize1D, PerformanceBenchmark)
 {
-    const size_t kSize = 10000000;  // 10M items
+    const size_t       kSize = 10000000;  // 10M items
     std::vector<float> data(kSize);
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    parallelize_1d(
-        [&data](size_t i) { data[i] = std::sin(i * 0.001f); },
-        kSize);
+    parallelize_1d([&data](size_t i) { data[i] = std::sin(i * 0.001f); }, kSize);
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration_ms =
-        std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    auto end         = std::chrono::high_resolution_clock::now();
+    auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     // Print performance metrics
     double items_per_ms = static_cast<double>(kSize) / duration_ms;
-    double us_per_item = 1000.0 / items_per_ms;
+    double us_per_item  = 1000.0 / items_per_ms;
 
     std::cout << "\n=== Parallelize1D Performance ===" << std::endl;
     std::cout << "Items: " << kSize << std::endl;
@@ -180,7 +174,7 @@ TEST(Parallelize1D, PerformanceBenchmark)
 
 TEST(Parallelize1D, MultipleCalls)
 {
-    const size_t kSize = 1000;
+    const size_t     kSize = 1000;
     std::vector<int> data1(kSize);
     std::vector<int> data2(kSize);
 
@@ -200,10 +194,11 @@ TEST(Parallelize1D, MultipleCalls)
 
 TEST(Parallelize1D, NestedLambdas)
 {
-    const size_t kSize = 1000;
+    const size_t     kSize = 1000;
     std::vector<int> data(kSize);
 
-    auto outer = [&data](size_t i) {
+    auto outer = [&data](size_t i)
+    {
         auto inner = [&data, i]() { data[i] = i; };
         inner();
     };
@@ -222,7 +217,7 @@ TEST(Parallelize1D, NestedLambdas)
 
 TEST(Parallelize1D, ThreadSafety)
 {
-    const size_t kSize = 100000;
+    const size_t                  kSize = 100000;
     std::vector<std::atomic<int>> data(kSize);
 
     // Initialize atomics
@@ -231,9 +226,7 @@ TEST(Parallelize1D, ThreadSafety)
         data[i].store(0);
     }
 
-    parallelize_1d(
-        [&data](size_t i) { data[i].fetch_add(1, std::memory_order_relaxed); },
-        kSize);
+    parallelize_1d([&data](size_t i) { data[i].fetch_add(1, std::memory_order_relaxed); }, kSize);
 
     for (size_t i = 0; i < kSize; ++i)
     {
@@ -248,4 +241,3 @@ int main(int argc, char** argv)
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
-

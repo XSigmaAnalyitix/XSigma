@@ -98,9 +98,7 @@ T parallel_reduce(
  * @endcode
  */
 XSIGMA_API void parallelize_1d(
-    const std::function<void(size_t)>& function,
-    size_t range,
-    uint32_t flags = 0);
+    const std::function<void(size_t)>& function, size_t range, uint32_t flags = 0);
 
 /**
  * @brief Launches a task for inter-op parallelism.

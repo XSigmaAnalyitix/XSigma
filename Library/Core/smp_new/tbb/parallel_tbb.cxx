@@ -61,8 +61,8 @@ void InitializeTBBBackend()
         if (env_threads != nullptr)
         {
             // Parse environment variable manually to avoid exceptions
-            char*       endptr = nullptr;
-            const long  value  = std::strtol(env_threads, &endptr, 10);
+            char*      endptr = nullptr;
+            const long value  = std::strtol(env_threads, &endptr, 10);
 
             // Check if conversion was successful and value is valid
             if (endptr != env_threads && *endptr == '\0' && value > 0 &&
@@ -164,10 +164,11 @@ bool InTBBParallelRegion()
 #endif
 }
 
-void ParallelForTBB(int64_t                                          begin,
-                    int64_t                                          end,
-                    int64_t                                          grain_size,
-                    const std::function<void(int64_t, int64_t)>& func)
+void ParallelForTBB(
+    int64_t                                      begin,
+    int64_t                                      end,
+    int64_t                                      grain_size,
+    const std::function<void(int64_t, int64_t)>& func)
 {
 #if XSIGMA_HAS_TBB
     if (!g_tbb_initialized.load())
@@ -185,9 +186,7 @@ void ParallelForTBB(int64_t                                          begin,
     // exceptions if needed.
     ::tbb::parallel_for(
         ::tbb::blocked_range<int64_t>(begin, end, grain_size),
-        [&func](const ::tbb::blocked_range<int64_t>& range) {
-            func(range.begin(), range.end());
-        });
+        [&func](const ::tbb::blocked_range<int64_t>& range) { func(range.begin(), range.end()); });
 
     // Restore parallel region flag
     g_in_parallel_region = was_in_parallel;
@@ -213,8 +212,7 @@ std::string GetTBBBackendInfo()
     oss << "    - Nested parallelism support\n";
     oss << "    - Cache-aware scheduling\n";
     oss << "    - Exception propagation\n";
-    oss << "  Status: " << (IsTBBBackendInitialized() ? "Initialized" : "Not initialized")
-        << "\n";
+    oss << "  Status: " << (IsTBBBackendInitialized() ? "Initialized" : "Not initialized") << "\n";
     oss << "  Threads: " << GetNumTBBThreads() << "\n";
 #else
     oss << "  Status: Not available (compile with XSIGMA_HAS_TBB=1)\n";
@@ -224,4 +222,3 @@ std::string GetTBBBackendInfo()
 }
 
 }  // namespace xsigma::smp_new::tbb
-

@@ -12,7 +12,10 @@ namespace xsigma::smp_new::parallel
 XSIGMATEST(SmpNewParallelReduce, basic_sum)
 {
     int result = parallel_reduce(
-        0, 100, 10, 0,
+        0,
+        100,
+        10,
+        0,
         [](int64_t begin, int64_t end, int identity)
         {
             int sum = identity;
@@ -32,7 +35,10 @@ XSIGMATEST(SmpNewParallelReduce, basic_sum)
 XSIGMATEST(SmpNewParallelReduce, empty_range)
 {
     int result = parallel_reduce(
-        0, 0, 10, 42,
+        0,
+        0,
+        10,
+        42,
         [](int64_t begin, int64_t end, int identity) { return identity; },
         [](int a, int b) { return a + b; });
 
@@ -43,7 +49,10 @@ XSIGMATEST(SmpNewParallelReduce, empty_range)
 XSIGMATEST(SmpNewParallelReduce, single_element)
 {
     int result = parallel_reduce(
-        0, 1, 10, 0,
+        0,
+        1,
+        10,
+        0,
         [](int64_t begin, int64_t end, int identity)
         {
             int sum = identity;
@@ -62,7 +71,10 @@ XSIGMATEST(SmpNewParallelReduce, single_element)
 XSIGMATEST(SmpNewParallelReduce, product)
 {
     int result = parallel_reduce(
-        1, 6, 2, 1,
+        1,
+        6,
+        2,
+        1,
         [](int64_t begin, int64_t end, int identity)
         {
             int product = identity;
@@ -81,7 +93,10 @@ XSIGMATEST(SmpNewParallelReduce, product)
 XSIGMATEST(SmpNewParallelReduce, maximum)
 {
     int result = parallel_reduce(
-        0, 100, 10, std::numeric_limits<int>::min(),
+        0,
+        100,
+        10,
+        std::numeric_limits<int>::min(),
         [](int64_t begin, int64_t end, int identity)
         {
             int max_val = identity;
@@ -100,7 +115,10 @@ XSIGMATEST(SmpNewParallelReduce, maximum)
 XSIGMATEST(SmpNewParallelReduce, minimum)
 {
     int result = parallel_reduce(
-        0, 100, 10, std::numeric_limits<int>::max(),
+        0,
+        100,
+        10,
+        std::numeric_limits<int>::max(),
         [](int64_t begin, int64_t end, int identity)
         {
             int min_val = identity;
@@ -121,7 +139,10 @@ XSIGMATEST(SmpNewParallelReduce, large_workload)
     const int64_t size = 100000;
 
     int64_t result = parallel_reduce(
-        0, size, 1000, 0LL,
+        0,
+        size,
+        1000,
+        0LL,
         [](int64_t begin, int64_t end, int64_t identity)
         {
             int64_t sum = identity;
@@ -141,7 +162,10 @@ XSIGMATEST(SmpNewParallelReduce, large_workload)
 XSIGMATEST(SmpNewParallelReduce, double_precision)
 {
     double result = parallel_reduce(
-        0, 100, 10, 0.0,
+        0,
+        100,
+        10,
+        0.0,
         [](int64_t begin, int64_t end, double identity)
         {
             double sum = identity;
@@ -161,7 +185,10 @@ XSIGMATEST(SmpNewParallelReduce, double_precision)
 XSIGMATEST(SmpNewParallelReduce, small_grain_size)
 {
     int result = parallel_reduce(
-        0, 50, 1, 0,
+        0,
+        50,
+        1,
+        0,
         [](int64_t begin, int64_t end, int identity)
         {
             int sum = identity;
@@ -181,7 +208,10 @@ XSIGMATEST(SmpNewParallelReduce, small_grain_size)
 XSIGMATEST(SmpNewParallelReduce, large_grain_size)
 {
     int result = parallel_reduce(
-        0, 100, 100, 0,
+        0,
+        100,
+        100,
+        0,
         [](int64_t begin, int64_t end, int identity)
         {
             int sum = identity;
@@ -201,7 +231,10 @@ XSIGMATEST(SmpNewParallelReduce, large_grain_size)
 XSIGMATEST(SmpNewParallelReduce, auto_grain_size)
 {
     int result = parallel_reduce(
-        0, 100, 0, 0,
+        0,
+        100,
+        0,
+        0,
         [](int64_t begin, int64_t end, int identity)
         {
             int sum = identity;
@@ -221,7 +254,10 @@ XSIGMATEST(SmpNewParallelReduce, auto_grain_size)
 XSIGMATEST(SmpNewParallelReduce, count)
 {
     int result = parallel_reduce(
-        0, 100, 10, 0,
+        0,
+        100,
+        10,
+        0,
         [](int64_t begin, int64_t end, int identity)
         {
             int count = identity;
@@ -243,7 +279,10 @@ XSIGMATEST(SmpNewParallelReduce, count)
 XSIGMATEST(SmpNewParallelReduce, complex_computation)
 {
     double result = parallel_reduce(
-        0, 1000, 100, 0.0,
+        0,
+        1000,
+        100,
+        0.0,
         [](int64_t begin, int64_t end, double identity)
         {
             double sum = identity;
@@ -271,7 +310,10 @@ XSIGMATEST(SmpNewParallelReduce, complex_computation)
 XSIGMATEST(SmpNewParallelReduce, negative_range)
 {
     int result = parallel_reduce(
-        10, 5, 10, 42,
+        10,
+        5,
+        10,
+        42,
         [](int64_t begin, int64_t end, int identity) { return identity + 1; },
         [](int a, int b) { return a + b; });
 
@@ -282,7 +324,10 @@ XSIGMATEST(SmpNewParallelReduce, negative_range)
 XSIGMATEST(SmpNewParallelReduce, very_large_grain_size)
 {
     int result = parallel_reduce(
-        0, 10, 1000, 0,
+        0,
+        10,
+        1000,
+        0,
         [](int64_t begin, int64_t end, int identity)
         {
             int sum = identity;
@@ -302,7 +347,10 @@ XSIGMATEST(SmpNewParallelReduce, very_large_grain_size)
 XSIGMATEST(SmpNewParallelReduce, multiple_reductions)
 {
     int sum = parallel_reduce(
-        0, 100, 10, 0,
+        0,
+        100,
+        10,
+        0,
         [](int64_t begin, int64_t end, int identity)
         {
             int s = identity;
@@ -315,7 +363,10 @@ XSIGMATEST(SmpNewParallelReduce, multiple_reductions)
         [](int a, int b) { return a + b; });
 
     int product = parallel_reduce(
-        1, 6, 2, 1,
+        1,
+        6,
+        2,
+        1,
         [](int64_t begin, int64_t end, int identity)
         {
             int p = identity;
@@ -332,4 +383,3 @@ XSIGMATEST(SmpNewParallelReduce, multiple_reductions)
 }
 
 }  // namespace xsigma::smp_new::parallel
-

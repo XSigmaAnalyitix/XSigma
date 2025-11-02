@@ -265,4 +265,3 @@ XSIGMATEST(SmpNewThreadPool, default_num_threads)
 }
 
 }  // namespace xsigma::smp_new::core
-

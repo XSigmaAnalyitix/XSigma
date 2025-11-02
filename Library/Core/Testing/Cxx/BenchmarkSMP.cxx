@@ -23,7 +23,7 @@ static void BM_ParallelFor_Small(benchmark::State& state)
 {
     const int        size = 100;
     std::vector<int> data(size, 0);
-    
+
     for (auto _ : state)
     {
         tools::For(
@@ -39,7 +39,7 @@ static void BM_ParallelFor_Small(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_ParallelFor_Small);
@@ -48,7 +48,7 @@ static void BM_ParallelFor_Medium(benchmark::State& state)
 {
     const int        size = 10000;
     std::vector<int> data(size, 0);
-    
+
     for (auto _ : state)
     {
         tools::For(
@@ -64,7 +64,7 @@ static void BM_ParallelFor_Medium(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_ParallelFor_Medium);
@@ -73,7 +73,7 @@ static void BM_ParallelFor_Large(benchmark::State& state)
 {
     const int        size = 1000000;
     std::vector<int> data(size, 0);
-    
+
     for (auto _ : state)
     {
         tools::For(
@@ -89,7 +89,7 @@ static void BM_ParallelFor_Large(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_ParallelFor_Large);
@@ -99,7 +99,7 @@ static void BM_ParallelFor_Computation(benchmark::State& state)
 {
     const int           size = 100000;
     std::vector<double> data(size, 0.0);
-    
+
     for (auto _ : state)
     {
         tools::For(
@@ -116,7 +116,7 @@ static void BM_ParallelFor_Computation(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_ParallelFor_Computation);
@@ -128,17 +128,13 @@ static void BM_Transform_Small(benchmark::State& state)
     std::vector<int> input(size);
     std::iota(input.begin(), input.end(), 0);
     std::vector<int> output(size, 0);
-    
+
     for (auto _ : state)
     {
-        tools::Transform(
-            input.begin(),
-            input.end(),
-            output.begin(),
-            [](int x) { return x * 2; });
+        tools::Transform(input.begin(), input.end(), output.begin(), [](int x) { return x * 2; });
         benchmark::DoNotOptimize(output.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_Transform_Small);
@@ -149,17 +145,13 @@ static void BM_Transform_Large(benchmark::State& state)
     std::vector<int> input(size);
     std::iota(input.begin(), input.end(), 0);
     std::vector<int> output(size, 0);
-    
+
     for (auto _ : state)
     {
-        tools::Transform(
-            input.begin(),
-            input.end(),
-            output.begin(),
-            [](int x) { return x * 2; });
+        tools::Transform(input.begin(), input.end(), output.begin(), [](int x) { return x * 2; });
         benchmark::DoNotOptimize(output.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_Transform_Large);
@@ -169,13 +161,13 @@ static void BM_Fill_Small(benchmark::State& state)
 {
     const int        size = 100;
     std::vector<int> data(size, 0);
-    
+
     for (auto _ : state)
     {
         tools::Fill(data.begin(), data.end(), 42);
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_Fill_Small);
@@ -184,13 +176,13 @@ static void BM_Fill_Large(benchmark::State& state)
 {
     const int        size = 1000000;
     std::vector<int> data(size, 0);
-    
+
     for (auto _ : state)
     {
         tools::Fill(data.begin(), data.end(), 42);
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_Fill_Large);
@@ -200,7 +192,7 @@ static void BM_Sort_Random(benchmark::State& state)
 {
     const int        size = 100000;
     std::vector<int> data(size);
-    
+
     for (auto _ : state)
     {
         state.PauseTiming();
@@ -210,11 +202,11 @@ static void BM_Sort_Random(benchmark::State& state)
             data[i] = (i * 7919) % size;
         }
         state.ResumeTiming();
-        
+
         tools::Sort(data.begin(), data.end());
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_Sort_Random);
@@ -224,13 +216,13 @@ static void BM_Sort_AlreadySorted(benchmark::State& state)
     const int        size = 100000;
     std::vector<int> data(size);
     std::iota(data.begin(), data.end(), 0);
-    
+
     for (auto _ : state)
     {
         tools::Sort(data.begin(), data.end());
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_Sort_AlreadySorted);
@@ -239,17 +231,17 @@ static void BM_Sort_ReverseSorted(benchmark::State& state)
 {
     const int        size = 100000;
     std::vector<int> data(size);
-    
+
     for (auto _ : state)
     {
         state.PauseTiming();
         std::iota(data.rbegin(), data.rend(), 0);
         state.ResumeTiming();
-        
+
         tools::Sort(data.begin(), data.end());
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_Sort_ReverseSorted);
@@ -260,7 +252,7 @@ static void BM_ParallelFor_GrainSize(benchmark::State& state)
     const int        size       = 100000;
     const int        grain_size = state.range(0);
     std::vector<int> data(size, 0);
-    
+
     for (auto _ : state)
     {
         tools::For(
@@ -276,7 +268,7 @@ static void BM_ParallelFor_GrainSize(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_ParallelFor_GrainSize)->Arg(10)->Arg(100)->Arg(1000)->Arg(10000);
@@ -286,7 +278,7 @@ static void BM_MemoryBound(benchmark::State& state)
 {
     const int        size = 1000000;
     std::vector<int> data(size, 0);
-    
+
     for (auto _ : state)
     {
         tools::For(
@@ -302,7 +294,7 @@ static void BM_MemoryBound(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
     state.SetLabel("Memory-bound");
 }
@@ -312,7 +304,7 @@ static void BM_ComputeBound(benchmark::State& state)
 {
     const int           size = 100000;
     std::vector<double> data(size, 0.0);
-    
+
     for (auto _ : state)
     {
         tools::For(
@@ -330,7 +322,7 @@ static void BM_ComputeBound(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
     state.SetLabel("Compute-bound");
 }

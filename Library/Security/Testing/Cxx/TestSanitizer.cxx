@@ -1,9 +1,8 @@
-#include "sanitizer.h"
-
 #include <cmath>
 #include <limits>
 
 #include "Core/Testing/xsigmaTest.h"
+#include "sanitizer.h"
 
 using namespace xsigma::security;
 
@@ -30,7 +29,9 @@ XSIGMATEST(sanitizer_test, remove_null_bytes_no_nulls)
 XSIGMATEST(sanitizer_test, remove_non_printable)
 {
     // Use string concatenation to avoid \x01c being interpreted as \x1c
-    std::string input = "hello\nworld\ttab\x01" "control";
+    std::string input =
+        "hello\nworld\ttab\x01"
+        "control";
     std::string result = sanitizer::remove_non_printable(input);
     EXPECT_EQ(result, "helloworldtabcontrol");
 }
@@ -72,8 +73,9 @@ XSIGMATEST(sanitizer_test, truncate_empty_string)
 
 XSIGMATEST(sanitizer_test, escape_html)
 {
-    EXPECT_EQ(sanitizer::escape_html("<script>alert('XSS')</script>"),
-              "&lt;script&gt;alert(&#39;XSS&#39;)&lt;/script&gt;");
+    EXPECT_EQ(
+        sanitizer::escape_html("<script>alert('XSS')</script>"),
+        "&lt;script&gt;alert(&#39;XSS&#39;)&lt;/script&gt;");
     EXPECT_EQ(sanitizer::escape_html("A & B"), "A &amp; B");
     EXPECT_EQ(sanitizer::escape_html("\"quoted\""), "&quot;quoted&quot;");
 }
@@ -120,7 +122,7 @@ XSIGMATEST(sanitizer_test, escape_json)
 
 XSIGMATEST(sanitizer_test, escape_json_control_chars)
 {
-    std::string input = "test\x01value";
+    std::string input  = "test\x01value";
     std::string result = sanitizer::escape_json(input);
     EXPECT_NE(result.find("\\u"), std::string::npos);
 }
@@ -255,7 +257,7 @@ XSIGMATEST(sanitizer_test, unicode_handling)
 
 XSIGMATEST(sanitizer_test, all_special_chars_html)
 {
-    std::string input = "<>&\"'";
+    std::string input  = "<>&\"'";
     std::string result = sanitizer::escape_html(input);
     EXPECT_EQ(result, "&lt;&gt;&amp;&quot;&#39;");
 }
@@ -268,4 +270,3 @@ XSIGMATEST(sanitizer_test, path_with_null_bytes)
     std::string result = sanitizer::sanitize_path(path);
     EXPECT_EQ(result.find('\0'), std::string::npos);
 }
-

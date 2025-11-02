@@ -1,7 +1,7 @@
 # XSigma SMP Performance Analysis and Usage Recommendations
 
-**Document Version:** 1.0  
-**Date:** 2025-11-02  
+**Document Version:** 1.0
+**Date:** 2025-11-02
 **Status:** Preliminary Analysis
 
 ---
@@ -822,4 +822,3 @@ bool in_parallel = in_parallel_region();
 ---
 
 **Document End**
-

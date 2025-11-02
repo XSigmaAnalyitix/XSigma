@@ -29,7 +29,7 @@ static void BM_SMP_MemoryBound_Small(benchmark::State& state)
 {
     const int        size = 100;
     std::vector<int> data(size, 0);
-    
+
     for (auto _ : state)
     {
         tools::For(
@@ -45,7 +45,7 @@ static void BM_SMP_MemoryBound_Small(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
     state.SetBytesProcessed(state.iterations() * size * sizeof(int));
 }
@@ -55,7 +55,7 @@ static void BM_SMPNew_MemoryBound_Small(benchmark::State& state)
 {
     const int        size = 100;
     std::vector<int> data(size, 0);
-    
+
     for (auto _ : state)
     {
         smp_new::parallel::parallel_for(
@@ -71,7 +71,7 @@ static void BM_SMPNew_MemoryBound_Small(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
     state.SetBytesProcessed(state.iterations() * size * sizeof(int));
 }
@@ -82,7 +82,7 @@ static void BM_SMP_MemoryBound_Medium(benchmark::State& state)
 {
     const int        size = 10000;
     std::vector<int> data(size, 0);
-    
+
     for (auto _ : state)
     {
         tools::For(
@@ -98,7 +98,7 @@ static void BM_SMP_MemoryBound_Medium(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
     state.SetBytesProcessed(state.iterations() * size * sizeof(int));
 }
@@ -108,7 +108,7 @@ static void BM_SMPNew_MemoryBound_Medium(benchmark::State& state)
 {
     const int        size = 10000;
     std::vector<int> data(size, 0);
-    
+
     for (auto _ : state)
     {
         smp_new::parallel::parallel_for(
@@ -124,7 +124,7 @@ static void BM_SMPNew_MemoryBound_Medium(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
     state.SetBytesProcessed(state.iterations() * size * sizeof(int));
 }
@@ -135,7 +135,7 @@ static void BM_SMP_MemoryBound_Large(benchmark::State& state)
 {
     const int        size = 1000000;
     std::vector<int> data(size, 0);
-    
+
     for (auto _ : state)
     {
         tools::For(
@@ -151,7 +151,7 @@ static void BM_SMP_MemoryBound_Large(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
     state.SetBytesProcessed(state.iterations() * size * sizeof(int));
 }
@@ -161,7 +161,7 @@ static void BM_SMPNew_MemoryBound_Large(benchmark::State& state)
 {
     const int        size = 1000000;
     std::vector<int> data(size, 0);
-    
+
     for (auto _ : state)
     {
         smp_new::parallel::parallel_for(
@@ -177,7 +177,7 @@ static void BM_SMPNew_MemoryBound_Large(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
     state.SetBytesProcessed(state.iterations() * size * sizeof(int));
 }
@@ -192,7 +192,7 @@ static void BM_SMP_ComputeBound_Small(benchmark::State& state)
 {
     const int           size = 1000;
     std::vector<double> data(size, 0.0);
-    
+
     for (auto _ : state)
     {
         tools::For(
@@ -209,7 +209,7 @@ static void BM_SMP_ComputeBound_Small(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_SMP_ComputeBound_Small);
@@ -218,7 +218,7 @@ static void BM_SMPNew_ComputeBound_Small(benchmark::State& state)
 {
     const int           size = 1000;
     std::vector<double> data(size, 0.0);
-    
+
     for (auto _ : state)
     {
         smp_new::parallel::parallel_for(
@@ -235,7 +235,7 @@ static void BM_SMPNew_ComputeBound_Small(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_SMPNew_ComputeBound_Small);
@@ -245,7 +245,7 @@ static void BM_SMP_ComputeBound_Medium(benchmark::State& state)
 {
     const int           size = 50000;
     std::vector<double> data(size, 0.0);
-    
+
     for (auto _ : state)
     {
         tools::For(
@@ -262,7 +262,7 @@ static void BM_SMP_ComputeBound_Medium(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_SMP_ComputeBound_Medium);
@@ -271,7 +271,7 @@ static void BM_SMPNew_ComputeBound_Medium(benchmark::State& state)
 {
     const int           size = 50000;
     std::vector<double> data(size, 0.0);
-    
+
     for (auto _ : state)
     {
         smp_new::parallel::parallel_for(
@@ -288,7 +288,7 @@ static void BM_SMPNew_ComputeBound_Medium(benchmark::State& state)
             });
         benchmark::DoNotOptimize(data.data());
     }
-    
+
     state.SetItemsProcessed(state.iterations() * size);
 }
 BENCHMARK(BM_SMPNew_ComputeBound_Medium);
@@ -433,10 +433,7 @@ static void BM_SMP_Transform_Small(benchmark::State& state)
     for (auto _ : state)
     {
         tools::Transform(
-            input.begin(),
-            input.end(),
-            output.begin(),
-            [](int x) { return x * 2 + 1; });
+            input.begin(), input.end(), output.begin(), [](int x) { return x * 2 + 1; });
         benchmark::DoNotOptimize(output.data());
     }
 
@@ -474,4 +471,3 @@ BENCHMARK(BM_SMPNew_Transform_Small);
 }  // namespace xsigma
 
 BENCHMARK_MAIN();
-
