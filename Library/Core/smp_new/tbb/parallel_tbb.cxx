@@ -244,6 +244,18 @@ void SetInParallelRegion(bool in_region)
 {
     g_in_parallel_region = in_region;
 }
+#else
+// Stub implementations when TBB is not available
+bool GetInParallelRegion()
+{
+    return false;
+}
+
+void SetInParallelRegion(bool XSIGMA_UNUSED in_region)
+{
+    // No-op when TBB is not available
+    (void)0;
+}
 #endif
 
 }  // namespace xsigma::smp_new::tbb

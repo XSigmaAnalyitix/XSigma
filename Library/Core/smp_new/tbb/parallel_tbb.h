@@ -168,7 +168,6 @@ XSIGMA_API void ParallelForTBB(
  */
 #if XSIGMA_HAS_TBB
 extern XSIGMA_API std::atomic<bool> g_tbb_initialized;
-extern thread_local bool            g_in_parallel_region;
 #endif
 
 template <typename T>
@@ -236,16 +235,20 @@ XSIGMA_API std::string GetTBBBackendInfo();
  * @brief Get the thread-local parallel region flag for TBB.
  *
  * @return true if currently in a TBB parallel region, false otherwise.
+ *
+ * @note This function is always available and works on all platforms.
+ *       When TBB is not available, it returns false.
  */
-#if XSIGMA_HAS_TBB
 XSIGMA_API bool GetInParallelRegion();
 
 /**
  * @brief Set the thread-local parallel region flag for TBB.
  *
  * @param in_region true if entering a parallel region, false if exiting.
+ *
+ * @note This function is always available and works on all platforms.
+ *       When TBB is not available, it is a no-op.
  */
 XSIGMA_API void SetInParallelRegion(bool in_region);
-#endif
 
 }  // namespace xsigma::smp_new::tbb
