@@ -167,8 +167,8 @@ XSIGMA_API void ParallelForTBB(
  * @note Requires TBB support at compile time.
  */
 #if XSIGMA_HAS_TBB
-extern std::atomic<bool> g_tbb_initialized;
-extern thread_local bool g_in_parallel_region;
+extern XSIGMA_API std::atomic<bool> g_tbb_initialized;
+extern thread_local bool            g_in_parallel_region;
 #endif
 
 template <typename T>
@@ -201,8 +201,8 @@ T ParallelReduceTBB(
     }
 
     // Set parallel region flag
-    bool was_in_parallel = g_in_parallel_region;
-    g_in_parallel_region = true;
+    bool was_in_parallel = GetInParallelRegion();
+    SetInParallelRegion(true);
 
     // Execute parallel reduce
     // Note: TBB may throw exceptions internally, but we let them propagate
@@ -216,7 +216,7 @@ T ParallelReduceTBB(
         [&reduce](T a, T b) -> T { return reduce(a, b); });
 
     // Restore parallel region flag
-    g_in_parallel_region = was_in_parallel;
+    SetInParallelRegion(was_in_parallel);
     return result;
 #else
     // TBB is not available - fallback to serial execution
@@ -231,5 +231,21 @@ T ParallelReduceTBB(
  * @return A string containing TBB backend information (version, configuration, etc.)
  */
 XSIGMA_API std::string GetTBBBackendInfo();
+
+/**
+ * @brief Get the thread-local parallel region flag for TBB.
+ *
+ * @return true if currently in a TBB parallel region, false otherwise.
+ */
+#if XSIGMA_HAS_TBB
+XSIGMA_API bool GetInParallelRegion();
+
+/**
+ * @brief Set the thread-local parallel region flag for TBB.
+ *
+ * @param in_region true if entering a parallel region, false if exiting.
+ */
+XSIGMA_API void SetInParallelRegion(bool in_region);
+#endif
 
 }  // namespace xsigma::smp_new::tbb

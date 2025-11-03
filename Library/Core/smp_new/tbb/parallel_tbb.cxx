@@ -30,8 +30,8 @@ namespace xsigma::smp_new::tbb
 {
 
 // TBB backend state
-std::atomic<bool>       g_tbb_initialized{false};
-static std::atomic<int> g_num_threads{-1};
+XSIGMA_API std::atomic<bool> g_tbb_initialized{false};
+static std::atomic<int>      g_num_threads{-1};
 
 #if XSIGMA_HAS_TBB
 // TBB global control for thread count
@@ -190,8 +190,8 @@ void ParallelForTBB(
     }
 
     // Set parallel region flag
-    bool const was_in_parallel = g_in_parallel_region;
-    g_in_parallel_region       = true;
+    bool const was_in_parallel = GetInParallelRegion();
+    SetInParallelRegion(true);
 
     // Execute parallel for
     // Note: TBB may throw exceptions internally, but we let them propagate
@@ -202,7 +202,7 @@ void ParallelForTBB(
         [&func](const ::tbb::blocked_range<int64_t>& range) { func(range.begin(), range.end()); });
 
     // Restore parallel region flag
-    g_in_parallel_region = was_in_parallel;
+    SetInParallelRegion(was_in_parallel);
 #else
     // TBB is not available - fallback to serial execution
     (void)grain_size;  // Suppress unused parameter warning
@@ -233,5 +233,17 @@ std::string GetTBBBackendInfo()
 
     return oss.str();
 }
+
+#if XSIGMA_HAS_TBB
+bool GetInParallelRegion()
+{
+    return g_in_parallel_region;
+}
+
+void SetInParallelRegion(bool in_region)
+{
+    g_in_parallel_region = in_region;
+}
+#endif
 
 }  // namespace xsigma::smp_new::tbb

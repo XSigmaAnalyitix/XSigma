@@ -40,8 +40,8 @@ void XSIGMA_API tools_implForTBB(
 class XSIGMA_VISIBILITY tools_implTBBInitialize
 {
 public:
-    tools_implTBBInitialize();
-    ~tools_implTBBInitialize();
+    XSIGMA_API tools_implTBBInitialize();
+    XSIGMA_API ~tools_implTBBInitialize();
 };
 
 //--------------------------------------------------------------------------------
