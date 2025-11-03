@@ -30,7 +30,7 @@ namespace xsigma::smp_new::tbb
 {
 
 // TBB backend state
-XSIGMA_API std::atomic<bool> g_tbb_initialized{false};
+XSIGMA_API std::atomic<bool> g_tbb_initialized{false};  //NOLINT
 static std::atomic<int>      g_num_threads{-1};
 
 #if XSIGMA_HAS_TBB
