@@ -251,10 +251,10 @@ bool GetInParallelRegion()
     return false;
 }
 
-void SetInParallelRegion(bool XSIGMA_UNUSED in_region)
+void SetInParallelRegion(bool in_region)
 {
     // No-op when TBB is not available
-    (void)0;
+    (void)in_region;
 }
 #endif
 
