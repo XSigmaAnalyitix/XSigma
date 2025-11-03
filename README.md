@@ -24,7 +24,7 @@
 ## Table of Contents
 
 - [Project Introduction](#project-introduction)
-- [Quick Start](#quick-start)
+- [Obtaining XSigma](#obtaining-xsigma)
 - [Build Optimizations](#build-optimizations)
 - [Analysis Tools](#analysis-tools)
 - [Third-Party Dependencies](#third-party-dependencies)
@@ -32,12 +32,34 @@
 - [Features](#features)
 - [Documentation](#documentation)
 - [Best Practices](#best-practices)
+- [Coding Standards](#coding-standards)
+- [Providing Feedback](#providing-feedback)
 - [Contributing](#contributing)
 - [License](#license)
 
-## Quick Start
+## Obtaining XSigma
 
-### Prerequisites
+### Download and Installation
+
+XSigma is available through multiple channels:
+
+#### From GitHub (Recommended)
+
+Clone the repository directly from GitHub:
+
+```bash
+# Clone the repository
+git clone https://github.com/XSigmaAnalyitix/XSigma.git
+cd XSigma
+
+# Initialize Git submodules for third-party dependencies
+git submodule update --init --recursive
+
+# Install Python dependencies
+pip install -r requirements.txt
+```
+
+### System Requirements
 
 XSigma requires the following minimum versions:
 
@@ -49,33 +71,17 @@ XSigma requires the following minimum versions:
 - **Python** 3.9+ (for build scripts and testing)
 - **Git** (for cloning and submodule management)
 
-### Prerequisites: Install Build Script Dependencies
+### Quick Start: Building from Source
 
-Before using the setup.py script, install the required Python dependencies:
+After cloning and installing dependencies, follow these platform-specific instructions to build XSigma:
 
-```bash
-# Clone the repository
-git clone https://github.com/XSigmaAnalyitix/XSigma.git
-cd XSigma
-
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Initialize Git submodules (for third-party dependencies)
-git submodule update --init --recursive
-```
-
-**Note**: The setup.py script requires `colorama` for colored terminal output. Install it before running any setup.py commands.
-
-### Understanding setup.py Flags
+#### Understanding setup.py Flags
 
 The `setup.py` script uses a standardized flag ordering convention to organize build configuration:
 
 - **config** - Runs the CMake configuration phase to generate build files
 - **build** - Compiles the source code and builds the project
 - **test** - Runs the test suite after building
-
-### Platform-Specific Build Instructions
 
 #### Unix/Linux (GCC and Clang)
 
@@ -548,6 +554,7 @@ Full cross-platform compatibility across Windows, Linux, and macOS with platform
 
 ### Core Documentation
 
+- **[Coding Standards](Docs/readme/coding-standards.md)** - Comprehensive guide to naming conventions, code formatting, testing, and best practices
 - **[Setup Guide](Docs/readme/setup.md)** - Detailed setup.py script and CMake flags reference
 - **[Build Configuration](Docs/readme/build/build-configuration.md)** - Build types, C++ standards, optimization options
 - **[High-Performance Computing](Docs/readme/high-performance-computing.md)** - SIMD, GPU acceleration, and multithreading
@@ -698,15 +705,117 @@ python setup.py config.build.test.ninja.clang.external
 
 ---
 
+## Coding Standards
+
+XSigma maintains strict coding standards to ensure code quality, consistency, and maintainability across the entire codebase. All contributions must adhere to these standards.
+
+**Key principles:** No exceptions (use return values), RAII for resource management, smart pointers for ownership, and const correctness. Code must follow `snake_case` naming conventions, use `clang-format` for formatting, achieve 98% test coverage, use STL algorithms instead of raw loops, maintain consistent header/implementation file organization, follow builder pattern conventions, pass all clang-tidy checks, and use `auto` appropriately for clarity.
+
+For a comprehensive guide covering naming conventions, code formatting, include paths, DLL export macros, testing requirements, static analysis, documentation standards, memory management, concurrency, security best practices, STL algorithm usage, file organization, builder patterns, clang-tidy enforcement, and auto keyword guidelines, see:
+
+📖 **[Complete Coding Standards Guide](Docs/readme/coding-standards.md)** - Comprehensive documentation with examples and detailed requirements
+
+---
+
+## Providing Feedback
+
+We value your feedback and encourage you to report bugs, suggest enhancements, and share your experiences with XSigma.
+
+### Reporting Bugs
+
+If you encounter a bug or unexpected behavior:
+
+1. **Search existing issues** - Check [GitHub Issues](https://github.com/XSigmaAnalyitix/XSigma/issues) to see if the bug has already been reported
+2. **Create a new issue** - If not found, [open a new issue](https://github.com/XSigmaAnalyitix/XSigma/issues/new) with:
+   - **Clear title** - Concise description of the bug
+   - **Detailed description** - What you were trying to do and what went wrong
+   - **Steps to reproduce** - Exact steps to reproduce the issue
+   - **Expected vs. actual behavior** - What you expected vs. what actually happened
+   - **Environment details** - OS, compiler, XSigma version, build configuration
+   - **Minimal reproducible example** - Code or commands that demonstrate the issue
+   - **Logs or error messages** - Any relevant output or stack traces
+
+3. **Follow the Code of Conduct** - Be respectful and constructive in your report
+
+### Requesting Features and Enhancements
+
+To suggest a new feature or enhancement:
+
+1. **Search existing discussions** - Check [GitHub Discussions](https://github.com/XSigmaAnalyitix/XSigma/discussions) and [Issues](https://github.com/XSigmaAnalyitix/XSigma/issues) for similar requests
+2. **Create a discussion or issue** - [Start a discussion](https://github.com/XSigmaAnalyitix/XSigma/discussions/new) or [open an issue](https://github.com/XSigmaAnalyitix/XSigma/issues/new) with:
+   - **Clear title** - Concise description of the feature
+   - **Motivation** - Why this feature would be useful
+   - **Proposed solution** - How you envision the feature working
+   - **Alternative approaches** - Other ways to solve the problem (if applicable)
+   - **Use cases** - Real-world scenarios where this feature would help
+   - **Additional context** - Any other relevant information
+
+3. **Engage in discussion** - Maintainers and community members may ask clarifying questions
+
+### Security Vulnerabilities
+
+**Do not report security vulnerabilities through public GitHub issues.** Instead:
+
+1. **Use GitHub Security Advisories** - Report privately at https://github.com/XSigmaAnalyitix/XSigma/security/advisories/new
+2. **Email** - Send details to [security@xsigma.co.uk](mailto:security@xsigma.co.uk)
+
+See [SECURITY.md](SECURITY.md) for complete vulnerability reporting guidelines and our response timeline.
+
+### Communication Channels
+
+- **Bug Reports & Feature Requests**: [GitHub Issues](https://github.com/XSigmaAnalyitix/XSigma/issues)
+- **Questions & Discussions**: [GitHub Discussions](https://github.com/XSigmaAnalyitix/XSigma/discussions)
+- **Security Issues**: [GitHub Security Advisories](https://github.com/XSigmaAnalyitix/XSigma/security/advisories) or [security@xsigma.co.uk](mailto:security@xsigma.co.uk)
+- **General Inquiries**: [info@xsigma.co.uk](mailto:info@xsigma.co.uk)
+- **Licensing Questions**: [licensing@xsigma.co.uk](mailto:licensing@xsigma.co.uk)
+- **Code of Conduct Violations**: [conduct@xsigma.co.uk](mailto:conduct@xsigma.co.uk)
+
+---
+
 ## Contributing
 
-When contributing to XSigma:
+We welcome contributions from the community! XSigma is built by developers like you, and we appreciate your interest in improving the project.
 
-1. **Follow CMake best practices** - use modern target-based configuration
-2. **Maintain backward compatibility** - existing configurations should continue working
-3. **Test cross-platform** - verify Windows, Linux, and macOS compatibility
-4. **Document changes** - update this README for new features
-5. **Use conditional compilation** - follow the `XSIGMA_ENABLE_XXX` pattern
+### Quick Start for Contributors
+
+1. **Read the guidelines** - Review [CONTRIBUTING.md](CONTRIBUTING.md) for complete contribution guidelines
+2. **Fork the repository** - Create your own fork on GitHub
+3. **Create a feature branch** - Branch from `main` with a descriptive name
+4. **Make your changes** - Follow our [coding standards](#coding-standards)
+5. **Write tests** - Ensure 98% code coverage for new code
+6. **Run checks** - Verify formatting, linting, and tests pass locally
+7. **Submit a pull request** - Push your branch and create a PR with a clear description
+
+### Contribution Areas
+
+We welcome contributions in many areas:
+
+- **Bug fixes** - Help us fix reported issues
+- **Features** - Implement new functionality or enhancements
+- **Documentation** - Improve guides, examples, and API documentation
+- **Tests** - Add tests for existing code or new features
+- **Performance** - Optimize existing code and improve efficiency
+- **Build system** - Improve CMake configuration and build process
+- **CI/CD** - Enhance testing and automation pipelines
+
+### Key Requirements
+
+- **Code Quality** - Follow [coding standards](#coding-standards) and pass all checks
+- **Testing** - Minimum 98% code coverage for new code
+- **Documentation** - Update README and docs for new features
+- **Licensing** - Contributions are dual-licensed (GPL-3.0-or-later and commercial)
+- **Code of Conduct** - Follow our [Code of Conduct](CODE_OF_CONDUCT.md)
+
+### Important Notes
+
+- **Contribution Policy** - Read [CONTRIBUTING.md](CONTRIBUTING.md) to understand our contribution policy and rights
+- **Intellectual Property** - Ensure your contribution is original or properly licensed
+- **Dual Licensing** - By contributing, you grant XSigmaAnalyitix rights to offer commercial licenses
+- **No Guarantee** - Submission does not guarantee acceptance; maintainers have final authority
+
+For complete details, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
 
 ## License
 
