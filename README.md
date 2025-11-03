@@ -86,7 +86,7 @@ cd Scripts
 # Debug build with Clang
 python setup.py config.build.ninja.clang.debug
 
-# Release build with optimizations (LTO enabled by default)
+# Release build with optimizations
 python setup.py config.build.ninja.clang.release.avx2
 
 # With testing enabled
@@ -109,7 +109,7 @@ cd Scripts
 # Debug build with Apple Clang
 python setup.py config.build.ninja.clang.debug
 
-# Release build with optimizations (LTO enabled by default)
+# Release build with optimizations
 python setup.py config.build.ninja.clang.release
 ```
 
@@ -129,7 +129,7 @@ cd Scripts
 # Debug build with MSVC
 python setup.py config.build.vs22.debug
 
-# Release build with Clang (LTO enabled by default)
+# Release build with Clang
 python setup.py config.build.ninja.clang.release
 
 # With testing enabled
@@ -206,21 +206,21 @@ python setup.py config.build.ninja.clang.none
 
 ### Link-Time Optimization (LTO)
 
-Link-Time Optimization is **enabled by default** in release builds. Use the `lto` flag to toggle it.
+Link-Time Optimization is **disabled by default**. Use the `lto` flag to enable it.
 
 ```bash
 cd Scripts
 
-# Release build with LTO enabled (default - no flag needed)
+# Release build without LTO (default - no flag needed)
 python setup.py config.build.ninja.clang.release
 
-# Disable LTO if needed (add 'lto' flag to toggle OFF)
-python setup.py config.build.ninja.clang.release.lto  # (LTO disabled - enabled by default in release builds)
+# Enable LTO if needed (add 'lto' flag to toggle ON)
+python setup.py config.build.ninja.clang.release.lto  # (LTO enabled)
 ```
 
 **LTO Behavior**:
-- **Default**: LTO is ON for release builds
-- **Toggle**: Adding `lto` flag toggles it OFF (since it defaults to ON)
+- **Default**: LTO is OFF
+- **Toggle**: Adding `lto` flag toggles it ON (since it defaults to OFF)
 - **Benefits**: 10-30% performance improvement in release builds
 - **Trade-off**: Increases build time (use for final releases)
 
@@ -615,15 +615,15 @@ If vectorization fails to compile:
 
 **LTO Issues**
 
-If Link-Time Optimization fails:
+If you want to enable Link-Time Optimization:
 
-1. **Disable LTO**: Add `lto` flag to setup.py command (toggles default ON to OFF)
+1. **Enable LTO**: Add `lto` flag to setup.py command (toggles default OFF to ON)
    ```bash
    cd Scripts
-   python setup.py config.build.ninja.clang.release.lto  # (LTO enabled by default in release builds)
+   python setup.py config.build.ninja.clang.release.lto  # (LTO enabled)
    ```
 2. Check compiler version (GCC 5+, Clang 3.5+, MSVC 2015+)
-3. Increase available memory (LTO is memory-intensive)
+3. Ensure sufficient available memory (LTO is memory-intensive)
 
 **Build Performance**
 
@@ -675,7 +675,7 @@ python setup.py config.build.test.ninja.clang.debug
 **For production releases:**
 ```bash
 cd Scripts
-python setup.py config.build.ninja.clang.release  # (LTO enabled by default in release builds)
+python setup.py config.build.ninja.clang.release.lto  # (LTO enabled for maximum optimization)
 ```
 
 **For CI/CD pipelines:**

@@ -741,8 +741,8 @@ class XsigmaFlags:
                 "cxxstd": "",  # Special case: let CMake decide
                 "logging_backend": "LOGURU",  # Default logging backend
                 "cache_type": "none",  # Default cache type is none
-                # CMake options with default ON - keep ON in setup.py
-                "lto": self.ON,  # XSIGMA_ENABLE_LTO default is ON
+                # CMake options with default OFF - keep OFF in setup.py
+                "lto": self.OFF,  # XSIGMA_ENABLE_LTO default is OFF
                 "gtest": self.ON,  # XSIGMA_ENABLE_GTEST default is ON
                 "magic_enum": self.ON,  # XSIGMA_ENABLE_MAGIC_ENUM default is ON
                 "loguru": self.ON,  # XSIGMA_ENABLE_LOGURU default is ON
@@ -818,7 +818,7 @@ class XsigmaFlags:
                 self.builder_suffix += f"_java{arg}"
             elif arg in self.__key:
                 # Implement inverse logic based on CMake defaults
-                if arg in ["loguru", "lto", "gtest", "magic_enum", "mimalloc"]:
+                if arg in ["loguru", "gtest", "magic_enum", "mimalloc"]:
                     # These have CMake default ON, so providing the arg turns them OFF
                     self.__value[arg] = self.OFF
                 else:

@@ -29,7 +29,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cmake/packages")
 set(CMAKE_COLOR_DIAGNOSTICS ON)
 
 # Build optimization settings
-option(XSIGMA_ENABLE_LTO "Enable Link Time Optimization" ON)
+option(XSIGMA_ENABLE_LTO "Enable Link Time Optimization" OFF)
 
 # Set CMAKE_INTERPROCEDURAL_OPTIMIZATION based on XSIGMA_ENABLE_LTO
 if(XSIGMA_ENABLE_LTO)
