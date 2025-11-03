@@ -176,6 +176,19 @@ void ParallelForTBB(
         InitializeTBBBackend();
     }
 
+    int64_t n = end - begin;
+
+    // Determine grain size if auto (grain_size <= 0)
+    if (grain_size <= 0)
+    {
+        auto num_threads = static_cast<int64_t>(GetNumTBBThreads());
+        if (num_threads <= 0)
+        {
+            num_threads = 1;
+        }
+        grain_size = std::max(static_cast<int64_t>(1), n / (num_threads * 4));
+    }
+
     // Set parallel region flag
     bool const was_in_parallel = g_in_parallel_region;
     g_in_parallel_region       = true;

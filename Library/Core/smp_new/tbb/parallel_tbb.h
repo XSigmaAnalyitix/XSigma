@@ -132,6 +132,8 @@ XSIGMA_API bool InTBBParallelRegion();
  * @param begin Start of iteration range (inclusive).
  * @param end End of iteration range (exclusive).
  * @param grain_size Minimum chunk size for parallel execution.
+ *                   If grain_size <= 0, automatically calculates an appropriate grain size
+ *                   based on the range size and number of threads (n / (num_threads * 4)).
  * @param func Function to execute for each chunk. Signature: void(int64_t begin, int64_t end)
  *
  * @note Thread-safe.
@@ -153,6 +155,8 @@ XSIGMA_API void ParallelForTBB(
  * @param begin Start of iteration range (inclusive).
  * @param end End of iteration range (exclusive).
  * @param grain_size Minimum chunk size for parallel execution.
+ *                   If grain_size <= 0, automatically calculates an appropriate grain size
+ *                   based on the range size and number of threads (n / (num_threads * 4)).
  * @param ident Identity value for the reduction operation.
  * @param func Reduction function. Signature: T(int64_t begin, int64_t end, T ident)
  * @param reduce Combine function. Signature: T(T a, T b)
@@ -181,6 +185,19 @@ T ParallelReduceTBB(
     if (!g_tbb_initialized.load())
     {
         InitializeTBBBackend();
+    }
+
+    int64_t n = end - begin;
+
+    // Determine grain size if auto (grain_size <= 0)
+    if (grain_size <= 0)
+    {
+        auto num_threads = static_cast<int64_t>(GetNumTBBThreads());
+        if (num_threads <= 0)
+        {
+            num_threads = 1;
+        }
+        grain_size = std::max(static_cast<int64_t>(1), n / (num_threads * 4));
     }
 
     // Set parallel region flag
