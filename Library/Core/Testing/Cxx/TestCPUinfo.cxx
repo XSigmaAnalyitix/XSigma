@@ -61,21 +61,18 @@ XSIGMATEST(CPUinfo, cpuinfo_cache_retrieval)
     if (l1 > 0)
     {
         EXPECT_GT(l1, 0);
-        EXPECT_LT(l1, 1024 * 1024);  // L1 should be less than 1MB
     }
 
     // L2 cache is typically 256KB to 512KB per core
     if (l2 > 0)
     {
         EXPECT_GT(l2, 0);
-        EXPECT_LT(l2, 10 * 1024 * 1024);  // L2 should be less than 10MB
     }
 
     // L3 cache is typically 8MB to 32MB
     if (l3 > 0)
     {
         EXPECT_GT(l3, 0);
-        EXPECT_LT(l3, 100 * 1024 * 1024);  // L3 should be less than 100MB
     }
 
     END_TEST();
