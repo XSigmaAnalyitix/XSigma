@@ -6,7 +6,7 @@
 /**
  * @file threaded_task_queue.hxx
  * @brief Task queue implementation for concurrent task execution
- * 
+ *
  * This file implements a thread-safe task queue for executing functions
  * concurrently across multiple threads. It provides a high-level abstraction
  * for parallel task processing with support for different thread pool backends.
@@ -26,7 +26,7 @@
 #include "smp/engine_facade.hxx"    // for TaskQueue
 #include "smp/multi_threader.h"
 #include "smp/thread_count.h"  // for GetGlobalDefaultNumberOfThreads
-#include "util/logger.h"
+#include "logging/logger.h"
 
 //=============================================================================
 namespace xsigma
@@ -34,11 +34,11 @@ namespace xsigma
 /**
  * @class task_queue
  * @brief Internal task queue implementation that manages function objects
- * 
+ *
  * This class provides a thread-safe queue implementation for storing task functions
  * and their associated task IDs. It supports operations for pushing tasks to the queue
  * and popping tasks for execution by worker threads.
- * 
+ *
  * @tparam R The return type of the functions stored in the queue
  */
 template <typename R>
@@ -47,7 +47,7 @@ class task_queue
 public:
     /**
      * @brief Constructs a task queue with the specified buffer size
-     * 
+     *
      * @param buffer_size Maximum number of tasks to keep in the buffer, or 0 for unlimited
      */
     task_queue(int buffer_size) : Done(false), buffer_size(buffer_size), next_task_id(0) {}
@@ -59,7 +59,7 @@ public:
 
     /**
      * @brief Marks the queue as done, preventing addition of new tasks
-     * 
+     *
      * This signals to all waiting threads that no more tasks will be added
      * and they should terminate after processing current tasks.
      */
@@ -74,17 +74,17 @@ public:
 
     /**
      * @brief Gets the next task ID to be assigned
-     * 
+     *
      * @return The ID that will be assigned to the next task pushed into the queue
      */
     std::uint64_t Getnext_task_id() const { return this->next_task_id; }
 
     /**
      * @brief Pushes a new task into the queue
-     * 
+     *
      * If the queue is marked as done, no tasks will be added.
      * If a buffer size is specified, older tasks may be removed when the queue exceeds the buffer size.
-     * 
+     *
      * @param task Function object to be executed
      */
     void Push(std::function<R()>&& task)
@@ -109,9 +109,9 @@ public:
 
     /**
      * @brief Pops a task from the queue
-     * 
+     *
      * This method will block until either a task is available or the queue is marked as done.
-     * 
+     *
      * @param task_id [out] The ID of the popped task
      * @param task [out] The function object to execute
      * @return true if a task was successfully popped, false if the queue is done and empty
@@ -148,11 +148,11 @@ private:
 /**
  * @class result_queue
  * @brief Internal result queue implementation that manages function results
- * 
+ *
  * This class provides a thread-safe priority queue implementation for storing
  * task results along with their task IDs. Results can be popped in task ID order
  * when strict ordering is enabled.
- * 
+ *
  * @tparam R The type of the results stored in the queue
  */
 template <typename R>
@@ -161,7 +161,7 @@ class result_queue
 public:
     /**
      * @brief Constructs a result queue
-     * 
+     *
      * @param strict_ordering If true, results can only be popped in order of task ID
      */
     result_queue(bool strict_ordering) : next_result_id(0), strict_ordering(strict_ordering) {}
@@ -173,16 +173,16 @@ public:
 
     /**
      * @brief Gets the next result ID that will be popped
-     * 
+     *
      * @return The ID of the next result expected to be popped
      */
     std::uint64_t Getnext_result_id() const { return this->next_result_id; }
 
     /**
      * @brief Pushes a new result into the queue
-     * 
+     *
      * Results with IDs less than next_result_id are considered obsolete and discarded.
-     * 
+     *
      * @param task_id The ID of the task that produced this result
      * @param result The result value to store
      */
@@ -200,9 +200,9 @@ public:
 
     /**
      * @brief Attempts to pop a result without waiting
-     * 
+     *
      * In strict ordering mode, this will only pop if the next expected result is available.
-     * 
+     *
      * @param result [out] The popped result value
      * @return true if a result was successfully popped, false otherwise
      */
@@ -229,10 +229,10 @@ public:
 
     /**
      * @brief Pops a result, waiting if necessary
-     * 
+     *
      * This method blocks until a result is available. In strict ordering mode,
      * it waits for the next expected result in sequence.
-     * 
+     *
      * @param result [out] The popped result value
      * @return true if a result was successfully popped, false otherwise
      */
@@ -271,9 +271,9 @@ private:
 //-----------------------------------------------------------------------------
 /**
  * @brief Constructor for the threaded task queue
- * 
+ *
  * Initializes a queue with the specified worker function, thread count, and behavior settings.
- * 
+ *
  * @param worker Function that will process each task
  * @param strict_ordering If true, results must be popped in the same order tasks were pushed
  * @param buffer_size Maximum task buffer size (-1 for unlimited)
@@ -296,7 +296,7 @@ threaded_task_queue<R, Args...>::threaded_task_queue(
 {
     auto f = [this](int thread_id)
     {
-        xsigmaLogger::set_thread_name("ttq::worker" + std::to_string(thread_id));
+        xsigma::logger::SetThreadName("ttq::worker" + std::to_string(thread_id));
         while (true)
         {
             std::function<R()> task;
@@ -323,7 +323,7 @@ threaded_task_queue<R, Args...>::threaded_task_queue(
 //-----------------------------------------------------------------------------
 /**
  * @brief Destructor for the threaded task queue
- * 
+ *
  * Signals all worker threads to terminate and waits for them to join
  * before freeing resources.
  */
@@ -340,10 +340,10 @@ threaded_task_queue<R, Args...>::~threaded_task_queue()
 //-----------------------------------------------------------------------------
 /**
  * @brief Pushes a new task into the queue
- * 
+ *
  * Binds the provided arguments to the worker function and adds it to the task queue.
  * This method returns immediately without waiting for the task to complete.
- * 
+ *
  * @param args Arguments to pass to the worker function
  */
 template <typename R, typename... Args>
@@ -355,7 +355,7 @@ void threaded_task_queue<R, Args...>::Push(Args&&... args)
 //-----------------------------------------------------------------------------
 /**
  * @brief Attempts to pop a result without waiting
- * 
+ *
  * @param result [out] The result from a completed task
  * @return true if a result was successfully popped, false if no results are available
  */
@@ -368,10 +368,10 @@ bool threaded_task_queue<R, Args...>::TryPop(R& result)
 //-----------------------------------------------------------------------------
 /**
  * @brief Pops a result, returning false if the queue is empty
- * 
+ *
  * Unlike the internal Results->Pop method, this does not wait if no results
  * are available. It first checks if the queue is empty.
- * 
+ *
  * @param result [out] The result from a completed task
  * @return true if a result was successfully popped, false if the queue is empty
  */
@@ -389,10 +389,10 @@ bool threaded_task_queue<R, Args...>::Pop(R& result)
 //-----------------------------------------------------------------------------
 /**
  * @brief Checks if the task queue is empty
- * 
+ *
  * A queue is considered empty when all pushed tasks have been completed
  * and their results have been popped.
- * 
+ *
  * @return true if no tasks are pending or in progress
  */
 template <typename R, typename... Args>
@@ -404,7 +404,7 @@ bool threaded_task_queue<R, Args...>::IsEmpty() const
 //-----------------------------------------------------------------------------
 /**
  * @brief Flushes the queue by popping all available results
- * 
+ *
  * This method removes all results from the queue without returning them.
  * It can be used to clear the queue when results are not needed.
  */
@@ -425,9 +425,9 @@ void threaded_task_queue<R, Args...>::Flush()
 //-----------------------------------------------------------------------------
 /**
  * @brief Constructor for void-returning threaded task queue
- * 
+ *
  * This specialization handles tasks that don't return results.
- * 
+ *
  * @param worker Function that will process each task
  * @param strict_ordering If true, tasks must complete in order
  * @param buffer_size Maximum task buffer size (-1 for unlimited)
@@ -450,7 +450,7 @@ threaded_task_queue<void, Args...>::threaded_task_queue(
 {
     auto f = [this](int thread_id)
     {
-        xsigmaLogger::set_thread_name("ttq::worker" + std::to_string(thread_id));
+        xsigma::logger::SetThreadName("ttq::worker" + std::to_string(thread_id));
         while (true)
         {
             std::function<void()> task;
@@ -484,7 +484,7 @@ threaded_task_queue<void, Args...>::threaded_task_queue(
 //-----------------------------------------------------------------------------
 /**
  * @brief Destructor for void-returning threaded task queue
- * 
+ *
  * Signals all worker threads to terminate and waits for them to join
  * before freeing resources.
  */
@@ -501,10 +501,10 @@ threaded_task_queue<void, Args...>::~threaded_task_queue()
 //-----------------------------------------------------------------------------
 /**
  * @brief Pushes a new task into the void-returning queue
- * 
+ *
  * Binds the provided arguments to the worker function and adds it to the task queue.
  * This method returns immediately without waiting for the task to complete.
- * 
+ *
  * @param args Arguments to pass to the worker function
  */
 template <typename... Args>
@@ -516,9 +516,9 @@ void threaded_task_queue<void, Args...>::Push(Args&&... args)
 //-----------------------------------------------------------------------------
 /**
  * @brief Checks if the void-returning task queue is empty
- * 
+ *
  * A queue is considered empty when all pushed tasks have been completed.
- * 
+ *
  * @return true if no tasks are pending or in progress
  */
 template <typename... Args>
@@ -530,7 +530,7 @@ bool threaded_task_queue<void, Args...>::IsEmpty() const
 //-----------------------------------------------------------------------------
 /**
  * @brief Flushes the void-returning queue by waiting for all tasks to complete
- * 
+ *
  * This method blocks until all tasks have been processed.
  */
 template <typename... Args>

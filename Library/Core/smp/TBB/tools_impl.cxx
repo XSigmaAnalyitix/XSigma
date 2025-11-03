@@ -115,7 +115,7 @@ int tools_impl<BackendType::TBB>::GetEstimatedDefaultNumberOfThreads()
 template <>
 bool tools_impl<BackendType::TBB>::GetSingleThread()
 {
-    std::lock_guard<std::mutex> lock(*threadIdStackLock);
+    std::scoped_lock const lock(*threadIdStackLock);
     if (threadIdStack->empty())
     {
         return false;

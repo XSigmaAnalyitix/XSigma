@@ -491,7 +491,7 @@ int64_t GetStartTimestampNs(const xplane& plane)
         return 0LL;
     }
     // Use std::accumulate to find minimum timestamp
-    int64_t plane_timestamp = std::accumulate(
+    int64_t const plane_timestamp = std::accumulate(
         plane.lines().begin(),
         plane.lines().end(),
         std::numeric_limits<int64_t>::max(),

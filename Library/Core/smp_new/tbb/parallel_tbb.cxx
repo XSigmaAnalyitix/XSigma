@@ -51,7 +51,7 @@ void InitializeTBBBackend()
 #if XSIGMA_HAS_TBB
     if (!g_tbb_initialized.exchange(true))
     {
-        std::lock_guard<std::mutex> lock(g_tbb_mutex);
+        std::scoped_lock const lock(g_tbb_mutex);
 
         // Initialize TBB with default number of threads
         int nthreads = ::tbb::task_arena::automatic;
@@ -61,7 +61,7 @@ void InitializeTBBBackend()
         if (env_threads != nullptr)
         {
             // Parse environment variable manually to avoid exceptions
-            char*      endptr = nullptr;
+            char*      endptr = nullptr;  //NOLINT
             const long value  = std::strtol(env_threads, &endptr, 10);
 
             // Check if conversion was successful and value is valid
@@ -83,7 +83,7 @@ void InitializeTBBBackend()
         else
         {
             // Get default thread count from TBB
-            ::tbb::task_arena arena;
+            ::tbb::task_arena const arena;
             g_num_threads.store(arena.max_concurrency());
         }
     }
@@ -98,7 +98,7 @@ void ShutdownTBBBackend()
 #if XSIGMA_HAS_TBB
     if (g_tbb_initialized.exchange(false))
     {
-        std::lock_guard<std::mutex> lock(g_tbb_mutex);
+        std::scoped_lock const lock(g_tbb_mutex);
 
         // Release global control
         g_global_control.reset();
@@ -129,7 +129,7 @@ void SetNumTBBThreads(int nthreads)
         return;
     }
 
-    std::lock_guard<std::mutex> lock(g_tbb_mutex);
+    std::scoped_lock const lock(g_tbb_mutex);
 
     // Update global control
     g_global_control = std::make_unique<::tbb::global_control>(
@@ -177,8 +177,8 @@ void ParallelForTBB(
     }
 
     // Set parallel region flag
-    bool was_in_parallel = g_in_parallel_region;
-    g_in_parallel_region = true;
+    bool const was_in_parallel = g_in_parallel_region;
+    g_in_parallel_region       = true;
 
     // Execute parallel for
     // Note: TBB may throw exceptions internally, but we let them propagate

@@ -1592,7 +1592,7 @@ memory_dump allocator_bfc::RecordMemoryMapInternal()
     {
         const BinDebugInfo& bin_info = bin_infos[bin_num];
 #ifndef NDEBUG
-        Bin* b = BinFromIndex(bin_num);
+        Bin const* b = BinFromIndex(bin_num);
         XSIGMA_CHECK_DEBUG(
             b->free_chunks.size() == bin_info.total_chunks_in_bin - bin_info.total_chunks_in_use);
 #endif

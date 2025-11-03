@@ -34,6 +34,7 @@
 #include <utility>
 #include <vector>
 
+#include "logging/logger.h"
 #include "util/exception.h"
 #include "util/flat_hash.h"
 #include "util/lock_free_queue.h"
@@ -53,32 +54,7 @@ namespace xsigma
 {
 static inline std::string get_thread_name()
 {
-    std::string name;
-
-#ifdef _WIN32
-    PWSTR         threadName = nullptr;
-    HRESULT const hr         = GetThreadDescription(GetCurrentThread(), &threadName);
-    if (SUCCEEDED(hr) && (threadName != nullptr))
-    {
-        int const size =
-            WideCharToMultiByte(CP_UTF8, 0, threadName, -1, nullptr, 0, nullptr, nullptr);
-        if (size > 0)
-        {
-            std::string result(size - 1, '\0');
-            WideCharToMultiByte(CP_UTF8, 0, threadName, -1, result.data(), size, nullptr, nullptr);
-            name = result;
-        }
-        LocalFree(threadName);
-    }
-#else
-    char thread_name[16];
-    if (pthread_getname_np(pthread_self(), thread_name, sizeof(thread_name)) == 0)
-    {
-        name = thread_name;
-    }
-#endif
-
-    return name;
+    return xsigma::logger::GetThreadName();
 }
 
 namespace internal
