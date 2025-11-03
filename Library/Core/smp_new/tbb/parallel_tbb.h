@@ -124,6 +124,32 @@ XSIGMA_API int GetTBBThreadNum();
 XSIGMA_API bool InTBBParallelRegion();
 
 /**
+ * @brief Get information about the TBB backend.
+ *
+ * @return A string containing TBB backend information (version, configuration, etc.)
+ */
+XSIGMA_API std::string GetTBBBackendInfo();
+
+/**
+ * @brief Get the thread-local parallel region flag for TBB.
+ *
+ * @return true if currently in a TBB parallel region, false otherwise.
+ *
+ * @note This function is always available and works on all platforms.
+ *       When TBB is not available, it returns false.
+ */
+XSIGMA_API bool GetInParallelRegion();
+
+/**
+ * @brief Set the thread-local parallel region flag for TBB.
+ *
+ * @param in_region true if entering a parallel region, false if exiting.
+ *
+ * @note This function is always available and works on all platforms.
+ *       When TBB is not available, it is a no-op.
+ */
+XSIGMA_API void SetInParallelRegion(bool in_region);
+/**
  * @brief Execute a parallel for loop using TBB.
  *
  * This function divides the iteration space [begin, end) into chunks
@@ -223,32 +249,4 @@ T ParallelReduceTBB(
     return func(begin, end, ident);
 #endif
 }
-
-/**
- * @brief Get information about the TBB backend.
- *
- * @return A string containing TBB backend information (version, configuration, etc.)
- */
-XSIGMA_API std::string GetTBBBackendInfo();
-
-/**
- * @brief Get the thread-local parallel region flag for TBB.
- *
- * @return true if currently in a TBB parallel region, false otherwise.
- *
- * @note This function is always available and works on all platforms.
- *       When TBB is not available, it returns false.
- */
-XSIGMA_API bool GetInParallelRegion();
-
-/**
- * @brief Set the thread-local parallel region flag for TBB.
- *
- * @param in_region true if entering a parallel region, false if exiting.
- *
- * @note This function is always available and works on all platforms.
- *       When TBB is not available, it is a no-op.
- */
-XSIGMA_API void SetInParallelRegion(bool in_region);
-
 }  // namespace xsigma::smp_new::tbb
