@@ -14,11 +14,57 @@
 
 If you believe you have found a security vulnerability in XSigma, we encourage you to report it immediately. We take all security reports seriously and will investigate them promptly.
 
-**Please report security issues using:** https://github.com/XSigmaAnalyitix/XSigma/security/advisories/new
+### How to Report
+
+**Please report security issues using one of the following methods:**
+
+1. **GitHub Security Advisories (Preferred):** https://github.com/XSigmaAnalyitix/XSigma/security/advisories/new
+2. **Email:** security@xsigma.co.uk (for private disclosure)
+
+### What to Include
+
+When reporting a vulnerability, please include:
+
+- **Description:** Clear description of the vulnerability
+- **Impact:** Potential impact and severity assessment
+- **Reproduction steps:** Detailed steps to reproduce the issue
+- **Affected versions:** Which versions of XSigma are affected
+- **Proof of concept:** Code, configuration, or commands demonstrating the vulnerability (if applicable)
+- **Suggested fix:** If you have ideas for remediation (optional)
+
+### Response Timeline
+
+We are committed to addressing security vulnerabilities promptly:
+
+- **Initial response:** Within **48 hours** of receiving your report
+- **Severity assessment:** Within **5 business days** we will assess the severity and confirm whether it is a valid security issue
+- **Critical vulnerabilities (CVSS ≥ 9.0):** Patched and released within **14 days** of confirmation
+- **High severity vulnerabilities (CVSS 7.0-8.9):** Patched and released within **30 days** of confirmation
+- **Medium severity vulnerabilities (CVSS 4.0-6.9):** Patched and released within **60 days** of confirmation
+- **Low severity vulnerabilities (CVSS < 4.0):** Addressed in the next regular release cycle
+
+### Disclosure Policy
 
 All reports submitted through the security advisories mechanism will **either be made public or dismissed by the team within 90 days of submission**. If an advisory has been closed on the grounds that it is not a security issue, please feel free to create a [new issue](https://github.com/XSigmaAnalyitix/XSigma/issues/new) as it may still be a valid concern for the project.
 
-For our responsible disclosure policy and reward guidelines, please refer to our security documentation.
+We follow **coordinated disclosure** principles:
+
+- We will work with you to understand and validate the vulnerability
+- We will keep you informed of our progress toward a fix
+- We will credit you in the security advisory (unless you prefer to remain anonymous)
+- We request that you do not publicly disclose the vulnerability until we have released a fix
+- If we cannot fix the vulnerability within 90 days, we will publicly disclose it with appropriate warnings
+
+### Supported Versions
+
+We provide security updates for the following versions:
+
+| Version | Supported          |
+| ------- | ------------------ |
+| 1.x.x   | :white_check_mark: |
+| < 1.0   | :x:                |
+
+We recommend always using the latest stable release to ensure you have the most recent security patches.
 
 ## Using XSigma Securely
 
