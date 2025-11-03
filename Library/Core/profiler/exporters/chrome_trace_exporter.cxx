@@ -176,11 +176,11 @@ std::string export_to_chrome_trace_json(const x_space& space, bool pretty_print)
 
                 // Calculate timestamp in nanoseconds (displayTimeUnit: ns)
                 // XPlane stores: timestamp_ns (line base) + offset_ps (event offset)
-                int64_t const timestamp_ns = line.timestamp_ns() + (event.offset_ps() / 1000);
+                const auto timestamp_ns = line.timestamp_ns() + (event.offset_ps() / 1000);
                 json << "\"ts\":" << timestamp_ns << ",";
 
                 // Duration in nanoseconds
-                int64_t const duration_ns = event.duration_ps() / 1000;
+                const auto duration_ns = event.duration_ps() / 1000;
                 json << "\"dur\":" << duration_ns;
 
                 // Add event stats as args
