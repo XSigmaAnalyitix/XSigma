@@ -30,43 +30,43 @@ struct TORCH_API KinetoEvent
     KinetoEvent(
         const std::shared_ptr<const torch::profiler::impl::Result>& /*result*/, const bool verbose);
 
-    uint64_t                                           startThreadId() const;
-    uint64_t                                           endThreadId() const;
-    uint8_t                                            activityType() const;
-    uint64_t                                           fwdThreadId() const;
-    bool                                               hasShapes() const;
-    const c10::ArrayRef<std::vector<int64_t>>          shapes() const;
-    bool                                               hasTypes() const;
-    const c10::ArrayRef<std::string>                   dtypes() const;
-    bool                                               hasConcreteInputs() const;
-    const c10::ArrayRef<c10::IValue>                   concreteInputs() const;
-    bool                                               hasKwinputs() const;
-    bool                                               isHiddenEvent() const;
-    const std::unordered_map<std::string, c10::IValue> kwinputs() const;
-    uint64_t                                           flops() const;
-    int64_t                                            sequenceNr() const;
-    bool                                               hasStack() const;
-    const c10::ArrayRef<std::string>                   stack() const;
-    uint8_t                                            scope() const;
-    bool                                               hasModuleHierarchy() const;
-    const c10::ArrayRef<std::string>                   moduleHierarchy() const;
-    int64_t                                            debugHandle() const;
-    std::string                                        name() const;
-    std::string                                        overload_name() const;
-    c10::DeviceType                                    deviceType() const;
-    int                                                deviceIndex() const;
-    int64_t                                            nBytes() const;
-    uint64_t                                           startNs() const;
-    uint64_t                                           endNs() const;
-    uint64_t                                           durationNs() const;
-    bool                                               isAsync() const;
-    uint64_t                                           correlationId() const;
-    uint64_t                                           linkedCorrelationId() const;
-    int64_t                                            deviceResourceId() const;
-    std::string                                        backend() const;
-    bool                                               isPythonFunction() const;
-    int64_t                                            cudaElapsedUs() const;
-    int64_t                                            privateuse1ElapsedUs() const;
+    uint64_t                                              startThreadId() const;
+    uint64_t                                              endThreadId() const;
+    uint8_t                                               activityType() const;
+    uint64_t                                              fwdThreadId() const;
+    bool                                                  hasShapes() const;
+    const xsigma::ArrayRef<std::vector<int64_t>>          shapes() const;
+    bool                                                  hasTypes() const;
+    const xsigma::ArrayRef<std::string>                   dtypes() const;
+    bool                                                  hasConcreteInputs() const;
+    const xsigma::ArrayRef<xsigma::IValue>                concreteInputs() const;
+    bool                                                  hasKwinputs() const;
+    bool                                                  isHiddenEvent() const;
+    const std::unordered_map<std::string, xsigma::IValue> kwinputs() const;
+    uint64_t                                              flops() const;
+    int64_t                                               sequenceNr() const;
+    bool                                                  hasStack() const;
+    const xsigma::ArrayRef<std::string>                   stack() const;
+    uint8_t                                               scope() const;
+    bool                                                  hasModuleHierarchy() const;
+    const xsigma::ArrayRef<std::string>                   moduleHierarchy() const;
+    int64_t                                               debugHandle() const;
+    std::string                                           name() const;
+    std::string                                           overload_name() const;
+    xsigma::DeviceType                                    deviceType() const;
+    int                                                   deviceIndex() const;
+    int64_t                                               nBytes() const;
+    uint64_t                                              startNs() const;
+    uint64_t                                              endNs() const;
+    uint64_t                                              durationNs() const;
+    bool                                                  isAsync() const;
+    uint64_t                                              correlationId() const;
+    uint64_t                                              linkedCorrelationId() const;
+    int64_t                                               deviceResourceId() const;
+    std::string                                           backend() const;
+    bool                                                  isPythonFunction() const;
+    int64_t                                               cudaElapsedUs() const;
+    int64_t                                               privateuse1ElapsedUs() const;
     void         getPerfEventCounters(torch::profiler::perf_counters_t& /*in*/) const;
     extra_meta_t extraMeta() const;
     std::string  metadataJson() const;
@@ -79,10 +79,10 @@ private:
     std::vector<std::string>                             python_stack_;
 
     // Copy fields from result so we can return ArrayRefs.
-    std::vector<std::vector<int64_t>>            shapes_;
-    std::vector<std::string>                     dtypes_;
-    std::vector<c10::IValue>                     concrete_inputs_;
-    std::unordered_map<std::string, c10::IValue> kwinputs_;
+    std::vector<std::vector<int64_t>>               shapes_;
+    std::vector<std::string>                        dtypes_;
+    std::vector<xsigma::IValue>                     concrete_inputs_;
+    std::unordered_map<std::string, xsigma::IValue> kwinputs_;
 };
 
 // Consolidating events returned directly from Kineto
@@ -119,7 +119,7 @@ private:
  * For example, if part of the model is lowered to a dsp backend, then
  * the execution of that part of the model is delegated to the backend.
  * When backend finishes execution it has an option to provide profiling
- * information (latency only at the moment) corresponding to different operators
+ * information (latency only xsigma the moment) corresponding to different operators
  * that were executed in the backend.
  * When such events are recorded by backend using this API, the event
  * records will be collected by active kineto profiler. If no kineto profiler
@@ -135,17 +135,17 @@ private:
  * @param backend_name: name of the backend where the event took place.
  */
 TORCH_API void reportBackendEventToActiveKinetoProfiler(
-    const int64_t         start_time_us,
-    const int64_t         end_time_us,
-    const int64_t         debug_handle,
-    const at::RecordScope scope,
-    const std::string&    event_name,
-    const std::string&    backend_name);
+    const int64_t             start_time_us,
+    const int64_t             end_time_us,
+    const int64_t             debug_handle,
+    const xsigma::RecordScope scope,
+    const std::string&        event_name,
+    const std::string&        backend_name);
 
 TORCH_API void enableProfiler(
     const torch::profiler::impl::ProfilerConfig&         config,
     const std::set<torch::profiler::impl::ActivityType>& activities,
-    const std::unordered_set<at::RecordScope>&           scopes = {});
+    const std::unordered_set<xsigma::RecordScope>&       scopes = {});
 
 /*
  * Same as enableProfiler but with callback to do post-processing of
@@ -173,7 +173,7 @@ TORCH_API void enableProfilerWithEventPostProcess(
     const torch::profiler::impl::ProfilerConfig&         config,
     const std::set<torch::profiler::impl::ActivityType>& activities,
     post_process_t&&                                     cb,
-    const std::unordered_set<at::RecordScope>&           scopes = {});
+    const std::unordered_set<xsigma::RecordScope>&       scopes = {});
 
 TORCH_API std::unique_ptr<ProfilerResult> disableProfiler();
 

@@ -24,20 +24,21 @@ VariableInfo::VariableInfo(const Variable& var, bool use_zeros_like)
 
 VariableInfo::VariableInfo() : requires_grad(false), is_empty(true) {}
 
-Variable VariableInfo::zeros(at::OptionalDeviceGuard& device_guard) const
+Variable VariableInfo::zeros(xsigma::OptionalDeviceGuard& device_guard) const
 {
     if (is_empty)
     {
         // Return undefined tensor.
-        return at::Tensor();
+        return xsigma::Tensor();
     }
     else if (the_var.has_value())
     {
-        return at::zeros_like(*the_var);
+        return xsigma::zeros_like(*the_var);
     }
     else
     {
-        return at::zeros_symint(size, at::TensorOptions(scalar_type).device(device).layout(layout));
+        return xsigma::zeros_symint(
+            size, xsigma::TensorOptions(scalar_type).device(device).layout(layout));
     }
 }
 

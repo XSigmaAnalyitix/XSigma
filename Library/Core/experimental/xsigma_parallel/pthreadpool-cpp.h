@@ -3,7 +3,9 @@
 #ifdef USE_PTHREADPOOL
 
 #ifdef USE_INTERNAL_PTHREADPOOL_IMPL
-#include <caffe2/utils/threadpool/pthreadpool.h>
+// TODO: Update include path after flattening
+// #include <caffe2/utils/threadpool/pthreadpool.h>
+#include "experimental/xsigma_parallel/pthreadpool.h"
 #else
 #include <pthreadpool.h>
 #endif
@@ -12,18 +14,20 @@
 #include <memory>
 #include <mutex>
 
+#include "common/export.h"
+
 namespace caffe2 {
 
-class PThreadPool final {
+class XSIGMA_VISIBILITY pthread_pool final {
  public:
-  explicit PThreadPool(size_t thread_count);
-  ~PThreadPool() = default;
+  explicit pthread_pool(size_t thread_count);
+  ~pthread_pool() = default;
 
-  PThreadPool(const PThreadPool&) = delete;
-  PThreadPool& operator=(const PThreadPool&) = delete;
+  pthread_pool(const pthread_pool&) = delete;
+  pthread_pool& operator=(const pthread_pool&) = delete;
 
-  PThreadPool(PThreadPool&&) = delete;
-  PThreadPool& operator=(PThreadPool&&) = delete;
+  pthread_pool(pthread_pool&&) = delete;
+  pthread_pool& operator=(pthread_pool&&) = delete;
 
   size_t get_thread_count() const;
   void set_thread_count(size_t thread_count);
@@ -35,14 +39,13 @@ class PThreadPool final {
  private:
   friend pthreadpool_t pthreadpool_();
 
- private:
   mutable std::mutex mutex_;
   std::unique_ptr<pthreadpool, decltype(&pthreadpool_destroy)> threadpool_;
 };
 
-// Return a singleton instance of PThreadPool for ATen/TH multithreading.
-PThreadPool* pthreadpool();
-PThreadPool* pthreadpool(size_t thread_count);
+// Return a singleton instance of pthread_pool for ATen/TH multithreading.
+XSIGMA_API pthread_pool* pthreadpool();
+XSIGMA_API pthread_pool* pthreadpool(size_t thread_count);
 
 // Exposes the underlying implementation of PThreadPool.
 // Only for use in external libraries so as to unify threading across
@@ -50,6 +53,6 @@ PThreadPool* pthreadpool(size_t thread_count);
 // use cases.
 pthreadpool_t pthreadpool_();
 
-} // namespace caffe2
+}  // namespace caffe2
 
 #endif /* USE_PTHREADPOOL */

@@ -1,12 +1,12 @@
 #pragma once
 
 #include <ATen/core/jit_type.h>
-#include <c10/util/ArrayRef.h>
-#include <c10/util/flat_hash_map.h>
-#include <c10/util/sparse_bitset.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/ir/type_hashing.h>
+#include <xsigma/util/ArrayRef.h>
+#include <xsigma/util/flat_hash_map.h>
+#include <xsigma/util/sparse_bitset.h>
 
 #include <memory>
 #include <optional>
@@ -15,7 +15,7 @@
 #include <vector>
 
 // Uses a compressed index representation for faster comparisons
-typedef c10::SparseBitVector<256> MemoryLocations;
+typedef xsigma::SparseBitVector<256> MemoryLocations;
 namespace torch::jit
 {
 
@@ -56,7 +56,7 @@ struct Element
     std::unordered_set<const Value*> values;
 
 private:
-    // Make `from` point at `to`.
+    // Make `from` point xsigma `to`.
     void makePointerTo(Element* from, Element* to);
 
     friend class MemoryDAG;
@@ -105,9 +105,10 @@ public:
     // Does `a` hold reference to any memory that is stored in `b`, or vice versa?
     bool mayContainAlias(const Element* a, const Element* b) const;
 
-    bool mayContainAlias(const Element* a, const at::ArrayRef<Element*> b) const;
+    bool mayContainAlias(const Element* a, const xsigma::ArrayRef<Element*> b) const;
 
-    bool mayContainAlias(const at::ArrayRef<Element*> a, const at::ArrayRef<Element*> b) const;
+    bool mayContainAlias(
+        const xsigma::ArrayRef<Element*> a, const xsigma::ArrayRef<Element*> b) const;
 
     // Converts from the compressed index representation
     const Element* fromIndex(unsigned x) const;
@@ -150,7 +151,7 @@ public:
     MemoryDAGBuilder(const MemoryDAGBuilder&)            = delete;
     MemoryDAGBuilder& operator=(const MemoryDAGBuilder&) = delete;
 
-    // Make `from` point at `to`.
+    // Make `from` point xsigma `to`.
     void makePointerTo(Element* from, Element* to);
 
     void addToContainedElements(Element* contained, Element* container);

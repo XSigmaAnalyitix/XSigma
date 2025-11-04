@@ -1,43 +1,43 @@
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/dead_code_elimination.h>
 #include <torch/csrc/jit/passes/onnx/helper.h>
 #include <torch/csrc/jit/passes/onnx/scalar_type_analysis.h>
+#include <xsigma/util/irange.h>
 
 namespace torch::jit
 {
 
 namespace onnx
 {
-using namespace ::c10::onnx;
+using namespace ::xsigma::onnx;
 }
 
 namespace
 {
 const int ONNX_OPSET_14 = 14;
 
-static const std::unordered_map<c10::ScalarType, int, ScalarTypeHashFunction>
+static const std::unordered_map<xsigma::ScalarType, int, ScalarTypeHashFunction>
     scalarTypeToONNXTypeMap = {
-        {c10::kFloat, 1},
-        {c10::kByte, 2},
-        {c10::kChar, 3},
-        {c10::kShort, 5},
-        {c10::kInt, 6},
-        {c10::kLong, 7},
-        {c10::kBool, 9},
-        {c10::kHalf, 10},
-        {c10::kDouble, 11},
-        {c10::kQInt8, 12},
-        {c10::kQUInt8, 13},
-        {c10::kQInt32, 14},
-        {c10::kBFloat16, 15},
-        {c10::kFloat8_e4m3fn, 16},
-        {c10::kFloat8_e5m2, 17},
-        {c10::kFloat8_e4m3fnuz, 18},
-        {c10::kFloat8_e5m2fnuz, 19},
+        {xsigma::kFloat, 1},
+        {xsigma::kByte, 2},
+        {xsigma::kChar, 3},
+        {xsigma::kShort, 5},
+        {xsigma::kInt, 6},
+        {xsigma::kLong, 7},
+        {xsigma::kBool, 9},
+        {xsigma::kHalf, 10},
+        {xsigma::kDouble, 11},
+        {xsigma::kQInt8, 12},
+        {xsigma::kQUInt8, 13},
+        {xsigma::kQInt32, 14},
+        {xsigma::kBFloat16, 15},
+        {xsigma::kFloat8_e4m3fn, 16},
+        {xsigma::kFloat8_e5m2, 17},
+        {xsigma::kFloat8_e4m3fnuz, 18},
+        {xsigma::kFloat8_e5m2fnuz, 19},
 };
 
-static int64_t ScalarTypeToONNXType(const c10::ScalarType& st)
+static int64_t ScalarTypeToONNXType(const xsigma::ScalarType& st)
 {
     int64_t    onnx_type = -1;
     const auto it        = scalarTypeToONNXTypeMap.find(st);
@@ -93,7 +93,7 @@ static bool IsSelectorOp(const NodeKind& nkind)
 }
 
 static TensorTypePtr CreateProfiledTensorTypeWithScalarType(
-    const TensorTypePtr& typePtr, const c10::ScalarType& scalar_type)
+    const TensorTypePtr& typePtr, const xsigma::ScalarType& scalar_type)
 {
     TORCH_INTERNAL_ASSERT(typePtr != nullptr);
     return typePtr->withScalarType({scalar_type});
@@ -104,16 +104,17 @@ static bool IsImplicitCastSupported(const NodeKind& nodeKind)
     return IsStandardOp(nodeKind) || IsComparisonOp(nodeKind) || IsSelectorOp(nodeKind);
 }
 
-static std::optional<c10::ScalarType> PromoteScalarTypes(const std::vector<c10::ScalarType>& types)
+static std::optional<xsigma::ScalarType> PromoteScalarTypes(
+    const std::vector<xsigma::ScalarType>& types)
 {
     if (types.empty())
     {
         return std::nullopt;
     }
     auto st = types[0];
-    for (const auto i : c10::irange(1, types.size()))
+    for (const auto i : xsigma::irange(1, types.size()))
     {
-        st = c10::promoteTypes(st, types[i]);
+        st = xsigma::promoteTypes(st, types[i]);
     }
     return st;
 }
@@ -121,24 +122,24 @@ static std::optional<c10::ScalarType> PromoteScalarTypes(const std::vector<c10::
 // Type promotion between scalars and tensors
 // per logic here
 // https://pytorch.org/docs/main/tensor_attributes.html#tensor-attributes
-static std::optional<c10::ScalarType> PromoteScalarTypesWithCategory(
-    const std::vector<c10::ScalarType>& typesFromTensors,
-    const std::vector<c10::ScalarType>& typesFromScalars)
+static std::optional<xsigma::ScalarType> PromoteScalarTypesWithCategory(
+    const std::vector<xsigma::ScalarType>& typesFromTensors,
+    const std::vector<xsigma::ScalarType>& typesFromScalars)
 {
     auto typeFromTensor = PromoteScalarTypes(typesFromTensors);
     auto typeFromScalar = PromoteScalarTypes(typesFromScalars);
 
-    auto getTypeCategory = [](c10::ScalarType t)
+    auto getTypeCategory = [](xsigma::ScalarType t)
     {
-        if (c10::kBool == t)
+        if (xsigma::kBool == t)
         {
             return 1;
         }
-        if (c10::isIntegralType(t, /*includeBool=*/false))
+        if (xsigma::isIntegralType(t, /*includeBool=*/false))
         {
             return 2;
         }
-        if (c10::isFloatingType(t))
+        if (xsigma::isFloatingType(t))
         {
             return 3;
         }
@@ -164,12 +165,12 @@ static std::optional<c10::ScalarType> PromoteScalarTypesWithCategory(
     return typeFromTensor;
 }
 
-static std::optional<c10::ScalarType> InferExpectedScalarType(const Node* n)
+static std::optional<xsigma::ScalarType> InferExpectedScalarType(const Node* n)
 {
-    std::vector<c10::ScalarType> typesFromTensors;
-    std::vector<c10::ScalarType> typesFromScalars;
+    std::vector<xsigma::ScalarType> typesFromTensors;
+    std::vector<xsigma::ScalarType> typesFromScalars;
 
-    auto get_scalar_type = [](const Value* input) -> std::optional<at::ScalarType>
+    auto get_scalar_type = [](const Value* input) -> std::optional<xsigma::ScalarType>
     {
         if (auto* tensor_type = input->type()->castRaw<TensorType>())
         {
@@ -178,7 +179,7 @@ static std::optional<c10::ScalarType> InferExpectedScalarType(const Node* n)
         return std::nullopt;
     };
     auto emplace_type_from_scalar =
-        [&typesFromTensors, &typesFromScalars](at::ScalarType scalar_type)
+        [&typesFromTensors, &typesFromScalars](xsigma::ScalarType scalar_type)
     {
         // Mimic PyTorch scalar type promotion logic
         // from https://github.com/pytorch/pytorch/issues/9515
@@ -187,17 +188,17 @@ static std::optional<c10::ScalarType> InferExpectedScalarType(const Node* n)
         //    auto-wrapped from a C++ or Python number type. Integer types are
         //    wrapped as 0-dim int64 tensors and floating-point types are
         //    wrapped as 0-dim double tensors.
-        auto default_scalar_type = at::typeMetaToScalarType(at::get_default_dtype());
+        auto default_scalar_type = xsigma::typeMetaToScalarType(xsigma::get_default_dtype());
         switch (scalar_type)
         {
-        case at::kDouble:
-        case at::kFloat:
+        case xsigma::kDouble:
+        case xsigma::kFloat:
             // floating-point numbers wrapped as float32/float64 tensors are
             // considered to have default type, instead of double.
             typesFromScalars.emplace_back(default_scalar_type);
             break;
-        case at::kLong:
-        case at::kBool:
+        case xsigma::kLong:
+        case xsigma::kBool:
             // bool and integer numbers remain the same type.
             typesFromScalars.emplace_back(scalar_type);
             break;
@@ -234,7 +235,7 @@ static std::optional<c10::ScalarType> InferExpectedScalarType(const Node* n)
                 // `dim_size` is treated in PyTorch as Scalar.
                 // However, in the ONNX IR graph, it is an output of onnx::Gather,
                 // which is by default considered as a tensor.
-                typesFromScalars.emplace_back(c10::kLong);
+                typesFromScalars.emplace_back(xsigma::kLong);
             }
             else if (nkind == onnx::Constant)
             {
@@ -264,7 +265,7 @@ static std::optional<c10::ScalarType> InferExpectedScalarType(const Node* n)
                 // the model won't work for another input that differs in shape.
 
                 // Now for type promotion logic, scalars should be treated differently
-                // with tensors. More info regarding type promotion logic commented at
+                // with tensors. More info regarding type promotion logic commented xsigma
                 // `emplace_type_from_scalar`. Here we filter out rank 0 tensors and
                 // run it with `emplace_type_from_scalar` to determine if they are
                 // considered scalars for type promotion.
@@ -287,8 +288,8 @@ static std::optional<c10::ScalarType> InferExpectedScalarType(const Node* n)
             }
         });
 
-    std::optional<c10::ScalarType> st        = std::nullopt;
-    const auto                     output_st = get_scalar_type(n->output());
+    std::optional<xsigma::ScalarType> st        = std::nullopt;
+    const auto                        output_st = get_scalar_type(n->output());
 
     if (IsComparisonOp(n->kind()))
     {
@@ -319,29 +320,30 @@ static std::optional<c10::ScalarType> InferExpectedScalarType(const Node* n)
     return st;
 }
 
-static std::optional<c10::ScalarType> LowPrecisionCastForStandardOps(
-    const Node* n, const c10::ScalarType& scalar_type)
+static std::optional<xsigma::ScalarType> LowPrecisionCastForStandardOps(
+    const Node* n, const xsigma::ScalarType& scalar_type)
 {
     // Some of standardOps do not support uint8\int8\int16 type for ONNX
     // opset version < 14.
     // Fix in this ONNX PR:
     // https://github.com/onnx/onnx/pull/3334
     if (n->kind() != onnx::Gemm && IsStandardOp(n->kind()) &&
-        (scalar_type == c10::kByte || scalar_type == c10::kChar || scalar_type == c10::kShort))
+        (scalar_type == xsigma::kByte || scalar_type == xsigma::kChar ||
+         scalar_type == xsigma::kShort))
     {
-        return c10::kLong;
+        return xsigma::kLong;
     }
     return scalar_type;
 }
 
-static void UpdateScalarTypeForInputs(Node* n, const c10::ScalarType& scalar_type)
+static void UpdateScalarTypeForInputs(Node* n, const xsigma::ScalarType& scalar_type)
 {
     const int64_t onnx_type = ScalarTypeToONNXType(scalar_type);
     if (onnx_type < 0)
     {
         TORCH_WARN(
             "ONNX Scalar Type Analysis - Scalar type: ",
-            c10::toString(scalar_type),
+            xsigma::toString(scalar_type),
             " of input tensor in operator: ",
             n->kind().toDisplayString(),
             " not supported in ONNX. ");
@@ -370,9 +372,9 @@ static void UpdateScalarTypeForInputs(Node* n, const c10::ScalarType& scalar_typ
                 // Fix up the scalar directly instead of inserting a cast operator.
                 // TODO: Keep only the else branch once constant_folding is enabled by
                 // default.
-                at::Tensor val        = input->node()->t(attr::value);
-                at::Tensor new_val    = val.to(scalar_type);
-                Node*      const_node = n->owningGraph()->create(onnx::Constant);
+                xsigma::Tensor val        = input->node()->t(attr::value);
+                xsigma::Tensor new_val    = val.to(scalar_type);
+                Node*          const_node = n->owningGraph()->create(onnx::Constant);
                 const_node->t_(attr::value, new_val);
                 const_node->insertBefore(n);
                 const_node->output()->setType(TensorType::create(new_val));
@@ -396,7 +398,7 @@ static void UpdateScalarTypeForInputs(Node* n, const c10::ScalarType& scalar_typ
     }
 }
 
-static void UpdateScalarTypeForOutput(Node* n, const c10::ScalarType& scalar_type)
+static void UpdateScalarTypeForOutput(Node* n, const xsigma::ScalarType& scalar_type)
 {
     if (auto output_tensor_type = n->output()->type()->cast<TensorType>())
     {
@@ -405,7 +407,7 @@ static void UpdateScalarTypeForOutput(Node* n, const c10::ScalarType& scalar_typ
     }
 }
 
-static void RecoverScalarTypeForOutput(Value* out, const c10::ScalarType& scalar_type)
+static void RecoverScalarTypeForOutput(Value* out, const xsigma::ScalarType& scalar_type)
 {
     Node* n = out->node();
     TORCH_INTERNAL_ASSERT(nullptr != n);

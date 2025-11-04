@@ -15,7 +15,7 @@
 namespace torch::autograd::profiler
 {
 
-enum class C10_API_ENUM EventKind : uint16_t
+enum class XSIGMA_API_ENUM EventKind : uint16_t
 {
     Mark,
     PushRange,
@@ -28,10 +28,10 @@ struct TORCH_API LegacyEvent
 {
     LegacyEvent(
         EventKind                           kind,
-        at::StringView                      name,
+        xsigma::StringView                  name,
         uint16_t                            thread_id,
         bool                                record_cuda,
-        at::RecordFunctionHandle            handle   = 0,
+        xsigma::RecordFunctionHandle        handle   = 0,
         std::vector<std::vector<int64_t>>&& shapes   = {},
         int64_t                             node_id  = -1,
         bool                                is_async = false)
@@ -49,9 +49,9 @@ struct TORCH_API LegacyEvent
     // Constructor to be used in conjunction with LegacyEvent::fromIValue.
     LegacyEvent(
         EventKind                           kind,
-        at::StringView                      name,
+        xsigma::StringView                  name,
         uint16_t                            thread_id,
-        at::RecordFunctionHandle            handle,
+        xsigma::RecordFunctionHandle        handle,
         std::vector<std::vector<int64_t>>&& shapes,
         int64_t                             node_id,
         bool                                is_remote,
@@ -59,7 +59,7 @@ struct TORCH_API LegacyEvent
         int64_t                             cpu_ns,
         bool                                cuda_recorded,
         int64_t                             cuda_memory_usage = 0,
-        c10::DeviceIndex                    device            = -1,
+        xsigma::DeviceIndex                 device            = -1,
         double                              cuda_us           = -1)
         : cpu_ns_(cpu_ns),
           name_(std::move(name)),
@@ -85,10 +85,10 @@ struct TORCH_API LegacyEvent
 
     // Returns IValues corresponding to event structure, to be used for
     // serialization.
-    at::IValue toIValue() const;
+    xsigma::IValue toIValue() const;
 
     // Reconstructs an event from IValues given by toIValue.
-    static LegacyEvent fromIValue(const at::IValue& eventIValue);
+    static LegacyEvent fromIValue(const xsigma::IValue& eventIValue);
 
     void record(bool record_cuda);
 
@@ -105,7 +105,7 @@ struct TORCH_API LegacyEvent
         case EventKind::MemoryAlloc:
             return "memory_alloc";
         }
-        TORCH_CHECK(false, "unknown event kind");
+        XSIGMA_CHECK(false, "unknown event kind");
     }
 
     EventKind kind() const { return kind_; }
@@ -129,17 +129,17 @@ struct TORCH_API LegacyEvent
 
     bool hasCuda() const { return cuda_event != nullptr || (isRemote() && device_ != -1); }
 
-    c10::DeviceIndex device() const { return device_; }
+    xsigma::DeviceIndex device() const { return device_; }
 
-    void updateMemoryStats(int64_t alloc_size, c10::Device device)
+    void updateMemoryStats(int64_t alloc_size, xsigma::Device device)
     {
-        if (device.is_cuda() || device.type() == c10::DeviceType::HIP)
+        if (device.is_cuda() || device.type() == xsigma::DeviceType::HIP)
         {
             cuda_memory_usage_ = alloc_size;
         }
         else if (
-            device.is_cpu() || device.type() == c10::DeviceType::MKLDNN ||
-            device.type() == c10::DeviceType::IDEEP)
+            device.is_cpu() || device.type() == xsigma::DeviceType::MKLDNN ||
+            device.type() == xsigma::DeviceType::IDEEP)
         {
             cpu_memory_usage_ = alloc_size;
         }
@@ -153,7 +153,7 @@ struct TORCH_API LegacyEvent
 
     int64_t cudaMemoryUsage() const { return cuda_memory_usage_; }
 
-    at::RecordFunctionHandle handle() const { return handle_; }
+    xsigma::RecordFunctionHandle handle() const { return handle_; }
 
     // Node ID corresponding to this event.
     int64_t nodeId() const { return node_id_; }
@@ -161,7 +161,7 @@ struct TORCH_API LegacyEvent
     // Set Node ID on this event.
     void setNodeId(int64_t node_id) { node_id_ = node_id; }
 
-    void setName(at::StringView newName_) { name_ = std::move(newName_); }
+    void setName(xsigma::StringView newName_) { name_ = std::move(newName_); }
 
     bool isRemote() const { return is_remote_; }
 
@@ -187,9 +187,9 @@ struct TORCH_API LegacyEvent
 
     void setScope(uint8_t scope) { scope_ = scope; }
 
-    const std::unordered_map<std::string, c10::IValue>& extraArgs() const { return extra_args_; }
+    const std::unordered_map<std::string, xsigma::IValue>& extraArgs() const { return extra_args_; }
 
-    void setExtraArgs(std::unordered_map<std::string, c10::IValue>&& save_args)
+    void setExtraArgs(std::unordered_map<std::string, xsigma::IValue>&& save_args)
     {
         extra_args_ = std::move(save_args);
     }
@@ -203,15 +203,15 @@ struct TORCH_API LegacyEvent
 private:
     // signed to allow for negative intervals, initialized for safety.
     int64_t                                      cpu_ns_ = 0;
-    at::StringView                               name_;
+    xsigma::StringView                           name_;
     EventKind                                    kind_;
     uint64_t                                     thread_id_;
     uint64_t                                     fwd_thread_id_{0};
-    at::RecordFunctionHandle                     handle_{0};
+    xsigma::RecordFunctionHandle                 handle_{0};
     std::vector<std::vector<int64_t>>            shapes_;
     int64_t                                      cpu_memory_usage_  = 0;
     int64_t                                      cuda_memory_usage_ = 0;
-    c10::DeviceIndex                             device_            = -1;
+    xsigma::DeviceIndex                          device_            = -1;
     torch::profiler::impl::ProfilerVoidEventStub cuda_event         = nullptr;
     int64_t                                      node_id_           = 0;
     bool                                         is_remote_         = false;
@@ -223,8 +223,8 @@ private:
     uint8_t                  scope_{0};
     uint64_t                 correlation_id_{0};
     // Extra arguments for computing op flops
-    std::unordered_map<std::string, c10::IValue> extra_args_;
-    uint64_t                                     flops_ = 0;
+    std::unordered_map<std::string, xsigma::IValue> extra_args_;
+    uint64_t                                        flops_ = 0;
 };
 
 // a linked-list of fixed sized vectors, to avoid
@@ -286,7 +286,7 @@ struct TORCH_API ProfilerDisableOptions
 };
 
 // NOTE: profiler mode is thread local, with automatic propagation
-// across thread boundary (e.g. at::launch tasks)
+// across thread boundary (e.g. xsigma::launch tasks)
 TORCH_API void enableProfilerLegacy(const torch::profiler::impl::ProfilerConfig& /*new_config*/);
 using thread_event_lists = std::vector<std::vector<LegacyEvent>>;
 TORCH_API thread_event_lists

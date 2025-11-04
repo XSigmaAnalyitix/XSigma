@@ -21,8 +21,9 @@
 #include "profiler/session/profiler.h"
 
 #if XSIGMA_HAS_KINETO
-#include "profiler/kineto_shim.h"
 #include <ActivityTrace.h>
+
+#include "profiler/kineto_shim.h"
 #endif
 
 #if XSIGMA_HAS_ITT
@@ -40,8 +41,7 @@ namespace xsigma::examples::profiling
  * @brief Matrix multiplication with profiling instrumentation.
  */
 std::vector<std::vector<double>> matrix_multiply(
-    const std::vector<std::vector<double>>& a,
-    const std::vector<std::vector<double>>& b)
+    const std::vector<std::vector<double>>& a, const std::vector<std::vector<double>>& b)
 {
     XSIGMA_PROFILE_SCOPE("matrix_multiply");
 
@@ -251,8 +251,8 @@ void example_kineto_profiler()
 
     // Also start XSigma profiler for hierarchical CPU profiling
     profiler_options opts;
-    opts.enable_timing_  = true;
-    opts.output_format_  = profiler_options::output_format_enum::JSON;
+    opts.enable_timing_ = true;
+    opts.output_format_ = profiler_options::output_format_enum::JSON;
 
     profiler_session session(opts);
     session.start();
@@ -330,8 +330,8 @@ void example_itt_profiler()
 
     // Start XSigma profiler for JSON export
     profiler_options opts;
-    opts.enable_timing_  = true;
-    opts.output_format_  = profiler_options::output_format_enum::JSON;
+    opts.enable_timing_ = true;
+    opts.output_format_ = profiler_options::output_format_enum::JSON;
 
     profiler_session session(opts);
     session.start();
@@ -431,4 +431,3 @@ int main()
 
     return 0;
 }
-

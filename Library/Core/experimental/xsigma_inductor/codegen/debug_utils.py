@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 def _print_debugging_tensor_value_info(msg, arg):
     # helper for printing debugging stats for intermediate tensor values
-    # at jit inductor level codegen
+    # xsigma jit inductor level codegen
     max_numel_to_print = 64
     print(msg)
     if not isinstance(arg, torch.Tensor):

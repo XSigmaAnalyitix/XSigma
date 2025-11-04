@@ -9,7 +9,7 @@
 namespace torch::jit::tensorexpr
 {
 
-#ifdef C10_MOBILE
+#ifdef XSIGMA_MOBILE
 extern "C"
 {
 #endif
@@ -17,7 +17,7 @@ extern "C"
 
     TORCH_API void nnc_aten_free(size_t bufs_num, void** ptrs) noexcept;
 
-#ifdef C10_MOBILE
+#ifdef XSIGMA_MOBILE
 }  // extern "C"
 #endif
 

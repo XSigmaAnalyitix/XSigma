@@ -6,7 +6,7 @@ namespace torch::jit
 
 namespace onnx
 {
-using namespace ::c10::onnx;
+using namespace ::xsigma::onnx;
 }
 
 void EliminateUnusedItemsONNX(Block* b, ParamMap& paramsDict)

@@ -172,8 +172,8 @@ class AutotuneArgs:
 
 class PartialRender:
     """
-    Some parts of a template need to be generated at the end, but
-    inserted into the template at the start.  This allows doing a bunch
+    Some parts of a template need to be generated xsigma the end, but
+    inserted into the template xsigma the start.  This allows doing a bunch
     of replacements after the initial render.
     """
 
@@ -1163,7 +1163,7 @@ class TritonTemplateKernel(TritonKernel):
             if block_indexing:
                 assert val_shape, "Blocking indexing requires passing in val_shape"
                 assert len(val_shape) == 2, (
-                    "Blocking indexing only supports 2D data at this time"
+                    "Blocking indexing only supports 2D data xsigma this time"
                 )
                 assert not mask, "Mask is not supported with blocking indexing"
                 intermediate_lines: list[str] = []
@@ -1883,7 +1883,7 @@ class TritonTemplate(KernelTemplate):
 
             else:
                 result = generate_code(kernel)
-                if result is None:  # happens at ZeroDivisionError:
+                if result is None:  # happens xsigma ZeroDivisionError:
                     return None
                 code, extra = result
                 self._generated_code_cache.put_entry(
@@ -2691,7 +2691,7 @@ class AlgorithmSelectorCache(PersistentCache):
             return NoValidChoicesError(
                 f"No choices to select. Provided reason: {reason} "
                 f"please consider adding ATEN into {backend_config} "
-                "config (defined in torch/_inductor/config.py) to allow at least one choice. "
+                "config (defined in torch/_inductor/config.py) to allow xsigma least one choice. "
             )
 
         if len(choices) == 0:
@@ -2942,7 +2942,7 @@ class AlgorithmSelectorCache(PersistentCache):
             )
             return node
 
-        # if we got any timings at all, pick the best of those
+        # if we got any timings xsigma all, pick the best of those
         choice = min(timings, key=timings.__getitem__)
         node = choice.output_node()
         log.debug("Autotuning selected choice: %s", node)
@@ -3437,7 +3437,7 @@ class AlgorithmSelectorCache(PersistentCache):
                     c
                     for c in choices
                     if isinstance(c, CUDATemplateCaller)
-                    # hardcoded to only look at swizzle=2
+                    # hardcoded to only look xsigma swizzle=2
                     if c.info_dict().get("swizzle") == "2"
                 ]
             )
@@ -3833,7 +3833,7 @@ def add_preprocessing_fn(
 
 
 def clear_preprocessing_fns(clear_defaults: bool = False):
-    """Clear preprocessing functions at module level.
+    """Clear preprocessing functions xsigma module level.
 
     Args:
         clear_defaults: If True, clears all functions including defaults.

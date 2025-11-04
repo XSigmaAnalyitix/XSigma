@@ -1,6 +1,5 @@
 #pragma once
 
-#include <c10/core/DeviceGuard.h>
 #include <torch/csrc/Exceptions.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/autograd/custom_function.h>
@@ -9,6 +8,7 @@
 #include <torch/csrc/autograd/variable.h>
 #include <torch/csrc/python_headers.h>
 #include <torch/csrc/utils/object_ptr.h>
+#include <xsigma/core/DeviceGuard.h>
 
 #include <memory>
 #include <optional>
@@ -29,7 +29,7 @@ struct PyNode : public Node
 {
     PyNode(THPObjectPtr obj) : obj(obj.release()) {}
 
-    PyObject*     to_py_args(const variable_list& inputs, at::OptionalDeviceGuard* device_guard);
+    PyObject* to_py_args(const variable_list& inputs, xsigma::OptionalDeviceGuard* device_guard);
     variable_list to_variable_list(const PyObject* r, const std::vector<bool>& is_variable_input);
 
     variable_list apply(variable_list&& inputs) override;
@@ -118,8 +118,8 @@ struct THPFunction
     // https://github.com/pytorch/pytorch/pull/98659#pullrequestreview-1376822560
     bool materialize_non_diff_grads;
 
-    PyObject*                compiled_autograd_backward_state;
-    std::vector<c10::SymInt> compiled_autograd_symints;
+    PyObject*                   compiled_autograd_backward_state;
+    std::vector<xsigma::SymInt> compiled_autograd_symints;
 
     std::vector<torch::autograd::VariableInfo>  output_info;
     std::vector<torch::autograd::VariableInfo>  input_info;

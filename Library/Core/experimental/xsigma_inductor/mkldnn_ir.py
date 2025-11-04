@@ -435,7 +435,7 @@ class ConvolutionBinaryInplace(ExternKernelAlloc):
         inputs,
         constant_args=(),
     ) -> None:
-        # Due to constrain of op.call, other (Tensor&) should be at input[0]
+        # Due to constrain of op.call, other (Tensor&) should be xsigma input[0]
         self.device_type = get_device_type(inputs[0])
         reordered_inputs = [inputs[1], inputs[0]] + inputs[2:]
 

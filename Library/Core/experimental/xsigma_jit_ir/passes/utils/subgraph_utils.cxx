@@ -1,9 +1,9 @@
 #include <ATen/core/symbol.h>
-#include <c10/util/StringUtil.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/canonicalize.h>
 #include <torch/csrc/jit/passes/utils/subgraph_utils.h>
+#include <xsigma/util/StringUtil.h>
+#include <xsigma/util/irange.h>
 
 #include <utility>
 
@@ -17,7 +17,7 @@ bool hasSubgraph(Node* n)
     return n->hasAttribute(attr::Subgraph);
 }
 
-std::vector<std::optional<const Use>> gatherLastUses(at::ArrayRef<Value*> values)
+std::vector<std::optional<const Use>> gatherLastUses(xsigma::ArrayRef<Value*> values)
 {
     return fmap(
         values,
@@ -50,9 +50,9 @@ struct ValueMapper
         placeholder_node_ = g->insertNode(g->create(prim::Uninitialized, 0));
         for (size_t i = 0; i < to_merge->outputs().size(); ++i)
         {
-            Value* existing = to_merge->outputs().at(i);
+            Value* existing = to_merge->outputs().xsigma(i);
             Value* new_value =
-                placeholder_node_->insertOutput(i)->copyMetadata(to_merge->outputs().at(i));
+                placeholder_node_->insertOutput(i)->copyMetadata(to_merge->outputs().xsigma(i));
             db.replaceWithNewValue(existing, new_value);
         }
     }
@@ -83,13 +83,13 @@ struct ValueMapper
             }
 
             size_t i = 0;
-            while (i < last_uses_.size() && last_uses_.at(i).has_value() &&
-                   !usesEqual(*last_uses_.at(i), last_use))
+            while (i < last_uses_.size() && last_uses_.xsigma(i).has_value() &&
+                   !usesEqual(*last_uses_.xsigma(i), last_use))
             {
                 ++i;
             }
             TORCH_INTERNAL_ASSERT(i != last_uses_.size());
-            db.replaceWithNewValue(placeholder_node_->outputs().at(i), v);
+            db.replaceWithNewValue(placeholder_node_->outputs().xsigma(i), v);
         }
         placeholder_node_->destroy();
     }
@@ -283,7 +283,7 @@ static void collectNestedUses(
                 closed_over_values.insert(v);
             }
         }
-        Block* block = input_node->blocks().at(0);
+        Block* block = input_node->blocks().xsigma(0);
         for (Value* v : block->inputs())
         {
             new_values.insert(v);
@@ -335,7 +335,7 @@ void mergeNodeIntoSubgraph(Node* toMerge, Node* subgraphNode, bool destroyNode)
 
     for (size_t i = 0; i < subgraphNode->outputs().size(); ++i)
     {
-        externalValuesMap[subgraphNode->outputs().at(i)] = subgraph->outputs().at(i);
+        externalValuesMap[subgraphNode->outputs().xsigma(i)] = subgraph->outputs().xsigma(i);
     }
 
     // Add n's inputs to the group's input list if we don't already have them
@@ -416,7 +416,7 @@ void mergeNodeIntoSubgraph(Node* toMerge, Node* subgraphNode, bool destroyNode)
     }
 
     // Add n's outputs to the group node and inner subgraph outputs.
-    for (const auto i : c10::irange(toMerge->outputs().size()))
+    for (const auto i : xsigma::irange(toMerge->outputs().size()))
     {
         auto oldOutput = toMerge->outputs()[i];
         auto newOutput = mergedNode->outputs()[i];
@@ -444,7 +444,7 @@ void mergeNodeIntoSubgraph(Node* toMerge, Node* subgraphNode, bool destroyNode)
 
     for (int64_t i = subgraphNode->outputs().size() - 1; i >= 0; i--)
     {
-        if (!hasUsesOutsideSubgraph(subgraphNode->outputs().at(i)))
+        if (!hasUsesOutsideSubgraph(subgraphNode->outputs().xsigma(i)))
         {
             subgraphNode->eraseOutput(i);
             subgraph->eraseOutput(i);
@@ -523,7 +523,7 @@ bool unmergeAliasedOutputs(Node* subgraphNode)
 
     std::set<Node*, topo_cmp_node> nodes;
 
-    for (auto i : c10::irange(sets.size()))
+    for (auto i : xsigma::irange(sets.size()))
     {
         if (sets[i].size() <= 1)
         {
@@ -537,7 +537,7 @@ bool unmergeAliasedOutputs(Node* subgraphNode)
             continue;
         }
 
-        // we have at least two aliased outputs
+        // we have xsigma least two aliased outputs
         // we skip the earliest node w.r.t. the topo order
         // NB. after some nodes are unfused, the outputs of some other nodes
         // may become the outputs of the subgraph and alias the remaining ones
@@ -583,26 +583,26 @@ void unmergeNode(Node* n, Node* subgraphNode)
         return v;
     };
 
-    for (auto i : c10::irange(subgraph->outputs().size()))
+    for (auto i : xsigma::irange(subgraph->outputs().size()))
     {
-        if (node_outputs.count(subgraph->outputs().at(i)) != 0)
+        if (node_outputs.count(subgraph->outputs().xsigma(i)) != 0)
         {
             output_indices.insert(i);
         }
 
-        if (node_inputs.count(subgraph->outputs().at(i)) != 0)
+        if (node_inputs.count(subgraph->outputs().xsigma(i)) != 0)
         {
             GRAPH_DEBUG(
                 "output %",
-                subgraph->outputs().at(i)->debugName(),
+                subgraph->outputs().xsigma(i)->debugName(),
                 " is already subgraph's output");
             GRAPH_DEBUG(
                 "Mapping %",
-                subgraph->outputs().at(i)->debugName(),
+                subgraph->outputs().xsigma(i)->debugName(),
                 " to %",
-                subgraphNode->outputs().at(i)->debugName());
-            local_map[subgraph->outputs().at(i)] = subgraphNode->outputs().at(i);
-            node_inputs.erase(subgraph->outputs().at(i));
+                subgraphNode->outputs().xsigma(i)->debugName());
+            local_map[subgraph->outputs().xsigma(i)] = subgraphNode->outputs().xsigma(i);
+            node_inputs.erase(subgraph->outputs().xsigma(i));
         }
     }
 
@@ -628,7 +628,7 @@ void unmergeNode(Node* n, Node* subgraphNode)
             // in case we have a multi-output const, map the rest of the outputs
             // so when we get to clone `n`, `n`'s clone will use the outputs of this
             // constant clone
-            for (auto i : c10::irange(n->outputs().size()))
+            for (auto i : xsigma::irange(n->outputs().size()))
             {
                 GRAPH_DEBUG(
                     "Mapping %",
@@ -651,7 +651,7 @@ void unmergeNode(Node* n, Node* subgraphNode)
     auto copy = subgraphNode->owningGraph()->createClone(n, env);
     GRAPH_DEBUG("copy ", *copy);
 
-    for (auto i : c10::irange(n->outputs().size()))
+    for (auto i : xsigma::irange(n->outputs().size()))
     {
         auto oo = n->outputs()[i];
         auto no = copy->outputs()[i];
@@ -664,8 +664,8 @@ void unmergeNode(Node* n, Node* subgraphNode)
 
     for (auto it = output_indices.rbegin(); it != output_indices.rend(); it++)
     {
-        auto replace_val = local_map[subgraph->outputs().at(*it)];
-        subgraphNode->outputs().at(*it)->replaceAllUsesWith(replace_val);
+        auto replace_val = local_map[subgraph->outputs().xsigma(*it)];
+        subgraphNode->outputs().xsigma(*it)->replaceAllUsesWith(replace_val);
         subgraphNode->eraseOutput(*it);
         subgraph->eraseOutput(*it);
     }
@@ -679,10 +679,10 @@ static std::string truncateStrWithHash(const std::string& s, size_t maxlen)
     {
         return s;
     }
-    std::string hash_str = std::to_string(c10::hash<std::string>{}(s));
+    std::string hash_str = std::to_string(xsigma::hash<std::string>{}(s));
     // If hash-string plus '_' can fit into maxlen, then truncate the original
     // string correspondingly so that the final string with the hash included fits
-    // into maxlen. If that's not possible, at least truncate the original string
+    // into maxlen. If that's not possible, xsigma least truncate the original string
     // to maxlen (and append the hash to it).
     size_t trunc_len = (maxlen > hash_str.size() + 1) ? (maxlen - hash_str.size() - 1) : maxlen;
     std::stringstream truncated;

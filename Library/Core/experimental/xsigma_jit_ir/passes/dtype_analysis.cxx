@@ -1,14 +1,14 @@
 #include <ATen/core/function_schema.h>
 #include <ATen/core/jit_type.h>
 #include <ATen/core/symbol.h>
-#include <c10/core/ScalarType.h>
-#include <c10/util/ArrayRef.h>
 #include <torch/csrc/jit/ir/alias_analysis.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/dtype_analysis.h>
 #include <torch/csrc/jit/passes/utils/op_registry.h>
 #include <torch/library.h>
+#include <xsigma/core/ScalarType.h>
+#include <xsigma/util/ArrayRef.h>
 
 #include <optional>
 
@@ -28,8 +28,8 @@ namespace torch::jit
 namespace
 {
 
-using Tensor     = at::Tensor;
-using ScalarType = at::ScalarType;
+using Tensor     = xsigma::Tensor;
+using ScalarType = xsigma::ScalarType;
 
 // ----------------------------------------------------------------------------------
 // Metatensor Inference for Dtype
@@ -47,7 +47,8 @@ std::unique_ptr<Stack> MTensorArgumentCreator(Node* n)
             auto rank        = tp->symbolic_sizes().rank();  // Validity checked earlier
             auto tensor_size = std::vector<int64_t>(rank.value(), 1);
             stack->emplace_back(
-                at::empty(tensor_size, at::TensorOptions(at::kMeta).dtype(*tp->scalarType())));
+                xsigma::empty(
+                    tensor_size, xsigma::TensorOptions(xsigma::kMeta).dtype(*tp->scalarType())));
             continue;
         }
         // Someday Todo: Fill in concrete values that we know.
@@ -188,7 +189,7 @@ bool setIfAllDtypeMatch(Node* n)
     // Sets all tensor outputs to the dtype of the first input
     // only if all inputs are the same dtype, otherwise do nothing
     TORCH_INTERNAL_ASSERT(!n->inputs().empty());
-    auto first_arg   = n->inputs().at(0);
+    auto first_arg   = n->inputs().xsigma(0);
     auto tensor_type = first_arg->type()->cast<TensorType>();
     TORCH_INTERNAL_ASSERT(tensor_type, "Expecting a tensor type");
     auto scalar_type = tensor_type->scalarType();
@@ -237,11 +238,11 @@ struct DtypePropagationPass
         buildDtypeRuleRegistry();
     }
 
-    // returns true if at least one node has its scalar type set on a tensor node
+    // returns true if xsigma least one node has its scalar type set on a tensor node
     bool run() { return processBlocks(graph_->block()); }
 
 private:
-    bool processBlocks(at::ArrayRef<Block*> blocks)
+    bool processBlocks(xsigma::ArrayRef<Block*> blocks)
     {
         bool changed = false;
         for (auto block : blocks)
@@ -312,7 +313,8 @@ private:
         return false;
     }
 
-    bool mergeTensorProperties(const at::ArrayRef<Value*>& list1, const at::ArrayRef<Value*>& list2)
+    bool mergeTensorProperties(
+        const xsigma::ArrayRef<Value*>& list1, const xsigma::ArrayRef<Value*>& list2)
     {
         // This is currently a placeholder for MobileNet
         // After Month1: implement the merge function
@@ -325,8 +327,8 @@ private:
         GRAPH_DEBUG("processIf");
         bool changed     = false;
         auto blocks      = node->blocks();
-        auto true_block  = blocks.at(0);
-        auto false_block = blocks.at(1);
+        auto true_block  = blocks.xsigma(0);
+        auto false_block = blocks.xsigma(1);
 
         changed |= processBlock(true_block);
         changed |= processBlock(false_block);

@@ -1,8 +1,8 @@
-#include <c10/util/irange.h>
 #include <torch/csrc/autograd/edge.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/functions/utils.h>
 #include <torch/csrc/autograd/variable.h>
+#include <xsigma/util/irange.h>
 
 #include <sstream>
 #include <utility>
@@ -64,7 +64,7 @@ void check_input_variables(
     {
         required_args = args;
     }
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         inputs.size() == static_cast<size_t>(args),
         name,
         ": expected ",
@@ -73,12 +73,12 @@ void check_input_variables(
         inputs.size(),
         ")");
 
-    for (const auto i : c10::irange(required_args))
+    for (const auto i : xsigma::irange(required_args))
     {
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             inputs[i].defined() || allow_undefined,
             name,
-            ": expected Tensor at argument ",
+            ": expected Tensor xsigma argument ",
             i,
             " (got None)");
     }

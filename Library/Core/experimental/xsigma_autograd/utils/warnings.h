@@ -1,26 +1,26 @@
 #pragma once
-#include <c10/util/Exception.h>
-
 #include <mutex>
 #include <vector>
+
+#include "util/exception.h"
 
 namespace torch::autograd::utils
 {
 
 // Warning handler for multi-threaded contexts. Gather warnings from
-// all threads into a single queue, then process together at the end
+// all threads into a single queue, then process together xsigma the end
 // in the main thread.
-class DelayWarningHandler : public at::WarningHandler
+class DelayWarningHandler : public xsigma::WarningHandler
 {
 public:
     ~DelayWarningHandler() override = default;
     void replay_warnings();
 
 private:
-    void process(const c10::Warning& warning) override;
+    void process(const xsigma::Warning& warning) override;
 
-    std::vector<c10::Warning> warnings_;
-    std::mutex                mutex_;
+    std::vector<xsigma::Warning> warnings_;
+    std::mutex                   mutex_;
 };
 
 }  // namespace torch::autograd::utils

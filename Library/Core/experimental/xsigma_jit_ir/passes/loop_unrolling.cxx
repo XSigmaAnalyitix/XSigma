@@ -1,11 +1,12 @@
 #include <ATen/core/symbol.h>
-#include <c10/util/Exception.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/ir/constants.h>
 #include <torch/csrc/jit/ir/ir_views.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/dead_code_elimination.h>
 #include <torch/csrc/jit/passes/loop_unrolling.h>
+#include <xsigma/util/irange.h>
+
+#include "util/exception.h"
 
 namespace torch::jit
 {
@@ -27,8 +28,8 @@ bool isForLoop(Node* node)
 {
     if (node->kind() != prim::Loop)
         return false;
-    Value* start_cond    = node->inputs().at(1);
-    Value* continue_cond = node->blocks().at(0)->outputs().at(0);
+    Value* start_cond    = node->inputs().xsigma(1);
+    Value* continue_cond = node->blocks().xsigma(0)->outputs().xsigma(0);
     return isTrueConstant(start_cond) && isTrueConstant(continue_cond);
 }
 
@@ -66,7 +67,7 @@ bool isSmallBlock(Block* body)
 void inlineBody(Node* loop)
 {
     auto            graph = loop->owningGraph();
-    auto            body  = loop->blocks().at(0);
+    auto            body  = loop->blocks().xsigma(0);
     WithInsertPoint insert_point_guard{loop};
 
     std::unordered_map<Value*, Value*> value_map;
@@ -95,7 +96,7 @@ void inlineBody(Node* loop)
     }
     for (size_t i = 0; i < loop->outputs().size(); ++i)
     {
-        loop->outputs().at(i)->replaceAllUsesWith(get_value(body->outputs().at(i + 1)));
+        loop->outputs().xsigma(i)->replaceAllUsesWith(get_value(body->outputs().xsigma(i + 1)));
     }
     // XXX: it is extremely important to destroy the loop in here. DCE might not
     // be able to conclude that it's safe, because the loop might contain side
@@ -105,7 +106,7 @@ void inlineBody(Node* loop)
 
 // inserts a copy of body, passing inputs to the inputs of the block
 // it returns the a list of the Values for the output of the block
-std::vector<Value*> insertBlockCopy(Graph& graph, Block* body, at::ArrayRef<Value*> inputs)
+std::vector<Value*> insertBlockCopy(Graph& graph, Block* body, xsigma::ArrayRef<Value*> inputs)
 {
     TORCH_INTERNAL_ASSERT(inputs.size() == body->inputs().size());
     std::unordered_map<Value*, Value*> value_map;
@@ -143,10 +144,10 @@ void repeatBody(Block* body, size_t times, Block* dest)
     }
 
     std::vector<Value*> io = dest->inputs().vec();
-    TORCH_INTERNAL_ASSERT(!body->inputs().at(0)->hasUses(), "loop counter should be unused");
-    for ([[maybe_unused]] const auto i : c10::irange(times))
+    TORCH_INTERNAL_ASSERT(!body->inputs().xsigma(0)->hasUses(), "loop counter should be unused");
+    for ([[maybe_unused]] const auto i : xsigma::irange(times))
     {
-        io[0] = body->inputs().at(0);
+        io[0] = body->inputs().xsigma(0);
         io    = insertBlockCopy(*graph, body, io);
     }
     for (Value* output : io)
@@ -166,7 +167,7 @@ void repeatBody(Block* body, size_t times, Block* dest)
 void replaceLoopCounter(Node* loop)
 {
     Graph*          graph = loop->owningGraph();
-    Block*          body  = loop->blocks().at(0);
+    Block*          body  = loop->blocks().xsigma(0);
     WithInsertPoint guard(loop);
     Value*          init_counter = graph->insertConstant(0);
 
@@ -184,7 +185,7 @@ void replaceLoopCounter(Node* loop)
 void unroll(Node* loop)
 {
     Graph* graph = loop->owningGraph();
-    Block* body  = loop->blocks().at(0);
+    Block* body  = loop->blocks().xsigma(0);
 
     // We will be using a "mutable" counter outside of the loop instead of the
     // default one, because this will allow us to share it between the unrolled
@@ -195,7 +196,7 @@ void unroll(Node* loop)
 
     // Some optimization for constant-length loops. If we know they won't run too
     // many times, then we can unroll them entirely.
-    Value*                 trip_count = loop->inputs().at(0);
+    Value*                 trip_count = loop->inputs().xsigma(0);
     std::optional<int64_t> const_len  = constant_as<int64_t>(trip_count);
     if (const_len && *const_len < kMaxBodyRepeats)
     {
@@ -221,7 +222,7 @@ void unroll(Node* loop)
     loop->eraseBlock(0);
 
     // Change the iteration counts of both loops
-    Value* iter_count = loop->inputs().at(0);
+    Value* iter_count = loop->inputs().xsigma(0);
     Value* unrolled_iter_count =
         graph->insert(aten::__round_to_zero_floordiv, {iter_count, kUnrollFactor});
     loop->replaceInput(0, unrolled_iter_count);
@@ -251,12 +252,12 @@ bool UnrollLoops(Block* block, bool constant_only)
         }
         if (constant_only)
         {
-            if (node->inputs().at(0)->node()->kind() != prim::Constant)
+            if (node->inputs().xsigma(0)->node()->kind() != prim::Constant)
             {
                 continue;
             }
         }
-        else if (!isSmallBlock(node->blocks().at(0)))
+        else if (!isSmallBlock(node->blocks().xsigma(0)))
         {
             continue;
         }

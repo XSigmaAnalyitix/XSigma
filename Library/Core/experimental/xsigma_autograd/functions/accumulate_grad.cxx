@@ -20,12 +20,12 @@ namespace
 {
 
 void AccumulateGrad_apply_impl(
-    variable_list&&                          grads,
-    at::Tensor&                              variable,
-    at::Tensor&                              variable_grad,
-    int64_t                                  num_expected_refs,
-    const std::function<void(at::Tensor&&)>& grad_update,
-    std::mutex*                              mutex = nullptr)
+    variable_list&&                              grads,
+    xsigma::Tensor&                              variable,
+    xsigma::Tensor&                              variable_grad,
+    int64_t                                      num_expected_refs,
+    const std::function<void(xsigma::Tensor&&)>& grad_update,
+    std::mutex*                                  mutex = nullptr)
 {
     check_input_variables("AccumulateGrad", grads, 1, 0);
 
@@ -35,7 +35,7 @@ void AccumulateGrad_apply_impl(
         return;
 
     // std::move(grads[0]) to avoid bumping up refcount
-    at::Tensor new_grad = std::move(grads[0]);
+    xsigma::Tensor new_grad = std::move(grads[0]);
 
     // Acquire lock to here protect thread safety on variable, this ensures
     // AccumulateGrad does not race to shared variable from different threads
@@ -57,8 +57,8 @@ variable_list AccumulateGrad_apply_functional_no_hooks_ivalue(
     const variable_list& grads, const ivalue_list& args)
 {
     PackedArgs r(args);
-    auto       variable       = r.unpack<at::Tensor>();
-    auto       variable_grad  = r.unpack<at::Tensor>();
+    auto       variable       = r.unpack<xsigma::Tensor>();
+    auto       variable_grad  = r.unpack<xsigma::Tensor>();
     auto       has_post_hooks = r.unpack<bool>();
 
     // Functional Tensors insert an Error node to assert that backward is never
@@ -68,13 +68,14 @@ variable_list AccumulateGrad_apply_functional_no_hooks_ivalue(
         throw std::logic_error("leaf variable has been moved into the graph interior");
     }
 
-    at::Tensor functional_grad;
+    xsigma::Tensor functional_grad;
     AccumulateGrad_apply_impl(
         variable_list(grads),
         variable,
         variable_grad,
         1 + has_post_hooks,
-        [&functional_grad](at::Tensor&& grad_update) { functional_grad = std::move(grad_update); },
+        [&functional_grad](xsigma::Tensor&& grad_update)
+        { functional_grad = std::move(grad_update); },
         nullptr  // no mutex needed since this is executed under a single thread
     );
     if (!functional_grad.defined())
@@ -102,7 +103,7 @@ auto AccumulateGrad::apply(variable_list&& grads) -> variable_list
         throw std::logic_error("leaf variable has been moved into the graph interior");
     }
 
-    at::Tensor& variable_grad = variable.mutable_grad();
+    xsigma::Tensor& variable_grad = variable.mutable_grad();
 
     // If the function has post hooks (for example, a DDP allreduce hook),
     // call_function in Engine.cpp will temporarily bump the expected refcount
@@ -115,7 +116,7 @@ auto AccumulateGrad::apply(variable_list&& grads) -> variable_list
         variable,
         variable_grad,
         1 + !post_hooks().empty() /* num_expected_refs */,
-        [&variable_grad](at::Tensor&& grad_update) { variable_grad = std::move(grad_update); },
+        [&variable_grad](xsigma::Tensor&& grad_update) { variable_grad = std::move(grad_update); },
         &mutex_);
 
     auto& hook = tensor_post_acc_grad_hooks();
@@ -150,8 +151,8 @@ variable_list AccumulateGrad::apply_with_saved(
         return variable_list();
     }
     TORCH_INTERNAL_ASSERT(!variable.grad_fn() && grads.size() == 1);
-    at::Tensor variable_copy = variable;
-    at::Tensor grad_copy     = variable.grad();
+    xsigma::Tensor variable_copy = variable;
+    xsigma::Tensor grad_copy     = variable.grad();
     saved.before(variable_copy);
     saved.before(grad_copy);
     variable_copy.mutable_grad() = grad_copy;
@@ -164,9 +165,9 @@ variable_list AccumulateGrad::apply_with_saved(
     // proxy a call to torch.ops.inductor.accumulate_grad_.default
     static bool flag [[maybe_unused]] = [&]()
     {
-        std::vector<at::TypePtr> schema = {
-            IValuePacker<at::Tensor>::packed_type(),
-            IValuePacker<at::Tensor>::packed_type(),
+        std::vector<xsigma::TypePtr> schema = {
+            IValuePacker<xsigma::Tensor>::packed_type(),
+            IValuePacker<xsigma::Tensor>::packed_type(),
             IValuePacker<bool>::packed_type()};
         const auto& interface = torch::dynamo::autograd::getPyCompilerInterface();
         interface->bind_function(

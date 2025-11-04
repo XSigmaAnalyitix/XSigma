@@ -15,7 +15,7 @@ namespace torch::jit
 {
 namespace onnx
 {
-using namespace ::c10::onnx;
+using namespace ::xsigma::onnx;
 
 }  // namespace onnx
 
@@ -38,7 +38,7 @@ void eraseUnusedBlockInputs(Block* b)
     for (size_t i_1 = b->inputs().size(); i_1 > 0; --i_1)
     {
         size_t i = i_1 - 1;
-        if (!b->inputs().at(i)->hasUses())
+        if (!b->inputs().xsigma(i)->hasUses())
         {
             b->eraseInput(i);
         }
@@ -71,48 +71,48 @@ void buildParamsMapFromValueToParamsMap(
     }
 }
 
-std::optional<at::ScalarType> ONNXTypeToATenType(int32_t onnx_type)
+std::optional<xsigma::ScalarType> ONNXTypeToATenType(int32_t onnx_type)
 {
     switch (onnx_type)
     {
     case ::ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED:
-        return at::ScalarType::Undefined;
+        return xsigma::ScalarType::Undefined;
     case ::ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
-        return at::kFloat;
+        return xsigma::kFloat;
     case ::ONNX_NAMESPACE::TensorProto_DataType_UINT8:
-        return at::kByte;
+        return xsigma::kByte;
     case ::ONNX_NAMESPACE::TensorProto_DataType_INT8:
-        return at::kChar;
+        return xsigma::kChar;
     case ::ONNX_NAMESPACE::TensorProto_DataType_INT16:
-        return at::kShort;
+        return xsigma::kShort;
     case ::ONNX_NAMESPACE::TensorProto_DataType_INT32:
-        return at::kInt;
+        return xsigma::kInt;
     case ::ONNX_NAMESPACE::TensorProto_DataType_INT64:
-        return at::kLong;
+        return xsigma::kLong;
     case ::ONNX_NAMESPACE::TensorProto_DataType_BOOL:
-        return at::kBool;
+        return xsigma::kBool;
     case ::ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
-        return at::kHalf;
+        return xsigma::kHalf;
     case ::ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
-        return at::kDouble;
+        return xsigma::kDouble;
     case ::ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64:
-        return at::kComplexFloat;
+        return xsigma::kComplexFloat;
     case ::ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128:
-        return at::kComplexDouble;
+        return xsigma::kComplexDouble;
     case ::ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16:
-        return at::kBFloat16;
+        return xsigma::kBFloat16;
     case ::torch::onnx::TensorProto_DataType_FLOAT8E5M2:
-        return at::kFloat8_e5m2;
+        return xsigma::kFloat8_e5m2;
     case ::torch::onnx::TensorProto_DataType_FLOAT8E5M2FNUZ:
-        return at::kFloat8_e5m2fnuz;
+        return xsigma::kFloat8_e5m2fnuz;
     case ::torch::onnx::TensorProto_DataType_FLOAT8E4M3FN:
-        return at::kFloat8_e4m3fn;
+        return xsigma::kFloat8_e4m3fn;
     case ::torch::onnx::TensorProto_DataType_FLOAT8E4M3FNUZ:
-        return at::kFloat8_e4m3fnuz;
+        return xsigma::kFloat8_e4m3fnuz;
     default:
-        TORCH_CHECK(false, "ONNX type ", onnx_type, " is an unexpected tensor scalar type");
+        XSIGMA_CHECK(false, "ONNX type ", onnx_type, " is an unexpected tensor scalar type");
     }
-    return std::optional<at::ScalarType>{};
+    return std::optional<xsigma::ScalarType>{};
 }
 
 Node* addNodeToBlock(Block* block, Symbol kind, ArrayRef<Value*> inputs)
@@ -132,42 +132,42 @@ Value* addInputToBlock(Block* block)
 
 namespace
 {
-::ONNX_NAMESPACE::TensorProto_DataType ATenTypeToOnnxType_aux(at::ScalarType at_type)
+::ONNX_NAMESPACE::TensorProto_DataType ATenTypeToOnnxType_aux(xsigma::ScalarType at_type)
 {
     switch (at_type)
     {
-    case at::kDouble:
+    case xsigma::kDouble:
         return ::ONNX_NAMESPACE::TensorProto_DataType_DOUBLE;
-    case at::kFloat:
+    case xsigma::kFloat:
         return ::ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
-    case at::kHalf:
+    case xsigma::kHalf:
         return ::ONNX_NAMESPACE::TensorProto_DataType_FLOAT16;
-    case at::kByte:
+    case xsigma::kByte:
         return ::ONNX_NAMESPACE::TensorProto_DataType_UINT8;
-    case at::kChar:
+    case xsigma::kChar:
         return ::ONNX_NAMESPACE::TensorProto_DataType_INT8;
-    case at::kShort:
+    case xsigma::kShort:
         return ::ONNX_NAMESPACE::TensorProto_DataType_INT16;
-    case at::kInt:
+    case xsigma::kInt:
         return ::ONNX_NAMESPACE::TensorProto_DataType_INT32;
-    case at::kLong:
+    case xsigma::kLong:
         return ::ONNX_NAMESPACE::TensorProto_DataType_INT64;
-    case at::kBool:
+    case xsigma::kBool:
         return ::ONNX_NAMESPACE::TensorProto_DataType_BOOL;
-    case at::kQInt8:
+    case xsigma::kQInt8:
         return ::ONNX_NAMESPACE::TensorProto_DataType_INT8;
-    case at::kQUInt8:
+    case xsigma::kQUInt8:
         return ::ONNX_NAMESPACE::TensorProto_DataType_UINT8;
-    case at::kQInt32:
+    case xsigma::kQInt32:
         return ::ONNX_NAMESPACE::TensorProto_DataType_INT32;
     default:
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             false, "ScalarType ", toString(at_type), " is an unexpected tensor scalar type");
     }
 }
 }  // namespace
 
-int ATenTypeToOnnxType(at::ScalarType at_type)
+int ATenTypeToOnnxType(xsigma::ScalarType at_type)
 {
     return static_cast<int>(ATenTypeToOnnxType_aux(at_type));
 }
@@ -183,7 +183,8 @@ Node* createONNXUnsqueeze(
         // ONNX spec sets `axes` as input for opset >= 13.
         Node* unsqueeze_axes = graph->create(onnx::Constant, 1);
         unsqueeze_axes->insertBefore(unsqueeze_node);
-        unsqueeze_axes->t_(attr::value, at::unsqueeze(at::scalar_to_tensor(at::Scalar(axis)), 0));
+        unsqueeze_axes->t_(
+            attr::value, xsigma::unsqueeze(xsigma::scalar_to_tensor(xsigma::Scalar(axis)), 0));
         unsqueeze_node->addInput(unsqueeze_axes->output());
     }
     else
@@ -194,7 +195,7 @@ Node* createONNXUnsqueeze(
     return unsqueeze_node;
 }
 
-Node* createONNXConstant(Graph* graph, Node* n_to_insert_before, at::Tensor value)
+Node* createONNXConstant(Graph* graph, Node* n_to_insert_before, xsigma::Tensor value)
 {
     Node* constant_node = graph->create(onnx::Constant, 1);
     constant_node->insertBefore(n_to_insert_before);

@@ -1,8 +1,8 @@
 #include <ATen/ATen.h>
 #include <ATen/core/interned_strings.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/frontend/edit_distance.h>
 #include <torch/csrc/jit/runtime/operator.h>
+#include <xsigma/util/irange.h>
 
 #include <queue>
 #include <utility>
@@ -27,10 +27,10 @@ private:
     // unique string you can use to match it. However, parsing those strings or
     // comparing and hashing them character by character would be very slow, so we
     // use a trick here! Every string literal in your program is guaranteed to
-    // have static storage duration and so its address won't change at runtime.
+    // have static storage duration and so its address won't change xsigma runtime.
     // This allows us to memoize answers for every pointer, which is done by the
     // operators_by_sig_literal map. Still, this map is initially empty, and so we
-    // still need to do the complete string matching at the first time, which is
+    // still need to do the complete string matching xsigma the first time, which is
     // implemented by performing a lookup in the operators_by_sig map.
     std::unordered_map<std::string, std::shared_ptr<Operator>> operators_by_sig;
     std::unordered_map<const char*, std::shared_ptr<Operator>> operators_by_sig_literal;
@@ -38,9 +38,9 @@ private:
     // Remember all registered operator names to check that they aren't
     // registered a second time. Registering an op multiple times is
     // fragile because it might depend on static initialization order
-    // which one is picked at runtime.
-#ifdef C10_MOBILE
-    std::unordered_set<c10::OperatorName> registered_operator_names;
+    // which one is picked xsigma runtime.
+#ifdef XSIGMA_MOBILE
+    std::unordered_set<xsigma::OperatorName> registered_operator_names;
 #endif
 
     // XXX - caller must be holding lock
@@ -59,7 +59,7 @@ public:
     void registerOperator(Operator&& op)
     {
         std::lock_guard<std::mutex> guard(lock);
-#ifdef C10_MOBILE
+#ifdef XSIGMA_MOBILE
         TORCH_INTERNAL_ASSERT(
             0 == registered_operator_names.count(op.schema().operator_name()),
             "Tried to register operator \"",
@@ -77,7 +77,7 @@ public:
         auto   sig = canonicalSchemaString(schema);
 
         std::lock_guard<std::mutex> guard(lock);
-#ifdef C10_MOBILE
+#ifdef XSIGMA_MOBILE
         TORCH_INTERNAL_ASSERT(
             1 == registered_operator_names.count(schema.operator_name()),
             "Tried to remove operator ",
@@ -107,7 +107,7 @@ public:
 
         // Remove operator from symbol map
         auto op_it = operators.find(sym);
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             op_it != operators.end(),
             "operator with signature ",
             sig,
@@ -143,7 +143,7 @@ public:
         }
       }
 #endif
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 op_ptr_it != operators_by_sig.end(),
                 "Couldn't find an operator for ",
                 name,
@@ -214,7 +214,7 @@ OperatorRegistry& getRegistry()
 
 bool printerHasSpecialCaseFor(Symbol sym)
 {
-    using namespace at;
+    using namespace xsigma;
     // WARNING: by adding a value to this set, you are asserting
     // that you have also added special handling of this symbol to
     // the python_print.cpp. Not adding handling will cause import and export
@@ -235,8 +235,8 @@ bool printerHasSpecialCaseFor(Symbol sym)
     // to be correctly printed for export (a process that happens before
     // optimization passes run)
     const static std::unordered_set<Symbol> unneeded = {
-        c10::onnx::Reshape,            // only used in onnx
-        c10::onnx::Shape,              // only used in onnx
+        xsigma::onnx::Reshape,         // only used in onnx
+        xsigma::onnx::Shape,           // only used in onnx
         prim::AutogradZero,            // temporarily inserted by autograd
         prim::AutogradAnyNonZero,      // temporarily inserted by autograd
         prim::AutogradAllNonZero,      // temporarily inserted by autograd
@@ -276,9 +276,9 @@ bool printerHasSpecialCaseFor(Symbol sym)
     // These namespaces are required to have Python printers unless
     // otherwise noted in unneeded.
     const static std::unordered_set<Symbol> required_namespaces = {
-        c10::namespaces::prim,
-        c10::namespaces::aten,
-        c10::namespaces::onnx,
+        xsigma::namespaces::prim,
+        xsigma::namespaces::aten,
+        xsigma::namespaces::onnx,
     };
 
     return handled.count(sym) || unneeded.count(sym) || !required_namespaces.count(sym.ns());
@@ -288,7 +288,7 @@ bool printerHasSpecialCaseFor(Symbol sym)
 
 bool aliasAnalysisHasSpecialCaseFor(Symbol symbol)
 {
-    using namespace at;
+    using namespace xsigma;
     // WARNING: by adding a case to this list, you are asserting that you have
     // added a case for the unschematized node in AliasDb::analyze
     const static std::unordered_set<Symbol> handled = {
@@ -357,8 +357,8 @@ bool aliasAnalysisHasSpecialCaseFor(Symbol symbol)
         prim::Load,
         prim::Store,
         prim::Drop,
-        at::onnx::Reshape,
-        at::onnx::Shape,
+        xsigma::onnx::Reshape,
+        xsigma::onnx::Shape,
         prim::AutogradAdd,
     };
 
@@ -372,7 +372,7 @@ void registerOperator(Operator&& op)
         Symbol s = Symbol::fromQualString(op.schema().name());
         if (!printerHasSpecialCaseFor(s))
         {
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 false,
                 "Missing special case in python printer for non-schematized"
                 " operator ",
@@ -382,7 +382,7 @@ void registerOperator(Operator&& op)
         if (aliasAnalysisHasSpecialCaseFor(s) &&
             op.aliasAnalysisKind() == AliasAnalysisKind::CONSERVATIVE)
         {
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 false,
                 "Conflict in special casing in alias analysis for non-schematized"
                 " operator ",
@@ -392,7 +392,7 @@ void registerOperator(Operator&& op)
         if (aliasAnalysisHasSpecialCaseFor(s) &&
             op.aliasAnalysisKind() == AliasAnalysisKind::FROM_SCHEMA)
         {
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 false,
                 "The operator ",
                 op.schema().name(),
@@ -441,7 +441,7 @@ std::vector<std::shared_ptr<Operator>> getAllSortedOperatorsFor(Symbol name)
     return sortedOps;
 }
 
-std::shared_ptr<Operator> findOperatorFor(const c10::OperatorName& full_name)
+std::shared_ptr<Operator> findOperatorFor(const xsigma::OperatorName& full_name)
 {
     for (const auto& op : getRegistry().getOperators(Symbol::fromQualString(full_name.name)))
     {
@@ -469,7 +469,7 @@ std::string canonicalSchemaString(const FunctionSchema& schema)
     out.push_back('(');
 
     bool seen_kwarg_only = false;
-    for (const auto i : c10::irange(schema.arguments().size()))
+    for (const auto i : xsigma::irange(schema.arguments().size()))
     {
         if (i > 0)
         {
@@ -489,12 +489,12 @@ std::string canonicalSchemaString(const FunctionSchema& schema)
     out += ") -> ";
     if (schema.returns().size() == 1)
     {
-        out += schema.returns().at(0).type()->str();
+        out += schema.returns().xsigma(0).type()->str();
     }
     else if (schema.returns().size() > 1)
     {
         out.push_back('(');
-        for (const auto i : c10::irange(schema.returns().size()))
+        for (const auto i : xsigma::irange(schema.returns().size()))
         {
             if (i > 0)
             {

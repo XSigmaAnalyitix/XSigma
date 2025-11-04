@@ -9,7 +9,7 @@ Tensor computeMatmul(
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device)
+    xsigma::Device                   device)
 {
     Dtype dtype = kFloat;
     if (outputType)
@@ -58,7 +58,7 @@ Tensor computeAddMM(
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device)
+    xsigma::Device                   device)
 {
     Dtype dtype = kFloat;
     if (outputType)

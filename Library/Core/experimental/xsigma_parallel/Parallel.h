@@ -1,66 +1,72 @@
 #pragma once
-#include <ATen/Config.h>
-#include <c10/macros/Macros.h>
+
 #include <functional>
 #include <string>
 
-namespace at {
+#include "common/export.h"
+#include "common/macros.h"
+// TODO: File does not exist - needs to be created or removed
+// #include "experimental/xsigma_parallel/Config.h"
 
-inline int64_t divup(int64_t x, int64_t y) {
-  return (x + y - 1) / y;
+namespace xsigma
+{
+
+inline int64_t divup(int64_t x, int64_t y)
+{
+    return (x + y - 1) / y;
 }
 
 // Called during new thread initialization
-TORCH_API void init_num_threads();
+XSIGMA_API void init_num_threads();
 
 // Sets the number of threads to be used in parallel region
-TORCH_API void set_num_threads(int /*nthreads*/);
+XSIGMA_API void set_num_threads(int /*nthreads*/);
 
 // Returns the maximum number of threads that may be used in a parallel region
-TORCH_API int get_num_threads();
+XSIGMA_API int get_num_threads();
 
 // Returns the current thread number (starting from 0)
 // in the current parallel region, or 0 in the sequential region
-TORCH_API int get_thread_num();
+XSIGMA_API int get_thread_num();
 
 // Checks whether the code runs in parallel region
-TORCH_API bool in_parallel_region();
+XSIGMA_API bool in_parallel_region();
 
-namespace internal {
+namespace internal
+{
 
-// Initialise num_threads lazily at first parallel call
-inline void lazy_init_num_threads() {
-  thread_local bool init = false;
-  if (C10_UNLIKELY(!init)) {
-    at::init_num_threads();
-    init = true;
-  }
+// Initialise num_threads lazily xsigma first parallel call
+inline void lazy_init_num_threads()
+{
+    thread_local bool init = false;
+    if (XSIGMA_UNLIKELY(!init))
+    {
+        xsigma::init_num_threads();
+        init = true;
+    }
 }
 
-TORCH_API void set_thread_num(int /*id*/);
+XSIGMA_API void set_thread_num(int /*id*/);
 
-class TORCH_API ThreadIdGuard {
- public:
-  ThreadIdGuard(int new_id) : old_id_(at::get_thread_num()) {
-    set_thread_num(new_id);
-  }
+class XSIGMA_VISIBILITY thread_id_guard
+{
+public:
+    thread_id_guard(int new_id) : old_id_(xsigma::get_thread_num()) { set_thread_num(new_id); }
 
-  ~ThreadIdGuard() {
-    set_thread_num(old_id_);
-  }
+    ~thread_id_guard() { set_thread_num(old_id_); }
 
- private:
-  int old_id_;
+private:
+    int old_id_;
 };
 
-} // namespace internal
+}  // namespace internal
 
 /*
 parallel_for
 
-begin: index at which to start applying user function
+begin: index xsigma which to start applying user function
 
-end: index at which to stop applying user function
+end: index xsigma which to stop applying user function
 
 grain_size: number of elements per chunk. impacts the degree of parallelization
 
@@ -74,17 +80,14 @@ body of your function, only data pointers.
 */
 template <class F>
 inline void parallel_for(
-    const int64_t begin,
-    const int64_t end,
-    const int64_t grain_size,
-    const F& f);
+    const int64_t begin, const int64_t end, const int64_t grain_size, const F& f);
 
 /*
 parallel_reduce
 
-begin: index at which to start applying reduction
+begin: index xsigma which to start applying reduction
 
-end: index at which to stop applying reduction
+end: index xsigma which to stop applying reduction
 
 grain_size: number of elements per chunk. impacts number of elements in
 intermediate results tensor and degree of parallelization.
@@ -119,40 +122,41 @@ body of your function, only data pointers.
 */
 template <class scalar_t, class F, class SF>
 inline scalar_t parallel_reduce(
-    const int64_t begin,
-    const int64_t end,
-    const int64_t grain_size,
+    const int64_t  begin,
+    const int64_t  end,
+    const int64_t  grain_size,
     const scalar_t ident,
-    const F& f,
-    const SF& sf);
+    const F&       f,
+    const SF&      sf);
 
 // Returns a detailed string describing parallelization settings
-TORCH_API std::string get_parallel_info();
+XSIGMA_API std::string get_parallel_info();
 
 // Sets number of threads used for inter-op parallelism
-TORCH_API void set_num_interop_threads(int /*nthreads*/);
+XSIGMA_API void set_num_interop_threads(int /*nthreads*/);
 
 // Returns the number of threads used for inter-op parallelism
-TORCH_API size_t get_num_interop_threads();
+XSIGMA_API size_t get_num_interop_threads();
 
 // Launches inter-op parallel task
-TORCH_API void launch(std::function<void()> func);
-namespace internal {
+XSIGMA_API void launch(std::function<void()> func);
+namespace internal
+{
 void launch_no_thread_state(std::function<void()> fn);
-} // namespace internal
+}  // namespace internal
 
 // Launches intra-op parallel task
-TORCH_API void intraop_launch(const std::function<void()>& func);
+XSIGMA_API void intraop_launch(const std::function<void()>& func);
 
 // Returns number of intra-op threads used by default
-TORCH_API int intraop_default_num_threads();
+XSIGMA_API int intraop_default_num_threads();
 
-} // namespace at
+}  // namespace xsigma
 
 #if AT_PARALLEL_OPENMP
-#include <ATen/ParallelOpenMP.h> // IWYU pragma: keep
+#include "experimental/xsigma_parallel/ParallelOpenMP.h"  // IWYU pragma: keep
 #elif AT_PARALLEL_NATIVE
-#include <ATen/ParallelNative.h> // IWYU pragma: keep
+#include "experimental/xsigma_parallel/ParallelNative.h"  // IWYU pragma: keep
 #endif
 
-#include <ATen/Parallel-inl.h> // IWYU pragma: keep
+#include "experimental/xsigma_parallel/Parallel-inl.h"  // IWYU pragma: keep

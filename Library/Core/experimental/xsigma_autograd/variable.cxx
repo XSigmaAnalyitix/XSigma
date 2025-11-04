@@ -1,7 +1,6 @@
 #include <ATen/ATen.h>
 #include <ATen/FuncTorchTLS.h>
 #include <ATen/MemoryOverlap.h>
-#include <c10/util/Exception.h>
 #include <torch/csrc/autograd/InferenceMode.h>
 #include <torch/csrc/autograd/autograd.h>
 #include <torch/csrc/autograd/edge.h>
@@ -22,6 +21,8 @@
 #include <utility>
 #include <vector>
 
+#include "util/exception.h"
+
 namespace torch::autograd
 {
 
@@ -40,7 +41,7 @@ static std::unique_ptr<ViewFunc> create_view_func_matching(const Variable& t)
 }
 
 DifferentiableViewMeta::DifferentiableViewMeta(
-    at::TensorImpl*         self_impl,
+    xsigma::TensorImpl*     self_impl,
     std::optional<ViewInfo> backward_info,
     std::optional<ViewInfo> forward_info,
     bool                    shared_view_info,
@@ -90,7 +91,7 @@ ViewInfo ViewInfo::chain(
 
             // assume view_fn_ / rev_view_fn_ always exist together or neither are set
             auto prev_rev_fn = rev_view_fn_;
-            rev_view_func    = [=](const at::Tensor& root_view)
+            rev_view_func    = [=](const xsigma::Tensor& root_view)
             {
                 auto temp = rev_view_func(root_view);
                 return prev_rev_fn(temp);
@@ -111,7 +112,7 @@ ViewInfo ViewInfo::chain(
                 auto        root_base_size           = root_base.sym_sizes().vec();
                 auto        root_base_stride         = root_base.sym_strides().vec();
                 auto        root_base_storage_offset = root_base.sym_storage_offset();
-                rev_view_func                        = [=](const at::Tensor& root_view)
+                rev_view_func                        = [=](const xsigma::Tensor& root_view)
                 {
                     auto temp = rev_view_func(root_view);
                     return temp.as_strided_symint(
@@ -127,9 +128,9 @@ ViewInfo ViewInfo::chain(
                     ("Attempted to chain views when the parent view has no view_func() and "
                      "does not support as_strided(). This is not supported.");
                 view_func     = std::make_unique<ErroringViewFunc>(error_msg);
-                rev_view_func = [=](const at::Tensor& root_view)
+                rev_view_func = [=](const xsigma::Tensor& root_view)
                 {
-                    TORCH_CHECK(false, error_msg);
+                    XSIGMA_CHECK(false, error_msg);
                     return root_view;
                 };
             }
@@ -147,7 +148,7 @@ ViewInfo ViewInfo::chain(
         auto base_size           = base.sym_sizes().vec();
         auto base_stride         = base.sym_strides().vec();
         auto base_storage_offset = base.sym_storage_offset();
-        rev_view_func            = [=](const at::Tensor& root_view)
+        rev_view_func            = [=](const xsigma::Tensor& root_view)
         {
             auto temp = root_view.as_strided_symint(base_size, base_stride, base_storage_offset);
             return prev_rev_view_fn(temp);
@@ -160,29 +161,29 @@ ViewInfo ViewInfo::chain(
 namespace
 {
 
-at::Tensor singleton_undefined_tensor;
+xsigma::Tensor singleton_undefined_tensor;
 
-struct ConcreteAutogradMetaFactory : public c10::impl::AutogradMetaFactory
+struct ConcreteAutogradMetaFactory : public xsigma::impl::AutogradMetaFactory
 {
-    std::unique_ptr<c10::AutogradMetaInterface> make() const override
+    std::unique_ptr<xsigma::AutogradMetaInterface> make() const override
     {
         return std::make_unique<AutogradMeta>();
     }
-    const at::Tensor& undefined_tensor() const override { return singleton_undefined_tensor; }
+    const xsigma::Tensor& undefined_tensor() const override { return singleton_undefined_tensor; }
 };
 
 ConcreteAutogradMetaFactory meta_factory;
 
-static c10::impl::AutogradMetaFactoryRegisterer meta_factory_registerer(&meta_factory);
+static xsigma::impl::AutogradMetaFactoryRegisterer meta_factory_registerer(&meta_factory);
 
 }  // namespace
 
 namespace impl
 {
 
-AutogradMeta* materialize_autograd_meta(const at::TensorBase& self)
+AutogradMeta* materialize_autograd_meta(const xsigma::TensorBase& self)
 {
-    TORCH_CHECK(self.defined(), "cannot call materialize_autograd_meta() on undefined tensor");
+    XSIGMA_CHECK(self.defined(), "cannot call materialize_autograd_meta() on undefined tensor");
     auto p = self.unsafeGetTensorImpl();
     if (!p->autograd_meta())
     {
@@ -192,7 +193,7 @@ AutogradMeta* materialize_autograd_meta(const at::TensorBase& self)
 }
 
 static void update_tensor_hooks_on_new_gradfn(
-    const at::TensorBase&                         self,
+    const xsigma::TensorBase&                     self,
     const std::shared_ptr<torch::autograd::Node>& old_fn,
     const std::shared_ptr<torch::autograd::Node>& new_fn)
 {
@@ -212,7 +213,7 @@ static void update_tensor_hooks_on_new_gradfn(
     TORCH_INTERNAL_ASSERT(meta);
     TORCH_INTERNAL_ASSERT(new_fn);
     meta->cpp_hooks_list_ = nullptr;
-    const c10::impl::PyInterpreter* interp =
+    const xsigma::impl::PyInterpreter* interp =
         self.unsafeGetTensorImpl()->pyobj_slot()->pyobj_interpreter();
     if (interp)
     {
@@ -242,14 +243,14 @@ void rebase_history(const Variable& self, Edge gradient_edge)
         TORCH_INTERNAL_ASSERT(creation_meta == CreationMeta::DEFAULT);
         TORCH_INTERNAL_ASSERT(gradient_edge.input_nr == 0);
         TORCH_INTERNAL_ASSERT(gradient_edge.function);
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             gradient_edge.function->num_inputs() == 1,
             "Functions which modify views in-place must return a single Variable");
         const auto& view_info      = diff_view_meta->get_backward_view();
         diff_view_meta->output_nr_ = gradient_edge.input_nr;
         auto copy_slices           = std::make_shared<CopySlices>(
             view_info.base_,
-            at::TensorGeometry(self),
+            xsigma::TensorGeometry(self),
             view_info.has_view_fn() ? view_info.view_fn().clone_and_set() : nullptr,
             std::move(gradient_edge.function));
         if (self.requires_grad())
@@ -268,7 +269,7 @@ void rebase_history(const Variable& self, Edge gradient_edge)
     torch::autograd::impl::update_tensor_hooks_on_new_gradfn(self, old_fn, self.grad_fn());
 }
 
-void create_cpp_hook(const at::TensorBase& self, bool is_retains_grad_hook)
+void create_cpp_hook(const xsigma::TensorBase& self, bool is_retains_grad_hook)
 {
     const auto&                  fn   = self.grad_fn();
     std::shared_ptr<hooks_list>& list = materialize_autograd_meta(self)->cpp_hooks_list_;
@@ -290,7 +291,7 @@ void set_grad_accumulator(const Variable& self, std::weak_ptr<Node> grad_accumul
     materialize_autograd_meta(self)->grad_accumulator_ = std::move(grad_accumulator);
 }
 
-std::shared_ptr<Node> try_get_grad_accumulator(const at::TensorBase& self)
+std::shared_ptr<Node> try_get_grad_accumulator(const xsigma::TensorBase& self)
 {
     if (get_autograd_meta(self))
     {
@@ -329,9 +330,9 @@ std::shared_ptr<Node> grad_accumulator(const Variable& self)
     if (result)
         return result;
 
-    c10::raw::intrusive_ptr::incref(self.unsafeGetTensorImpl());
+    xsigma::raw::intrusive_ptr::incref(self.unsafeGetTensorImpl());
     auto intrusive_from_this =
-        c10::intrusive_ptr<at::TensorImpl>::reclaim(self.unsafeGetTensorImpl());
+        xsigma::intrusive_ptr<xsigma::TensorImpl>::reclaim(self.unsafeGetTensorImpl());
     result = std::make_shared<AccumulateGrad>(Variable(std::move(intrusive_from_this)));
     autograd_meta->grad_accumulator_ = result;
     return result;
@@ -387,28 +388,28 @@ Node* grad_fn_unsafe(const Variable& self)
 // Versions
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-void set_version_counter(const Variable& self, const c10::VariableVersion& version_counter)
+void set_version_counter(const Variable& self, const xsigma::VariableVersion& version_counter)
 {
-    TORCH_CHECK(self.defined(), "cannot call set_version_counter() on undefined tensor");
+    XSIGMA_CHECK(self.defined(), "cannot call set_version_counter() on undefined tensor");
     self.unsafeGetTensorImpl()->set_version_counter(version_counter);
 }
 
 void bump_version(const Variable& self)
 {
-    TORCH_CHECK(self.defined(), "cannot call bump_version() on undefined tensor");
+    XSIGMA_CHECK(self.defined(), "cannot call bump_version() on undefined tensor");
     self.unsafeGetTensorImpl()->bump_version();
 }
 
-const c10::VariableVersion& version_counter(const Variable& self)
+const xsigma::VariableVersion& version_counter(const Variable& self)
 {
-    TORCH_CHECK(self.defined(), "cannot call version_counter() on undefined tensor");
+    XSIGMA_CHECK(self.defined(), "cannot call version_counter() on undefined tensor");
     return self.unsafeGetTensorImpl()->version_counter();
 }
 
 // Hooks
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-void add_hook(const at::TensorBase& self, std::unique_ptr<FunctionPreHook> hook)
+void add_hook(const xsigma::TensorBase& self, std::unique_ptr<FunctionPreHook> hook)
 {
     AutogradMeta* meta = materialize_autograd_meta(self);
     TORCH_INTERNAL_ASSERT(meta->hooks_.empty());
@@ -421,14 +422,14 @@ std::vector<std::unique_ptr<FunctionPreHook>>& hooks(const Variable& self)
     return get_autograd_meta(self)->hooks_;
 }
 
-void clear_hooks(const at::TensorBase& self)
+void clear_hooks(const xsigma::TensorBase& self)
 {
     // This is a little goofy, but usually this should be a no oop
     materialize_autograd_meta(self)->hooks_.clear();
 }
 
 void set_post_acc_grad_hooks(
-    const at::TensorBase& self, std::unique_ptr<PostAccumulateGradHook> dict)
+    const xsigma::TensorBase& self, std::unique_ptr<PostAccumulateGradHook> dict)
 {
     AutogradMeta* meta         = materialize_autograd_meta(self);
     meta->post_acc_grad_hooks_ = std::move(dict);
@@ -448,14 +449,14 @@ void set_name(const Variable& self, const std::string& name)
 // Miscellaneous
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-AutogradMeta* get_autograd_meta(const at::TensorBase& self)
+AutogradMeta* get_autograd_meta(const xsigma::TensorBase& self)
 {
     // NB: could return nullptr
-    TORCH_CHECK(self.defined(), "cannot call get_autograd_meta() on undefined tensor");
+    XSIGMA_CHECK(self.defined(), "cannot call get_autograd_meta() on undefined tensor");
     return static_cast<AutogradMeta*>(self.unsafeGetTensorImpl()->autograd_meta());
 }
 
-DifferentiableViewMeta* get_view_autograd_meta(const at::TensorBase& self)
+DifferentiableViewMeta* get_view_autograd_meta(const xsigma::TensorBase& self)
 {
     // NB: return nullptr if self is not a view
     AutogradMeta* meta = get_autograd_meta(self);
@@ -471,32 +472,32 @@ DifferentiableViewMeta* get_view_autograd_meta(const at::TensorBase& self)
 
 }  // namespace impl
 
-using at::Tensor;
+using xsigma::Tensor;
 
-VariableHooks                     variableHooks;
-at::impl::VariableHooksRegisterer registerVariableHooks(&variableHooks);
+VariableHooks                         variableHooks;
+xsigma::impl::VariableHooksRegisterer registerVariableHooks(&variableHooks);
 
-at::TensorBase VariableHooks::variable_data(const at::TensorBase& self) const
+xsigma::TensorBase VariableHooks::variable_data(const xsigma::TensorBase& self) const
 {
-    TORCH_CHECK(self.defined(), "cannot call variable_data() on undefined tensor");
+    XSIGMA_CHECK(self.defined(), "cannot call variable_data() on undefined tensor");
     auto self_impl_copy = self.unsafeGetTensorImpl()->shallow_copy_and_detach(
         /*version_counter=*/0,
         /*allow_tensor_metadata_change=*/false);
     self_impl_copy->set_autograd_meta(nullptr);
-    return at::Tensor(self_impl_copy);
+    return xsigma::Tensor(self_impl_copy);
 }
 
-at::TensorBase VariableHooks::tensor_data(const at::TensorBase& self) const
+xsigma::TensorBase VariableHooks::tensor_data(const xsigma::TensorBase& self) const
 {
-    TORCH_CHECK(self.defined(), "cannot call tensor_data() on undefined tensor");
+    XSIGMA_CHECK(self.defined(), "cannot call tensor_data() on undefined tensor");
     auto self_impl_copy = self.unsafeGetTensorImpl()->shallow_copy_and_detach(
         /*version_counter=*/self.unsafeGetTensorImpl()->version_counter(),
         /*allow_tensor_metadata_change=*/
         self.unsafeGetTensorImpl()->allow_tensor_metadata_change());
-    return at::Tensor(self_impl_copy);
+    return xsigma::Tensor(self_impl_copy);
 }
 
-bool VariableHooks::is_leaf(const at::TensorBase& self) const
+bool VariableHooks::is_leaf(const xsigma::TensorBase& self) const
 {
     if (impl::get_autograd_meta(self))
     {
@@ -508,7 +509,7 @@ bool VariableHooks::is_leaf(const at::TensorBase& self) const
     }
 }
 
-int64_t VariableHooks::output_nr(const at::TensorBase& self) const
+int64_t VariableHooks::output_nr(const xsigma::TensorBase& self) const
 {
     if (impl::get_autograd_meta(self))
     {
@@ -521,23 +522,24 @@ int64_t VariableHooks::output_nr(const at::TensorBase& self) const
 }
 
 void VariableHooks::set_data(
-    const at::TensorBase& self_base, const at::TensorBase& new_data_base) const
+    const xsigma::TensorBase& self_base, const xsigma::TensorBase& new_data_base) const
 {
-    at::OptionalTensorRef self_ref(self_base);
-    const Tensor&         self = *self_ref;
-    at::OptionalTensorRef new_data_ref(new_data_base);
-    const Tensor&         new_data = *new_data_ref;
+    xsigma::OptionalTensorRef self_ref(self_base);
+    const Tensor&             self = *self_ref;
+    xsigma::OptionalTensorRef new_data_ref(new_data_base);
+    const Tensor&             new_data = *new_data_ref;
 
     // `var.set_data(new_data)` shallow-copies all non-autograd TensorImpl fields
     // from `new_data` to `var`. It requires that `new_data` and `var` have
     // compatible tensor type.
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         _has_compatible_shallow_copy_type(self, new_data),
         "Attempted to call `variable.set_data(tensor)`, but `variable` and `tensor` have "
         "incompatible tensor type.");
 
-    TORCH_CHECK(
-        !self.requires_grad() || isDifferentiableType(at::typeMetaToScalarType(new_data.dtype())),
+    XSIGMA_CHECK(
+        !self.requires_grad() ||
+            isDifferentiableType(xsigma::typeMetaToScalarType(new_data.dtype())),
         "data set to a tensor that requires gradients must be floating point or complex dtype");
 
     // Resets gradient accumulator if metadata is out of date
@@ -570,22 +572,22 @@ void VariableHooks::set_data(
     self.unsafeGetTensorImpl()->shallow_copy_from(new_data.getIntrusivePtr());
 }
 
-at::TensorBase VariableHooks::data(const at::TensorBase& self) const
+xsigma::TensorBase VariableHooks::data(const xsigma::TensorBase& self) const
 {
     return self.variable_data();
 }
 
-int64_t VariableHooks::_version(const at::TensorBase& self) const
+int64_t VariableHooks::_version(const xsigma::TensorBase& self) const
 {
     return self.unsafeGetTensorImpl()->version_counter().current_version();
 }
 
-void VariableHooks::retain_grad(const at::TensorBase& self) const
+void VariableHooks::retain_grad(const xsigma::TensorBase& self) const
 {
-    TORCH_CHECK(self.requires_grad(), "can't retain_grad on Tensor that has requires_grad=False");
+    XSIGMA_CHECK(self.requires_grad(), "can't retain_grad on Tensor that has requires_grad=False");
 
     // temporary hack to improve functorch UX.
-    const auto& functorch_tls = at::functorch::functorchTLSAccessor();
+    const auto& functorch_tls = xsigma::functorch::functorchTLSAccessor();
     if (functorch_tls)
     {
         functorch_tls->checkSupportsRetainGrad();
@@ -599,11 +601,11 @@ void VariableHooks::retain_grad(const at::TensorBase& self) const
     {
         return;
     }
-    c10::weak_intrusive_ptr<c10::TensorImpl> weak_self(self.getIntrusivePtr());
+    xsigma::weak_intrusive_ptr<xsigma::TensorImpl> weak_self(self.getIntrusivePtr());
 
-    auto retain_grad_hook = [weak_self](const at::TensorBase& grad_base)
+    auto retain_grad_hook = [weak_self](const xsigma::TensorBase& grad_base)
     {
-        at::Tensor grad{grad_base};
+        xsigma::Tensor grad{grad_base};
         if (!weak_self.expired() && grad.defined())
         {
             auto var = weak_self.lock();
@@ -615,7 +617,7 @@ void VariableHooks::retain_grad(const at::TensorBase& self) const
                 }
                 else
                 {
-                    var->mutable_grad() = grad.clone(at::MemoryFormat::Contiguous);
+                    var->mutable_grad() = grad.clone(xsigma::MemoryFormat::Contiguous);
                 }
             }
             else
@@ -623,7 +625,7 @@ void VariableHooks::retain_grad(const at::TensorBase& self) const
                 var->mutable_grad() = var->grad() + grad;
             }
         }
-        return at::TensorBase{};
+        return xsigma::TensorBase{};
     };
 
     const auto& fn = self.grad_fn();
@@ -634,7 +636,7 @@ void VariableHooks::retain_grad(const at::TensorBase& self) const
     impl::get_autograd_meta(self)->retains_grad_ = true;
 }
 
-bool VariableHooks::retains_grad(const at::TensorBase& self) const
+bool VariableHooks::retains_grad(const xsigma::TensorBase& self) const
 {
     if (impl::get_autograd_meta(self))
     {
@@ -648,7 +650,7 @@ bool VariableHooks::retains_grad(const at::TensorBase& self) const
 
 void VariableHooks::_backward(
     const Tensor&                self,
-    at::TensorList               inputs,
+    xsigma::TensorList           inputs,
     const std::optional<Tensor>& gradient,
     std::optional<bool>          keep_graph,
     bool                         create_graph) const
@@ -661,9 +663,9 @@ void VariableHooks::_backward(
     torch::autograd::backward({self}, {std::move(_gradient)}, keep_graph, create_graph, input_vars);
 }
 
-void VariableHooks::requires_grad_(const at::TensorBase& self, bool _requires_grad) const
+void VariableHooks::requires_grad_(const xsigma::TensorBase& self, bool _requires_grad) const
 {
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         self.is_leaf() || _requires_grad,
         autograd::utils::requires_grad_leaf_error(_requires_grad));
     self.set_requires_grad(_requires_grad);
@@ -672,7 +674,7 @@ void VariableHooks::requires_grad_(const at::TensorBase& self, bool _requires_gr
 // Backward View Variables
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-bool VariableHooks::is_view(const at::TensorBase& self) const
+bool VariableHooks::is_view(const xsigma::TensorBase& self) const
 {
     auto diff_view_meta = torch::autograd::impl::get_view_autograd_meta(self);
     if (diff_view_meta)
@@ -685,17 +687,17 @@ bool VariableHooks::is_view(const at::TensorBase& self) const
     }
 }
 
-const at::TensorBase& VariableHooks::base(const at::TensorBase& self) const
+const xsigma::TensorBase& VariableHooks::base(const xsigma::TensorBase& self) const
 {
     auto diff_view_meta = torch::autograd::impl::get_view_autograd_meta(self);
     if (diff_view_meta)
     {
-        TORCH_CHECK(diff_view_meta->has_bw_view(), "Can't get base of non-backward view Tensor");
+        XSIGMA_CHECK(diff_view_meta->has_bw_view(), "Can't get base of non-backward view Tensor");
         return diff_view_meta->get_backward_view().base_;
     }
     else
     {
-        TORCH_CHECK(false, "Can't get base of non-view Tensor");
+        XSIGMA_CHECK(false, "Can't get base of non-view Tensor");
     }
 }
 
@@ -704,9 +706,9 @@ namespace
 std::string singleton_string;
 }
 
-const std::string& VariableHooks::name(const at::TensorBase& self) const
+const std::string& VariableHooks::name(const xsigma::TensorBase& self) const
 {
-    TORCH_CHECK(self.defined(), "cannot call variable_data() on undefined tensor");
+    XSIGMA_CHECK(self.defined(), "cannot call variable_data() on undefined tensor");
     if (torch::autograd::impl::get_autograd_meta(self))
     {
         return torch::autograd::impl::get_autograd_meta(self)->name_;
@@ -723,7 +725,7 @@ std::shared_ptr<torch::autograd::Node> singleton_shared_ptr;
 }
 
 const std::shared_ptr<torch::autograd::Node>& VariableHooks::grad_fn(
-    const at::TensorBase& self) const
+    const xsigma::TensorBase& self) const
 {
     auto diff_view_meta = torch::autograd::impl::get_view_autograd_meta(self);
     if (diff_view_meta && diff_view_meta->has_bw_view())
@@ -785,7 +787,7 @@ const std::shared_ptr<torch::autograd::Node>& VariableHooks::grad_fn(
             else
             {
                 auto fn = std::make_shared<torch::autograd::generated::AsStridedBackward0>();
-                fn->self_geometry  = at::TensorGeometry(view_info.base_);
+                fn->self_geometry  = xsigma::TensorGeometry(view_info.base_);
                 fn->size           = self.sym_sizes().vec();
                 fn->stride         = self.sym_strides().vec();
                 fn->storage_offset = self.sym_storage_offset();
@@ -817,18 +819,19 @@ const std::shared_ptr<torch::autograd::Node>& VariableHooks::grad_fn(
     }
 }
 
-void VariableHooks::remove_hook(const at::TensorBase& self, unsigned pos) const
+void VariableHooks::remove_hook(const xsigma::TensorBase& self, unsigned pos) const
 {
     auto& list = torch::autograd::impl::materialize_autograd_meta(self)->cpp_hooks_list_;
-    TORCH_CHECK(list && pos < list->size(), "Invalid index, no hook at position ", pos);
+    XSIGMA_CHECK(list && pos < list->size(), "Invalid index, no hook xsigma position ", pos);
     // Hook will be ignored
     (*list)[pos] = nullptr;
 }
 
 unsigned VariableHooks::_register_hook(
-    const at::TensorBase& self, std::function<at::TensorBase(const at::TensorBase&)> hook) const
+    const xsigma::TensorBase&                                    self,
+    std::function<xsigma::TensorBase(const xsigma::TensorBase&)> hook) const
 {
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         self.requires_grad(),
         "cannot register a hook on a variable that "
         "doesn't require gradient");
@@ -868,7 +871,7 @@ void handle_view_on_rebase(DifferentiableViewMeta* diff_view_meta, bool indirect
             std::string prefix;
             if (grad_fn)
             {
-                prefix = c10::str(
+                prefix = xsigma::str(
                     "Output ",
                     diff_view_meta->output_nr_,
                     " of ",
@@ -881,7 +884,7 @@ void handle_view_on_rebase(DifferentiableViewMeta* diff_view_meta, bool indirect
             }
             if (creation_meta == CreationMeta::INFERENCE_MODE)
             {
-                msg = c10::str(
+                msg = xsigma::str(
                     prefix,
                     " inference mode and ",
                     modified_obj,
@@ -893,7 +896,7 @@ void handle_view_on_rebase(DifferentiableViewMeta* diff_view_meta, bool indirect
                 // e.g. CreationMeta::IN_CUSTOM_FUNCTION is possible, but we know that
                 // if there is no grad_fn, that means that the view was performed in
                 // no-grad mode
-                msg = c10::str(
+                msg = xsigma::str(
                     prefix,
                     " no_grad mode and ",
                     modified_obj,
@@ -902,7 +905,7 @@ void handle_view_on_rebase(DifferentiableViewMeta* diff_view_meta, bool indirect
         }
         else
         {
-            msg = c10::str(
+            msg = xsigma::str(
                 "Output ",
                 diff_view_meta->output_nr_,
                 " of ",
@@ -914,7 +917,7 @@ void handle_view_on_rebase(DifferentiableViewMeta* diff_view_meta, bool indirect
 
         if (creation_meta == CreationMeta::MULTI_OUTPUT_NODE)
         {
-            msg = c10::str(
+            msg = xsigma::str(
                 msg,
                 " This view is the output of a function that returns multiple views. Such "
                 "functions do not"
@@ -924,7 +927,7 @@ void handle_view_on_rebase(DifferentiableViewMeta* diff_view_meta, bool indirect
         }
         else if (creation_meta == CreationMeta::NO_GRAD_MODE)
         {
-            msg = c10::str(
+            msg = xsigma::str(
                 msg,
                 " Given that this use case is ambiguous and error-prone, it is forbidden."
                 " You can clarify your code by moving both the view and the inplace either both"
@@ -934,7 +937,7 @@ void handle_view_on_rebase(DifferentiableViewMeta* diff_view_meta, bool indirect
         }
         else if (creation_meta == CreationMeta::INFERENCE_MODE)
         {
-            msg = c10::str(
+            msg = xsigma::str(
                 msg,
                 " Given that this use case is ambiguous and error-prone, it is forbidden."
                 " You can clarify your code by moving both the view and the inplace either both"
@@ -944,7 +947,7 @@ void handle_view_on_rebase(DifferentiableViewMeta* diff_view_meta, bool indirect
         }
         else if (creation_meta == CreationMeta::IN_CUSTOM_FUNCTION)
         {
-            msg = c10::str(
+            msg = xsigma::str(
                 msg,
                 " This view was created inside a custom Function (or because an input was returned "
                 "as-is) and the"
@@ -959,11 +962,11 @@ void handle_view_on_rebase(DifferentiableViewMeta* diff_view_meta, bool indirect
             TORCH_INTERNAL_ASSERT(false, "Invalid CreationMeta state");
         }
 
-        TORCH_CHECK(false, msg);
+        XSIGMA_CHECK(false, msg);
     }
 }
 
-std::vector<c10::SymInt> ChainedViewFunc::get_symints() const
+std::vector<xsigma::SymInt> ChainedViewFunc::get_symints() const
 {
     auto symints        = first->get_symints();
     auto second_symints = second->get_symints();
@@ -975,7 +978,7 @@ std::vector<c10::SymInt> ChainedViewFunc::get_symints() const
     return symints;
 }
 
-std::vector<at::Tensor> ChainedViewFunc::get_tensors() const
+std::vector<xsigma::Tensor> ChainedViewFunc::get_tensors() const
 {
     auto tensors        = first->get_tensors();
     auto second_tensors = second->get_tensors();
@@ -987,34 +990,34 @@ std::vector<at::Tensor> ChainedViewFunc::get_tensors() const
     return tensors;
 }
 
-at::Tensor ChainedViewFunc::operator()(const at::Tensor& input_base) const
+xsigma::Tensor ChainedViewFunc::operator()(const xsigma::Tensor& input_base) const
 {
     return (*second)((*first)(input_base));
 }
 
 std::unique_ptr<ViewFunc> ChainedViewFunc::clone_and_set(
-    std::optional<std::vector<c10::SymInt>> symints,
-    std::optional<std::vector<at::Tensor>>  tensors) const
+    std::optional<std::vector<xsigma::SymInt>> symints,
+    std::optional<std::vector<xsigma::Tensor>> tensors) const
 {
-    std::optional<std::vector<c10::SymInt>> first_symints;
-    std::optional<std::vector<c10::SymInt>> second_symints;
+    std::optional<std::vector<xsigma::SymInt>> first_symints;
+    std::optional<std::vector<xsigma::SymInt>> second_symints;
     if (symints.has_value())
     {
         TORCH_INTERNAL_ASSERT(symints->size() == num_symints());
-        first_symints = std::vector<c10::SymInt>(
+        first_symints = std::vector<xsigma::SymInt>(
             symints->begin(), symints->begin() + static_cast<std::ptrdiff_t>(first->num_symints()));
-        second_symints = std::vector<c10::SymInt>(
+        second_symints = std::vector<xsigma::SymInt>(
             symints->begin() + static_cast<std::ptrdiff_t>(first->num_symints()), symints->end());
     }
 
-    std::optional<std::vector<at::Tensor>> first_tensors;
-    std::optional<std::vector<at::Tensor>> second_tensors;
+    std::optional<std::vector<xsigma::Tensor>> first_tensors;
+    std::optional<std::vector<xsigma::Tensor>> second_tensors;
     if (tensors.has_value())
     {
         TORCH_INTERNAL_ASSERT(tensors->size() == num_tensors());
-        first_tensors = std::vector<at::Tensor>(
+        first_tensors = std::vector<xsigma::Tensor>(
             tensors->begin(), tensors->begin() + static_cast<std::ptrdiff_t>(first->num_tensors()));
-        second_tensors = std::vector<at::Tensor>(
+        second_tensors = std::vector<xsigma::Tensor>(
             tensors->begin() + static_cast<std::ptrdiff_t>(first->num_tensors()), tensors->end());
     }
 
@@ -1023,7 +1026,7 @@ std::unique_ptr<ViewFunc> ChainedViewFunc::clone_and_set(
         second->clone_and_set(second_symints, second_tensors));
 }
 
-std::optional<c10::ScalarType> VariableHooks::grad_dtype(const at::TensorBase& self) const
+std::optional<xsigma::ScalarType> VariableHooks::grad_dtype(const xsigma::TensorBase& self) const
 {
     if (auto* meta = impl::get_autograd_meta(self))
     {
@@ -1033,13 +1036,13 @@ std::optional<c10::ScalarType> VariableHooks::grad_dtype(const at::TensorBase& s
 }
 
 void VariableHooks::set_grad_dtype(
-    const at::TensorBase& self, const std::optional<c10::ScalarType>& grad_dtype) const
+    const xsigma::TensorBase& self, const std::optional<xsigma::ScalarType>& grad_dtype) const
 {
     auto* meta = impl::materialize_autograd_meta(self);
     meta->set_grad_dtype(grad_dtype, self);
 }
 
-std::optional<at::ScalarType> AutogradMeta::grad_dtype(const at::TensorBase& self) const
+std::optional<xsigma::ScalarType> AutogradMeta::grad_dtype(const xsigma::TensorBase& self) const
 {
     if (allow_grad_dtype_mismatch_)
     {
@@ -1051,13 +1054,13 @@ std::optional<at::ScalarType> AutogradMeta::grad_dtype(const at::TensorBase& sel
     }
     else
     {
-        return std::optional<at::ScalarType>(self.scalar_type());
+        return std::optional<xsigma::ScalarType>(self.scalar_type());
     }
 }
 void AutogradMeta::set_grad_dtype(
-    const std::optional<at::ScalarType>& grad_dtype, const at::TensorBase& self)
+    const std::optional<xsigma::ScalarType>& grad_dtype, const xsigma::TensorBase& self)
 {
-    TORCH_CHECK(!grad_fn_, "grad_dtype can only be set on leaf tensors.");
+    XSIGMA_CHECK(!grad_fn_, "grad_dtype can only be set on leaf tensors.");
     if (grad_dtype.has_value())
     {
         grad_dtype_                = grad_dtype;

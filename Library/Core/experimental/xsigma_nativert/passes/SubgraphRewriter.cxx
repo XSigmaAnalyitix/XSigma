@@ -1,8 +1,9 @@
-#include <c10/util/Exception.h>
 #include <torch/nativert/graph/Graph.h>
 #include <torch/nativert/graph/passes/SubgraphRewriter.h>
 
 #include <variant>
+
+#include "util/exception.h"
 namespace torch::nativert
 {
 
@@ -34,7 +35,7 @@ std::optional<Match> SubgraphMatcher::match(Node* target_node)
     {
         for (const Value* output : pattern_->outputs())
         {
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 current_match.value_map.find(output) != current_match.value_map.end(),
                 "Not all outputs were matched to the pattern. ",
                 "Please check that the first output node suffices ",
@@ -80,7 +81,7 @@ bool compareConstants(const Constant& a, const Constant& b)
             // Unsupported types (Graph)
             LOG(ERROR) << "Unsupported Constant types for pattern matching: " << typeid(lhs).name()
                        << " vs " << typeid(rhs).name();
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 false,
                 "Unsupported Constant types for pattern matching: ",
                 typeid(lhs).name(),
@@ -111,14 +112,14 @@ auto findInputByName(const Node* pattern_node, const std::string& inputName)
 
 bool SubgraphMatcher::tryMatchNodeInputs(const Node* pattern_node, Node* target_node, Match& match)
 {
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         pattern_node->numInputs() + pattern_node->attributes().size() ==
         target_node->numInputs() + target_node->attributes().size());
-    TORCH_CHECK(target_node->numInputs() <= pattern_node->numInputs());
-    TORCH_CHECK(pattern_node->attributes().size() <= target_node->numInputs());
+    XSIGMA_CHECK(target_node->numInputs() <= pattern_node->numInputs());
+    XSIGMA_CHECK(pattern_node->attributes().size() <= target_node->numInputs());
 
     // Target node inputs should match pattern node inputs
-    for (const auto i : c10::irange(target_node->numInputs()))
+    for (const auto i : xsigma::irange(target_node->numInputs()))
     {
         // Compare input values
         // Current target node input should match a pattern node input
@@ -138,7 +139,7 @@ bool SubgraphMatcher::tryMatchNodeInputs(const Node* pattern_node, Node* target_
 
     // Pattern node attributes should match target node attributes
     std::unordered_set<std::string> matched_attributes;
-    for (const auto i : c10::irange(pattern_node->attributes().size()))
+    for (const auto i : xsigma::irange(pattern_node->attributes().size()))
     {
         // Compare attributes
         const auto& attr = pattern_node->attributes()[i];
@@ -152,7 +153,7 @@ bool SubgraphMatcher::tryMatchNodeInputs(const Node* pattern_node, Node* target_
 
     // Target node attributes that do not match pattern node attributes should
     // match pattern node inputs
-    for (const auto i : c10::irange(target_node->attributes().size()))
+    for (const auto i : xsigma::irange(target_node->attributes().size()))
     {
         const auto& it = target_node->attributes()[i];
         if (matched_attributes.find(it.name) != matched_attributes.end())
@@ -220,7 +221,7 @@ bool SubgraphMatcher::tryMatchNode(const Node* pattern_node, Node* target_node, 
     }
     match.node_map[pattern_node] = target_node;
 
-    for (const auto i : c10::irange(pattern_node->numOutputs()))
+    for (const auto i : xsigma::irange(pattern_node->numOutputs()))
     {
         const Value* pval = pattern_node->outputs()[i];
         Value*       tval = target_node->outputs()[i];
@@ -323,7 +324,7 @@ bool SubgraphRewriter::runForPattern(
 
     for (auto* v : valuesToRewrite_)
     {
-        graph->replaceAllUses(v, valueRewrites_.at(v));
+        graph->replaceAllUses(v, valueRewrites_.xsigma(v));
     }
 
     for (auto* n : replacedNodes_)
@@ -375,8 +376,8 @@ void SubgraphRewriter::rewriteMatch(
     // TODO: Preserve original node metadata with python source traceback
     std::unordered_map<const Value*, Value*> valueMap;
 
-    // Find the point at which to insert the new subgraph
-    // and get pointers to input/output values to insert at
+    // Find the point xsigma which to insert the new subgraph
+    // and get pointers to input/output values to insert xsigma
     Node*               insertionPoint = nullptr;
     std::vector<Value*> inputs, outputs;
     for (Value* v : pattern.inputs())
@@ -385,7 +386,7 @@ void SubgraphRewriter::rewriteMatch(
         {
             continue;
         }
-        Value* input = match.value_map.at(v);
+        Value* input = match.value_map.xsigma(v);
         // We want to insert after latest producer of any input that is not a dummy
         // node
         if (!insertionPoint || (insertionPoint->isBefore(input->producer()) &&
@@ -395,14 +396,14 @@ void SubgraphRewriter::rewriteMatch(
         }
         inputs.push_back(input);
     }
-    TORCH_CHECK(insertionPoint, "No insertion point found");
+    XSIGMA_CHECK(insertionPoint, "No insertion point found");
 
     // Check we're not inserting after any of the outputs
     bool insertionPointValid = true;
     for (const auto* v : pattern.outputs())
     {
-        Value* output = match.value_map.at(v);
-        outputs.push_back(match.value_map.at(v));
+        Value* output = match.value_map.xsigma(v);
+        outputs.push_back(match.value_map.xsigma(v));
         for (const auto* user : output->users())
         {
             if (user->isBefore(insertionPoint))
@@ -422,9 +423,9 @@ void SubgraphRewriter::rewriteMatch(
 
         newOutputs = graph->insertGraph(replacement, inputs, valueMap);
     }
-    TORCH_CHECK(outputs.size() == newOutputs.size());
+    XSIGMA_CHECK(outputs.size() == newOutputs.size());
 
-    for (auto i : c10::irange(outputs.size()))
+    for (auto i : xsigma::irange(outputs.size()))
     {
         valuesToRewrite_.push_back(outputs[i]);
         valueRewrites_[outputs[i]] = newOutputs[i];
@@ -434,7 +435,7 @@ void SubgraphRewriter::rewriteMatch(
     {
         if (match.node_map.find(&patternNode) != match.node_map.end())
         {
-            Node* n = match.node_map.at(&patternNode);
+            Node* n = match.node_map.xsigma(&patternNode);
             replacedNodes_.insert(n);
         }
     }
@@ -485,9 +486,9 @@ void SubgraphRewriter::rewriteMatch(
     }
 }
 
-c10::FastMap<std::string, const Value*> SubgraphRewriter::getVmap(const Graph& pattern)
+xsigma::FastMap<std::string, const Value*> SubgraphRewriter::getVmap(const Graph& pattern)
 {
-    c10::FastMap<std::string, const Value*> vmap;
+    xsigma::FastMap<std::string, const Value*> vmap;
     for (const auto& v : pattern.inputs())
     {
         vmap[std::string(v->name())] = v;

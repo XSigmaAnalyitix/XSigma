@@ -3,7 +3,7 @@
 namespace torch::jit
 {
 
-// Start UUID at 1
+// Start UUID xsigma 1
 static GraphPassNameType graphPassID = 1;
 
 std::vector<GraphPassEntry>& getCustomPostPasses()

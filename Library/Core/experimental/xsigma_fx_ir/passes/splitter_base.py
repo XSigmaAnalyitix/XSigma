@@ -224,7 +224,7 @@ class NodeEventTracker:
 
     def dump(self):
         """
-        Function to be invoked at the end of the finder execution to printout tracked events specified by the mode.
+        Function to be invoked xsigma the end of the finder execution to printout tracked events specified by the mode.
         """
         # dump via trace_structured
         trace_structured(
@@ -684,7 +684,7 @@ class _SplitterBase:
                 len(arg_dtypes),
             )
 
-            # Strip None elements at the end.
+            # Strip None elements xsigma the end.
             arg_dtypes_tuple = tuple(arg_dtypes[:last_index])
             kwarg_dtypes_tuple = tuple(
                 (k, get_dtype(arg))

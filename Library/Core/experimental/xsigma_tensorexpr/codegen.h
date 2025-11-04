@@ -26,7 +26,7 @@ public:
     CodeGen(
         StmtPtr                stmt,
         std::vector<BufferArg> buffer_args,
-        at::Device             device           = at::kCPU,
+        xsigma::Device         device           = xsigma::kCPU,
         std::string            kernel_func_name = "func");
 
     virtual ~CodeGen() = default;
@@ -43,7 +43,7 @@ public:
 
     const std::vector<BufferArg>& buffer_args() const { return buffer_args_; }
 
-    at::Device device() { return device_; }
+    xsigma::Device device() { return device_; }
 
     // This function returns the generated code as
     // a string.
@@ -65,15 +65,16 @@ public:
     /// a simple division, rather than evaluating an expression.
     virtual void call_with_numel(void** args, int64_t numel);
 
-    virtual at::Tensor empty_strided(
-        c10::IntArrayRef               size,
-        c10::IntArrayRef               stride,
-        std::optional<c10::ScalarType> dtype_opt,
-        std::optional<c10::Layout>     layout_opt,
-        std::optional<c10::Device>     device_opt,
-        std::optional<bool>            pin_memory_opt)
+    virtual xsigma::Tensor empty_strided(
+        xsigma::IntArrayRef               size,
+        xsigma::IntArrayRef               stride,
+        std::optional<xsigma::ScalarType> dtype_opt,
+        std::optional<xsigma::Layout>     layout_opt,
+        std::optional<xsigma::Device>     device_opt,
+        std::optional<bool>               pin_memory_opt)
     {
-        return at::empty_strided(size, stride, dtype_opt, layout_opt, device_opt, pin_memory_opt);
+        return xsigma::empty_strided(
+            size, stride, dtype_opt, layout_opt, device_opt, pin_memory_opt);
     }
 
     const std::string& kernel_func_name() const { return kernel_func_name_; }
@@ -86,7 +87,7 @@ protected:
 private:
     StmtPtr                stmt_;
     std::vector<BufferArg> buffer_args_;
-    at::Device             device_           = at::kCPU;
+    xsigma::Device         device_           = xsigma::kCPU;
     std::string            kernel_func_name_ = "func";
 };
 
@@ -208,7 +209,7 @@ public:
     using StmtFactoryMethod = std::function<std::unique_ptr<CodeGen>(
         StmtPtr stmt,
         const std::vector<CodeGen::BufferArg>&,
-        at::Device         device,
+        xsigma::Device     device,
         const std::string& kernel_func_name)>;
 
     TORCH_API StmtFactoryMethod FindStmtFactoryMethod(const std::string& name);
@@ -236,7 +237,7 @@ public:
             name,
             [](const StmtPtr&                         stmt,
                const std::vector<CodeGen::BufferArg>& params,
-               at::Device                             device,
+               xsigma::Device                         device,
                const std::string&                     kernel_func_name)
             { return std::make_unique<CodeGenType>(stmt, params, device, kernel_func_name); });
     }
@@ -246,7 +247,7 @@ TORCH_API std::unique_ptr<CodeGen> CreateCodeGen(
     const std::string&                     name,
     StmtPtr                                stmt,
     const std::vector<CodeGen::BufferArg>& params,
-    at::Device                             device           = at::kCPU,
+    xsigma::Device                         device           = xsigma::kCPU,
     const std::string&                     kernel_func_name = "func");
 
 class TORCH_API GenericIntrinsicsExpander : public IRMutator

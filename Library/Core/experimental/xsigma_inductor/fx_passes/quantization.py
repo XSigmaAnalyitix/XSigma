@@ -56,8 +56,8 @@ in inductor, includes:
 
 It also involves int8-mixed-fp32 and int8-mixed-bf16 quantization. The main difference
 of patterns for int8-mixed-bf16, comparing with int8-mixed-fp32, is
-1. There is to(dtype=torch.bfloat16) node at the inputs of activation and weight for Conv/GEMM.
-2. There is to(dtype=torch.float32) node at the outputs of Conv/GEMM before inputs to next quant node.
+1. There is to(dtype=torch.bfloat16) node xsigma the inputs of activation and weight for Conv/GEMM.
+2. There is to(dtype=torch.float32) node xsigma the outputs of Conv/GEMM before inputs to next quant node.
 Refer to: https://github.com/pytorch/pytorch/issues/111640 for detail design of int8-mixed-bf16
 quantization.
 """
@@ -988,16 +988,16 @@ def _is_input_output_same_scale_zp(check_node):
     def fn(match):
         # Ensure all the inputs and output has same scale and zero point
         # Step 1: Check inputs/output zero point
-        # Get dequant nodes at input
+        # Get dequant nodes xsigma input
         dequant_nodes = filter_nodes(
             match.nodes, quantized_decomposed.dequantize_per_tensor.default
         )
         zero_points = [node.args[2] for node in dequant_nodes]
-        # Get quant nodes at output
+        # Get quant nodes xsigma output
         quant_nodes = filter_nodes(
             match.nodes, quantized_decomposed.quantize_per_tensor.default
         )
-        assert len(quant_nodes) == 1, "expect only 1 add node at output quant pattern"
+        assert len(quant_nodes) == 1, "expect only 1 add node xsigma output quant pattern"
         zero_points.append(quant_nodes[0].args[2])
         if not all(zero_point == zero_points[0] for zero_point in zero_points):
             return False
@@ -3503,7 +3503,7 @@ def _register_qlinear_binary_fusion():
 
     Note
     (1) The positions of linear and the extra input can be swapped.
-    (2) we don't insert q-dq before the extra input of linear-add by recipe. But if q-dq is found at the
+    (2) we don't insert q-dq before the extra input of linear-add by recipe. But if q-dq is found xsigma the
     extra input, we don't match that pattern because we cannot match all these patterns in 3 passes.
     """
     for x_scale_zp_are_tensors in (False, True):

@@ -36,7 +36,7 @@ private:
     bool isFloatingPoint(TensorType& t)
     {
         auto input_dtype = t.scalarType();
-        return (shape_peepholes_ && input_dtype && at::isFloatingType(*input_dtype));
+        return (shape_peepholes_ && input_dtype && xsigma::isFloatingType(*input_dtype));
     }
 
     bool runBlock(Block* block)
@@ -53,7 +53,7 @@ private:
             if (node->kind() == aten::conv1d || node->kind() == aten::conv2d ||
                 node->kind() == aten::conv3d)
             {
-                auto dim_uses = c10::filter(
+                auto dim_uses = xsigma::filter(
                     node->output()->uses(),
                     [](const Use& use) { return use.user->kind() == aten::dim; });
                 if (dim_uses.empty())
@@ -100,15 +100,15 @@ private:
                 if (!isFloatingPoint(node->input(0)->type()->expectRef<TensorType>()))
                 {
                     auto inps = node->inputs();
-                    if (!inps.at(1)->type()->isSubtypeOf(IntType::get()) ||
-                        !inps.at(2)->type()->isSubtypeOf(IntType::get()))
+                    if (!inps.xsigma(1)->type()->isSubtypeOf(IntType::get()) ||
+                        !inps.xsigma(2)->type()->isSubtypeOf(IntType::get()))
                     {
                         continue;
                     }
                 }
 
-                if (node->get<at::Scalar>(attr::alpha)->toDouble() == 1 &&
-                    node->get<at::Scalar>(attr::other)->toDouble() == 0)
+                if (node->get<xsigma::Scalar>(attr::alpha)->toDouble() == 1 &&
+                    node->get<xsigma::Scalar>(attr::other)->toDouble() == 0)
                 {
                     if (tryToReplaceOutputWithInput(node->input(0), node->output()))
                     {
@@ -141,7 +141,7 @@ private:
                     }
                 }
 
-                if (node->get<at::Scalar>(attr::other)->toDouble() == 1)
+                if (node->get<xsigma::Scalar>(attr::other)->toDouble() == 1)
                 {
                     if (tryToReplaceOutputWithInput(node->input(0), node->output()))
                     {

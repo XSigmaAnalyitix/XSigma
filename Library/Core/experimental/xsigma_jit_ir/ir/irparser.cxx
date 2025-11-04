@@ -87,16 +87,16 @@ struct ParsedLiteral
 
     AttributeKind k = AttributeKind::t;
 
-    int64_t                           i = 0;
-    std::string                       s;
-    double                            f = 0.0;
-    c10::complex<double>              c = c10::complex<double>(0, 0);
-    TypePtr                           ty;
-    std::vector<int64_t>              is;
-    std::vector<std::string>          ss;
-    std::vector<double>               fs;
-    std::vector<c10::complex<double>> cs;
-    std::vector<TypePtr>              tys;
+    int64_t                              i = 0;
+    std::string                          s;
+    double                               f = 0.0;
+    xsigma::complex<double>              c = xsigma::complex<double>(0, 0);
+    TypePtr                              ty;
+    std::vector<int64_t>                 is;
+    std::vector<std::string>             ss;
+    std::vector<double>                  fs;
+    std::vector<xsigma::complex<double>> cs;
+    std::vector<TypePtr>                 tys;
 };
 
 struct VarWithType
@@ -185,10 +185,10 @@ void IRParser::parseOperatorOutputs(std::vector<VarWithType>* outs)
 // Parse string or numeric literal and return it along with its type.
 ParsedLiteral IRParser::parseScalarLiteral(Node* n)
 {
-    auto                                              token = L.cur();
-    std::string                                       str;
-    std::pair<TypePtr, std::optional<c10::AliasInfo>> type_alias;
-    ParsedLiteral                                     r;
+    auto                                                 token = L.cur();
+    std::string                                          str;
+    std::pair<TypePtr, std::optional<xsigma::AliasInfo>> type_alias;
+    ParsedLiteral                                        r;
     switch (token.kind)
     {
     case TK_STRINGLITERAL:
@@ -225,7 +225,7 @@ ParsedLiteral IRParser::parseScalarLiteral(Node* n)
                     ErrorReport(token.range)
                     << "Number is too long to be represented in type double");
             }
-            r.c = c10::complex<double>(0, imag);
+            r.c = xsigma::complex<double>(0, imag);
         }
         else if (str.find('.') != std::string::npos || str.find('e') != std::string::npos)
         {
@@ -318,13 +318,13 @@ ParsedLiteral IRParser::parseScalarLiteral(Node* n)
         switch (number.k)
         {
         case AttributeKind::i:
-            n->ival_(attr::value, c10::Scalar(number.i));
+            n->ival_(attr::value, xsigma::Scalar(number.i));
             break;
         case AttributeKind::f:
-            n->ival_(attr::value, c10::Scalar(number.f));
+            n->ival_(attr::value, xsigma::Scalar(number.f));
             break;
         case AttributeKind::c:
-            n->ival_(attr::value, c10::Scalar(number.c));
+            n->ival_(attr::value, xsigma::Scalar(number.c));
             break;
         default:
             throw(
@@ -375,13 +375,13 @@ void IRParser::parseAttr(Node* n)
     if (L.cur().kind == '[')
     {
         // list
-        AttributeKind                   k = AttributeKind::ts;
-        c10::List<int64_t>              is;
-        c10::List<std::string>          ss;
-        c10::List<double>               fs;
-        c10::List<c10::complex<double>> cs;
-        std::vector<TypePtr>            tys;
-        int                             elem_num = 0;
+        AttributeKind                         k = AttributeKind::ts;
+        xsigma::List<int64_t>                 is;
+        xsigma::List<std::string>             ss;
+        xsigma::List<double>                  fs;
+        xsigma::List<xsigma::complex<double>> cs;
+        std::vector<TypePtr>                  tys;
+        int                                   elem_num = 0;
         parseList(
             '[',
             ',',
@@ -503,7 +503,7 @@ void IRParser::parseAttr(Node* n)
                     {
                         throw(
                             ErrorReport(L.cur().range)
-                            << "Only cpu device is supported for Generator at this time.");
+                            << "Only cpu device is supported for Generator xsigma this time.");
                     }
                     device = r.s;
                 }
@@ -536,11 +536,11 @@ void IRParser::parseAttr(Node* n)
             {
                 if (seed.has_value())
                 {
-                    n->ival_(Symbol::attr(attrname), at::detail::createCPUGenerator(*seed));
+                    n->ival_(Symbol::attr(attrname), xsigma::detail::createCPUGenerator(*seed));
                 }
                 else
                 {
-                    n->ival_(Symbol::attr(attrname), at::detail::createCPUGenerator());
+                    n->ival_(Symbol::attr(attrname), xsigma::detail::createCPUGenerator());
                 }
             }
         }
@@ -721,14 +721,14 @@ void IRParser::parseOperator(Block* b)
         vmap[v.name] = n->outputs()[idx];
         if (schema && !schema->is_varret())
         {
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 schema->returns().size() > idx,
-                "Operator parsing error: out of bounds access at ",
+                "Operator parsing error: out of bounds access xsigma ",
                 idx,
                 " to schema->returns() which size is ",
                 schema->returns().size(),
                 " in size");
-            auto schema_return_type = schema->returns().at(idx).type();
+            auto schema_return_type = schema->returns().xsigma(idx).type();
             if (!v.type)
             {
                 vmap[v.name]->setType(schema_return_type);
@@ -847,9 +847,9 @@ void IRParser::parse()
         TORCH_INTERNAL_ASSERT(device);
         auto dtype = tt->scalarType();
         TORCH_INTERNAL_ASSERT(dtype);
-        auto options = at::TensorOptions(*device).dtype(dtype);
+        auto options = xsigma::TensorOptions(*device).dtype(dtype);
 
-        auto e = at::empty_strided(*sizes, *strides, options);
+        auto e = xsigma::empty_strided(*sizes, *strides, options);
         if (n->hasAttribute(attr::value))
         {
             auto value = n->ival(attr::value);
@@ -866,11 +866,11 @@ void IRParser::parse()
         IValue val;
         if (type->kind() == TypeKind::ListType)
         {
-            val = c10::impl::GenericList(type->containedType(0));
+            val = xsigma::impl::GenericList(type->containedType(0));
         }
         else if (type->kind() == TypeKind::DictType)
         {
-            val = c10::impl::GenericDict(type->containedType(0), type->containedType(1));
+            val = xsigma::impl::GenericDict(type->containedType(0), type->containedType(1));
         }
         n->ival_(attr::value, val);
     }
@@ -901,7 +901,7 @@ Value* IRParser::findValueInVMap(const std::string& name)
     {
         throw(ErrorReport(L.cur().range) << "Cannot find a variable with name '" << name << "'");
     }
-    return vmap.at(name);
+    return vmap.xsigma(name);
 }
 
 }  // namespace torch::jit

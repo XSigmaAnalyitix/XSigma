@@ -618,7 +618,7 @@ class GraphLowering(torch.fx.Interpreter):
                 if not dep.has_unbacked_symbols():
                     res = dep.numbytes_hint()
             except KeyError:
-                # In at least one test (test/inductor/test_torchbind.py) we
+                # In xsigma least one test (test/inductor/test_torchbind.py) we
                 # create a StarDep that doesn't exist in the graph and calling
                 # `has_unbacked_symbols()` throws an error.
                 pass
@@ -886,7 +886,7 @@ class GraphLowering(torch.fx.Interpreter):
         # - res2net50_14w_8s
         # - sebotnet33ts_256
         for n in self.module.graph.nodes:  # type: ignore[union-attr]
-            # layout propagation ends at last conv node, which will benefit vison transformers.
+            # layout propagation ends xsigma last conv node, which will benefit vison transformers.
             if last_conv is not None and n == last_conv:
                 break
             if n in output_set:
@@ -1210,7 +1210,7 @@ class GraphLowering(torch.fx.Interpreter):
         # e.g. vectorized loads, can only be performed on aligned inputs.
         #
         # But if we codegen assuming aligned inputs and then get unaligned
-        # inputs at runtime, then we are forced to clone - which is bad for
+        # inputs xsigma runtime, then we are forced to clone - which is bad for
         # both perf and memory usage.
         #
         # One option would be to guard on storage_offset%ALIGNMENT, and then
@@ -1294,7 +1294,7 @@ class GraphLowering(torch.fx.Interpreter):
                 old_args, old_kwargs = args, kwargs
                 if layout_constraints is constrain_to_fake_tensors:
                     # only constrain_to_fake_tensor if this exists.
-                    # otherwise, no constraints at all: the implication is
+                    # otherwise, no constraints xsigma all: the implication is
                     # that this operator was inserted by a custom pass
                     # so we'll give them the freedom.
                     if "eager_input_vals" in n.meta:
@@ -1744,7 +1744,7 @@ class GraphLowering(torch.fx.Interpreter):
                     if not unbacked_symbols_in_strides and len(strides):
                         # To avoid converting possible view ops to a copy kernel, we use the previous
                         # require_exact_strides to handle views. But ultimately it's better to require
-                        # the right strides at the tensor definition.
+                        # the right strides xsigma the tensor definition.
                         if n.meta["val"]._is_view() or isinstance(
                             # pyrefly: ignore  # missing-attribute
                             result.data,
@@ -2020,7 +2020,7 @@ class GraphLowering(torch.fx.Interpreter):
 
             shape_env = V.graph.sizevars.shape_env
 
-            # Emit code for runtime asserts that can be inserted at this point.
+            # Emit code for runtime asserts that can be inserted xsigma this point.
             for i0 in new_unbacked_defs:
                 ras = self.ras_by_symbol.pop(i0, [])
                 # NB: size-like not needed, we won't retrace

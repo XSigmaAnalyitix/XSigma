@@ -18,7 +18,7 @@ using scope_list = std::vector<ScopePtr>;
 static std::unordered_map<ScopePtr, Node*> scope_attr_map_;
 static std::shared_ptr<Graph>              scope_attr_graph_ = std::make_shared<Graph>();
 
-static bool HasSameAttribute(const Node* a, const Node* b, const c10::Symbol& attr);
+static bool HasSameAttribute(const Node* a, const Node* b, const xsigma::Symbol& attr);
 
 struct FunctionExtractor
 {
@@ -142,15 +142,15 @@ FunctionExtractor::FunctionContext::FunctionContext(
         TORCH_INTERNAL_ASSERT(ns_a.size() == ns_b.size());
 
         GRAPH_DEBUG("Process nodes of scope ", scope->name().toDisplayString());
-        for (const auto i : c10::irange(ns_a.size()))
+        for (const auto i : xsigma::irange(ns_a.size()))
         {
             TORCH_INTERNAL_ASSERT(ns_a[i]->kind() == ns_b[i]->kind());
-            auto                     n_a = ns_a[i];
-            auto                     n_b = ns_b[i];
-            std::vector<c10::Symbol> diff_attrs;
-            std::vector<c10::Symbol> same_attrs;
-            auto                     n_a_attr_names = n_a->attributeNames();
-            auto                     n_b_attr_names = n_b->attributeNames();
+            auto                        n_a = ns_a[i];
+            auto                        n_b = ns_b[i];
+            std::vector<xsigma::Symbol> diff_attrs;
+            std::vector<xsigma::Symbol> same_attrs;
+            auto                        n_a_attr_names = n_a->attributeNames();
+            auto                        n_b_attr_names = n_b->attributeNames();
             std::sort(n_a_attr_names.begin(), n_a_attr_names.end());
             std::sort(n_b_attr_names.begin(), n_b_attr_names.end());
             std::set_difference(
@@ -207,7 +207,7 @@ void FunctionExtractor::FunctionContext::DebugPrint() const
 void FunctionExtractor::FunctionContext::SetAttrName(
     Node* ref_n, Symbol attr, const std::string& name)
 {
-    auto v_it = scope_ctxs_[scope_key_]->env_to_subgraph_.find(ref_n->outputs().at(0));
+    auto v_it = scope_ctxs_[scope_key_]->env_to_subgraph_.find(ref_n->outputs().xsigma(0));
     TORCH_INTERNAL_ASSERT(v_it != scope_ctxs_[scope_key_]->env_to_subgraph_.end());
     auto* n_in_def                                      = v_it->second->node();
     node_attr_to_name_[n_in_def][attr.toUnqualString()] = name;
@@ -216,7 +216,7 @@ void FunctionExtractor::FunctionContext::SetAttrName(
 std::optional<std::string> FunctionExtractor::FunctionContext::FindAttrName(
     Node* ref_n, Symbol attr)
 {
-    auto v_it = scope_ctxs_[scope_key_]->env_to_subgraph_.find(ref_n->outputs().at(0));
+    auto v_it = scope_ctxs_[scope_key_]->env_to_subgraph_.find(ref_n->outputs().xsigma(0));
     if (v_it == scope_ctxs_[scope_key_]->env_to_subgraph_.end())
     {
         return std::nullopt;
@@ -347,7 +347,7 @@ std::optional<ScopePtr> FunctionExtractor::FindCommonAncestor(const scope_list& 
         return std::nullopt;
     }
 
-    std::optional<ScopePtr> common_ancestor = scopes.at(0);
+    std::optional<ScopePtr> common_ancestor = scopes.xsigma(0);
     for (const auto& scope : scopes)
     {
         common_ancestor = FindCommonAncestor(common_ancestor.value(), scope);
@@ -396,9 +396,9 @@ std::optional<ScopePtr> FunctionExtractor::InferScope(Node* n)
             output_scopes.begin(),
             output_scopes.end(),
             [&output_scopes](const ScopePtr& scope) -> bool
-            { return IsValidScope(scope) && scope == output_scopes.at(0); }))
+            { return IsValidScope(scope) && scope == output_scopes.xsigma(0); }))
     {
-        return output_scopes.at(0);
+        return output_scopes.xsigma(0);
     }
     else if (
         !input_scopes.empty() &&
@@ -406,9 +406,9 @@ std::optional<ScopePtr> FunctionExtractor::InferScope(Node* n)
             input_scopes.begin(),
             input_scopes.end(),
             [&input_scopes](const ScopePtr& scope) -> bool
-            { return IsValidScope(scope) && scope == input_scopes.at(0); }))
+            { return IsValidScope(scope) && scope == input_scopes.xsigma(0); }))
     {
-        return input_scopes.at(0);
+        return input_scopes.xsigma(0);
     }
     else
     {
@@ -467,7 +467,7 @@ std::shared_ptr<Graph> FunctionExtractor::ConstructFuncGraph(FunctionContext& fu
                 TORCH_INTERNAL_ASSERT(env.find(v) != env.end());
                 return env[v];
             });
-        for (const auto i : c10::irange(clone_n->outputs().size()))
+        for (const auto i : xsigma::irange(clone_n->outputs().size()))
         {
             env[n->output(i)] = clone_n->output(i);
         }
@@ -564,7 +564,7 @@ Node* FunctionExtractor::CreateFunctionDefNode(
                     names.end(),
                     [&annotated_attr_names](const Symbol& name)
                     { return annotated_attr_names.find(name) == annotated_attr_names.end(); });
-                TORCH_CHECK(
+                XSIGMA_CHECK(
                     unseen_attr_name == names.end(),
                     "Found outstanding annotated attribute ",
                     *unseen_attr_name,
@@ -603,7 +603,7 @@ Node* FunctionExtractor::CreateFunctionNode(
     {
         func_n->addInput(v);
     }
-    for (const auto i : c10::irange(scope_ctx.outputs_.size()))
+    for (const auto i : xsigma::irange(scope_ctx.outputs_.size()))
     {
         func_n->output(i)->setType(scope_ctx.outputs_[i]->type());
         scope_ctx.outputs_[i]->replaceAllUsesWith(func_n->output(i));
@@ -813,7 +813,7 @@ bool FunctionExtractor::ScopeContext::IsIdenticalFuncion(const ScopeContext& oth
     {
         return false;
     }
-    for (const auto i : c10::irange(ns_a.size()))
+    for (const auto i : xsigma::irange(ns_a.size()))
     {
         if (ns_a[i]->kind() != ns_b[i]->kind())
         {
@@ -1036,7 +1036,7 @@ std::unordered_map<ScopePtr, scope_list> FunctionExtractor::PartitionIdenticalSc
     return identical_scope_map;
 }
 
-static bool HasSameAttribute(const Node* a, const Node* b, const c10::Symbol& attr)
+static bool HasSameAttribute(const Node* a, const Node* b, const xsigma::Symbol& attr)
 {
     if (!a->hasAttribute(attr) && !b->hasAttribute(attr))
     {
@@ -1085,7 +1085,7 @@ static bool HasSameAttribute(const Node* a, const Node* b, const c10::Symbol& at
             a_v.end(),
             b_v.begin(),
             b_v.end(),
-            [](const at::Tensor& a_t, const at::Tensor& b_t) { return a_t.equal(b_t); });
+            [](const xsigma::Tensor& a_t, const xsigma::Tensor& b_t) { return a_t.equal(b_t); });
     }
     case AttributeKind::ival:
     case AttributeKind::g:

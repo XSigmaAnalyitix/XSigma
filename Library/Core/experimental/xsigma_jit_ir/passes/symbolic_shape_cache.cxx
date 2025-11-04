@@ -13,7 +13,7 @@ namespace
 using CanonicalArg    = std::variant<CanonicalizedSymbolicShape, IValue>;
 using CanonicalArgVec = std::vector<CanonicalArg>;
 using CanonicalRet    = std::vector<CanonicalizedSymbolicShape>;
-using ShapeCacheKey   = std::tuple<c10::OperatorName, CanonicalArgVec>;
+using ShapeCacheKey   = std::tuple<xsigma::OperatorName, CanonicalArgVec>;
 
 CanonicalArgVec cannonicalizeVec(
     const std::vector<SSAInput>&          arg_vec,
@@ -37,7 +37,7 @@ CanonicalArgVec cannonicalizeVec(
         }
         else
         {
-            auto& ss = std::get<at::SymbolicShape>(arg);
+            auto& ss = std::get<xsigma::SymbolicShape>(arg);
             canonical_args.emplace_back(CanonicalizedSymbolicShape(ss, ss_map));
         }
     }
@@ -45,7 +45,7 @@ CanonicalArgVec cannonicalizeVec(
 }
 
 std::vector<CanonicalizedSymbolicShape> cannonicalizeVec(
-    const std::vector<at::SymbolicShape>& ret_vec, std::unordered_map<int64_t, int64_t>& ss_map)
+    const std::vector<xsigma::SymbolicShape>& ret_vec, std::unordered_map<int64_t, int64_t>& ss_map)
 {
     std::vector<CanonicalizedSymbolicShape> canonical_rets;
     canonical_rets.reserve(ret_vec.size());
@@ -65,9 +65,9 @@ struct ArgumentsHasher
         auto& op_name = std::get<0>(cacheKey);
         auto& arg_vec = std::get<1>(cacheKey);
 
-        size_t hash_val = c10::hash<c10::OperatorName>()(op_name);
+        size_t hash_val = xsigma::hash<xsigma::OperatorName>()(op_name);
 
-        hash_val = at::hash_combine(std::hash<size_t>{}(arg_vec.size()), hash_val);
+        hash_val = xsigma::hash_combine(std::hash<size_t>{}(arg_vec.size()), hash_val);
         for (const CanonicalArg& arg : arg_vec)
         {
             size_t cur_arg = 0;
@@ -81,7 +81,7 @@ struct ArgumentsHasher
                     cur_arg = ival->toListRef().size();
                     for (const IValue& elem_ival : ival->toListRef())
                     {
-                        cur_arg = at::hash_combine(cur_arg, IValue::hash(elem_ival));
+                        cur_arg = xsigma::hash_combine(cur_arg, IValue::hash(elem_ival));
                     }
                 }
                 else
@@ -93,7 +93,7 @@ struct ArgumentsHasher
             {
                 cur_arg = std::get<CanonicalizedSymbolicShape>(arg).hash();
             }
-            hash_val = at::hash_combine(hash_val, cur_arg);
+            hash_val = xsigma::hash_combine(hash_val, cur_arg);
         }
         return hash_val;
     }
@@ -118,9 +118,9 @@ ShapeCacheKey get_cache_key(
 }  // namespace
 
 TORCH_API void cache_shape_function(
-    const FunctionSchema*                 schema,
-    const std::vector<SSAInput>&          arg_vec,
-    const std::vector<at::SymbolicShape>& ret_vec)
+    const FunctionSchema*                     schema,
+    const std::vector<SSAInput>&              arg_vec,
+    const std::vector<xsigma::SymbolicShape>& ret_vec)
 {
     // TODO: compare perf using std::vector<std::tuple<int64_t, int64_t>>
     auto ss_map      = std::unordered_map<int64_t, int64_t>();
@@ -130,7 +130,7 @@ TORCH_API void cache_shape_function(
     shapeCache.Add(std::move(cache_key), std::move(can_ret_vec));
 }
 
-TORCH_API std::optional<std::vector<at::SymbolicShape>> get_cached_shape_function(
+TORCH_API std::optional<std::vector<xsigma::SymbolicShape>> get_cached_shape_function(
     const FunctionSchema* schema, const std::vector<SSAInput>& arg_vec)
 {
     // TODO: compare perf using std::vector<std::tuple<int64_t, int64_t>> for both
@@ -148,7 +148,7 @@ TORCH_API std::optional<std::vector<at::SymbolicShape>> get_cached_shape_functio
     {
         inverse_ss_map[ss_val.second] = ss_val.first;
     }
-    std::vector<at::SymbolicShape> ret_vec;
+    std::vector<xsigma::SymbolicShape> ret_vec;
     for (auto& css : *cached_ret_vec)
     {
         ret_vec.emplace_back(css.toSymbolicShape(inverse_ss_map));
@@ -168,7 +168,7 @@ TORCH_API size_t get_shape_cache_size()
 }
 
 void CanonicalizedSymbolicShape::init(
-    const c10::SymbolicShape& orig_shape, std::unordered_map<int64_t, int64_t>& ss_map)
+    const xsigma::SymbolicShape& orig_shape, std::unordered_map<int64_t, int64_t>& ss_map)
 {
     auto sizes = orig_shape.sizes();
     if (!sizes)
@@ -203,34 +203,34 @@ void CanonicalizedSymbolicShape::init(
     }
 }
 
-c10::SymbolicShape CanonicalizedSymbolicShape::toSymbolicShape(
+xsigma::SymbolicShape CanonicalizedSymbolicShape::toSymbolicShape(
     std::unordered_map<int64_t, int64_t>& inverse_ss_map) const
 {
     if (!values_.has_value())
     {
-        return c10::SymbolicShape();
+        return xsigma::SymbolicShape();
     }
-    std::vector<at::ShapeSymbol> sizes;
+    std::vector<xsigma::ShapeSymbol> sizes;
     for (long long cur_val : *values_)
     {
         if (cur_val >= 0)
         {
-            sizes.push_back(at::ShapeSymbol::fromStaticSize(cur_val));
+            sizes.push_back(xsigma::ShapeSymbol::fromStaticSize(cur_val));
             continue;
         }
         auto res = inverse_ss_map.find(cur_val);
         if (res != inverse_ss_map.end())
         {
-            sizes.push_back(at::ShapeSymbol::fromStaticSize(res->second));
+            sizes.push_back(xsigma::ShapeSymbol::fromStaticSize(res->second));
         }
         else
         {
-            auto new_symbol = at::ShapeSymbol::newSymbol();
+            auto new_symbol = xsigma::ShapeSymbol::newSymbol();
             inverse_ss_map.insert({cur_val, new_symbol.value()});
             sizes.push_back(new_symbol);
         }
     }
-    return c10::SymbolicShape(std::move(sizes));
+    return xsigma::SymbolicShape(std::move(sizes));
 }
 
 size_t CanonicalizedSymbolicShape::hash() const
@@ -239,7 +239,7 @@ size_t CanonicalizedSymbolicShape::hash() const
     {
         return 0x8cc80c80;  // random value to prevent hash collisions
     }
-    return c10::hash<std::vector<int64_t>>()(values_.value());
+    return xsigma::hash<std::vector<int64_t>>()(values_.value());
 }
 
 bool operator==(const CanonicalizedSymbolicShape& a, const CanonicalizedSymbolicShape& b)

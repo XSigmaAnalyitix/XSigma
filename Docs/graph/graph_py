@@ -1271,7 +1271,7 @@ dump_ir(graph)
 - **Purpose**: SavedVariable implementation
 - **Dependencies**: saved_variable.h
 
-**c10/core/TensorImpl.cpp**
+**xsigma/core/TensorImpl.cpp**
 - **Purpose**: Core tensor implementation with autograd metadata
 - **Key Functions**: `mutable_grad()`, `_fw_grad()`, `_set_fw_grad()`
 - **Dependencies**: AutogradMeta interface

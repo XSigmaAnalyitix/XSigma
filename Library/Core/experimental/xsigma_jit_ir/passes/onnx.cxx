@@ -1,6 +1,4 @@
 #include <ATen/core/functional.h>
-#include <c10/util/Exception.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/symbolic.h>
 #include <torch/csrc/jit/ir/constants.h>
@@ -13,8 +11,11 @@
 #include <torch/csrc/jit/passes/onnx/shape_type_inference.h>
 #include <torch/csrc/jit/python/python_ir.h>
 #include <torch/csrc/utils/pybind.h>
+#include <xsigma/util/irange.h>
 
 #include <sstream>
+
+#include "util/exception.h"
 
 namespace torch::jit
 {
@@ -31,7 +32,7 @@ static void removePrintOps(Block* block)
         {
             for (size_t i = 0; i < it->inputs().size();)
             {
-                auto input = it->inputs().at(i);
+                auto input = it->inputs().xsigma(i);
                 // only handling constants bc of potential side effects
                 if (input->uses().size() == 1 && input->node()->kind() == prim::Constant)
                 {
@@ -54,10 +55,10 @@ void RemovePrintOps(std::shared_ptr<Graph>& graph)
     GRAPH_DUMP("After RemovePrintOps: ", graph);
 }
 
-static void checkONNXCompatibility(const c10::FunctionSchema& schema)
+static void checkONNXCompatibility(const xsigma::FunctionSchema& schema)
 {
     // in ONNX, all inputs are tensors, no support for tensor list
-    // so at most one input tensor list is supported
+    // so xsigma most one input tensor list is supported
     bool        has_tensor_list = false;
     const auto& args            = schema.arguments();
     for (const auto& arg : args)
@@ -79,7 +80,7 @@ static void checkONNXCompatibility(const c10::FunctionSchema& schema)
             if (elem_type->isSubtypeOf(*TensorType::get()))
             {
                 TORCH_INTERNAL_ASSERT(
-                    !has_tensor_list, "ONNX export supports at most one TensorList as input.");
+                    !has_tensor_list, "ONNX export supports xsigma most one TensorList as input.");
                 has_tensor_list = true;
             }
         }
@@ -175,14 +176,14 @@ static void preprocessCaffe2Ops(Block* block)
                     {
                         throw std::runtime_error(
                             "Unhandled scalar arg: " + arg.name() +
-                            ", type: " + c10::typeKindToString(elem_type->kind()));
+                            ", type: " + xsigma::typeKindToString(elem_type->kind()));
                     }
                 }
                 else
                 {
                     throw std::runtime_error(
                         "Unsupported input type of arg " + arg.name() +
-                        " in Caffe2 operator: " + c10::typeKindToString(type->kind()));
+                        " in Caffe2 operator: " + xsigma::typeKindToString(type->kind()));
                 }
             }
         }
@@ -282,7 +283,7 @@ py::dict BlockToONNX(
 
 static bool ConstantFoldCondition(torch::jit::Value* output)
 {
-    auto fold_condition = output->node()->kind() != c10::onnx::Constant &&
+    auto fold_condition = output->node()->kind() != xsigma::onnx::Constant &&
                           ConstantValueMap::HasValue(output->debugName());
     auto reliable_value = ConstantValueMap::GetTypeReliable(output->debugName()).value_or(false);
     return fold_condition && reliable_value;
@@ -307,9 +308,9 @@ void NodeToONNX(
     auto envFn = [&env](Value* n) -> Value*
     {
         auto py_n = py::cast(n);
-        TORCH_CHECK(env.contains(py_n), "Dangling node reference");
+        XSIGMA_CHECK(env.contains(py_n), "Dangling node reference");
         auto py_value = env[py_n];
-        TORCH_CHECK(!py_value.is_none(), "Unused node was subsequently used");
+        XSIGMA_CHECK(!py_value.is_none(), "Unused node was subsequently used");
         Value* value = py_value.cast<Value*>();
         return value;
     };
@@ -334,7 +335,7 @@ void NodeToONNX(
         const ParamMap empty_params_dict = {};
         auto           opset_version =
             py::cast<int>(onnx_globals.attr("GLOBALS").attr("export_onnx_opset_version"));
-        for (const auto i : c10::irange(num_old_outputs))
+        for (const auto i : xsigma::irange(num_old_outputs))
         {
             auto old = old_outputs[i];
             if (outputs[i])
@@ -383,7 +384,7 @@ void NodeToONNX(
                     // Create a const node if the node output value is in
                     // ConstantValueMap.
                     auto  value      = ConstantValueMap::GetValue(outputs[i]->debugName()).value();
-                    Node* const_node = new_block->owningGraph()->create(c10::onnx::Constant);
+                    Node* const_node = new_block->owningGraph()->create(xsigma::onnx::Constant);
                     const_node->t_(attr::value, value);
                     const_node->output()->setType(TensorType::create(value));
 
@@ -446,7 +447,7 @@ void NodeToONNX(
     auto cloneNode = [&](Node* node)
     {
         auto n_ = new_block->appendNode(new_block->owningGraph()->createClone(node, envFn));
-        for (const auto i : c10::irange(node->outputs().size()))
+        for (const auto i : xsigma::irange(node->outputs().size()))
         {
             // n_->outputs()[i]->setType(node->outputs()[i]->type());
             auto py_output                 = py::cast(n_->output(i));
@@ -460,7 +461,7 @@ void NodeToONNX(
     {
         for (auto subblock : PythonOpNode->blocks())
         {
-            for (const auto i : c10::irange(PythonOpNode->inputs().size()))
+            for (const auto i : xsigma::irange(PythonOpNode->inputs().size()))
             {
                 auto py_value                        = env[py::cast(PythonOpNode->inputs()[i])];
                 env[py::cast(subblock->inputs()[i])] = py_value;
@@ -470,7 +471,7 @@ void NodeToONNX(
             {
                 NodeToONNX(node, new_block, operator_export_type, env, values_in_env);
             }
-            for (const auto i : c10::irange(PythonOpNode->outputs().size()))
+            for (const auto i : xsigma::irange(PythonOpNode->outputs().size()))
             {
                 auto py_value                             = env[py::cast(subblock->outputs()[i])];
                 env[py::cast(PythonOpNode->outputs()[i])] = py_value;
@@ -624,12 +625,12 @@ void NodeToONNX(
             py::object obj;
             if (arg_type == 'c')
             {
-                TORCH_CHECK(scalar_it != op->scalar_args.end(), "expected too many scalar args");
+                XSIGMA_CHECK(scalar_it != op->scalar_args.end(), "expected too many scalar args");
                 obj = py::reinterpret_borrow<py::object>(py::handle((scalar_it++)->get()));
             }
             else if (arg_type == 'd')
             {
-                TORCH_CHECK(node_it != inputs.end(), "expected too many inputs");
+                XSIGMA_CHECK(node_it != inputs.end(), "expected too many inputs");
                 obj = py::cast(envFn(*node_it++));
             }
             else

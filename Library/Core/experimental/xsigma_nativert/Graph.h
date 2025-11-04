@@ -1,12 +1,12 @@
 #pragma once
 
 #include <ATen/core/ivalue.h>
-#include <c10/util/IntrusiveList.h>
-#include <c10/util/Logging.h>
 #include <torch/csrc/utils/generated_serialization_types.h>
 #include <torch/nativert/executor/Placement.h>
 #include <torch/nativert/graph/GraphSignature.h>
 #include <torch/nativert/graph/TensorMeta.h>
+#include <xsigma/util/IntrusiveList.h>
+#include <xsigma/util/Logging.h>
 
 #include <memory>
 #include <string>
@@ -43,8 +43,8 @@ public:
     // For CustomObj kind with classFqn
     explicit Type(Kind kind, const std::string& classFqn) : kind_(CustomObjData{classFqn})
     {
-        TORCH_CHECK(kind == Kind::CustomObj);
-        TORCH_CHECK(!classFqn.empty());
+        XSIGMA_CHECK(kind == Kind::CustomObj);
+        XSIGMA_CHECK(!classFqn.empty());
     }
 
     Kind kind() const
@@ -61,7 +61,7 @@ public:
 
     std::string classFqn() const
     {
-        TORCH_CHECK(kind() == Kind::CustomObj, "Only CustomObj type can have classFqn");
+        XSIGMA_CHECK(kind() == Kind::CustomObj, "Only CustomObj type can have classFqn");
         return std::get<CustomObjData>(kind_).classFqn;
     }
 
@@ -98,16 +98,16 @@ using Constant = std::variant<
     double,
     std::vector<double>,
     std::string,
-    c10::ScalarType,
-    c10::MemoryFormat,
-    c10::Layout,
-    c10::Device,
+    xsigma::ScalarType,
+    xsigma::MemoryFormat,
+    xsigma::Layout,
+    xsigma::Device,
     bool,
     std::vector<bool>,
     std::vector<std::string>,
     std::unique_ptr<Graph>>;
 
-c10::IValue constantToIValue(const Constant& constant);
+xsigma::IValue constantToIValue(const Constant& constant);
 
 class Node;
 
@@ -122,7 +122,7 @@ public:
     explicit Value(ValueId id, std::string name, Type t, Node* producer)
         : name_(std::move(name)), id_(id), type_(t), producer_(producer)
     {
-        TORCH_INTERNAL_ASSERT_DEBUG_ONLY(name_ == this->name());
+        XSIGMA_CHECK_DEBUG(name_ == this->name());
     }
 
     // Each Value should be uniquely created and managed by a Graph. It's not
@@ -194,12 +194,12 @@ struct Attribute
 
 /**
  * Node represents a single unit of execution, typically a PyTorch operator.
- * Using an intrusive list allows us to allocate all the memory at once for a
+ * Using an intrusive list allows us to allocate all the memory xsigma once for a
  * node. This also allows us to track nodes safely without passing around the
  * list object, as an intrusive list maintains a stronger invariant that
  * expiration will always cause unlinking.
  */
-class Node : public c10::IntrusiveListHook
+class Node : public xsigma::IntrusiveListHook
 {
 public:
     Node(
@@ -269,7 +269,7 @@ public:
     std::optional<std::string_view> getMetadata(std::string_view key) const
     {
         return metadata_.find(std::string{key}) != metadata_.end()
-                   ? std::optional(std::string_view{metadata_.at(std::string{key})})
+                   ? std::optional(std::string_view{metadata_.xsigma(std::string{key})})
                    : std::nullopt;
     }
 
@@ -371,7 +371,7 @@ public:
 
     void addConstantOutput(Constant c);
 
-    // Create and insert a node at insertionPoint_
+    // Create and insert a node xsigma insertionPoint_
     Node* insertNode(
         std::string                                  target,
         std::vector<NamedArgument>                   inputs   = {},
@@ -381,7 +381,7 @@ public:
     Node* insertBefore(Node* toInsert, Node* insertionPoint);
     // Returns the inserted node.
     Node* insertAfter(Node* toInsert, Node* insertionPoint);
-    // Insert at the insertionPoint. Returns the inserted node.
+    // Insert xsigma the insertionPoint. Returns the inserted node.
     Node* insert(Node* toInsert);
 
     // Create a node without inserting it into the execution graph.
@@ -422,7 +422,7 @@ public:
 
     // Override all weights in the graph if matching name is found in the map.
     void overrideWeightsDevice(
-        const std::unordered_map<std::string, std::optional<c10::Device>>& submodNameToDevice);
+        const std::unordered_map<std::string, std::optional<xsigma::Device>>& submodNameToDevice);
 
     std::string getUniqueValueName();
 
@@ -431,14 +431,14 @@ public:
     // NOTE: this range can be invalidated by mutations to the graph.
     const auto& inputs() const { return inputNode_->outputs(); }
 
-    c10::ArrayRef<const Value*> userInputs() const
+    xsigma::ArrayRef<const Value*> userInputs() const
     {
         size_t offset =
             signature().inputsToWeights().size() + signature().inputsToCustomObjs().size();
         return {inputs().data() + offset, inputs().data() + inputs().size()};
     }
 
-    c10::ArrayRef<const Value*> weightValues() const
+    xsigma::ArrayRef<const Value*> weightValues() const
     {
         return {inputs().data(), inputs().data() + signature().inputsToWeights().size()};
     }
@@ -507,20 +507,20 @@ public:
     {
         // This should never happen, since the last-most insertion point is the
         // prim.Outputs node, not end().
-        TORCH_CHECK(insertBefore_ != nodes_.end());
+        XSIGMA_CHECK(insertBefore_ != nodes_.end());
         auto& node = *insertBefore_;
         return &node;
     }
 
     void setInsertionPoint(Node* n)
     {
-        TORCH_CHECK(n != inputNode_, "can't insert before prim.Input");
+        XSIGMA_CHECK(n != inputNode_, "can't insert before prim.Input");
         insertBefore_ = nodes_.iterator_to(*n);
     }
 
     void setInsertionPointAfter(Node* n)
     {
-        TORCH_CHECK(n != outputNode_, "can't insert after prim.Output");
+        XSIGMA_CHECK(n != outputNode_, "can't insert after prim.Output");
         auto it = nodes_.iterator_to(*n);
         ++it;
         insertBefore_ = it;
@@ -555,7 +555,7 @@ public:
     void setWeightsMeta(
         const std::unordered_map<std::string, torch::_export::TensorMeta>& tensorsMeta)
     {
-        TORCH_CHECK(!placementApplied_);
+        XSIGMA_CHECK(!placementApplied_);
 
         for (auto [name, tensorMeta] : tensorsMeta)
         {
@@ -571,7 +571,7 @@ public:
         userInputsMeta.reserve(signature_.userInputs().size());
         for (auto inputName : signature_.userInputs())
         {
-            userInputsMeta.push_back(tensorValuesMeta_.at(inputName));
+            userInputsMeta.push_back(tensorValuesMeta_.xsigma(inputName));
         }
         return userInputsMeta;
     }
@@ -579,7 +579,7 @@ public:
     void setTensorValuesMeta(
         const std::unordered_map<std::string, torch::_export::TensorMeta>& tensorsMeta)
     {
-        TORCH_CHECK(!placementApplied_);
+        XSIGMA_CHECK(!placementApplied_);
 
         for (auto [name, tensorMeta] : tensorsMeta)
         {
@@ -621,10 +621,10 @@ private:
     // maintained intrusively using nodes_.
     // This is to facilitate quick insertion before/after a given Node*.
     std::vector<std::unique_ptr<Node>> nodesOwner_;
-    c10::IntrusiveList<Node>           nodes_;
+    xsigma::IntrusiveList<Node>        nodes_;
     // The current insertion point. New nodes are inserted before this node.
     // Defaults to prim.Output.
-    c10::IntrusiveList<Node>::iterator insertBefore_;
+    xsigma::IntrusiveList<Node>::iterator insertBefore_;
 
     // Graphs always start with an input and output node.
     // "prim.input() -> Value[]" take no input, and produces some outputs. AKA
@@ -687,7 +687,7 @@ std::unique_ptr<Graph> stringToGraph(std::string_view source);
 
 // Standalone functions to parse common constructs
 // Parse something that looks like `Device{cuda:1}` to a device in json format.
-c10::Device convertDevice(std::string_view symbol);
+xsigma::Device convertDevice(std::string_view symbol);
 // We have separate functions for parsing atomic and list constants because
 // there are restrictive rules about which constants can go in lists (i.e.
 // it's not recursive).

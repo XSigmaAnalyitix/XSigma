@@ -13,7 +13,7 @@ namespace torch::jit
 
 #if AT_MKLDNN_ENABLED()
 
-static c10::VaryingShape<int64_t> getSizesOf(Node* n, size_t idx)
+static xsigma::VaryingShape<int64_t> getSizesOf(Node* n, size_t idx)
 {
     auto tt = n->input(idx)->type()->cast<TensorType>();
     return tt->sizes();
@@ -23,13 +23,13 @@ static void insertPrePackedConvOpForNode(Node* n)
 {
     constexpr int POS_INPUT  = 0;
     constexpr int POS_WEIGHT = 1;
-    if (!tensorexpr::isContiguous(n->input(POS_INPUT), at::MemoryFormat::ChannelsLast))
+    if (!tensorexpr::isContiguous(n->input(POS_INPUT), xsigma::MemoryFormat::ChannelsLast))
     {
         GRAPH_DEBUG("insertPrePackedConvOpForNode: input is not ChannelsLast contiguous");
         return;
     }
 
-    if (!tensorexpr::isContiguous(n->input(POS_WEIGHT), at::MemoryFormat::ChannelsLast))
+    if (!tensorexpr::isContiguous(n->input(POS_WEIGHT), xsigma::MemoryFormat::ChannelsLast))
     {
         GRAPH_DEBUG("insertPrePackedConvOpForNode: weight is not ChannelsLast contiguous");
         return;
@@ -53,7 +53,7 @@ static void insertPrePackedConvOpForNode(Node* n)
         graph->create(Symbol::fromQualString("mkldnn_prepacked::conv2d_prepack"), 1);
 
     // skip input value
-    for (const auto i : c10::irange(1, n->inputs().size()))
+    for (const auto i : xsigma::irange(1, n->inputs().size()))
     {
         Value* v = n->input(i);
         prepack_node->addInput(v);
@@ -127,7 +127,7 @@ static void insertMkldnnPrePackedOps(std::shared_ptr<Graph>& graph)
 
 static void FuseReluWithPackedOps(std::shared_ptr<Graph>& graph)
 {
-    auto conv_op_rstring = at::jit::CodeTemplate(R"(
+    auto conv_op_rstring = xsigma::jit::CodeTemplate(R"(
     graph(%input, %weight, %bias, %stride:int[], %padding:int[],
           %dilation:int[], %groups:int, %input_size:int[], %dummy_attr:str):
         %packed_weight_bias = mkldnn_prepacked::conv2d_prepack(
@@ -137,7 +137,7 @@ static void FuseReluWithPackedOps(std::shared_ptr<Graph>& graph)
         %res = aten::${op}(%conv2d_res)
         return (%res))");
 
-    auto conv_op_fused_rstring = at::jit::CodeTemplate(R"(
+    auto conv_op_fused_rstring = xsigma::jit::CodeTemplate(R"(
     graph(%input, %weight, %bias, %stride:int[], %padding:int[],
           %dilation:int[], %groups:int, %input_size:int[], %dummy_attr:str):
         %attr: str = prim::Constant[value="${op_attr}"]()
@@ -155,10 +155,10 @@ static void FuseReluWithPackedOps(std::shared_ptr<Graph>& graph)
             continue;
         }
 
-        at::jit::TemplateEnv env;
+        xsigma::jit::TemplateEnv env;
         env.s("op", op);
 
-        at::jit::TemplateEnv env_fused;
+        xsigma::jit::TemplateEnv env_fused;
         env_fused.s("op_attr", op);
 
         SubgraphRewriter rewriter;
@@ -188,7 +188,7 @@ static void PrePackingOpsFolder(Block* b)
             if (optional_outputs)
             {
                 auto outputs = optional_outputs.value();
-                TORCH_CHECK(outputs.size() == 1, "Prepack ops have single output");
+                XSIGMA_CHECK(outputs.size() == 1, "Prepack ops have single output");
                 Value*          prepack_op_value = n->output(0);
                 auto            graph            = n->owningGraph();
                 WithInsertPoint ins(prepack_op_value->node());

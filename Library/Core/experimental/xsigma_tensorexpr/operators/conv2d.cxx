@@ -239,8 +239,8 @@ bool conv2dIsSupported(
     const std::vector<int64_t>& dilation,
     int64_t                     groups)
 {
-    if (input.dtype != c10::ScalarType::Float || weight.dtype != c10::ScalarType::Float ||
-        bias.dtype != c10::ScalarType::Float)
+    if (input.dtype != xsigma::ScalarType::Float || weight.dtype != xsigma::ScalarType::Float ||
+        bias.dtype != xsigma::ScalarType::Float)
     {
         GRAPH_DEBUG("conv2dIsSupported: only float32 allowed");
         return false;
@@ -292,7 +292,7 @@ bool mkldnnPrepackedConvIsSupported(
     int64_t                     groups)
 {
 #if AT_MKLDNN_ENABLED()
-    if (input.dtype != c10::ScalarType::Float || weight.dtype != c10::ScalarType::Float)
+    if (input.dtype != xsigma::ScalarType::Float || weight.dtype != xsigma::ScalarType::Float)
     {
         GRAPH_DEBUG("mkldnnPrepackedConvIsSupported: only float32 allowed");
         return false;
@@ -334,7 +334,7 @@ Tensor computeConv2d(
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device)
+    xsigma::Device                   device)
 {
     Dtype dtype = kFloat;
     if (outputType)
@@ -378,7 +378,7 @@ Tensor computeConv1d(
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device)
+    xsigma::Device                   device)
 {
     Dtype dtype = kFloat;
     if (outputType)
@@ -411,7 +411,7 @@ Tensor computePrepackedConv2dClampRun(
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device)
+    xsigma::Device                   device)
 {
     Dtype dtype = kFloat;
     if (outputType)
@@ -432,7 +432,7 @@ Tensor computePrepackedLinearClampRun(
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device)
+    xsigma::Device                   device)
 {
     Dtype dtype = kFloat;
     if (outputType)
@@ -453,7 +453,7 @@ Tensor computeMkldnnPrepackedConvRun(
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device)
+    xsigma::Device                   device)
 {
     Dtype dtype = kFloat;
     if (outputType)

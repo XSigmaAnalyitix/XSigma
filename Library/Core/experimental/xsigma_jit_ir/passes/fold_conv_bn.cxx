@@ -20,18 +20,19 @@
 namespace torch::jit
 {
 
-std::tuple<at::Tensor, at::Tensor> computeUpdatedConvWeightAndBias(const ConvBNParameters& p)
+std::tuple<xsigma::Tensor, xsigma::Tensor> computeUpdatedConvWeightAndBias(
+    const ConvBNParameters& p)
 {
-    at::Tensor    bn_var_rsqrt = at::rsqrt(p.bn_rv + p.bn_eps);
-    const int64_t ndim         = p.conv_w.dim();
-    at::DimVector sizes(ndim, 1);
-    sizes.at(0) = -1;
+    xsigma::Tensor    bn_var_rsqrt = xsigma::rsqrt(p.bn_rv + p.bn_eps);
+    const int64_t     ndim         = p.conv_w.dim();
+    xsigma::DimVector sizes(ndim, 1);
+    sizes.xsigma(0) = -1;
 
     auto conv_w_dtype = p.conv_w.dtype();
     auto conv_b_dtype = p.conv_b.dtype();
 
-    at::Tensor new_w = p.conv_w * (p.bn_w * bn_var_rsqrt).reshape(sizes);
-    at::Tensor new_b = (p.conv_b - p.bn_rm) * bn_var_rsqrt * p.bn_w + p.bn_b;
+    xsigma::Tensor new_w = p.conv_w * (p.bn_w * bn_var_rsqrt).reshape(sizes);
+    xsigma::Tensor new_b = (p.conv_b - p.bn_rm) * bn_var_rsqrt * p.bn_w + p.bn_b;
     return std::make_tuple(new_w.to(conv_w_dtype), new_b.to(conv_b_dtype));
 }
 
@@ -78,7 +79,8 @@ void replaceConvBiasWithGetAttr(Module& module)
                 // In that case, the corresponding graph will not have getAttr("bias")
                 // Insert that in the graph.
                 // And change _convolution to take the new value.
-                auto conv_node = match.values_map.at(convolution_vmap.at("conv_out"))->node();
+                auto conv_node =
+                    match.values_map.xsigma(convolution_vmap.xsigma("conv_out"))->node();
                 WithInsertPoint ins(conv_node);
                 Value*          bias_attr_val =
                     graph->insertGetAttr(graph->inputs()[0], "bias")->setType(TensorType::get());
@@ -108,7 +110,7 @@ void addBiasForConvIfNone(Module& module, const std::string& pattern_name)
         {
             auto optional_tensor_type = OptionalType::create(TensorType::get());
             t->addAttribute("bias", std::move(optional_tensor_type), true);
-            auto optional_tensor = std::optional<at::Tensor>();
+            auto optional_tensor = std::optional<xsigma::Tensor>();
             module.setattr("bias", std::move(optional_tensor));
             replaceConvBiasWithGetAttr(module);
         }
@@ -139,7 +141,8 @@ public:
 private:
     bool tryExtractingConvBNParameters(Module& conv, Module& bn, ConvBNParameters& r);
 
-    std::unordered_map<ModulePtr, std::tuple<at::Tensor, at::Tensor>> conv_module_and_params_;
+    std::unordered_map<ModulePtr, std::tuple<xsigma::Tensor, xsigma::Tensor>>
+        conv_module_and_params_;
 
     // A map from graph to a list of tuple of paths of matched conv and bn module
     // e.g. if we have a graph `g` containing following code
@@ -187,14 +190,14 @@ bool extractOptionalBNParams(const script::Module& bn, ConvBNParameters& r)
     }
     else
     {
-        auto optional_eps = toIValue(matches[0].values_map.at(bn_vmap.at("eps")));
+        auto optional_eps = toIValue(matches[0].values_map.xsigma(bn_vmap.xsigma("eps")));
         if (!optional_eps)
         {
             return false;
         }
         r.bn_eps = optional_eps.value().toDouble();
     }
-    r.bn_w = at::ones_like(bn.attr("running_mean").toTensor());
+    r.bn_w = xsigma::ones_like(bn.attr("running_mean").toTensor());
     if (bn.hasattr("weight"))
     {
         if (bn.attr("weight").isTensor())
@@ -204,7 +207,7 @@ bool extractOptionalBNParams(const script::Module& bn, ConvBNParameters& r)
     }
     else
     {
-        auto optional_bn_weight = toIValue(matches[0].values_map.at(bn_vmap.at("weight")));
+        auto optional_bn_weight = toIValue(matches[0].values_map.xsigma(bn_vmap.xsigma("weight")));
         if (!optional_bn_weight)
         {
             return false;
@@ -214,7 +217,7 @@ bool extractOptionalBNParams(const script::Module& bn, ConvBNParameters& r)
             r.bn_w = optional_bn_weight.value().toTensor();
         }
     }
-    r.bn_b = at::zeros_like(bn.attr("running_mean").toTensor());
+    r.bn_b = xsigma::zeros_like(bn.attr("running_mean").toTensor());
     if (bn.hasattr("bias"))
     {
         if (bn.attr("bias").isTensor())
@@ -224,7 +227,7 @@ bool extractOptionalBNParams(const script::Module& bn, ConvBNParameters& r)
     }
     else
     {
-        auto optional_bn_bias = toIValue(matches[0].values_map.at(bn_vmap.at("bias")));
+        auto optional_bn_bias = toIValue(matches[0].values_map.xsigma(bn_vmap.xsigma("bias")));
         if (!optional_bn_bias)
         {
             return false;
@@ -255,8 +258,8 @@ bool FoldConvBatchNormHelper::tryExtractingConvBNParameters(
     }
 
     r.conv_w      = conv.attr("weight").toTensor();
-    r.conv_b      = at::zeros_like(r.bn_rm);
-    auto bias_opt = conv.attr("bias").toOptional<at::Tensor>();
+    r.conv_b      = xsigma::zeros_like(r.bn_rm);
+    auto bias_opt = conv.attr("bias").toOptional<xsigma::Tensor>();
     if (bias_opt)
     {
         r.conv_b = *bias_opt;
@@ -269,9 +272,9 @@ void FoldConvBatchNormHelper::analyze(Module& module, const PatternInfo& pattern
 {
     const Graph& pattern_graph        = *pattern.pattern_graph;
     const auto&  vmap                 = pattern.vmap;
-    Value*       pattern_conv_out     = vmap.at("conv_out");
-    Value*       pattern_bn_out       = vmap.at("bn_out");
-    Value*       pattern_bn_submodule = vmap.at("batchnorm");
+    Value*       pattern_conv_out     = vmap.xsigma("conv_out");
+    Value*       pattern_bn_out       = vmap.xsigma("bn_out");
+    Value*       pattern_bn_submodule = vmap.xsigma("batchnorm");
     Node*        pattern_conv         = pattern_conv_out->node();
     Node*        pattern_bn           = pattern_bn_out->node();
 
@@ -315,16 +318,17 @@ void FoldConvBatchNormHelper::analyze(Module& module, const PatternInfo& pattern
                     }
                     GRAPH_DEBUG("Checking next match...");
                     // Get the conv and bn submodule
-                    Node*  matched_conv         = match.nodes_map.at(pattern_conv);
-                    Node*  matched_bn           = match.nodes_map.at(pattern_bn);
-                    Node*  matched_bn_submodule = match.values_map.at(pattern_bn_submodule)->node();
-                    Value* conv_instance        = matched_conv->input(0);
-                    Value* bn_instance          = matched_bn->input(0);
-                    Value* self                 = g->inputs()[0];
-                    auto   conv_module_path     = getModuleAccessPath(conv_instance, self);
-                    auto   bn_module_path       = getModuleAccessPath(bn_instance, self);
-                    Module conv_submodule       = findChildModule(current, conv_module_path);
-                    Module bn_submodule         = findChildModule(current, bn_module_path);
+                    Node* matched_conv = match.nodes_map.xsigma(pattern_conv);
+                    Node* matched_bn   = match.nodes_map.xsigma(pattern_bn);
+                    Node* matched_bn_submodule =
+                        match.values_map.xsigma(pattern_bn_submodule)->node();
+                    Value* conv_instance    = matched_conv->input(0);
+                    Value* bn_instance      = matched_bn->input(0);
+                    Value* self             = g->inputs()[0];
+                    auto   conv_module_path = getModuleAccessPath(conv_instance, self);
+                    auto   bn_module_path   = getModuleAccessPath(bn_instance, self);
+                    Module conv_submodule   = findChildModule(current, conv_module_path);
+                    Module bn_submodule     = findChildModule(current, bn_module_path);
 
                     ConvBNParameters params;
                     if (!tryExtractingConvBNParameters(conv_submodule, bn_submodule, params))
@@ -354,13 +358,13 @@ void FoldConvBatchNormHelper::analyze(Module& module, const PatternInfo& pattern
                     GRAPH_UPDATE("Deleting ", *matched_bn_submodule);
 
                     auto slot = conv_submodule.type()->getAttributeSlot("bias");
-                    TORCH_CHECK(
+                    XSIGMA_CHECK(
                         conv_submodule.type()->is_parameter(slot),
                         "Expected conv module to have a bias parameter");
                 }  // matches
             }
 
-            for (const auto& conv_bn : conv_bn_paths_.at(g))
+            for (const auto& conv_bn : conv_bn_paths_.xsigma(g))
             {
                 Module conv_submodule = findChildModule(current, std::get<0>(conv_bn));
                 Module bn_submodule   = findChildModule(current, std::get<1>(conv_bn));
@@ -388,7 +392,7 @@ void FoldConvBatchNormHelper::transform()
     // Perform planned rewritings
     for (auto v : values_to_rewrite_)
     {
-        v->replaceAllUsesWith(rewrite_map_.at(v));
+        v->replaceAllUsesWith(rewrite_map_.xsigma(v));
     }
 
     // Perform planned deletions

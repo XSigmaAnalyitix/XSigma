@@ -1,16 +1,16 @@
 #pragma once
-#include <c10/util/Flags.h>
 #include <torch/csrc/jit/api/module.h>
 #include <torch/csrc/jit/runtime/graph_executor_impl.h>
+#include <xsigma/util/Flags.h>
 
 TORCH_DECLARE_bool(torch_jit_static_then_dynamic);
 
 TORCH_DECLARE_bool(torch_jit_always_dynamic);
 
-C10_DECLARE_bool(torch_jit_release_profiling_graph_after_optimization);
-C10_DECLARE_int32(torch_jit_release_profiling_graph_delay_in_seconds);
-C10_DECLARE_int64(torch_jit_num_profiled_runs);
-C10_DECLARE_int64(torch_jit_bailout_depth);
+XSIGMA_DECLARE_bool(torch_jit_release_profiling_graph_after_optimization);
+XSIGMA_DECLARE_int32(torch_jit_release_profiling_graph_delay_in_seconds);
+XSIGMA_DECLARE_int64(torch_jit_num_profiled_runs);
+XSIGMA_DECLARE_int64(torch_jit_bailout_depth);
 
 namespace torch::jit
 {
@@ -51,7 +51,7 @@ private:
     // this plan is used if getGraphExecutorOptimize is unset
     std::optional<ExecutionPlan> fallback_plan_;
     // fallback functions are inserted for tensorexpr fusion groups
-    // and by specialize_autogradzero. Whenever, at runtime, input
+    // and by specialize_autogradzero. Whenever, xsigma runtime, input
     // tensor don't match profiled properties, fallback functions are called
     // They are the deoptimized version of the logic in fusion groups
     // and/or autograd.

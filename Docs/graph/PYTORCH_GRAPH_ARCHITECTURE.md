@@ -83,7 +83,7 @@ struct GraphTask : std::enable_shared_from_this<GraphTask> {
   std::unordered_set<Node*> nodes_in_graph_;
   
   // Root nodes of the backward graph
-  c10::SmallVector<Node*, 4> graph_roots_;
+  xsigma::SmallVector<Node*, 4> graph_roots_;
   
   // Execution info for selective execution
   std::unordered_map<Node*, ExecInfo> exec_info_;

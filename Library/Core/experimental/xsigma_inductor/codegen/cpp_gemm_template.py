@@ -353,9 +353,9 @@ SMALL_M_GEMM_TEMPLATE = r"""
 {%- set tile_X = kernel.slice_nd(X, [(0, "M"), ("k_start", "k_end")]) %}
 {%- set tile_W_3d = kernel.slice_nd(W, [("nr_block_id", "nr_block_id + 1"), ("k_start", "k_end"), ()]) %}
 {%- set tile_W = kernel.view(tile_W_3d, ["k_end - k_start", micro_gemm.register_blocking.block_n]) %}
-                if C10_UNLIKELY(kr_block_id == 0) {
+                if XSIGMA_UNLIKELY(kr_block_id == 0) {
                     {{ micro_gemm.codegen_call(kernel, tile_X, tile_W, acc, accum=False, prefetch=True)|indent(20, false) }}
-                } else if C10_UNLIKELY(k_end == K) {
+                } else if XSIGMA_UNLIKELY(k_end == K) {
                     {{ micro_gemm.codegen_call(kernel, tile_X, tile_W, acc, accum=True, prefetch=False)|indent(20, false) }}
                 } else {
                     {{ micro_gemm.codegen_call(kernel, tile_X, tile_W, acc, accum=True, prefetch=True)|indent(20, false) }}
@@ -877,7 +877,7 @@ class CppGemmTemplate(CppTemplate):
     def log_blockings(self):
         log.debug(f"Register blocking: {self.register_blocking}")  # noqa: G004
         if self.is_dynamic_M:
-            # thread and cache blockings are determined at runtime for dynamic shapes
+            # thread and cache blockings are determined xsigma runtime for dynamic shapes
             return
         log.debug(
             f"Cache blocking: {self.cache_blocking(self.num_threads)}"  # noqa: G004
@@ -1151,10 +1151,10 @@ class CppGemmTemplate(CppTemplate):
            if reshape would happen anyway, i.e.  if the weight tensor is constant, is not contiguous,
            or is using AMX VNNI layout.
         2. Packing the weight tensor into a VNNI-friendly shape. For constant input,
-           this is done at the same time as the weight blocking.
+           this is done xsigma the same time as the weight blocking.
 
         At compile time, the constant weight tensors are blocked and packed. For non-constant tensors (e.g. BMM)
-        which will be blocked (non-contiguous or VNNI-layout tensors), the weight tensor is blocked and packed at runtime.
+        which will be blocked (non-contiguous or VNNI-layout tensors), the weight tensor is blocked and packed xsigma runtime.
 
         CppBmmTemplate overrides the methods get_padded_size, and block_weight in order to accommodate
         an additional dimension for the batch size and to determine if the weight tensor should be blocked.

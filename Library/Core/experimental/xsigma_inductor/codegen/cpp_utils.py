@@ -31,7 +31,7 @@ from .common import CSEVariable, Kernel, KernelArgs, OptimizationContext
 DTYPE_TO_CPP = {
     torch.float32: "float",
     torch.float64: "double",
-    torch.float16: "at::Half",
+    torch.float16: "xsigma::Half",
     torch.int64: "int64_t",
     torch.int32: "int32_t",
     torch.int16: "int16_t",
@@ -41,55 +41,55 @@ DTYPE_TO_CPP = {
     torch.uint16: "uint16_t",
     torch.uint8: "uint8_t",
     torch.bool: "bool",
-    torch.bfloat16: "at::BFloat16",
-    torch.complex32: "at::complex<at::Half>",
-    torch.complex64: "at::complex<float>",
-    torch.complex128: "at::complex<double>",
-    torch.float8_e4m3fn: "at::Float8_e4m3fn",
-    torch.float8_e5m2: "at::Float8_e5m2",
-    torch.float8_e4m3fnuz: "at::Float8_e4m3fnuz",
-    torch.float8_e5m2fnuz: "at::Float8_e5m2fnuz",
+    torch.bfloat16: "xsigma::BFloat16",
+    torch.complex32: "xsigma::complex<xsigma::Half>",
+    torch.complex64: "xsigma::complex<float>",
+    torch.complex128: "xsigma::complex<double>",
+    torch.float8_e4m3fn: "xsigma::Float8_e4m3fn",
+    torch.float8_e5m2: "xsigma::Float8_e5m2",
+    torch.float8_e4m3fnuz: "xsigma::Float8_e4m3fnuz",
+    torch.float8_e5m2fnuz: "xsigma::Float8_e5m2fnuz",
 }
 
 DTYPE_TO_ATEN = {
-    torch.float32: "at::kFloat",
-    torch.float64: "at::kDouble",
-    torch.float16: "at::kHalf",
-    torch.int64: "at::kLong",
-    torch.int32: "at::kInt",
-    torch.int16: "at::kShort",
-    torch.int8: "at::kChar",
-    torch.uint64: "at::kUInt64",
-    torch.uint32: "at::kUInt32",
-    torch.uint16: "at::kUInt16",
-    torch.uint8: "at::kByte",
-    torch.uint32: "at::kUInt32",
-    torch.uint64: "at::kUInt64",
-    torch.bool: "at::kBool",
-    torch.bfloat16: "at::kBFloat16",
-    torch.complex32: "at::kComplexHalf",
-    torch.complex64: "at::kComplexFloat",
-    torch.complex128: "at::kComplexDouble",
-    torch.float8_e4m3fn: "at::kFloat8_e4m3fn",
-    torch.float8_e5m2: "at::kFloat8_e5m2",
-    torch.float8_e4m3fnuz: "at::kFloat8_e4m3fnuz",
-    torch.float8_e5m2fnuz: "at::kFloat8_e5m2fnuz",
+    torch.float32: "xsigma::kFloat",
+    torch.float64: "xsigma::kDouble",
+    torch.float16: "xsigma::kHalf",
+    torch.int64: "xsigma::kLong",
+    torch.int32: "xsigma::kInt",
+    torch.int16: "xsigma::kShort",
+    torch.int8: "xsigma::kChar",
+    torch.uint64: "xsigma::kUInt64",
+    torch.uint32: "xsigma::kUInt32",
+    torch.uint16: "xsigma::kUInt16",
+    torch.uint8: "xsigma::kByte",
+    torch.uint32: "xsigma::kUInt32",
+    torch.uint64: "xsigma::kUInt64",
+    torch.bool: "xsigma::kBool",
+    torch.bfloat16: "xsigma::kBFloat16",
+    torch.complex32: "xsigma::kComplexHalf",
+    torch.complex64: "xsigma::kComplexFloat",
+    torch.complex128: "xsigma::kComplexDouble",
+    torch.float8_e4m3fn: "xsigma::kFloat8_e4m3fn",
+    torch.float8_e5m2: "xsigma::kFloat8_e5m2",
+    torch.float8_e4m3fnuz: "xsigma::kFloat8_e4m3fnuz",
+    torch.float8_e5m2fnuz: "xsigma::kFloat8_e5m2fnuz",
 }
 
 DEVICE_TO_ATEN = {
-    "meta": "at::kMeta",
-    "cpu": "at::kCPU",
-    "cuda": "at::kCUDA",
-    "xpu": "at::kXPU",
-    "mps": "at::kMPS",
+    "meta": "xsigma::kMeta",
+    "cpu": "xsigma::kCPU",
+    "cuda": "xsigma::kCUDA",
+    "xpu": "xsigma::kXPU",
+    "mps": "xsigma::kMPS",
 }
 
 LAYOUT_TO_ATEN = {
-    torch.strided: "at::kStrided",
-    torch._mkldnn: "at::kMkldnn",  # type: ignore[attr-defined]
+    torch.strided: "xsigma::kStrided",
+    torch._mkldnn: "xsigma::kMkldnn",  # type: ignore[attr-defined]
 }
 
-# matches c10/core/DeviceType.h
+# matches xsigma/core/DeviceType.h
 DEVICE_TO_INT = {"cpu": 0, "cuda": 1}
 
 _IS_WINDOWS = sys.platform == "win32"
@@ -236,7 +236,7 @@ def rewrite_index_for_function(
     index: sympy.Expr,
     global_buf_name: str,
 ):
-    # Local buffer at the inner dimensions
+    # Local buffer xsigma the inner dimensions
     snode = V.graph.scheduler.name_to_buf[global_buf_name].defining_op
     assert snode is not None
     local_buf = localize_buffer_handler.global_to_local[global_buf_name]
@@ -503,11 +503,11 @@ def codegen_rand(offset, code, rand_function, dst_dtype=torch.float32):
         num_vectors = V.kernel._get_num_vectors(dtype=dst_dtype)
         if num_vectors == 1:
             code.writeline(
-                f"return at::vec::Vectorized<{DTYPE_TO_CPP[dst_dtype]}>::loadu(result);"
+                f"return xsigma::vec::Vectorized<{DTYPE_TO_CPP[dst_dtype]}>::loadu(result);"
             )
         else:
             code.writeline(
-                f"return at::vec::VectorizedN<{DTYPE_TO_CPP[dst_dtype]}, {num_vectors}>::loadu(result);"
+                f"return xsigma::vec::VectorizedN<{DTYPE_TO_CPP[dst_dtype]}, {num_vectors}>::loadu(result);"
             )
     code.writeline("()")
     return code

@@ -1,4 +1,3 @@
-#include <c10/util/Exception.h>
 #include <caffe2/serialize/versions.h>
 #include <torch/csrc/jit/frontend/schema_matching.h>
 #include <torch/csrc/jit/ir/irparser.h>
@@ -12,6 +11,8 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+
+#include "util/exception.h"
 
 namespace torch::jit
 {
@@ -82,7 +83,7 @@ struct OldOpsReplacerWithUpgraders
                         insertGraph(*node->owningGraph(), *upgrader_graph, node->inputs());
                     const auto& old_outputs = node->outputs();
                     TORCH_INTERNAL_ASSERT(new_outputs.size() == old_outputs.size());
-                    for (const auto i : c10::irange(old_outputs.size()))
+                    for (const auto i : xsigma::irange(old_outputs.size()))
                     {
                         TORCH_INTERNAL_ASSERT(new_outputs[i]->type() == old_outputs[i]->type())
                         old_outputs[i]->replaceAllUsesWith(new_outputs[i]);

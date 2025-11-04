@@ -506,7 +506,7 @@ script::Module optimizeForMobile(
 {
     TORCH_INTERNAL_ASSERT(
         false,
-        "Mobile optimization only available with XNNPACK at the moment. "
+        "Mobile optimization only available with XNNPACK xsigma the moment. "
         "XNNPACK is not enabled. Please build with USE_XNNPACK=1");
     return module;
 }

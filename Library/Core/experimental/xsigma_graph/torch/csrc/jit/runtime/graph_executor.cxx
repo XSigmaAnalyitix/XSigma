@@ -1,6 +1,4 @@
 #include <ATen/core/ivalue.h>
-#include <c10/util/Exception.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/autograd/edge.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/grad_mode.h>
@@ -42,6 +40,7 @@
 #include <torch/csrc/jit/runtime/profiling_graph_executor_impl.h>
 #include <torch/csrc/jit/runtime/profiling_record.h>
 #include <torch/csrc/jit/runtime/simple_graph_executor_impl.h>
+#include <xsigma/util/irange.h>
 
 #include <cstdint>
 #include <iterator>
@@ -51,8 +50,10 @@
 #include <utility>
 #include <vector>
 
+#include "util/exception.h"
+
 // clang-format off
-C10_DEFINE_bool(
+XSIGMA_DEFINE_bool(
     torch_jit_execution_plan_reuse_code_graph,
     false,
     "Directly reuse the preprocessed graph in the CodeImpl to reduce the memory consumption. This is aggressive memory saving, and please be cautious!")
@@ -72,7 +73,7 @@ EnableProfilingGuard::~EnableProfilingGuard() {
 }
 
 namespace {
-c10::AliasAnalysisKind aliasAnalysisInternalSpecialCase() {
+xsigma::AliasAnalysisKind aliasAnalysisInternalSpecialCase() {
   return AliasAnalysisKind::INTERNAL_SPECIAL_CASE;
 }
 } // namespace
@@ -106,7 +107,7 @@ std::shared_ptr<Graph> lastExecutedOptimizedGraph() {
 }
 namespace {
 
-using tensor_list = std::vector<at::Tensor>;
+using tensor_list = std::vector<xsigma::Tensor>;
 using Variable = autograd::Variable;
 using autograd::variable_list;
 
@@ -118,7 +119,7 @@ struct CaptureList {
     ivalue_captures_.reserve(capture_size);
   }
 
-  void captureTensor(const at::Tensor& tensor, bool is_output) {
+  void captureTensor(const xsigma::Tensor& tensor, bool is_output) {
     var_captures_.emplace_back(tensor, is_output);
   }
 
@@ -159,9 +160,9 @@ struct CaptureList {
           ++var_capture_it;
         } break;
         case CAPTURE_LIST: {
-          c10::List<at::Tensor> lst;
+          xsigma::List<xsigma::Tensor> lst;
           auto size = *size_it++;
-          for (const auto i : c10::irange(size)) {
+          for (const auto i : xsigma::irange(size)) {
             (void)i;
             lst.emplace_back(var_capture_it->unpack(saved_for));
             var_capture_it++;
@@ -216,11 +217,11 @@ struct UnpackInstructions {
     for (Inst inst : insts_) {
       switch (inst) {
         case PUSH_TENSOR: {
-          at::Tensor t = *input_it++;
+          xsigma::Tensor t = *input_it++;
           stack.emplace_back(std::move(t));
         } break;
         case PUSH_LIST: {
-          std::vector<at::Tensor> lst(input_it, input_it + *sizes_it++);
+          std::vector<xsigma::Tensor> lst(input_it, input_it + *sizes_it++);
           stack.emplace_back(lst);
         } break;
         case PUSH_NONE: {
@@ -281,7 +282,7 @@ struct DifferentiableGraphBackward : public autograd::Node {
     size_t output_index = 0;
     for (IValue& v : stack) {
       if (v.isTensorList()) {
-        for (at::Tensor tensor : v.toTensorList()) {
+        for (xsigma::Tensor tensor : v.toTensorList()) {
           produceOutput(output_index++, std::move(tensor), outputs);
         }
       } else if (v.isTensor()) {
@@ -299,7 +300,7 @@ struct DifferentiableGraphBackward : public autograd::Node {
           produceOutput(output_index++, std::move(v).toTensor(), outputs);
         }
       } else {
-        TORCH_INTERNAL_ASSERT_DEBUG_ONLY(v.isNone());
+        XSIGMA_CHECK_DEBUG(v.isNone());
         output_index++;
         // Input grad can also be None even if it requires grad
         // Example: `other` in expand_as(self, other)
@@ -319,7 +320,7 @@ struct DifferentiableGraphBackward : public autograd::Node {
     captures_.capture(val, is_output);
   }
 
-  void addOutputForTensor(const at::Tensor& tensor) {
+  void addOutputForTensor(const xsigma::Tensor& tensor) {
     add_next_edge(
         tensor.defined() ? torch::autograd::impl::gradient_edge(tensor)
                     : autograd::Edge{});
@@ -327,7 +328,7 @@ struct DifferentiableGraphBackward : public autograd::Node {
   void addOutputForIValue(const IValue& value) {
     if (value.isTensorList()) {
       input_tensor_lists_.insert({index_, value.toTensorList().size()});
-      for (const at::Tensor& tensor : value.toTensorList()) {
+      for (const xsigma::Tensor& tensor : value.toTensorList()) {
         addOutputForTensor(tensor);
         index_++;
       }
@@ -345,8 +346,8 @@ struct DifferentiableGraphBackward : public autograd::Node {
     // NB: since our requires_grad setting is only a heuristic we might end
     // up wanting to differentiate through integral tensors, which is
     // generally a hard error in autograd.
-    if (at::isFloatingType(output.scalar_type()) ||
-        at::isComplexType(output.scalar_type())) {
+    if (xsigma::isFloatingType(output.scalar_type()) ||
+        xsigma::isComplexType(output.scalar_type())) {
       autograd::create_gradient_edge(output, shared_from_this());
       output.set_requires_grad(true);
     } else {
@@ -358,7 +359,7 @@ struct DifferentiableGraphBackward : public autograd::Node {
     if (v.isTensorList()) {
       auto tensors = v.toTensorList();
       input_instructions_.pushTensorList(tensors.size());
-      for (const at::Tensor& tensor : tensors) {
+      for (const xsigma::Tensor& tensor : tensors) {
         addInputVariable(tensor);
       }
     } else if (v.isTensor()) {
@@ -375,7 +376,7 @@ struct DifferentiableGraphBackward : public autograd::Node {
   }
 
  private:
-  void produceOutput(size_t i, at::Tensor output, variable_list& outputs) {
+  void produceOutput(size_t i, xsigma::Tensor output, variable_list& outputs) {
     if (task_should_compute_output(i)) {
       const auto& edge = next_edge(i);
       if (output.defined()) {
@@ -469,7 +470,7 @@ struct DifferentiableGraphOp {
   friend GraphExecutor* detail::getGradExecutor(Operation& op);
   friend GraphExecutor* detail::getDifferentiableGraphOpExecutor(Operation& op);
 
-  at::Tensor detach(at::Tensor t) const {
+  xsigma::Tensor detach(xsigma::Tensor t) const {
     if (!t.defined()) {
       return t;
     }
@@ -480,7 +481,7 @@ struct DifferentiableGraphOp {
     if (v.isTensor()) {
       v = IValue(detach(std::move(v).toTensor()));
     } else if (v.isTensorList()) {
-      std::vector<at::Tensor> lst = v.toTensorVector();
+      std::vector<xsigma::Tensor> lst = v.toTensorVector();
       for (auto& tensor : lst) {
         tensor = detach(tensor);
       }
@@ -494,7 +495,7 @@ struct DifferentiableGraphOp {
     // ourselves.
     const int64_t stack_size = stack.size();
     const int64_t stack_offset = stack_size - num_inputs;
-    for (const auto i : c10::irange(stack_offset, stack_size)) {
+    for (const auto i : xsigma::irange(stack_offset, stack_size)) {
       detach(stack[i]);
     }
   }
@@ -502,14 +503,14 @@ struct DifferentiableGraphOp {
   // backwards
   void captureInputs(
       DifferentiableGraphBackward& grad_fn,
-      at::ArrayRef<IValue> inputs) const {
+      xsigma::ArrayRef<IValue> inputs) const {
     for (size_t offset : grad.df_input_captured_inputs) {
       grad_fn.capture(inputs[offset], /*is_output*/ false);
     }
   }
   void captureOutputs(
       DifferentiableGraphBackward& grad_fn,
-      at::ArrayRef<IValue> outputs) const {
+      xsigma::ArrayRef<IValue> outputs) const {
     for (size_t offset : grad.df_input_captured_outputs) {
       grad_fn.capture(outputs[offset], /*is_output*/ true);
     }
@@ -569,14 +570,14 @@ GraphExecutor* getDifferentiableGraphOpExecutor(Operation& op) {
 } // namespace detail
 
 void GraphExecutorImplBase::run(Stack& stack) {
-  TORCH_CHECK(
+  XSIGMA_CHECK(
       stack.size() >= num_inputs,
       "expected ",
       num_inputs,
       " inputs, but got only ",
       stack.size());
 
-  C10_LOG_API_USAGE_ONCE("torch.graph_executor.run");
+  XSIGMA_LOG_API_USAGE_ONCE("torch.graph_executor.run");
   logging::getLogger()->addStatValue(
       logging::runtime_counters::GRAPH_EXECUTOR_INVOCATIONS, 1.0);
 
@@ -585,17 +586,17 @@ void GraphExecutorImplBase::run(Stack& stack) {
   last_executed_optimized_graph = plan.graph;
 }
 
-c10::intrusive_ptr<Future> GraphExecutorImplBase::runAsync(
+xsigma::intrusive_ptr<Future> GraphExecutorImplBase::runAsync(
     Stack& stack,
     TaskLauncher taskLauncher) {
-  TORCH_CHECK(
+  XSIGMA_CHECK(
       stack.size() >= num_inputs,
       "expected ",
       num_inputs,
       " inputs, but got only ",
       stack.size());
 
-  C10_LOG_API_USAGE_ONCE("torch.graph_executor.runAsync");
+  XSIGMA_LOG_API_USAGE_ONCE("torch.graph_executor.runAsync");
   logging::getLogger()->addStatValue(
       logging::runtime_counters::GRAPH_EXECUTOR_INVOCATIONS, 1.0);
 
@@ -829,7 +830,7 @@ void GraphExecutor::run(Stack& inputs) {
   return pImpl->run(inputs);
 }
 
-c10::intrusive_ptr<Future> GraphExecutor::runAsync(
+xsigma::intrusive_ptr<Future> GraphExecutor::runAsync(
     Stack& stack,
     TaskLauncher taskLauncher) {
   return pImpl->runAsync(stack, std::move(taskLauncher));
@@ -861,7 +862,7 @@ bool GraphExecutor::isOptimized() const {
 
 TORCH_API bool IsNewExecutorEnabled() {
   static const auto disable_new_executor =
-      c10::utils::has_env("TORCH_JIT_DISABLE_NEW_EXECUTOR");
+      xsigma::utils::has_env("TORCH_JIT_DISABLE_NEW_EXECUTOR");
   return getExecutorMode() && FLAGS_torch_jit_enable_new_executor &&
       !disable_new_executor;
 }
@@ -937,7 +938,7 @@ void runNondiffOptimization(
   DecomposeOps(graph);
   GRAPH_DEBUG("After DecomposeOps\n", *graph);
 
-  // TupleConstruct / TupleUnpack pairs can still be present at this point
+  // TupleConstruct / TupleUnpack pairs can still be present xsigma this point
   // and must be removed for fusion.
   LowerSimpleTuples(graph);
   GRAPH_DEBUG("After LowerSimpleTuples, before BatchMM\n", *graph);
@@ -992,7 +993,7 @@ void runOptimization(
   ConstantPooling(graph);
   GRAPH_DEBUG("After ConstantPooling\n", *graph);
 
-  // Unroll small loops, and eliminate expressions that are the same at every
+  // Unroll small loops, and eliminate expressions that are the same xsigma every
   // iteration.
   bool unroll_success = false;
   if (unroll_non_constant_loops) {
@@ -1045,12 +1046,12 @@ Node* replaceBlockWithFallbackGraph(Block* b, ArrayRef<Value*> inputs) {
   fallback->g_(attr::Subgraph, graph);
   b->prependNode(fallback);
 
-  for (const auto i : c10::irange(inputs.size())) {
+  for (const auto i : xsigma::irange(inputs.size())) {
     graph->inputs()[i]->setType(inputs[i]->type());
     graph->inputs()[i]->copyMetadata(inputs[i]);
   }
 
-  for (const auto i : c10::irange(b->outputs().size())) {
+  for (const auto i : xsigma::irange(b->outputs().size())) {
     fallback->output(i)->setType(b->outputs()[i]->type());
     fallback->output(i)->copyMetadata(b->outputs()[i]);
     b->replaceOutput(i, fallback->output(i));

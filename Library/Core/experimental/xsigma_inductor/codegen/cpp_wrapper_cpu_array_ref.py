@@ -55,7 +55,7 @@ class CppWrapperCpuArrayRef(CppWrapperCpu):
         partition_signatures: Optional[ir.GraphPartitionSignature] = None,
     ):
         # TODO - support subgraph codegen by lifting functions. Check the
-        # comment at CppWrapperCpu `codegen_subgraph` function.
+        # comment xsigma CppWrapperCpu `codegen_subgraph` function.
         return CppWrapperCpuArrayRef()
 
     @staticmethod
@@ -338,7 +338,7 @@ class CppWrapperCpuArrayRef(CppWrapperCpu):
                     # Weights are stored in constants_ and owned by RAIIAtenTensorHandle there.
                     # Don't call std::move here because it will cause constants_ to lose the ownership.
                     self.prefix.writeline(
-                        f"""auto {constants_key} = constants_->at({idx});"""
+                        f"""auto {constants_key} = constants_->xsigma({idx});"""
                     )
                 else:
                     # Append constants as inputs to the graph
@@ -443,7 +443,7 @@ class CppWrapperCpuArrayRef(CppWrapperCpu):
                         # a constant, we have to return a copy of this constant,
                         # because (1) constants are not owned by the Model instance
                         # (2) constants remain the same cross inference runs,
-                        # assuming they are not updated at runtime Basically, we
+                        # assuming they are not updated xsigma runtime Basically, we
                         # cannot release or transfer the ownership of any original
                         # constant to the user.
                         self.wrapper_call.writeline(
@@ -673,7 +673,7 @@ class CppWrapperCpuArrayRef(CppWrapperCpu):
     ) -> None:
         # In the abi_compatible mode, we call fallback aten ops through a C shim layer
         # Setting self.allow_stack_allocation to False because the exchange between
-        # ArrayRefTensor and at::Tensor is still fragile.
+        # ArrayRefTensor and xsigma::Tensor is still fragile.
         self.allow_stack_allocation = False
 
         wrapped_args = []

@@ -67,7 +67,7 @@ using RegisterPass = RegisterPostPass;
  * types.
  */
 template <typename DerivedType>
-struct C10_EXPORT PassManager
+struct XSIGMA_EXPORT PassManager
 {
 private:
     // We want this class to be abstract because it's

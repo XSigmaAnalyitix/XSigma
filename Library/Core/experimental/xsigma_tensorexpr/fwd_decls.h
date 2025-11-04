@@ -1,5 +1,5 @@
 #pragma once
-#include <c10/core/ScalarType.h>
+#include <xsigma/core/ScalarType.h>
 
 #include <memory>
 

@@ -1,9 +1,9 @@
 #pragma once
 #include <ATen/core/jit_type.h>
 #include <ATen/core/symbol.h>
-#include <c10/util/intrusive_ptr.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/jit/frontend/source_range.h>
+#include <xsigma/util/intrusive_ptr.h>
 
 #include <optional>
 #include <unordered_map>
@@ -26,10 +26,10 @@ std::string get_module_info(const ModuleInstanceInfo& module_instance_info);
 // of when Graph is deallocated. Hence, pointers to scopes held by nodes
 // will always be valid as long as Graph is alive.
 struct Scope;
-using ScopePtr = c10::intrusive_ptr<Scope>;
-using c10::Symbol;
+using ScopePtr = xsigma::intrusive_ptr<Scope>;
+using xsigma::Symbol;
 
-struct TORCH_API Scope : public c10::intrusive_ptr_target
+struct TORCH_API Scope : public xsigma::intrusive_ptr_target
 {
 private:
     ScopePtr parent_;
@@ -72,15 +72,15 @@ struct InlinedCallStack;
 struct ModuleInstanceInfo
 {
 private:
-    c10::ClassTypePtr module_type_{nullptr};
-    std::string       instance_name_;
+    xsigma::ClassTypePtr module_type_{nullptr};
+    std::string          instance_name_;
 
 public:
     ModuleInstanceInfo() = default;
-    ModuleInstanceInfo(c10::ClassTypePtr module_type, std::string instance_name);
-    c10::ClassTypePtr class_type() { return module_type_; }
-    c10::ClassTypePtr class_type() const { return module_type_; }
-    std::string       instance_name() const { return instance_name_; }
+    ModuleInstanceInfo(xsigma::ClassTypePtr module_type, std::string instance_name);
+    xsigma::ClassTypePtr class_type() { return module_type_; }
+    xsigma::ClassTypePtr class_type() const { return module_type_; }
+    std::string          instance_name() const { return instance_name_; }
 
     bool operator==(const ModuleInstanceInfo& rhs) const
     {
@@ -99,8 +99,8 @@ public:
  * For instance, if a node has a callstack
  *    [foo, source_range1] -> [bar, source_range2]
  * it means that this node was originally from function 'bar' that was called
- * at 'source_range2' in function 'foo' that was called in the current function
- * at 'source_range1'.
+ * xsigma 'source_range2' in function 'foo' that was called in the current function
+ * xsigma 'source_range1'.
  *
  * If a node did not come from any inlined function, its callstack will be
  * empty.
@@ -116,10 +116,10 @@ public:
  *                           /
  *  [ham, source_range4]  --
  */
-using InlinedCallStackPtr   = c10::intrusive_ptr<InlinedCallStack>;
+using InlinedCallStackPtr   = xsigma::intrusive_ptr<InlinedCallStack>;
 using InlinedCallStackEntry = std::tuple<Function*, SourceRange, std::optional<ModuleInstanceInfo>>;
 
-struct TORCH_API InlinedCallStack : public c10::intrusive_ptr_target
+struct TORCH_API InlinedCallStack : public xsigma::intrusive_ptr_target
 {
 private:
     std::optional<InlinedCallStackPtr> callee_;

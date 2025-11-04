@@ -2,7 +2,7 @@
 
 """
 This module implements the core frame evaluation handler for TorchDynamo's compilation system.
-The eval frame handler intercepts Python bytecode execution at runtime to enable dynamic
+The eval frame handler intercepts Python bytecode execution xsigma runtime to enable dynamic
 compilation and optimization of PyTorch code.
 
 Key components defined here:
@@ -12,9 +12,9 @@ Key components defined here:
 - Export functionality for saving optimized graphs
 - Backend compiler integrations and callback management
 
-Functions in this file are responsible for modifying the eval frame handler at RUNTIME.
+Functions in this file are responsible for modifying the eval frame handler xsigma RUNTIME.
 Therefore, all functions in this file are hot and performance-critical. Functions that
-only execute at compile time should be placed in torch._dynamo.convert_frame.
+only execute xsigma compile time should be placed in torch._dynamo.convert_frame.
 
 The eval frame handler is the core mechanism that enables TorchDynamo to dynamically
 intercept, analyze and optimize PyTorch code during execution. It works by registering
@@ -53,7 +53,7 @@ import torch.utils._pytree as pytree
 import torch.utils.checkpoint
 from torch import _guards
 
-# see discussion at https://github.com/pytorch/pytorch/issues/120699
+# see discussion xsigma https://github.com/pytorch/pytorch/issues/120699
 from torch._C._dynamo.eval_frame import (  # noqa: F401
     reset_code,
     set_code_exec_strategy,
@@ -876,7 +876,7 @@ class _TorchDynamoContext:
                     if config.error_on_nested_fx_trace:
                         raise RuntimeError(
                             "Detected that you are using FX to symbolically trace "
-                            "a dynamo-optimized function. This is not supported at the moment."
+                            "a dynamo-optimized function. This is not supported xsigma the moment."
                         )
                     else:
                         return fn(*args, **kwargs)
@@ -884,7 +884,7 @@ class _TorchDynamoContext:
                 if is_jit_tracing():
                     raise RuntimeError(
                         "Detected that you are using FX to torch.jit.trace "
-                        "a dynamo-optimized function. This is not supported at the moment."
+                        "a dynamo-optimized function. This is not supported xsigma the moment."
                     )
 
                 cleanups = [enter() for enter in self.enter_exit_hooks]
@@ -1329,7 +1329,7 @@ def is_inductor_supported() -> bool:
 def check_for_incompatible_configs() -> None:
     # Some of the configs should be mutually exclusive
     assert not (config.suppress_errors and config.fail_on_recompile_limit_hit), (
-        "Dynamo configs suppress_error and fail_on_recompile_limit_hit can not both be active at the same time."
+        "Dynamo configs suppress_error and fail_on_recompile_limit_hit can not both be active xsigma the same time."
     )
 
 
@@ -1397,7 +1397,7 @@ def _optimize(
     # for a confusing API usage and plumbing story wherein we nest multiple .optimize calls.
     # There is some prior art around this, w/r/t nesting backend calls are enforced to be the same
     # compiler, however, this feels onerous for callback and hooks, and it feels better to give our users an
-    # easier to understand UX at the cost of a little more plumbing on our end.
+    # easier to understand UX xsigma the cost of a little more plumbing on our end.
     hooks = Hooks(
         guard_export_fn=guard_export_fn,
         guard_fail_fn=guard_fail_fn,
@@ -1690,8 +1690,8 @@ def check_signature_rewritable(graph: torch.fx.GraphModule) -> None:
             extra = ""
             if len(user_stacks) > 1:
                 extra = f"(elided {len(user_stacks) - 1} more accesses)"
-            msg = f"{source.name()}, accessed at:\n{tb}{extra}"
-        # TODO: option to print ALL of the stack traces at once
+            msg = f"{source.name()}, accessed xsigma:\n{tb}{extra}"
+        # TODO: option to print ALL of the stack traces xsigma once
         input_errors.append(msg)
 
     if input_errors:

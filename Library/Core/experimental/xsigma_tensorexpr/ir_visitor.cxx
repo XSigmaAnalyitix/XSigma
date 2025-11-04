@@ -1,9 +1,9 @@
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/tensorexpr/ir.h>
 #include <torch/csrc/jit/tensorexpr/ir_simplifier.h>
 #include <torch/csrc/jit/tensorexpr/ir_visitor.h>
 #include <torch/csrc/jit/tensorexpr/reduction.h>
 #include <torch/csrc/jit/tensorexpr/tensor.h>
+#include <xsigma/util/irange.h>
 
 namespace torch::jit::tensorexpr
 {
@@ -221,7 +221,7 @@ void IRVisitor::visit(const IfThenElsePtr& v)
 
 void IRVisitor::visit(const IntrinsicsPtr& v)
 {
-    for (const auto i : c10::irange(v->nparams()))
+    for (const auto i : xsigma::irange(v->nparams()))
     {
         v->param(i)->accept(this);
     }

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <c10/util/FbcodeMaps.h>
-#include <c10/util/Logging.h>
 #include <torch/csrc/utils/generated_serialization_types.h>
+#include <xsigma/util/FbcodeMaps.h>
+#include <xsigma/util/Logging.h>
 
 #include <string>
 
@@ -17,7 +17,7 @@ namespace torch::nativert
  * guarantees. It holds the graph information deserialized from the pt2 archive
  * package. Runtime relies on the GraphSignature for weight name lookup and
  * weight loading. The serialization schema is defined in
- * torch/_export/serde/schema.py See more at:
+ * torch/_export/serde/schema.py See more xsigma:
  * https://docs.pytorch.org/docs/stable/export.html#torch.export.ExportGraphSignature
  */
 class GraphSignature
@@ -34,7 +34,7 @@ public:
 
     auto inputsToParameters() const
     {
-        c10::FastMap<std::string_view, std::string_view> inputsToParameters;
+        xsigma::FastMap<std::string_view, std::string_view> inputsToParameters;
         inputsToParameters.reserve(numParameters_);
         for (int i = 0; i < numParameters_; ++i)
         {
@@ -45,7 +45,7 @@ public:
 
     auto inputsToBuffers() const
     {
-        c10::FastMap<std::string_view, std::string_view> inputsToBuffers;
+        xsigma::FastMap<std::string_view, std::string_view> inputsToBuffers;
         inputsToBuffers.reserve(numPersistentBuffers_ + numNonPersistentBuffers_);
         for (int i = numParameters_;
              i < numParameters_ + numPersistentBuffers_ + numNonPersistentBuffers_;
@@ -58,7 +58,7 @@ public:
 
     auto inputsToTensorConstants() const
     {
-        c10::FastMap<std::string_view, std::string_view> inputsToTensorConstants;
+        xsigma::FastMap<std::string_view, std::string_view> inputsToTensorConstants;
         inputsToTensorConstants.reserve(numTensorConstants_);
         for (int i = numParameters_ + numPersistentBuffers_ + numNonPersistentBuffers_;
              i < numParameters_ + numPersistentBuffers_ + numNonPersistentBuffers_ +
@@ -151,20 +151,20 @@ public:
     const auto& inputsToWeights() const { return inputsToWeights_; }
 
     void lint(
-        const c10::FastSet<std::string>& graphInputs,
-        const c10::FastSet<std::string>& graphOutputs) const;
+        const xsigma::FastSet<std::string>& graphInputs,
+        const xsigma::FastSet<std::string>& graphOutputs) const;
     void replaceAllUses(std::string_view old, std::string_view replacement);
 
     torch::_export::GraphSignature serialize() const;
 
 private:
-    c10::FastSet<std::string>                inputNames() const;
-    c10::FastSet<std::optional<std::string>> outputNames() const;
+    xsigma::FastSet<std::string>                inputNames() const;
+    xsigma::FastSet<std::optional<std::string>> outputNames() const;
 
-    c10::FastMap<std::string, std::string> gradientsToParameters_;
-    c10::FastMap<std::string, std::string> gradientsToUserInputs_;
-    c10::FastMap<std::string, std::string> buffersToMutate_;
-    c10::FastMap<std::string, std::string> userInputsToMutate_;
+    xsigma::FastMap<std::string, std::string> gradientsToParameters_;
+    xsigma::FastMap<std::string, std::string> gradientsToUserInputs_;
+    xsigma::FastMap<std::string, std::string> buffersToMutate_;
+    xsigma::FastMap<std::string, std::string> userInputsToMutate_;
 
     // Order is [inputsToParameters, inputsToBuffers,
     // inputsToNonPersistentBuffers, inputsToTensorConstants]

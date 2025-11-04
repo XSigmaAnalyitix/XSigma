@@ -35,18 +35,19 @@ Node* MutationRemover::createSpecialMappedOp(Node* n)
     Node*           new_node = nullptr;
     if (n->matches("aten::fill_.Scalar(Tensor(a!) self, Scalar value) -> Tensor(a!)"))
     {
-        auto dtype = graph_->insert(prim::dtype, {inputs.at(0)});
-        new_node =
-            graph_
-                ->insert(
-                    aten::full_like, {inputs.at(0), inputs.at(1)}, {NamedValue("dtype", dtype)})
-                ->node();
+        auto dtype = graph_->insert(prim::dtype, {inputs.xsigma(0)});
+        new_node   = graph_
+                       ->insert(
+                           aten::full_like,
+                           {inputs.xsigma(0), inputs.xsigma(1)},
+                           {NamedValue("dtype", dtype)})
+                       ->node();
         new_node->copyMetadata(n);
         new_node->output()->setType(n->output()->type());
     }
     else if (n->matches("aten::zero_(Tensor(a!) self) -> Tensor(a!)"))
     {
-        new_node = graph_->insert(aten::zeros_like, {n->inputs().at(0)})->node();
+        new_node = graph_->insert(aten::zeros_like, {n->inputs().xsigma(0)})->node();
     }
     else if (n->matches(
                  "aten::normal_(Tensor(a!) self, float mean=0, float std=1, *, Generator? "
@@ -56,16 +57,16 @@ Node* MutationRemover::createSpecialMappedOp(Node* n)
         // normal(float mean, float std, int[] size, *, Generator? generator=None,
         // ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool?
         // pin_memory=None) -> Tensor
-        auto size       = graph_->insert(aten::size, {n->inputs().at(0)});
-        auto dtype      = graph_->insert(prim::dtype, {n->inputs().at(0)});
-        auto layout     = graph_->insert(prim::layout, {n->inputs().at(0)});
-        auto device     = graph_->insert(prim::device, {n->inputs().at(0)});
-        auto pin_memory = graph_->insert(aten::is_pinned, {n->inputs().at(0)});
+        auto size       = graph_->insert(aten::size, {n->inputs().xsigma(0)});
+        auto dtype      = graph_->insert(prim::dtype, {n->inputs().xsigma(0)});
+        auto layout     = graph_->insert(prim::layout, {n->inputs().xsigma(0)});
+        auto device     = graph_->insert(prim::device, {n->inputs().xsigma(0)});
+        auto pin_memory = graph_->insert(aten::is_pinned, {n->inputs().xsigma(0)});
         auto generator  = graph_->insertConstant(IValue());
         new_node        = graph_->insertNode(graph_->create(
             aten::normal,
-            {n->inputs().at(1),
-                    n->inputs().at(2),
+            {n->inputs().xsigma(1),
+                    n->inputs().xsigma(2),
                     size,
                     generator,
                     dtype,
@@ -88,11 +89,11 @@ static bool removableSetItem(Node* n)
     {
         return false;
     }
-    if (n->inputs().at(0)->node()->kind() != prim::ListConstruct)
+    if (n->inputs().xsigma(0)->node()->kind() != prim::ListConstruct)
     {
         return false;
     }
-    auto    li_node = n->inputs().at(0)->node();
+    auto    li_node = n->inputs().xsigma(0)->node();
     int64_t index   = *constant_as<int64_t>(n->input(1));
     if (index < 0)
     {
@@ -106,9 +107,9 @@ bool MutationRemover::listMutationFollowingListConstruct(Node* n)
 {
     return (
         (n->kind() == aten::append ||
-         (n->kind() == aten::insert && n->inputs().at(1)->node()->kind() == prim::Constant) ||
+         (n->kind() == aten::insert && n->inputs().xsigma(1)->node()->kind() == prim::Constant) ||
          (removableSetItem(n))) &&
-        n->inputs().at(0)->node()->kind() == prim::ListConstruct);
+        n->inputs().xsigma(0)->node()->kind() == prim::ListConstruct);
 }
 
 bool MutationRemover::tryMakeCreationAndMutationAtomic(Value* mutated_value, Node* mutating_op)
@@ -145,8 +146,8 @@ bool MutationRemover::tryMakeUnaliasedIfOutputAndMutationAtomic(
 
     auto if_node     = mutated_value->node();
     auto offset      = mutated_value->offset();
-    auto true_value  = if_node->blocks().at(0)->outputs().at(offset);
-    auto false_value = if_node->blocks().at(1)->outputs().at(offset);
+    auto true_value  = if_node->blocks().xsigma(0)->outputs().xsigma(offset);
+    auto false_value = if_node->blocks().xsigma(1)->outputs().xsigma(offset);
 
     if (true_value->uses().size() > 1 || false_value->uses().size() > 1)
     {
@@ -180,7 +181,7 @@ bool MutationRemover::RemoveListMutation(Block* block)
             continue;
         }
 
-        Value* mutated_value = node->inputs().at(0);
+        Value* mutated_value = node->inputs().xsigma(0);
         if (!tryMakeCreationAndMutationAtomic(mutated_value, node))
         {
             continue;
@@ -199,11 +200,11 @@ bool MutationRemover::RemoveListMutation(Block* block)
         switch (node->kind())
         {
         case aten::append:
-            list_construct->addInput(node->inputs().at(1));
+            list_construct->addInput(node->inputs().xsigma(1));
             break;
         case aten::insert:
         {
-            int pos  = toIValue(node->inputs().at(1))->toInt();
+            int pos  = toIValue(node->inputs().xsigma(1))->toInt();
             int size = list_construct->inputs().size();
             // insert to neg position equals insert to std::max(pos+size, 0)
             if (pos < 0)
@@ -212,12 +213,12 @@ bool MutationRemover::RemoveListMutation(Block* block)
             }
             // insert beyond current list length is the same as append
             pos = std::min(pos, size);
-            list_construct->insertInput(pos, node->inputs().at(2));
+            list_construct->insertInput(pos, node->inputs().xsigma(2));
             break;
         }
         case aten::_set_item:
         {
-            int pos  = toIValue(node->inputs().at(1))->toInt();
+            int pos  = toIValue(node->inputs().xsigma(1))->toInt();
             int size = list_construct->inputs().size();
             if (pos < 0)
             {
@@ -275,7 +276,7 @@ bool MutationRemover::RemoveTensorMutation(Block* block)
             continue;
         }
 
-        Value* mutated_value = node->inputs().at(0);
+        Value* mutated_value = node->inputs().xsigma(0);
         if (!tryMakeCreationAndMutationAtomic(mutated_value, node) &&
             !tryMakeUnaliasedIfOutputAndMutationAtomic(mutated_value, node))
         {
@@ -357,7 +358,7 @@ bool MutationRemover::inplaceOpVariant(Node* n)
     }
 
     auto name       = n->schema().name();
-    bool inplace_op = name.at(name.size() - 1) == '_';
+    bool inplace_op = name.xsigma(name.size() - 1) == '_';
     if (!inplace_op)
     {
         return false;
@@ -374,7 +375,7 @@ bool MutationRemover::inplaceOpVariant(Node* n)
         return false;
     }
 
-    // all inplace ops at time of writing have a single input that is mutated
+    // all inplace ops xsigma time of writing have a single input that is mutated
     // and returned. check that this is true, anything else could have strange
     // semantics,
     if (n->outputs().size() != 1 || n->inputs().empty())
@@ -382,7 +383,7 @@ bool MutationRemover::inplaceOpVariant(Node* n)
         return false;
     }
     auto inputs = n->inputs();
-    if (!getOrCreateAliasDb()->writesToAlias(n, {inputs.at(0)}) ||
+    if (!getOrCreateAliasDb()->writesToAlias(n, {inputs.xsigma(0)}) ||
         getOrCreateAliasDb()->writesToAlias(n, {inputs.slice(1).begin(), inputs.slice(1).end()}))
     {
         return false;

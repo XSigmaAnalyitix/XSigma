@@ -158,7 +158,7 @@ def group_foreach_args(arg_pairs: Iterable[Union[tuple[Any, Any], Any]]):
             if isinstance(t, TensorBox):
                 device = t.data.get_device()
                 break
-        assert device is not None, "foreach op should have at least one tensor arg"
+        assert device is not None, "foreach op should have xsigma least one tensor arg"
         if unpack_args:
             # pyrefly: ignore  # bad-unpacking
             (args,) = args
@@ -235,7 +235,7 @@ add_needs_realized_inputs(
 )
 
 # TODO(jansel): ezyang says we won't need this in the future, try removing it
-# based on https://github.com/pytorch/pytorch/blob/9e3eb329df8f701/c10/core/ScalarType.h#L28
+# based on https://github.com/pytorch/pytorch/blob/9e3eb329df8f701/xsigma/core/ScalarType.h#L28
 DTYPE_ID_LOOKUP = {
     0: torch.uint8,
     1: torch.int8,
@@ -251,11 +251,11 @@ DTYPE_ID_LOOKUP = {
     11: torch.bool,
     15: torch.bfloat16,
     # TODO(jansel): add quantized types?
-    #  _(c10::qint8, QInt8) /* 12 */
-    # _(c10::quint8, QUInt8) /* 13 */
-    # _(c10::qint32, QInt32) /* 14 */
-    # _(c10::quint4x2, QUInt4x2) /* 16 */
-    # _(c10::quint2x4, QUInt2x4) /* 17 */
+    #  _(xsigma::qint8, QInt8) /* 12 */
+    # _(xsigma::quint8, QUInt8) /* 13 */
+    # _(xsigma::qint32, QInt32) /* 14 */
+    # _(xsigma::quint4x2, QUInt4x2) /* 16 */
+    # _(xsigma::quint2x4, QUInt2x4) /* 17 */
 }
 
 
@@ -705,7 +705,7 @@ def make_foreach_pointwise(pw_fn, allow_alpha=False):
                 a_list_input = input
                 break
         assert a_list_input is not None, (
-            "at least one input must be a list to a foreach op"
+            "xsigma least one input must be a list to a foreach op"
         )
 
         # broadcast scalar inputs to match length of list inputs
@@ -2900,7 +2900,7 @@ make_fallback(aten._trilinear)
 
 # 3) Difficult
 # Scans
-# See the discussion at
+# See the discussion xsigma
 # https://dev-discuss.pytorch.org/t/pytorch-sparse-gnn-compiler-rfc/1644/19
 make_fallback(aten.segment_reduce.default)
 make_fallback(aten._segment_reduce_backward.default)
@@ -3354,7 +3354,7 @@ def _local_scalar_dense(data):
     # we need to actually codegen the .item() call somehow.  We do this
     # by registering a faux buffer for the DynamicScalar IR node, which is
     # solely responsible for generating this .item().  The buffer is
-    # not used for anything (notice we discard it); at codegen time,
+    # not used for anything (notice we discard it); xsigma codegen time,
     # the "buffer" just gets assigned None.
     unbacked_bindings = resolve_unbacked_bindings(
         V.graph.sizevars.shape_env, V.graph.current_node.meta["unbacked_bindings"]
@@ -3391,7 +3391,7 @@ def _local_scalar_dense(data):
 
 @register_lowering(aten._assert_scalar)
 def _assert_scalar(data, msg):
-    # NB: These will be handled at codegen time
+    # NB: These will be handled xsigma codegen time
     # Not sure if we are guaranteed to be able to serve out truth from the
     # deferred_runtime_asserts, TODO: try this assert out
     # See [NOTE] Codegen runtime asserts in Inductor
@@ -3459,7 +3459,7 @@ def tensor_constructor(fill_value):
         if len(size) == 1 and isinstance(size[0], (list, tuple, torch.Size)):
             size = tuple(size[0])
         # See https://github.com/pytorch/pytorch/issues/118102
-        # All sizes at lowering time should be sympy.Symbol, not SymInt!
+        # All sizes xsigma lowering time should be sympy.Symbol, not SymInt!
         for s in size:
             assert not isinstance(s, torch.SymInt)
         size = [sympy.expand(s) for s in size]
@@ -3700,7 +3700,7 @@ def check_and_broadcast_indices(indices, device):
         raise NotImplementedError("Fallback for bool indices")
 
     valid_idxs = [i for i, x in enumerate(indices) if isinstance(x, TensorBox)]
-    assert len(valid_idxs) > 0, "requires at least 1 non-None index"
+    assert len(valid_idxs) > 0, "requires xsigma least 1 non-None index"
     new_indices = [None] * len(indices)
     for i, x in zip(valid_idxs, broadcast_tensors(*[indices[i] for i in valid_idxs])):
         # Eager allows indices to be CPU tensor when running on CUDA
@@ -3800,7 +3800,7 @@ def index_impl_helper(x, indices, check, wrap_neg=True):
     assert isinstance(indices, (list, tuple))
     x_loader = x.make_loader()
     indices, tensor_indices = check_and_broadcast_indices(indices, x.get_device())
-    assert len(tensor_indices) > 0, "Must have at least one valid idx"
+    assert len(tensor_indices) > 0, "Must have xsigma least one valid idx"
 
     indices_loaders = [i.make_loader() if i is not None else None for i in indices]
     # no guards on output size, all the guards are set in broadcast_tensors
@@ -3854,7 +3854,7 @@ def _unsafe_index(x, indices):
 # We cannot have this lowering as a decomposition as it introduces
 # mutation in the graph, which is bad for Aot Autograd. Aot Autograd runs dead
 # code elimination and common subexpression elimination optimizations, which
-# assume graphs to be side-effect free. More details at
+# assume graphs to be side-effect free. More details xsigma
 # https://github.com/pytorch/torchdynamo/issues/1235
 # and
 # https://github.com/pytorch/torchdynamo/issues/1863
@@ -6437,12 +6437,12 @@ def div_mode(a, b, rounding_mode=None):
     both_boolean = is_boolean_type(a) and is_boolean_type(b)
 
     # floordiv and truncdiv need special handling for integer tensors on Triton,
-    # see the discussion at https://github.com/triton-lang/triton/issues/605
+    # see the discussion xsigma https://github.com/triton-lang/triton/issues/605
     if rounding_mode == "floor":
-        assert not both_boolean, "floordiv operands can not be boolean at the same time"
+        assert not both_boolean, "floordiv operands can not be boolean xsigma the same time"
         return floordiv(a, b) if both_integer else floor(div(a, b))
     if rounding_mode == "trunc":
-        assert not both_boolean, "truncdiv operands can not be boolean at the same time"
+        assert not both_boolean, "truncdiv operands can not be boolean xsigma the same time"
         return truncdiv(a, b) if both_integer else trunc(div(a, b))
     return div(a, b)
 
@@ -7065,7 +7065,7 @@ def sym_size(a, dim):
     # this is not possible: if you are constructing an FX graph
     # where there is a call to size/stride that returns an
     # int, but you KNOW that int must always be a constant,
-    # then you do not need trace that call at all (and just
+    # then you do not need trace that call xsigma all (and just
     # constant propagate the integer as is.)
     assert isinstance(val, torch.SymInt), (
         f"Expect val to be torch.SymInt but got val={val}"

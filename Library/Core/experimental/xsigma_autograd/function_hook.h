@@ -18,7 +18,7 @@ struct PackedArgs;
 namespace torch::autograd
 {
 
-using Variable      = at::Tensor;
+using Variable      = xsigma::Tensor;
 using variable_list = std::vector<Variable>;
 
 struct TORCH_API FunctionPreHook

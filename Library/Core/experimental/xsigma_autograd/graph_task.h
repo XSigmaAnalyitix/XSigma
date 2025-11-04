@@ -1,9 +1,9 @@
 #pragma once
 #include <ATen/ThreadLocalState.h>
 #include <ATen/core/Tensor.h>
-#include <c10/util/ThreadLocal.h>
 #include <torch/csrc/autograd/input_buffer.h>
 #include <torch/csrc/autograd/utils/warnings.h>
+#include <xsigma/util/ThreadLocal.h>
 
 #include <vector>
 
@@ -34,8 +34,8 @@ struct GraphTask : std::enable_shared_from_this<GraphTask>
     std::unordered_map<Node*, int>         dependencies_;
 
     // Records the nodes that are in the graph
-    std::unordered_set<Node*>  nodes_in_graph_;
-    c10::SmallVector<Node*, 4> graph_roots_;
+    std::unordered_set<Node*>     nodes_in_graph_;
+    xsigma::SmallVector<Node*, 4> graph_roots_;
     // Note [Exec info]
     // Exec info is created for each GraphTask, which allows filtering paths on
     // the graph that are not needed. It has a bit complicated semantics. If it's
@@ -67,8 +67,8 @@ struct GraphTask : std::enable_shared_from_this<GraphTask>
             // grad will be replaced by the return value of the hook.
             struct GradCaptureHook
             {
-                virtual ~GradCaptureHook()                            = default;
-                virtual at::Tensor operator()(const at::Tensor& grad) = 0;
+                virtual ~GradCaptureHook()                                    = default;
+                virtual xsigma::Tensor operator()(const xsigma::Tensor& grad) = 0;
             };
             // NOTE [Deprecated capture hooks]
             //
@@ -128,13 +128,13 @@ struct GraphTask : std::enable_shared_from_this<GraphTask>
 
     // Note: this field is not ready to be used until the proper
     // `thread_locals_.set_grad_mode()` call in the constructor.
-    at::ThreadLocalState thread_locals_;
+    xsigma::ThreadLocalState thread_locals_;
 
-    std::unordered_set<c10::Stream> leaf_streams;
+    std::unordered_set<xsigma::Stream> leaf_streams;
 
     // Per-device current streams of the execute() that called this GraphTask.
     // These will be synced with leaf_streams in exec_post_processing.
-    std::vector<std::optional<c10::Stream>> caller_current_streams_;
+    std::vector<std::optional<xsigma::Stream>> caller_current_streams_;
 
     // Collects caller_current_streams_ for the accelerator device.
     void stash_current_streams();
@@ -181,7 +181,7 @@ struct GraphTask : std::enable_shared_from_this<GraphTask>
 
     // Future representing the completion of the graph task. Notified when all
     // tasks are done.
-    c10::intrusive_ptr<at::ivalue::Future> future_result_;
+    xsigma::intrusive_ptr<xsigma::ivalue::Future> future_result_;
 
     // Final callbacks installed during execution of this GraphTask
     std::vector<std::function<void()>> final_callbacks_;
@@ -194,12 +194,12 @@ struct GraphTask : std::enable_shared_from_this<GraphTask>
     uint64_t id_;
 
     GraphTask(
-        bool                        keep_graph,
-        bool                        grad_mode,
-        int                         reentrant_depth,
-        std::shared_ptr<ReadyQueue> cpu_ready_queue,
-        c10::SmallVector<Node*, 4>  graph_roots,
-        bool                        exit_on_error = false);
+        bool                          keep_graph,
+        bool                          grad_mode,
+        int                           reentrant_depth,
+        std::shared_ptr<ReadyQueue>   cpu_ready_queue,
+        xsigma::SmallVector<Node*, 4> graph_roots,
+        bool                          exit_on_error = false);
 
 private:
     // run GraphTask post processing

@@ -1,4 +1,3 @@
-#include <c10/util/irange.h>
 #include <pybind11/pybind11.h>
 #include <torch/csrc/DynamicTypes.h>
 #include <torch/csrc/Exceptions.h>
@@ -11,6 +10,7 @@
 #include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/python_numbers.h>
 #include <torch/csrc/utils/python_strings.h>
+#include <xsigma/util/irange.h>
 
 #include <cstdio>
 #include <memory>
@@ -156,7 +156,7 @@ PyObject* THPCppFunction_next_functions(PyObject* self, void* _unused)
     THPObjectPtr py_functions(PyTuple_New(num_next));
     if (!py_functions)
         return nullptr;
-    for (const auto i : c10::irange(num_next))
+    for (const auto i : xsigma::irange(num_next))
     {
         auto&        c_tuple = cdata->next_edge(i);
         THPObjectPtr tuple(PyTuple_New(2));
@@ -287,7 +287,7 @@ PyTypeObject* _initFunctionPyTypeObject(
     type.tp_clear     = THPCppFunction_clear;
     if (PyType_Ready(&type) < 0)
     {
-        TORCH_CHECK(false, "Unable to instantiate PyTypeObject for ", name);
+        XSIGMA_CHECK(false, "Unable to instantiate PyTypeObject for ", name);
     }
     return &type;
 }

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <c10/util/irange.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/variable.h>
+#include <xsigma/util/irange.h>
 
 #include <memory>
 #include <string>
@@ -52,7 +52,7 @@ struct TORCH_API DelayedError : public Node
 {
     DelayedError(std::string msg, int64_t num_inputs) : msg(std::move(msg))
     {
-        for ([[maybe_unused]] const auto _ [[maybe_unused]] : c10::irange(num_inputs))
+        for ([[maybe_unused]] const auto _ [[maybe_unused]] : xsigma::irange(num_inputs))
         {
             add_input_metadata(Node::undefined_input());
         }
@@ -94,7 +94,7 @@ struct TORCH_API GraphRoot : public Node
         : Node(std::move(functions)), outputs(std::move(inputs))
     {
         // Ensures calls to stream() on a GraphRoot instance reflect current
-        // stream(s) on devices of root grad tensors at the time the instance is
+        // stream(s) on devices of root grad tensors xsigma the time the instance is
         // constructed.
         for (const auto& t : outputs)
         {

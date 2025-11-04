@@ -11,17 +11,17 @@ namespace
 {
 static void VisitTupleNode(Node* node)
 {
-    TORCH_CHECK(node->outputs().size() == 1, "Tuple must have exactly one output!");
+    XSIGMA_CHECK(node->outputs().size() == 1, "Tuple must have exactly one output!");
 
     Value* output     = node->outputs()[0];
     auto   tuple_type = output->type()->expectRef<TupleType>();
 
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         tuple_type.containedTypes().size() == node->inputs().size(),
         "Number of contained types does not match number of inputs!");
 
     // Extract updated types from input values.
-    std::vector<c10::TypePtr> types;
+    std::vector<xsigma::TypePtr> types;
     for (const Value* input : node->inputs())
     {
         types.push_back(input->type());

@@ -10,7 +10,7 @@
 namespace torch::jit
 {
 
-using ::c10::Symbol;
+using ::xsigma::Symbol;
 
 constexpr int max_tensor_display_size = 10;
 
@@ -89,19 +89,19 @@ private:
     ValueType value_;
 };
 
-using ComplexAttr     = ScalarAttributeValue<c10::complex<double>, AttributeKind::c>;
-using ComplexValsAttr = VectorAttributeValue<c10::complex<double>, AttributeKind::cs>;
+using ComplexAttr     = ScalarAttributeValue<xsigma::complex<double>, AttributeKind::c>;
+using ComplexValsAttr = VectorAttributeValue<xsigma::complex<double>, AttributeKind::cs>;
 using FloatAttr       = ScalarAttributeValue<double, AttributeKind::f>;
 using FloatsAttr      = VectorAttributeValue<double, AttributeKind::fs>;
 using IntAttr         = ScalarAttributeValue<int64_t, AttributeKind::i>;
 using IntsAttr        = VectorAttributeValue<int64_t, AttributeKind::is>;
 using StringAttr      = ScalarAttributeValue<std::string, AttributeKind::s>;
 using StringsAttr     = VectorAttributeValue<std::string, AttributeKind::ss>;
-using TensorAttr      = ScalarAttributeValue<at::Tensor, AttributeKind::t>;
-using TensorsAttr     = VectorAttributeValue<at::Tensor, AttributeKind::ts>;
-using TypeAttr        = ScalarAttributeValue<c10::TypePtr, AttributeKind::ty>;
-using TypesAttr       = VectorAttributeValue<c10::TypePtr, AttributeKind::tys>;
-using IValueAttr      = ScalarAttributeValue<at::IValue, AttributeKind::ival>;
+using TensorAttr      = ScalarAttributeValue<xsigma::Tensor, AttributeKind::t>;
+using TensorsAttr     = VectorAttributeValue<xsigma::Tensor, AttributeKind::ts>;
+using TypeAttr        = ScalarAttributeValue<xsigma::TypePtr, AttributeKind::ty>;
+using TypesAttr       = VectorAttributeValue<xsigma::TypePtr, AttributeKind::tys>;
+using IValueAttr      = ScalarAttributeValue<xsigma::IValue, AttributeKind::ival>;
 
 struct Graph;
 

@@ -9,7 +9,7 @@ namespace caffe2
 {
 // Required for cpp_custom_type_hack to work
 // NOLINTNEXTLINE(bugprone-exception-escape)
-CAFFE_KNOWN_TYPE(at::RecordFunction)
+CAFFE_KNOWN_TYPE(xsigma::RecordFunction)
 }  // namespace caffe2
 
 namespace torch::autograd::profiler
@@ -18,13 +18,13 @@ namespace torch::autograd::profiler
 // Creates a new profiling scope using RecordFunction and invokes its starting
 // callbacks.
 static void record_function_enter(
-    const std::string& name, const std::optional<std::string>& args, at::RecordFunction& rec)
+    const std::string& name, const std::optional<std::string>& args, xsigma::RecordFunction& rec)
 {
     if (rec.isActive())
     {
         if (rec.needsInputs() && args.has_value())
         {
-            rec.before(name, c10::ArrayRef<const c10::IValue>{c10::IValue{args.value()}});
+            rec.before(name, xsigma::ArrayRef<const xsigma::IValue>{xsigma::IValue{args.value()}});
         }
         else
         {
@@ -34,37 +34,37 @@ static void record_function_enter(
 }
 
 // Legacy signature using cpp_custom_type_hack
-static at::Tensor record_function_enter_legacy(
+static xsigma::Tensor record_function_enter_legacy(
     const std::string& name, const std::optional<std::string>& args)
 {
-    auto rec = std::make_unique<at::RecordFunction>(at::RecordScope::USER_SCOPE);
+    auto rec = std::make_unique<xsigma::RecordFunction>(xsigma::RecordScope::USER_SCOPE);
     record_function_enter(name, args, *rec);
-    return at::cpp_custom_type_hack::create(std::move(rec), at::TensorOptions());
+    return xsigma::cpp_custom_type_hack::create(std::move(rec), xsigma::TensorOptions());
 }
 
 // New signature using custom_class
-c10::intrusive_ptr<PythonRecordFunction> record_function_enter_new(
+xsigma::intrusive_ptr<PythonRecordFunction> record_function_enter_new(
     const std::string& name, const std::optional<std::string>& args)
 {
-    auto rec = c10::make_intrusive<PythonRecordFunction>(at::RecordScope::USER_SCOPE);
+    auto rec = xsigma::make_intrusive<PythonRecordFunction>(xsigma::RecordScope::USER_SCOPE);
     record_function_enter(name, args, rec->record);
     return rec;
 }
 
-static at::RecordFunction& getRecordFunctionFromTensor(const at::Tensor& handle)
+static xsigma::RecordFunction& getRecordFunctionFromTensor(const xsigma::Tensor& handle)
 {
-    auto& rec = at::cpp_custom_type_hack::cast<at::RecordFunction>(handle);
+    auto& rec = xsigma::cpp_custom_type_hack::cast<xsigma::RecordFunction>(handle);
     return rec;
 }
 
 // Ends the profiling scope created with record_function_enter.
-static void record_function_exit(at::RecordFunction& rec)
+static void record_function_exit(xsigma::RecordFunction& rec)
 {
     rec.end();
 }
 
 // Legacy signature using cpp_custom_type_hack
-static void record_function_exit_legacy(const at::Tensor& handle)
+static void record_function_exit_legacy(const xsigma::Tensor& handle)
 {
     // We don't actually need to do anything with handle just need to persist the
     // lifetime until now.
@@ -73,18 +73,18 @@ static void record_function_exit_legacy(const at::Tensor& handle)
 }
 
 // New signature using custom_class
-static void record_function_exit_new(const c10::intrusive_ptr<PythonRecordFunction>& record)
+static void record_function_exit_new(const xsigma::intrusive_ptr<PythonRecordFunction>& record)
 {
     record_function_exit(record->record);
 }
 
 template <typename Func>
-static c10::intrusive_ptr<c10::ivalue::Future> _call_end_callbacks_on_fut(
-    Func get_record, const c10::intrusive_ptr<c10::ivalue::Future>& fut)
+static xsigma::intrusive_ptr<xsigma::ivalue::Future> _call_end_callbacks_on_fut(
+    Func get_record, const xsigma::intrusive_ptr<xsigma::ivalue::Future>& fut)
 {
     // Profiling callback that ends the associated record_function
     // and returns the value of the passed in future.
-    auto futureProfilingFunc = [get_record = std::move(get_record)](c10::ivalue::Future& fut)
+    auto futureProfilingFunc = [get_record = std::move(get_record)](xsigma::ivalue::Future& fut)
     {
         auto& rec = get_record();
         rec.end();
@@ -96,17 +96,17 @@ static c10::intrusive_ptr<c10::ivalue::Future> _call_end_callbacks_on_fut(
         return fut.value();
     };
     // Define a future that completes after the profiling callbacks are run.
-    auto profiledFut =
-        fut->then(at::wrapPropagateTLSState(std::move(futureProfilingFunc)), fut->elementType());
+    auto profiledFut = fut->then(
+        xsigma::wrapPropagateTLSState(std::move(futureProfilingFunc)), fut->elementType());
     return profiledFut;
 }
 
 // Legacy signature using cpp_custom_type_hack
-static c10::intrusive_ptr<c10::ivalue::Future> _call_end_callbacks_on_fut_legacy(
-    const at::Tensor& handle, const c10::intrusive_ptr<c10::ivalue::Future>& fut)
+static xsigma::intrusive_ptr<xsigma::ivalue::Future> _call_end_callbacks_on_fut_legacy(
+    const xsigma::Tensor& handle, const xsigma::intrusive_ptr<xsigma::ivalue::Future>& fut)
 {
     return _call_end_callbacks_on_fut(
-        [handle]() -> at::RecordFunction&
+        [handle]() -> xsigma::RecordFunction&
         {
             TORCH_INTERNAL_ASSERT(
                 handle.defined(),
@@ -120,12 +120,12 @@ static c10::intrusive_ptr<c10::ivalue::Future> _call_end_callbacks_on_fut_legacy
 }
 
 // New signature using custom_class
-c10::intrusive_ptr<c10::ivalue::Future> _call_end_callbacks_on_fut_new(
-    const c10::intrusive_ptr<PythonRecordFunction>& record,
-    const c10::intrusive_ptr<c10::ivalue::Future>&  fut)
+xsigma::intrusive_ptr<xsigma::ivalue::Future> _call_end_callbacks_on_fut_new(
+    const xsigma::intrusive_ptr<PythonRecordFunction>&   record,
+    const xsigma::intrusive_ptr<xsigma::ivalue::Future>& fut)
 {
     return _call_end_callbacks_on_fut(
-        [record]() -> at::RecordFunction& { return record->record; }, fut);
+        [record]() -> xsigma::RecordFunction& { return record->record; }, fut);
 }
 
 // Internal only, do not use directly, use Python's record_function()
@@ -155,12 +155,12 @@ TORCH_LIBRARY_FRAGMENT(profiler, m)
                 // return future that completes when profiling callbacks have run.
                 jit::push(stack, std::move(profiledFut));
             },
-            c10::AliasAnalysisKind::FROM_SCHEMA));
+            xsigma::AliasAnalysisKind::FROM_SCHEMA));
     torch::jit::registerOperator(
         torch::jit::Operator(
             "profiler::_call_end_callbacks_on_jit_fut._RecordFunction("
             "__torch__.torch.classes.profiler._RecordFunction x, Future(t) y) -> Future(t)",
-            [](c10::Stack& stack)
+            [](xsigma::Stack& stack)
             {
                 // Pop inputs, which should be a future and a PythonRecordFunction
                 auto fut         = torch::jit::pop(stack).toFuture();
@@ -169,7 +169,7 @@ TORCH_LIBRARY_FRAGMENT(profiler, m)
                 // return future that completes when profiling callbacks have run.
                 torch::jit::push(stack, std::move(profiledFut));
             },
-            c10::AliasAnalysisKind::FROM_SCHEMA));
+            xsigma::AliasAnalysisKind::FROM_SCHEMA));
 }
 
 }  // namespace torch::autograd::profiler

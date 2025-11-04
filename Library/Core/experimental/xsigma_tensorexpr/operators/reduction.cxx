@@ -25,7 +25,7 @@ Tensor computeSum(
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device)
+    xsigma::Device                   device)
 {
     std::vector<size_t> axes;
     bool                keepdim = false;
@@ -50,7 +50,7 @@ Tensor computeSum(
             // Canonicalize axes: wrap around, sort and make unique.
             for (auto axis : nodeAxes)
             {
-                axes.push_back(at::maybe_wrap_dim(axis, static_cast<int64_t>(rank)));
+                axes.push_back(xsigma::maybe_wrap_dim(axis, static_cast<int64_t>(rank)));
             }
             std::sort(axes.begin(), axes.end());
             axes.erase(std::unique(axes.begin(), axes.end()), axes.end());
@@ -128,7 +128,7 @@ Tensor computeMean(
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device)
+    xsigma::Device                   device)
 {
     Dtype dtype = kFloat;
     if (outputType)
@@ -146,7 +146,7 @@ Tensor computeMean(
 
     if (auto mean_dims = std::get_if<IntList>(&inputs[1]))
     {
-        extra_args = c10::fmap<ExprHandle>(*mean_dims);
+        extra_args = xsigma::fmap<ExprHandle>(*mean_dims);
     }
     else
     {
@@ -166,7 +166,7 @@ Tensor computeMax(
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device)
+    xsigma::Device                   device)
 {
     Dtype dtype = kFloat;
     if (outputType)
@@ -188,7 +188,7 @@ Tensor computeAdaptiveAvgPool2d(
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device)
+    xsigma::Device                   device)
 {
     Dtype dtype = kFloat;
     if (outputType)
@@ -203,7 +203,7 @@ Tensor computeAdaptiveAvgPool2d(
             ResultBuf,
             "nnc_aten_adaptive_avg_pool2d",
             {std::get<BufHandle>(inputs[0])},
-            c10::fmap<ExprHandle>(out_size_param)));
+            xsigma::fmap<ExprHandle>(out_size_param)));
 }
 
 }  // namespace torch::jit::tensorexpr

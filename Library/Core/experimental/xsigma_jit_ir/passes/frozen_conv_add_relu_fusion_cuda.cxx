@@ -26,7 +26,7 @@ void fuseFrozenConvAddReluImpl(std::shared_ptr<Graph>& graph)
     std::array<std::string, 2> add_operators  = {"add", "add_"};
     std::array<std::string, 2> relu_operators = {"relu", "relu_"};
 
-    auto conv_relu_rstring = at::jit::CodeTemplate(R"(
+    auto conv_relu_rstring = xsigma::jit::CodeTemplate(R"(
     graph(%input, %weight, %bias, %stride:int[], %padding:int[], %dilation:int[], %groups:int):
       %x = aten::${conv}(%input, %weight, %bias, %stride, %padding, %dilation, %groups)
       %res = aten::${relu}(%x)
@@ -44,7 +44,7 @@ void fuseFrozenConvAddReluImpl(std::shared_ptr<Graph>& graph)
         return (%res))";
 #endif
 
-    auto conv_add_relu_rstring = at::jit::CodeTemplate(R"(
+    auto conv_add_relu_rstring = xsigma::jit::CodeTemplate(R"(
     graph(%input, %weight, %bias, %z, %alpha, %stride:int[], %padding:int[], %dilation:int[], %groups:int):
       %x = aten::${conv}(%input, %weight, %bias, %stride, %padding, %dilation, %groups)
       %y = aten::${add}(%x, %z, %alpha)
@@ -67,7 +67,7 @@ void fuseFrozenConvAddReluImpl(std::shared_ptr<Graph>& graph)
     {
         for (const auto& relu : relu_operators)
         {
-            at::jit::TemplateEnv env;
+            xsigma::jit::TemplateEnv env;
             env.s("conv", conv);
             env.s("relu", relu);
             rewriter.RegisterRewritePattern(conv_relu_rstring.format(env), conv_relu_fused);
@@ -82,12 +82,12 @@ void fuseFrozenConvAddReluImpl(std::shared_ptr<Graph>& graph)
 
     auto filter = [](const Match& match, const std::unordered_map<std::string, Value*>& vmap)
     {
-        auto weight = toIValue(match.values_map.at(vmap.at("weight")));
+        auto weight = toIValue(match.values_map.xsigma(vmap.xsigma("weight")));
         if (!weight.has_value() || !weight.value().isTensor())
         {
             return false;
         }
-        const at::Tensor& weight_t = weight.value().toTensor();
+        const xsigma::Tensor& weight_t = weight.value().toTensor();
         if (!weight_t.device().is_cuda() || !weight_t.is_contiguous())
         {
             return false;
@@ -96,10 +96,10 @@ void fuseFrozenConvAddReluImpl(std::shared_ptr<Graph>& graph)
         // bias is optional
         if (vmap.find("bias") != vmap.end())
         {
-            auto bias = toIValue(match.values_map.at(vmap.at("bias")));
+            auto bias = toIValue(match.values_map.xsigma(vmap.xsigma("bias")));
             if (bias.has_value() && bias.value().isTensor())
             {
-                const at::Tensor& bias_t = bias.value().toTensor();
+                const xsigma::Tensor& bias_t = bias.value().toTensor();
                 if (bias_t.dtype() != weight_t.dtype() || bias_t.ndimension() != 1 ||
                     bias_t.size(0) != weight_t.size(0) || !bias_t.device().is_cuda())
                 {
@@ -111,10 +111,10 @@ void fuseFrozenConvAddReluImpl(std::shared_ptr<Graph>& graph)
         // z is optional
         if (vmap.find("z") != vmap.end())
         {
-            auto z = toIValue(match.values_map.at(vmap.at("z")));
+            auto z = toIValue(match.values_map.xsigma(vmap.xsigma("z")));
             if (z.has_value() && z.value().isTensor())
             {
-                const at::Tensor& z_t = z.value().toTensor();
+                const xsigma::Tensor& z_t = z.value().toTensor();
                 if (z_t.dtype() != weight_t.dtype() || z_t.size(0) != weight_t.size(0) ||
                     !z_t.is_contiguous() || !z_t.device().is_cuda())
                 {

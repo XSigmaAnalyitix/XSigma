@@ -1,16 +1,16 @@
 #include <ATen/code_template.h>
 #include <ATen/core/op_registration/op_registration.h>
 #include <ATen/record_function.h>
-#include <c10/core/Allocator.h>
-#include <c10/util/ApproximateClock.h>
-#include <c10/util/ThreadLocalDebugInfo.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/profiler_legacy.h>
 #include <torch/csrc/jit/frontend/tracer.h>
 #include <torch/csrc/jit/runtime/interpreter.h>
 #include <torch/csrc/jit/runtime/operator.h>
 #include <torch/library.h>
+#include <xsigma/core/Allocator.h>
+#include <xsigma/util/ApproximateClock.h>
+#include <xsigma/util/ThreadLocalDebugInfo.h>
+#include <xsigma/util/irange.h>
 
 #include <fstream>
 #include <iostream>
@@ -29,7 +29,7 @@ namespace torch::autograd::profiler
 // the debug information structs.
 // ThreadLocalDebugInfo is automatically propagated across thread
 // boundaries, including the cases of:
-//  - launching async jobs with at::launch
+//  - launching async jobs with xsigma::launch
 //  - executing JIT continuations
 //  - moving from the forward threads into autograd (backward) threads
 //
@@ -77,11 +77,11 @@ namespace torch::autograd::profiler
 // ThreadLocalState also automatically propagates profiler callbacks.
 //
 //
-// at::RecordFunction and observers
+// xsigma::RecordFunction and observers
 //
 // Profiler uses observers mechanism to add a pair of thread local callbacks
 // that are executed on a number of predetermined ranges, including:
-//  - c10/ATen ops
+//  - xsigma/ATen ops
 //  - TorchScript functions/methods
 //  - user defined named ranges (see `record_function` python context manager)
 //
@@ -128,8 +128,7 @@ struct ProfilerLegacyThreadLocalState : public ProfilerStateBase
     static ProfilerLegacyThreadLocalState* getTLS()
     {
         auto tls = ProfilerStateBase::get(/*global=*/false);
-        TORCH_INTERNAL_ASSERT_DEBUG_ONLY(
-            tls == nullptr || tls->profilerType() == ActiveProfilerType::LEGACY);
+        XSIGMA_CHECK_DEBUG(tls == nullptr || tls->profilerType() == ActiveProfilerType::LEGACY);
         return static_cast<ProfilerLegacyThreadLocalState*>(tls);
     }
 
@@ -140,18 +139,18 @@ struct ProfilerLegacyThreadLocalState : public ProfilerStateBase
     void setOrAddRemoteProfiledEvents(std::vector<LegacyEvent>&& remoteProfiledEvents);
 
     void pushRange(
-        const at::RecordFunction&           fn,
+        const xsigma::RecordFunction&       fn,
         const bool                          record_cuda,
         std::vector<std::vector<int64_t>>&& shapes = {});
 
-    void popRange(const at::RecordFunction& fn, const bool record_cuda);
+    void popRange(const xsigma::RecordFunction& fn, const bool record_cuda);
 
     void reportMemoryUsage(
         void* /* unused */,
         int64_t alloc_size,
         size_t /* total_allocated, unused for legacy */,
         size_t /* total_reserved, unused for legacy */,
-        c10::Device device) override;
+        xsigma::Device device) override;
 
     ActiveProfilerType profilerType() override { return ActiveProfilerType::LEGACY; }
 
@@ -200,10 +199,10 @@ void ProfilerLegacyThreadLocalState::mark(std::string name, bool include_cuda)
     {
         LegacyEvent evt(
             EventKind::Mark,
-            at::StringView(std::move(name)),
-            at::RecordFunction::currentThreadId(),
+            xsigma::StringView(std::move(name)),
+            xsigma::RecordFunction::currentThreadId(),
             include_cuda && config_.state == torch::profiler::impl::ProfilerState::CUDA);
-        evt.setNodeId(at::RecordFunction::getDefaultNodeId());
+        evt.setNodeId(xsigma::RecordFunction::getDefaultNodeId());
         getEventList().record(std::move(evt));
     }
 }
@@ -224,7 +223,7 @@ void ProfilerLegacyThreadLocalState::setOrAddRemoteProfiledEvents(
 }
 
 void ProfilerLegacyThreadLocalState::pushRange(
-    const at::RecordFunction&           fn,
+    const xsigma::RecordFunction&       fn,
     const bool                          record_cuda,
     std::vector<std::vector<int64_t>>&& shapes)
 {
@@ -241,12 +240,12 @@ void ProfilerLegacyThreadLocalState::pushRange(
     {
         LegacyEvent evt(
             EventKind::PushRange,
-            at::StringView(std::string(fn.name())),
-            at::RecordFunction::currentThreadId(),
+            xsigma::StringView(std::string(fn.name())),
+            xsigma::RecordFunction::currentThreadId(),
             record_cuda,
             fn.handle(),
             std::move(shapes),
-            at::RecordFunction::getDefaultNodeId(),
+            xsigma::RecordFunction::getDefaultNodeId(),
             fn.isAsync());
         evt.setSequenceNr(fn.seqNr());
         evt.setFwdThreadId(fn.forwardThreadId());
@@ -258,11 +257,11 @@ void ProfilerLegacyThreadLocalState::pushRange(
                 torch::profiler::impl::computeFlops(std::string(fn.name()), evt.extraArgs()));
         }
 
-// TODO: will unify the two macros BUILD_LITE_INTERPRETER and C10_MOBILE soon.
-#if !defined BUILD_LITE_INTERPRETER && !defined C10_MOBILE
+// TODO: will unify the two macros BUILD_LITE_INTERPRETER and XSIGMA_MOBILE soon.
+#if !defined BUILD_LITE_INTERPRETER && !defined XSIGMA_MOBILE
         // backward nodes source range corresponds to the forward node
         // TODO: consider using C++ stack trace
-        if (config_.with_stack && fn.scope() != at::RecordScope::BACKWARD_FUNCTION)
+        if (config_.with_stack && fn.scope() != xsigma::RecordScope::BACKWARD_FUNCTION)
         {
             auto cs = torch::profiler::impl::prepareCallstack(jit::currentCallstack());
             if (cs.empty())
@@ -276,7 +275,8 @@ void ProfilerLegacyThreadLocalState::pushRange(
     }
 }
 
-void ProfilerLegacyThreadLocalState::popRange(const at::RecordFunction& fn, const bool record_cuda)
+void ProfilerLegacyThreadLocalState::popRange(
+    const xsigma::RecordFunction& fn, const bool record_cuda)
 {
     if (config_.disabled())
     {
@@ -294,11 +294,11 @@ void ProfilerLegacyThreadLocalState::popRange(const at::RecordFunction& fn, cons
         // thread and save current thread id in pop event
         LegacyEvent evt(
             EventKind::PopRange,
-            at::StringView(""),
-            at::RecordFunction::currentThreadId(),
+            xsigma::StringView(""),
+            xsigma::RecordFunction::currentThreadId(),
             record_cuda,
             fn.handle());
-        evt.setNodeId(at::RecordFunction::getDefaultNodeId());
+        evt.setNodeId(xsigma::RecordFunction::getDefaultNodeId());
         getEventList(fn.threadId()).record(std::move(evt));
     }
 }
@@ -308,14 +308,14 @@ void ProfilerLegacyThreadLocalState::reportMemoryUsage(
     int64_t alloc_size,
     size_t /* total_allocated, unused for legacy */,
     size_t /* total_reserved, unused for legacy */,
-    c10::Device device)
+    xsigma::Device device)
 {
     if (config_.profile_memory && !config_.disabled())
     {
-        uint64_t    thread_id = at::RecordFunction::currentThreadId();
+        uint64_t    thread_id = xsigma::RecordFunction::currentThreadId();
         LegacyEvent evt(
             EventKind::MemoryAlloc,
-            at::StringView(""),
+            xsigma::StringView(""),
             thread_id,
             config_.state == torch::profiler::impl::ProfilerState::CUDA);
         evt.updateMemoryStats(alloc_size, device);
@@ -327,7 +327,7 @@ RangeEventList& ProfilerLegacyThreadLocalState::getEventList(std::optional<uint6
 {
     if (!thread_id.has_value())
     {
-        thread_id = at::RecordFunction::currentThreadId();
+        thread_id = xsigma::RecordFunction::currentThreadId();
     }
     RangeEventList*             list_ptr = nullptr;
     std::lock_guard<std::mutex> guard(state_mutex_);
@@ -383,9 +383,9 @@ void pushProfilingCallbacksLegacy()
 {
     auto registration_state_ptr = ProfilerLegacyThreadLocalState::getTLS();
     TORCH_INTERNAL_ASSERT(registration_state_ptr, "Expected profiler state set");
-    auto handle = at::addThreadLocalCallback(
-        at::RecordFunctionCallback(
-            [](const at::RecordFunction& fn) -> std::unique_ptr<at::ObserverContext>
+    auto handle = xsigma::addThreadLocalCallback(
+        xsigma::RecordFunctionCallback(
+            [](const xsigma::RecordFunction& fn) -> std::unique_ptr<xsigma::ObserverContext>
             {
                 auto state_ptr = ProfilerLegacyThreadLocalState::getTLS();
                 if (!state_ptr || state_ptr->config().disabled())
@@ -412,7 +412,7 @@ void pushProfilingCallbacksLegacy()
 
                 return nullptr;
             },
-            [](const at::RecordFunction& fn, at::ObserverContext*)
+            [](const xsigma::RecordFunction& fn, xsigma::ObserverContext*)
             {
                 auto state_ptr = ProfilerLegacyThreadLocalState::getTLS();
                 if (!state_ptr || state_ptr->config().disabled())
@@ -437,17 +437,17 @@ void pushProfilingCallbacksLegacy()
 
 void enableProfilerLegacy(const torch::profiler::impl::ProfilerConfig& new_config)
 {
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         new_config.state != torch::profiler::impl::ProfilerState::NVTX ||
             torch::profiler::impl::cudaStubs()->enabled(),
         "Can't use NVTX profiler - PyTorch was compiled without CUDA");
 
-    TORCH_CHECK(new_config.state != torch::profiler::impl::ProfilerState::KINETO);
+    XSIGMA_CHECK(new_config.state != torch::profiler::impl::ProfilerState::KINETO);
 
     auto state_ptr = ProfilerLegacyThreadLocalState::getTLS();
-    TORCH_CHECK(!state_ptr, "Profiler is already enabled on this thread");
+    XSIGMA_CHECK(!state_ptr, "Profiler is already enabled on this thread");
     auto state = std::make_shared<ProfilerLegacyThreadLocalState>(new_config);
-    c10::ThreadLocalDebugInfo::_push(c10::DebugInfoKind::PROFILER_STATE, state);
+    xsigma::ThreadLocalDebugInfo::_push(xsigma::DebugInfoKind::PROFILER_STATE, state);
 
     pushProfilingCallbacksLegacy();
 
@@ -461,18 +461,18 @@ thread_event_lists disableProfilerLegacy(
     auto consolidate     = profilerDisableOptions ? profilerDisableOptions->consolidate : true;
     // all the DebugInfoBase objects are scope based and supposed to use
     // DebugInfoGuard
-    std::shared_ptr<c10::DebugInfoBase> state;
+    std::shared_ptr<xsigma::DebugInfoBase> state;
     if (cleanupTLSState)
     {
-        state = c10::ThreadLocalDebugInfo::_pop(c10::DebugInfoKind::PROFILER_STATE);
+        state = xsigma::ThreadLocalDebugInfo::_pop(xsigma::DebugInfoKind::PROFILER_STATE);
     }
     else
     {
-        state = c10::ThreadLocalDebugInfo::_peek(c10::DebugInfoKind::PROFILER_STATE);
+        state = xsigma::ThreadLocalDebugInfo::_peek(xsigma::DebugInfoKind::PROFILER_STATE);
     }
 
     auto state_ptr = static_cast<ProfilerLegacyThreadLocalState*>(state.get());
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         state_ptr && !state_ptr->config().disabled(),
         "Can't disable profiler when it's not running");
 
@@ -490,7 +490,7 @@ thread_event_lists disableProfilerLegacy(
 void addEventList(std::vector<LegacyEvent>&& profiledEvents)
 {
     auto state_ptr = ProfilerLegacyThreadLocalState::getTLS();
-    TORCH_CHECK(state_ptr, "Profiler must be enabled.");
+    XSIGMA_CHECK(state_ptr, "Profiler must be enabled.");
     state_ptr->setOrAddRemoteProfiledEvents(std::move(profiledEvents));
 }
 
@@ -501,17 +501,17 @@ void LegacyEvent::record(bool record_cuda)
         torch::profiler::impl::cudaStubs()->record(&device_, &cuda_event, &cpu_ns_);
         return;
     }
-    cpu_ns_ = c10::getTime();
+    cpu_ns_ = xsigma::getTime();
 }
 
-/* static */ LegacyEvent LegacyEvent::fromIValue(const at::IValue& eventIValue)
+/* static */ LegacyEvent LegacyEvent::fromIValue(const xsigma::IValue& eventIValue)
 {
     TORCH_INTERNAL_ASSERT(
-        eventIValue.isList(), "Expected IValue to contain type c10::impl::GenericList");
+        eventIValue.isList(), "Expected IValue to contain type xsigma::impl::GenericList");
     auto ivalues = eventIValue.toList();
     TORCH_INTERNAL_ASSERT(
         ivalues.size() >= NUM_EVENT_IVALUE_IDX,
-        "Expected at least ",
+        "Expected xsigma least ",
         NUM_EVENT_IVALUE_IDX,
         " elements to reconstruct LegacyEvent.");
 
@@ -519,22 +519,22 @@ void LegacyEvent::record(bool record_cuda)
     const auto& shapeListIValue = ivalues.get(EventIValueIdx::SHAPES);
     TORCH_INTERNAL_ASSERT(
         shapeListIValue.isList(),
-        "Expected profiler shapes IValue to contain type c10::impl::GenericList.");
+        "Expected profiler shapes IValue to contain type xsigma::impl::GenericList.");
 
     auto                              shapeList = shapeListIValue.toList();
     std::vector<std::vector<int64_t>> shapes;
     shapes.reserve(shapeList.size());
-    for (const auto i : c10::irange(shapeList.size()))
+    for (const auto i : xsigma::irange(shapeList.size()))
     {
         std::vector<int64_t> s;
         const auto&          shapeIValue = shapeList.get(i);
         TORCH_INTERNAL_ASSERT(
             shapeIValue.isList(),
             "Expected each profiler shape element to contain shapes of type "
-            "c10::impl::GenericList.")
+            "xsigma::impl::GenericList.")
         auto curShapesList = shapeIValue.toList();
         s.reserve(curShapesList.size());
-        for (const auto j : c10::irange(curShapesList.size()))
+        for (const auto j : xsigma::irange(curShapesList.size()))
         {
             s.emplace_back(curShapesList.get(j).toInt());
         }
@@ -542,27 +542,27 @@ void LegacyEvent::record(bool record_cuda)
     }
 
     LegacyEvent evt(
-        static_cast<EventKind>(ivalues.get(EventIValueIdx::KIND).toInt()),  // EventKind
-        at::StringView(ivalues.get(EventIValueIdx::NAME).toStringRef()),    // name
-        ivalues.get(EventIValueIdx::THREAD_ID).toInt(),                     // thread_id
-        static_cast<at::RecordFunctionHandle>(
-            ivalues.get(EventIValueIdx::HANDLE).toDouble()),                 // handle
-        std::move(shapes),                                                   // input shapes
-        ivalues.get(EventIValueIdx::NODE_ID).toInt(),                        // node id
-        true,                                                                // is remote
-        ivalues.get(EventIValueIdx::CPU_MEM_USAGE).toInt(),                  // cpu_mem_usage
-        ivalues.get(EventIValueIdx::CPU_NS).toInt(),                         // cpu_ns
-        ivalues.get(EventIValueIdx::CUDA_RECORDED).toBool(),                 // was cuda recorded
-        ivalues.get(EventIValueIdx::CUDA_MEM_USAGE).toInt(),                 // cuda memory usage
-        c10::DeviceIndex(ivalues.get(EventIValueIdx::CUDA_DEVICE).toInt()),  // device
-        static_cast<double>(ivalues.get(EventIValueIdx::CUDA_US).toInt())    // cuda_us
+        static_cast<EventKind>(ivalues.get(EventIValueIdx::KIND).toInt()),    // EventKind
+        xsigma::StringView(ivalues.get(EventIValueIdx::NAME).toStringRef()),  // name
+        ivalues.get(EventIValueIdx::THREAD_ID).toInt(),                       // thread_id
+        static_cast<xsigma::RecordFunctionHandle>(
+            ivalues.get(EventIValueIdx::HANDLE).toDouble()),                    // handle
+        std::move(shapes),                                                      // input shapes
+        ivalues.get(EventIValueIdx::NODE_ID).toInt(),                           // node id
+        true,                                                                   // is remote
+        ivalues.get(EventIValueIdx::CPU_MEM_USAGE).toInt(),                     // cpu_mem_usage
+        ivalues.get(EventIValueIdx::CPU_NS).toInt(),                            // cpu_ns
+        ivalues.get(EventIValueIdx::CUDA_RECORDED).toBool(),                    // was cuda recorded
+        ivalues.get(EventIValueIdx::CUDA_MEM_USAGE).toInt(),                    // cuda memory usage
+        xsigma::DeviceIndex(ivalues.get(EventIValueIdx::CUDA_DEVICE).toInt()),  // device
+        static_cast<double>(ivalues.get(EventIValueIdx::CUDA_US).toInt())       // cuda_us
     );
     return evt;
 }
 
-at::IValue LegacyEvent::toIValue() const
+xsigma::IValue LegacyEvent::toIValue() const
 {
-    c10::impl::GenericList eventIValueList(at::AnyType::get());
+    xsigma::impl::GenericList eventIValueList(xsigma::AnyType::get());
     eventIValueList.reserve(NUM_EVENT_IVALUE_IDX);
     eventIValueList.emplace_back(static_cast<int64_t>(kind_));
     eventIValueList.emplace_back(std::string(name_.str()));
@@ -578,12 +578,12 @@ at::IValue LegacyEvent::toIValue() const
     eventIValueList.emplace_back(device_);
     eventIValueList.emplace_back(cuda_us_);
     // Shapes
-    c10::impl::GenericList shapesList =
-        c10::impl::GenericList(at::ListType::create(at::IntType::get()));
+    xsigma::impl::GenericList shapesList =
+        xsigma::impl::GenericList(xsigma::ListType::create(xsigma::IntType::get()));
     shapesList.reserve(shapes_.size());
     for (const auto& shape : shapes_)
     {
-        c10::impl::GenericList s = c10::impl::GenericList(at::IntType::get());
+        xsigma::impl::GenericList s = xsigma::impl::GenericList(xsigma::IntType::get());
         s.reserve(shape.size());
         for (const auto& k : shape)
         {
@@ -592,15 +592,15 @@ at::IValue LegacyEvent::toIValue() const
         shapesList.emplace_back(s);
     }
     eventIValueList.emplace_back(shapesList);
-    return at::IValue(eventIValueList);
+    return xsigma::IValue(eventIValueList);
 }
 
 double LegacyEvent::cudaElapsedUs(const LegacyEvent& e) const
 {
-    TORCH_CHECK(e.hasCuda() && hasCuda(), "Events were not recorded for CUDA");
-    TORCH_CHECK(
+    XSIGMA_CHECK(e.hasCuda() && hasCuda(), "Events were not recorded for CUDA");
+    XSIGMA_CHECK(
         e.device() == device(),
-        c10::str("Events are not on the same device: ", e.device(), " vs ", device()));
+        xsigma::str("Events are not on the same device: ", e.device(), " vs ", device()));
     if (isRemote() && e.isRemote())
     {
         // validate that cuda_us_ has been set properly.
@@ -610,7 +610,7 @@ double LegacyEvent::cudaElapsedUs(const LegacyEvent& e) const
     return torch::profiler::impl::cudaStubs()->elapsed(&cuda_event, &e.cuda_event);
 }
 
-static const at::jit::CodeTemplate event_template(R"(
+static const xsigma::jit::CodeTemplate event_template(R"(
 {
   "name": "${name}",
   "ph": "X",
@@ -623,7 +623,7 @@ static const at::jit::CodeTemplate event_template(R"(
 
 void writeProfilerEventsToStream(std::ostream& out, const std::vector<LegacyEvent*>& events)
 {
-    TORCH_CHECK(out, "Could not open file");
+    XSIGMA_CHECK(out, "Could not open file");
     LegacyEvent* profiler_start = nullptr;
     for (LegacyEvent* e : events)
     {
@@ -633,16 +633,17 @@ void writeProfilerEventsToStream(std::ostream& out, const std::vector<LegacyEven
             break;
         }
     }
-    TORCH_CHECK(profiler_start, "Could not find __start_profile mark");
+    XSIGMA_CHECK(profiler_start, "Could not find __start_profile mark");
 
     struct PairHash
     {
-        size_t operator()(std::pair<at::RecordFunctionHandle, int> p) const noexcept
+        size_t operator()(std::pair<xsigma::RecordFunctionHandle, int> p) const noexcept
         {
-            return std::hash<at::RecordFunctionHandle>()(p.first) ^ std::hash<int64_t>()(p.second);
+            return std::hash<xsigma::RecordFunctionHandle>()(p.first) ^
+                   std::hash<int64_t>()(p.second);
         }
     };
-    std::unordered_map<std::pair<at::RecordFunctionHandle, int64_t>, LegacyEvent*, PairHash>
+    std::unordered_map<std::pair<xsigma::RecordFunctionHandle, int64_t>, LegacyEvent*, PairHash>
         events_map;
     out << "[\n";
     bool first = true;
@@ -660,11 +661,11 @@ void writeProfilerEventsToStream(std::ostream& out, const std::vector<LegacyEven
             }
             first   = false;
             auto it = events_map.find(std::make_pair(evt->handle(), evt->nodeId()));
-            TORCH_CHECK(it != events_map.end(), "Unmatched pop event");
+            XSIGMA_CHECK(it != events_map.end(), "Unmatched pop event");
             LegacyEvent* evt_start = it->second;
             events_map.erase(it);
 
-            at::jit::TemplateEnv env;
+            xsigma::jit::TemplateEnv env;
             env.s("name", evt_start->name());
             env.d("ts", profiler_start->cpuElapsedUs(*evt_start));
             env.d("dur", evt_start->cpuElapsedUs(*evt));

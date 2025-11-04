@@ -1,8 +1,5 @@
 #include <ATen/core/functional.h>
 #include <ATen/core/interned_strings.h>
-#include <c10/core/MemoryFormat.h>
-#include <c10/core/ScalarType.h>
-#include <c10/util/Exception.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/ir/ir_views.h>
 #include <torch/csrc/jit/jit_log.h>
@@ -12,9 +9,13 @@
 #include <torch/csrc/jit/runtime/graph_iterator.h>
 #include <torch/csrc/jit/runtime/register_ops_utils.h>
 #include <torch/csrc/jit/runtime/static/ops.h>
+#include <xsigma/core/MemoryFormat.h>
+#include <xsigma/core/ScalarType.h>
 
 #include <sstream>
 #include <utility>
+
+#include "util/exception.h"
 
 namespace torch::jit
 {
@@ -42,7 +43,7 @@ static std::map<int64_t, Value*> InsertSymbolicShapesCompute(
         if (*enclosing_graph_input->second->type() == *shape_graph_input->type())
         {
             shape_compute_graph_inputs.push_back(
-                tensorexpr_graph->inputs().at(enclosing_graph_input->second->offset()));
+                tensorexpr_graph->inputs().xsigma(enclosing_graph_input->second->offset()));
         }
         else
         {
@@ -51,7 +52,7 @@ static std::map<int64_t, Value*> InsertSymbolicShapesCompute(
                 shape_graph_input->type()->isSubtypeOf(ListType::ofInts()));
             shape_compute_graph_inputs.push_back(enclosing_graph->insert(
                 aten::size,
-                {tensorexpr_graph->inputs().at(enclosing_graph_input->second->offset())}));
+                {tensorexpr_graph->inputs().xsigma(enclosing_graph_input->second->offset())}));
         }
     }
     auto sym_shape_values = insertGraph(
@@ -59,7 +60,7 @@ static std::map<int64_t, Value*> InsertSymbolicShapesCompute(
     std::map<int64_t, Value*> sym_shape_to_enclosing_graph_value;
     for (size_t i = 0; i < shape_mapping.partial_eval_shape_graph->outputs().size(); ++i)
     {
-        Value* output    = shape_mapping.partial_eval_shape_graph->outputs().at(i);
+        Value* output    = shape_mapping.partial_eval_shape_graph->outputs().xsigma(i);
         auto   sym_shape = shape_mapping.graph_output_to_symbolic_shape_dim_.find(output);
         TORCH_INTERNAL_ASSERT(sym_shape != shape_mapping.graph_output_to_symbolic_shape_dim_.end());
         sym_shape_to_enclosing_graph_value[sym_shape->second] = sym_shape_values[i];
@@ -130,8 +131,8 @@ StrideInput strideInputFromString(const std::string& si)
 // vector. stride_inputs_offset indexes into that vector
 // where the strides of this tensor begin
 static inline StrideInput summarizeStrideDim(
-    const c10::IntArrayRef          sizes,
-    const c10::IntArrayRef          strides,
+    const xsigma::IntArrayRef       sizes,
+    const xsigma::IntArrayRef       strides,
     size_t                          dim,
     const std::vector<StrideInput>& stride_inputs,
     size_t                          stride_inputs_offset)
@@ -163,12 +164,12 @@ static std::vector<StrideInput> summarizeInputStrides(const TensorType& tt)
 {
     auto strides = *tt.strides().concrete_sizes();
     auto sizes   = *tt.sizes().concrete_sizes();
-    if (c10::is_contiguous_strides(sizes, strides))
+    if (xsigma::is_contiguous_strides(sizes, strides))
     {
         return {StrideInput::TENSOR_CONT};
         // TODO: channels last 3d
     }
-    else if (c10::is_channels_last_strides_2d(sizes, strides))
+    else if (xsigma::is_channels_last_strides_2d(sizes, strides))
     {
         return {StrideInput::TENSOR_CONT_CHANNELS_LAST};
     }
@@ -188,7 +189,7 @@ static StrideInput summarizeOutputStrides(const TensorType& tt)
     // We only try to maintain output striding for channels last tensors,
     // otherwise we defer to contiguous
     // TODO: channels last 3d
-    if (c10::is_channels_last_strides_2d(sizes, strides))
+    if (xsigma::is_channels_last_strides_2d(sizes, strides))
     {
         return StrideInput::TENSOR_CONT_CHANNELS_LAST;
     }
@@ -221,10 +222,10 @@ TryGeneralizeInputDimensionsToSymbolicShapes(const std::shared_ptr<Graph>& tenso
             return std::nullopt;
         }
         input_striding.push_back(summarizeInputStrides(tt));
-        std::vector<at::ShapeSymbol> shape_vec = *tt.symbolic_sizes().sizes();
-        auto                         new_sizes = c10::fmap(
+        std::vector<xsigma::ShapeSymbol> shape_vec = *tt.symbolic_sizes().sizes();
+        auto                             new_sizes = xsigma::fmap(
             shape_vec,
-            [&](const at::ShapeSymbol& shape)
+            [&](const xsigma::ShapeSymbol& shape)
             {
                 auto value = shape.value();
                 TORCH_INTERNAL_ASSERT(value >= 0, "Expected complete tensor");
@@ -238,12 +239,12 @@ TryGeneralizeInputDimensionsToSymbolicShapes(const std::shared_ptr<Graph>& tenso
                 }
                 else
                 {
-                    auto new_shape_symbol = at::ShapeSymbol::newSymbol().value();
+                    auto new_shape_symbol = xsigma::ShapeSymbol::newSymbol().value();
                     shape_to_sym_shape[static_cast<size_t>(value)] = new_shape_symbol;
                     return new_shape_symbol;
                 }
             });
-        v->setType(tt.withSymbolicShapes(c10::SymbolicShape(new_sizes)));
+        v->setType(tt.withSymbolicShapes(xsigma::SymbolicShape(new_sizes)));
     }
     return input_striding;
 }
@@ -378,7 +379,7 @@ static void inlineFallbackGraphAndAddSRCopyOutOp(std::shared_ptr<Graph> graph)
     false_block->appendNode(copy_node);
     for (size_t i = 0; i < false_block_outputs.size(); ++i)
     {
-        false_block->replaceOutput(i, copy_node->outputs().at(i));
+        false_block->replaceOutput(i, copy_node->outputs().xsigma(i));
     }
 }
 
@@ -396,9 +397,9 @@ void insertDynamicShapesGuard(
     // Fixup types of the subgraph inputs
     std::vector<Value*>  inputs_to_check;
     std::vector<TypePtr> guard_types;
-    for (const auto i : c10::irange(guarded_node->inputs().size()))
+    for (const auto i : xsigma::irange(guarded_node->inputs().size()))
     {
-        Value* node_input = guarded_node->inputs().at(i);
+        Value* node_input = guarded_node->inputs().xsigma(i);
         // We only check inputs of the guarded nodes
         if (!node_input->type()->cast<TensorType>())
         {
@@ -406,8 +407,8 @@ void insertDynamicShapesGuard(
         }
         inputs_to_check.push_back(node_input);
         guard_types.emplace_back(
-            subgraph->inputs().at(i)->type()->expect<TensorType>()->withStrides(
-                c10::VaryingShape<c10::Stride>()));
+            subgraph->inputs().xsigma(i)->type()->expect<TensorType>()->withStrides(
+                xsigma::VaryingShape<xsigma::Stride>()));
     }
     TORCH_INTERNAL_ASSERT(inputs_to_check.size());
 
@@ -494,14 +495,14 @@ void insertDynamicShapesGuard(
     {
         if (auto t = v->type()->cast<TensorType>())
         {
-            v->setType(t->withStrides(c10::VaryingShape<c10::Stride>()));
+            v->setType(t->withStrides(xsigma::VaryingShape<xsigma::Stride>()));
         }
     }
     for (Value* v : subgraph->outputs())
     {
         if (auto t = v->type()->cast<TensorType>())
         {
-            v->setType(t->withStrides(c10::VaryingShape<c10::Stride>()));
+            v->setType(t->withStrides(xsigma::VaryingShape<xsigma::Stride>()));
         }
     }
 
@@ -525,7 +526,7 @@ void insertDynamicShapesGuard(
     }
 }
 
-// This operator is inserted at the end of the fallback block computing outputs
+// This operator is inserted xsigma the end of the fallback block computing outputs
 // for the fusion group. We convert block1():
 //   %14 : Tensor = aten::mul(%0, %1)
 //   %15 : Tensor = aten::mul(%0, %14)
@@ -562,11 +563,11 @@ static Operation StaticRuntimeCopyOuts(const Node* node)
         }
         else
         {
-            at::ArrayRef<IValue> outputs = last(stack, num_ten_inputs);
+            xsigma::ArrayRef<IValue> outputs = last(stack, num_ten_inputs);
             for (size_t i = 0; i < inputs.size(); ++i)
             {
-                IValue      out   = outputs[i];
-                at::Tensor& out_t = out.toTensor();
+                IValue          out   = outputs[i];
+                xsigma::Tensor& out_t = out.toTensor();
                 fastResizeToZero(out_t);
                 out_t.resize_as_(inputs[i].toTensor());
                 out_t.copy_(inputs[i].toTensor());
@@ -603,7 +604,7 @@ static RegisterOperators reg_guard({
             std::vector<int64_t> flattened_input_dims;
 
             // Each inputs expected scalar types
-            std::vector<c10::ScalarType> expected_scalar_types;
+            std::vector<xsigma::ScalarType> expected_scalar_types;
 
             // Map from symbolic dimension value to its set's index
             std::map<int64_t, size_t> sym_dim_flat_index;
@@ -678,7 +679,7 @@ static RegisterOperators reg_guard({
                     flattened_input_striding,
                     num_symbolic_dims](Stack& stack)
             {
-                at::ArrayRef<IValue> inputs = last(stack, num_inputs);
+                xsigma::ArrayRef<IValue> inputs = last(stack, num_inputs);
                 drop(stack, num_inputs);
                 // each invocation we need to reset what value of each symbolic
                 // symbol is.
@@ -686,28 +687,28 @@ static RegisterOperators reg_guard({
                 // each invocation or would that mess up with multithreaded
                 // inference since we are writing to it?
                 // TODO - smallvector here ?
-                bool                 grad_mode_enabled = at::GradMode::is_enabled();
+                bool                 grad_mode_enabled = xsigma::GradMode::is_enabled();
                 std::vector<int64_t> flattened_symbolic_dims(num_symbolic_dims, -1);
                 size_t               flattened_dim_offset    = 0;
                 size_t               flattened_stride_offset = 0;
-                for (const auto i : c10::irange(num_inputs))
+                for (const auto i : xsigma::irange(num_inputs))
                 {
-                    at::Tensor tensor = inputs[i].toTensor();
-                    if (C10_UNLIKELY(
+                    xsigma::Tensor tensor = inputs[i].toTensor();
+                    if (XSIGMA_UNLIKELY(
                             tensor.device() != device ||
                             tensor.dtype() != expected_scalar_types[i]))
                     {
                         push(stack, false);
                         return;
                     }
-                    if (C10_UNLIKELY(grad_mode_enabled && tensor.requires_grad()))
+                    if (XSIGMA_UNLIKELY(grad_mode_enabled && tensor.requires_grad()))
                     {
                         push(stack, false);
                         return;
                     }
                     const auto& sizes    = tensor.sizes();
                     const auto  num_dims = sizes.size();
-                    if (C10_UNLIKELY(num_dims != expected_dims[i]))
+                    if (XSIGMA_UNLIKELY(num_dims != expected_dims[i]))
                     {
                         push(stack, false);
                         return;
@@ -719,7 +720,8 @@ static RegisterOperators reg_guard({
                     // property than iterating over dimensions and checking yourself
                     if (striding == StrideInput::TENSOR_CONT)
                     {
-                        if (C10_UNLIKELY(!tensor.is_contiguous(at::MemoryFormat::Contiguous)))
+                        if (XSIGMA_UNLIKELY(
+                                !tensor.is_contiguous(xsigma::MemoryFormat::Contiguous)))
                         {
                             push(stack, false);
                             return;
@@ -729,7 +731,8 @@ static RegisterOperators reg_guard({
                     else if (striding == StrideInput::TENSOR_CONT_CHANNELS_LAST)
                     {
                         // TODO: 5D channels last
-                        if (C10_UNLIKELY(!tensor.is_contiguous(at::MemoryFormat::ChannelsLast)))
+                        if (XSIGMA_UNLIKELY(
+                                !tensor.is_contiguous(xsigma::MemoryFormat::ChannelsLast)))
                         {
                             push(stack, false);
                             return;
@@ -747,7 +750,7 @@ static RegisterOperators reg_guard({
                                 dim,
                                 flattened_input_striding,
                                 flattened_stride_offset);
-                            if (C10_UNLIKELY(
+                            if (XSIGMA_UNLIKELY(
                                     summarized_dim !=
                                     flattened_input_striding[dim + flattened_stride_offset]))
                             {
@@ -757,14 +760,14 @@ static RegisterOperators reg_guard({
                         }
                         flattened_stride_offset += num_dims;
                     }
-                    for (const auto dim_index : c10::irange(num_dims))
+                    for (const auto dim_index : xsigma::irange(num_dims))
                     {
                         const auto dim_value =
                             flattened_input_dims[dim_index + flattened_dim_offset];
                         const int64_t tensor_dim = sizes[dim_index];
                         if (dim_value >= 0)
                         {
-                            if (C10_UNLIKELY(dim_value != tensor_dim))
+                            if (XSIGMA_UNLIKELY(dim_value != tensor_dim))
                             {
                                 push(stack, false);
                                 return;
@@ -772,7 +775,7 @@ static RegisterOperators reg_guard({
                         }
                         else
                         {
-                            // flattened sym indices start at -1,
+                            // flattened sym indices start xsigma -1,
                             // so -1 -> index 0, -2 -> index 1
                             const auto flattened_sym_index = (-dim_value) - 1;
                             const auto flattened_sym_value =
@@ -780,7 +783,7 @@ static RegisterOperators reg_guard({
                             // sym symbol already seen, check value
                             if (flattened_symbolic_dims[flattened_sym_index] >= 0)
                             {
-                                if (C10_UNLIKELY(flattened_sym_value != tensor_dim))
+                                if (XSIGMA_UNLIKELY(flattened_sym_value != tensor_dim))
                                 {
                                     push(stack, false);
                                     return;

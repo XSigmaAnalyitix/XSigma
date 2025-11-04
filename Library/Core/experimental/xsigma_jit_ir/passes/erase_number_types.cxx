@@ -40,14 +40,14 @@ void EraseNumberTypesOnBlock(Block* block)
             if (it->output()->type()->isSubtypeOf(*NumberType::get()) ||
                 it->output()->type()->isSubtypeOf(*BoolType::get()))
             {
-                at::Scalar s;
+                xsigma::Scalar s;
                 if (it->output()->type()->isSubtypeOf(*BoolType::get()))
                 {
                     s = *constant_as<bool>(it->output());
                 }
                 else
                 {
-                    s = *constant_as<at::Scalar>(it->output());
+                    s = *constant_as<xsigma::Scalar>(it->output());
                 }
 
                 WithInsertPoint guard(*it);

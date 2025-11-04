@@ -3,15 +3,16 @@
 #include <ATen/ExpandUtils.h>
 #include <ATen/NestedTensorImpl.h>
 #include <ATen/core/Tensor.h>
-#include <c10/core/Device.h>
-#include <c10/core/DeviceType.h>
-#include <c10/core/Stream.h>
-#include <c10/core/SymIntArrayRef.h>
-#include <c10/core/TensorImpl.h>
-#include <c10/core/impl/DeviceGuardImplInterface.h>
-#include <c10/util/DimVector.h>
-#include <c10/util/Exception.h>
-#include <c10/util/SmallVector.h>
+#include <xsigma/core/Device.h>
+#include <xsigma/core/DeviceType.h>
+#include <xsigma/core/Stream.h>
+#include <xsigma/core/SymIntArrayRef.h>
+#include <xsigma/core/TensorImpl.h>
+#include <xsigma/core/impl/DeviceGuardImplInterface.h>
+#include <xsigma/util/DimVector.h>
+#include <xsigma/util/SmallVector.h>
+
+#include "util/exception.h"
 
 #ifndef AT_PER_OPERATOR_HEADERS
 #include <ATen/Functions.h>
@@ -22,8 +23,8 @@
 namespace torch::autograd
 {
 
-using SymIntSmallVec = c10::SmallVector<c10::SymInt, c10::kDimVectorStaticSize>;
-using MetadataShape  = std::variant<SymIntSmallVec, at::Tensor>;
+using SymIntSmallVec = xsigma::SmallVector<xsigma::SymInt, xsigma::kDimVectorStaticSize>;
+using MetadataShape  = std::variant<SymIntSmallVec, xsigma::Tensor>;
 
 /**
  * Records TensorOptions, shape of the tensor, whether or not the Python
@@ -37,40 +38,40 @@ struct TORCH_API InputMetadata
 {
     InputMetadata() = default;
     InputMetadata(
-        const at::TensorOptions&      options,
-        MetadataShape                 input_shape,
-        bool                          is_tensor_subclass,
-        bool                          is_nested,
-        std::optional<at::ScalarType> grad_dtype);
-    InputMetadata(const at::Tensor& t);
+        const xsigma::TensorOptions&      options,
+        MetadataShape                     input_shape,
+        bool                              is_tensor_subclass,
+        bool                              is_nested,
+        std::optional<xsigma::ScalarType> grad_dtype);
+    InputMetadata(const xsigma::Tensor& t);
 
-    const at::TensorOptions& options() const { return options_; }
+    const xsigma::TensorOptions& options() const { return options_; }
 
     caffe2::TypeMeta dtype() const { return options_.dtype(); }
 
-    at::Device device() const { return options_.device(); }
+    xsigma::Device device() const { return options_.device(); }
 
-    at::Layout layout() const { return options_.layout(); }
+    xsigma::Layout layout() const { return options_.layout(); }
 
-    c10::Stream stream() const { return stream_; }
+    xsigma::Stream stream() const { return stream_; }
 
     bool is_tensor_subclass() const { return is_tensor_subclass_; }
 
-    at::Tensor zeros_like() const;
+    xsigma::Tensor zeros_like() const;
 
-    bool is_same_shape(const at::Tensor& grad) const;
+    bool is_same_shape(const xsigma::Tensor& grad) const;
 
-    bool is_expandable_to_shape(const at::Tensor& grad) const;
+    bool is_expandable_to_shape(const xsigma::Tensor& grad) const;
 
-    at::Tensor reduce_grad(at::Tensor& grad) const;
+    xsigma::Tensor reduce_grad(xsigma::Tensor& grad) const;
 
-    at::Tensor maybe_reduce(
+    xsigma::Tensor maybe_reduce(
         const size_t                                          index,
-        at::Tensor                                            grad,
+        xsigma::Tensor                                        grad,
         const std::function<std::string(const std::string&)>& format_error) const;
 
     std::stringstream incompatible_shape_error_message(
-        const size_t index, const at::Tensor& grad) const;
+        const size_t index, const xsigma::Tensor& grad) const;
 
     bool was_default_constructed() const { return was_default_constructed_; }
 
@@ -78,42 +79,42 @@ struct TORCH_API InputMetadata
 
     bool is_nested_tensor() const { return is_nested_; }
 
-    c10::SymIntArrayRef shape_as_dim_vector() const;
+    xsigma::SymIntArrayRef shape_as_dim_vector() const;
 
     // Danger: not thread safe, caller must protect with lock
     SymIntSmallVec& mutable_shape_as_dim_vector();
 
-    std::optional<at::ScalarType> grad_dtype() const
+    std::optional<xsigma::ScalarType> grad_dtype() const
     {
         TORCH_INTERNAL_ASSERT(!was_default_constructed_);
         return grad_dtype_;
     }
 
-    void set_grad_dtype(const std::optional<at::ScalarType>& grad_dtype)
+    void set_grad_dtype(const std::optional<xsigma::ScalarType>& grad_dtype)
     {
         TORCH_INTERNAL_ASSERT(!was_default_constructed_);
         grad_dtype_ = grad_dtype;
     }
 
 private:
-    at::Tensor shape_as_tensor() const;
-    bool       is_nestedness_same(const at::Tensor& grad) const;
-    bool       maybe_expandable_to(const at::Tensor& grad) const;
+    xsigma::Tensor shape_as_tensor() const;
+    bool           is_nestedness_same(const xsigma::Tensor& grad) const;
+    bool           maybe_expandable_to(const xsigma::Tensor& grad) const;
 
     // NB: The engine does not use the dtype from the options, but rather the
     //     grad_dtype_ field to validate grad_output dtype.
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
-    const at::TensorOptions options_;
-    MetadataShape           shape_;
-    c10::Stream             stream_ = c10::Stream(c10::Stream::Default::DEFAULT, device());
-    bool                    is_tensor_subclass_      = false;
-    bool                    is_nested_               = false;
-    bool                    was_default_constructed_ = true;
+    const xsigma::TensorOptions options_;
+    MetadataShape               shape_;
+    xsigma::Stream stream_             = xsigma::Stream(xsigma::Stream::Default::DEFAULT, device());
+    bool           is_tensor_subclass_ = false;
+    bool           is_nested_          = false;
+    bool           was_default_constructed_ = true;
 
     // The grad_dtype_ field is the dtype that the engine expects the grad to be.
     // When nullopt, grad_dtype_ is allowed to be any dtype.
     // This field is mutated if THPVariable_set_grad_dtype is called
     // and the AccumulateGrad has already been created.
-    std::optional<at::ScalarType> grad_dtype_;
+    std::optional<xsigma::ScalarType> grad_dtype_;
 };
 }  // namespace torch::autograd

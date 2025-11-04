@@ -111,7 +111,7 @@ struct LivenessAnalyzer
     }
 
 private:
-    SparseBitVector toSparseBitVector(at::ArrayRef<Value*> values)
+    SparseBitVector toSparseBitVector(xsigma::ArrayRef<Value*> values)
     {
         SparseBitVector sbv;
         for (auto v : values)

@@ -56,7 +56,7 @@ def gen_external(native_functions_path, tags_path, external_path):
 
         tensor_decls = []
         for idx, arg in enumerate(tensor_args):
-            s = f"const at::Tensor& {arg.name} = tensors[{idx + 1}];"
+            s = f"const xsigma::Tensor& {arg.name} = tensors[{idx + 1}];"
             tensor_decls.append(s)
             arg_names[idx] = arg.name
         nl = "\n"
@@ -72,12 +72,12 @@ void nnc_aten_{name}(
     int8_t* buf_dtypes,
     int64_t args_num,
     int64_t* extra_args) {{
-  std::vector<at::Tensor> tensors =
+  std::vector<xsigma::Tensor> tensors =
       constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-  at::Tensor& r = tensors[0];
+  xsigma::Tensor& r = tensors[0];
   {nl.join(tensor_decls)}
   try {{
-    at::{name}_out({", ".join(["r"] + arg_names)});
+    xsigma::{name}_out({", ".join(["r"] + arg_names)});
   }} catch (...) {{
   }}
 }}"""

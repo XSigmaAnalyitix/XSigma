@@ -26,10 +26,10 @@ bool FunctionalToInplaceRewriter::CanBeInplace(Node* node)
     }
 
     // If type promotion is allowed, then perform dtype check
-    bool check_dtype = activation_type_promotion_mapping.at(node->kind());
+    bool check_dtype = activation_type_promotion_mapping.xsigma(node->kind());
 
-    Value* input       = node->inputs().at(0);
-    Value* output      = node->outputs().at(0);
+    Value* input       = node->inputs().xsigma(0);
+    Value* output      = node->outputs().xsigma(0);
     auto   inputDtype  = input->type()->expect<TensorType>()->scalarType();
     auto   outputDtype = output->type()->expect<TensorType>()->scalarType();
 
@@ -74,7 +74,7 @@ bool FunctionalToInplaceRewriter::FunctionalToInplace(Block* block)
         changed = true;
         Node* inplace_node =
             node->replaceWithNewSymbol(Symbol::fromQualString(node->schema().name() + "_"));
-        inplace_node->output()->replaceAllUsesWith(node->inputs().at(0));
+        inplace_node->output()->replaceAllUsesWith(node->inputs().xsigma(0));
         getOrCreateAliasDb()->replaceWithNewValue(node->output(), inplace_node->output());
 
         node->destroy();

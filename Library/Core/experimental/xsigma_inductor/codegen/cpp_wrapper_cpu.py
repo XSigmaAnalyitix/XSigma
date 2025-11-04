@@ -86,7 +86,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
         self.cached_output_id = count()
         self.scalar_to_tensor_id = count()
         self.custom_op_wrapper_loaded = False
-        # For GEMM kernels that must be initialized and are resolved at linking.
+        # For GEMM kernels that must be initialized and are resolved xsigma linking.
         self.initialized_kernels: dict[str, Kernel] = {}
         self.device_codegen = get_device_op_overrides(self.device)
         # only need to include each header once
@@ -102,7 +102,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
         partition_signatures: Optional[ir.GraphPartitionSignature] = None,
     ):
         # TODO - support subgraph codegen by lifting functions. Check the
-        # comment at CppWrapperCpu `codegen_subgraph` function.
+        # comment xsigma CppWrapperCpu `codegen_subgraph` function.
         return CppWrapperCpu()
 
     @staticmethod
@@ -361,7 +361,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
     def generate_input_output_runtime_checks(self):
         """
         In debug_compile mode, we generate checks to ensure the dtype/shape/stride/device of each
-        real input/output tensor match ones provided at compile time via sample
+        real input/output tensor match ones provided xsigma compile time via sample
         input/output.
         """
 
@@ -392,7 +392,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
                         f"""
                             if ({d} != {name}_size[{dim_idx}]) {{
                                 std::stringstream ss;
-                                ss << "{handle_kind}[{idx}]: unmatched dim value at {dim_idx}, "
+                                ss << "{handle_kind}[{idx}]: unmatched dim value xsigma {dim_idx}, "
                                    << "expected: {d}, " << "but got: " << {name}_size[{dim_idx}]
                                    << "\\n";
                                 throw std::runtime_error(ss.str());
@@ -408,7 +408,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
                             f"""
                                 if ({name}_size[{dim_idx}] < {sym_range.lower}) {{
                                     std::stringstream ss;
-                                    ss << "{handle_kind}[{idx}]: dim value is too small at {dim_idx}, "
+                                    ss << "{handle_kind}[{idx}]: dim value is too small xsigma {dim_idx}, "
                                        << "expected it to be >= {sym_range.lower}, " << "but got: "
                                        << {name}_size[{dim_idx}] << "\\n";
                                     throw std::runtime_error(ss.str());
@@ -423,7 +423,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
                             f"""
                                 if ({name}_size[{dim_idx}] > {upper_bound}) {{
                                     std::stringstream ss;
-                                    ss << "{handle_kind}[{idx}]: dim value is too large at {dim_idx}, "
+                                    ss << "{handle_kind}[{idx}]: dim value is too large xsigma {dim_idx}, "
                                        << "expected to be <= {upper_bound}, " << "but got: "
                                        << {name}_size[{dim_idx}] << "\\n";
                                     throw std::runtime_error(ss.str());
@@ -439,7 +439,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
                     f"""
                         if ({s} != {name}_stride[{stride_idx}]) {{
                             std::stringstream ss;
-                            ss << "{handle_kind}[{idx}]: unmatched stride value at {stride_idx}, "
+                            ss << "{handle_kind}[{idx}]: unmatched stride value xsigma {stride_idx}, "
                                << "expected: {s}, " << "but got: " << {name}_stride[{stride_idx}]
                                << "\\n";
                             throw std::runtime_error(ss.str());
@@ -629,7 +629,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
                     # Weights are stored in constants_ and owned by ConstantHandle there.
                     # Don't call std::move here because it will cause constants_ to lose the ownership.
                     self.prefix.writeline(
-                        f"""[[maybe_unused]] auto& {constants_key} = constants_->at({idx});"""
+                        f"""[[maybe_unused]] auto& {constants_key} = constants_->xsigma({idx});"""
                     )
                 else:
                     # Append constants as inputs to the graph
@@ -752,7 +752,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
         inputs_info_[0].dtype = "torch.float16";
         ...
         constants_info_[0].name = "L__self___weight";
-        constants_info_[0].dtype = at::kFloat;
+        constants_info_[0].dtype = xsigma::kFloat;
         constants_info_[0].offset = 0;
         constants_info_[0].data_size = 8192;
         constants_info_[0].shape = {64, 32};
@@ -986,7 +986,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
 
             for output_idx, (const_idx, _) in enumerate(const_index_mapping):  # type: ignore[misc]
                 self.prefix.writeline(
-                    f"output_handles[{output_idx}] = constants_->at({const_idx});"
+                    f"output_handles[{output_idx}] = constants_->xsigma({const_idx});"
                 )
 
             self.prefix.writeline(
@@ -1185,8 +1185,8 @@ class CppWrapperCpu(PythonWrapperCodegen):
                     constants_tensor = {constants_str}
                     input_tensors.extend(constants_tensor)
             """
-        # Convert vector of at::Tensor to vector of AtenTensorHandle.
-        # If we pass at::Tensor, the compilation will be too slow.
+        # Convert vector of xsigma::Tensor to vector of AtenTensorHandle.
+        # If we pass xsigma::Tensor, the compilation will be too slow.
         wrapper_body += """
                     input_handles = torch._C._aoti.unsafe_alloc_void_ptrs_from_tensors(input_tensors)
         """
@@ -1593,7 +1593,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
         assert device.type in DEVICE_TO_ATEN, (
             device.type + " not found in DEVICE_TO_ATEN"
         )
-        device_str = DEVICE_TO_ATEN[device.type][5:].lower()  # remove "at::k"
+        device_str = DEVICE_TO_ATEN[device.type][5:].lower()  # remove "xsigma::k"
         self.used_cached_devices.add(device_str)
         return f"cached_torch_device_type_{device_str}, {device.index if device.index else 0}"
 
@@ -1900,8 +1900,8 @@ class CppWrapperCpu(PythonWrapperCodegen):
             if not isinstance(inner_input_val, ir.TensorBox):
                 continue
 
-            # in ABI-compatible mode, we copy the underlying at::Tensor of the conditional
-            # input (outer_input) into another at::Tensor to be used as a subgraph input
+            # in ABI-compatible mode, we copy the underlying xsigma::Tensor of the conditional
+            # input (outer_input) into another xsigma::Tensor to be used as a subgraph input
             # (inner_input) in the nested scope. we can't std::move here, as the codegened
             # outer input may be an expression / rvalue (e.g., reinterpret_view(x)), so we
             # can't necessarily std::move it back to the origin (x).
@@ -2007,7 +2007,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
         for inp, out in zip(outer_carried_inputs, while_loop.outputs):
             # in ABI-compatible mode, the carried inputs are codegened
             # as buffers outside the while loop and set to the initial
-            # values. at the end of each while_loop iteration, they
+            # values. xsigma the end of each while_loop iteration, they
             # will be assigned the carried values.
             out_name = out.get_name()
             self.writeline(f"AtenTensorHandle {out_name}_handle;")
@@ -2449,14 +2449,14 @@ if (!custom_op_wrapper) {
                 return handle_scalar(raw_arg)
             elif isinstance(raw_arg, torch.device):
                 device_str, device_index = self.codegen_device(raw_arg).split(", ")
-                return f"THPDevice_New(c10::Device(static_cast<c10::DeviceType>({device_str}), {device_index}))"
+                return f"THPDevice_New(xsigma::Device(static_cast<xsigma::DeviceType>({device_str}), {device_index}))"
             elif isinstance(raw_arg, torch.dtype):
-                return f"Py_NewRef(torch::getTHPDtype(static_cast<c10::ScalarType>({self.codegen_dtype(raw_arg)})))"
+                return f"Py_NewRef(torch::getTHPDtype(static_cast<xsigma::ScalarType>({self.codegen_dtype(raw_arg)})))"
             elif isinstance(raw_arg, torch.layout):
-                return f"Py_NewRef(torch::getTHPLayout(static_cast<c10::Layout>({self.codegen_layout(raw_arg)})))"
+                return f"Py_NewRef(torch::getTHPLayout(static_cast<xsigma::Layout>({self.codegen_layout(raw_arg)})))"
             elif isinstance(raw_arg, torch.memory_format):
                 return (
-                    "Py_NewRef(torch::utils::getTHPMemoryFormat(static_cast<c10::MemoryFormat>("
+                    "Py_NewRef(torch::utils::getTHPMemoryFormat(static_cast<xsigma::MemoryFormat>("
                     f"{self.codegen_memory_format(raw_arg)})))"
                 )
             else:
@@ -2494,7 +2494,7 @@ if (!custom_op_wrapper) {
         only be called in cpp_wrapper mode, and assumes that the input is a non-None
         OpOverload.
 
-        In the future, we may switch over to directly calling c10::Dispatcher if we need
+        In the future, we may switch over to directly calling xsigma::Dispatcher if we need
         to support more datatypes."""
         if raw_outputs:
             declarations_before_scope = [
@@ -2613,7 +2613,7 @@ if (!custom_op_wrapper) {
         OpOverload.
 
         This function calls into Python to dispatch, which allows it to handle datatypes
-        that cannot be contained in StableIValue, at the cost of some performance."""
+        that cannot be contained in StableIValue, xsigma the cost of some performance."""
         self.load_custom_op_wrapper()
 
         num_args = len(raw_args)
@@ -2756,7 +2756,7 @@ if (!custom_op_wrapper) {
             # uint64_t is long on Linux, but long long on MacOS and Windows
             return f"{val}LL" if sys.platform in ["darwin", "win32"] else f"{val}L"
         elif isinstance(val, complex):
-            return f"c10::complex<double>{{ {self.generate_float_value(val.real)}, {self.generate_float_value(val.imag)} }}"
+            return f"xsigma::complex<double>{{ {self.generate_float_value(val.real)}, {self.generate_float_value(val.imag)} }}"
         elif isinstance(val, str):
             return f'"{val}"'
         elif isinstance(
@@ -2799,7 +2799,7 @@ if (!custom_op_wrapper) {
                 return "nullptr"
 
             if isinstance(type_, torch.TensorType):
-                # create an empty tensor, the equivalent of at::Tensor()
+                # create an empty tensor, the equivalent of xsigma::Tensor()
                 var_name = f"var_{next(self.arg_var_id)}"
                 self.writeline(f"AtenTensorHandle {var_name}_handle;")
                 self.writeline(

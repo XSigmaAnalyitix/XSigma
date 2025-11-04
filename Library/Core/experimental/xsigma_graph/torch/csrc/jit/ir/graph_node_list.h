@@ -1,6 +1,6 @@
 #pragma once
 
-#include <c10/util/Exception.h>
+#include "util/exception.h"
 
 namespace torch::jit
 {
@@ -26,7 +26,7 @@ namespace torch::jit
 // the off-by-one behavior for all standard library reverse iterators like
 // std::list.
 
-// The list is includes two sentinel nodes, one at the beginning and one at the
+// The list is includes two sentinel nodes, one xsigma the beginning and one xsigma the
 // end with a circular link between them. It is an error to insert nodes after
 // the end sentinel node but before the beginning node:
 

@@ -6,7 +6,7 @@
 namespace torch::autograd
 {
 
-using GradMode     = at::GradMode;
-using AutoGradMode = at::AutoGradMode;
+using GradMode     = xsigma::GradMode;
+using AutoGradMode = xsigma::AutoGradMode;
 
 }  // namespace torch::autograd

@@ -14,7 +14,7 @@ namespace torch::jit
 {
 
 // Replaces prim::Guard nodes with prim::BailOut nodes and
-// computes sets of inputs needed to resume execution at
+// computes sets of inputs needed to resume execution xsigma
 // bailout points
 TORCH_API void InsertBailOuts(std::shared_ptr<Graph> graph);
 

@@ -13,11 +13,11 @@
 namespace torch::autograd
 {
 Scatter::Scatter(
-    std::vector<at::Device>                                         devices,
-    std::optional<std::vector<int64_t>>                             chunk_sizes,
-    int64_t                                                         dim,
-    std::optional<std::vector<std::optional<at::cuda::CUDAStream>>> streams,
-    bool                                                            unsqueeze_scalars)
+    std::vector<xsigma::Device>                                         devices,
+    std::optional<std::vector<int64_t>>                                 chunk_sizes,
+    int64_t                                                             dim,
+    std::optional<std::vector<std::optional<xsigma::cuda::CUDAStream>>> streams,
+    bool                                                                unsqueeze_scalars)
     : devices_(std::move(devices)),
       chunk_sizes_(std::move(chunk_sizes)),
       dim_(dim),
@@ -41,7 +41,7 @@ variable_list Scatter::apply(variable_list&& inputs)
     }
 
     auto device_indices =
-        fmap(devices_, [](const at::Device& device) -> int64_t { return device.index(); });
+        fmap(devices_, [](const xsigma::Device& device) -> int64_t { return device.index(); });
     auto tensors = torch::cuda::scatter(input, device_indices, chunk_sizes_, dim_, streams_);
 
     std::vector<Variable> variables;
@@ -68,7 +68,7 @@ variable_list Scatter::apply(variable_list&& inputs)
     return variables;
 }
 
-Gather::Gather(const at::Device& destination_device, int64_t dim)
+Gather::Gather(const xsigma::Device& destination_device, int64_t dim)
     : destination_device_(destination_device), dim_(dim)
 {
 }
@@ -80,7 +80,7 @@ variable_list Gather::apply(variable_list&& inputs)
     bool all_are_zero_dim = true;
     for (const auto& input : inputs)
     {
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             input.is_cuda(), "All inputs to Gather must be CUDA tensors, got ", input.toString());
         if (input.dim() > 0)
         {
@@ -101,7 +101,7 @@ variable_list Gather::apply(variable_list&& inputs)
     // compute this before moving variables from `inputs`
     if (compute_requires_grad(inputs))
     {
-        std::vector<at::Device> source_devices;
+        std::vector<xsigma::Device> source_devices;
         source_devices.reserve(inputs.size());
         std::vector<int64_t> input_sizes;
         input_sizes.reserve(inputs.size());
@@ -119,7 +119,7 @@ variable_list Gather::apply(variable_list&& inputs)
         grad_fn->set_next_edges(collect_next_edges(inputs));
     }
 
-    std::vector<at::Tensor> tensors;
+    std::vector<xsigma::Tensor> tensors;
     if (unsqueeze_scalars)
     {
         tensors.reserve(inputs.size());
@@ -136,9 +136,9 @@ variable_list Gather::apply(variable_list&& inputs)
     // Disable the autograd during the actual computation
     // torch::cuda::gather does not return a view or change things inplace
     // so no need for extra logic here
-    at::Tensor variable;
+    xsigma::Tensor variable;
     {
-        at::AutoDispatchBelowAutograd mode;
+        xsigma::AutoDispatchBelowAutograd mode;
         // This is special logic for torch::cuda::gather!
         const auto destination_index =
             destination_device_.is_cpu() ? -1 : destination_device_.index();

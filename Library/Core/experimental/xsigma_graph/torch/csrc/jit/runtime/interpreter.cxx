@@ -1,10 +1,6 @@
 #include <ATen/Parallel.h>
 #include <ATen/core/ivalue.h>
 #include <ATen/record_function.h>
-#include <c10/core/thread_pool.h>
-#include <c10/macros/Macros.h>
-#include <c10/util/Exception.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/autograd/edge.h>
 #include <torch/csrc/autograd/grad_mode.h>
 #include <torch/csrc/autograd/profiler.h>
@@ -27,8 +23,13 @@
 #include <torch/csrc/jit/runtime/script_profile.h>
 #include <torch/csrc/jit/runtime/vararg_functions.h>
 #include <torch/csrc/utils/cpp_stacktraces.h>
+#include <xsigma/core/thread_pool.h>
+#include <xsigma/macros/Macros.h>
+#include <xsigma/util/irange.h>
 
 #include <string>
+
+#include "util/exception.h"
 
 #ifdef USE_RPC
 #include <torch/csrc/distributed/autograd/context/container.h>
@@ -47,17 +48,17 @@ using torch::distributed::autograd::DistAutogradContainer;
 #include <vector>
 
 // clang-format off
-C10_DEFINE_bool(
+XSIGMA_DEFINE_bool(
     torch_jit_enable_rethrow_caught_exception,
     false,
     "enable rethrowing caught exception")
 
-C10_DEFINE_bool(
+XSIGMA_DEFINE_bool(
     torch_jit_enable_expanded_stacks,
     false,
     "When true we will attempts to pre-expand node stacks and cache expanded stacks.")
 
-C10_DEFINE_bool(
+XSIGMA_DEFINE_bool(
     torch_jit_expanded_stacks_mangled,
     false,
     "When true pre-expanded stacks will use mangled names.")
@@ -85,12 +86,12 @@ using CodeImpl = interpreter::CodeImpl;
 //   indicating whether this is the last use of the value. The interpreter
 //   should generate a move rather than a copy in this case.
 
-TensorTypePtr tensorTypeInCurrentExecutionContext(const at::Tensor& t) {
+TensorTypePtr tensorTypeInCurrentExecutionContext(const xsigma::Tensor& t) {
   if (!t.defined()) {
     return TensorType::get()->withUndefined();
   }
   auto r = TensorType::create(t);
-  if (!at::GradMode::is_enabled()) {
+  if (!xsigma::GradMode::is_enabled()) {
     return r->withRequiresGrad(false);
   }
   return r;
@@ -126,7 +127,7 @@ bool in_torchscript_runtime() {
 }
 
 // InterpreterState state that and used to compute a Code
-struct InterpreterStateImpl : c10::intrusive_ptr_target {
+struct InterpreterStateImpl : xsigma::intrusive_ptr_target {
   InterpreterStateImpl(const Code& code, TaskLauncher taskLauncher)
       : taskLauncher_(std::move(taskLauncher)) {
     enterFrame(code, 0);
@@ -154,7 +155,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
   // answer: to where it was when we were called, not
   // including any inputs to this function
   int64_t stack_start_ = -1;
-  c10::intrusive_ptr<Future> future_;
+  xsigma::intrusive_ptr<Future> future_;
   TaskLauncher taskLauncher_;
 
   // this holds all the tensors for this interpreter run
@@ -173,9 +174,9 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
 
   std::vector<Frame> frames;
 
-  c10::intrusive_ptr<InterpreterStateImpl> intrusive_from_this() {
-    c10::raw::intrusive_ptr::incref(this);
-    return c10::intrusive_ptr<InterpreterStateImpl>::reclaim(this);
+  xsigma::intrusive_ptr<InterpreterStateImpl> intrusive_from_this() {
+    xsigma::raw::intrusive_ptr::incref(this);
+    return xsigma::intrusive_ptr<InterpreterStateImpl>::reclaim(this);
   }
 
   void enterFrame(const Code& code, size_t base_pointer) {
@@ -443,7 +444,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
               inst = instFetch(1);
             } else {
               size_t n_loop_carried = inst.N - 2;
-              for (const auto i : c10::irange(n_loop_carried)) {
+              for (const auto i : xsigma::irange(n_loop_carried)) {
                 fr[i] = std::move(fr[i + 3]);
               }
               drop(stack, 3); // iteration_count, max_iter, cond
@@ -491,7 +492,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
                 future_->markCompleted(stack.back());
               } else {
                 future_->markCompleted(
-                    c10::ivalue::Tuple::create(jit::last(stack, num_outputs)));
+                    xsigma::ivalue::Tuple::create(jit::last(stack, num_outputs)));
               }
             }
             // destroy the last frame and call RecordFunction's end callbacks
@@ -508,7 +509,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
               // we can move the stack to the other thread
               struct Callback {
                 Callback(
-                    c10::intrusive_ptr<InterpreterStateImpl> state,
+                    xsigma::intrusive_ptr<InterpreterStateImpl> state,
                     Stack stack)
                     : stateImpl_(std::move(state)),
                       state_(stateImpl_),
@@ -516,7 +517,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
                       dist_autograd_context_id_(getDistAutogradContextId()) {
                   state_ = InterpreterState(stateImpl_);
                 }
-                void operator()(c10::ivalue::Future& /* unused */) {
+                void operator()(xsigma::ivalue::Future& /* unused */) {
                   stateImpl_->taskLauncher_(InterpreterContinuation(
                       state_,
                       std::move(stack_),
@@ -525,12 +526,12 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
                 }
 
                private:
-                c10::intrusive_ptr<InterpreterStateImpl> stateImpl_;
+                xsigma::intrusive_ptr<InterpreterStateImpl> stateImpl_;
                 InterpreterState state_;
                 Stack stack_;
                 int64_t dist_autograd_context_id_;
                 // preserve the original ThreadLocalState
-                at::ThreadLocalState tls_state_;
+                xsigma::ThreadLocalState tls_state_;
               };
 
               // we are suspending, so we need to reset the stack to where we
@@ -564,7 +565,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
             }
             const auto& callback =
                 frame.function->profile_function_table_[inst.X];
-            push(stack, c10::IValue{static_cast<int64_t>(*frame_id_ref)});
+            push(stack, xsigma::IValue{static_cast<int64_t>(*frame_id_ref)});
             callback(stack);
           }
             INST_NEXT;
@@ -631,9 +632,9 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
             size_t base_pointer = frame.base_pointer;
             TORCH_INTERNAL_ASSERT(stack.size() >= num_inputs);
             size_t inputs_start = stack.size() - num_inputs;
-            for (const auto i : c10::irange(num_inputs)) {
-              stack.at(base_pointer + i) =
-                  std::move(stack.at(inputs_start + i));
+            for (const auto i : xsigma::irange(num_inputs)) {
+              stack.xsigma(base_pointer + i) =
+                  std::move(stack.xsigma(inputs_start + i));
             }
             stack.resize(base_pointer + num_inputs);
             leaveFrame();
@@ -687,7 +688,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
             INST_NEXT;
           case INST(ISINSTANCE): {
             [[maybe_unused]] auto _ = instGuard();
-            at::ArrayRef<TypePtr> types(
+            xsigma::ArrayRef<TypePtr> types(
                 &frame.function->type_table_[inst.X],
                 &frame.function->type_table_[inst.X] + inst.N);
             isinstance(stack, types);
@@ -802,7 +803,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
               out_type = TupleType::create(out_types);
             }
             auto args = std::vector<IValue>(stack.end() - inst.N, stack.end());
-            auto aw = c10::make_intrusive<c10::ivalue::Await>(out_type);
+            auto aw = xsigma::make_intrusive<xsigma::ivalue::Await>(out_type);
             aw->setArgs(std::move(args));
             aw->setFn(
                 [&args = aw->args(),
@@ -820,7 +821,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
                   if (n_out == 1) {
                     return s.back();
                   }
-                  return c10::ivalue::Tuple::create(jit::last(s, n_out));
+                  return xsigma::ivalue::Tuple::create(jit::last(s, n_out));
                 });
             drop(stack, inst.N);
             push(stack, std::move(aw));
@@ -837,7 +838,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
             }
 
             Node* node =
-                frames.back().function->instructions_source_.at(frame.pc);
+                frames.back().function->instructions_source_.xsigma(frame.pc);
             auto range = node->sourceRange().source();
             if (range->filename()) {
               drop(stack, 1);
@@ -845,13 +846,13 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
               if (need_warn) {
                 auto line = range->starting_line_no() +
                     range->lineno_for_offset(node->sourceRange().start());
-                c10::SourceLocation location{
+                xsigma::SourceLocation location{
                     "", range->filename()->c_str(), uint32_t(line)};
                 // Sends the warning to the warning handler with the
                 // "verbatim" flag. This flag ensures the warning handler
                 // will print the exception as configured.
-                c10::warn(c10::Warning(
-                    c10::UserWarning(), location, msg, /*verbatim=*/true));
+                xsigma::warn(xsigma::Warning(
+                    xsigma::UserWarning(), location, msg, /*verbatim=*/true));
               }
               stack.pop_back();
             } else {
@@ -889,7 +890,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
       }
       auto* jit_exception = dynamic_cast<JITException*>(&e);
       // Janky af.  See https://github.com/pytorch/pytorch/issues/54612
-      auto* not_implemented_error = dynamic_cast<c10::NotImplementedError*>(&e);
+      auto* not_implemented_error = dynamic_cast<xsigma::NotImplementedError*>(&e);
 
       std::optional<std::string> python_class_name;
       if (jit_exception) {
@@ -921,7 +922,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
   void handleError(
       const std::exception& e,
       bool is_jit_exception,
-      c10::NotImplementedError* not_implemented_error,
+      xsigma::NotImplementedError* not_implemented_error,
       std::optional<std::string> python_class_name) {
     ExceptionMessage msg(e);
     std::ostringstream ss;
@@ -936,7 +937,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
       // save the original exception's message when creating a new JITException
       throw JITException(ss.str(), python_class_name, e.what());
     } else if (not_implemented_error) {
-      throw c10::NotImplementedError(
+      throw xsigma::NotImplementedError(
           ss.str(),
           not_implemented_error->backtrace(),
           not_implemented_error->caller());
@@ -950,12 +951,12 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
 
   static void checkAndStartRecordFunction(Frame& frame, Stack& stack) {
     if (!frame.record_function) {
-      auto step_callbacks = at::getStepCallbacksUnlessEmpty(
-          at::RecordScope::TORCHSCRIPT_FUNCTION);
-      if (C10_UNLIKELY(step_callbacks.has_value())) {
+      auto step_callbacks = xsigma::getStepCallbacksUnlessEmpty(
+          xsigma::RecordScope::TORCHSCRIPT_FUNCTION);
+      if (XSIGMA_UNLIKELY(step_callbacks.has_value())) {
         auto rec_fn =
-            std::make_unique<at::RecordFunction>(std::move(*step_callbacks));
-        TORCH_INTERNAL_ASSERT_DEBUG_ONLY(rec_fn->isActive());
+            std::make_unique<xsigma::RecordFunction>(std::move(*step_callbacks));
+        XSIGMA_CHECK_DEBUG(rec_fn->isActive());
         if (rec_fn->needsInputs()) {
           rec_fn->before(
               frame.function->function_name_,
@@ -974,7 +975,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
   // This is not exactly clean as it will expose, internal details of
   // interpreter. But this way we hold onto graph/node and Function and
   // we can create module hierarchy string for each event in autograd
-  // profiler at the end, when consolidating events.
+  // profiler xsigma the end, when consolidating events.
   // At the moment overhead does not seem exhorbitantly large.
   // Another option would be return vector of (string, InlinedCallstackPtrs)
   // string would contain function name and typename of self
@@ -1001,7 +1002,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
       std::string g_self_type;
       if (g && !g->inputs().empty()) {
         const auto& g_self_type_ptr =
-            g->inputs()[0]->type()->cast<c10::ClassType>();
+            g->inputs()[0]->type()->cast<xsigma::ClassType>();
         if (g_self_type_ptr) {
           g_self_type = g_self_type_ptr->name()->qualifiedName();
           g_self_type = g_self_type.substr(g_self_type.find_last_of('.') + 1);
@@ -1070,7 +1071,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
 
   std::vector<StackEntry> callstack() const {
     std::vector<StackEntry> entries;
-    for (const auto i : c10::irange(frames.size())) {
+    for (const auto i : xsigma::irange(frames.size())) {
       const Frame& frame = frames[i];
       std::string previous_fn_name = frame.function->function_name_;
       size_t pc = frame.pc;
@@ -1092,15 +1093,15 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
     return entries;
   }
 
-  c10::intrusive_ptr<Future> getOrCreateFuture() {
+  xsigma::intrusive_ptr<Future> getOrCreateFuture() {
     if (!future_) {
       future_ =
-          c10::make_intrusive<Future>(frames.front().function->return_type_);
+          xsigma::make_intrusive<Future>(frames.front().function->return_type_);
     }
     return future_;
   }
 
-  c10::intrusive_ptr<Future> runAsync(Stack& stack) {
+  xsigma::intrusive_ptr<Future> runAsync(Stack& stack) {
     getOrCreateFuture();
     runImpl(stack);
     return future_;
@@ -1198,7 +1199,7 @@ size_t Code::num_outputs() const {
   return pImpl->n_outputs;
 }
 
-const std::vector<c10::IValue>& Code::constant_table() const {
+const std::vector<xsigma::IValue>& Code::constant_table() const {
   return pImpl->constant_table();
 }
 
@@ -1228,7 +1229,7 @@ std::shared_ptr<Graph> Code::graph() const {
 }
 
 InterpreterState::InterpreterState(const Code& code, TaskLauncher taskLauncher)
-    : pImpl(c10::make_intrusive<InterpreterStateImpl>(
+    : pImpl(xsigma::make_intrusive<InterpreterStateImpl>(
           code,
           std::move(taskLauncher))) {}
 
@@ -1236,16 +1237,16 @@ void InterpreterState::run(Stack& stack) {
   static_cast<InterpreterStateImpl*>(pImpl.get())->run(stack);
 }
 
-c10::intrusive_ptr<Future> InterpreterState::runAsync(Stack& stack) {
+xsigma::intrusive_ptr<Future> InterpreterState::runAsync(Stack& stack) {
   return static_cast<InterpreterStateImpl*>(pImpl.get())->runAsync(stack);
 }
 
-c10::intrusive_ptr<Future> InterpreterState::getFuture() {
+xsigma::intrusive_ptr<Future> InterpreterState::getFuture() {
   return static_cast<InterpreterStateImpl*>(pImpl.get())->getOrCreateFuture();
 }
 
 InterpreterState::InterpreterState(
-    c10::intrusive_ptr<c10::intrusive_ptr_target> pImpl_)
+    xsigma::intrusive_ptr<xsigma::intrusive_ptr_target> pImpl_)
     : pImpl(std::move(pImpl_)) {}
 
 void InterpreterContinuation::operator()() {
@@ -1254,7 +1255,7 @@ void InterpreterContinuation::operator()() {
   DistAutogradContainer::forceCurrentContextId(dist_autograd_context_id_);
 #endif
   if (tls_state_ != std::nullopt) {
-    at::ThreadLocalStateGuard g(*tls_state_);
+    xsigma::ThreadLocalStateGuard g(*tls_state_);
     state.runAsync(stack);
   } else {
     state.runAsync(stack);

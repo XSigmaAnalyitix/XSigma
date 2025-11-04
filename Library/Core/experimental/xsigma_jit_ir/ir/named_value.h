@@ -53,7 +53,7 @@ struct NamedValue
         return loc();
     }
 
-    // note: this will insert a constant node into the graph at the current
+    // note: this will insert a constant node into the graph xsigma the current
     // insert point if this NamedValue is actually a constant
     Value* value(Graph& g) const
     {
@@ -75,7 +75,7 @@ struct NamedValue
         return *loc_;
     }
 
-    at::TypePtr type() const;
+    xsigma::TypePtr type() const;
 
 private:
     std::optional<SourceRange> loc_;

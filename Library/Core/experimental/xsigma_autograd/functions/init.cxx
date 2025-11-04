@@ -1,5 +1,4 @@
 #include <Python.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/autograd/functions/accumulate_grad.h>
 #include <torch/csrc/autograd/functions/basic_ops.h>
 #include <torch/csrc/autograd/functions/pybind.h>
@@ -8,6 +7,7 @@
 #include <torch/csrc/autograd/python_autograd.h>
 #include <torch/csrc/autograd/python_cpp_function.h>
 #include <torch/csrc/autograd/python_variable.h>
+#include <xsigma/util/irange.h>
 #ifdef USE_DISTRIBUTED
 #include <torch/csrc/distributed/autograd/functions/sendrpc_backward.h>
 #endif
@@ -24,13 +24,13 @@ struct DelayedErrorCtor
 {
     DelayedError* operator()(PyObject* args)
     {
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             PyTuple_GET_SIZE(args) == 2, "Requires two arguments, got ", PyTuple_GET_SIZE(args));
         auto arg1 = PyTuple_GET_ITEM(args, 0);
-        TORCH_CHECK(THPUtils_checkString(arg1), "argument 'msg' must be a string");
+        XSIGMA_CHECK(THPUtils_checkString(arg1), "argument 'msg' must be a string");
         std::string msg  = THPUtils_unpackString(arg1);
         auto        arg2 = PyTuple_GET_ITEM(args, 1);
-        TORCH_CHECK(THPUtils_checkLong(arg2), "argument 'num_inputs' must be an int");
+        XSIGMA_CHECK(THPUtils_checkLong(arg2), "argument 'num_inputs' must be an int");
         auto num_inputs = THPUtils_unpackLong(arg2);
         return new DelayedError(std::move(msg), num_inputs);
     }
@@ -40,7 +40,7 @@ struct UndefinedGradCtor
 {
     UndefinedGrad* operator()(PyObject* args)
     {
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             PyTuple_GET_SIZE(args) == 0, "Requires zero arguments, got ", PyTuple_GET_SIZE(args));
         return new UndefinedGrad();
     }
@@ -48,7 +48,7 @@ struct UndefinedGradCtor
 
 struct NoCtor
 {
-    Node* operator()(PyObject* args) { TORCH_CHECK(false, "Cannot construct"); }
+    Node* operator()(PyObject* args) { XSIGMA_CHECK(false, "Cannot construct"); }
 };
 
 template <typename C, typename T>
@@ -81,7 +81,7 @@ static PyObject* getTupleAttr(PyObject* obj, void* _unused)
     THPObjectPtr    py_tuple(PyTuple_New(num_elems));
     if (!py_tuple)
         return nullptr;
-    for (const auto i : c10::irange(num_elems))
+    for (const auto i : xsigma::irange(num_elems))
     {
         PyTuple_SET_ITEM(py_tuple.get(), i, Convert(arr[i]));
     }

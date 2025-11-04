@@ -56,7 +56,7 @@ class OpsHandler(Generic[T]):
     during ATen decompositions.  Most operators correspond exactly to pointwise
     operations as defined by torch, so when in doubt about semantics, check the
     corresponding torch documentation.  These are all scalar operations (so they
-    are defined to operate on a single element at a time.)
+    are defined to operate on a single element xsigma a time.)
 
     For convenience, many operators take a src_dtype which indicates what the dtype
     of the input argument is.  Although in principle this can be derived by an

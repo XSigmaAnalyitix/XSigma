@@ -2,7 +2,6 @@
 
 #include <ATen/core/boxing/KernelFunction.h>
 #include <ATen/core/dispatch/Dispatcher.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/autograd/edge.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/functions/basic_ops.h>
@@ -13,6 +12,7 @@
 #include <torch/csrc/autograd/saved_variable.h>
 #include <torch/csrc/autograd/variable.h>
 #include <torch/csrc/utils/variadic.h>
+#include <xsigma/util/irange.h>
 
 #include <cstddef>
 #include <functional>
@@ -42,7 +42,8 @@ enum class can_mutate_inplace_result
 // writing a Tensor that requires gradients inplace into a Tensor that does not
 // require gradients: a = torch.rand(2) b = torch.rand(2, requires_grad=True)
 // a.copy_(b)
-inline can_mutate_inplace_result can_mutate_inplace(const at::Tensor& tensor, bool requires_grad)
+inline can_mutate_inplace_result can_mutate_inplace(
+    const xsigma::Tensor& tensor, bool requires_grad)
 {
     if (!requires_grad || !GradMode::is_enabled())
     {
@@ -67,7 +68,7 @@ inline can_mutate_inplace_result can_mutate_inplace(const at::Tensor& tensor, bo
     return can_mutate_inplace_result::success;
 }
 
-inline void check_inplace(const at::Tensor& tensor, bool requires_grad)
+inline void check_inplace(const xsigma::Tensor& tensor, bool requires_grad)
 {
     switch (can_mutate_inplace(tensor, requires_grad))
     {
@@ -78,20 +79,20 @@ inline void check_inplace(const at::Tensor& tensor, bool requires_grad)
         return handle_view_on_rebase(impl::get_view_autograd_meta(tensor));
     }
     case can_mutate_inplace_result::view_of_leaf:
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             false,
             "a view of a leaf Variable that requires grad is being used in an in-place operation.");
         break;
 
     case can_mutate_inplace_result::is_leaf:
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             false, "a leaf Variable that requires grad is being used in an in-place operation.");
         break;
     }
     TORCH_INTERNAL_ASSERT(false);
 }
 
-inline void check_inplace(at::ITensorListRef tensors, bool requires_grad)
+inline void check_inplace(xsigma::ITensorListRef tensors, bool requires_grad)
 {
     for (const auto& tensor : tensors)
     {
@@ -101,18 +102,18 @@ inline void check_inplace(at::ITensorListRef tensors, bool requires_grad)
 
 inline void throw_error_out_requires_grad(const char* name)
 {
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         false,
         name,
         "(): functions with out=... arguments don't support automatic differentiation, "
         "but one of the arguments requires grad.");
 }
 
-inline void throw_error_for_complex_autograd(const at::Tensor& tensor, const char* name)
+inline void throw_error_for_complex_autograd(const xsigma::Tensor& tensor, const char* name)
 {
     if (tensor.requires_grad())
     {
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             !tensor.is_complex(),
             name,
             " does not support automatic differentiation for outputs with complex dtype.");
@@ -120,9 +121,9 @@ inline void throw_error_for_complex_autograd(const at::Tensor& tensor, const cha
 }
 
 inline void throw_error_if_base_and_tensor_are_same(
-    const at::Tensor& base, const at::Tensor& tensor)
+    const xsigma::Tensor& base, const xsigma::Tensor& tensor)
 {
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         base.unsafeGetTensorImpl() != tensor.unsafeGetTensorImpl(),
         "View operation returned a tensor that is the same as the input base tensor.  This "
         "is no longer allowed; you must explicitly create a new tensor (e.g., using .detach()). "
@@ -131,7 +132,7 @@ inline void throw_error_if_base_and_tensor_are_same(
         "report a bug to PyTorch or the backend you are using.");
 }
 
-inline void throw_error_for_complex_autograd(at::ITensorListRef tensorlist, const char* name)
+inline void throw_error_for_complex_autograd(xsigma::ITensorListRef tensorlist, const char* name)
 {
     for (const auto& tensor : tensorlist)
     {
@@ -169,7 +170,7 @@ inline void rebase_history(const std::vector<Variable>& vars, const std::shared_
     }
 }
 
-inline void increment_version(const at::Tensor& t)
+inline void increment_version(const xsigma::Tensor& t)
 {
     impl::bump_version(t);
 }
@@ -179,13 +180,16 @@ struct Flatten : IterArgs<Flatten>
     Flatten(variable_list& out) : out(out) {}
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
     variable_list& out;
-    void           operator()(const at::Tensor& x) { out.emplace_back(x); }
-    void           operator()(const std::optional<at::Tensor>& x)
+    void           operator()(const xsigma::Tensor& x) { out.emplace_back(x); }
+    void           operator()(const std::optional<xsigma::Tensor>& x)
     {
         if (x.has_value())
             out.emplace_back(x.value());
     }
-    void operator()(at::ArrayRef<at::Tensor> xs) { out.insert(out.end(), xs.begin(), xs.end()); }
+    void operator()(xsigma::ArrayRef<xsigma::Tensor> xs)
+    {
+        out.insert(out.end(), xs.begin(), xs.end());
+    }
 };
 
 template <typename... Args>
@@ -198,15 +202,15 @@ inline variable_list flatten_tensor_args(Args&&... args)
 }
 
 // See NOTE [ Autograd View Variables ] for details.
-inline at::Tensor as_view(
-    const at::Tensor&                            base,
-    const at::Tensor&                            tensor,
-    bool                                         is_bw_differentiable,
-    bool                                         is_fw_differentiable,
-    std::unique_ptr<ViewFunc>                    view_func     = nullptr,
-    std::function<at::Tensor(const at::Tensor&)> rev_view_func = nullptr,
-    CreationMeta                                 creation_meta = CreationMeta::DEFAULT,
-    bool                                         allow_tensor_metadata_change = true)
+inline xsigma::Tensor as_view(
+    const xsigma::Tensor&                                base,
+    const xsigma::Tensor&                                tensor,
+    bool                                                 is_bw_differentiable,
+    bool                                                 is_fw_differentiable,
+    std::unique_ptr<ViewFunc>                            view_func     = nullptr,
+    std::function<xsigma::Tensor(const xsigma::Tensor&)> rev_view_func = nullptr,
+    CreationMeta                                         creation_meta = CreationMeta::DEFAULT,
+    bool                                                 allow_tensor_metadata_change = true)
 {
     // Note [View of inference tensor]
     // For inference tensor this code can only be hit outside InferenceMode
@@ -270,7 +274,7 @@ inline at::Tensor as_view(
     }
     else
     {
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             creation_meta == CreationMeta::DEFAULT,
             "Non-backward differentiable views must have creation_meta=CreationMeta::DEFAULT");
     }
@@ -313,12 +317,12 @@ inline at::Tensor as_view(
 }
 
 inline void check_no_requires_grad(
-    const at::Tensor& tensor,
-    const char*       name,
-    const char*       fn_name         = "",
-    bool              check_grad_mode = true)
+    const xsigma::Tensor& tensor,
+    const char*           name,
+    const char*           fn_name         = "",
+    bool                  check_grad_mode = true)
 {
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         !(tensor.defined() && tensor.requires_grad()) ||
             !(check_grad_mode && GradMode::is_enabled()),
         "The function '",
@@ -329,7 +333,7 @@ inline void check_no_requires_grad(
 }
 
 inline void check_no_requires_grad(
-    const std::optional<at::Tensor>& tensor, const char* name, const char* fn_name = "")
+    const std::optional<xsigma::Tensor>& tensor, const char* name, const char* fn_name = "")
 {
     if (tensor.has_value())
     {
@@ -338,7 +342,7 @@ inline void check_no_requires_grad(
 }
 
 inline void check_no_requires_grad(
-    at::ITensorListRef tensors, const char* name, const char* fn_name = "")
+    xsigma::ITensorListRef tensors, const char* name, const char* fn_name = "")
 {
     // GradMode check is expensive, so check it only once for TensorLists
     if (!GradMode::is_enabled())
@@ -352,14 +356,16 @@ inline void check_no_requires_grad(
 }
 
 inline void check_no_requires_grad(
-    const c10::List<std::optional<at::Tensor>>& tensors, const char* name, const char* fn_name = "")
+    const xsigma::List<std::optional<xsigma::Tensor>>& tensors,
+    const char*                                        name,
+    const char*                                        fn_name = "")
 {
     // GradMode check is expensive, so check it only once for TensorLists
     if (!GradMode::is_enabled())
     {
         return;
     }
-    for (std::optional<at::Tensor> tensor : tensors)
+    for (std::optional<xsigma::Tensor> tensor : tensors)
     {
         if (tensor.has_value())
         {
@@ -370,21 +376,21 @@ inline void check_no_requires_grad(
 
 // Assumed that saved tensor lists are never inplace outputs
 inline std::vector<SavedVariable> make_saved_variable_list(
-    at::ITensorListRef tensors, const bool is_output = false)
+    xsigma::ITensorListRef tensors, const bool is_output = false)
 {
     return fmap(
         tensors,
-        [&is_output](const at::Tensor& tensor) -> SavedVariable
+        [&is_output](const xsigma::Tensor& tensor) -> SavedVariable
         { return SavedVariable{tensor, is_output /* is output */}; });
 }
 
 // Assumed that saved tensor lists are never inplace outputs
 inline std::vector<SavedVariable> make_saved_variable_list(
-    const c10::List<std::optional<at::Tensor>>& tensors, const bool is_output = false)
+    const xsigma::List<std::optional<xsigma::Tensor>>& tensors, const bool is_output = false)
 {
     return fmap(
         tensors,
-        [&is_output](const std::optional<at::Tensor>& tensor) -> SavedVariable
+        [&is_output](const std::optional<xsigma::Tensor>& tensor) -> SavedVariable
         {
             if (tensor.has_value())
             {
@@ -392,12 +398,12 @@ inline std::vector<SavedVariable> make_saved_variable_list(
             }
             else
             {
-                return SavedVariable{at::Tensor(), is_output /* is output */};
+                return SavedVariable{xsigma::Tensor(), is_output /* is output */};
             }
         });
 }
 
-inline std::vector<std::vector<int64_t>> to_args_sizes(at::ITensorListRef tensors)
+inline std::vector<std::vector<int64_t>> to_args_sizes(xsigma::ITensorListRef tensors)
 {
     std::vector<std::vector<int64_t>> args_sizes(tensors.size());
     size_t                            i = 0;
@@ -408,10 +414,10 @@ inline std::vector<std::vector<int64_t>> to_args_sizes(at::ITensorListRef tensor
     return args_sizes;
 }
 
-inline std::vector<std::vector<c10::SymInt>> to_args_sizes_symint(at::ITensorListRef tensors)
+inline std::vector<std::vector<xsigma::SymInt>> to_args_sizes_symint(xsigma::ITensorListRef tensors)
 {
-    std::vector<std::vector<c10::SymInt>> args_sizes(tensors.size());
-    size_t                                i = 0;
+    std::vector<std::vector<xsigma::SymInt>> args_sizes(tensors.size());
+    size_t                                   i = 0;
     for (const auto& t : tensors)
     {
         args_sizes[i++] = t.sym_sizes().vec();
@@ -419,10 +425,10 @@ inline std::vector<std::vector<c10::SymInt>> to_args_sizes_symint(at::ITensorLis
     return args_sizes;
 }
 
-inline std::vector<c10::ScalarType> to_args_scalartypes(at::ITensorListRef tensors)
+inline std::vector<xsigma::ScalarType> to_args_scalartypes(xsigma::ITensorListRef tensors)
 {
-    std::vector<c10::ScalarType> args_scalartypes(tensors.size());
-    size_t                       i = 0;
+    std::vector<xsigma::ScalarType> args_scalartypes(tensors.size());
+    size_t                          i = 0;
     for (const auto& t : tensors)
     {
         args_scalartypes[i++] = t.scalar_type();
@@ -437,15 +443,16 @@ namespace
 {
 
 // If run_jit_decomposition were not a member function, we would be able
-// to pass this as a template parameter to c10::Boxedkernel::makeFromFunction.
+// to pass this as a template parameter to xsigma::Boxedkernel::makeFromFunction.
 // However, member functions cannot be passed this way - instead we wrap our
-// call in this functor so it can be passed to c10::BoxedKernel::makeFromFunctor
-class WrapperFunctor final : public c10::OperatorKernel
+// call in this functor so it can be passed to xsigma::BoxedKernel::makeFromFunctor
+class WrapperFunctor final : public xsigma::OperatorKernel
 {
 public:
     WrapperFunctor(JitDecompInterface* impl) : impl_(impl) {}
 
-    void operator()(const c10::OperatorHandle& op, c10::DispatchKeySet ks, torch::jit::Stack* stack)
+    void operator()(
+        const xsigma::OperatorHandle& op, xsigma::DispatchKeySet ks, torch::jit::Stack* stack)
     {
         impl_->run_jit_decomposition(op, stack);
     }
@@ -456,9 +463,9 @@ public:
 
 template <class Return, class... Args>
 Return run_jit_decomposition_with_args_for_jvp(
-    std::string_view           name,
-    const c10::OperatorHandle& opHandle,
-    c10::DispatchKeySet        dispatchKeySet,
+    std::string_view              name,
+    const xsigma::OperatorHandle& opHandle,
+    xsigma::DispatchKeySet        dispatchKeySet,
     Args&&... args)
 {
     // see NOTE: [Jit Decomposition Interface]
@@ -469,12 +476,13 @@ Return run_jit_decomposition_with_args_for_jvp(
         "Trying to use forward AD with ",
         name,
         " that does not support it because it has not been implemented yet.\nPlease file an issue "
-        "to PyTorch at https://github.com/pytorch/pytorch/issues/new?template=feature-request.yml "
+        "to PyTorch xsigma "
+        "https://github.com/pytorch/pytorch/issues/new?template=feature-request.yml "
         "so that we can prioritize its implementation or submit a PR adding the implementation to "
         "derivatives.yaml");
 
-    return c10::KernelFunction::makeFromBoxedKernel(
-               c10::BoxedKernel::makeFromFunctor(std::make_unique<WrapperFunctor>(impl)))
+    return xsigma::KernelFunction::makeFromBoxedKernel(
+               xsigma::BoxedKernel::makeFromFunctor(std::make_unique<WrapperFunctor>(impl)))
         .call<Return, Args...>(opHandle, dispatchKeySet, std::forward<Args>(args)...);
 }
 

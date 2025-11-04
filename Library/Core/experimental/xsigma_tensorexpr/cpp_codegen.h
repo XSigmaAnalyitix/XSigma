@@ -69,7 +69,7 @@ public:
     CppCodeGen(
         StmtPtr                       stmt,
         const std::vector<BufferArg>& buffer_args,
-        at::Device                    device           = at::kCPU,
+        xsigma::Device                device           = xsigma::kCPU,
         const std::string&            kernel_func_name = "func");
 
     ~CppCodeGen() override;

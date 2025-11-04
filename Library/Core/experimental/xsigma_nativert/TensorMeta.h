@@ -1,43 +1,43 @@
 #pragma once
 
-#include <c10/core/Device.h>
-#include <c10/core/Layout.h>
-#include <c10/core/MemoryFormat.h>
-#include <c10/core/ScalarType.h>
-#include <c10/core/TensorOptions.h>
-#include <c10/util/ArrayRef.h>
-#include <c10/util/Logging.h>
 #include <torch/csrc/utils/generated_serialization_types.h>
 #include <torch/nativert/executor/Placement.h>
+#include <xsigma/core/Device.h>
+#include <xsigma/core/Layout.h>
+#include <xsigma/core/MemoryFormat.h>
+#include <xsigma/core/ScalarType.h>
+#include <xsigma/core/TensorOptions.h>
+#include <xsigma/util/ArrayRef.h>
+#include <xsigma/util/Logging.h>
 
 namespace torch::nativert
 {
 
-c10::ScalarType   convertJsonScalarType(const torch::_export::ScalarType& scalarType);
-c10::MemoryFormat convertJsonMemoryFormat(const torch::_export::MemoryFormat& memoryFormat);
-c10::Layout       convertJsonLayout(const torch::_export::Layout& layout);
-c10::Device       convertJsonDevice(const torch::_export::Device& device);
+xsigma::ScalarType   convertJsonScalarType(const torch::_export::ScalarType& scalarType);
+xsigma::MemoryFormat convertJsonMemoryFormat(const torch::_export::MemoryFormat& memoryFormat);
+xsigma::Layout       convertJsonLayout(const torch::_export::Layout& layout);
+xsigma::Device       convertJsonDevice(const torch::_export::Device& device);
 
 class TensorMeta
 {
 public:
     explicit TensorMeta(const torch::_export::TensorMeta& tensorMeta);
 
-    c10::IntArrayRef sizes() const
+    xsigma::IntArrayRef sizes() const
     {
-        TORCH_CHECK(!hasSymbolicShape_, "TensorMeta has symbolic shape");
+        XSIGMA_CHECK(!hasSymbolicShape_, "TensorMeta has symbolic shape");
         return sizes_;
     }
 
-    c10::IntArrayRef strides() const
+    xsigma::IntArrayRef strides() const
     {
-        TORCH_CHECK(!hasSymbolicShape_, "TensorMeta has symbolic shape");
+        XSIGMA_CHECK(!hasSymbolicShape_, "TensorMeta has symbolic shape");
         return strides_;
     }
 
-    c10::Layout layout() const { return layout_; }
+    xsigma::Layout layout() const { return layout_; }
 
-    c10::ScalarType dtype() const { return dtype_; }
+    xsigma::ScalarType dtype() const { return dtype_; }
 
     bool requires_grad() const { return requiresGrad_; }
 
@@ -47,18 +47,18 @@ public:
 
     int64_t numel() const
     {
-        TORCH_CHECK(!hasSymbolicShape_, "TensorMeta has symbolic shape");
+        XSIGMA_CHECK(!hasSymbolicShape_, "TensorMeta has symbolic shape");
         return numel_;
     }
 
-    c10::Device device() const { return device_; }
+    xsigma::Device device() const { return device_; }
 
     // override device according to placement
-    void setDevice(c10::Device device) { device_ = device; }
+    void setDevice(xsigma::Device device) { device_ = device; }
 
-    c10::TensorOptions asTensorOptions() const
+    xsigma::TensorOptions asTensorOptions() const
     {
-        return c10::TensorOptions().dtype(dtype_).layout(layout_).requires_grad(requiresGrad_);
+        return xsigma::TensorOptions().dtype(dtype_).layout(layout_).requires_grad(requiresGrad_);
     }
 
     // override device according to placement
@@ -68,10 +68,10 @@ public:
     }
 
     // NYI
-    // c10::SymIntArrayRef sym_sizes() const {}
-    // c10::SymIntArrayRef sym_strides() const {}
-    // c10::SymInt sym_storage_offset() const {}
-    // c10::SymInt sym_numel() const {}
+    // xsigma::SymIntArrayRef sym_sizes() const {}
+    // xsigma::SymIntArrayRef sym_strides() const {}
+    // xsigma::SymInt sym_storage_offset() const {}
+    // xsigma::SymInt sym_numel() const {}
 
 private:
     bool hasSymbolicShape_ = false;
@@ -81,11 +81,11 @@ private:
     int64_t              storage_offset_ = 0;
     int64_t              numel_          = 1;
 
-    c10::ScalarType dtype_;
-    c10::Layout     layout_;
-    bool            requiresGrad_;
+    xsigma::ScalarType dtype_;
+    xsigma::Layout     layout_;
+    bool               requiresGrad_;
 
-    c10::Device device_;
+    xsigma::Device device_;
 };
 
 }  // namespace torch::nativert

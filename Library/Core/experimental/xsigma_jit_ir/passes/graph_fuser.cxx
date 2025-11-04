@@ -1,5 +1,3 @@
-#include <c10/util/Exception.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/codegen/fuser/interface.h>
 #include <torch/csrc/jit/frontend/ir_emitter.h>
 #include <torch/csrc/jit/ir/alias_analysis.h>
@@ -12,10 +10,13 @@
 #include <torch/csrc/jit/runtime/autodiff.h>
 #include <torch/csrc/jit/runtime/custom_operator.h>
 #include <torch/csrc/jit/runtime/operator.h>
+#include <xsigma/util/irange.h>
 
 #include <queue>
 #include <unordered_map>
 #include <utility>
+
+#include "util/exception.h"
 
 namespace torch::jit
 {
@@ -290,7 +291,7 @@ struct GraphFuser
         std::unordered_map<Value*, Value*> inner_to_outer;
         auto                               inner_inputs = producer_subgraph->inputs();
         auto                               outer_inputs = producer_group->inputs();
-        for (const auto i : c10::irange(inner_inputs.size()))
+        for (const auto i : xsigma::irange(inner_inputs.size()))
         {
             inner_to_outer[inner_inputs[i]] = outer_inputs[i];
         }
@@ -299,12 +300,12 @@ struct GraphFuser
         for (auto inner : producer_subgraph->nodes())
         {
             Node* outer = block_->owningGraph()->createClone(
-                inner, [&](Value* k) -> Value* { return inner_to_outer.at(k); });
+                inner, [&](Value* k) -> Value* { return inner_to_outer.xsigma(k); });
             outer->insertBefore(producer_group);
             temporary_nodes.emplace_back(outer);
             auto inner_outputs = inner->outputs();
             auto outer_outputs = outer->outputs();
-            for (const auto i : c10::irange(inner_outputs.size()))
+            for (const auto i : xsigma::irange(inner_outputs.size()))
             {
                 inner_to_outer[inner_outputs[i]] = outer_outputs[i];
             }
@@ -312,9 +313,9 @@ struct GraphFuser
 
         // Replace uses of producer_group outputs and destroy the producer
         auto subgraph_outputs = producer_subgraph->outputs();
-        for (const auto i : c10::irange(subgraph_outputs.size()))
+        for (const auto i : xsigma::irange(subgraph_outputs.size()))
         {
-            auto outer_output = inner_to_outer.at(subgraph_outputs[i]);
+            auto outer_output = inner_to_outer.xsigma(subgraph_outputs[i]);
             producer_group->outputs()[i]->replaceAllUsesWith(outer_output);
             // new producer outputs have same aliasing properties as outer_output
             aliasDb_->replaceWithNewValue(producer_group->outputs()[i], outer_output);
@@ -330,7 +331,7 @@ struct GraphFuser
             Node* merged = mergeNodeIntoGroup(consumer_group, node);
             // If any of the outputs are still used then we need to add them
             auto outputs = node->outputs();
-            for (const auto i : c10::irange(outputs.size()))
+            for (const auto i : xsigma::irange(outputs.size()))
             {
                 auto output = outputs[i];
                 if (output->uses().empty())
@@ -548,9 +549,9 @@ struct GraphFuser
         }
         size_t input_index    = it - group->inputs().begin();
         auto&  subgraph       = getSubgraph(group);
-        auto*  subgraph_input = subgraph.inputs().at(input_index);
+        auto*  subgraph_input = subgraph.inputs().xsigma(input_index);
         // If subgraph_input is an input to prim::ConstantChunk, it will have 1 use
-        auto* node = subgraph_input->uses().at(0).user;
+        auto* node = subgraph_input->uses().xsigma(0).user;
         if (node->kind() == prim::ConstantChunk)
         {
             AT_ASSERT(subgraph_input->uses().size() == 1);
@@ -569,13 +570,13 @@ struct GraphFuser
         for (size_t i = 0; i < chunk->outputs().size(); ++i)
         {
             // Find the input to the FusionGroup (group)
-            auto* replacement_val = existingFusedChunk->outputs().at(i);
-            auto* val             = chunk->outputs().at(i);
+            auto* replacement_val = existingFusedChunk->outputs().xsigma(i);
+            auto* val             = chunk->outputs().xsigma(i);
             auto  it              = std::find(group->inputs().begin(), group->inputs().end(), val);
             auto  input_index     = it - group->inputs().begin();
 
             // Rewrite the graph to use replacement_val
-            auto group_input = subgraph.inputs().at(input_index);
+            auto group_input = subgraph.inputs().xsigma(input_index);
             group_input->replaceAllUsesWith(replacement_val);
 
             // Remove the input, it's no longer needed
@@ -645,7 +646,7 @@ struct GraphFuser
         return ++consumer->reverseIterator();
     }
 
-    at::ArrayRef<Value*> broadcast_tensors(value_list inputs)
+    xsigma::ArrayRef<Value*> broadcast_tensors(value_list inputs)
     {
         AT_ASSERT(!inputs.empty());
         auto* g          = inputs[0]->owningGraph();
@@ -662,7 +663,7 @@ struct GraphFuser
         //   a_broadcasted, b_broadcasted = listUnpack(output_list)
         // `a_broadcasted` should receive the same aliasing info as `a`
         TORCH_INTERNAL_ASSERT(unpack_node->outputs().size() == inputs.size());
-        for (const auto i : c10::irange(inputs.size()))
+        for (const auto i : xsigma::irange(inputs.size()))
         {
             Value* original_input     = inputs[i];
             Value* broadcasted_output = unpack_node->outputs()[i];
@@ -697,10 +698,10 @@ struct GraphFuser
         size_t nchunks = chunk->i(attr::chunks);
         Node*  bchunk  = chunk->owningGraph()->create(prim::BroadcastingChunk, nchunks);
         bchunk->addInput(chunk->input());
-        for (const auto i : c10::irange(nchunks))
+        for (const auto i : xsigma::irange(nchunks))
         {
-            auto* old_output = chunk->outputs().at(i);
-            auto* new_output = bchunk->outputs().at(i);
+            auto* old_output = chunk->outputs().xsigma(i);
+            auto* new_output = bchunk->outputs().xsigma(i);
             new_output->copyMetadata(old_output);
             aliasDb_->replaceWithNewValue(old_output, new_output);
             old_output->replaceAllUsesWith(new_output);
@@ -825,7 +826,7 @@ struct GraphFuser
         WithInsertPoint guard(bchunk->next());
 
         std::vector<Value*> producer_chunk_outputs;
-        for (const auto i : c10::irange(nchunks))
+        for (const auto i : xsigma::irange(nchunks))
         {
             producer_chunk_outputs.push_back(bchunk->output(nchunks * producer_index + i));
         }
@@ -850,10 +851,10 @@ struct GraphFuser
             {
                 chunked_inputs.emplace_back();
                 auto input_index = std::distance(bchunk_inputs.begin(), it);
-                for (const auto chunki : c10::irange(nchunks))
+                for (const auto chunki : xsigma::irange(nchunks))
                 {
                     chunked_inputs.back().push_back(
-                        bchunk->outputs().at(nchunks * input_index + chunki));
+                        bchunk->outputs().xsigma(nchunks * input_index + chunki));
                 }
                 continue;
             }
@@ -894,7 +895,7 @@ struct GraphFuser
                     AT_ASSERT(chunked_inputs_it != chunked_inputs.end());
                     chunked_op->addInput(
                         // NOLINTNEXTLINE(clang-analyzer-core.DivideZero)
-                        chunked_inputs_it->at(chunk_sel->offset() % nchunks));
+                        chunked_inputs_it->xsigma(chunk_sel->offset() % nchunks));
                     ++chunked_inputs_it;
                 }
                 else
@@ -908,7 +909,7 @@ struct GraphFuser
         }
 
         bchunk->removeInput(producer_index);
-        for ([[maybe_unused]] const auto i : c10::irange(nchunks))
+        for ([[maybe_unused]] const auto i : xsigma::irange(nchunks))
         {
             bchunk->eraseOutput(nchunks * producer_index);
         }
@@ -996,14 +997,15 @@ struct GraphFuser
             // Split the bchunk into bchunks.inputs().size() number of chunk nodes.
             for (size_t input_offset = 0; input_offset < bchunk->inputs().size(); input_offset++)
             {
-                auto* input = bchunk->inputs().at(input_offset);
+                auto* input = bchunk->inputs().xsigma(input_offset);
 
                 Node* new_chunk = graph->insertNode(graph->create(prim::ConstantChunk, input, 0));
                 new_chunk->copyAttributes(*bchunk);
-                for (const auto output_offset : c10::irange(nchunks))
+                for (const auto output_offset : xsigma::irange(nchunks))
                 {
                     auto new_output = new_chunk->addOutput();
-                    auto old_output = bchunk->outputs().at(input_offset * nchunks + output_offset);
+                    auto old_output =
+                        bchunk->outputs().xsigma(input_offset * nchunks + output_offset);
                     new_output->copyMetadata(old_output);
                     aliasDb_->replaceWithNewValue(old_output, new_output);
                     old_output->replaceAllUsesWith(new_output);
@@ -1027,7 +1029,7 @@ struct GraphFuser
         auto inputs  = fusion_group->inputs();
         auto sinputs = subgraph->inputs();
         AT_ASSERT(inputs.size() == sinputs.size());
-        for (const auto i : c10::irange(inputs.size()))
+        for (const auto i : xsigma::irange(inputs.size()))
         {
             if (inputs[i]->type()->isSubtypeOf(*TensorType::get()))
             {
@@ -1044,7 +1046,7 @@ struct GraphFuser
         auto outputs  = fusion_group->outputs();
         auto soutputs = subgraph->outputs();
         AT_ASSERT(outputs.size() == soutputs.size());
-        for (const auto i : c10::irange(outputs.size()))
+        for (const auto i : xsigma::irange(outputs.size()))
         {
             if (usedOnlyInSize(outputs[i]))
                 continue;
@@ -1071,16 +1073,16 @@ struct GraphFuser
             }
             if (n->kind() == prim::ConstantChunk)
             {
-                Node* sizes_node =
-                    graph->insertNode(graph->create(prim::ChunkSizes, shape_of.at(n->input()), 2));
+                Node* sizes_node = graph->insertNode(
+                    graph->create(prim::ChunkSizes, shape_of.xsigma(n->input()), 2));
                 sizes_node->i_(attr::dim, n->i(attr::dim));
                 sizes_node->i_(attr::chunks, n->i(attr::chunks));
                 for (Value* output : sizes_node->outputs())
                 {
                     aliasDb_->createValue(output);
                 }
-                Value* regular_size = sizes_node->outputs().at(0);
-                Value* last_size    = sizes_node->outputs().at(1);
+                Value* regular_size = sizes_node->outputs().xsigma(0);
+                Value* last_size    = sizes_node->outputs().xsigma(1);
                 regular_size->setType(ListType::ofInts());
                 last_size->setType(ListType::ofInts());
                 auto outputs = n->outputs();
@@ -1088,12 +1090,12 @@ struct GraphFuser
                 {
                     shape_of.emplace(o, regular_size);
                 }
-                shape_of.emplace(outputs.at(outputs.size() - 1), last_size);
+                shape_of.emplace(outputs.xsigma(outputs.size() - 1), last_size);
                 continue;
             }
             auto tensor_inputs = filter(
                 n->inputs(), [](Value* v) { return v->type()->isSubtypeOf(*TensorType::get()); });
-            auto shapes = fmap(tensor_inputs, [&](Value* v) { return shape_of.at(v); });
+            auto shapes = fmap(tensor_inputs, [&](Value* v) { return shape_of.xsigma(v); });
             AT_ASSERT(!shapes.empty());
             shape_of.emplace(
                 n->output(), shapes.size() == 1 ? shapes[0] : broadcastSizes(shapes, aliasDb_));
@@ -1123,7 +1125,7 @@ struct GraphFuser
                 for (Use u : uses)
                 {
                     AT_ASSERT(u.user->matches("aten::size(Tensor self) -> int[]"));
-                    u.user->output()->replaceAllUsesWith(shape_of.at(soutput));
+                    u.user->output()->replaceAllUsesWith(shape_of.xsigma(soutput));
                     u.user->destroy();
                 }
                 fusion_group->eraseOutput(i);
@@ -1158,7 +1160,7 @@ struct GraphFuser
         if (producer->node()->kind() == prim::FusionGroup)
         {
             auto  subgraph = producer->node()->g(attr::Subgraph);
-            auto* node     = subgraph->outputs().at(producer->offset())->node();
+            auto* node     = subgraph->outputs().xsigma(producer->offset())->node();
             return node->kind() != prim::FusedConcat;
         }
         return true;

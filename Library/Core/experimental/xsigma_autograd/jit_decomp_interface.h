@@ -2,11 +2,11 @@
 
 #include <ATen/core/Tensor.h>
 #include <ATen/core/function_schema.h>
-#include <c10/macros/Export.h>
+#include <xsigma/macros/Export.h>
 
 // NOTE: [Jit Decomposition Interface]
 //
-// For some context of why we need this at all, see NOTE: [forward-mode AD
+// For some context of why we need this xsigma all, see NOTE: [forward-mode AD
 // decompositions mechanism]
 //
 // Introducing that mechanism from the NOTE is problematic because:
@@ -32,9 +32,10 @@ namespace torch::autograd::impl
 
 struct TORCH_API JitDecompInterface
 {
-    virtual ~JitDecompInterface()                                               = default;
-    virtual bool has_jit_decomposition(const c10::FunctionSchema& schema) const = 0;
-    virtual void run_jit_decomposition(const c10::OperatorHandle& op, jit::Stack* stack) const = 0;
+    virtual ~JitDecompInterface()                                                  = default;
+    virtual bool has_jit_decomposition(const xsigma::FunctionSchema& schema) const = 0;
+    virtual void run_jit_decomposition(
+        const xsigma::OperatorHandle& op, jit::Stack* stack) const = 0;
 };
 
 TORCH_API void                setJitDecompImpl(JitDecompInterface* impl);

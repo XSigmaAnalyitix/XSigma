@@ -2,7 +2,6 @@
 #include <ATen/FuncTorchTLS.h>
 #include <ATen/SequenceNumber.h>
 #include <ATen/functorch/DynamicLayer.h>
-#include <c10/util/irange.h>
 #include <pybind11/pybind11.h>
 #include <structmember.h>
 #include <torch/csrc/DynamicTypes.h>
@@ -32,6 +31,7 @@
 #include <torch/csrc/utils/python_numbers.h>
 #include <torch/csrc/utils/python_strings.h>
 #include <torch/csrc/utils/tensor_dtypes.h>
+#include <xsigma/util/irange.h>
 
 #include <functional>
 #include <memory>
@@ -44,7 +44,7 @@
 
 using namespace torch;
 using namespace torch::autograd;
-using at::Tensor;
+using xsigma::Tensor;
 
 PyObject* THPFunctionClass     = nullptr;
 PyObject* THPGradientEdgeClass = nullptr;
@@ -63,7 +63,7 @@ namespace
 inline void check_legacy_fn_attr_access(
     const std::shared_ptr<torch::autograd::Node>& cdata, const char* attr)
 {
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         cdata,
         "Attribute '",
         attr,
@@ -93,7 +93,7 @@ static PyObject* unpack_saved_variables(
     THPFunction* self, const std::function<PyObject*(const Variable&)>& unpack_fn)
 {
     HANDLE_TH_ERRORS
-    TORCH_CHECK(!self->has_freed_buffers, ERR_BACKWARD_TWICE);
+    XSIGMA_CHECK(!self->has_freed_buffers, ERR_BACKWARD_TWICE);
     auto& saved_variables = self->saved_variables;
     if (saved_variables.empty())
         return PyTuple_New(0);
@@ -104,14 +104,14 @@ static PyObject* unpack_saved_variables(
         return nullptr;
     auto saved_for = self->cdata.lock();
     // This is really a true assert, because we've already tested for the
-    // self->has_freed_buffers case at the beginning of this function:
+    // self->has_freed_buffers case xsigma the beginning of this function:
     // buffers are freed when PyNode dies; if the buffers are not freed,
     // PyNode must be live.  (Note that the buffers could be freed
     // even though the PyNode is live, but that doesn't matter here
     // because we will never hit this line of code if the buffers are freed--
     // and in any case saved_for will be non-NULL.)
     TORCH_INTERNAL_ASSERT(saved_for);
-    for (const auto i : c10::irange(num_saved))
+    for (const auto i : xsigma::irange(num_saved))
     {
         auto         unpacked_var = saved_variables[i].unpack(saved_for);
         THPObjectPtr value;
@@ -130,16 +130,16 @@ static PyObject* unpack_saved_variables(
     END_HANDLE_TH_ERRORS
 }
 
-PyObject* to_py_size(const std::vector<c10::SymInt>& size)
+PyObject* to_py_size(const std::vector<xsigma::SymInt>& size)
 {
-    c10::SymIntArrayRef sym_sizes(size);
+    xsigma::SymIntArrayRef sym_sizes(size);
 
     auto ret =
         THPObjectPtr(THPSizeType.tp_alloc(&THPSizeType, static_cast<Py_ssize_t>(sym_sizes.size())));
     if (!ret)
         throw python_error();
 
-    for (auto i : c10::irange(sym_sizes.size()))
+    for (auto i : xsigma::irange(sym_sizes.size()))
     {
         auto symint = sym_sizes[i];
         if (auto maybe_int = symint.maybe_as_int(); maybe_int.has_value())
@@ -167,7 +167,7 @@ namespace torch::autograd
 auto PyNode::apply(variable_list&& inputs) -> variable_list
 {
     pybind11::gil_scoped_acquire gil;
-    at::OptionalDeviceGuard      _device_guard;
+    xsigma::OptionalDeviceGuard  _device_guard;
     THPFunction*                 py_fn = (THPFunction*)obj;
 
     // Massage a C++ variable_list into a Python arguments tuple
@@ -189,7 +189,7 @@ auto PyNode::apply(variable_list&& inputs) -> variable_list
     if (num_outputs > num_forward_inputs)
     {
         bool all_none = true;
-        for (const auto i : c10::irange(num_forward_inputs, num_outputs))
+        for (const auto i : xsigma::irange(num_forward_inputs, num_outputs))
         {
             all_none &= PyTuple_GET_ITEM(r.get(), i) == Py_None;
         }
@@ -203,7 +203,7 @@ auto PyNode::apply(variable_list&& inputs) -> variable_list
     }
 
     // Now the number of gradients should match
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         num_outputs == num_forward_inputs,
         "function ",
         name(),
@@ -221,7 +221,7 @@ auto PyNode::apply_with_saved_impl(const variable_list& inputs, const SwapSavedV
     -> variable_list
 {
     pybind11::gil_scoped_acquire gil;
-    at::OptionalDeviceGuard      _device_guard;
+    xsigma::OptionalDeviceGuard  _device_guard;
     THPFunction*                 py_fn = (THPFunction*)obj;
 
     // Massage a C++ variable_list into a Python arguments tuple
@@ -239,11 +239,11 @@ auto PyNode::apply_with_saved_impl(const variable_list& inputs, const SwapSavedV
         throw python_error();
 
     int offset = 0;
-    for (const auto i : c10::irange(is_variable_input.size()))
+    for (const auto i : xsigma::irange(is_variable_input.size()))
     {
         if (!is_variable_input[i])
         {
-            // input at i is not a variable, skip index
+            // input xsigma i is not a variable, skip index
             PyTuple_SET_ITEM(fwdInputMetadatas.get(), i, Py_None);
             offset++;
             continue;
@@ -344,15 +344,15 @@ void PyNode::compiled_args(CompiledNodeArgs& args) const
     THPObjectPtr     pykey(PyObject_CallMethodObjArgs(obj, method_name, nullptr));
     if (!pykey)
         throw_python_error();
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         PyTuple_CheckExact(pykey.get()), "_compiled_autograd_key should return tuple of ints");
     auto size = PyTuple_GET_SIZE(pykey.get());
     TORCH_INTERNAL_ASSERT(size > 0);
     // first value is unique id managed by AUTOGRAD_FUNCTION_COUNTER
     auto key = PyLong_AsSsize_t(PyTuple_GET_ITEM(pykey.get(), 0));
-    if (C10_UNLIKELY(key < 0))
+    if (XSIGMA_UNLIKELY(key < 0))
     {
-        TORCH_CHECK(PyErr_Occurred(), "key must be positive");
+        XSIGMA_CHECK(PyErr_Occurred(), "key must be positive");
         throw_python_error();
     }
     args.collect_size(static_cast<size_t>(key));
@@ -361,10 +361,10 @@ void PyNode::compiled_args(CompiledNodeArgs& args) const
     auto f = (THPFunction*)obj;
     f->compiled_autograd_symints.clear();
     f->compiled_autograd_symints.reserve(size - 1);
-    for (const auto i : c10::irange(1, size))
+    for (const auto i : xsigma::irange(1, size))
     {
         auto val = PyLong_AsSsize_t(PyTuple_GET_ITEM(pykey.get(), i));
-        if (C10_UNLIKELY(val == -1 && PyErr_Occurred()))
+        if (XSIGMA_UNLIKELY(val == -1 && PyErr_Occurred()))
             throw_python_error();
         f->compiled_autograd_symints.emplace_back(val);
     }
@@ -383,13 +383,13 @@ void PyNode::compiled_args(CompiledNodeArgs& args) const
     args.collect(f->input_info);
 
     Py_INCREF(obj);
-    c10::SafePyObject                backward_obj(obj, getPyInterpreter());
-    std::optional<c10::SafePyObject> backward_state_obj;
-    PyObject*                        bw_state = f->compiled_autograd_backward_state;
+    xsigma::SafePyObject                backward_obj(obj, getPyInterpreter());
+    std::optional<xsigma::SafePyObject> backward_state_obj;
+    PyObject*                           bw_state = f->compiled_autograd_backward_state;
     if (args.cond(bw_state != nullptr))
     {
         Py_INCREF(bw_state);
-        backward_state_obj = c10::SafePyObject(bw_state, getPyInterpreter());
+        backward_state_obj = xsigma::SafePyObject(bw_state, getPyInterpreter());
     }
     args.collect_pynode_objs(this, std::move(backward_obj), std::move(backward_state_obj));
 }
@@ -413,11 +413,11 @@ variable_list PyNode::apply_with_saved(const variable_list& inputs, SwapSavedVar
     return result;
 }
 
-PyObject* PyNode::to_py_args(const variable_list& inputs, at::OptionalDeviceGuard* device_guard)
+PyObject* PyNode::to_py_args(const variable_list& inputs, xsigma::OptionalDeviceGuard* device_guard)
 {
     THPFunction* py_fn = (THPFunction*)obj;
 
-    auto zeros_without_gil = [](const VariableInfo& variable, at::OptionalDeviceGuard& dg)
+    auto zeros_without_gil = [](const VariableInfo& variable, xsigma::OptionalDeviceGuard& dg)
     {
         pybind11::gil_scoped_release gil;
         return variable.zeros(dg);
@@ -428,7 +428,7 @@ PyObject* PyNode::to_py_args(const variable_list& inputs, at::OptionalDeviceGuar
     if (!pyInputs)
         throw_python_error();
     auto& output_info = py_fn->output_info;
-    for (const auto i : c10::irange(num_inputs))
+    for (const auto i : xsigma::irange(num_inputs))
     {
         PyObject* input = nullptr;
         if (inputs[i].defined() || !py_fn->materialize_grads ||
@@ -460,11 +460,11 @@ variable_list PyNode::to_variable_list(
         bool      was_variable = is_variable_input[i];
         if (!was_variable)
         {
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 output == Py_None,
                 "function ",
                 name(),
-                " returned a gradient different than None at position ",
+                " returned a gradient different than None xsigma position ",
                 i + 1,
                 ", but the corresponding forward input was not a Variable");
             continue;
@@ -475,7 +475,7 @@ variable_list PyNode::to_variable_list(
         }
         else
         {
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 THPVariable_Check(output),
                 "expected Variable or None (got ",
                 THPUtils_typename(output),
@@ -577,10 +577,10 @@ static PyObject* THPFunction_new(PyTypeObject* type, PyObject* args, PyObject* k
 
 // Bump the counters of all recorded dirty input tensors, adding each of them
 // into dirty_inputs.  Also does some sanity checking.
-static std::unordered_set<at::TensorImpl*> _mark_dirty(THPFunction* self)
+static std::unordered_set<xsigma::TensorImpl*> _mark_dirty(THPFunction* self)
 {
     // Increase versions of modified tensors
-    std::unordered_set<at::TensorImpl*> dirty_inputs;
+    std::unordered_set<xsigma::TensorImpl*> dirty_inputs;
     if (!self->dirty_tensors)
         return dirty_inputs;
 
@@ -592,7 +592,7 @@ static std::unordered_set<at::TensorImpl*> _mark_dirty(THPFunction* self)
         THPUtils_typename(self->dirty_tensors));
     Py_ssize_t num_dirty = PyTuple_GET_SIZE(self->dirty_tensors);
     dirty_inputs.reserve(num_dirty);
-    for (const auto i : c10::irange(num_dirty))
+    for (const auto i : xsigma::irange(num_dirty))
     {
         PyObject* obj = PyTuple_GET_ITEM(self->dirty_tensors, i);
         THPFunction_assert(
@@ -612,7 +612,7 @@ static std::unordered_set<at::TensorImpl*> _mark_dirty(THPFunction* self)
     return dirty_inputs;
 }
 
-static std::unordered_set<at::TensorImpl*> _parse_non_differentiable(THPFunction* self);
+static std::unordered_set<xsigma::TensorImpl*> _parse_non_differentiable(THPFunction* self);
 
 // Given a Python tuple of raw output tensors (raw_output), set each of
 // the corresponding entries in a different Python tuple (outputs) with
@@ -626,13 +626,13 @@ static std::unordered_set<at::TensorImpl*> _parse_non_differentiable(THPFunction
 // do in this case.  After this method is run, t2var is extended with
 // mappings for output tensors as well.
 static void _wrap_outputs(
-    const std::shared_ptr<PyNode>&             cdata,
-    THPFunction*                               self,
-    const variable_list&                       input_vars,
-    PyObject*                                  raw_output,
-    PyObject*                                  outputs,
-    bool                                       is_executable,
-    const std::unordered_set<at::TensorImpl*>& to_save_if_setup_context)
+    const std::shared_ptr<PyNode>&                 cdata,
+    THPFunction*                                   self,
+    const variable_list&                           input_vars,
+    PyObject*                                      raw_output,
+    PyObject*                                      outputs,
+    bool                                           is_executable,
+    const std::unordered_set<xsigma::TensorImpl*>& to_save_if_setup_context)
 {
     auto       cdata_if_executable = is_executable ? cdata : nullptr;
     Py_ssize_t num_outputs         = PyTuple_GET_SIZE(raw_output);
@@ -647,7 +647,7 @@ static void _wrap_outputs(
 
     std::vector<std::optional<Variable>> raw_output_vars;
     raw_output_vars.reserve(num_outputs);
-    for (const auto i : c10::irange(num_outputs))
+    for (const auto i : xsigma::irange(num_outputs))
     {
         PyObject* obj = PyTuple_GET_ITEM(raw_output, i);
         // Only process tensors as outputs for autograd purposes.
@@ -672,7 +672,7 @@ static void _wrap_outputs(
         if (!pyInputs)
             throw_python_error();
         int64_t variable_idx = 0;
-        for (const auto i : c10::irange(num_inputs))
+        for (const auto i : xsigma::irange(num_inputs))
         {
             PyObject* input = nullptr;
             if (self->is_variable_input[i])
@@ -684,7 +684,7 @@ static void _wrap_outputs(
                 }
                 else
                 {
-                    input = THPVariable_Wrap(at::zeros_like(inputs[variable_idx]));
+                    input = THPVariable_Wrap(xsigma::zeros_like(inputs[variable_idx]));
                 }
                 if (!input)
                 {
@@ -714,7 +714,7 @@ static void _wrap_outputs(
         const int     num_outputs = PyTuple_GET_SIZE(r.get());
         variable_list results;
         results.reserve(num_outputs);
-        for (const auto i : c10::irange(num_outputs))
+        for (const auto i : xsigma::irange(num_outputs))
         {
             PyObject* output = PyTuple_GET_ITEM(r.get(), i);
             if (output == Py_None)
@@ -723,7 +723,7 @@ static void _wrap_outputs(
             }
             else
             {
-                TORCH_CHECK(
+                XSIGMA_CHECK(
                     THPVariable_Check(output),
                     "expected Variable or None (got ",
                     THPUtils_typename(output),
@@ -737,7 +737,7 @@ static void _wrap_outputs(
         return results;
     };
 
-    auto view_as_self_fn = [](const at::Tensor& x) -> at::Tensor
+    auto view_as_self_fn = [](const xsigma::Tensor& x) -> xsigma::Tensor
     {
         pybind11::gil_scoped_acquire gil;
         THPObjectPtr                 py_x(THPVariable_Wrap(x));
@@ -765,7 +765,7 @@ static void _wrap_outputs(
         view_as_self_fn,
         self->pure_view);
 
-    for (const auto i : c10::irange(num_outputs))
+    for (const auto i : xsigma::irange(num_outputs))
     {
         PyObject*   obj            = PyTuple_GetItem(raw_output, i);
         const auto& wrapped_output = wrapped_outputs[i];
@@ -799,15 +799,15 @@ static void _wrap_outputs(
 }
 
 static void _get_tensors_to_save(
-    THPFunction*                            self,
-    std::unordered_set<at::TensorImpl*>&    to_save_if_setup_context,
-    std::vector<std::optional<at::Tensor>>& tensors_to_save,
-    bool                                    overridden_setup_context,
-    bool                                    is_executable)
+    THPFunction*                                self,
+    std::unordered_set<xsigma::TensorImpl*>&    to_save_if_setup_context,
+    std::vector<std::optional<xsigma::Tensor>>& tensors_to_save,
+    bool                                        overridden_setup_context,
+    bool                                        is_executable)
 {
     if (self->saved_for_forward && overridden_setup_context)
     {
-        // We look at saved_for_forward here purely for the purpose of populating
+        // We look xsigma saved_for_forward here purely for the purpose of populating
         // to_save_if_setup_context, the actual saving is not done here.
         THPFunction_assert(
             PyTuple_Check(self->saved_for_forward),
@@ -815,7 +815,7 @@ static void _get_tensors_to_save(
             "error: saved_for_forward attribute is expected to be a tuple but is ",
             THPUtils_typename(self->saved_for_forward));
         Py_ssize_t num_saved_for_forward = PyTuple_GET_SIZE(self->saved_for_forward);
-        for (const auto i : c10::irange(num_saved_for_forward))
+        for (const auto i : xsigma::irange(num_saved_for_forward))
         {
             PyObject* obj = PyTuple_GET_ITEM(self->saved_for_forward, i);
             if (THPVariable_Check(obj))
@@ -834,7 +834,7 @@ static void _get_tensors_to_save(
             THPUtils_typename(self->to_save));
 
         Py_ssize_t num_saved = PyTuple_GET_SIZE(self->to_save);
-        for (const auto i : c10::irange(num_saved))
+        for (const auto i : xsigma::irange(num_saved))
         {
             PyObject* obj = PyTuple_GET_ITEM(self->to_save, i);
             if (obj == Py_None)
@@ -875,11 +875,11 @@ static void _get_tensors_to_save(
 }
 // Save any variables that requested by to_save
 static void _save_variables(
-    const std::vector<std::optional<at::Tensor>>& tensors_to_save,
-    const std::shared_ptr<PyNode>&                cdata_ptr,
-    THPFunction*                                  self,
-    PyObject*                                     outputs,
-    int64_t                                       num_outputs)
+    const std::vector<std::optional<xsigma::Tensor>>& tensors_to_save,
+    const std::shared_ptr<PyNode>&                    cdata_ptr,
+    THPFunction*                                      self,
+    PyObject*                                         outputs,
+    int64_t                                           num_outputs)
 {
     if (tensors_to_save.empty())
         return;
@@ -887,9 +887,9 @@ static void _save_variables(
     self->saved_variables.clear();
     self->saved_variables.reserve(num_saved);
 
-    std::unordered_set<at::TensorImpl*> output_impls{};
+    std::unordered_set<xsigma::TensorImpl*> output_impls{};
     output_impls.reserve(num_outputs);
-    for (const auto i : c10::irange(num_outputs))
+    for (const auto i : xsigma::irange(num_outputs))
     {
         PyObject* obj = PyTuple_GET_ITEM(outputs, i);
         if (THPVariable_Check(obj))
@@ -915,9 +915,9 @@ static void _save_variables(
 
 // Mark requires_grad = 0 on non-differentiable variables (as per
 // non_differentiable)
-static std::unordered_set<at::TensorImpl*> _parse_non_differentiable(THPFunction* self)
+static std::unordered_set<xsigma::TensorImpl*> _parse_non_differentiable(THPFunction* self)
 {
-    std::unordered_set<at::TensorImpl*> set;
+    std::unordered_set<xsigma::TensorImpl*> set;
     if (!self->non_differentiable)
         return set;
 
@@ -929,7 +929,7 @@ static std::unordered_set<at::TensorImpl*> _parse_non_differentiable(THPFunction
         THPUtils_typename(self->non_differentiable));
     Py_ssize_t num_nondiff = PyTuple_GET_SIZE(self->non_differentiable);
     set.reserve(num_nondiff);
-    for (const auto i : c10::irange(num_nondiff))
+    for (const auto i : xsigma::irange(num_nondiff))
     {
         PyObject* t = PyTuple_GET_ITEM(self->non_differentiable, i);
         THPFunction_assert(
@@ -948,7 +948,7 @@ struct UnpackedInput
     THPObjectPtr  input_tuple;
     variable_list input_vars;
     // record_function_inputs is for RECORD_FUNCTION only
-    std::vector<c10::IValue> record_function_inputs;
+    std::vector<xsigma::IValue> record_function_inputs;
 };
 
 struct InputFlags
@@ -973,7 +973,7 @@ std::pair<UnpackedInput, InputFlags> unpack_input(PyObject* args)
     bool profiler_need_input = torch::autograd::profiler::profilerEnabled() &&
                                torch::autograd::profiler::getProfilerConfig().report_input_shapes;
 
-    for (const auto i : c10::irange(num_args))
+    for (const auto i : xsigma::irange(num_args))
     {
         PyObject* arg = PyTuple_GET_ITEM(args, i);
 
@@ -1041,12 +1041,12 @@ void _append_subgraph(
     auto subgraph = node->g(torch::jit::attr::Subgraph);
 
     std::unordered_map<Value*, Value*> value_map;
-    auto                               value_map_func = [&](Value* v) { return value_map.at(v); };
+    auto value_map_func = [&](Value* v) { return value_map.xsigma(v); };
     for (size_t i = 0; i < node->inputs().size(); ++i)
     {
         auto subgraph_input = subgraph->addInput();
-        subgraph_input->copyMetadata(node->inputs().at(i));
-        value_map[node->inputs().at(i)] = subgraph_input;
+        subgraph_input->copyMetadata(node->inputs().xsigma(i));
+        value_map[node->inputs().xsigma(i)] = subgraph_input;
     }
     // Find node position in owning block, all subsequent nodes after are added to
     // subgraph
@@ -1088,7 +1088,7 @@ torch::jit::Node* _trace_pre_record(
     std::string arg_types;
     arg_types.reserve(num_args);
     scalar_args.reserve(num_args);
-    for (const auto i : c10::irange(num_args))
+    for (const auto i : xsigma::irange(num_args))
     {
         PyObject* arg_object = PyTuple_GET_ITEM(input_objects, i);
         if (THPVariable_Check(arg_object))
@@ -1139,8 +1139,8 @@ void _trace_post_record(
     auto old_node = node;
     if (!unpack_output)
     {
-        std::vector<at::TypePtr> tuple_values(num_outputs, at::TensorType::get());
-        auto                     tuple_type = at::TupleType::create(std::move(tuple_values));
+        std::vector<xsigma::TypePtr> tuple_values(num_outputs, xsigma::TensorType::get());
+        auto tuple_type = xsigma::TupleType::create(std::move(tuple_values));
         // Original type is tuple of tensors "without" element type and shape.
         // The missed parts will be added below.
         node->output()->setType(std::move(tuple_type));
@@ -1149,7 +1149,7 @@ void _trace_post_record(
     }
 
     std::vector<torch::jit::Value*> trace_outputs;
-    for (const auto i : c10::irange(num_outputs))
+    for (const auto i : xsigma::irange(num_outputs))
     {
         PyObject* obj = PyTuple_GET_ITEM(output_objects, i);
         if (THPVariable_Check(obj))
@@ -1180,13 +1180,13 @@ void _trace_post_record(
     // to the original tuple type.
     if (!unpack_output)
     {
-        std::vector<at::TypePtr> new_tuple_values;
-        for (const auto i : c10::irange(num_outputs))
+        std::vector<xsigma::TypePtr> new_tuple_values;
+        for (const auto i : xsigma::irange(num_outputs))
         {
             auto ptr = node->outputs()[i]->type();
             new_tuple_values.push_back(ptr);
         }
-        auto tuple_type = at::TupleType::create(std::move(new_tuple_values));
+        auto tuple_type = xsigma::TupleType::create(std::move(new_tuple_values));
         // The i-th tuple element receives a new tensor type with element type and
         // shape.
         old_node->output()->setType(std::move(tuple_type));
@@ -1226,8 +1226,8 @@ PyObject* process_outputs(
         }
     }
 
-    std::unordered_set<at::TensorImpl*>    to_save_if_setup_context{};
-    std::vector<std::optional<at::Tensor>> tensors_to_save{};
+    std::unordered_set<xsigma::TensorImpl*>    to_save_if_setup_context{};
+    std::vector<std::optional<xsigma::Tensor>> tensors_to_save{};
     _get_tensors_to_save(
         grad_fn,
         to_save_if_setup_context,
@@ -1346,7 +1346,7 @@ THPObjectPtr make_ctx_input_tuple(
         return {};
     Py_INCREF(ctx);
     PyTuple_SET_ITEM(ctx_input_tuple.get(), 0, (PyObject*)ctx);
-    for (const auto i : c10::irange(num_args))
+    for (const auto i : xsigma::irange(num_args))
     {
         PyObject* arg = PyTuple_GET_ITEM(unpacked_input.input_tuple.get(), i);
         Py_INCREF(arg);
@@ -1401,7 +1401,7 @@ PyObject* THPFunction_apply(PyObject* cls, PyObject* inputs)
     HANDLE_TH_ERRORS
 
     // save a local copy of seq_id before it gets incremented
-    auto           seq_id         = at::sequence_number::peek();
+    auto           seq_id         = xsigma::sequence_number::peek();
     auto           info_pair      = unpack_input<false>(inputs);
     UnpackedInput& unpacked_input = info_pair.first;
     InputFlags&    input_info     = info_pair.second;
@@ -1410,7 +1410,7 @@ PyObject* THPFunction_apply(PyObject* cls, PyObject* inputs)
     // before context has been allocated.
     RECORD_FUNCTION(((PyTypeObject*)cls)->tp_name, unpacked_input.record_function_inputs, seq_id);
 
-    const auto& functorch_tls = at::functorch::functorchTLSAccessor();
+    const auto& functorch_tls = xsigma::functorch::functorchTLSAccessor();
     if (functorch_tls)
     {
         // autograd.Function support for functorch is handled in Python.
@@ -1462,9 +1462,9 @@ PyObject* THPFunction_apply(PyObject* cls, PyObject* inputs)
     // Call forward
     THPObjectPtr output;
     {
-        AutoGradMode       grad_mode(false);
-        at::AutoFwGradMode fw_grad_mode(false);
-        THPObjectPtr       forward_fn(PyObject_GetAttrString(cls, "forward"));
+        AutoGradMode           grad_mode(false);
+        xsigma::AutoFwGradMode fw_grad_mode(false);
+        THPObjectPtr           forward_fn(PyObject_GetAttrString(cls, "forward"));
         if (!forward_fn)
             return nullptr;
         if (overridden_setup_context)
@@ -1522,7 +1522,7 @@ PyObject* THPFunction_apply(PyObject* cls, PyObject* inputs)
 PyObject* THPFunction__register_hook_dict(PyObject* _self, PyObject* _var)
 {
     HANDLE_TH_ERRORS
-    TORCH_CHECK(THPVariable_Check(_var), "_register_hook_dict expected a Tensor");
+    XSIGMA_CHECK(THPVariable_Check(_var), "_register_hook_dict expected a Tensor");
     THPVariable*                     var    = reinterpret_cast<THPVariable*>(_var);
     const auto&                      tensor = THPVariable_Unpack(var);
     std::unique_ptr<FunctionPreHook> hook(
@@ -1645,7 +1645,7 @@ PyObject* THPFunction_get_compiled_autograd_symints(PyObject* _self, PyObject* _
     {
         throw python_error();
     }
-    for (const auto i : c10::irange(size))
+    for (const auto i : xsigma::irange(size))
     {
         PyTuple_SET_ITEM(result, i, py::cast(self->compiled_autograd_symints[i]).release().ptr());
     }
@@ -1683,7 +1683,7 @@ PyObject* THPFunction_raw_saved_tensors(THPFunction* self, void* _unused)
 {
     HANDLE_TH_ERRORS
     // User tries to access saved variables after they have been freed
-    TORCH_CHECK(!self->has_freed_buffers, ERR_BACKWARD_TWICE);
+    XSIGMA_CHECK(!self->has_freed_buffers, ERR_BACKWARD_TWICE);
     const auto& saved_variables = self->saved_variables;
     if (saved_variables.empty())
         return PyTuple_New(0);
@@ -1693,7 +1693,7 @@ PyObject* THPFunction_raw_saved_tensors(THPFunction* self, void* _unused)
     {
         return nullptr;
     }
-    for (const auto i : c10::irange(num_saved))
+    for (const auto i : xsigma::irange(num_saved))
     {
         py::object obj = py::cast(saved_variables[i], py::return_value_policy::reference);
         PyTuple_SET_ITEM(saved.get(), i, obj.release().ptr());
@@ -1711,7 +1711,7 @@ PyObject* THPFunction_next_functions(THPFunction* self, void* _unused)
     THPObjectPtr result(PyTuple_New(num_outputs));
     if (!result)
         return nullptr;
-    for (const auto i : c10::irange(num_outputs))
+    for (const auto i : xsigma::irange(num_outputs))
     {
         THPObjectPtr fn_tuple(PyTuple_New(2));
         if (!fn_tuple)
@@ -1738,7 +1738,7 @@ PyObject* THPFunction_metadata(THPFunction* self, void* _unused)
     // mean that you no longer get the property that grad_fn is a subclass
     // of the autograd function class that you defined in the custom case,
     // so I didn't fix it here.
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         cdata,
         "You attempted to access the anomaly metadata of a custom autograd function "
         "but the underlying PyNode has already been deallocated.  The most likely "

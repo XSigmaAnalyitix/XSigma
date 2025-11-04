@@ -13,7 +13,7 @@
 namespace torch::jit
 {
 
-using ::c10::IValue;
+using ::xsigma::IValue;
 
 struct Graph;
 struct Value;

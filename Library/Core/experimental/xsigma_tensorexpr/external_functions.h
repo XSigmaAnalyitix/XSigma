@@ -2,8 +2,8 @@
 
 #include <ATen/Config.h>
 #include <ATen/Functions.h>
-#include <c10/macros/Macros.h>
 #include <torch/csrc/Export.h>
+#include <xsigma/macros/Macros.h>
 
 #include <cstdint>
 #include <vector>
@@ -64,11 +64,11 @@ namespace torch::jit::tensorexpr
 {
 struct QIData final
 {
-    double          scale;
-    int64_t         zero;
-    c10::ScalarType scalarType;
+    double             scale;
+    int64_t            zero;
+    xsigma::ScalarType scalarType;
 };
-std::vector<at::Tensor> constructTensors(
+std::vector<xsigma::Tensor> constructTensors(
     int64_t                                               bufs_num,
     void**                                                buf_data,
     int64_t*                                              buf_ranks,
@@ -77,7 +77,7 @@ std::vector<at::Tensor> constructTensors(
     int8_t*                                               buf_dtypes,
     std::optional<std::vector<std::pair<size_t, QIData>>> qdataArg = std::nullopt);
 
-std::vector<at::Tensor> constructTensors2(
+std::vector<xsigma::Tensor> constructTensors2(
     int64_t                                               bufs_in_num,
     void**                                                buf_data,
     int64_t*                                              buf_ranks,
@@ -87,7 +87,7 @@ std::vector<at::Tensor> constructTensors2(
     std::optional<std::vector<std::pair<size_t, QIData>>> qdataArg     = std::nullopt,
     size_t                                                bufs_out_num = 0);
 
-#ifdef C10_MOBILE
+#ifdef XSIGMA_MOBILE
 extern "C"
 {
 #endif
@@ -100,7 +100,7 @@ extern "C"
 
     TORCH_API void nnc_aten_free(size_t bufs_num, void** ptrs) noexcept;
 
-#ifdef C10_MOBILE
+#ifdef XSIGMA_MOBILE
 }  // extern "C"
 #endif
 

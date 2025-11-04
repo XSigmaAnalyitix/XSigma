@@ -1,8 +1,6 @@
 #include <ATen/ATen.h>
 #include <ATen/core/functional.h>
 #include <ATen/core/symbol.h>
-#include <c10/util/Exception.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/ir/alias_analysis.h>
 #include <torch/csrc/jit/ir/constants.h>
 #include <torch/csrc/jit/passes/batch_mm.h>
@@ -10,17 +8,20 @@
 #include <torch/csrc/jit/passes/peephole.h>
 #include <torch/csrc/jit/runtime/custom_operator.h>
 #include <torch/csrc/jit/runtime/graph_iterator.h>
+#include <xsigma/util/irange.h>
 
 #include <algorithm>
 #include <unordered_map>
 #include <utility>
+
+#include "util/exception.h"
 
 namespace torch::jit
 {
 
 namespace
 {
-c10::AliasAnalysisKind aliasAnalysisIsSpecialCase()
+xsigma::AliasAnalysisKind aliasAnalysisIsSpecialCase()
 {
     return AliasAnalysisKind::INTERNAL_SPECIAL_CASE;
 }
@@ -84,29 +85,29 @@ c10::AliasAnalysisKind aliasAnalysisIsSpecialCase()
 // Tunable parameter. Set to something larger if it turns out to be better.
 static constexpr size_t min_fusion_size = 4;
 
-static bool have_same_shape(at::TensorList inputs)
+static bool have_same_shape(xsigma::TensorList inputs)
 {
     auto expected_sizes = inputs[0].sizes();
     return (std::all_of(
         inputs.begin(),
         inputs.end(),
-        [expected_sizes](const at::Tensor& t) { return t.sizes() == expected_sizes; }));
+        [expected_sizes](const xsigma::Tensor& t) { return t.sizes() == expected_sizes; }));
 }
 
-static bool should_be_transposed(at::TensorList inputs)
+static bool should_be_transposed(xsigma::TensorList inputs)
 {
     return (std::all_of(
         inputs.begin(),
         inputs.end(),
-        [](const at::Tensor& t) { return t.stride(0) == 1 && t.stride(1) == t.size(0); }));
+        [](const xsigma::Tensor& t) { return t.stride(0) == 1 && t.stride(1) == t.size(0); }));
 }
 
-static std::vector<at::Tensor> transpose_inputs(at::TensorList inputs)
+static std::vector<xsigma::Tensor> transpose_inputs(xsigma::TensorList inputs)
 {
-    return fmap(inputs, [](const at::Tensor& i) { return i.t(); });
+    return fmap(inputs, [](const xsigma::Tensor& i) { return i.t(); });
 }
 
-static bool shape_is_fast_for_reduce(const at::Tensor& lhs, const at::Tensor& rhs)
+static bool shape_is_fast_for_reduce(const xsigma::Tensor& lhs, const xsigma::Tensor& rhs)
 {
     size_t l = lhs.size(0);
     size_t m = lhs.size(1);
@@ -119,8 +120,8 @@ static RegisterOperators mm_tree_reduction_reg({Operator(
     "prim::MMTreeReduce(...) -> Tensor",
     [](Stack& stack)
     {
-        auto                    num_inputs = pop(stack).toInt();
-        std::vector<at::Tensor> inputs;
+        auto                        num_inputs = pop(stack).toInt();
+        std::vector<xsigma::Tensor> inputs;
         inputs.reserve(num_inputs);
         for (auto it = stack.end() - num_inputs; it != stack.end(); ++it)
         {
@@ -131,47 +132,47 @@ static RegisterOperators mm_tree_reduction_reg({Operator(
         AT_ASSERT(!inputs.empty());
         AT_ASSERT(inputs.size() % 2 == 0);
         size_t side_num_elems = inputs.size() / 2;
-        auto   lhs_inputs     = at::TensorList(inputs).slice(0, side_num_elems);
-        auto   rhs_inputs     = at::TensorList(inputs).slice(side_num_elems);
+        auto   lhs_inputs     = xsigma::TensorList(inputs).slice(0, side_num_elems);
+        auto   rhs_inputs     = xsigma::TensorList(inputs).slice(side_num_elems);
         // TODO: checking this is not free, so we should stop if this keeps
         // failing
         if (have_same_shape(lhs_inputs) && have_same_shape(rhs_inputs) &&
             shape_is_fast_for_reduce(lhs_inputs[0], rhs_inputs[0]))
         {
             // sometimes lhs_inputs or rhs_inputs are not contiguous, and that
-            // causes at::cat to go through slow path view them as contiguous if
+            // causes xsigma::cat to go through slow path view them as contiguous if
             // possible by transposing
-            bool       lhs_input_transposed = should_be_transposed(lhs_inputs);
-            bool       rhs_input_transposed = should_be_transposed(rhs_inputs);
-            at::Tensor lhs, rhs;
+            bool           lhs_input_transposed = should_be_transposed(lhs_inputs);
+            bool           rhs_input_transposed = should_be_transposed(rhs_inputs);
+            xsigma::Tensor lhs, rhs;
             if (lhs_input_transposed)
             {
-                std::vector<at::Tensor> lhs_contig_inputs = transpose_inputs(lhs_inputs);
-                lhs                                       = at::cat(lhs_contig_inputs, /*dim*/ 0);
-                lhs                                       = lhs.t();
+                std::vector<xsigma::Tensor> lhs_contig_inputs = transpose_inputs(lhs_inputs);
+                lhs = xsigma::cat(lhs_contig_inputs, /*dim*/ 0);
+                lhs = lhs.t();
             }
             else
             {
-                lhs = at::cat(lhs_inputs, /*dim=*/1);
+                lhs = xsigma::cat(lhs_inputs, /*dim=*/1);
             }
             if (rhs_input_transposed)
             {
-                std::vector<at::Tensor> rhs_contig_inputs = transpose_inputs(rhs_inputs);
-                rhs                                       = at::cat(rhs_contig_inputs, /*dim*/ 1);
-                rhs                                       = rhs.t();
+                std::vector<xsigma::Tensor> rhs_contig_inputs = transpose_inputs(rhs_inputs);
+                rhs = xsigma::cat(rhs_contig_inputs, /*dim*/ 1);
+                rhs = rhs.t();
             }
             else
             {
-                rhs = at::cat(rhs_inputs, /*dim=*/0);
+                rhs = xsigma::cat(rhs_inputs, /*dim=*/0);
             }
-            push(stack, at::mm(lhs, rhs));
+            push(stack, xsigma::mm(lhs, rhs));
         }
         else
         {
-            auto acc = at::mm(inputs[0], inputs[side_num_elems]);
-            for (const auto i : c10::irange(1, side_num_elems))
+            auto acc = xsigma::mm(inputs[0], inputs[side_num_elems]);
+            for (const auto i : xsigma::irange(1, side_num_elems))
             {
-                acc.add_(at::mm(inputs[i], inputs[side_num_elems + i]));
+                acc.add_(xsigma::mm(inputs[i], inputs[side_num_elems + i]));
             }
             push(stack, std::move(acc));
         }
@@ -343,18 +344,18 @@ static void BatchMMTreeReduce(Block* block, AliasDb& alias_db)
         Node* tree_reduce = graph->insertNode(graph->create(Symbol::prim("MMTreeReduce")));
         for (Node* matmul : matmuls)
         {
-            tree_reduce->addInput(matmul->inputs().at(0));
+            tree_reduce->addInput(matmul->inputs().xsigma(0));
         }
         for (Node* matmul : matmuls)
         {
-            tree_reduce->addInput(matmul->inputs().at(1));
+            tree_reduce->addInput(matmul->inputs().xsigma(1));
         }
         root.node->output()->replaceAllUsesWith(tree_reduce->output());
         // NB: don't bother with cleaning up after yourself. We'll use DCE for that.
     }
 }
 
-static bool shape_is_fast_for_side(const at::Tensor& other_side_input)
+static bool shape_is_fast_for_side(const xsigma::Tensor& other_side_input)
 {
     // Cutoff chose by benchmarking on a TITAN V
     return other_side_input.numel() <= 1024 * 2048;
@@ -368,8 +369,8 @@ static RegisterOperators mm_batch_side_reg({Operator(
         Side   single_side           = static_cast<Side>(node->i(Symbol::attr("side")));
         return [num_other_side_inputs, single_side](Stack& stack)
         {
-            at::Tensor              side_input;
-            std::vector<at::Tensor> other_side_inputs;
+            xsigma::Tensor              side_input;
+            std::vector<xsigma::Tensor> other_side_inputs;
             other_side_inputs.reserve(num_other_side_inputs);
             for (auto it = stack.end() - num_other_side_inputs; it != stack.end(); ++it)
             {
@@ -382,10 +383,10 @@ static RegisterOperators mm_batch_side_reg({Operator(
             if (have_same_shape(other_side_inputs) && shape_is_fast_for_side(other_side_inputs[0]))
             {
                 auto other_side_input =
-                    at::cat(other_side_inputs, single_side == Side::LHS ? 1 : 0);
+                    xsigma::cat(other_side_inputs, single_side == Side::LHS ? 1 : 0);
                 auto mm_out  = single_side == Side::LHS ? side_input.mm(other_side_input)
                                                         : other_side_input.mm(side_input);
-                auto outputs = at::chunk(
+                auto outputs = xsigma::chunk(
                     mm_out,
                     num_other_side_inputs,
                     /*dim=*/single_side == Side::LHS ? 1 : 0);
@@ -398,14 +399,14 @@ static RegisterOperators mm_batch_side_reg({Operator(
             {
                 if (single_side == Side::LHS)
                 {
-                    for (at::Tensor& other : other_side_inputs)
+                    for (xsigma::Tensor& other : other_side_inputs)
                     {
                         stack.emplace_back(side_input.mm(other));
                     }
                 }
                 else
                 {
-                    for (at::Tensor& other : other_side_inputs)
+                    for (xsigma::Tensor& other : other_side_inputs)
                     {
                         stack.emplace_back(other.mm(side_input));
                     }
@@ -428,7 +429,7 @@ static std::pair<std::vector<Node*>, std::vector<Node*>> gatherIndependentMMUses
         // Filter out dependent MMs. This algorithm might do very badly if e.g. you
         // have a lot of independent MMs, that depend on the first one, but I doubt
         // this will be a common scenario.
-        for (const auto i : c10::irange(mms.size()))
+        for (const auto i : xsigma::irange(mms.size()))
         {
             if (mms[i] == nullptr)
                 continue;
@@ -442,7 +443,7 @@ static std::pair<std::vector<Node*>, std::vector<Node*>> gatherIndependentMMUses
                 }
             }
         }
-        return c10::filter(mms, [](Node* n) { return n != nullptr; });
+        return xsigma::filter(mms, [](Node* n) { return n != nullptr; });
     };
 
     Block*             block = value->node()->owningBlock();
@@ -487,12 +488,12 @@ static void BatchMMSide(Block* block, AliasDb& alias_db)
             /*num_outputs=*/mms.size());
         graph->insertNode(batch_mm);
         batch_mm->i_(Symbol::attr("side"), static_cast<int>(side));
-        Value* const_side = mms[0]->inputs().at(side == Side::LHS ? 0 : 1);
+        Value* const_side = mms[0]->inputs().xsigma(side == Side::LHS ? 0 : 1);
         batch_mm->addInput(const_side);
-        for (const auto i : c10::irange(mms.size()))
+        for (const auto i : xsigma::irange(mms.size()))
         {
-            batch_mm->addInput(mms[i]->inputs().at(side == Side::LHS ? 1 : 0));
-            mms[i]->output()->replaceAllUsesWith(batch_mm->outputs().at(i));
+            batch_mm->addInput(mms[i]->inputs().xsigma(side == Side::LHS ? 1 : 0));
+            mms[i]->output()->replaceAllUsesWith(batch_mm->outputs().xsigma(i));
         }
     };
 

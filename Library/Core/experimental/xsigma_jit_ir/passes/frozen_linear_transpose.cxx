@@ -20,7 +20,7 @@ namespace torch::jit
 namespace
 {
 
-using Tensor = at::Tensor;
+using Tensor = xsigma::Tensor;
 
 class TransposeFrozenLinear
 {
@@ -67,7 +67,7 @@ public:
 
             Tensor weight_tensor = constant_as<Tensor>(weight).value();
             Tensor weight_t_tensor =
-                at::transpose(weight_tensor, 1, 0).clone(at::MemoryFormat::Contiguous);
+                xsigma::transpose(weight_tensor, 1, 0).clone(xsigma::MemoryFormat::Contiguous);
             Value* weight_t = graph_->insertConstant(std::move(weight_t_tensor));
             matmul          = graph_->create(aten::matmul, {node->inputs()[0], weight_t});
             matmul->insertAfter(node);

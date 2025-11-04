@@ -7,7 +7,7 @@
 #include <torch/csrc/jit/frontend/tracer.h>
 #include <torch/csrc/tensor/python_tensor.h>
 
-using namespace at;
+using namespace xsigma;
 
 namespace torch::autograd
 {
@@ -54,7 +54,7 @@ static PyObject* THPVariable_pynew(PyTypeObject* type, PyObject* args, PyObject*
 
     TORCH_CHECK_VALUE(
         !is_volatile || !requires_grad,
-        "Variable can't be volatile and require_grad at the same time!");
+        "Variable can't be volatile and require_grad xsigma the same time!");
     if (grad_fn && !THPFunction_Check(grad_fn))
     {
         TORCH_CHECK_TYPE(
@@ -72,7 +72,7 @@ static PyObject* THPVariable_pynew(PyTypeObject* type, PyObject* args, PyObject*
         auto options      = TensorOptions(scalar_type)
                            .device(dispatchKeyToDeviceType(dispatch_key))
                            .layout(dispatchKeyToLayout(dispatch_key));
-        var = at::empty({0}, options);
+        var = xsigma::empty({0}, options);
     }
     else if (THPVariable_Check(data))
     {
@@ -92,7 +92,7 @@ static PyObject* THPVariable_pynew(PyTypeObject* type, PyObject* args, PyObject*
     // ```
     var.unsafeGetTensorImpl()->set_allow_tensor_metadata_change(true);
 
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         !grad_fn,
         "_grad_fn argument to legacy Variable constructor is no longer supported.  "
         "Instead, please invoke your _grad_fn to produce a variable with it as the "

@@ -1,20 +1,21 @@
 #pragma once
 
 #ifdef TORCH_ENABLE_LLVM
-#include <c10/macros/Macros.h>
-#include <c10/util/Exception.h>
 #include <torch/csrc/Export.h>
+#include <xsigma/macros/Macros.h>
 
 #include <optional>
 
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wsuggest-override")
+#include "util/exception.h"
+
+XSIGMA_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wsuggest-override")
 #include <llvm/ExecutionEngine/JITSymbol.h>
-C10_DIAGNOSTIC_POP()
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wextra-semi")
+XSIGMA_DIAGNOSTIC_POP()
+XSIGMA_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wextra-semi")
 #include <llvm/ExecutionEngine/Orc/Core.h>
 #include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
 #include <llvm/Target/TargetMachine.h>
-C10_DIAGNOSTIC_POP()
+XSIGMA_DIAGNOSTIC_POP()
 
 #include <memory>
 #include <string>

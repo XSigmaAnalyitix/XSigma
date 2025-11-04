@@ -1,7 +1,5 @@
 #pragma once
 
-#include <c10/macros/Macros.h>
-#include <c10/util/Logging.h>
 #include <torch/csrc/jit/tensorexpr/codegen.h>
 #include <torch/csrc/jit/tensorexpr/exceptions.h>
 #include <torch/csrc/jit/tensorexpr/ir.h>
@@ -9,6 +7,8 @@
 #include <torch/csrc/jit/tensorexpr/tensor.h>
 #include <torch/csrc/jit/tensorexpr/types.h>
 #include <torch/csrc/jit/tensorexpr/var_substitutor.h>
+#include <xsigma/macros/Macros.h>
+#include <xsigma/util/Logging.h>
 
 #include <cmath>
 #include <cstring>
@@ -42,15 +42,15 @@ public:
     AT_FORALL_SCALAR_TYPES_AND3(Bool, Half, BFloat16, VALUE_CTOR)
 #undef VALUE_CTOR
 
-    explicit InterpValue(c10::quint8 v) : dtype_(kQUInt8) { QUInt8values.emplace_back(v.val_); }
+    explicit InterpValue(xsigma::quint8 v) : dtype_(kQUInt8) { QUInt8values.emplace_back(v.val_); }
 
-    explicit InterpValue(c10::qint8 v) : dtype_(kQInt8) { QInt8values.emplace_back(v.val_); }
+    explicit InterpValue(xsigma::qint8 v) : dtype_(kQInt8) { QInt8values.emplace_back(v.val_); }
 
 #define VALUE_VEC_CTOR(Type, Name) \
     InterpValue(const std::vector<Type>& v) : dtype_(Dtype(k##Name, v.size())), Name##values(v) {}
     AT_FORALL_SCALAR_TYPES_AND3(Bool, Half, BFloat16, VALUE_VEC_CTOR)
-    VALUE_VEC_CTOR(c10::quint8, QUInt8)
-    VALUE_VEC_CTOR(c10::qint8, QInt8)
+    VALUE_VEC_CTOR(xsigma::quint8, QUInt8)
+    VALUE_VEC_CTOR(xsigma::qint8, QInt8)
 #undef VALUE_VEC_CTOR
 
     template <typename T>
@@ -68,8 +68,8 @@ private:
 
 #define VALUE_STORAGE(Type, Name) std::vector<Type> Name##values;
     AT_FORALL_SCALAR_TYPES_AND3(Bool, Half, BFloat16, VALUE_STORAGE)
-    VALUE_STORAGE(c10::qint8, QInt8)
-    VALUE_STORAGE(c10::quint8, QUInt8)
+    VALUE_STORAGE(xsigma::qint8, QInt8)
+    VALUE_STORAGE(xsigma::quint8, QUInt8)
 #undef VALUE_STORAGE
     void* ptr{nullptr};
 };
@@ -85,8 +85,8 @@ private:
         return Name##values[0];               \
     }
 AT_FORALL_SCALAR_TYPES_AND3(Bool, Half, BFloat16, VALUE_AS_DISPATCH)
-VALUE_AS_DISPATCH(c10::quint8, QUInt8)
-VALUE_AS_DISPATCH(c10::qint8, QInt8)
+VALUE_AS_DISPATCH(xsigma::quint8, QUInt8)
+VALUE_AS_DISPATCH(xsigma::qint8, QInt8)
 #undef VALUE_AS_DISPATCH
 
 #define VALUE_AS_VEC_DISPATCH(Type, Name)                             \
@@ -100,8 +100,8 @@ VALUE_AS_DISPATCH(c10::qint8, QInt8)
         return Name##values;                                          \
     }
 AT_FORALL_SCALAR_TYPES_AND3(Bool, Half, BFloat16, VALUE_AS_VEC_DISPATCH)
-VALUE_AS_VEC_DISPATCH(c10::quint8, QUInt8)
-VALUE_AS_VEC_DISPATCH(c10::qint8, QInt8)
+VALUE_AS_VEC_DISPATCH(xsigma::quint8, QUInt8)
+VALUE_AS_VEC_DISPATCH(xsigma::qint8, QInt8)
 #undef VALUE_AS_VEC_DISPATCH
 
 template <typename Type>
@@ -111,13 +111,13 @@ auto underlyingValue(Type x)
 }
 
 template <>
-inline auto underlyingValue<c10::quint8>(c10::quint8 x)
+inline auto underlyingValue<xsigma::quint8>(xsigma::quint8 x)
 {
     return x.val_;
 }
 
 template <>
-inline auto underlyingValue<c10::qint8>(c10::qint8 x)
+inline auto underlyingValue<xsigma::qint8>(xsigma::qint8 x)
 {
     return x.val_;
 }
@@ -125,7 +125,7 @@ inline auto underlyingValue<c10::qint8>(c10::qint8 x)
 template <typename To, typename From>
 To raw_bitcast(const From& src)
 {
-    TORCH_CHECK(sizeof(To) == sizeof(From), "Invalid bitcast invocation");
+    XSIGMA_CHECK(sizeof(To) == sizeof(From), "Invalid bitcast invocation");
     To storage;
     std::memcpy(&storage, &src, sizeof(To));
     return storage;
@@ -138,7 +138,7 @@ public:
     SimpleIREvaluator(
         StmtPtr                       stmt,
         const std::vector<BufferArg>& buffer_args,
-        at::Device                    device           = at::kCPU,
+        xsigma::Device                device           = xsigma::kCPU,
         const std::string&            kernel_func_name = "func");
 
     ~SimpleIREvaluator() override;
@@ -229,8 +229,8 @@ public:
     }                                                 \
     break;
             AT_FORALL_SCALAR_TYPES_AND2(Half, BFloat16, TYPE_CASE);
-            TYPE_CASE(c10::quint8, QUInt8);
-            TYPE_CASE(c10::qint8, QInt8);
+            TYPE_CASE(xsigma::quint8, QUInt8);
+            TYPE_CASE(xsigma::qint8, QInt8);
 #undef TYPE_CASE
         case ScalarType::Bool:
         {
@@ -260,8 +260,8 @@ public:
     }                                                \
     break;
             AT_FORALL_SCALAR_TYPES_AND2(Half, BFloat16, TYPE_CASE);
-            TYPE_CASE(c10::quint8, QUInt8);
-            TYPE_CASE(c10::qint8, QInt8);
+            TYPE_CASE(xsigma::quint8, QUInt8);
+            TYPE_CASE(xsigma::qint8, QInt8);
 #undef TYPE_CASE
         case ScalarType::Bool:
         {

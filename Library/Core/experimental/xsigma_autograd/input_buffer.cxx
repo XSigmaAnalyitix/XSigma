@@ -5,10 +5,10 @@
 #include <ATen/TensorSubclassLikeUtils.h>
 #include <ATen/core/grad_mode.h>
 #include <ATen/native/SparseTensorUtils.h>
-#include <c10/core/DeviceGuard.h>
-#include <c10/core/Event.h>
-#include <c10/core/StreamGuard.h>
 #include <torch/csrc/autograd/input_buffer.h>
+#include <xsigma/core/DeviceGuard.h>
+#include <xsigma/core/Event.h>
+#include <xsigma/core/StreamGuard.h>
 
 #include <cstddef>
 #include <optional>
@@ -26,7 +26,7 @@ namespace
 // See https://github.com/pytorch/pytorch/issues/60306
 // TODO: clean this up when https://github.com/pytorch/pytorch/issues/60306 is
 // improved
-void record_stream_any_impl(Variable& var, const c10::Stream& stream)
+void record_stream_any_impl(Variable& var, const xsigma::Stream& stream)
 {
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
 
@@ -35,11 +35,11 @@ void record_stream_any_impl(Variable& var, const c10::Stream& stream)
         return;
     }
 
-    const auto guard = c10::impl::VirtualGuardImpl(device_of(var).value().type());
+    const auto guard = xsigma::impl::VirtualGuardImpl(device_of(var).value().type());
 
-    if (C10_UNLIKELY(at::isBatchedTensor(var)))
+    if (XSIGMA_UNLIKELY(xsigma::isBatchedTensor(var)))
     {
-        auto* impl = at::maybeGetBatchedImpl(var);
+        auto* impl = xsigma::maybeGetBatchedImpl(var);
         if (impl)
         {
             guard.recordDataPtrOnStream(impl->value().storage().data_ptr(), stream);
@@ -53,25 +53,25 @@ void record_stream_any_impl(Variable& var, const c10::Stream& stream)
     {
         switch (var.layout())
         {
-        case c10::kSparseCsr:
-        case c10::kSparseCsc:
-        case c10::kSparseBsr:
-        case c10::kSparseBsc:
+        case xsigma::kSparseCsr:
+        case xsigma::kSparseCsc:
+        case xsigma::kSparseBsr:
+        case xsigma::kSparseBsc:
         {
-            auto* impl = at::sparse_csr::get_sparse_csr_impl(var);
+            auto* impl = xsigma::sparse_csr::get_sparse_csr_impl(var);
             guard.recordDataPtrOnStream(impl->values().storage().data_ptr(), stream);
             guard.recordDataPtrOnStream(impl->compressed_indices().storage().data_ptr(), stream);
             guard.recordDataPtrOnStream(impl->plain_indices().storage().data_ptr(), stream);
             break;
         }
-        case c10::kSparse:
+        case xsigma::kSparse:
         {
-            auto* impl = at::sparse::get_sparse_impl(var);
+            auto* impl = xsigma::sparse::get_sparse_impl(var);
             guard.recordDataPtrOnStream(impl->values().storage().data_ptr(), stream);
             guard.recordDataPtrOnStream(impl->indices().storage().data_ptr(), stream);
             break;
         }
-        case c10::kStrided:
+        case xsigma::kStrided:
             guard.recordDataPtrOnStream(var.storage().data_ptr(), stream);
             break;
         default:
@@ -84,13 +84,14 @@ bool can_accumulate_inplace(const Variable& v)
 {
     return (
         // `v` is a "vanilla" Tensor
-        !(at::isTensorSubclassLike(v) || v._is_zerotensor() || v.is_nested()) &&
+        !(xsigma::isTensorSubclassLike(v) || v._is_zerotensor() || v.is_nested()) &&
 
         // with a favorable memory layout
         v.is_non_overlapping_and_dense() &&
 
         // and we hold the last reference
-        at::caching::adjusted_use_count(v) == 1 && v.has_storage() && v.storage().use_count() == 1);
+        xsigma::caching::adjusted_use_count(v) == 1 && v.has_storage() &&
+        v.storage().use_count() == 1);
 }
 }  // anonymous namespace
 
@@ -116,7 +117,7 @@ static void accumulate(std::vector<Variable>& buffer, const size_t pos, Variable
     //     it's hard to predict the semantics of arbitrary subclass behavior.
 
     // NOLINTNEXTLINE(bugprone-branch-clone)
-    if (at::GradMode::is_enabled())
+    if (xsigma::GradMode::is_enabled())
     {
         buffer[pos] = old_var + var;
     }
@@ -133,7 +134,7 @@ static void accumulate(std::vector<Variable>& buffer, const size_t pos, Variable
             buffer[pos] = var + old_var;
         }
     }
-    else if (can_accumulate_inplace(old_var) && !at::isTensorSubclassLike(var))
+    else if (can_accumulate_inplace(old_var) && !xsigma::isTensorSubclassLike(var))
     {
         buffer[pos] = old_var.add_(var);
     }
@@ -200,10 +201,10 @@ static void accumulate(std::vector<Variable>& buffer, const size_t pos, Variable
 // know that we won't need to wait on it, saving on the order of microseconds.
 //
 void InputBuffer::add(
-    size_t                            pos,
-    Variable&&                        var,
-    const std::optional<c10::Stream>& opt_producer_stream_,
-    const std::optional<c10::Stream>& opt_consumer_stream_)
+    size_t                               pos,
+    Variable&&                           var,
+    const std::optional<xsigma::Stream>& opt_producer_stream_,
+    const std::optional<xsigma::Stream>& opt_consumer_stream_)
 {
     TORCH_INTERNAL_ASSERT(pos < buffer.size());
 
@@ -213,7 +214,7 @@ void InputBuffer::add(
     }
     const auto device         = var.device();
     const auto device_type    = device.type();
-    bool       is_accelerator = at::accelerator::isAccelerator(device.type());
+    bool       is_accelerator = xsigma::accelerator::isAccelerator(device.type());
     //
     // Non-accelerator case
     //
@@ -225,25 +226,27 @@ void InputBuffer::add(
         }
         else
         {
-            c10::OptionalDeviceGuard device_guard{device};
+            xsigma::OptionalDeviceGuard device_guard{device};
             accumulate(buffer, pos, std::move(var));
         }
         return;
     }
     // Handle the case where var is on an accelerator but producer node has no
     // canonical stream, e.g. this can happen if forward is DtoH
-    const std::optional<c10::Stream>& opt_producer_stream =
+    const std::optional<xsigma::Stream>& opt_producer_stream =
         (opt_producer_stream_.has_value()
              ? opt_producer_stream_
-             : std::optional<c10::Stream>(at::accelerator::getCurrentStream(device.index())));
+             : std::optional<xsigma::Stream>(
+                   xsigma::accelerator::getCurrentStream(device.index())));
 
     // opt_consumer_stream is always non-null when is_accelerator is true
     // when InputBuffer is used in the engine. InputBuffer is also called
     // elsewhere however! (e.g. other engine implementations)
-    const std::optional<c10::Stream>& opt_consumer_stream =
+    const std::optional<xsigma::Stream>& opt_consumer_stream =
         (opt_consumer_stream_.has_value()
              ? opt_consumer_stream_
-             : std::optional<c10::Stream>(at::accelerator::getCurrentStream(device.index())));
+             : std::optional<xsigma::Stream>(
+                   xsigma::accelerator::getCurrentStream(device.index())));
 
     TORCH_INTERNAL_ASSERT(opt_consumer_stream && opt_producer_stream);
 
@@ -273,7 +276,7 @@ void InputBuffer::add(
         else
         {
             // Case C
-            opt_accum_streams[pos] = at::accelerator::getCurrentStream(device.index());
+            opt_accum_streams[pos] = xsigma::accelerator::getCurrentStream(device.index());
         }
         // 2)
         buffer[pos] = std::move(var);
@@ -285,7 +288,7 @@ void InputBuffer::add(
         {
             // Either the consumer or accum stream waits for the producer
             // stream depending on whether accumulation is needed.
-            auto event = c10::Event{device_type};
+            auto event = xsigma::Event{device_type};
             event.record(*opt_producer_stream);
             ready_events[pos] = std::move(event);
         }
@@ -301,7 +304,7 @@ void InputBuffer::add(
         // 1)
         if (*accum_stream != *opt_producer_stream)
         {
-            auto event = c10::Event{device_type};
+            auto event = xsigma::Event{device_type};
             event.record(*opt_producer_stream);
             accum_stream->wait(event);
             record_stream_any_impl(var, *accum_stream);
@@ -314,13 +317,13 @@ void InputBuffer::add(
             record_stream_any_impl(buffer[pos], *accum_stream);
         }
         // 2)
-        c10::OptionalStreamGuard stream_guard{accum_stream};
+        xsigma::OptionalStreamGuard stream_guard{accum_stream};
         accumulate(buffer, pos, std::move(var));
         // 3)
         if (*opt_consumer_stream != *accum_stream)
         {
             // Only the consumer stream needs to wait for this event
-            auto event = c10::Event{device_type};
+            auto event = xsigma::Event{device_type};
             event.record(*accum_stream);
             ready_events[pos] = std::move(event);
         }

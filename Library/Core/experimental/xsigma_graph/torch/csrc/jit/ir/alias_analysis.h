@@ -1,11 +1,11 @@
 #pragma once
 
 #include <ATen/core/alias_info.h>
-#include <c10/util/flat_hash_map.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/ir/type_hashing.h>
 #include <torch/csrc/jit/passes/create_functional_graphs.h>
 #include <torch/csrc/jit/passes/utils/memory_dag.h>
+#include <xsigma/util/flat_hash_map.h>
 
 namespace torch::jit
 {
@@ -81,12 +81,12 @@ public:
     // hold in memory any element that exists in the other
     TORCH_API bool mayContainAlias(Value* a, Value* b) const;
 
-    TORCH_API bool mayContainAlias(Value* a, const at::ArrayRef<Value*> b) const;
+    TORCH_API bool mayContainAlias(Value* a, const xsigma::ArrayRef<Value*> b) const;
 
     // Do any values in group `a` share a memory location or hold in memory
     // any element that exists in group `b`
     TORCH_API bool mayContainAlias(
-        const at::ArrayRef<Value*> a, const at::ArrayRef<Value*> b) const;
+        const xsigma::ArrayRef<Value*> a, const xsigma::ArrayRef<Value*> b) const;
 
     // Do `a` and `b` potentially share a memory location?
     TORCH_API bool mayAlias(const Value* a, const Value* b) const;
@@ -110,11 +110,11 @@ public:
     // reads from.
     TORCH_API bool isMutable(Node* n) const;
 
-    TORCH_API bool escapesScope(const at::ArrayRef<Value*>& vs) const;
+    TORCH_API bool escapesScope(const xsigma::ArrayRef<Value*>& vs) const;
 
     // Is it safe to change whether `a` and `b` alias each other ?
     TORCH_API bool safeToChangeAliasingRelationship(
-        const at::ArrayRef<Value*>& a, const at::ArrayRef<Value*>& b) const;
+        const xsigma::ArrayRef<Value*>& a, const xsigma::ArrayRef<Value*>& b) const;
 
     // Move `n` (already in the graph) after `movePoint` in the topological order.
     //
@@ -252,7 +252,7 @@ private:
     void           makeAllAlias(const std::vector<Value*>& values);
     void           makePointerTo(const Value* value, const Value* to);
     TORCH_API void addToContainedElements(const Value* element, const Value* container);
-    void           mapAliases(at::ArrayRef<Value*> to, at::ArrayRef<Value*> from);
+    void           mapAliases(xsigma::ArrayRef<Value*> to, xsigma::ArrayRef<Value*> from);
     void           giveFreshAlias(const Value* value, bool add_wildcard_to_contained_elems = true);
     Element*       getOrCreateElement(const Value* value);
 
@@ -284,10 +284,10 @@ private:
     void pointUnionTypeElementToAllContainedTypes(
         Element* container_elem, const AliasTypeSet& mut_types);
 
-    std::vector<Element*> getElements(at::ArrayRef<Value*> vs) const;
+    std::vector<Element*> getElements(xsigma::ArrayRef<Value*> vs) const;
     bool                  mayAliasWildcard(const Value* v) const;
-    bool                  mayAliasWildcard(const at::ArrayRef<Value*> vs) const;
-    bool                  hasWriters(const at::ArrayRef<Value*>& values) const;
+    bool                  mayAliasWildcard(const xsigma::ArrayRef<Value*> vs) const;
+    bool                  hasWriters(const xsigma::ArrayRef<Value*>& values) const;
 
     // Cached mapping of type ptrs to their mutable types
     mutable ska::flat_hash_map<TypePtr, AliasTypeSet> mapped_mutable_types_;

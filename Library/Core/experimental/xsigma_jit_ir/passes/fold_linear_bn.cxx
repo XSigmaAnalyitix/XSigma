@@ -10,11 +10,12 @@
 namespace torch::jit
 {
 
-std::tuple<at::Tensor, at::Tensor> computeUpdatedLinearWeightAndBias(const LinearBNParameters& p)
+std::tuple<xsigma::Tensor, xsigma::Tensor> computeUpdatedLinearWeightAndBias(
+    const LinearBNParameters& p)
 {
-    at::Tensor bn_scale = p.bn_w * at::rsqrt(p.bn_rv + p.bn_eps);
-    at::Tensor fused_w  = p.linear_w * bn_scale.unsqueeze(-1);
-    at::Tensor fused_b  = (p.linear_b - p.bn_rm) * bn_scale + p.bn_b;
+    xsigma::Tensor bn_scale = p.bn_w * xsigma::rsqrt(p.bn_rv + p.bn_eps);
+    xsigma::Tensor fused_w  = p.linear_w * bn_scale.unsqueeze(-1);
+    xsigma::Tensor fused_b  = (p.linear_b - p.bn_rm) * bn_scale + p.bn_b;
 
     auto linear_w_dtype = p.linear_w.dtype();
     auto linear_b_dtype = p.linear_b.dtype();

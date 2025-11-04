@@ -1,10 +1,5 @@
 #include <ATen/core/interned_strings.h>
 #include <ATen/core/jit_type.h>
-#include <c10/util/Exception.h>
-#include <c10/util/StringUtil.h>
-#include <c10/util/env.h>
-#include <c10/util/hash.h>
-#include <c10/util/irange.h>
 #include <caffe2/serialize/versions.h>
 #include <torch/csrc/jit/api/function_impl.h>
 #include <torch/csrc/jit/frontend/canonicalize_modified_loop.h>
@@ -34,11 +29,17 @@
 #include <torch/csrc/jit/runtime/operator.h>
 #include <torch/csrc/jit/runtime/slice_indices_adjust.h>
 #include <torch/csrc/jit/testing/hooks_for_testing.h>
+#include <xsigma/util/StringUtil.h>
+#include <xsigma/util/env.h>
+#include <xsigma/util/hash.h>
+#include <xsigma/util/irange.h>
 
 #include <climits>
 #include <optional>
 #include <set>
 #include <stack>
+
+#include "util/exception.h"
 
 namespace
 {
@@ -48,7 +49,7 @@ bool reportSourceLocation(size_t file_size)
     {
         return true;
     }
-    const auto enable_env = c10::utils::get_env("PYTORCH_JIT_ENABLE_LARGE_SOURCE_LOCATION");
+    const auto enable_env = xsigma::utils::get_env("PYTORCH_JIT_ENABLE_LARGE_SOURCE_LOCATION");
     bool       flag       = true;
     if (!enable_env.has_value() || enable_env == "0" || enable_env == "FALSE" ||
         enable_env == "false")
@@ -547,7 +548,7 @@ struct Environment
                 {"rangelist", std::make_shared<BuiltinFunction>(prim::rangelist, std::nullopt)},
                 {"sorted", std::make_shared<BuiltinFunction>(aten::sorted, std::nullopt)},
                 // Only AssertionError is bound so that we can use it from emitAssert,
-                // all other exceptions should be resolved at the Python level
+                // all other exceptions should be resolved xsigma the Python level
                 {"AssertionError", std::make_shared<ExceptionValue>("AssertionError")},
             };
             auto it = globals.find(ident);
@@ -730,7 +731,7 @@ private:
     ResolverPtr                                             resolver;
     std::unordered_map<int64_t, Value*, std::hash<int64_t>> integral_constants;
     std::unordered_map<double, Value*, std::hash<double>>   fp_constants;
-    std::unordered_map<c10::complex<double>, Value*, c10::hash<c10::complex<double>>>
+    std::unordered_map<xsigma::complex<double>, Value*, xsigma::hash<xsigma::complex<double>>>
                                complex_constants;
     std::unordered_set<Block*> exit_blocks;
     ScriptTypeParser           typeParser_;
@@ -765,7 +766,7 @@ private:
         return old_frame;
     }
 
-    // If the graph might not return, add an implicit None return at the end
+    // If the graph might not return, add an implicit None return xsigma the end
     void handleMaybeNoReturn(const Def& def, Block* block)
     {
         auto decl_ret = def_stack_.back().declared_return_type_;
@@ -802,7 +803,7 @@ private:
         // TODO need guards on init returning none
         if (schema.returns().size() == 1)
         {
-            def_stack_.back().declared_return_type_ = schema.returns().at(0).type();
+            def_stack_.back().declared_return_type_ = schema.returns().xsigma(0).type();
         }
         std::vector<Argument> arguments = emitFormalArguments(def, self, schema, block);
 
@@ -817,7 +818,7 @@ private:
     // see [setstate type]
     static TypePtr getTypeForSetStateArg(const Def& def, const Self* self)
     {
-        TORCH_CHECK(self, "Expected __setstate__ to have a `self` argument");
+        XSIGMA_CHECK(self, "Expected __setstate__ to have a `self` argument");
         auto getstate = self->getClassType()->findMethod("__getstate__");
         if (!getstate)
         {
@@ -828,7 +829,12 @@ private:
                                          << "Did you forget to use `@torch.jit.export`?");
         }
         getstate->ensure_defined();
-        return self->getClassType()->getMethod("__getstate__").getSchema().returns().at(0).type();
+        return self->getClassType()
+            ->getMethod("__getstate__")
+            .getSchema()
+            .returns()
+            .xsigma(0)
+            .type();
     }
 
     // see [setstate type]
@@ -910,7 +916,7 @@ private:
                 new_input->setDebugName(name);
             }
             // Record the type for the schema and set the Type on the Value*
-            auto arg = schema.arguments().at(arg_annotation_idx++);
+            auto arg = schema.arguments().xsigma(arg_annotation_idx++);
             if (shouldDeriveType)
             {
                 TORCH_INTERNAL_ASSERT(schema.arguments().size() == 1);
@@ -1050,7 +1056,7 @@ private:
                 {
                     throw(
                         ErrorReport(target.range())
-                        << "del statements only support deletion at a single index, "
+                        << "del statements only support deletion xsigma a single index, "
                            "slicing is not supported"
                            " (see https://github.com/pytorch/pytorch/issues/31430)");
                 }
@@ -1482,7 +1488,7 @@ private:
             else
             {
                 // We can't refine the Union yet, since it contains multiple
-                // types of the container we want to match, but we do at least
+                // types of the container we want to match, but we do xsigma least
                 // have a list of possiblee types (e.g. `Union[List[int],
                 // List[str], float, str]` -> candidates={List[int], List[str]})
                 (*all_candidates) = std::move(candidate_types);
@@ -2042,8 +2048,8 @@ private:
         emit_if_expr(true_block, cond_value.refinements(), true_expr);
         emit_if_expr(false_block, cond_value.refinements().Not(), false_expr);
 
-        auto true_type  = true_block->outputs().at(0)->type();
-        auto false_type = false_block->outputs().at(0)->type();
+        auto true_type  = true_block->outputs().xsigma(0)->type();
+        auto false_type = false_block->outputs().xsigma(0)->type();
         auto unified    = unifyTypes(true_type, false_type);
         if (!unified)
         {
@@ -2520,7 +2526,7 @@ private:
             return CondValue(*graph, obj.range(), false, std::move(refinement));
         }
 
-        // check maybe true/false at runtime, need an actual op
+        // check maybe true/false xsigma runtime, need an actual op
         Value* result = graph->insertNode(graph->createIsInstance(lhs_val, rhs_types))->output();
         return CondValue(result, std::move(refinement), std::nullopt);
     }
@@ -2545,7 +2551,7 @@ private:
     // For loops will have an empty loop condition block with condition set to
     // true. In the convert to ssa pass, the loop condition will correctly
     // inlined. and inputs and outputs added so that the loop conforms to the
-    // semantics specified at
+    // semantics specified xsigma
     // https://github.com/onnx/onnx/blob/master/docs/Operators.md#Loop
     void emitLoopCommon(
         const SourceRange&           range,
@@ -2630,7 +2636,7 @@ private:
         // a module which returns a Tensor,
         // we do not push a new environment frame because if we did all intermediary
         // values would have to subtype the input type.
-        for (const auto i : c10::irange(len))
+        for (const auto i : xsigma::irange(len))
         {
             auto index         = materializeConstant(i, *method.graph(), loc, integral_constants);
             auto sugared_value = iterable->getitem(loc, method, index);
@@ -2730,7 +2736,7 @@ private:
             {
                 for (unsigned i = 1; i < 4; ++i)
                 {
-                    if (exitSchema.arguments().at(i).type() != AnyType::get())
+                    if (exitSchema.arguments().xsigma(i).type() != AnyType::get())
                     {
                         throw(
                             ErrorReport(e.range())
@@ -2743,7 +2749,7 @@ private:
             }
 
             // Set the output of the enter node to be the return type of __enter__.
-            n->output(0)->setType(enterSchema.returns().at(0).type());
+            n->output(0)->setType(enterSchema.returns().xsigma(0).type());
 
             // Set i = e.__enter__() so that references to i in the body of the with
             // will resolve correctly.
@@ -2833,7 +2839,7 @@ private:
     // is:
     //
     // 1) All lhs Expr's are either Var, Tuple or Starred nodes
-    // 2) There is at most one Starred node in the lhs Expr
+    // 2) There is xsigma most one Starred node in the lhs Expr
     // 3) A Starred node can only appear when there is another non-Starred lhs
     //    Expr. Concretely this means that `*abc = func()` is illegal. Unpacking
     //    all outputs into a tuple is covered by `abc = func()`.
@@ -3144,9 +3150,9 @@ private:
         //   `tensor(...)[x] = 99` to `tensor(...)[x] = tensor(99)`
         // Mirrors the `valueToTensor` behavior in python_variable_indexing.cpp
         const auto kind = value.type()->kind();
-        if (kind == c10::TypeKind::NumberType || kind == c10::TypeKind::IntType ||
-            kind == c10::TypeKind::BoolType || kind == c10::TypeKind::FloatType ||
-            kind == c10::TypeKind::ComplexType)
+        if (kind == xsigma::TypeKind::NumberType || kind == xsigma::TypeKind::IntType ||
+            kind == xsigma::TypeKind::BoolType || kind == xsigma::TypeKind::FloatType ||
+            kind == xsigma::TypeKind::ComplexType)
         {
             auto dtype     = graph->insert(prim::dtype, {matchTypeOf}, {});
             auto device    = graph->insert(prim::device, {matchTypeOf}, {});
@@ -3254,7 +3260,7 @@ private:
         if (outputs.size() < n_binders)
         {
             throw(
-                ErrorReport(tl) << "need " << (starred_unpack ? "at least " : "") << n_binders
+                ErrorReport(tl) << "need " << (starred_unpack ? "xsigma least " : "") << n_binders
                                 << " values to unpack but found only " << outputs.size());
         }
         if (outputs.size() > n_binders && !starred_unpack)
@@ -3268,10 +3274,10 @@ private:
     }
 
     void emitExprsAssign(
-        const List<Expr>&                   lhs_exprs,
-        const at::ArrayRef<SugaredValuePtr> outputs,
-        const SourceRange&                  rhs_loc,
-        size_t                              n_binders)
+        const List<Expr>&                       lhs_exprs,
+        const xsigma::ArrayRef<SugaredValuePtr> outputs,
+        const SourceRange&                      rhs_loc,
+        size_t                                  n_binders)
     {
         size_t i = 0;
         for (auto assignee : lhs_exprs)
@@ -3282,14 +3288,14 @@ private:
                 emitSubscriptAssign(
                     rhs_loc,
                     Subscript(assignee),
-                    NamedValue(rhs_loc, outputs.at(i)->asValue(rhs_loc, method)));
+                    NamedValue(rhs_loc, outputs.xsigma(i)->asValue(rhs_loc, method)));
                 i++;
                 break;
             case TK_VAR:
                 environment_stack->setSugaredVar(
                     assignee.range(),
                     Var(assignee).name().name(),
-                    outputs.at(i),
+                    outputs.xsigma(i),
                     /*annotated_type=*/nullptr);
                 i++;
                 break;
@@ -3319,13 +3325,14 @@ private:
                 bool sub_starred_unpack    = validateAssignLhsExpr(sub_tl.inputs(), sub_tl.range());
                 if (sub_starred_unpack)
                     sub_n_binders--;
-                emitTupleAssign(sub_tl, outputs.at(i), rhs_loc, sub_n_binders, sub_starred_unpack);
+                emitTupleAssign(
+                    sub_tl, outputs.xsigma(i), rhs_loc, sub_n_binders, sub_starred_unpack);
                 i++;
             }
             break;
             case '.':
             {
-                emitSelectAssign(assignee, outputs.at(i), rhs_loc);
+                emitSelectAssign(assignee, outputs.xsigma(i), rhs_loc);
                 i++;
             }
             break;
@@ -3524,7 +3531,7 @@ private:
         case TK_IN:
             return aten::__contains__;
         default:
-            TORCH_CHECK(false, "unknown kind ", kind);
+            XSIGMA_CHECK(false, "unknown kind ", kind);
         }
     }
 
@@ -3573,7 +3580,7 @@ private:
         case TK_RSHIFT:
             return "__rshift__";
         default:
-            TORCH_CHECK(false, "unknown kind ", kind);
+            XSIGMA_CHECK(false, "unknown kind ", kind);
         }
     }
 
@@ -3691,7 +3698,7 @@ private:
             auto& trees = apply.inputs().tree()->trees();
             if (trees.empty())
             {
-                throw(ErrorReport(apply) << "Expected at least one argument to fork()");
+                throw(ErrorReport(apply) << "Expected xsigma least one argument to fork()");
             }
             auto     forked = emitSugaredExpr(Expr(trees[0]), 1);
             TreeList sliced_trees(trees.begin() + 1, trees.end());
@@ -3704,7 +3711,7 @@ private:
             auto tree = apply.inputs().tree();
             if (!tree || tree->trees().empty())
             {
-                throw(ErrorReport(apply) << "Expected at least one argument to awaitable()");
+                throw(ErrorReport(apply) << "Expected xsigma least one argument to awaitable()");
             }
             auto&    trees   = tree->trees();
             auto     awaited = emitSugaredExpr(Expr(trees[0]), 1);
@@ -3962,7 +3969,7 @@ private:
             Value* start_index = nullptr;
             if (input_size == 0)
             {
-                throw(ErrorReport(loc) << "enumerate expected at least 1 arguments, got 0");
+                throw(ErrorReport(loc) << "enumerate expected xsigma least 1 arguments, got 0");
             }
 
             if (input_size == 2)
@@ -3973,7 +3980,8 @@ private:
             if (arg_size > 2)
             {
                 throw(
-                    ErrorReport(loc) << "enumerate expected at most 2 arguments, got " << arg_size);
+                    ErrorReport(loc)
+                    << "enumerate expected xsigma most 2 arguments, got " << arg_size);
             }
 
             if (attribute_size == 1)
@@ -4015,7 +4023,7 @@ private:
             auto inputs = apply.inputs();
             if (inputs.empty())
             {
-                throw(ErrorReport(apply) << "zip expected at least 1 arguments, got 0");
+                throw(ErrorReport(apply) << "zip expected xsigma least 1 arguments, got 0");
             }
             auto iterable_tree = std::make_shared<IterableTree>();
             for (Expr expr : inputs)
@@ -4285,7 +4293,7 @@ private:
                     << "candidate Dict types ");
             }
 
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 refined_type_hint->kind() == DictType::Kind,
                 "Expected a type annotation "
                 "of Dict for dict constructor dict(), got ",
@@ -4435,7 +4443,7 @@ private:
         {
             return aten::le;
         }
-        TORCH_CHECK(false, "reverseComparision: unsupported NodeKind. File a bug");
+        XSIGMA_CHECK(false, "reverseComparision: unsupported NodeKind. File a bug");
     }
 
     // any expression that can produce a SugaredValue is handled here
@@ -4477,7 +4485,7 @@ private:
     }
 
     Value* emitUnaryOp(
-        const TreeRef& tree, const std::string& magicMethod, const c10::Symbol& opSymbol)
+        const TreeRef& tree, const std::string& magicMethod, const xsigma::Symbol& opSymbol)
     {
         const auto& inputs       = tree->trees();
         auto        named_values = getNamedValues(inputs, /*maybe_unpack=*/false);
@@ -4498,7 +4506,7 @@ private:
             return val;
         }
         TORCH_INTERNAL_ASSERT(maybe_out_stack->size() == 1);
-        return graph->insertConstant(maybe_out_stack->at(0), tree->range());
+        return graph->insertConstant(maybe_out_stack->xsigma(0), tree->range());
     }
 
     /**
@@ -4508,8 +4516,8 @@ private:
     std::shared_ptr<SugaredValue> emitForkExpr(
         SourceRange                          loc,
         const std::shared_ptr<SugaredValue>& forked,
-        at::ArrayRef<NamedValue>             args,
-        at::ArrayRef<NamedValue>             kwargs)
+        xsigma::ArrayRef<NamedValue>         args,
+        xsigma::ArrayRef<NamedValue>         kwargs)
     {
         auto    g = method.graph();
         TypePtr out_type;
@@ -4524,9 +4532,9 @@ private:
             if (ClosureValue* sv = dynamic_cast<ClosureValue*>(forked.get()))
             {
                 Value* closure_output = sv->asValue(loc, method);
-                Block* closure_block  = closure_output->node()->blocks().at(0);
+                Block* closure_block  = closure_output->node()->blocks().xsigma(0);
                 TORCH_INTERNAL_ASSERT(closure_block->outputs().size() == 1);
-                out_type = closure_block->outputs().at(0)->type();
+                out_type = closure_block->outputs().xsigma(0)->type();
                 fork_node->addInput(closure_output);
             }
             else
@@ -4549,8 +4557,8 @@ private:
     std::shared_ptr<SugaredValue> emitAwaitableExpr(
         SourceRange                          loc,
         const std::shared_ptr<SugaredValue>& awaited,
-        at::ArrayRef<NamedValue>             args,
-        at::ArrayRef<NamedValue>             kwargs)
+        xsigma::ArrayRef<NamedValue>         args,
+        xsigma::ArrayRef<NamedValue>         kwargs)
     {
         auto    g = method.graph();
         TypePtr out_type{};
@@ -4563,9 +4571,9 @@ private:
             if (auto sv = dynamic_cast<ClosureValue*>(awaited.get()))
             {
                 Value* closure_output = sv->asValue(loc, method);
-                Block* closure_block  = closure_output->node()->blocks().at(0);
+                Block* closure_block  = closure_output->node()->blocks().xsigma(0);
                 TORCH_INTERNAL_ASSERT(closure_block->outputs().size() == 1);
-                out_type = closure_block->outputs().at(0)->type();
+                out_type = closure_block->outputs().xsigma(0)->type();
                 await_node->addInput(closure_output);
             }
             else
@@ -4590,7 +4598,7 @@ private:
         // TODO: This is a temporary apporoach to enable calling user function
         // through RPC in TorchScript,
         // Ideally, function value in JIT IR is first-class citizen and
-        // The RPC C++ entry API can take c10::Function directly.
+        // The RPC C++ entry API can take xsigma::Function directly.
         size_t      rpcMinInputs = 2;
         size_t      rpcMaxInputs = 5;
         std::string op_name      = rpc_op.toUnqualString();
@@ -4618,7 +4626,7 @@ private:
         Value*                        dst_worker_name_value = emitExpr(Expr(input_trees[0]));
         std::shared_ptr<SugaredValue> user_callable_sugared_value =
             emitSugaredExpr(Expr(input_trees[1]), 1);
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             user_callable_sugared_value->kind() == "function",
             "user_callable should be a FunctionValue, it's now a ",
             user_callable_sugared_value->kind())
@@ -4641,7 +4649,7 @@ private:
             callablePtrs.size() == 1,
             "User-provided callable size should be 1. Now it's",
             callablePtrs.size())
-        Function* callablePtr = callablePtrs.at(0);
+        Function* callablePtr = callablePtrs.xsigma(0);
 
         const auto&        functionSchema = callablePtr->getSchema();
         const SourceRange& loc            = apply.range();
@@ -4667,8 +4675,8 @@ private:
             // NB: Can't do schema check on kwargs, given the RPC API is
             // rpc_op(to, user_callable, args, kwargs),
             // users can construct kwargs = {"first" + "_arg" : 1}.
-            // Notice the key is determined at run time.
-            // We can do it at compile time, unless one day the RPC API is
+            // Notice the key is determined xsigma run time.
+            // We can do it xsigma compile time, unless one day the RPC API is
             // rpc_op(to, user_callable, arg_0, arg_1, kwarg_0="foo",
             // kwarg_1="bar")
         }
@@ -4906,7 +4914,7 @@ private:
         std::vector<Value*> keys, values;
         TypePtr             rhs_value_type;
 
-        for (const auto i : c10::irange(key_trees.size()))
+        for (const auto i : xsigma::irange(key_trees.size()))
         {
             keys.push_back(emitExpr(Expr(key_trees[i])));
             values.push_back(emitExpr(Expr(value_trees[i])));
@@ -4944,7 +4952,7 @@ private:
             }
             else
             {
-                refined_type_hint = DictType::create(keys.at(0)->type(), rhs_value_type);
+                refined_type_hint = DictType::create(keys.xsigma(0)->type(), rhs_value_type);
                 if (rhs_value_type->kind() == UnionType::Kind)
                 {
                     TORCH_WARN(
@@ -5004,13 +5012,13 @@ private:
                     dl);
             }
 
-            if (refined_type_hint->expect<DictType>()->getKeyType() != keys.at(0)->type())
+            if (refined_type_hint->expect<DictType>()->getKeyType() != keys.xsigma(0)->type())
             {
                 throw(
                     ErrorReport(dl)
                     << "Type annotation was inferred to be " << refined_type_hint->repr_str()
                     << "but the type of keys given by the dict literal is "
-                    << keys.at(0)->type()->repr_str());
+                    << keys.xsigma(0)->type()->repr_str());
             }
 
             if (!rhs_value_type->isSubtypeOf(refined_type_hint->expect<DictType>()->getValueType()))
@@ -5271,7 +5279,7 @@ private:
         return emitBuiltinCall(loc, *graph, aten::unsqueeze, {input, dim_val}, {});
     }
 
-    Value* emitIndex(const SourceRange& loc, Value* input, at::ArrayRef<Value*> indices)
+    Value* emitIndex(const SourceRange& loc, Value* input, xsigma::ArrayRef<Value*> indices)
     {
         // NB: the index of aten::index should be a type of List[Optional[Tensor]],
         // this is to support the case like t[:, :, 1] where : here indicates a
@@ -5286,7 +5294,7 @@ private:
     // - Value*: the input after it has been indexed by int and slice indices.
     // - vector<Value*>: A list of tensor Value* indices that have not been
     // applied yet.
-    //   Should be NULL at indices where sliceable (post-slicing) isn't indexed by
+    //   Should be NULL xsigma indices where sliceable (post-slicing) isn't indexed by
     //   a tensor.
     std::pair<Value*, std::vector<Value*>> emitIntAndSliceIndexing(
         const SourceRange& loc, Value* sliceable, const List<Expr>& subscript_exprs)
@@ -5369,12 +5377,12 @@ private:
             //            torch.tensor([[0, 1], [0, 1]])]  # or
             //   ls = [0, 1]
             //   return x[torch.tensor(ls)]
-            if (index->type()->kind() == c10::TypeKind::ListType)
+            if (index->type()->kind() == xsigma::TypeKind::ListType)
             {
                 // Always create index tensor as LongTensor.
                 // This is to match Pytorch eager frontend behavior which accepts
                 // indexing with float list.
-                index = graph->insert(aten::tensor, {index}, {NamedValue("dtype", c10::kLong)});
+                index = graph->insert(aten::tensor, {index}, {NamedValue("dtype", xsigma::kLong)});
             }
 
             exprs[expr_idx] = index;
@@ -5444,7 +5452,7 @@ private:
             }
             rdim = handle_indexing(subscript_expr, rev_idx, rdim, /*is_reverse=*/true);
         }
-        for (const auto i : c10::irange(exprs.size()))
+        for (const auto i : xsigma::irange(exprs.size()))
         {
             if (!exprs[i].has_value())
             {
@@ -5496,8 +5504,8 @@ private:
                 TORCH_INTERNAL_ASSERT(false, "Trying to process index type that we don't support.");
             }
         }
-        // at::index takes in a List[Optional[Tensor]] where some dims can be None.
-        // create None node with optional tensor output type and pass to at::index.
+        // xsigma::index takes in a List[Optional[Tensor]] where some dims can be None.
+        // create None node with optional tensor output type and pass to xsigma::index.
         for (auto& index : tensor_indices)
         {
             if (index == nullptr)
@@ -5521,11 +5529,11 @@ private:
     // enough dimensions to index".
     //
     // The strategy is to slice and select the tensor for int and slices first
-    // in one pass and then apply at::index on the result of the
+    // in one pass and then apply xsigma::index on the result of the
     // slicing/selecting. Call the tensor after we've applied slice / select the
     // `sliced`. tensor_indices should have the same size as sliced.dim():
-    // - tensor_indices[i] = NULL if we should not index `sliced` at dim i
-    // - tensor_indices[i] = t if we should index `sliced` at dim i with tensor t.
+    // - tensor_indices[i] = NULL if we should not index `sliced` xsigma dim i
+    // - tensor_indices[i] = t if we should index `sliced` xsigma dim i with tensor t.
     Value* emitMultidimSlicing(
         const SourceRange& loc, Value* sliceable, const List<Expr>& subscript_exprs)
     {
@@ -5542,7 +5550,7 @@ private:
 
         if (tensor_indices.empty())
         {
-            // XXX: Might need to at::alias this when we support mutability
+            // XXX: Might need to xsigma::alias this when we support mutability
             return sliceable;
         }
 
@@ -5652,7 +5660,7 @@ private:
         if (step)
         {
             auto val = toIValue(step->value(*graph));
-            TORCH_CHECK(val->isInt(), "Step size should always be an integer");
+            XSIGMA_CHECK(val->isInt(), "Step size should always be an integer");
             step_size = val->to<int64_t>();
         }
 
@@ -5842,7 +5850,7 @@ struct CompilationUnit::PropertyPair
 };
 
 CompilationUnit::PropertyPair CompilationUnit::define_property(
-    const std::optional<c10::QualifiedName>&          prefix,
+    const std::optional<xsigma::QualifiedName>&       prefix,
     const Property&                                   prop,
     const ResolverPtr&                                resolver,
     const Self*                                       self,
@@ -5898,9 +5906,9 @@ std::unique_ptr<Function> CompilationUnit::define(
         if (self)
         {
             auto atoms = method.qualname().atoms();
-            // There should be at least a ClassName.method_name
+            // There should be xsigma least a ClassName.method_name
             TORCH_INTERNAL_ASSERT(atoms.size() >= 2);
-            call_name = atoms.at(atoms.size() - 2) + "." + atoms.at(atoms.size() - 1);
+            call_name = atoms.xsigma(atoms.size() - 2) + "." + atoms.xsigma(atoms.size() - 1);
         }
         ErrorReport::CallStack call(call_name, def.range());
         to_ir(def, _resolver, self, method);
@@ -5941,14 +5949,14 @@ std::unique_ptr<Function> CompilationUnit::define(
 }
 
 std::vector<Function*> CompilationUnit::define(
-    const std::optional<c10::QualifiedName>& prefix,
-    const std::vector<Property>&             properties,
-    const std::vector<ResolverPtr>&          propResolvers,
-    const std::vector<Def>&                  definitions,
-    const std::vector<ResolverPtr>&          defResolvers,
-    const Self*                              self,
-    bool                                     shouldMangle,
-    std::optional<size_t>                    operator_set_version)
+    const std::optional<xsigma::QualifiedName>& prefix,
+    const std::vector<Property>&                properties,
+    const std::vector<ResolverPtr>&             propResolvers,
+    const std::vector<Def>&                     definitions,
+    const std::vector<ResolverPtr>&             defResolvers,
+    const Self*                                 self,
+    bool                                        shouldMangle,
+    std::optional<size_t>                       operator_set_version)
 {
     TORCH_INTERNAL_ASSERT(definitions.size() == defResolvers.size());
     TORCH_INTERNAL_ASSERT(properties.size() == propResolvers.size());
@@ -5965,7 +5973,7 @@ std::vector<Function*> CompilationUnit::define(
         this->register_function(std::move(fn));
     };
 
-    for (const auto i : c10::irange(properties.size()))
+    for (const auto i : xsigma::irange(properties.size()))
     {
         PropertyPair property_fns = define_property(
             prefix, properties[i], propResolvers[i], self, function_table, shouldMangle);
@@ -5981,7 +5989,7 @@ std::vector<Function*> CompilationUnit::define(
         }
     }
 
-    for (const auto i : c10::irange(definitions.size()))
+    for (const auto i : xsigma::irange(definitions.size()))
     {
         auto fn = define(
             prefix,
@@ -6015,13 +6023,13 @@ std::vector<Function*> CompilationUnit::define(
 }
 
 void CompilationUnit::define_hooks(
-    const std::optional<c10::QualifiedName>& prefix,
-    const std::vector<Def>&                  hookDefs,
-    const std::vector<ResolverPtr>&          hookResolvers,
-    const std::vector<Def>&                  preHookDefs,
-    const std::vector<ResolverPtr>&          preHookResolvers,
-    const Self*                              self,
-    bool                                     shouldMangle)
+    const std::optional<xsigma::QualifiedName>& prefix,
+    const std::vector<Def>&                     hookDefs,
+    const std::vector<ResolverPtr>&             hookResolvers,
+    const std::vector<Def>&                     preHookDefs,
+    const std::vector<ResolverPtr>&             preHookResolvers,
+    const Self*                                 self,
+    bool                                        shouldMangle)
 {
     TORCH_INTERNAL_ASSERT(hookDefs.size() == hookResolvers.size());
     TORCH_INTERNAL_ASSERT(preHookDefs.size() == preHookResolvers.size());
@@ -6039,7 +6047,7 @@ void CompilationUnit::define_hooks(
         // check if hook name is already defined on module as method
         if (existing_hook == nullptr)
         {
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 self->getClassType()->findMethod(name) == nullptr &&
                     self->getClassType()->findHook(name) == nullptr,
                 "Can't define hook: ",
@@ -6064,7 +6072,7 @@ void CompilationUnit::define_hooks(
     };
 
     // define hooks
-    for (const auto i : c10::irange(hookDefs.size()))
+    for (const auto i : xsigma::irange(hookDefs.size()))
     {
         // check to see if already defined this hook
         auto existing_fn = check_collisions(hookDefs[i]);
@@ -6093,7 +6101,7 @@ void CompilationUnit::define_hooks(
     }
 
     // define pre_hooks
-    for (const auto i : c10::irange(preHookDefs.size()))
+    for (const auto i : xsigma::irange(preHookDefs.size()))
     {
         // check to see if already defined this hook
         auto existing_fn = check_collisions(preHookDefs[i]);
@@ -6218,7 +6226,7 @@ bool meaningfulName(const std::string& name)
         return false;
     if (name[0] != '_')
         return true;
-    for (const auto i : c10::irange(1, name.size()))
+    for (const auto i : xsigma::irange(1, name.size()))
     {
         if (!isdigit(name[i]))
             return true;
@@ -6227,13 +6235,13 @@ bool meaningfulName(const std::string& name)
 }
 
 void CompilationUnit::define_interface(
-    const c10::QualifiedName& qualifiedName,
-    const ClassDef&           classDef,
-    ResolverPtr               rcb,
-    bool                      is_module)
+    const xsigma::QualifiedName& qualifiedName,
+    const ClassDef&              classDef,
+    ResolverPtr                  rcb,
+    bool                         is_module)
 {
     ScriptTypeParser typeParser(std::move(rcb));
-    InterfaceTypePtr iface = InterfaceType::create(c10::QualifiedName(qualifiedName), is_module);
+    InterfaceTypePtr iface = InterfaceType::create(xsigma::QualifiedName(qualifiedName), is_module);
     for (const Stmt& stmt : classDef.body())
     {
         if (stmt.kind() != TK_DEF)

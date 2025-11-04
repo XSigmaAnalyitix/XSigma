@@ -4,7 +4,6 @@
 
 #include <ATen/ScalarOps.h>
 #include <ATen/core/Tensor.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/Dtype.h>
 #include <torch/csrc/DynamicTypes.h>
 #include <torch/csrc/Layout.h>
@@ -14,6 +13,7 @@
 #include <torch/csrc/python_headers.h>
 #include <torch/csrc/utils/python_numbers.h>
 #include <torch/csrc/utils/tensor_qschemes.h>
+#include <xsigma/util/irange.h>
 
 #include <initializer_list>
 #include <tuple>
@@ -33,7 +33,7 @@ inline PyObject* wrap(bool value)
     }
 }
 
-inline PyObject* wrap(c10::DeviceIndex value)
+inline PyObject* wrap(xsigma::DeviceIndex value)
 {
     return THPUtils_packDeviceIndex(value);
 }
@@ -48,7 +48,7 @@ inline PyObject* wrap(double value)
     return PyFloat_FromDouble(value);
 }
 
-inline PyObject* wrap(c10::complex<double> value)
+inline PyObject* wrap(xsigma::complex<double> value)
 {
     // I could probably also use FromComplex with a reinterpret cast,
     // but... eh.
@@ -65,7 +65,7 @@ inline PyObject* wrap(THPDtype* dtype)
     return Py_NewRef(dtype);
 }
 
-inline PyObject* wrap(at::ScalarType scalarType)
+inline PyObject* wrap(xsigma::ScalarType scalarType)
 {
     return Py_NewRef(getTHPDtype(scalarType));
 }
@@ -75,53 +75,53 @@ inline PyObject* wrap(THPLayout* layout)
     return Py_NewRef(layout);
 }
 
-inline PyObject* wrap(at::Layout layout)
+inline PyObject* wrap(xsigma::Layout layout)
 {
     return Py_NewRef(getTHPLayout(layout));
 }
 
-inline PyObject* wrap(const at::Tensor& tensor)
+inline PyObject* wrap(const xsigma::Tensor& tensor)
 {
     return THPVariable_Wrap(tensor);
 }
 
-inline PyObject* wrap(const at::Scalar& scalar)
+inline PyObject* wrap(const xsigma::Scalar& scalar)
 {
     return wrap(scalar_to_tensor(scalar));
 }
 
-inline PyObject* wrap(at::QScheme qscheme)
+inline PyObject* wrap(xsigma::QScheme qscheme)
 {
     auto* thp_qscheme = torch::utils::getTHPQScheme(qscheme);
     Py_INCREF(thp_qscheme);
     return thp_qscheme;
 }
 
-inline PyObject* wrap(at::TensorList tl)
+inline PyObject* wrap(xsigma::TensorList tl)
 {
     auto r = THPObjectPtr{PyTuple_New(static_cast<Py_ssize_t>(tl.size()))};
     if (!r)
         throw python_error();
-    for (const auto i : c10::irange(tl.size()))
+    for (const auto i : xsigma::irange(tl.size()))
     {
         PyTuple_SET_ITEM(r.get(), i, wrap(tl[i]));
     }
     return r.release();
 }
 
-inline PyObject* wrap(at::IntArrayRef list)
+inline PyObject* wrap(xsigma::IntArrayRef list)
 {
     auto r = THPObjectPtr{PyTuple_New(static_cast<Py_ssize_t>(list.size()))};
     if (!r)
         throw python_error();
-    for (const auto i : c10::irange(list.size()))
+    for (const auto i : xsigma::irange(list.size()))
     {
         PyTuple_SET_ITEM(r.get(), i, wrap(list[i]));
     }
     return r.release();
 }
 
-inline PyObject* wrap(at::Stream stream)
+inline PyObject* wrap(xsigma::Stream stream)
 {
     return THPStream_Wrap(stream);
 }

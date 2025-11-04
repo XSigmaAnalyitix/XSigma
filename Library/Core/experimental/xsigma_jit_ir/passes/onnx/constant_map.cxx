@@ -1,7 +1,7 @@
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/onnx/constant_map.h>
 #include <torch/csrc/jit/passes/onnx/helper.h>
+#include <xsigma/util/irange.h>
 
 #include <iostream>
 #include <sstream>
@@ -59,7 +59,8 @@ bool ConstantValueMap::GetAllGraphInputsReliableComputed()
     return ConstantValueMap::getInstance().allGraphInputsReliableComputed;
 }
 
-void ConstantValueMap::SetShape(const std::string& tensorName, const c10::SymbolicShape& shapeValue)
+void ConstantValueMap::SetShape(
+    const std::string& tensorName, const xsigma::SymbolicShape& shapeValue)
 {
     ConstantValueMap::getInstance().shapeMap[tensorName]           = shapeValue;
     ConstantValueMap::getInstance().useInferredTypeMap[tensorName] = true;
@@ -71,7 +72,7 @@ bool ConstantValueMap::HasShape(const std::string& tensorName)
            ConstantValueMap::getInstance().shapeMap.end();
 }
 
-std::optional<c10::SymbolicShape> ConstantValueMap::GetShape(const std::string& tensorName)
+std::optional<xsigma::SymbolicShape> ConstantValueMap::GetShape(const std::string& tensorName)
 {
     if (!HasShape(tensorName))
     {
@@ -80,7 +81,7 @@ std::optional<c10::SymbolicShape> ConstantValueMap::GetShape(const std::string& 
     return ConstantValueMap::getInstance().shapeMap[tensorName];
 }
 
-void ConstantValueMap::SetValue(const std::string& tensorName, const at::Tensor& value)
+void ConstantValueMap::SetValue(const std::string& tensorName, const xsigma::Tensor& value)
 {
     ConstantValueMap::getInstance().tensorValueMap[tensorName] = value;
 }
@@ -91,7 +92,7 @@ bool ConstantValueMap::HasValue(const std::string& tensorName)
            ConstantValueMap::getInstance().tensorValueMap.end();
 }
 
-std::optional<at::Tensor> ConstantValueMap::GetValue(const std::string& tensorName)
+std::optional<xsigma::Tensor> ConstantValueMap::GetValue(const std::string& tensorName)
 {
     if (!HasValue(tensorName))
     {
@@ -106,7 +107,7 @@ void ConstantValueMap::EraseValue(const std::string& tensorName)
 }
 
 std::vector<int64_t> ConstantValueMap::GetCompleteShapeInto1DInt64Vector(
-    const c10::SymbolicShape& shape)
+    const xsigma::SymbolicShape& shape)
 {
     TORCH_INTERNAL_ASSERT(shape.isComplete());
     std::vector<int64_t> shape_value;
@@ -179,11 +180,11 @@ std::optional<std::vector<int64_t>> ConstantValueMap::GetShapeInto1DInt64VectorW
 std::vector<int64_t> ConstantValueMap::GetValueInto1DInt64Vector(const std::string& value_name)
 {
     auto                 value         = ConstantValueMap::GetValue(value_name).value();
-    auto                 value_int64_t = value.toType(at::ScalarType::Long);
+    auto                 value_int64_t = value.toType(xsigma::ScalarType::Long);
     std::vector<int64_t> value_vector;
     value_vector.reserve(value_int64_t.size(0));
     auto value_size_a = value_int64_t.accessor<int64_t, 1>();
-    for (const auto i : c10::irange(value_int64_t.size(0)))
+    for (const auto i : xsigma::irange(value_int64_t.size(0)))
     {
         value_vector.emplace_back(static_cast<int64_t>(value_size_a[i]));
     }
@@ -231,7 +232,7 @@ std::optional<bool> ConstantValueMap::GetUseInferredType(const std::string& tens
 }
 
 void ConstantValueMap::SetShapeValue(
-    const std::string& tensorName, const c10::SymbolicShape& shapeValue)
+    const std::string& tensorName, const xsigma::SymbolicShape& shapeValue)
 {
     ConstantValueMap::getInstance().shapeValueMap[tensorName] = shapeValue;
 }
@@ -242,7 +243,7 @@ bool ConstantValueMap::HasShapeValue(const std::string& tensorName)
            ConstantValueMap::getInstance().shapeValueMap.end();
 }
 
-std::optional<c10::SymbolicShape> ConstantValueMap::GetShapeValue(const std::string& tensorName)
+std::optional<xsigma::SymbolicShape> ConstantValueMap::GetShapeValue(const std::string& tensorName)
 {
     if (!HasShapeValue(tensorName))
     {

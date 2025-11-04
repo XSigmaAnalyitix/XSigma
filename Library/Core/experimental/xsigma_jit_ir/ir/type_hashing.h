@@ -9,13 +9,13 @@ namespace torch::jit
 struct TORCH_API HashType
 {
     size_t operator()(const TypePtr& type) const;
-    size_t operator()(const c10::ConstTypePtr& type) const;
+    size_t operator()(const xsigma::ConstTypePtr& type) const;
 };
 
 struct EqualType
 {
     bool operator()(const TypePtr& a, const TypePtr& b) const;
-    bool operator()(const c10::ConstTypePtr& a, const c10::ConstTypePtr& b) const;
+    bool operator()(const xsigma::ConstTypePtr& a, const xsigma::ConstTypePtr& b) const;
 };
 
 }  // namespace torch::jit

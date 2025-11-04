@@ -1,11 +1,12 @@
 #pragma once
 
-#include <c10/util/Exception.h>
-#include <c10/util/Logging.h>
 #include <torch/nativert/graph/Graph.h>
+#include <xsigma/util/Logging.h>
 
 #include <functional>
 #include <map>
+
+#include "util/exception.h"
 namespace torch::nativert
 {
 
@@ -70,7 +71,7 @@ public:
     const GraphPass& get_pass(const GraphPassIdentifier& name)
     {
         auto it = registry_.find(name);
-        TORCH_CHECK(it != registry_.end(), "Pass ", name, " not registered to get");
+        XSIGMA_CHECK(it != registry_.end(), "Pass ", name, " not registered to get");
         return it->second;
     }
 

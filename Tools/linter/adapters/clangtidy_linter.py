@@ -59,7 +59,7 @@ class LintMessage(NamedTuple):
     description: str | None
 
 
-# c10/core/DispatchKey.cpp:281:26: error: 'k' used after it was moved [bugprone-use-after-move]
+# xsigma/core/DispatchKey.cpp:281:26: error: 'k' used after it was moved [bugprone-use-after-move]
 RESULTS_RE: re.Pattern[str] = re.compile(
     r"""(?mx)
     ^

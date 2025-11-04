@@ -18,7 +18,7 @@ namespace torch::jit
 namespace
 {
 
-using Tensor = at::Tensor;
+using Tensor = xsigma::Tensor;
 
 bool supportedLinearNode(Node* n)
 {
@@ -42,9 +42,9 @@ bool FoldFrozenLinearBatchnorm(Block* b)
             graph_modified |= FoldFrozenLinearBatchnorm(block);
         }
 
-        if (n->kind() == aten::batch_norm && supportedLinearNode(n->inputs().at(0)->node()))
+        if (n->kind() == aten::batch_norm && supportedLinearNode(n->inputs().xsigma(0)->node()))
         {
-            auto linear = n->inputs().at(0)->node();
+            auto linear = n->inputs().xsigma(0)->node();
             auto bn     = n;
 
             if (nonConstantParameters(linear) || nonConstantParameters(bn))
@@ -89,16 +89,16 @@ bool FoldFrozenLinearBatchnorm(Block* b)
             Tensor linear_b;
             if (linear->namedInput("bias")->type() == NoneType::get())
             {
-                at::ScalarType bias_dtype    = bn_rm.scalar_type();
-                at::ScalarType weight_dtype  = linear_w.scalar_type();
-                at::DeviceType weight_device = linear_w.device().type();
-                if (weight_device == at::kCUDA &&
-                    (weight_dtype == at::kHalf || weight_dtype == at::kBFloat16) &&
-                    bias_dtype == at::kFloat)
+                xsigma::ScalarType bias_dtype    = bn_rm.scalar_type();
+                xsigma::ScalarType weight_dtype  = linear_w.scalar_type();
+                xsigma::DeviceType weight_device = linear_w.device().type();
+                if (weight_device == xsigma::kCUDA &&
+                    (weight_dtype == xsigma::kHalf || weight_dtype == xsigma::kBFloat16) &&
+                    bias_dtype == xsigma::kFloat)
                 {
                     bias_dtype = weight_dtype;
                 }
-                linear_b = at::zeros_like(bn_rm, at::TensorOptions().dtype(bias_dtype));
+                linear_b = xsigma::zeros_like(bn_rm, xsigma::TensorOptions().dtype(bias_dtype));
             }
             else
             {
@@ -107,7 +107,7 @@ bool FoldFrozenLinearBatchnorm(Block* b)
             Tensor bn_w;
             if (bn->namedInput("weight")->type() == NoneType::get())
             {
-                bn_w = at::ones_like(bn_rm);
+                bn_w = xsigma::ones_like(bn_rm);
             }
             else
             {
@@ -116,7 +116,7 @@ bool FoldFrozenLinearBatchnorm(Block* b)
             Tensor bn_b;
             if (n->namedInput("bias")->type() == NoneType::get())
             {
-                bn_b = at::zeros_like(bn_rm);
+                bn_b = xsigma::zeros_like(bn_rm);
             }
             else
             {

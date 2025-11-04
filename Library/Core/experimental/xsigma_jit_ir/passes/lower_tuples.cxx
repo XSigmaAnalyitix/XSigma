@@ -1,12 +1,13 @@
 #include <ATen/core/functional.h>
-#include <c10/util/Exception.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/ir/constants.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/dead_code_elimination.h>
 #include <torch/csrc/jit/passes/lower_tuples.h>
+#include <xsigma/util/irange.h>
 
 #include <utility>
+
+#include "util/exception.h"
 
 namespace torch::jit
 {
@@ -35,11 +36,11 @@ std::unordered_set<Symbol> supported_ops = {
 // Flatten block inputs and insert a tuple construct in the block
 static void flattenTupleInLoopParams(Node* n, size_t index)
 {
-    auto         input = n->inputs().at(index);
+    auto         input = n->inputs().xsigma(index);
     TupleTypePtr tt    = input->type()->cast<TupleType>();
     TORCH_INTERNAL_ASSERT(tt);
 
-    Block* block      = n->blocks().at(0);
+    Block* block      = n->blocks().xsigma(0);
     Node*  block_node = n;
 
     auto new_construct_node =
@@ -48,11 +49,11 @@ static void flattenTupleInLoopParams(Node* n, size_t index)
     {
         auto new_block_in = block->insertInput(index + j);
         new_construct_node->addInput(new_block_in);
-        block_node->insertInput(index + j + 1, input->node()->inputs().at(j));
+        block_node->insertInput(index + j + 1, input->node()->inputs().xsigma(j));
     }
-    new_construct_node->output()->setType(block->inputs().at(index - 1)->type());
+    new_construct_node->output()->setType(block->inputs().xsigma(index - 1)->type());
     new_construct_node->copyMetadata(n);
-    block->inputs().at(index - 1)->replaceAllUsesWith(new_construct_node->output());
+    block->inputs().xsigma(index - 1)->replaceAllUsesWith(new_construct_node->output());
     block->eraseInput(index - 1);
     block_node->removeInput(index);
 }
@@ -61,7 +62,7 @@ static void flattenTupleInLoopParams(Node* n, size_t index)
 // node after the block node if there is an outer block.
 static void flattenTupleInBlockReturn(Node* n, size_t index)
 {
-    auto         input              = n->inputs().at(index);
+    auto         input              = n->inputs().xsigma(index);
     Block*       block              = n->owningBlock();
     Node*        block_node         = block->owningNode();
     Node*        new_construct_node = nullptr;
@@ -71,7 +72,7 @@ static void flattenTupleInBlockReturn(Node* n, size_t index)
     // 1- Add flattened tuple to block outputs
     for (size_t j = 0; j < tt->elements().size(); ++j)
     {
-        block->insertOutput(index + j + 1, input->node()->inputs().at(j));
+        block->insertOutput(index + j + 1, input->node()->inputs().xsigma(j));
     }
     block->eraseOutput(index);
 
@@ -83,7 +84,7 @@ static void flattenTupleInBlockReturn(Node* n, size_t index)
     // Loop block has an extra element (iter counter)
     if (block_node->kind() == prim::Loop)
         index = index - 1;
-    auto tuple_output = block_node->outputs().at(index);
+    auto tuple_output = block_node->outputs().xsigma(index);
     // When node has multiple blocks, do not flatten outputs on the second block
     // again
     if (!(tuple_output->type()->cast<TupleType>()))
@@ -111,12 +112,12 @@ void removeTupleNodes(Node* n, bool must_remove_tuples)
         return;
     }
     // tuple index has two inputs, tuple and index
-    auto construct_node = n->inputs().at(0)->node();
+    auto construct_node = n->inputs().xsigma(0)->node();
     if (construct_node->kind() != prim::TupleConstruct)
     {
         if (must_remove_tuples)
         {
-            TORCH_CHECK(false, n->kind().toQualString(), " not matched to tuple construct");
+            XSIGMA_CHECK(false, n->kind().toQualString(), " not matched to tuple construct");
         }
         return;
     }
@@ -124,18 +125,18 @@ void removeTupleNodes(Node* n, bool must_remove_tuples)
     {
         for (size_t i = 0; i < n->outputs().size(); ++i)
         {
-            n->outputs()[i]->replaceAllUsesWith(construct_node->inputs().at(i));
+            n->outputs()[i]->replaceAllUsesWith(construct_node->inputs().xsigma(i));
         }
     }
     else if (n->kind() == prim::TupleIndex)
     {
-        auto idx       = n->inputs().at(1);
+        auto idx       = n->inputs().xsigma(1);
         auto maybe_int = constant_as<int64_t>(idx);
         if (!maybe_int)
         {
             if (must_remove_tuples)
             {
-                TORCH_CHECK(false, n->sourceRange(), "tuple index with non-constant index");
+                XSIGMA_CHECK(false, n->sourceRange(), "tuple index with non-constant index");
             }
             return;
         }
@@ -149,7 +150,7 @@ void removeTupleNodes(Node* n, bool must_remove_tuples)
         // so we need to check bounds here
         if (int_idx >= 0 && static_cast<size_t>(int_idx) < len)
         {
-            n->output()->replaceAllUsesWith(construct_node->inputs().at(int_idx));
+            n->output()->replaceAllUsesWith(construct_node->inputs().xsigma(int_idx));
         }
     }
     else if (n->kind() == prim::TupleSlice)
@@ -159,7 +160,7 @@ void removeTupleNodes(Node* n, bool must_remove_tuples)
         int64_t             end = n->i(attr::end);
         for (int64_t i = beg; i < end; i += 1)
         {
-            values.push_back(construct_node->inputs().at(i));
+            values.push_back(construct_node->inputs().xsigma(i));
         }
         auto graph     = n->owningGraph();
         auto tuple_out = graph->createTuple(values);
@@ -213,7 +214,7 @@ static void flattenInputs(Node* n, Node* insert_point)
         auto input = n->inputs()[i];
         if (TupleTypePtr tt = input->type()->cast<TupleType>())
         {
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 (input->node()->kind() == prim::TupleConstruct),
                 "tuple use not matched to tuple construct. Instead found: ",
                 n->kind().toQualString());
@@ -233,7 +234,7 @@ static void flattenInputs(Node* n, Node* insert_point)
                 {
                     for (size_t j = 0; j < tt->elements().size(); ++j)
                     {
-                        n->insertInput(i + 1 + j, input->node()->inputs().at(j));
+                        n->insertInput(i + 1 + j, input->node()->inputs().xsigma(j));
                     }
                     n->removeInput(i);
                 }
@@ -273,12 +274,12 @@ static void flattenOutputs(Node* n, Node* insert_point)
         // (a, b, tup, c) -> (a, b, t0, t1, c)
         // and:
         //    tup = (t0, t1)
-        // is placed at the current insertion point
+        // is placed xsigma the current insertion point
         if (TupleTypePtr tt = output->type()->cast<TupleType>())
         {
             if (supported_ops.count(n->kind()) > 0)
             {
-                for (const auto j : c10::irange(tt->elements().size()))
+                for (const auto j : xsigma::irange(tt->elements().size()))
                 {
                     n->insertOutput(i + 1 + j)->setType(tt->elements()[j]);
                 }
@@ -354,7 +355,7 @@ static void EnsureNoTuples(ArrayRef<Value*> values)
 {
     for (Value* v : values)
     {
-        TORCH_CHECK(v->type()->kind() != TypeKind::TupleType, "Couldn't lower all tuples.");
+        XSIGMA_CHECK(v->type()->kind() != TypeKind::TupleType, "Couldn't lower all tuples.");
     }
 }
 

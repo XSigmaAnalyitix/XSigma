@@ -1,4 +1,3 @@
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/add_if_then_else.h>
 #include <torch/csrc/jit/passes/bailout_graph.h>
@@ -33,38 +32,39 @@
 #include <torch/csrc/jit/passes/update_differentiable_graph_requires_grad.h>
 #include <torch/csrc/jit/passes/utils/subgraph_utils.h>
 #include <torch/csrc/jit/runtime/profiling_graph_executor_impl.h>
+#include <xsigma/util/irange.h>
 
 #include <chrono>
 #include <mutex>
 #include <optional>
 
 // clang-format off
-C10_DEFINE_bool(
+XSIGMA_DEFINE_bool(
     torch_jit_enable_new_executor,
     true,
     "If this flag is set to false TorchScript will be using the legacy/original executor")
 
-C10_DEFINE_bool(
+XSIGMA_DEFINE_bool(
     torch_jit_disable_warning_prints,
     false,
     "Disables warning.warn prints in TorchScript graph")
 
-C10_DEFINE_bool(
+XSIGMA_DEFINE_bool(
     torch_jit_static_then_dynamic,
     false,
     "fuse on two static compilations then 10 dynamic")
 
-C10_DEFINE_bool(
+XSIGMA_DEFINE_bool(
     torch_jit_always_dynamic,
     false,
     "fuse on 12 dynamic compilations")
 
-C10_DEFINE_bool(
+XSIGMA_DEFINE_bool(
     torch_jit_release_profiling_graph_after_optimization,
     false,
     "After getOptimizedPlanFor release the optimization record for reduction of memory in inference. This is aggressive memory saving, and please be cautious!")
 
-C10_DEFINE_int32(
+XSIGMA_DEFINE_int32(
     torch_jit_release_profiling_graph_delay_in_seconds,
     60,
     "How long to wait before releasing the profiling graph after optimizaiton is done. Only used if torch_jit_release_profiling_graph_after_optimization is set to true.")
@@ -72,11 +72,11 @@ C10_DEFINE_int32(
 constexpr size_t kDefaultNumProfiledRuns = 1;
 constexpr size_t kDefaultBailoutDepth = 20;
 
-C10_DEFINE_int64(
+XSIGMA_DEFINE_int64(
     torch_jit_num_profiled_runs,
     kDefaultNumProfiledRuns,
     "Number of profiling runs")
-C10_DEFINE_int64(
+XSIGMA_DEFINE_int64(
     torch_jit_bailout_depth,
     kDefaultBailoutDepth,
     "Number of re-specializations")
@@ -92,7 +92,7 @@ int32_t getNowInSecs() {
 }
 } // namespace
 
-#if defined(C10_MOBILE)
+#if defined(XSIGMA_MOBILE)
 static std::atomic<bool> executor_mode{true};
 static std::atomic<bool> profiling_mode{false};
 #else
@@ -228,11 +228,11 @@ static bool needsGradientInProfilingMode(Block* b) {
     return false;
   };
 
-  for (const auto i : c10::irange(go.size())) {
+  for (const auto i : xsigma::irange(go.size())) {
     auto ty = go[i]->type()->cast<TensorType>();
     if (ty) {
       auto n = go[i]->node();
-      auto dno = dnode->outputs().at(i);
+      auto dno = dnode->outputs().xsigma(i);
       for (auto dno_use : dno->uses()) {
         GRAPH_DEBUG("found user of ", i, " as ", *dno_use.user);
         if (n->kind() == prim::profile) {
@@ -248,10 +248,10 @@ static bool needsGradientInProfilingMode(Block* b) {
           }
         } else if (dno_use.user->kind() == prim::DifferentiableGraph) {
           Value* o =
-              dno_use.user->g(attr::Subgraph)->inputs().at(dno_use.offset);
+              dno_use.user->g(attr::Subgraph)->inputs().xsigma(dno_use.offset);
           // Is it safe to not check other uses, because we are inside a
           // DifferentiableGraph?
-          auto nn = o->uses().at(0).user;
+          auto nn = o->uses().xsigma(0).user;
           if (nn->kind() == prim::profile) {
             if (set_requires_grad(
                     nn->ty(attr::profiled_type)->expect<TensorType>(), go[i])) {
@@ -267,11 +267,11 @@ static bool needsGradientInProfilingMode(Block* b) {
 static bool guardDifferentiableGraph(Node* dnode) {
   auto gi = dnode->g(attr::Subgraph)->inputs();
   bool all_inputs_seen = true;
-  for (const auto i : c10::irange(gi.size())) {
+  for (const auto i : xsigma::irange(gi.size())) {
     auto ty = gi[i]->type()->cast<TensorType>();
     if (ty) {
-      auto n = gi[i]->uses().at(0).user;
-      auto dni = dnode->inputs().at(i);
+      auto n = gi[i]->uses().xsigma(0).user;
+      auto dni = dnode->inputs().xsigma(i);
       GRAPH_DEBUG("found first user of ", i, " as ", *n);
       if (n->kind() == prim::profile) {
         GRAPH_DEBUG(
@@ -286,7 +286,7 @@ static bool guardDifferentiableGraph(Node* dnode) {
         // but that should be done while creating subgraphs and would be
         // a mess.
         // XXX TODO: revisit the alternatives
-        Value* o = dni->node()->g(attr::Subgraph)->outputs().at(dni->offset());
+        Value* o = dni->node()->g(attr::Subgraph)->outputs().xsigma(dni->offset());
         if (o->node()->kind() == prim::profile) {
           dni->setType(o->node()->ty(attr::profiled_type));
         }
@@ -431,7 +431,7 @@ void ProfilingGraphExecutorImpl::runNoGradOptimizations(
     }
     GRAPH_DEBUG("After customPrePasses, before LowerSimpleTuples\n", *graph);
 
-    // TupleConstruct / TupleUnpack pairs can still be present at this point
+    // TupleConstruct / TupleUnpack pairs can still be present xsigma this point
     // and must be removed for fusion.
     LowerSimpleTuples(graph);
     GRAPH_DEBUG("After LowerSimpleTuples\n", *graph);
@@ -757,7 +757,7 @@ static GraphFunction* createFallbackPathFunction(
   auto graph = std::make_shared<Graph>();
   graph->block()->cloneFrom(b, value_map);
 
-  auto otypes = c10::fmap(
+  auto otypes = xsigma::fmap(
       graph->return_node()->inputs(), [](Value* v) { return v->type(); });
   // a GraphFunction call only have one output, so all the outputs
   // need to be packed into a tuple
@@ -787,7 +787,7 @@ void ProfilingGraphExecutorImpl::replaceFallbackGraphWithFallbackFunction(
       WithInsertPoint wip{*it};
       auto function_call = insertFallbackFunctionCall(
           b->owningGraph(), fallback_func, it->inputs());
-      for (const auto i : c10::irange(function_call->outputs().size())) {
+      for (const auto i : xsigma::irange(function_call->outputs().size())) {
         it->output(i)->replaceAllUsesWith(function_call->output(i));
       }
       it.destroyCurrent();

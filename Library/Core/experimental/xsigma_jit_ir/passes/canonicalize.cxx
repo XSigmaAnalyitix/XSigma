@@ -1,6 +1,6 @@
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/ir/ir_views.h>
 #include <torch/csrc/jit/passes/canonicalize.h>
+#include <xsigma/util/irange.h>
 
 namespace torch::jit
 {
@@ -14,7 +14,7 @@ std::shared_ptr<Graph> Canonicalize(const std::shared_ptr<Graph>& graph, bool ke
 {
     auto                               r = std::make_shared<Graph>(graph->current_scope());
     std::unordered_map<Value*, Value*> rn_env;
-    auto                               rn_fn = [&](Value* v) { return rn_env.at(v); };
+    auto                               rn_fn = [&](Value* v) { return rn_env.xsigma(v); };
     for (auto* input : graph->inputs())
     {
         auto* r_input = r->addInput();
@@ -36,9 +36,9 @@ std::shared_ptr<Graph> Canonicalize(const std::shared_ptr<Graph>& graph, bool ke
         r->appendNode(r_node);
         auto outputs   = node->outputs();
         auto r_outputs = r_node->outputs();
-        for (const auto i : c10::irange(outputs.size()))
+        for (const auto i : xsigma::irange(outputs.size()))
         {
-            rn_env[outputs.at(i)] = r_outputs.at(i);
+            rn_env[outputs.xsigma(i)] = r_outputs.xsigma(i);
         }
         if (node->hasAttribute(attr::Subgraph))
         {
@@ -180,13 +180,13 @@ std::optional<const Use> firstOrLastUse(Value* v, bool find_first)
     return extreme_use;
 }
 
-static std::vector<std::optional<const Use>> gatherFirstUses(at::ArrayRef<Value*> values)
+static std::vector<std::optional<const Use>> gatherFirstUses(xsigma::ArrayRef<Value*> values)
 {
     return fmap(
         values, [&](Value* v) -> std::optional<const Use> { return firstOrLastUse(v, true); });
 }
 
-static std::vector<size_t> sort_indexes(at::ArrayRef<Value*> values)
+static std::vector<size_t> sort_indexes(xsigma::ArrayRef<Value*> values)
 {
     // initialize original index locations
     std::vector<size_t> idx(values.size());

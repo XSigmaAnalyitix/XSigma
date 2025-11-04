@@ -1,14 +1,15 @@
 #include <ATen/core/functional.h>
 #include <ATen/core/symbol.h>
-#include <c10/util/Exception.h>
-#include <c10/util/hash.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/ir/node_hashing.h>
 #include <torch/csrc/jit/passes/common_subexpression_elimination.h>
+#include <xsigma/util/hash.h>
+#include <xsigma/util/irange.h>
 
 #include <algorithm>
 #include <unordered_map>
+
+#include "util/exception.h"
 
 namespace torch::jit
 {
@@ -16,7 +17,7 @@ namespace torch::jit
 namespace
 {
 
-bool tensorEqual(const at::Tensor& lhs, const at::Tensor& rhs)
+bool tensorEqual(const xsigma::Tensor& lhs, const xsigma::Tensor& rhs)
 {
     // type_equal doesn't distinguish between mkldnn/pytorch cpu tensors,
     // and we dont want to coalesce mkldnn tensors bc they do layout
@@ -41,7 +42,7 @@ bool typeListEqual(const std::vector<TypePtr>& lhs, const std::vector<TypePtr>& 
 {
     if (lhs.size() != rhs.size())
         return false;
-    for (const auto i : c10::irange(lhs.size()))
+    for (const auto i : xsigma::irange(lhs.size()))
     {
         if (*lhs[i] != *rhs[i])
         {
@@ -57,27 +58,27 @@ bool attributesEqual(attribute_type a1, attribute_type a2)
     return a1 == a2;
 }
 
-bool attributesEqual(const at::Tensor& a1, const at::Tensor& a2)
+bool attributesEqual(const xsigma::Tensor& a1, const xsigma::Tensor& a2)
 {
     return tensorEqual(a1, a2);
 }
 
 bool ivaluesEqual(const IValue& a1, const IValue& a2);
 
-bool attributesEqual(const std::vector<at::Tensor>& lhs, const std::vector<at::Tensor>& rhs)
+bool attributesEqual(const std::vector<xsigma::Tensor>& lhs, const std::vector<xsigma::Tensor>& rhs)
 {
     if (lhs.size() != rhs.size())
         return false;
     return std::equal(lhs.begin(), lhs.end(), rhs.begin(), tensorEqual);
 }
 
-bool attributesEqual(at::ArrayRef<IValue> a1, at::ArrayRef<IValue> a2)
+bool attributesEqual(xsigma::ArrayRef<IValue> a1, xsigma::ArrayRef<IValue> a2)
 {
     if (a1.size() != a2.size())
     {
         return false;
     }
-    for (const auto i : c10::irange(a1.size()))
+    for (const auto i : xsigma::irange(a1.size()))
     {
         if (!ivaluesEqual(a1[i], a2[i]))
         {
@@ -131,8 +132,8 @@ bool ivaluesEqual(const IValue& a1, const IValue& a2)
     }
     if (a1.isTuple())
     {
-        at::ArrayRef<IValue> a1_elem = a1.toTupleRef().elements();
-        at::ArrayRef<IValue> a2_elem = a2.toTupleRef().elements();
+        xsigma::ArrayRef<IValue> a1_elem = a1.toTupleRef().elements();
+        xsigma::ArrayRef<IValue> a2_elem = a2.toTupleRef().elements();
         return attributesEqual(a1_elem, a2_elem);
     }
     if (a1.isGenericDict())
@@ -269,7 +270,7 @@ size_t HashNode::operator()(const Node* k) const
         else if (
             type->isSubtypeOf(*NumberType::get()) && k->kindOf(attr::value) == AttributeKind::c)
         {
-            constant_hash = c10::hash<c10::complex<double>>{}(k->c(attr::value));
+            constant_hash = xsigma::hash<xsigma::complex<double>>{}(k->c(attr::value));
         }
         else if (type->isSubtypeOf(*BoolType::get()))
         {
@@ -300,7 +301,7 @@ bool EqualNode::operator()(const Node* lhs, const Node* rhs) const
     auto rhs_outputs = rhs->outputs();
     if (lhs_outputs.size() != rhs_outputs.size())
         return false;
-    for (const auto i : c10::irange(lhs_outputs.size()))
+    for (const auto i : xsigma::irange(lhs_outputs.size()))
     {
         const auto& lt = lhs_outputs[i]->type();
         const auto& rt = rhs_outputs[i]->type();

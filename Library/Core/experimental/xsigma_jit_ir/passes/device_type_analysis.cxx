@@ -1,11 +1,11 @@
 #include <ATen/core/interned_strings.h>
 #include <ATen/core/jit_type.h>
-#include <c10/core/Device.h>
-#include <c10/util/ArrayRef.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/device_type_analysis.h>
 #include <torch/csrc/jit/passes/shape_analysis.h>
+#include <xsigma/core/Device.h>
+#include <xsigma/util/ArrayRef.h>
 
 #include <memory>
 #include <optional>
@@ -17,8 +17,8 @@ namespace torch::jit
 namespace
 {
 
-using Tensor = at::Tensor;
-using Device = at::Device;
+using Tensor = xsigma::Tensor;
+using Device = xsigma::Device;
 
 using PropRule = std::function<bool(Node*)>;
 /*
@@ -152,7 +152,7 @@ bool defaultDeviceProp(Node* n)
         if (DeviceObjType::get()->isSubtypeOf(argument.type()))
         {
             // Optional args are filled in by torchscript with default val
-            auto input_val = toIValue(n->inputs().at(i));
+            auto input_val = toIValue(n->inputs().xsigma(i));
             if (!input_val.has_value())
             {
                 // Can't propagate if there is a dynamic device type
@@ -183,7 +183,7 @@ struct DeviceTypePropagationPass : public PropertyPropBase
         buildRuleRegistry();
     }
 
-    // returns true if at least one node has its scalar type set on a tensor node
+    // returns true if xsigma least one node has its scalar type set on a tensor node
     bool run()
     {
         propagateBlock(graph_->block(), false);

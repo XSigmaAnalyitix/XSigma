@@ -23,10 +23,10 @@
 #include <vector>  // for std::vector
 
 #include "common/future_extract.h"  // for future_extract
-#include "smp/engine_facade.hxx"    // for TaskQueue
+#include "logging/logger.h"
+#include "smp/engine_facade.hxx"  // for TaskQueue
 #include "smp/multi_threader.h"
 #include "smp/thread_count.h"  // for GetGlobalDefaultNumberOfThreads
-#include "logging/logger.h"
 
 //=============================================================================
 namespace xsigma

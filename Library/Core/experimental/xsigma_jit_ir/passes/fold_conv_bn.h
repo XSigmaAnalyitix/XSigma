@@ -15,13 +15,13 @@ TORCH_API Module FoldConvBatchNorm(const Module& module);
 
 struct TORCH_API ConvBNParameters
 {
-    at::Tensor conv_w;
-    at::Tensor conv_b;
-    at::Tensor bn_rm;
-    at::Tensor bn_rv;
-    double     bn_eps = 0.0;
-    at::Tensor bn_w;
-    at::Tensor bn_b;
+    xsigma::Tensor conv_w;
+    xsigma::Tensor conv_b;
+    xsigma::Tensor bn_rm;
+    xsigma::Tensor bn_rv;
+    double         bn_eps = 0.0;
+    xsigma::Tensor bn_w;
+    xsigma::Tensor bn_b;
 };
 
 /**
@@ -31,7 +31,7 @@ struct TORCH_API ConvBNParameters
  *
  * The function is basically copied from torch/nn/utils/fusion.py
  */
-TORCH_API std::tuple<at::Tensor, at::Tensor> computeUpdatedConvWeightAndBias(
+TORCH_API std::tuple<xsigma::Tensor, xsigma::Tensor> computeUpdatedConvWeightAndBias(
     const ConvBNParameters& p);
 
 }  // namespace torch::jit

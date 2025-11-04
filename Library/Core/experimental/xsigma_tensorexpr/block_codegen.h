@@ -93,7 +93,7 @@ public:
     template <typename... Ts>
     /* implicit */
     BlockCodeGen(StmtPtr stmt, Ts... ts)
-        : CodeGen(stmt, std::vector<BufferArg>({BufferArg(ts)...}), at::Device(at::kCPU))
+        : CodeGen(stmt, std::vector<BufferArg>({BufferArg(ts)...}), xsigma::Device(xsigma::kCPU))
     {
         Initialize();
     }
@@ -101,7 +101,7 @@ public:
     BlockCodeGen(
         StmtPtr                       stmt,
         const std::vector<BufferArg>& buffer_args,
-        at::Device                    device           = at::Device(at::kCPU),
+        xsigma::Device                device           = xsigma::Device(xsigma::kCPU),
         const std::string&            kernel_func_name = "func")
         : CodeGen(std::move(stmt), buffer_args, device, kernel_func_name)
     {

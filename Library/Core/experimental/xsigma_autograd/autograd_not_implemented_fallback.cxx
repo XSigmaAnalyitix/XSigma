@@ -1,14 +1,14 @@
 #include <ATen/core/TorchDispatchUtils.h>
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <ATen/core/ivalue.h>
-#include <c10/core/impl/TorchDispatchModeTLS.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/autograd/VariableTypeUtils.h>
 #include <torch/csrc/autograd/autograd.h>
 #include <torch/csrc/autograd/autograd_not_implemented_fallback.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/functions/basic_ops.h>
 #include <torch/csrc/autograd/functions/utils.h>
+#include <xsigma/core/impl/TorchDispatchModeTLS.h>
+#include <xsigma/util/irange.h>
 
 #include <optional>
 #include <utility>
@@ -25,7 +25,7 @@ void _foreach_tensor(F fn, torch::jit::Stack* stack, size_t stack_start, size_t 
 {
     // Enumerate over tensors in a stack, including ones in TensorLists
     int idx_tensor = 0;
-    for (const auto idx_arg : c10::irange(size))
+    for (const auto idx_arg : xsigma::irange(size))
     {
         auto& ivalue = (*stack)[stack_start + idx_arg];
         if (ivalue.isTensor())
@@ -52,7 +52,7 @@ AutogradFallbackMode kAutogradFallbackMode = AutogradFallbackMode::Warn;
 
 void setAutogradFallbackMode(AutogradFallbackMode mode)
 {
-    TORCH_CHECK(mode != AutogradFallbackMode::Error, "NYI: mode='error'");
+    XSIGMA_CHECK(mode != AutogradFallbackMode::Error, "NYI: mode='error'");
     kAutogradFallbackMode = mode;
 }
 
@@ -98,12 +98,14 @@ auto WarnNotImplemented::apply(variable_list&& inputs) -> variable_list
 {
     auto inputsLocal = std::move(inputs);
     warnAutogradNotImplemented(op_name);
-    std::vector<at::Tensor> output(num_outputs);
+    std::vector<xsigma::Tensor> output(num_outputs);
     return output;
 }
 
 static void basicAutogradNotImplementedFallbackImpl(
-    const c10::OperatorHandle& op, c10::DispatchKeySet dispatch_keys, torch::jit::Stack* stack)
+    const xsigma::OperatorHandle& op,
+    xsigma::DispatchKeySet        dispatch_keys,
+    torch::jit::Stack*            stack)
 {
     const auto& schema        = op.schema();
     const auto& op_name       = schema.operator_name().name;
@@ -113,14 +115,14 @@ static void basicAutogradNotImplementedFallbackImpl(
 
     if (getAutogradFallbackMode() == AutogradFallbackMode::Nothing)
     {
-        op.redispatchBoxed(dispatch_keys & c10::after_autograd_keyset, stack);
+        op.redispatchBoxed(dispatch_keys & xsigma::after_autograd_keyset, stack);
         return;
     }
     TORCH_INTERNAL_ASSERT(getAutogradFallbackMode() == AutogradFallbackMode::Warn);
 
     bool any_input_requires_grad = false;
     _foreach_tensor(
-        [&](size_t _, size_t idx_arg, const at::Tensor& t)
+        [&](size_t _, size_t idx_arg, const xsigma::Tensor& t)
         {
             if (t.requires_grad())
             {
@@ -139,9 +141,9 @@ static void basicAutogradNotImplementedFallbackImpl(
     {
         // NB: It is standard to collect edges from all tensors
         // (see generated/VariableTypeEverything.cpp for examples)
-        std::vector<const at::Tensor*> all_tensors_on_stack;
+        std::vector<const xsigma::Tensor*> all_tensors_on_stack;
         _foreach_tensor(
-            [&](size_t _, size_t idx_arg, const at::Tensor& t)
+            [&](size_t _, size_t idx_arg, const xsigma::Tensor& t)
             { all_tensors_on_stack.push_back(&t); },
             stack,
             stack_start,
@@ -151,7 +153,7 @@ static void basicAutogradNotImplementedFallbackImpl(
         grad_fn->set_next_edges(collect_next_edges(all_tensors_on_stack));
     }
 
-    op.redispatchBoxed(dispatch_keys & c10::after_autograd_keyset, stack);
+    op.redispatchBoxed(dispatch_keys & xsigma::after_autograd_keyset, stack);
 
     if (any_input_requires_grad)
     {
@@ -161,15 +163,15 @@ static void basicAutogradNotImplementedFallbackImpl(
         // of technical expertise necessary (you would need to manually register an
         // autograd kernel without using autograd.Function)
         _foreach_tensor(
-            [&](size_t _, size_t idx_ret, const at::Tensor& t)
+            [&](size_t _, size_t idx_ret, const xsigma::Tensor& t)
             {
                 if (!isDifferentiableType(t.scalar_type()))
                 {
                     return;
                 }
                 const bool is_mutable_output =
-                    schema.is_aliasing({c10::SchemaArgType::output, idx_ret}) &&
-                    schema.is_mutable({c10::SchemaArgType::output, idx_ret});
+                    schema.is_aliasing({xsigma::SchemaArgType::output, idx_ret}) &&
+                    schema.is_mutable({xsigma::SchemaArgType::output, idx_ret});
 
                 // If the post-autograd implementation returns Tensors that require
                 // grad, then we install a hook that will warn during the backwards.
@@ -186,7 +188,7 @@ static void basicAutogradNotImplementedFallbackImpl(
                 // >>> torch.autograd.grad(z.sum(), w)
                 if (t.requires_grad())
                 {
-                    t.register_hook([op_name](const at::Tensor& grad)
+                    t.register_hook([op_name](const xsigma::Tensor& grad)
                                     { warnAutogradNotImplemented(op_name); });
                     // If history is rebased, then we will attempt to warn
                     // on the view's base. This will catch most cases (because
@@ -198,7 +200,7 @@ static void basicAutogradNotImplementedFallbackImpl(
                         if (base.requires_grad())
                         {
                             // Can only register_hook on tensors that require grad.
-                            base.register_hook([op_name](const at::TensorBase& grad)
+                            base.register_hook([op_name](const xsigma::TensorBase& grad)
                                                { warnAutogradNotImplemented(op_name); });
                         }
                     }
@@ -235,25 +237,27 @@ torch::CppFunction basicAutogradNotImplementedFallback()
 }
 
 void VariableHooks::basic_autograd_not_implemented_fallback(
-    const c10::OperatorHandle& op,
-    c10::DispatchKeySet        dispatch_keys,
-    torch::jit::Stack*         stack) const
+    const xsigma::OperatorHandle& op,
+    xsigma::DispatchKeySet        dispatch_keys,
+    torch::jit::Stack*            stack) const
 {
     basicAutogradNotImplementedFallbackImpl(op, dispatch_keys, stack);
 }
 
 static void autogradNotImplementedFallbackImpl(
-    const c10::OperatorHandle& op, c10::DispatchKeySet dispatch_keys, torch::jit::Stack* stack)
+    const xsigma::OperatorHandle& op,
+    xsigma::DispatchKeySet        dispatch_keys,
+    torch::jit::Stack*            stack)
 {
     // Mimics a subset of the logic of a VariableType NotImplemented kernel
     // See gen_variable_type.py
-    const auto&                    schema        = op.schema();
-    const auto&                    op_name       = schema.operator_name().name;
-    const auto                     num_arguments = schema.arguments().size();
-    const auto                     num_returns   = schema.returns().size();
-    const auto                     stack_start   = stack->size() - num_arguments;
-    const bool                     grad_mode     = GradMode::is_enabled();
-    std::vector<const at::Tensor*> tensors_requiring_grad_on_stack;
+    const auto&                        schema        = op.schema();
+    const auto&                        op_name       = schema.operator_name().name;
+    const auto                         num_arguments = schema.arguments().size();
+    const auto                         num_returns   = schema.returns().size();
+    const auto                         stack_start   = stack->size() - num_arguments;
+    const bool                         grad_mode     = GradMode::is_enabled();
+    std::vector<const xsigma::Tensor*> tensors_requiring_grad_on_stack;
 
     // Keep track of which outputs are output of in-place modification
     // so we can rebase_history if necessary
@@ -262,18 +266,18 @@ static void autogradNotImplementedFallbackImpl(
     std::vector<bool>     is_aliased_output(num_returns, false);
     std::optional<size_t> aliased_output_idx;
 
-    for (const auto i : c10::irange(num_returns))
+    for (const auto i : xsigma::irange(num_returns))
     {
-        if (schema.is_aliasing({c10::SchemaArgType::output, i}))
+        if (schema.is_aliasing({xsigma::SchemaArgType::output, i}))
         {
-            if (schema.is_mutable({c10::SchemaArgType::output, i}))
+            if (schema.is_mutable({xsigma::SchemaArgType::output, i}))
             {
                 is_inplace_output[i]  = true;
                 any_is_inplace_output = true;
             }
             else
             {
-                TORCH_CHECK(
+                XSIGMA_CHECK(
                     !aliased_output_idx.has_value(),
                     "Expected only a single output in the operator schema to have a non-write "
                     "alias annotation (i.e., 'Tensor(a)'). "
@@ -287,12 +291,12 @@ static void autogradNotImplementedFallbackImpl(
     }
 
     int64_t aliased_input_idx = -1;
-    for (const auto i : c10::irange(num_arguments))
+    for (const auto i : xsigma::irange(num_arguments))
     {
-        if (schema.is_aliasing({c10::SchemaArgType::input, i}) &&
-            !schema.is_mutable({c10::SchemaArgType::input, i}))
+        if (schema.is_aliasing({xsigma::SchemaArgType::input, i}) &&
+            !schema.is_mutable({xsigma::SchemaArgType::input, i}))
         {
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 aliased_input_idx == -1,
                 "Expected only a single input in the operator schema to have a non-write alias "
                 "annotation (i.e., 'Tensor(a)'). "
@@ -305,7 +309,7 @@ static void autogradNotImplementedFallbackImpl(
 
     size_t num_tensor_inputs = 0;  // Only used for DEBUG-only checks
     _foreach_tensor(
-        [&](size_t _, size_t idx_arg, const at::Tensor& t)
+        [&](size_t _, size_t idx_arg, const xsigma::Tensor& t)
         {
             if (grad_mode && t.requires_grad())
             {
@@ -326,12 +330,12 @@ static void autogradNotImplementedFallbackImpl(
     const bool has_out_arg       = std::any_of(
         schema.arguments().begin(),
         schema.arguments().end(),
-        [](const c10::Argument& arg) { return arg.is_out(); });
+        [](const xsigma::Argument& arg) { return arg.is_out(); });
 
     _foreach_tensor(
-        [&](size_t _, size_t i, const at::Tensor& t)
+        [&](size_t _, size_t i, const xsigma::Tensor& t)
         {
-            if (schema.is_mutable({c10::SchemaArgType::input, i}))
+            if (schema.is_mutable({xsigma::SchemaArgType::input, i}))
             {
                 if (has_out_arg)
                 {
@@ -364,17 +368,17 @@ static void autogradNotImplementedFallbackImpl(
 
 #ifndef NDEBUG
     // See NOTE [ TensorImpl and Storage Pointer Sanity Checks ]
-    auto stack_args_copy =
-        std::vector<c10::IValue>(stack->begin() + static_cast<int64_t>(stack_start), stack->end());
-    std::vector<c10::intrusive_ptr<c10::TensorImpl>> impl_saved;
+    auto stack_args_copy = std::vector<xsigma::IValue>(
+        stack->begin() + static_cast<int64_t>(stack_start), stack->end());
+    std::vector<xsigma::intrusive_ptr<xsigma::TensorImpl>> impl_saved;
     impl_saved.reserve(num_tensor_inputs);
-    std::vector<std::optional<c10::Storage>> storage_saved;
+    std::vector<std::optional<xsigma::Storage>> storage_saved;
     storage_saved.reserve(num_tensor_inputs);
     _foreach_tensor(
-        [&](size_t idx, size_t _, const at::Tensor& t)
+        [&](size_t idx, size_t _, const xsigma::Tensor& t)
         {
             storage_saved.push_back(
-                t.has_storage() ? std::optional<c10::Storage>(t.storage()) : std::nullopt);
+                t.has_storage() ? std::optional<xsigma::Storage>(t.storage()) : std::nullopt);
             impl_saved.emplace_back(t.getIntrusivePtr());
         },
         &stack_args_copy,
@@ -383,34 +387,35 @@ static void autogradNotImplementedFallbackImpl(
 #endif
     if (aliased_input_idx != -1 || any_is_inplace_output)
     {
-        at::AutoDispatchBelowAutograd guard;
-        op.redispatchBoxed(dispatch_keys & c10::after_autograd_keyset, stack);
+        xsigma::AutoDispatchBelowAutograd guard;
+        op.redispatchBoxed(dispatch_keys & xsigma::after_autograd_keyset, stack);
     }
     else
     {
         // If neither in-place nor view
-        at::AutoDispatchBelowADInplaceOrView guard;
-        op.redispatchBoxed(dispatch_keys & c10::after_ADInplaceOrView_keyset, stack);
+        xsigma::AutoDispatchBelowADInplaceOrView guard;
+        op.redispatchBoxed(dispatch_keys & xsigma::after_ADInplaceOrView_keyset, stack);
     }
 #ifndef NDEBUG
     _foreach_tensor(
-        [&](size_t idx_tensor, size_t _, const at::Tensor& t)
+        [&](size_t idx_tensor, size_t _, const xsigma::Tensor& t)
         {
             // Skip next two for chunk_cat, see
             // https://github.com/pytorch/pytorch/issues/130073
-            if (storage_saved.at(idx_tensor).has_value() && op_name != "aten::_chunk_cat")
+            if (storage_saved.xsigma(idx_tensor).has_value() && op_name != "aten::_chunk_cat")
                 TORCH_INTERNAL_ASSERT(
-                    storage_saved.at(idx_tensor).value().is_alias_of(t.storage()), op_name);
-            if (impl_saved.at(idx_tensor) && op_name != "aten::_chunk_cat")
-                TORCH_INTERNAL_ASSERT(impl_saved.at(idx_tensor) == t.getIntrusivePtr(), op_name);
+                    storage_saved.xsigma(idx_tensor).value().is_alias_of(t.storage()), op_name);
+            if (impl_saved.xsigma(idx_tensor) && op_name != "aten::_chunk_cat")
+                TORCH_INTERNAL_ASSERT(
+                    impl_saved.xsigma(idx_tensor) == t.getIntrusivePtr(), op_name);
         },
         &stack_args_copy,
         0,
         num_arguments);
     _foreach_tensor(
-        [&](size_t idx_tensor, size_t idx_ret, const at::Tensor& t)
+        [&](size_t idx_tensor, size_t idx_ret, const xsigma::Tensor& t)
         {
-            if (at::impl::tensor_has_dispatch(t) || at::impl::dispatch_mode_enabled() ||
+            if (xsigma::impl::tensor_has_dispatch(t) || xsigma::impl::dispatch_mode_enabled() ||
                 // NJT components are expected to be reused; skip use_count() check
                 op_name.rfind("aten::_nested_get", 0) == 0)
                 return;
@@ -447,23 +452,23 @@ static void autogradNotImplementedFallbackImpl(
     // aliased.
     if (aliased_input_idx != -1 && aliased_output_idx.has_value())
     {
-        const c10::IValue& aliased_input_iv = stack_args_copy[aliased_input_idx];
-        const c10::IValue& aliased_output_iv =
+        const xsigma::IValue& aliased_input_iv = stack_args_copy[aliased_input_idx];
+        const xsigma::IValue& aliased_output_iv =
             (*stack)[stack->size() - num_returns + *aliased_output_idx];
         TORCH_INTERNAL_ASSERT(aliased_input_iv.isTensor(), op_name);
         TORCH_INTERNAL_ASSERT(
             aliased_output_iv.isTensor() || aliased_output_iv.isTensorList(), op_name);
-        const at::Tensor& aliased_input = aliased_input_iv.toTensor();
+        const xsigma::Tensor& aliased_input = aliased_input_iv.toTensor();
         if (aliased_input.has_storage())
         {
             if (aliased_output_iv.isTensor())
             {
-                const at::Tensor& aliased_output = aliased_input_iv.toTensor();
+                const xsigma::Tensor& aliased_output = aliased_input_iv.toTensor();
                 // for now, skip asserts for subclasses
                 // TODO: Fix the aliasing situation involving subclasses
-                if (!at::impl::dispatch_mode_enabled() &&
-                    !at::impl::tensor_has_dispatch(aliased_input) &&
-                    !at::impl::tensor_has_dispatch(aliased_output))
+                if (!xsigma::impl::dispatch_mode_enabled() &&
+                    !xsigma::impl::tensor_has_dispatch(aliased_input) &&
+                    !xsigma::impl::tensor_has_dispatch(aliased_output))
                 {
                     TORCH_INTERNAL_ASSERT(
                         aliased_input.storage().is_alias_of(aliased_output.storage()), op_name);
@@ -476,9 +481,9 @@ static void autogradNotImplementedFallbackImpl(
                 {
                     // for now, skip asserts for subclasses
                     // TODO: Fix the aliasing situation involving subclasses
-                    if (!at::impl::dispatch_mode_enabled() &&
-                        !at::impl::tensor_has_dispatch(aliased_input) &&
-                        !at::impl::tensor_has_dispatch(aliased_output))
+                    if (!xsigma::impl::dispatch_mode_enabled() &&
+                        !xsigma::impl::tensor_has_dispatch(aliased_input) &&
+                        !xsigma::impl::tensor_has_dispatch(aliased_output))
                     {
                         TORCH_INTERNAL_ASSERT(
                             aliased_input.storage().is_alias_of(aliased_output.storage()), op_name);
@@ -492,7 +497,7 @@ static void autogradNotImplementedFallbackImpl(
     if (any_requires_grad)
     {
         _foreach_tensor(
-            [&](size_t idx_tensor, size_t idx_ret, const at::Tensor& t)
+            [&](size_t idx_tensor, size_t idx_ret, const xsigma::Tensor& t)
             {
                 if (isDifferentiableType(t.scalar_type()))
                 {
@@ -520,7 +525,7 @@ torch::CppFunction autogradNotImplementedFallback()
 struct GenericViewFunc : public ViewFunc
 {
     GenericViewFunc(
-        torch::jit::Stack non_tensor_stack, size_t aliased_input_idx_val, c10::OperatorHandle op)
+        torch::jit::Stack non_tensor_stack, size_t aliased_input_idx_val, xsigma::OperatorHandle op)
         : non_tensor_stack_(non_tensor_stack),
           aliased_input_idx_val_(aliased_input_idx_val),
           op_(op)
@@ -533,47 +538,49 @@ struct GenericViewFunc : public ViewFunc
         const auto& schema = op_.schema();
         for (const auto& arg : schema.arguments())
         {
-            TORCH_CHECK(
-                arg.real_type()->kind() != c10::TypeKind::SymIntType,
+            XSIGMA_CHECK(
+                arg.real_type()->kind() != xsigma::TypeKind::SymIntType,
                 "Custom ops that are views do not support SymInt. Please file an issue if you need "
                 "it.");
             for (const auto& ct : arg.real_type()->containedTypes())
             {
-                TORCH_CHECK(
-                    ct->kind() != c10::TypeKind::SymIntType,
+                XSIGMA_CHECK(
+                    ct->kind() != xsigma::TypeKind::SymIntType,
                     "Custom ops that are views do not support SymInt. Please file an issue if you "
                     "need it.");
             }
         }
     }
 
-    at::Tensor operator()(const at::Tensor& new_base) const override
+    xsigma::Tensor operator()(const xsigma::Tensor& new_base) const override
     {
-        torch::jit::Stack local_stack          = non_tensor_stack_;
-        local_stack.at(aliased_input_idx_val_) = c10::IValue(new_base);
+        torch::jit::Stack local_stack              = non_tensor_stack_;
+        local_stack.xsigma(aliased_input_idx_val_) = xsigma::IValue(new_base);
 
         op_.callBoxed(local_stack);
         auto& result = local_stack[local_stack.size() - 1];
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             result.isTensor(), "ADInplaceOrView fallback view replay did not return a Tensor");
         return result.toTensor();
     }
 
     std::unique_ptr<ViewFunc> clone_and_set(
-        std::optional<std::vector<c10::SymInt>> /*unused*/ = std::nullopt,
-        std::optional<std::vector<at::Tensor>> /*unused*/  = std::nullopt) const override
+        std::optional<std::vector<xsigma::SymInt>> /*unused*/ = std::nullopt,
+        std::optional<std::vector<xsigma::Tensor>> /*unused*/ = std::nullopt) const override
     {
         return std::make_unique<GenericViewFunc>(non_tensor_stack_, aliased_input_idx_val_, op_);
     }
 
 private:
-    torch::jit::Stack   non_tensor_stack_;
-    size_t              aliased_input_idx_val_;
-    c10::OperatorHandle op_;
+    torch::jit::Stack      non_tensor_stack_;
+    size_t                 aliased_input_idx_val_;
+    xsigma::OperatorHandle op_;
 };
 
 static void autogradNotImplementedInplaceOrViewFallbackImpl(
-    const c10::OperatorHandle& op, c10::DispatchKeySet dispatch_keys, torch::jit::Stack* stack)
+    const xsigma::OperatorHandle& op,
+    xsigma::DispatchKeySet        dispatch_keys,
+    torch::jit::Stack*            stack)
 {
     // Mimics a subset of the logic from ADInplaceOrViewType kernel:
     // - see gen_inplace_or_view_type.py
@@ -601,15 +608,15 @@ static void autogradNotImplementedInplaceOrViewFallbackImpl(
     const auto  num_returns   = schema.returns().size();
     const auto  stack_start   = stack->size() - num_arguments;
 
-    at::Tensor aliased_input;
+    xsigma::Tensor aliased_input;
 
     int64_t aliased_output_idx = -1;
-    for (const auto i : c10::irange(num_returns))
+    for (const auto i : xsigma::irange(num_returns))
     {
-        if (schema.is_aliasing({c10::SchemaArgType::output, i}) &&
-            !schema.is_mutable({c10::SchemaArgType::output, i}))
+        if (schema.is_aliasing({xsigma::SchemaArgType::output, i}) &&
+            !schema.is_mutable({xsigma::SchemaArgType::output, i}))
         {
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 aliased_output_idx == -1,
                 "Fallback ADInplaceOrView kernel expects only a single output in the operator "
                 "schema to have a "
@@ -622,12 +629,12 @@ static void autogradNotImplementedInplaceOrViewFallbackImpl(
     }
 
     std::optional<size_t> aliased_input_idx;
-    for (const auto i : c10::irange(num_arguments))
+    for (const auto i : xsigma::irange(num_arguments))
     {
-        if (schema.is_aliasing({c10::SchemaArgType::input, i}) &&
-            !schema.is_mutable({c10::SchemaArgType::input, i}))
+        if (schema.is_aliasing({xsigma::SchemaArgType::input, i}) &&
+            !schema.is_mutable({xsigma::SchemaArgType::input, i}))
         {
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 !aliased_input_idx.has_value(),
                 "Fallback ADInplaceOrView kernel expects only a single input in the operator "
                 "schema to have a "
@@ -636,16 +643,16 @@ static void autogradNotImplementedInplaceOrViewFallbackImpl(
                 "supported. "
                 "Please rewrite your function as a composite function.");
             aliased_input_idx = i;
-            const c10::IValue& aliased_input_iv =
+            const xsigma::IValue& aliased_input_iv =
                 (*stack)[stack_start + i];  // get a reference to an ivalue on the
                                             // stack
-            TORCH_CHECK(aliased_input_iv.isTensor());
+            XSIGMA_CHECK(aliased_input_iv.isTensor());
             aliased_input = aliased_input_iv.toTensor();  // TODO: Can we avoid saving this tensor
                                                           // and incurring the refcount bump?
         }
     }
     // See NOTE [ Limitations of ADInplaceOrView boxed kernel ] above
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         (!aliased_input_idx.has_value() && aliased_output_idx == -1) ||
             (aliased_input_idx.has_value() && aliased_input_idx.value() == 0 &&
              aliased_output_idx == 0),
@@ -662,20 +669,20 @@ static void autogradNotImplementedInplaceOrViewFallbackImpl(
         // Note that this won't be used if a TensorList is returned.
         aliased_input_idx_val = aliased_input_idx.value();
         non_tensor_stack.reserve(num_arguments);
-        for (const auto i : c10::irange(num_arguments))
+        for (const auto i : xsigma::irange(num_arguments))
         {
             non_tensor_stack.push_back((*stack)[stack_start + i]);
         }
     }
 
     {
-        at::AutoDispatchBelowADInplaceOrView guard;
-        op.redispatchBoxed(dispatch_keys & c10::after_ADInplaceOrView_keyset, stack);
+        xsigma::AutoDispatchBelowADInplaceOrView guard;
+        op.redispatchBoxed(dispatch_keys & xsigma::after_ADInplaceOrView_keyset, stack);
     }
 
-    for (const auto i : c10::irange(num_returns))
+    for (const auto i : xsigma::irange(num_returns))
     {
-        if (schema.is_mutable({c10::SchemaArgType::output, i}))
+        if (schema.is_mutable({xsigma::SchemaArgType::output, i}))
         {
             increment_version((*stack)[stack->size() - num_returns + i].toTensor());
         }
@@ -683,7 +690,8 @@ static void autogradNotImplementedInplaceOrViewFallbackImpl(
 
     if (is_view)
     {
-        c10::IValue& aliased_output_iv = (*stack)[stack->size() - num_returns + aliased_output_idx];
+        xsigma::IValue& aliased_output_iv =
+            (*stack)[stack->size() - num_returns + aliased_output_idx];
 
         // See NOTE [ View + Inplace detection ] for more details about this logic
         // We always need this view_func because otherwise if we do in-place
@@ -695,14 +703,14 @@ static void autogradNotImplementedInplaceOrViewFallbackImpl(
              "which does not have a derivative implemented is forbidden.");
         auto erroring_view_func = std::make_unique<ErroringViewFunc>(error_msg);
 
-        const auto erroring_rev_view_func = [op_name = op_name](const at::Tensor&)
+        const auto erroring_rev_view_func = [op_name = op_name](const xsigma::Tensor&)
         {
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 false,
                 "Accessing the reverse view for ",
                 op_name,
                 " which does not have a derivative implemented is forbidden.");
-            return at::Tensor();
+            return xsigma::Tensor();
         };
 
         if (aliased_output_iv.isTensorList())
@@ -720,27 +728,27 @@ static void autogradNotImplementedInplaceOrViewFallbackImpl(
                     /* creation_meta=*/
                     InferenceMode::is_enabled()
                         ? CreationMeta::INFERENCE_MODE
-                        : (at::GradMode::is_enabled() ? CreationMeta::MULTI_OUTPUT_NODE
-                                                      : CreationMeta::NO_GRAD_MODE));
+                        : (xsigma::GradMode::is_enabled() ? CreationMeta::MULTI_OUTPUT_NODE
+                                                          : CreationMeta::NO_GRAD_MODE));
             }
-            auto result                                                 = std::move(aliased_output);
-            stack->at(stack->size() - num_returns + aliased_output_idx) = result;
+            auto result = std::move(aliased_output);
+            stack->xsigma(stack->size() - num_returns + aliased_output_idx) = result;
         }
         else
         {
-            c10::IValue& aliased_output_iv =
+            xsigma::IValue& aliased_output_iv =
                 (*stack)[stack->size() - num_returns + aliased_output_idx];
-            TORCH_CHECK(aliased_output_iv.isTensor());
-            TORCH_CHECK(
+            XSIGMA_CHECK(aliased_output_iv.isTensor());
+            XSIGMA_CHECK(
                 num_returns == 1,
                 "ADInplaceOrView fallback only support single output view functions");
 
             // Remove the Tensor from the original stack
-            for (const auto i : c10::irange(num_arguments))
+            for (const auto i : xsigma::irange(num_arguments))
             {
                 if (non_tensor_stack[i].isTensor())
                 {
-                    TORCH_CHECK(
+                    XSIGMA_CHECK(
                         i == aliased_input_idx_val,
                         "Internal error in ADInplaceOrView fallback, unknown Tensor in the stack");
                     non_tensor_stack[i] = {};
@@ -760,9 +768,9 @@ static void autogradNotImplementedInplaceOrViewFallbackImpl(
                 /* creation_meta=*/
                 InferenceMode::is_enabled()
                     ? CreationMeta::INFERENCE_MODE
-                    : (at::GradMode::is_enabled() ? CreationMeta::DEFAULT
-                                                  : CreationMeta::NO_GRAD_MODE));
-            stack->at(stack->size() - num_returns + aliased_output_idx) = std::move(result);
+                    : (xsigma::GradMode::is_enabled() ? CreationMeta::DEFAULT
+                                                      : CreationMeta::NO_GRAD_MODE));
+            stack->xsigma(stack->size() - num_returns + aliased_output_idx) = std::move(result);
         }
     }
 }

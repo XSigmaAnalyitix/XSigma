@@ -30,7 +30,7 @@ def get_loggers() -> list[logging.Logger]:
 
 
 # Creates a logging function that logs a message with a step # prepended.
-# get_step_logger should be lazily called (i.e. at runtime, not at module-load time)
+# get_step_logger should be lazily called (i.e. xsigma runtime, not xsigma module-load time)
 # so that step numbers are initialized properly. e.g.:
 
 # @functools.cache

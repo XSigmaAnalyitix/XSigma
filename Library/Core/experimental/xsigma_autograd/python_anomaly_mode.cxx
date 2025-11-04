@@ -1,4 +1,3 @@
-#include <c10/util/Exception.h>
 #include <pybind11/pybind11.h>
 #include <torch/csrc/Exceptions.h>
 #include <torch/csrc/autograd/python_anomaly_mode.h>
@@ -7,6 +6,8 @@
 #include <torch/csrc/utils/object_ptr.h>
 #include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/python_strings.h>
+
+#include "util/exception.h"
 
 namespace torch::autograd
 {
@@ -37,7 +38,7 @@ void PyAnomalyMetadata::print_stack(const std::string& current_node_name)
     pybind11::gil_scoped_acquire gil;
     if (!PyDict_Check(dict()))
     {
-        TORCH_CHECK(false, "Anomaly metadata is not a python dictionary.");
+        XSIGMA_CHECK(false, "Anomaly metadata is not a python dictionary.");
     }
     PyObject* trace_stack = nullptr;
     if (PyDict_GetItemStringRef(dict(), ANOMALY_TRACE_KEY, &trace_stack) < 0)

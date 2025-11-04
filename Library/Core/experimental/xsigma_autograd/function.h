@@ -3,8 +3,6 @@
 #include <ATen/SequenceNumber.h>
 #include <ATen/core/Tensor.h>
 #include <ATen/record_function.h>
-#include <c10/util/Exception.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/autograd/anomaly_mode.h>
 #include <torch/csrc/autograd/edge.h>
 #include <torch/csrc/autograd/grad_mode.h>
@@ -14,6 +12,7 @@
 #include <torch/csrc/autograd/variable.h>
 #include <torch/csrc/utils/python_stub.h>
 #include <torch/csrc/utils/variadic.h>
+#include <xsigma/util/irange.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -23,6 +22,8 @@
 #include <utility>
 #include <vector>
 
+#include "util/exception.h"
+
 namespace torch::autograd
 {
 
@@ -30,13 +31,13 @@ struct Edge;
 struct FunctionPostHook;
 struct FunctionPreHook;
 
-using tensor_list         = std::vector<at::Tensor>;
+using tensor_list         = std::vector<xsigma::Tensor>;
 using variable_list       = std::vector<Variable>;
 using edge_list           = std::vector<Edge>;
 using saved_variable_list = std::vector<SavedVariable>;
-using ivalue_list         = std::vector<c10::IValue>;
+using ivalue_list         = std::vector<xsigma::IValue>;
 using functional_apply_t =
-    std::function<variable_list(const variable_list&, const std::vector<c10::IValue>&)>;
+    std::function<variable_list(const variable_list&, const std::vector<xsigma::IValue>&)>;
 using IndexRange = std::pair<size_t, size_t>;
 using torch::dynamo::autograd::CompiledNodeArgs;
 using torch::dynamo::autograd::PackedArgs;
@@ -76,7 +77,7 @@ TORCH_API std::shared_ptr<Node> get_current_node();
 // nodes, connected to each other via (directed) `Edge`s, which themselves are
 // represented via (`Node`, input_nr) pairs. `Variable`s are the outputs to
 // and inputs of `Node`s, and travel between these edges during execution
-// of the graph. When two or more `Edge`s (from different sources) point at the
+// of the graph. When two or more `Edge`s (from different sources) point xsigma the
 // same input to a `Node`, the values produced along all of these edges are
 // implicitly summed prior to being forwarded to the target `Node`.
 //
@@ -136,12 +137,12 @@ public:
 
         // Store the thread_id of the forward operator.
         // See NOTE [ Sequence Numbers ]
-        thread_id_ = at::RecordFunction::currentThreadId();
+        thread_id_ = xsigma::RecordFunction::currentThreadId();
     }
 
     explicit Node(edge_list&& next_edges = edge_list())
         : Node(
-              /*sequence_nr=*/at::sequence_number::get_and_increment(), std::move(next_edges))
+              /*sequence_nr=*/xsigma::sequence_number::get_and_increment(), std::move(next_edges))
     {
     }
 
@@ -160,26 +161,27 @@ public:
         // In the first iteration of named tensors, autograd ignores names and
         // operates on unnamed tensors. In the long term, autograd should
         // probably operate with names.
-        at::NoNamesGuard no_names_guard;
+        xsigma::NoNamesGuard no_names_guard;
 
 #ifdef USE_ROCM
         // Keep track of backward pass for rocblas.
-        at::ROCmBackwardPassGuard in_backward;
+        xsigma::ROCmBackwardPassGuard in_backward;
 #endif
 
-        auto step_callbacks = at::getStepCallbacksUnlessEmpty(at::RecordScope::BACKWARD_FUNCTION);
-        if (C10_UNLIKELY(step_callbacks.has_value()))
+        auto step_callbacks =
+            xsigma::getStepCallbacksUnlessEmpty(xsigma::RecordScope::BACKWARD_FUNCTION);
+        if (XSIGMA_UNLIKELY(step_callbacks.has_value()))
         {
-            at::RecordFunction guard(std::move(*step_callbacks));
+            xsigma::RecordFunction guard(std::move(*step_callbacks));
             // Using sequence number and thread id to correlate with
             // the forward pass function
             guard.setForwardThreadId(thread_id_);
             if (guard.needsInputs())
             {
-                std::vector<c10::IValue> inputs_vec(inputs.begin(), inputs.end());
+                std::vector<xsigma::IValue> inputs_vec(inputs.begin(), inputs.end());
                 guard.before(
                     name(),
-                    c10::ArrayRef<const c10::IValue>(inputs_vec.data(), inputs_vec.size()),
+                    xsigma::ArrayRef<const xsigma::IValue>(inputs_vec.data(), inputs_vec.size()),
                     static_cast<int64_t>(sequence_nr()));
             }
             else
@@ -208,11 +210,11 @@ public:
     /// Adds the type and shape metadata for a new input. Returns the index of
     /// of the new input.
     uint32_t add_input_metadata(
-        const at::TensorOptions&      options,
-        c10::SymIntArrayRef           shape,
-        bool                          is_tensor_subclass,
-        bool                          is_nested,
-        std::optional<at::ScalarType> grad_dtype) noexcept
+        const xsigma::TensorOptions&      options,
+        xsigma::SymIntArrayRef            shape,
+        bool                              is_tensor_subclass,
+        bool                              is_nested,
+        std::optional<xsigma::ScalarType> grad_dtype) noexcept
     {
         uint32_t input_nr   = input_metadata_.size();
         auto     meta_shape = MetadataShape{std::in_place_type<SymIntSmallVec>, shape};
@@ -221,7 +223,7 @@ public:
         return input_nr;
     }
 
-    uint32_t add_input_metadata(const at::Tensor& t) noexcept
+    uint32_t add_input_metadata(const xsigma::Tensor& t) noexcept
     {
         uint32_t input_nr = input_metadata_.size();
         input_metadata_.emplace_back(t);
@@ -252,9 +254,9 @@ public:
    * elements are on different devices (across multiple GPUs, for example)
    * they may have different streams.
    */
-    std::optional<c10::Stream> stream()
+    std::optional<xsigma::Stream> stream()
     {
-        auto opt_device_type = at::getAccelerator();
+        auto opt_device_type = xsigma::getAccelerator();
         if (!opt_device_type.has_value())
         {
             return std::nullopt;
@@ -269,7 +271,7 @@ public:
     }
 
     // Used by the engine to determine what device thread to run on
-    at::Device device()
+    xsigma::Device device()
     {
         // Since we pick the first non-CPU tensor, this won't work with
         // mixed device-type operations (e.g., an op that is both CUDA
@@ -278,14 +280,14 @@ public:
         for (const auto& metadata : input_metadata_)
         {
             auto device = metadata.device();
-            if (device.type() != at::kCPU)
+            if (device.type() != xsigma::kCPU)
             {
                 return device;
             }
         }
         // Only report to the CPU thread if there really were no tensors
         // from other devices.
-        return at::kCPU;
+        return xsigma::kCPU;
     }
 
     void clear_input_metadata() { input_metadata_.clear(); }
@@ -428,7 +430,7 @@ public:
     /// output of this function should be computed.
     bool should_compute_output(size_t output_edge_index) const
     {
-        TORCH_CHECK(output_edge_index < num_outputs(), "Index out of range");
+        XSIGMA_CHECK(output_edge_index < num_outputs(), "Index out of range");
         return next_edges_[output_edge_index].is_valid();
     }
 
@@ -440,7 +442,7 @@ public:
             idxs.end(),
             [this](IndexRange range)
             {
-                for (const auto i : c10::irange(range.first, range.second))
+                for (const auto i : xsigma::irange(range.first, range.second))
                 {
                     if (should_compute_output(i))
                         return true;
@@ -453,7 +455,7 @@ public:
     /// check whether this edge is needed within the current graph task.
     bool task_should_compute_output(size_t output_edge_index) const
     {
-        TORCH_CHECK(output_edge_index < num_outputs(), "Index out of range");
+        XSIGMA_CHECK(output_edge_index < num_outputs(), "Index out of range");
         const auto& next = next_edges_[output_edge_index];
         if (next.is_valid())
         {
@@ -480,7 +482,7 @@ public:
             idxs.end(),
             [this](IndexRange range)
             {
-                for (const auto i : c10::irange(range.first, range.second))
+                for (const auto i : xsigma::irange(range.first, range.second))
                 {
                     if (task_should_compute_output(i))
                         return true;
@@ -713,7 +715,7 @@ protected:
     std::vector<std::unique_ptr<FunctionPreHook>>                tensor_pre_hooks_;
     std::unordered_map<size_t, std::unique_ptr<FunctionPreHook>> retains_grad_hooks_;
     std::vector<std::unique_ptr<FunctionPostHook>>               post_hooks_;
-    at::SmallVector<InputMetadata, 2>                            input_metadata_;
+    xsigma::SmallVector<InputMetadata, 2>                        input_metadata_;
 };
 
 /// See Node::is_traceable() for definition.
@@ -800,12 +802,12 @@ struct TypeAndSize
 {
     TypeAndSize() = default;
     /* implicit */
-    TypeAndSize(const at::Tensor& t) : sym_sizes(t.sym_sizes().vec()), options(t.options()) {}
+    TypeAndSize(const xsigma::Tensor& t) : sym_sizes(t.sym_sizes().vec()), options(t.options()) {}
 
-    at::Tensor zeros();
+    xsigma::Tensor zeros();
 
-    std::vector<c10::SymInt> sym_sizes;
-    at::TensorOptions        options;
+    std::vector<xsigma::SymInt> sym_sizes;
+    xsigma::TensorOptions       options;
 };
 
 }  // namespace torch::autograd

@@ -9,11 +9,10 @@
 #include <ATen/core/op_registration/op_allowlist.h>
 #include <ATen/core/stack.h>
 #include <ATen/core/symbol.h>
-#include <c10/util/Exception.h>
-#include <c10/util/overloaded.h>
 #include <torch/csrc/jit/frontend/function_schema_parser.h>
 #include <torch/csrc/jit/runtime/operator_options.h>
 #include <torch/library.h>
+#include <xsigma/util/overloaded.h>
 
 #include <functional>
 #include <initializer_list>
@@ -24,19 +23,21 @@
 #include <variant>
 #include <vector>
 
+#include "util/exception.h"
+
 namespace torch::jit
 {
 
 struct Node;
-using ::c10::Argument;
-using ::c10::FunctionSchema;
-using ::c10::Symbol;
+using ::xsigma::Argument;
+using ::xsigma::FunctionSchema;
+using ::xsigma::Symbol;
 
 using OperationCreator = Operation (*)(const Node*);
 
 namespace
 {
-const std::array<at::Tag, 1> kJitOnlyOperatorTags = {at::Tag::pt2_compliant_tag};
+const std::array<xsigma::Tag, 1> kJitOnlyOperatorTags = {xsigma::Tag::pt2_compliant_tag};
 }
 
 /*
@@ -48,28 +49,28 @@ const std::array<at::Tag, 1> kJitOnlyOperatorTags = {at::Tag::pt2_compliant_tag}
  * so that changes to symbolic derivatives are remembered.
  *
  * Currently, the JIT operator library contains a jit::Operator instance
- * with a wrapper for each c10 operator. The c10 operator library registers
+ * with a wrapper for each xsigma operator. The xsigma operator library registers
  * those wrappers using listeners in register_c10_ops.cpp.
  * TODO Instead of doing it this way, we should only have pure-jit ops in
- * the jit library but have the JIT operator lookup look into the c10 library
+ * the jit library but have the JIT operator lookup look into the xsigma library
  * too.
  */
 
 // An Operator is a thin wrapper around either a pure JIT operator (e.g. prim
-// ops) or a c10 operator, allowing some common operations and abstracting away
+// ops) or a xsigma operator, allowing some common operations and abstracting away
 // the concrete operator nature.
 struct TORCH_API Operator
 {
 private:
     struct C10Operator final
     {
-        c10::OperatorHandle handle_;
-        Operation           op_;
+        xsigma::OperatorHandle handle_;
+        Operation              op_;
     };
     struct UnparsedFunctionSchema final
     {
-        std::string                                   schema_string_;
-        mutable std::optional<c10::AliasAnalysisKind> alias_analysis_;
+        std::string                                      schema_string_;
+        mutable std::optional<xsigma::AliasAnalysisKind> alias_analysis_;
     };
     struct JitOnlyOperator final
     {
@@ -81,24 +82,24 @@ private:
     };
 
 public:
-    Operator(c10::OperatorHandle opHandle, Operation operation)
+    Operator(xsigma::OperatorHandle opHandle, Operation operation)
         : op_(C10Operator{std::move(opHandle), std::move(operation)})
     {
     }
 
-    Operator(std::string schema, Operation op, c10::AliasAnalysisKind alias_analysis)
+    Operator(std::string schema, Operation op, xsigma::AliasAnalysisKind alias_analysis)
         : op_(JitOnlyOperator{
               UnparsedFunctionSchema{std::move(schema), alias_analysis}, Operation(std::move(op))})
     {
     }
 
     Operator(
-        std::string            name,
-        std::string            overload_name,
-        std::vector<Argument>  arguments,
-        std::vector<Argument>  returns,
-        Operation              op,
-        c10::AliasAnalysisKind alias_analysis)
+        std::string               name,
+        std::string               overload_name,
+        std::vector<Argument>     arguments,
+        std::vector<Argument>     returns,
+        Operation                 op,
+        xsigma::AliasAnalysisKind alias_analysis)
         : op_(JitOnlyOperator{
               FunctionSchema(varArgSchemaWithName(
                   std::move(name),
@@ -110,7 +111,8 @@ public:
     {
     }
 
-    Operator(std::string schema, OperationCreator op_creator, c10::AliasAnalysisKind alias_analysis)
+    Operator(
+        std::string schema, OperationCreator op_creator, xsigma::AliasAnalysisKind alias_analysis)
         : op_(JitOnlyOperator{
               UnparsedFunctionSchema{std::move(schema), alias_analysis}, op_creator})
     {
@@ -120,7 +122,7 @@ public:
     // run for _every_ IR Node where n.kind() == name, regardless of arguments.
     // This is accomplished by marking the schema varargs and having no required
     // arguments.
-    Operator(Symbol name, OperationCreator op_creator, c10::AliasAnalysisKind alias_analysis)
+    Operator(Symbol name, OperationCreator op_creator, xsigma::AliasAnalysisKind alias_analysis)
         : op_(JitOnlyOperator{
               FunctionSchema(varArgSchemaWithName(name, alias_analysis)), op_creator})
     {
@@ -129,12 +131,12 @@ public:
     Operation getOperation(const Node* node = nullptr) const
     {
         return std::visit(
-            c10::overloaded(
+            xsigma::overloaded(
                 [](const C10Operator& op) { return op.op_; },
                 [node](const JitOnlyOperator& op)
                 {
                     return std::visit(
-                        c10::overloaded(
+                        xsigma::overloaded(
                             [](const Operation& op) { return op; },
                             [node](const OperationCreator& op_creator)
                             { return op_creator(node); }),
@@ -143,11 +145,11 @@ public:
             op_);
     }
 
-    Operation getOperationForDispatchKey(c10::DispatchKey dk) const
+    Operation getOperationForDispatchKey(xsigma::DispatchKey dk) const
     {
         // TODO: some sort of caching mechanism?
         return std::visit(
-            c10::overloaded(
+            xsigma::overloaded(
                 [dk](const C10Operator& op)
                 {
                     return Operation([op, dk](Stack& stack)
@@ -155,7 +157,7 @@ public:
                 },
                 [](const JitOnlyOperator& op)
                 {
-                    TORCH_CHECK(false, "calling a JIT operator for dispatch key is not supported");
+                    XSIGMA_CHECK(false, "calling a JIT operator for dispatch key is not supported");
                     return Operation(nullptr);
                 }),
             op_);
@@ -164,7 +166,7 @@ public:
     const FunctionSchema& schema() const
     {
         return std::visit(
-            c10::overloaded(
+            xsigma::overloaded(
                 [](const C10Operator& op) -> const FunctionSchema& { return op.handle_.schema(); },
                 [](const JitOnlyOperator& op) -> const FunctionSchema&
                 {
@@ -186,30 +188,30 @@ public:
             op_);
     }
 
-    c10::ArrayRef<at::Tag> getTags() const
+    xsigma::ArrayRef<xsigma::Tag> getTags() const
     {
         return std::visit(
-            c10::overloaded(
+            xsigma::overloaded(
                 [](const C10Operator& op) { return op.handle_.getTags(); },
                 [](const JitOnlyOperator& op)
                 {
-                    // JitOnlyOperators don't have an c10::OperatorHandle or a way to
+                    // JitOnlyOperators don't have an xsigma::OperatorHandle or a way to
                     // specify tags. We're grandfathering them all into
                     // pt2_compliant_tag, but for anything else, please just stop
                     // using JitOnlyOperator.
-                    return c10::ArrayRef<at::Tag>(kJitOnlyOperatorTags);
+                    return xsigma::ArrayRef<xsigma::Tag>(kJitOnlyOperatorTags);
                 }),
             op_);
     }
 
     bool isC10Op() const { return op_.index() == 0; }
 
-    c10::AliasAnalysisKind aliasAnalysisKind() const
+    xsigma::AliasAnalysisKind aliasAnalysisKind() const
     {
-        const FunctionSchema&  schemaRef      = schema();
-        c10::AliasAnalysisKind alias_analysis = schemaRef.aliasAnalysis();
+        const FunctionSchema&     schemaRef      = schema();
+        xsigma::AliasAnalysisKind alias_analysis = schemaRef.aliasAnalysis();
 
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             alias_analysis == AliasAnalysisKind::FROM_SCHEMA || !schemaRef.hasAnyAliasInfo(),
             "In operator registration: Tried to register operator ",
             schemaRef,
@@ -220,7 +222,7 @@ public:
     bool hasOperation() const
     {
         return std::visit(
-            c10::overloaded(
+            xsigma::overloaded(
                 [](const C10Operator&) { return true; },
                 [](const JitOnlyOperator& op) { return op.op_.index() == 0; }),
             op_);
@@ -270,7 +272,7 @@ TORCH_API std::vector<std::shared_ptr<Operator>> getAllSortedOperatorsFor(Symbol
 
 // given a operator with an overload name, find the specific operator related to
 // it, may return nullptr if no operator exists.
-TORCH_API std::shared_ptr<Operator> findOperatorFor(const c10::OperatorName& full_name);
+TORCH_API std::shared_ptr<Operator> findOperatorFor(const xsigma::OperatorName& full_name);
 
 TORCH_API std::vector<Symbol> findSimilarOperators(Symbol input_op);
 
@@ -280,15 +282,15 @@ TORCH_API void deregisterOperator(const FunctionSchema& schema);
 // XXX: this function is meant to be used with string literals only!
 TORCH_API std::shared_ptr<Operator> getOperatorForLiteral(const char* signature);
 
-// Ensure the thing that registers c10 ops is defined.
-// Otherwise, our registry will not have c10 ops. You can run into this
+// Ensure the thing that registers xsigma ops is defined.
+// Otherwise, our registry will not have xsigma ops. You can run into this
 // scenario if you're querying registered ops during static init.
 //
 // This fn is defined in register_c10_ops.cpp
 TORCH_API void ensure_c10_registerer_defined();
 
 // Used to assert that unschematized operators have an analysis method written
-TORCH_API bool aliasAnalysisHasSpecialCaseFor(c10::Symbol sym);
+TORCH_API bool aliasAnalysisHasSpecialCaseFor(xsigma::Symbol sym);
 
 // A factory function to generate an optional operator. It has two
 // instantiations depending on the template bool arg value. The arg can be a
@@ -319,12 +321,12 @@ std::optional<Operator> OperatorGenerator(
 
 template <typename Func>
 std::optional<Operator> OperatorGenerator(
-    const std::string                name,
-    const std::string                overload_name,
-    const std::vector<c10::Argument> arguments,
-    const std::vector<c10::Argument> returns,
-    Func&&                           op,
-    AliasAnalysisKind                alias_analysis)
+    const std::string                   name,
+    const std::string                   overload_name,
+    const std::vector<xsigma::Argument> arguments,
+    const std::vector<xsigma::Argument> returns,
+    Func&&                              op,
+    AliasAnalysisKind                   alias_analysis)
 {
     return std::optional<Operator>(
         Operator(name, overload_name, arguments, returns, std::forward<Func>(op), alias_analysis));

@@ -1,7 +1,7 @@
 #pragma once
-#include <c10/util/Flags.h>
 #include <torch/csrc/jit/api/module.h>
 #include <torch/csrc/jit/runtime/graph_executor_impl.h>
+#include <xsigma/util/Flags.h>
 
 namespace torch::jit
 {

@@ -1,8 +1,8 @@
 #include <ATen/ATen.h>
-#include <c10/util/ThreadLocal.h>
 #include <torch/csrc/autograd/engine.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/variable.h>
+#include <xsigma/util/ThreadLocal.h>
 
 #include <memory>
 #include <string>
@@ -21,7 +21,7 @@ namespace torch::autograd
 // The current evaluating node. This is useful to assign the current node as a
 // parent of new nodes created during the evaluation of this node in anomaly
 // mode.
-C10_DEFINE_TLS_static(std::shared_ptr<Node>, tls_current_evaluating_node);
+XSIGMA_DEFINE_TLS_static(std::shared_ptr<Node>, tls_current_evaluating_node);
 #define current_evaluating_node (tls_current_evaluating_node.get())
 
 NodeGuard::NodeGuard(std::shared_ptr<Node> node)
@@ -47,7 +47,7 @@ void Node::assign_parent()
 
 auto Node::name() const -> std::string
 {
-    return c10::demangle(typeid(*this).name());
+    return xsigma::demangle(typeid(*this).name());
 }
 
 AnomalyMetadata* Node::metadata() noexcept
@@ -116,9 +116,9 @@ void deleteNode(Node* function)
     }
 }
 
-at::Tensor TypeAndSize::zeros()
+xsigma::Tensor TypeAndSize::zeros()
 {
-    return at::zeros_symint(sym_sizes, options);
+    return xsigma::zeros_symint(sym_sizes, options);
 }
 
 }  // namespace torch::autograd

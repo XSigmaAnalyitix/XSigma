@@ -1,14 +1,14 @@
 #include <ATen/TracerMode.h>
 #include <ATen/core/op_registration/op_registration.h>
-#include <c10/core/ScalarType.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/frontend/tracer.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/library.h>
+#include <xsigma/core/ScalarType.h>
+#include <xsigma/util/irange.h>
 
 #include <optional>
 
-using namespace at;
+using namespace xsigma;
 
 namespace torch::TraceType
 {
@@ -44,7 +44,7 @@ Tensor& copy_(Tensor& self, const Tensor& src, bool non_blocking)
     }
 
     {
-        at::tracer::impl::NoTracerDispatchMode tracer_guard;
+        xsigma::tracer::impl::NoTracerDispatchMode tracer_guard;
         self.copy_(src, non_blocking);
     }
 
@@ -69,7 +69,7 @@ const Tensor& resize_(
     }
 
     {
-        at::tracer::impl::NoTracerDispatchMode tracer_guard;
+        xsigma::tracer::impl::NoTracerDispatchMode tracer_guard;
         self.resize_(size, optional_memory_format);
     }
     return self;
@@ -87,7 +87,7 @@ const Tensor& resize_as_(
     }
 
     {
-        at::tracer::impl::NoTracerDispatchMode tracer_guard;
+        xsigma::tracer::impl::NoTracerDispatchMode tracer_guard;
         self.resize_as_(the_template, optional_memory_format);
     }
     return self;
@@ -107,7 +107,7 @@ Tensor detach(const Tensor& self)
 
     auto result = [&]()
     {
-        at::tracer::impl::NoTracerDispatchMode tracer_guard;
+        xsigma::tracer::impl::NoTracerDispatchMode tracer_guard;
         return self.detach();
     }();
 
@@ -132,7 +132,7 @@ Tensor& detach_(Tensor& self)
     }
 
     {
-        at::tracer::impl::NoTracerDispatchMode tracer_guard;
+        xsigma::tracer::impl::NoTracerDispatchMode tracer_guard;
         self.detach_();
     }
 
@@ -174,7 +174,7 @@ TORCH_LIBRARY_IMPL(aten, Tracer, m)
 
 namespace torch::jit
 {
-static void general_trace_function(const c10::OperatorHandle& op, Stack* stack)
+static void general_trace_function(const xsigma::OperatorHandle& op, Stack* stack)
 {
     const auto input_size  = op.schema().arguments().size();
     const auto output_size = op.schema().returns().size();
@@ -255,8 +255,8 @@ static void general_trace_function(const c10::OperatorHandle& op, Stack* stack)
                 else if (auto class_type = elem_type->cast<ClassType>())
                 {
                     AT_ASSERT(iter->isList());
-                    auto                                                 list = iter->toList();
-                    std::vector<c10::intrusive_ptr<c10::ivalue::Object>> objects;
+                    auto list = iter->toList();
+                    std::vector<xsigma::intrusive_ptr<xsigma::ivalue::Object>> objects;
                     for (IValue iv : list)
                     {
                         objects.emplace_back(std::move(iv).toObject());
@@ -271,7 +271,7 @@ static void general_trace_function(const c10::OperatorHandle& op, Stack* stack)
                     // doubles in the list are constants
                     auto                value = iter->toDoubleVector();
                     std::vector<Value*> info(value.size());
-                    for (const auto value_index : c10::irange(value.size()))
+                    for (const auto value_index : xsigma::irange(value.size()))
                     {
                         info[value_index] = graph->insertConstant(value[value_index]);
                         tracer::recordSourceLocation(info[value_index]->node());
@@ -283,7 +283,7 @@ static void general_trace_function(const c10::OperatorHandle& op, Stack* stack)
                 {
                     AT_ASSERT(iter->isIntList());
                     tracer::addInputs(
-                        node, args[i].name().c_str(), c10::IntArrayRef(iter->toIntVector()));
+                        node, args[i].name().c_str(), xsigma::IntArrayRef(iter->toIntVector()));
                 }
                 else if (elem_type->kind() == TypeKind::BoolType)
                 {
@@ -292,7 +292,7 @@ static void general_trace_function(const c10::OperatorHandle& op, Stack* stack)
                 }
                 else
                 {
-                    TORCH_CHECK(false, "unsupported input list type: ", elem_type->str());
+                    XSIGMA_CHECK(false, "unsupported input list type: ", elem_type->str());
                 }
             }
             else if (iter->isObject())
@@ -301,7 +301,7 @@ static void general_trace_function(const c10::OperatorHandle& op, Stack* stack)
             }
             else
             {
-                TORCH_CHECK(false, "unsupported input type: ", type->str());
+                XSIGMA_CHECK(false, "unsupported input type: ", type->str());
             }
         }
         graph->insertNode(node);
@@ -335,7 +335,7 @@ static void general_trace_function(const c10::OperatorHandle& op, Stack* stack)
                 }
                 else
                 {
-                    TORCH_CHECK(false, "unsupported output list type: ", elem_type->str());
+                    XSIGMA_CHECK(false, "unsupported output list type: ", elem_type->str());
                 }
             }
             else if (type->kind() == TypeKind::ClassType)
@@ -345,7 +345,7 @@ static void general_trace_function(const c10::OperatorHandle& op, Stack* stack)
             }
             else
             {
-                TORCH_CHECK(
+                XSIGMA_CHECK(
                     false,
                     "unsupported output type: ",
                     type->str(),

@@ -387,14 +387,14 @@ void CppPrinter::visit(const VarPtr& v)
     }
     else
     {
-        os() << *vector_vars_.at(v);
+        os() << *vector_vars_.xsigma(v);
     }
 }
 
 CppCodeGen::CppCodeGen(
     StmtPtr                       stmt,
     const std::vector<BufferArg>& buffer_args,
-    at::Device                    device,
+    xsigma::Device                device,
     const std::string&            kernel_func_name)
     : CodeGen(std::move(stmt), buffer_args, device, kernel_func_name)
 {

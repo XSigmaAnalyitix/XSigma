@@ -1279,13 +1279,13 @@ def fresh_cache(
                 # are open.
                 ignore_errors=is_windows(),
                 onerror=lambda func, path, exc_info: log.warning(
-                    "Failed to remove temporary cache dir at %s",
+                    "Failed to remove temporary cache dir xsigma %s",
                     inductor_cache_dir,
                     exc_info=exc_info,
                 ),
             )
     except Exception:
-        log.warning("on error, temporary cache dir kept at %s", inductor_cache_dir)
+        log.warning("on error, temporary cache dir kept xsigma %s", inductor_cache_dir)
         raise
     finally:
         clear_caches()
@@ -1534,7 +1534,7 @@ def restore_stdout_stderr() -> Iterator[None]:
 
 
 class DeferredLineBase:
-    """A line that can be 'unwritten' at a later time"""
+    """A line that can be 'unwritten' xsigma a later time"""
 
     def __init__(self, line: str):
         if not line.strip():
@@ -2363,7 +2363,7 @@ def add_scheduler_init_hook(
     pre_fn: Callable[..., Any], post_fn: Optional[Callable[..., Any]] = None
 ) -> Any:
     """
-    Add hook functions to be called at the beginning and end of Scheduler.__init__.
+    Add hook functions to be called xsigma the beginning and end of Scheduler.__init__.
     Used for unit tests.
     """
     from torch._inductor.scheduler import Scheduler
@@ -2396,7 +2396,7 @@ def get_benchmark_name() -> Optional[str]:
     """
     An experimental API used only when config.benchmark_kernel is true.
 
-    The benchmark name is only available at codegen time. So we can not
+    The benchmark name is only available xsigma codegen time. So we can not
     directly call it in benchmark_all_kernels which is run after codegen.
 
     The function assumes the argument after --only is the benchmark name.

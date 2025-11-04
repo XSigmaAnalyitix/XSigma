@@ -1,6 +1,6 @@
 #ifdef TORCH_ENABLE_LLVM
-#include <c10/util/Half.h>
 #include <torch/csrc/jit/tensorexpr/intrinsic_symbols.h>
+#include <xsigma/util/Half.h>
 
 #include <cmath>
 
@@ -132,7 +132,7 @@ extern "C"
 namespace torch::jit::tensorexpr
 {
 
-c10::ArrayRef<SymbolAddress> getIntrinsicSymbols()
+xsigma::ArrayRef<SymbolAddress> getIntrinsicSymbols()
 {
     static SymbolAddress symbolAddresses[] = {
         {"log10f", reinterpret_cast<void*>(&log10f)},
@@ -161,8 +161,8 @@ c10::ArrayRef<SymbolAddress> getIntrinsicSymbols()
         {"remainderf", reinterpret_cast<void*>(&remainderf)},
 
         // float -> half & half -> float conversions
-        {"__gnu_h2f_ieee", reinterpret_cast<void*>(&c10::detail::fp16_ieee_to_fp32_value)},
-        {"__gnu_f2h_ieee", reinterpret_cast<void*>(&c10::detail::fp16_ieee_from_fp32_value)},
+        {"__gnu_h2f_ieee", reinterpret_cast<void*>(&xsigma::detail::fp16_ieee_to_fp32_value)},
+        {"__gnu_f2h_ieee", reinterpret_cast<void*>(&xsigma::detail::fp16_ieee_from_fp32_value)},
 
 #if !defined(_MSC_VER) && defined(__x86_64__)
         // FP32 Sleef functions -- SSE
@@ -282,7 +282,7 @@ c10::ArrayRef<SymbolAddress> getIntrinsicSymbols()
         {"Sleef_fmodd4", reinterpret_cast<void*>(&Sleef_fmodd4)},
 #endif
     };
-    return c10::ArrayRef<SymbolAddress>(symbolAddresses);
+    return xsigma::ArrayRef<SymbolAddress>(symbolAddresses);
 }
 
 }  // namespace torch::jit::tensorexpr

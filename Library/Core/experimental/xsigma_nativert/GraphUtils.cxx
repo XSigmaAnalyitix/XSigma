@@ -1,6 +1,6 @@
-#include <c10/core/Device.h>
 #include <torch/nativert/graph/Graph.h>
 #include <torch/nativert/graph/GraphUtils.h>
+#include <xsigma/core/Device.h>
 
 namespace torch::nativert
 {
@@ -91,9 +91,9 @@ bool areAllIOTensorsAttributesOnCpu(const Node& node)
     // Check attributes
     for (auto& attribute : node.attributes())
     {
-        if (std::holds_alternative<c10::Device>(attribute.value))
+        if (std::holds_alternative<xsigma::Device>(attribute.value))
         {
-            auto device = std::get<c10::Device>(attribute.value);
+            auto device = std::get<xsigma::Device>(attribute.value);
             if (!device.is_cpu())
             {
                 return false;

@@ -154,7 +154,7 @@ struct GraphTask {
   std::unordered_map<Node*, InputBuffer> not_ready_;
   std::unordered_map<Node*, int> dependencies_;
   std::unordered_set<Node*> nodes_in_graph_;
-  c10::SmallVector<Node*, 4> graph_roots_;
+  xsigma::SmallVector<Node*, 4> graph_roots_;
   std::unordered_map<Node*, ExecInfo> exec_info_;
   std::vector<at::Tensor> captured_vars_;
 };

@@ -21,11 +21,11 @@ TORCH_API void fuseGraph(std::shared_ptr<Graph>& g);
 
 }  // namespace fuser::onednn
 
-struct C10_EXPORT RegisterLlgaFuseGraph : public PassManager<RegisterLlgaFuseGraph>
+struct XSIGMA_EXPORT RegisterLlgaFuseGraph : public PassManager<RegisterLlgaFuseGraph>
 {
     static bool setEnabled(bool enabled)
     {
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             AT_MKLDNN_ENABLED(),
             "Running oneDNN Graph fuser is only supported with MKLDNN builds.");
         bool oldState                   = fuser::onednn::getLlgaEnabled();

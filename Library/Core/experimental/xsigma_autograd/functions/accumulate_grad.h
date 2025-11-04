@@ -80,7 +80,7 @@ struct TORCH_API AccumulateGrad : public Node
     // be added to variable_grad.  If we aren't setting up for double backward
     // (!GradMode::is_enabled()), AccumulateGrad performs "variable_grad +=
     // new_grad" in-place, which keeps variable_grad's layout. We assume (hope)
-    // variable_grad was created obeying (1) or (2) at some point in the past.
+    // variable_grad was created obeying (1) or (2) xsigma some point in the past.
     //
     // If we are setting up for double backward, AccumulateGrad updates the grad
     // out-of-place via "variable_grad + new_grad."  TensorIterator operator+
@@ -174,17 +174,17 @@ struct TORCH_API AccumulateGrad : public Node
     //              is used to set a new value for the grad.
     template <typename T>
     static void accumulateGrad(
-        const Variable&   variable,
-        at::Tensor&       variable_grad,
-        const at::Tensor& new_grad,
-        size_t            num_expected_refs,
-        const T&          update_grad)
+        const Variable&       variable,
+        xsigma::Tensor&       variable_grad,
+        const xsigma::Tensor& new_grad,
+        size_t                num_expected_refs,
+        const T&              update_grad)
     {
         if (!variable_grad.defined())
         {
             if (!GradMode::is_enabled() && !new_grad.is_sparse() && !new_grad.is_sparse_csr() &&
-                !(variable.is_sparse_csr() && new_grad.layout() == at::kStrided) &&
-                at::caching::adjusted_use_count(new_grad) <= num_expected_refs &&
+                !(variable.is_sparse_csr() && new_grad.layout() == xsigma::kStrided) &&
+                xsigma::caching::adjusted_use_count(new_grad) <= num_expected_refs &&
                 (new_grad.is_mkldnn() || utils::obeys_layout_contract(new_grad, variable)))
             {
                 // See Case 1.1: Stealable dense new_grad
@@ -200,13 +200,13 @@ struct TORCH_API AccumulateGrad : public Node
             {
                 // Case 1.2: Stealable sparse new_grad
                 // No scenario where we expect this to be true currently
-                TORCH_INTERNAL_ASSERT_DEBUG_ONLY(
-                    !at::caching::is_cached_tensor(new_grad._indices()) &&
-                    !at::caching::is_cached_tensor(new_grad._values()) &&
-                    !at::caching::is_cached_tensor(new_grad));
+                XSIGMA_CHECK_DEBUG(
+                    !xsigma::caching::is_cached_tensor(new_grad._indices()) &&
+                    !xsigma::caching::is_cached_tensor(new_grad._values()) &&
+                    !xsigma::caching::is_cached_tensor(new_grad));
 
                 update_grad(
-                    at::_sparse_coo_tensor_unsafe(
+                    xsigma::_sparse_coo_tensor_unsafe(
                         new_grad._indices(),
                         new_grad._values(),
                         new_grad.sizes(),
@@ -245,7 +245,7 @@ struct TORCH_API AccumulateGrad : public Node
                 CHECK_RESULT(result, variable);
                 update_grad(std::move(result));
             }
-            else if (!at::inplaceIsVmapCompatible(variable_grad, new_grad))
+            else if (!xsigma::inplaceIsVmapCompatible(variable_grad, new_grad))
             {
                 // Case 2.2: Vmap-incompatible
                 auto result = variable_grad + new_grad;
@@ -263,9 +263,9 @@ struct TORCH_API AccumulateGrad : public Node
                 // } else if (obeys_layout_contract(variable_grad, variable)) {
                 //   variable_grad += new_grad;
                 // } else {
-                //   result = at::empty_strided(variable.sizes(), variable.strides(),
+                //   result = xsigma::empty_strided(variable.sizes(), variable.strides(),
                 //                              variable.options().memory_format(std::nullopt));
-                //   update_grad(at::native::add_out(result, variable_grad,
+                //   update_grad(xsigma::native::add_out(result, variable_grad,
                 //   new_grad, 1.0);
                 // }
                 // However, that accumulation is sometimes in place and sometimes not,
@@ -275,7 +275,7 @@ struct TORCH_API AccumulateGrad : public Node
         else
         {
             // Case 3: Param has existing grad and grad mode is enabled
-            at::Tensor result;
+            xsigma::Tensor result;
             if (variable_grad.is_sparse() && !new_grad.is_sparse())
             {
                 // Case 3.1: Sparse variable_grad + Dense new_grad

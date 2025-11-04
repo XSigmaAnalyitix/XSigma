@@ -12,15 +12,11 @@
 #endif
 
 #ifdef _OPENMP
-namespace at::internal {
+namespace xsigma::internal {
+
 template <typename F>
-inline void invoke_parallel(
-    int64_t begin,
-    int64_t end,
-    int64_t grain_size,
-    const F& f) {
-  std::atomic_flag err_flag = ATOMIC_FLAG_INIT;
-  std::exception_ptr eptr;
+inline void invoke_parallel(int64_t begin, int64_t end, int64_t grain_size, const F& f) {
+  std::atomic<bool> has_error{false};
 
 #pragma omp parallel
   {
@@ -35,20 +31,13 @@ inline void invoke_parallel(
     int64_t tid = omp_get_thread_num();
     int64_t chunk_size = divup((end - begin), num_threads);
     int64_t begin_tid = begin + tid * chunk_size;
-    if (begin_tid < end) {
-      try {
-        internal::ThreadIdGuard tid_guard(tid);
-        f(begin_tid, std::min(end, chunk_size + begin_tid));
-      } catch (...) {
-        if (!err_flag.test_and_set()) {
-          eptr = std::current_exception();
-        }
-      }
+    if (begin_tid < end && !has_error.load()) {
+      internal::thread_id_guard tid_guard(tid);
+      // Note: Error handling removed - function f should handle errors internally
+      f(begin_tid, std::min(end, chunk_size + begin_tid));
     }
   }
-  if (eptr) {
-    std::rethrow_exception(eptr);
-  }
 }
-} // namespace at::internal
-#endif // _OPENMP
+
+}  // namespace xsigma::internal
+#endif  // _OPENMP

@@ -1,4 +1,3 @@
-#include <c10/util/Exception.h>
 #include <torch/csrc/jit/ir/alias_analysis.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/jit_log.h>
@@ -8,6 +7,8 @@
 #include <torch/csrc/jit/passes/remove_redundant_profiles.h>
 #include <torch/csrc/jit/passes/utils/subgraph_utils.h>
 #include <torch/csrc/jit/runtime/autodiff.h>
+
+#include "util/exception.h"
 
 namespace torch::jit
 {
@@ -464,7 +465,7 @@ void AddRequiresGradToDifferentiableGraph(Node* diff_graph, const ContextMapping
 {
     TORCH_INTERNAL_ASSERT(diff_graph->kind() == prim::DifferentiableGraph);
     const auto& subgraph = diff_graph->g(attr::Subgraph);
-    for (auto i : c10::irange(subgraph->outputs().size()))
+    for (auto i : xsigma::irange(subgraph->outputs().size()))
     {
         Value* output = subgraph->outputs()[i];
         if (output->node()->kind() == prim::profile)
@@ -483,7 +484,7 @@ void AddRequiresGradToDifferentiableGraph(Node* diff_graph, const ContextMapping
         }
 
         // this node doesn't have any requires_grad info.
-        // look at its uses to try to find a profile node.
+        // look xsigma its uses to try to find a profile node.
         auto requires_grad =
             findRequiresGradForOutput(diff_graph, diff_graph->output(i), ctx_mapping);
 

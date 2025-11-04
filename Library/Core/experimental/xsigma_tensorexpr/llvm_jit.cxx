@@ -1,16 +1,16 @@
 #ifdef TORCH_ENABLE_LLVM
 
-#include <c10/macros/Macros.h>
 #include <torch/csrc/jit/tensorexpr/external_functions.h>
 #include <torch/csrc/jit/tensorexpr/intrinsic_symbols.h>
 #include <torch/csrc/jit/tensorexpr/llvm_jit.h>
+#include <xsigma/macros/Macros.h>
 
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wsuggest-override")
+XSIGMA_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wsuggest-override")
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
-C10_DIAGNOSTIC_POP()
+XSIGMA_DIAGNOSTIC_POP()
 
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wextra-semi")
+XSIGMA_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wextra-semi")
 #include <llvm/ExecutionEngine/Orc/CompileUtils.h>
 #include <llvm/ExecutionEngine/Orc/ExecutionUtils.h>
 #include <llvm/ExecutionEngine/Orc/IRCompileLayer.h>
@@ -35,10 +35,10 @@ C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wextra-semi")
 #endif
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Target/TargetMachine.h>
-C10_DIAGNOSTIC_POP()
+XSIGMA_DIAGNOSTIC_POP()
 
-#include <c10/util/Half.h>
 #include <torch/csrc/jit/tensorexpr/external_functions_registry.h>
+#include <xsigma/util/Half.h>
 
 #include <algorithm>
 #include <memory>

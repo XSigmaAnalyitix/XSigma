@@ -32,7 +32,7 @@ using NNCLoweringFunction = std::function<Tensor(
     const std::vector<ExprHandle>&,
     const std::vector<ExprHandle>&,
     const std::optional<ScalarType>&,
-    at::Device)>;
+    xsigma::Device)>;
 
 TORCH_API FunctionSchemaMap<NNCLoweringFunction>& getNNCLoweringRegistry();
 TORCH_API NNCLoweringFunction                     getStandardLoweringFor(const std::string& op);

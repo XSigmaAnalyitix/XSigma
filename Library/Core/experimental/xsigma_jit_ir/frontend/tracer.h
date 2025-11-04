@@ -5,7 +5,6 @@
 #include <ATen/core/jit_type.h>
 #include <ATen/core/stack.h>
 #include <ATen/core/symbol.h>
-#include <c10/util/Exception.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/jit/frontend/source_range.h>
 #include <torch/csrc/utils/variadic.h>
@@ -14,6 +13,8 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+
+#include "util/exception.h"
 
 namespace torch::jit
 {
@@ -25,15 +26,15 @@ struct Module;
 namespace tracer
 {
 
-using ::c10::ivalue::Shared;
+using ::xsigma::ivalue::Shared;
 
-using ::c10::IValue;
-using ::c10::ivalue::Future;
+using ::xsigma::IValue;
+using ::xsigma::ivalue::Future;
 
-using ::c10::ArrayRef;
-using ::c10::TupleType;
-using ::c10::TupleTypePtr;
-using ::c10::ivalue::ConstantString;
+using ::xsigma::ArrayRef;
+using ::xsigma::TupleType;
+using ::xsigma::TupleTypePtr;
+using ::xsigma::ivalue::ConstantString;
 
 using torch::autograd::Variable;
 using variable_list = std::vector<Variable>;
@@ -67,11 +68,11 @@ struct TORCH_API TracingState : public std::enable_shared_from_this<TracingState
     Value* getOutput(const IValue& var, size_t i);
     bool   hasValue(const IValue& var) const;
 
-    Node* createNode(c10::Symbol op_name, size_t num_outputs);
+    Node* createNode(xsigma::Symbol op_name, size_t num_outputs);
     void  insertNode(Node* node);
 
 private:
-    using WeakIValue = at::WeakIValue;
+    using WeakIValue = xsigma::WeakIValue;
 
     struct WeakIValueHasher
     {
@@ -116,7 +117,7 @@ struct ArgumentStash
 
     static IntArrayRefTrace popIntArrayRef(const std::string& arg_name)
     {
-        auto info = std::move(stash.intlists.at(arg_name));
+        auto info = std::move(stash.intlists.xsigma(arg_name));
         stash.intlists.erase(arg_name);
         return info;
     }
@@ -125,16 +126,16 @@ struct ArgumentStash
     // to regular Value*'s in the graph. i.e. they don't require special
     // handling like in the case of IntArrayRefs
     TORCH_API static void stashValue(
-        const std::string&  arg_name,
-        size_t              idx,
-        const Variable&     var,
-        const c10::TypePtr& type = nullptr);
+        const std::string&     arg_name,
+        size_t                 idx,
+        const Variable&        var,
+        const xsigma::TypePtr& type = nullptr);
 
     static bool hasValue(const std::string& arg_name) { return stash.values.count(arg_name) > 0; }
 
     static Value* popValue(const std::string& arg_name)
     {
-        auto info = stash.values.at(arg_name);
+        auto info = stash.values.xsigma(arg_name);
         stash.values.erase(arg_name);
         return info;
     }
@@ -230,64 +231,70 @@ TORCH_API void abandon();
 // NB: those serve both as an intermediate steps in addInputs below,
 // as well as the overloads that terminate template recursion
 TORCH_API void addInputs(Node* n, const char* name, int64_t value);
-TORCH_API void addInputs(Node* n, const char* name, const c10::SymInt& value);
+TORCH_API void addInputs(Node* n, const char* name, const xsigma::SymInt& value);
 TORCH_API void addInputs(Node* n, const char* name, std::optional<int64_t> value);
 TORCH_API void addInputs(Node* n, const char* name, bool value);
 TORCH_API void addInputs(Node* n, const char* name, const std::optional<bool>& value);
 TORCH_API void addInputs(Node* n, const char* name, double value);
 TORCH_API void addInputs(Node* n, const char* name, const std::optional<double>& value);
-TORCH_API void addInputs(Node* n, const char* name, const at::Scalar& value);
-TORCH_API void addInputs(Node* n, const char* name, const std::optional<at::Scalar>& value);
-TORCH_API void addInputs(Node* n, const char* name, const at::Tensor& value);
-TORCH_API void addInputs(Node* n, const char* name, const std::optional<at::Tensor>& value);
+TORCH_API void addInputs(Node* n, const char* name, const xsigma::Scalar& value);
+TORCH_API void addInputs(Node* n, const char* name, const std::optional<xsigma::Scalar>& value);
+TORCH_API void addInputs(Node* n, const char* name, const xsigma::Tensor& value);
+TORCH_API void addInputs(Node* n, const char* name, const std::optional<xsigma::Tensor>& value);
 TORCH_API void addInputs(Node* n, const char* name, ArrayRef<int64_t> value);
-TORCH_API void addInputs(Node* n, const char* name, c10::SymIntArrayRef value);
-TORCH_API void addInputs(Node* n, const char* name, std::optional<c10::SymInt> value);
+TORCH_API void addInputs(Node* n, const char* name, xsigma::SymIntArrayRef value);
+TORCH_API void addInputs(Node* n, const char* name, std::optional<xsigma::SymInt> value);
 TORCH_API void addInputs(Node* n, const char* name, const std::optional<ArrayRef<int64_t>>& value);
-TORCH_API void addInputs(Node* n, const char* name, const at::OptionalIntArrayRef& opt_value);
-TORCH_API void addInputs(Node* n, const char* name, const at::OptionalSymIntArrayRef& opt_value);
+TORCH_API void addInputs(Node* n, const char* name, const xsigma::OptionalIntArrayRef& opt_value);
 TORCH_API void addInputs(
-    Node* n, const char* name, ArrayRef<at::Tensor> value, bool allow_undefined = false);
+    Node* n, const char* name, const xsigma::OptionalSymIntArrayRef& opt_value);
 TORCH_API void addInputs(
-    Node* n, const char* name, const std::vector<at::Tensor>& value, bool allow_undefined = false);
+    Node* n, const char* name, ArrayRef<xsigma::Tensor> value, bool allow_undefined = false);
 TORCH_API void addInputs(
-    Node* n, const char* name, at::ITensorListRef value, bool allow_undefined = false);
-TORCH_API void addInputs(Node* n, const char* name, const List<std::optional<at::Tensor>>& value);
+    Node*                              n,
+    const char*                        name,
+    const std::vector<xsigma::Tensor>& value,
+    bool                               allow_undefined = false);
 TORCH_API void addInputs(
-    Node*                                             n,
-    const char*                                       name,
-    ArrayRef<c10::intrusive_ptr<c10::ivalue::Object>> value,
-    const c10::ClassTypePtr&                          class_type);
+    Node* n, const char* name, xsigma::ITensorListRef value, bool allow_undefined = false);
+TORCH_API void addInputs(
+    Node* n, const char* name, const List<std::optional<xsigma::Tensor>>& value);
+TORCH_API void addInputs(
+    Node*                                                   n,
+    const char*                                             name,
+    ArrayRef<xsigma::intrusive_ptr<xsigma::ivalue::Object>> value,
+    const xsigma::ClassTypePtr&                             class_type);
 TORCH_API void addInputs(Node* n, const char* name, ArrayRef<double> value);
 TORCH_API void addInputs(Node* n, const char* name, const std::optional<ArrayRef<double>>& value);
 TORCH_API void addInputs(Node* n, const char* name, const std::string_view value);
 TORCH_API void addInputs(Node* n, const char* name, const std::optional<std::string_view>& value);
-TORCH_API void addInputs(Node* n, const char* name, at::Device value);
-TORCH_API void addInputs(Node* n, const char* name, c10::Stream stream);
-TORCH_API void addInputs(Node* n, const char* name, at::Layout value);
-TORCH_API void addInputs(Node* n, const char* name, at::ScalarType value);
-TORCH_API void addInputs(Node* n, const char* name, const std::optional<at::ScalarType>& value);
-TORCH_API void addInputs(Node* n, const char* name, const std::optional<at::Device>& value);
-TORCH_API void addInputs(Node* n, const char* name, const std::optional<at::Layout>& value);
-TORCH_API void addInputs(Node* n, const char* name, at::MemoryFormat value);
-TORCH_API void addInputs(Node* n, const char* name, std::optional<at::DimnameList> value);
-TORCH_API void addInputs(Node* n, const char* name, const std::optional<at::MemoryFormat>& value);
-TORCH_API void addInputs(Node* n, const char* name, const std::optional<at::Generator>& value);
+TORCH_API void addInputs(Node* n, const char* name, xsigma::Device value);
+TORCH_API void addInputs(Node* n, const char* name, xsigma::Stream stream);
+TORCH_API void addInputs(Node* n, const char* name, xsigma::Layout value);
+TORCH_API void addInputs(Node* n, const char* name, xsigma::ScalarType value);
+TORCH_API void addInputs(Node* n, const char* name, const std::optional<xsigma::ScalarType>& value);
+TORCH_API void addInputs(Node* n, const char* name, const std::optional<xsigma::Device>& value);
+TORCH_API void addInputs(Node* n, const char* name, const std::optional<xsigma::Layout>& value);
+TORCH_API void addInputs(Node* n, const char* name, xsigma::MemoryFormat value);
+TORCH_API void addInputs(Node* n, const char* name, std::optional<xsigma::DimnameList> value);
+TORCH_API void addInputs(
+    Node* n, const char* name, const std::optional<xsigma::MemoryFormat>& value);
+TORCH_API void addInputs(Node* n, const char* name, const std::optional<xsigma::Generator>& value);
 
 inline void addInputs(Node* n, const char* name, const std::vector<bool>& value)
 {
-    TORCH_CHECK(false, "Tracing a list of bool type is currently not supported!");
+    XSIGMA_CHECK(false, "Tracing a list of bool type is currently not supported!");
 }
 
 template <typename T>
 void addInputs(Node* n, const char* name, ArrayRef<T> value)
 {
-    TORCH_CHECK(false, "Tracing a list of arbitrary type is currently not supported!");
+    XSIGMA_CHECK(false, "Tracing a list of arbitrary type is currently not supported!");
 }
 template <typename K, typename V>
 void addInputs(Node* n, const char* name, const std::unordered_map<K, V>& value)
 {
-    TORCH_CHECK(false, "Tracing a dict of arbitrary types is currently not supported!");
+    XSIGMA_CHECK(false, "Tracing a dict of arbitrary types is currently not supported!");
 }
 
 template <size_t N>
@@ -298,31 +305,32 @@ void addInputs(Node* n, const char* name, std::array<bool, N> value)
 }
 
 TORCH_API void addInputs(
-    Node* n, const char* name, const c10::intrusive_ptr<c10::ivalue::Object>& obj);
+    Node* n, const char* name, const xsigma::intrusive_ptr<xsigma::ivalue::Object>& obj);
 
-TORCH_API void ensureUniqueIfOutOfPlaced(const char* name, const at::Tensor& tensor);
-TORCH_API void ensureUniqueIfOutOfPlaced(const char* name, const std::optional<at::Tensor>& tensor);
+TORCH_API void ensureUniqueIfOutOfPlaced(const char* name, const xsigma::Tensor& tensor);
+TORCH_API void ensureUniqueIfOutOfPlaced(
+    const char* name, const std::optional<xsigma::Tensor>& tensor);
 
 template <
     typename T,
     typename = std::enable_if_t<
-        (!std::is_convertible_v<std::decay_t<T>, at::TensorList> &&
-         !std::is_convertible_v<std::decay_t<T>, c10::List<at::Tensor>> &&
-         !std::is_convertible_v<std::decay_t<T>, at::Tensor> &&
-         !std::is_convertible_v<std::decay_t<T>, c10::intrusive_ptr<c10::ivalue::Object>>)>>
+        (!std::is_convertible_v<std::decay_t<T>, xsigma::TensorList> &&
+         !std::is_convertible_v<std::decay_t<T>, xsigma::List<xsigma::Tensor>> &&
+         !std::is_convertible_v<std::decay_t<T>, xsigma::Tensor> &&
+         !std::is_convertible_v<std::decay_t<T>, xsigma::intrusive_ptr<xsigma::ivalue::Object>>)>>
 void addOutput(Node* node, T&& /*unused*/)
 {
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         false,
         "Found an unsupported argument type ",
-        c10::demangle_type<T>(),
+        xsigma::demangle_type<T>(),
         " in the JIT tracer. File a bug report.");
 }
-TORCH_API void addOutput(Node* node, const at::Tensor& tensor);
-TORCH_API void setOutput(Value* value, const at::Tensor& output);
-TORCH_API void addOutput(Node* node, const std::vector<at::Tensor>& list);
-TORCH_API void addOutput(Node* node, const c10::List<at::Tensor>& list);
-TORCH_API void addOutput(Node* node, const c10::intrusive_ptr<c10::ivalue::Object>& output);
+TORCH_API void addOutput(Node* node, const xsigma::Tensor& tensor);
+TORCH_API void setOutput(Value* value, const xsigma::Tensor& output);
+TORCH_API void addOutput(Node* node, const std::vector<xsigma::Tensor>& list);
+TORCH_API void addOutput(Node* node, const xsigma::List<xsigma::Tensor>& list);
+TORCH_API void addOutput(Node* node, const xsigma::intrusive_ptr<xsigma::ivalue::Object>& output);
 
 TORCH_API autograd::Variable getSizeOf(const autograd::Variable& var, int64_t dim);
 

@@ -119,7 +119,7 @@ uint32_t add_input_metadata(const at::Tensor& t) noexcept {
 // Add metadata with explicit parameters
 uint32_t add_input_metadata(
     const at::TensorOptions& options,
-    c10::SymIntArrayRef shape,
+    xsigma::SymIntArrayRef shape,
     bool is_tensor_subclass,
     bool is_nested,
     std::optional<at::ScalarType> grad_dtype) noexcept {
@@ -164,8 +164,8 @@ auto Engine::execute(
   bool not_reentrant_backward_call = worker_device == NO_DEVICE;
   
   // Extract root nodes
-  c10::SmallVector<Node*, 4> temp_roots{root_edges.size()};
-  for (const auto i : c10::irange(root_edges.size())) {
+  xsigma::SmallVector<Node*, 4> temp_roots{root_edges.size()};
+  for (const auto i : xsigma::irange(root_edges.size())) {
     temp_roots[i] = root_edges[i].function.get();
   }
   

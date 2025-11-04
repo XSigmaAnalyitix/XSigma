@@ -10,7 +10,7 @@ namespace torch::jit::tensorexpr
 struct TensorInfo
 {
     std::vector<int64_t> dims;
-    c10::ScalarType      dtype;
+    xsigma::ScalarType   dtype;
 };
 std::optional<TensorInfo> getTensorInfo(const BufHandle& b);
 
@@ -41,31 +41,31 @@ Tensor computeChunk(
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device);
+    xsigma::Device                   device);
 Tensor computeTranspose(
     const std::vector<ArgValue>&     inputs,
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device);
+    xsigma::Device                   device);
 Tensor computeExpand(
     const std::vector<ArgValue>&     inputs,
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device);
+    xsigma::Device                   device);
 Tensor computeReshape(
     const std::vector<ArgValue>&     inputs,
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device);
+    xsigma::Device                   device);
 Tensor computeFlatten(
     const std::vector<ArgValue>&     inputs,
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device);
+    xsigma::Device                   device);
 Tensor computeCatWoConditionals(
     const std::vector<ArgValue>& inputs, const std::vector<ExprHandle>& outputShape);
 Tensor computeCat(
@@ -73,12 +73,12 @@ Tensor computeCat(
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device);
+    xsigma::Device                   device);
 Tensor computeEmbedding(
     const std::vector<ArgValue>&     inputs,
     const std::vector<ExprHandle>&   outputShape,
     const std::vector<ExprHandle>&   outputStrides,
     const std::optional<ScalarType>& outputType,
-    at::Device                       device);
+    xsigma::Device                   device);
 
 }  // namespace torch::jit::tensorexpr

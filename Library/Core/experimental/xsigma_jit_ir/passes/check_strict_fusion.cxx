@@ -1,11 +1,12 @@
 
-#include <c10/util/Exception.h>
 #include <torch/csrc/jit/frontend/error_report.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/check_strict_fusion.h>
 #include <torch/csrc/jit/passes/quantization/helper.h>
 #include <torch/csrc/jit/runtime/graph_iterator.h>
+
+#include "util/exception.h"
 
 namespace torch::jit
 {
@@ -89,7 +90,7 @@ static void checkForUnfusedOps(Node* enter_node)
 
     // autodiff/nnc both insert a number of guards, see
     // `CudaFusionViewGuard Example Graph`
-    // to check for unfused nodes, look at node's whose outputs
+    // to check for unfused nodes, look xsigma node's whose outputs
     // are not depended on by the fusion guard
     // restrict search for all values after the first
     // node in the prim::Enter block

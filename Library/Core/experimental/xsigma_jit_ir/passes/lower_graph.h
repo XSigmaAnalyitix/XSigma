@@ -5,7 +5,7 @@
 namespace torch::jit
 {
 
-using ModulePtr = c10::intrusive_ptr<c10::ivalue::Object>;
+using ModulePtr = xsigma::intrusive_ptr<xsigma::ivalue::Object>;
 
 // Given a graph with of a method which first argument is %self, lower it to a
 // graph where all attributes accesses are replaced with explicit inputs of the

@@ -540,7 +540,7 @@ class UnknownVariable(VariableTracker):
 
 class DelayGraphBreakVariable(UnknownVariable):
     """
-    Used to insert a dummy variable in the stack to do the graph break at CALL_FUNCTION.
+    Used to insert a dummy variable in the stack to do the graph break xsigma CALL_FUNCTION.
     """
 
     def __init__(self, msg=None, **kwargs):
@@ -564,7 +564,7 @@ class DelayGraphBreakVariable(UnknownVariable):
 
 class ComptimeVariable(VariableTracker):
     """
-    This variable is special, it lets you execute arbitrary code at
+    This variable is special, it lets you execute arbitrary code xsigma
     Dynamo compile time
     """
 
@@ -595,7 +595,7 @@ class ComptimeVariable(VariableTracker):
             raise_args_mismatch(
                 tx,
                 "comptime()",
-                "at most 2 args and 0 kwargs",
+                "xsigma most 2 args and 0 kwargs",
                 f"{len(args)} args and {len(kwargs)} kwargs",
             )
         fn = args[0]

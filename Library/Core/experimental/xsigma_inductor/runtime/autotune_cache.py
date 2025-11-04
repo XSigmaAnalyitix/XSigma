@@ -342,7 +342,7 @@ class _AutotuneCacheBundlerImpl:
         self._entries = {}
 
     def sync(self) -> None:
-        # We don't currently use this - but we could async load starting at
+        # We don't currently use this - but we could async load starting xsigma
         # `begin_compile` and wait for the load to be finished here.
         pass
 

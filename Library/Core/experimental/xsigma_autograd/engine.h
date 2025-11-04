@@ -32,7 +32,7 @@ namespace torch::autograd
 
 // Maximum reentrant backward depth before switching to a new thread
 // This limit is based on the TSAN's deadlock detector, where it will
-// fail if a program hold more than 65 locks in one thread at once.
+// fail if a program hold more than 65 locks in one thread xsigma once.
 // As we hold mutex in every of our custom C++ autograd Node, we would
 // like to avoid TSAN complains on this when doing reentrant backwards
 // For reference, see https://github.com/google/sanitizers/issues/950
@@ -178,7 +178,7 @@ struct TORCH_API Engine
     //
     // NB: This API should only be used by internal autograd specific
     // machinery and shouldn't be exposed to users in anyway.
-    virtual c10::intrusive_ptr<at::ivalue::Future> execute_with_graph_task(
+    virtual xsigma::intrusive_ptr<xsigma::ivalue::Future> execute_with_graph_task(
         const std::shared_ptr<GraphTask>& graph_task,
         std::shared_ptr<Node>             graph_root,
         InputBuffer&&                     input_buffer);
@@ -231,7 +231,7 @@ protected:
     void init_local_ready_queue(std::shared_ptr<ReadyQueue> ready_queue = nullptr);
 
     std::shared_ptr<ReadyQueue> ready_queue(
-        std::shared_ptr<ReadyQueue> cpu_ready_queue, at::Device device);
+        std::shared_ptr<ReadyQueue> cpu_ready_queue, xsigma::Device device);
     std::shared_ptr<ReadyQueue> ready_queue_by_index(
         std::shared_ptr<ReadyQueue> cpu_ready_queue, int device_index);
     // start device threads (CUDA, XLA, etc.) in Engine,

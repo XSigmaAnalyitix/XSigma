@@ -443,7 +443,7 @@ class CppMicroGemmFP32Vec(CppMicroGemm):
 
     TEMPLATE_ENTRY = r"""
 {{declare_kernel}} {
-    using Vectorized = at::vec::Vectorized<{{compute_t}}>;
+    using Vectorized = xsigma::vec::Vectorized<{{compute_t}}>;
     constexpr auto VLEN = Vectorized::size();
     {{kernel.assert_function}}({{block_n}} % VLEN == 0, "block_n dimension must be multiple of Vector size");
     {{kernel.assert_function}}(K % {{block_k}} == 0, "K dimension must be multiple of {{block_k}}");
@@ -565,9 +565,9 @@ inline void {{kernel_name}}_transpose_b_kernel(
     int64_t ldb,
     int64_t ldc
 ) {
-    using Vectorized = at::vec::Vectorized<{{compute_t}}>;
+    using Vectorized = xsigma::vec::Vectorized<{{compute_t}}>;
 {%- if input2_dtype in [torch.bfloat16, torch.float16] %}
-    using VectorizedIn = at::vec::Vectorized<{{input_t}}>;
+    using VectorizedIn = xsigma::vec::Vectorized<{{input_t}}>;
 {%- endif %}
 
 {%- if not trans_b %}
@@ -576,8 +576,8 @@ inline void {{kernel_name}}_transpose_b_kernel(
     constexpr auto COLS = BLOCK_N / VLEN;
 
     Vectorized va;
-    at::vec::VectorizedN<{{compute_t}}, COLS> vb;
-    at::vec::VectorizedN<{{compute_t}}, ROWS*COLS> vc;
+    xsigma::vec::VectorizedN<{{compute_t}}, COLS> vb;
+    xsigma::vec::VectorizedN<{{compute_t}}, ROWS*COLS> vc;
 
     {%- if tail_n %}
     int64_t rCOLS = (N + VLEN - 1) / VLEN;
@@ -599,7 +599,7 @@ inline void {{kernel_name}}_transpose_b_kernel(
             vc[i] = Vectorized(0.0f);
         }
     };
-    c10::ForcedUnroll<ROWS * COLS>{}(loadc);
+    xsigma::ForcedUnroll<ROWS * COLS>{}(loadc);
 
     auto compute = [&, COLS](auto i, int k) {
         constexpr int row = i / COLS;
@@ -620,11 +620,11 @@ inline void {{kernel_name}}_transpose_b_kernel(
             if (col < rCOLS) {
         {%- if input2_dtype in [torch.bfloat16, torch.float16] %}
                 auto b = VectorizedIn::loadu(B + k * ldb + col * VLEN, load_size);
-                vb[col] = at::vec::convert<{{compute_t}}>(b);
+                vb[col] = xsigma::vec::convert<{{compute_t}}>(b);
         {%- elif input2_dtype == torch.int8 %}
             // Convert VLEN int8 elements to int32, and then fp32
-                auto b32 = at::vec::convert_to_int32<int8_t>(B + k * ldb + col * VLEN, load_size);
-                vb[col] = at::vec::convert<float>(b32);
+                auto b32 = xsigma::vec::convert_to_int32<int8_t>(B + k * ldb + col * VLEN, load_size);
+                vb[col] = xsigma::vec::convert<float>(b32);
         {%- else %}
                 vb[col] = Vectorized::loadu(B + k * ldb + col * VLEN, load_size);
         {%- endif %}
@@ -636,14 +636,14 @@ inline void {{kernel_name}}_transpose_b_kernel(
 
         {%- if input2_dtype in [torch.bfloat16, torch.float16] %}
             auto b = VectorizedIn::loadu(B + k * ldb + col * VLEN, VLEN);
-            vb[col] = at::vec::convert<{{compute_t}}>(b);
+            vb[col] = xsigma::vec::convert<{{compute_t}}>(b);
         {%- elif input2_dtype == torch.int8 %}
             // Convert VLEN int8 elements to int32, and then fp32
-            auto b32 = at::vec::convert_to_int32<int8_t>(B + k * ldb + col * VLEN);
+            auto b32 = xsigma::vec::convert_to_int32<int8_t>(B + k * ldb + col * VLEN);
             if constexpr (prefetch) {
               _mm_prefetch(B + (k + {{block_k}}) * ldb + col * VLEN, _MM_HINT_T0);
             }
-            vb[col] = at::vec::convert<float>(b32);
+            vb[col] = xsigma::vec::convert<float>(b32);
         {%- else %}
             vb[col] = Vectorized::loadu(B + k * ldb + col * VLEN);
         {%- endif %}
@@ -654,15 +654,15 @@ inline void {{kernel_name}}_transpose_b_kernel(
         constexpr int idx = row * COLS + col;
     {%- if tail_n %}
         if (col < rCOLS) {
-            vc[idx] = at::vec::fmadd(va, vb[col], vc[idx]);
+            vc[idx] = xsigma::vec::fmadd(va, vb[col], vc[idx]);
         }
     {%- else %}
-        vc[idx] = at::vec::fmadd(va, vb[col], vc[idx]);
+        vc[idx] = xsigma::vec::fmadd(va, vb[col], vc[idx]);
     {%- endif %}
     };
 
     for (int k = 0; k < K; ++k) {
-        c10::ForcedUnroll<ROWS * COLS>{}(compute, k);
+        xsigma::ForcedUnroll<ROWS * COLS>{}(compute, k);
     }
 
     // store to C
@@ -678,7 +678,7 @@ inline void {{kernel_name}}_transpose_b_kernel(
         vc[i].store(C + row * ldc + col * VLEN);
     {%- endif %}
     };
-    c10::ForcedUnroll<ROWS * COLS>{}(storec);
+    xsigma::ForcedUnroll<ROWS * COLS>{}(storec);
 
 {%- else %}
     // Use 2 implementations for the transposed B:
@@ -700,8 +700,8 @@ inline void {{kernel_name}}_transpose_b_kernel(
         constexpr auto COLS = BLOCK_N / VLEN;
         int _K = K / VLEN;
         Vectorized va;
-        at::vec::VectorizedN<{{compute_t}}, VLEN> vb;
-        at::vec::VectorizedN<{{compute_t}}, ROWS*COLS> vc;
+        xsigma::vec::VectorizedN<{{compute_t}}, VLEN> vb;
+        xsigma::vec::VectorizedN<{{compute_t}}, ROWS*COLS> vc;
         auto loadc = [&](auto i) {
             if constexpr (accum) {
                 constexpr int row = i / COLS;
@@ -711,14 +711,14 @@ inline void {{kernel_name}}_transpose_b_kernel(
                 vc[i] = Vectorized(0.0f);
             }
         };
-        c10::ForcedUnroll<ROWS * COLS>{}(loadc);
+        xsigma::ForcedUnroll<ROWS * COLS>{}(loadc);
         auto unroll_loadB = [&](auto i, const {{input2_t}}* {{restrict_keyword}} src_ptr) {
     {%- if input2_dtype in [torch.bfloat16, torch.float16] %}
             auto b = VectorizedIn::loadu(src_ptr + i * ldb, VLEN);
-            vb[i] = at::vec::convert<{{compute_t}}>(b);
+            vb[i] = xsigma::vec::convert<{{compute_t}}>(b);
     {%- elif input2_dtype == torch.int8 %}
-            auto b32 = at::vec::convert_to_int32<int8_t>(src_ptr + i * ldb, VLEN);
-            vb[i] = at::vec::convert<float>(b32);
+            auto b32 = xsigma::vec::convert_to_int32<int8_t>(src_ptr + i * ldb, VLEN);
+            vb[i] = xsigma::vec::convert<float>(b32);
     {%- else %}
             vb[i] = Vectorized::loadu(src_ptr + i * ldb, VLEN);
     {%- endif %}
@@ -729,8 +729,8 @@ inline void {{kernel_name}}_transpose_b_kernel(
             constexpr int e_col = col * VLEN;
             int idk = k * VLEN;
             if constexpr (row == 0) {
-                c10::ForcedUnroll<VLEN>{}(unroll_loadB, B + e_col * ldb + idk);
-                at::vec::transpose_block(vb);
+                xsigma::ForcedUnroll<VLEN>{}(unroll_loadB, B + e_col * ldb + idk);
+                xsigma::vec::transpose_block(vb);
             }
             constexpr int idx = row * COLS + col;
             {{kernel.unroll_pragma(16)}}
@@ -740,11 +740,11 @@ inline void {{kernel_name}}_transpose_b_kernel(
     {%- else %}
                 va = Vectorized(static_cast<{{compute_t}}>(A[row * lda + idk + j]));
     {%- endif %}
-                vc[idx] = at::vec::fmadd(va, vb[j], vc[idx]);
+                vc[idx] = xsigma::vec::fmadd(va, vb[j], vc[idx]);
             }
         };
         for (int k = 0; k < _K; ++k) {
-            c10::ForcedUnroll<ROWS * COLS>{}(compute_trans, k);
+            xsigma::ForcedUnroll<ROWS * COLS>{}(compute_trans, k);
         }
         // store to C
         auto storec = [&](auto i) {
@@ -752,7 +752,7 @@ inline void {{kernel_name}}_transpose_b_kernel(
             constexpr int col = i % COLS;
             vc[i].store(C + row * ldc + col * VLEN);
         };
-        c10::ForcedUnroll<ROWS * COLS>{}(storec);
+        xsigma::ForcedUnroll<ROWS * COLS>{}(storec);
     } else {
         // Second implementation
     {%- if input2_dtype in [torch.bfloat16, torch.float16] %}
@@ -772,13 +772,13 @@ inline void {{kernel_name}}_transpose_b_kernel(
         constexpr int bM = (BLOCK_M + sM - 1) / sM;
 
     {%- if input2_dtype in [torch.bfloat16, torch.float16] %}
-        at::vec::VectorizedN<{{compute_t}}, 2> va;
-        at::vec::VectorizedN<{{compute_t}}, 2 * sN> vb;
+        xsigma::vec::VectorizedN<{{compute_t}}, 2> va;
+        xsigma::vec::VectorizedN<{{compute_t}}, 2 * sN> vb;
     {%- else %}
-        at::vec::Vectorized<{{compute_t}}> va;
-        at::vec::VectorizedN<{{compute_t}}, sN> vb;
+        xsigma::vec::Vectorized<{{compute_t}}> va;
+        xsigma::vec::VectorizedN<{{compute_t}}, sN> vb;
     {%- endif %}
-        at::vec::VectorizedN<{{compute_t}}, sN * sM> vmid;
+        xsigma::vec::VectorizedN<{{compute_t}}, sN * sM> vmid;
 
     {%- if tail_n %}
         int ntail = N % sN;
@@ -800,10 +800,10 @@ inline void {{kernel_name}}_transpose_b_kernel(
             for (int i = 0; i < e_n; i++) {
     {%- if input2_dtype in [torch.bfloat16, torch.float16] %}
                 auto b = VectorizedIn::loadu(B + (sN * n + i) * ldb + k * VLEN, e_k);
-                std::tie(vb[2 * i], vb[2 * i + 1]) = at::vec::convert_to_float<{{input_t}}>(b);
+                std::tie(vb[2 * i], vb[2 * i + 1]) = xsigma::vec::convert_to_float<{{input_t}}>(b);
     {%- elif input2_dtype == torch.int8 %}
-                auto b32 = at::vec::convert_to_int32<int8_t>(B + (sN * n + i) * ldb + k * VLEN, e_k);
-                vb[i] = at::vec::convert<float>(b32);
+                auto b32 = xsigma::vec::convert_to_int32<int8_t>(B + (sN * n + i) * ldb + k * VLEN, e_k);
+                vb[i] = xsigma::vec::convert<float>(b32);
     {%- else %}
                 vb[i] = Vectorized::loadu(B + (sN * n + i) * ldb + k * VLEN, e_k);
     {%- endif %}
@@ -813,10 +813,10 @@ inline void {{kernel_name}}_transpose_b_kernel(
             for (int s = 0; s < e_m; s++) {
     {%- if input2_dtype in [torch.bfloat16, torch.float16] %}
                 auto a = VectorizedIn::loadu(A + (sM * m + s) * lda + k * VLEN, e_k);
-                std::tie(va[0], va[1]) = at::vec::convert_to_float<{{input_t}}>(a);
+                std::tie(va[0], va[1]) = xsigma::vec::convert_to_float<{{input_t}}>(a);
     {%- elif input2_dtype == torch.int8 %}
-                auto a32 = at::vec::convert_to_int32<int8_t>(A + (sM * m + s) * lda + k * VLEN, e_k);
-                va = at::vec::convert<float>(a32);
+                auto a32 = xsigma::vec::convert_to_int32<int8_t>(A + (sM * m + s) * lda + k * VLEN, e_k);
+                va = xsigma::vec::convert<float>(a32);
     {%- else %}
                 va = Vectorized::loadu(A + (sM * m + s) * lda + k * VLEN, e_k);
     {%- endif %}
@@ -828,20 +828,20 @@ inline void {{kernel_name}}_transpose_b_kernel(
                     {{kernel.unroll_pragma(sub_block_n)}}
                     for (int i = 0; i < e_n; i++) {
     {%- if input2_dtype in [torch.bfloat16, torch.float16] %}
-                        vmid[sN * s + i] = at::vec::fmadd(va[0], vb[2 * i], Vectorized(0.0f));
-                        vmid[sN * s + i] = at::vec::fmadd(va[1], vb[2 * i + 1], vmid[sN * s + i]);
+                        vmid[sN * s + i] = xsigma::vec::fmadd(va[0], vb[2 * i], Vectorized(0.0f));
+                        vmid[sN * s + i] = xsigma::vec::fmadd(va[1], vb[2 * i + 1], vmid[sN * s + i]);
     {%- else %}
-                        vmid[sN * s + i] = at::vec::fmadd(va, vb[i], Vectorized(0.0f));
+                        vmid[sN * s + i] = xsigma::vec::fmadd(va, vb[i], Vectorized(0.0f));
     {%- endif %}
                     }
                 } else {
                     {{kernel.unroll_pragma(sub_block_n)}}
                     for (int i = 0; i < e_n; i++) {
     {%- if input2_dtype in [torch.bfloat16, torch.float16] %}
-                        vmid[sN * s + i] = at::vec::fmadd(va[0], vb[2 * i], vmid[sN * s + i]);
-                        vmid[sN * s + i] = at::vec::fmadd(va[1], vb[2 * i + 1], vmid[sN * s + i]);
+                        vmid[sN * s + i] = xsigma::vec::fmadd(va[0], vb[2 * i], vmid[sN * s + i]);
+                        vmid[sN * s + i] = xsigma::vec::fmadd(va[1], vb[2 * i + 1], vmid[sN * s + i]);
     {%- else %}
-                        vmid[sN * s + i] = at::vec::fmadd(va, vb[i], vmid[sN * s + i]);
+                        vmid[sN * s + i] = xsigma::vec::fmadd(va, vb[i], vmid[sN * s + i]);
     {%- endif %}
                     }
                 }
@@ -853,7 +853,7 @@ inline void {{kernel_name}}_transpose_b_kernel(
                 for (int s = 0; s < e_m; s++) {
                     {{kernel.unroll_pragma(sub_block_n)}}
                     for (int i = 0; i < e_n; i++) {
-                        auto v = at::vec::vec_reduce_all([](Vectorized& x, Vectorized& y) { return x + y; }, vmid[sN * s + i]);
+                        auto v = xsigma::vec::vec_reduce_all([](Vectorized& x, Vectorized& y) { return x + y; }, vmid[sN * s + i]);
                         if constexpr (accum) {
                             auto c = *(C + (sM * m + s) * ldc + sN * n + i);
                             *(C + (sM * m + s) * ldc + sN * n + i) = c + v;
@@ -1079,11 +1079,11 @@ class CppMicroGemmAMX(CppMicroGemm):
             // 5) Store 16 x bf16 (256 bits)
             _mm256_storeu_si256((__m256i*)(dequantized_B_buf + idx_dq + {{vec_idx}}), bf16);
             {%- else %}
-            auto b_int8_tail = at::vec::Vectorized<int8_t>::loadu(
+            auto b_int8_tail = xsigma::vec::Vectorized<int8_t>::loadu(
                 base_addr + idx_q + {{block_n - (block_n % 32)}},
                 static_cast<int64_t>({{block_n % 32}})
             );
-            auto b_bf16_tail = at::vec::convert<{{input_t}}>(b_int8_tail);
+            auto b_bf16_tail = xsigma::vec::convert<{{input_t}}>(b_int8_tail);
             b_bf16_tail.store(
                 dequantized_B_buf + idx_dq + {{block_n - (block_n % 32)}},
                 static_cast<int64_t>({{block_n % 32}})
@@ -1103,7 +1103,7 @@ class CppMicroGemmAMX(CppMicroGemm):
     for (int64_t n = 0; n < N; n += {{block_n}}) {
 {%- if pack_vnni_B_locally %}
         // Pack non-constant weights into VNNI interleaved format in packed_B_buf
-        at::vec::pack_vnni2(B + n, packed_B_buf, ldb, K, {{block_n}});
+        xsigma::vec::pack_vnni2(B + n, packed_B_buf, ldb, K, {{block_n}});
 {%- elif use_cached_dequantized_B %}
         // Dequantize K * block_n int8 B elements into BF16
         load_dequantized_B(n);
@@ -1185,7 +1185,7 @@ inline void {{kernel_name}}_amx_kernel_{{num_rows}}_{{num_columns}}(
     };
     const auto last_k_offset = K / {{block_k}} * {{block_k}};
     const auto tail_k_size = K - last_k_offset;
-    if C10_LIKELY (last_k_offset > 0) {
+    if XSIGMA_LIKELY (last_k_offset > 0) {
         amx_state.configure(tilecfg_rows, 64, {{num_rows}} / 16, {{num_columns}}, loadconfig);
     } else {
         amx_state.configure(tilecfg_rows, tail_k_size * sizeof({{input_t}}), {{num_rows}} / 16, {{num_columns}}, loadconfig);
@@ -1260,8 +1260,8 @@ inline void {{kernel_name}}_amx_kernel_{{num_rows}}_{{num_columns}}(
     };
 
     // TODO(jgong5): move tail k computation to separate loopnest to save tile configuration overhead
-    if C10_UNLIKELY (tail_k_size > 0) {
-        if C10_LIKELY (last_k_offset > 0) {
+    if XSIGMA_UNLIKELY (tail_k_size > 0) {
+        if XSIGMA_LIKELY (last_k_offset > 0) {
             store_c();
             amx_state.configure(tilecfg_rows, tail_k_size * sizeof({{input_t}}), {{num_rows}} / 16, {{num_columns}}, loadconfig);
             load_c();
@@ -1360,9 +1360,9 @@ class CppMicroBrgemm(CppMicroGemm):
 {{declare_kernel}} {
 {%- if pack_vnni_B_locally %}
     {{template.codegen_allocate_weight_buffer("packed_B_buf", input2_t, "K * N")}}
-    at::vec::pack_vnni2(B, packed_B_buf, ldb, K, N);
+    xsigma::vec::pack_vnni2(B, packed_B_buf, ldb, K, N);
 {%- endif %}
-    at::native::cpublas::brgemm(
+    xsigma::native::cpublas::brgemm(
       M, N, K,
     {%- if pack_vnni_B_locally %}
       lda, N, ldc,
@@ -1400,7 +1400,7 @@ class CppMicroBrgemm(CppMicroGemm):
         self,
         kernel: CppTemplateKernel,
     ) -> str:
-        return "at::native::cpublas::brgemm_release();"
+        return "xsigma::native::cpublas::brgemm_release();"
 
     def get_b_layout(self):
         assert self.input_dtype == torch.half and torch.cpu._is_amx_fp16_supported()
@@ -1517,7 +1517,7 @@ inline void {{kernel_name}}_kernel(
     int64_t ldb,
     int64_t ldc,
     int64_t q_group_size,
-    const at::BFloat16* {{restrict_keyword}} ScaleAndZeros,
+    const xsigma::BFloat16* {{restrict_keyword}} ScaleAndZeros,
     int64_t lds, // leading dimension of ScaleAndZeros
     int64_t k_start) {
   constexpr int BLOCK_K = {{block_k}};
@@ -1563,7 +1563,7 @@ inline void {{kernel_name}}_kernel(
 
     // convert to 2x f32 vector
     __m512 a, b;
-    at::vec::cvtbf16_fp32(t, a, b);
+    xsigma::vec::cvtbf16_fp32(t, a, b);
 
     // transpose scale_and_zero from {16, 2} to {2, 16}
     // inputs:
@@ -1585,7 +1585,7 @@ inline void {{kernel_name}}_kernel(
       vc[i] = _mm512_setzero_ps();
     }
   };
-  c10::ForcedUnroll<ROWS * COLS>{}(loadc);
+  xsigma::ForcedUnroll<ROWS * COLS>{}(loadc);
 
   auto compute = [&, COLS](auto i, int k) {
     constexpr  int row = i / COLS;
@@ -1599,7 +1599,7 @@ inline void {{kernel_name}}_kernel(
 
     if constexpr (row == 0) {
       if constexpr (COLS == 4) {
-        // when BLOCK_N = 64, handle each row at a time
+        // when BLOCK_N = 64, handle each row xsigma a time
         // to reduce de-quantize overhead.
         if constexpr (col == 0) {
           __m256i b4 = _mm256_loadu_si256((__m256i*)(B + k * ldb));
@@ -1631,9 +1631,9 @@ inline void {{kernel_name}}_kernel(
 
   for (int k = 0, kb = 0; k < K; ++k) {
     if ({{kernel_name}}_is_block_start(k, k_start, q_group_size)) {
-      c10::ForcedUnroll<COLS>{}(load_scale_and_zeros, kb++);
+      xsigma::ForcedUnroll<COLS>{}(load_scale_and_zeros, kb++);
     }
-    c10::ForcedUnroll<ROWS * COLS>{}(compute, k);
+    xsigma::ForcedUnroll<ROWS * COLS>{}(compute, k);
   }
 
   //store to C
@@ -1642,14 +1642,14 @@ inline void {{kernel_name}}_kernel(
     constexpr int col = i % COLS;
     _mm512_storeu_ps(C + row * ldc + col * 16, vc[i]);
   };
-  c10::ForcedUnroll<ROWS * COLS>{}(storec);
+  xsigma::ForcedUnroll<ROWS * COLS>{}(storec);
 }
 """
 
     def get_kernel_extra_args_declare(self) -> str:
         return (
             "const int64_t q_group_size,\n"
-            "    const at::BFloat16* __restrict__ ScaleAndZeros,\n"
+            "    const xsigma::BFloat16* __restrict__ ScaleAndZeros,\n"
             "    const int64_t lds,\n"
             "    int64_t k_start,"
         )
@@ -1784,7 +1784,7 @@ inline bool {{kernel_name}}_is_block_start(int index, int k_start, int group_siz
 
         // convert to 2x f32 vector
         __m512 a, b;
-        at::vec::cvtbf16_fp32(t, a, b);
+        xsigma::vec::cvtbf16_fp32(t, a, b);
 
         // transpose scale_and_zero from {16, 2} to {2, 16}
         // inputs:
@@ -1798,7 +1798,7 @@ inline bool {{kernel_name}}_is_block_start(int index, int k_start, int group_siz
     };
 
     // Dequantize a B block of 2 * block_n into bf16
-    // So, it handles k and k+1 at the same time
+    // So, it handles k and k+1 xsigma the same time
     auto dequantize_B = [&](int n) {
         constexpr int64_t ldb_int4 = BLOCK_N / 2; // 16
         for (int k = 0, kb = 0; k < K; k += 2) {
@@ -1806,7 +1806,7 @@ inline bool {{kernel_name}}_is_block_start(int index, int k_start, int group_siz
             // a multiple of q_group_size. In that case, we need to load scales
             // and zero points immediately when k == 0 here
             if ({{kernel_name}}_is_block_start(k, k_start, q_group_size) || k == 0) {
-                c10::ForcedUnroll<COLS>{}(load_scale_and_zeros, kb++);
+                xsigma::ForcedUnroll<COLS>{}(load_scale_and_zeros, kb++);
             }
 
             _mm_prefetch(B + (k + PREFETCH_SIZE_K) * ldb_int4, _MM_HINT_T0);
@@ -1894,7 +1894,7 @@ inline bool {{kernel_name}}_is_block_start(int index, int k_start, int group_siz
         return (
             "AMXState& amx_state,\n"
             "    const int64_t q_group_size,\n"
-            "    const c10::BFloat16* __restrict__ ScaleAndZeros,\n"
+            "    const xsigma::BFloat16* __restrict__ ScaleAndZeros,\n"
             "    const int64_t lds,\n"
             "    int64_t k_start,"
         )

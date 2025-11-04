@@ -17,7 +17,7 @@ struct THPVariable
 {
     PyObject_HEAD
         // Payload
-            c10::MaybeOwned<at::Tensor>
+            xsigma::MaybeOwned<xsigma::Tensor>
             cdata;
     // Hooks to be run on backwards pass (corresponds to Python attr
     // '_backwards_hooks', set by 'register_hook')
@@ -37,7 +37,7 @@ TORCH_PYTHON_API extern PyObject* THPVariableClass;
 TORCH_PYTHON_API extern PyObject* ParameterClass;
 
 bool                       THPVariable_initModule(PyObject* module);
-TORCH_PYTHON_API PyObject* THPVariable_Wrap(const at::TensorBase& var);
+TORCH_PYTHON_API PyObject* THPVariable_Wrap(const xsigma::TensorBase& var);
 
 inline bool THPVariable_CheckTypeExact(PyTypeObject* tp)
 {
@@ -70,26 +70,26 @@ inline bool THPVariable_Check(PyObject* obj)
     return result;
 }
 
-inline const at::Tensor& THPVariable_Unpack(THPVariable* var)
+inline const xsigma::Tensor& THPVariable_Unpack(THPVariable* var)
 {
     return *var->cdata;
 }
 
-inline const at::Tensor& THPVariable_Unpack(PyObject* obj)
+inline const xsigma::Tensor& THPVariable_Unpack(PyObject* obj)
 {
     return THPVariable_Unpack(reinterpret_cast<THPVariable*>(obj));
 }
 
 std::pair<py::object, py::dict> parseIValuesToPyArgsKwargs(
-    const c10::OperatorHandle& op, const std::vector<c10::IValue>& arguments);
+    const xsigma::OperatorHandle& op, const std::vector<xsigma::IValue>& arguments);
 
 void pushPyOutToStack(
-    const c10::OperatorHandle& op, torch::jit::Stack* stack, py::object out, const char* msg);
+    const xsigma::OperatorHandle& op, torch::jit::Stack* stack, py::object out, const char* msg);
 
 inline PyObject* THPVariable_WrapList(const torch::autograd::variable_list& inputs)
 {
     PyObject* pyinput = PyList_New(static_cast<Py_ssize_t>(inputs.size()));
-    for (const auto i : c10::irange(inputs.size()))
+    for (const auto i : xsigma::irange(inputs.size()))
     {
         PyList_SET_ITEM(pyinput, i, THPVariable_Wrap(inputs[i]));
     }
@@ -98,16 +98,16 @@ inline PyObject* THPVariable_WrapList(const torch::autograd::variable_list& inpu
 
 inline torch::autograd::variable_list THPVariable_UnpackList(PyObject* pyresult)
 {
-    TORCH_CHECK(PyList_CheckExact(pyresult));
+    XSIGMA_CHECK(PyList_CheckExact(pyresult));
     auto                           result_len = PyList_GET_SIZE(pyresult);
     torch::autograd::variable_list result;
     result.reserve(result_len);
-    for (const auto i : c10::irange(result_len))
+    for (const auto i : xsigma::irange(result_len))
     {
         PyObject* item = PyList_GET_ITEM(pyresult, i);
         if (!Py_IsNone(item))
         {
-            TORCH_INTERNAL_ASSERT_DEBUG_ONLY(THPVariable_Check(item));
+            XSIGMA_CHECK_DEBUG(THPVariable_Check(item));
             result.emplace_back(THPVariable_Unpack(item));
         }
         else

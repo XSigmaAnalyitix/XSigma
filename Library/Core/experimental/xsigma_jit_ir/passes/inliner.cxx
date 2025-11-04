@@ -10,7 +10,7 @@ namespace torch::jit
 
 namespace prim
 {
-using namespace ::c10::prim;
+using namespace ::xsigma::prim;
 }
 
 GraphFunction* tryToGraphFunction(Node* n)

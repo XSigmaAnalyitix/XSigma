@@ -1,13 +1,13 @@
 #pragma once
 
 #include <ATen/core/ivalue.h>
-#include <c10/core/SymInt.h>
-#include <c10/util/flat_hash_map.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/variable.h>
 #include <torch/csrc/autograd/variable_info.h>
 #include <torch/csrc/dynamo/compiled_autograd.h>
+#include <xsigma/core/SymInt.h>
+#include <xsigma/util/flat_hash_map.h>
+#include <xsigma/util/irange.h>
 
 #include <vector>
 
@@ -16,21 +16,23 @@ namespace torch::autograd
 
 using optional_variable_list = std::vector<std::optional<Variable>>;
 using _jvp_fn_t              = std::function<variable_list(variable_list, variable_list)>;
-using _view_as_self_fn_t     = std::function<at::Tensor(at::Tensor)>;
+using _view_as_self_fn_t     = std::function<xsigma::Tensor(xsigma::Tensor)>;
 
 TORCH_API std::vector<std::optional<Variable>> _wrap_outputs(
-    const variable_list&                        input_vars,
-    const std::unordered_set<at::TensorImpl*>&  non_differentiable,
-    const std::unordered_set<at::TensorImpl*>&  dirty_inputs,
-    const at::ArrayRef<std::optional<Variable>> raw_outputs,
-    const std::shared_ptr<Node>&                cdata,
-    const _jvp_fn_t&                            jvp_user_function,
-    const std::unordered_set<at::TensorImpl*>&  to_save_if_setup_context,
-    const _view_as_self_fn_t&                   view_as_self_fn,
-    bool                                        pure_view);
+    const variable_list&                            input_vars,
+    const std::unordered_set<xsigma::TensorImpl*>&  non_differentiable,
+    const std::unordered_set<xsigma::TensorImpl*>&  dirty_inputs,
+    const xsigma::ArrayRef<std::optional<Variable>> raw_outputs,
+    const std::shared_ptr<Node>&                    cdata,
+    const _jvp_fn_t&                                jvp_user_function,
+    const std::unordered_set<xsigma::TensorImpl*>&  to_save_if_setup_context,
+    const _view_as_self_fn_t&                       view_as_self_fn,
+    bool                                            pure_view);
 
 TORCH_API void check_variable_result(
-    const at::TensorBase& original, const at::TensorBase& result, const std::string& hook_name);
+    const xsigma::TensorBase& original,
+    const xsigma::TensorBase& result,
+    const std::string&        hook_name);
 
 // Get the return type of the forward function of the custom Function class X
 template <typename X, typename... Args>
@@ -50,7 +52,7 @@ using forward_t = decltype(X::forward(nullptr, std::declval<Args>()...));
 /// (see `torch::autograd::AutogradContext::save_for_backward`) and other data
 /// can be saved in the `ctx->saved_data` map
 /// (see `torch::autograd::AutogradContext::saved_data`)
-/// in the form of `<std::string, at::IValue>` pairs.
+/// in the form of `<std::string, xsigma::IValue>` pairs.
 ///
 /// `backward` should take a pointer to `torch::autograd::AutogradContext`
 /// and a variable list containing as many Variables as there were outputs from
@@ -108,7 +110,7 @@ struct TORCH_API Function
         -> std::enable_if_t<std::is_same_v<X, T>, forward_t<X, Args...>>;
 
     // This flag is for an experimental feature: compiled autograd. Not all
-    // built-in APIs are supported at the moment e.g. mark_dirty and
+    // built-in APIs are supported xsigma the moment e.g. mark_dirty and
     // mark_non_differentiable. Before setting this flag to enable tracing for
     // your custom function <T>, you need to ensure that the backward function is
     // traceable i.e. any variables accessed in the backward other than the input
@@ -132,17 +134,17 @@ struct TORCH_API AutogradContext
     AutogradContext(PackedArgs& packed_args);
 
     /// Can be used to save non-variable data for `backward`.
-    ska::flat_hash_map<std::string, at::IValue> saved_data;
+    ska::flat_hash_map<std::string, xsigma::IValue> saved_data;
 
     /// Saves the list of variables for a future call to `backward`. This
-    /// should be called at most once from inside of `forward`.
+    /// should be called xsigma most once from inside of `forward`.
     void save_for_backward(variable_list to_save);
     /// Marks variables in the list as modified in an in-place operation. This
-    /// should be called at most once from inside of `forward` and all arguments
+    /// should be called xsigma most once from inside of `forward` and all arguments
     /// should be inputs.
     void mark_dirty(const variable_list& inputs);
     /// Marks outputs in the list as not requiring gradients. This should be
-    /// called at most once from inside of `forward` and all arguments should be
+    /// called xsigma most once from inside of `forward` and all arguments should be
     /// outputs.
     void mark_non_differentiable(const variable_list& outputs);
     // Sets whether undefined output grad tensors should be expanded to tensors
@@ -152,9 +154,9 @@ struct TORCH_API AutogradContext
     /// Get the list of variables that were saved in `forward` using
     /// `save_for_backward()`. Before returning them to the user, a check is made
     /// to ensure that they were not modified by any in-place operations.
-    variable_list                              get_saved_variables() const;
-    const std::unordered_set<at::TensorImpl*>& get_and_bump_dirty() const;
-    const std::unordered_set<at::TensorImpl*>& get_non_differentiable() const;
+    variable_list                                  get_saved_variables() const;
+    const std::unordered_set<xsigma::TensorImpl*>& get_and_bump_dirty() const;
+    const std::unordered_set<xsigma::TensorImpl*>& get_non_differentiable() const;
 
     /// Expose the Node's `task_should_compute_output` method to the cpp
     /// custom autograd Function as `needs_input_grad`.
@@ -162,8 +164,8 @@ struct TORCH_API AutogradContext
     bool needs_input_grad(std::initializer_list<IndexRange> idxs) const;
 
 private:
-    std::unordered_set<at::TensorImpl*>         non_differentiable_;
-    std::unordered_set<at::TensorImpl*>         dirty_inputs_;
+    std::unordered_set<xsigma::TensorImpl*>     non_differentiable_;
+    std::unordered_set<xsigma::TensorImpl*>     dirty_inputs_;
     std::vector<torch::autograd::SavedVariable> saved_variables_;
     variable_list                               to_save_;
     bool                                        materialize_grads_{true};
@@ -201,12 +203,12 @@ inline variable_list CppNode_apply_functional(
     const std::vector<VariableInfo>& output_info_,
     const std::string&               name)
 {
-    at::OptionalDeviceGuard _device_guard;
+    xsigma::OptionalDeviceGuard _device_guard;
 
     auto          num_inputs = inputs.size();
     variable_list backward_inputs;
     backward_inputs.reserve(num_inputs);
-    for (const auto i : c10::irange(num_inputs))
+    for (const auto i : xsigma::irange(num_inputs))
     {
         if (inputs[i].defined() || !ctx_.materialize_grads_)
         {
@@ -227,7 +229,7 @@ inline variable_list CppNode_apply_functional(
     if (num_outputs > num_forward_inputs)
     {
         bool all_undef = true;
-        for (const auto i : c10::irange(num_forward_inputs, num_outputs))
+        for (const auto i : xsigma::irange(num_forward_inputs, num_outputs))
         {
             all_undef &= (!outputs[i].defined());
         }
@@ -238,7 +240,7 @@ inline variable_list CppNode_apply_functional(
         }
     }
 
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         num_outputs == num_forward_inputs,
         "function ",
         name,
@@ -250,15 +252,15 @@ inline variable_list CppNode_apply_functional(
 
     variable_list results;
     results.reserve(num_outputs);
-    for (const auto i : c10::irange(num_outputs))
+    for (const auto i : xsigma::irange(num_outputs))
     {
         if (!is_variable_input_[i])
         {
-            TORCH_CHECK(
+            XSIGMA_CHECK(
                 outputs[i].defined() == false,
                 "function ",
                 name,
-                " returned a gradient different that is defined at position ",
+                " returned a gradient different that is defined xsigma position ",
                 i + 1,
                 ", std the corresponding forward input was not a Variable");
             continue;
@@ -271,7 +273,7 @@ inline variable_list CppNode_apply_functional(
 
 template <typename T>
 inline variable_list CppNode_apply_functional_ivalue(
-    const variable_list& inputs, const std::vector<c10::IValue>& args)
+    const variable_list& inputs, const std::vector<xsigma::IValue>& args)
 {
     auto packed_args       = PackedArgs(args);
     auto ctx               = AutogradContext(packed_args);
@@ -302,7 +304,7 @@ struct CppNode : public Node
     void compiled_args(CompiledNodeArgs& args) const override
     {
         // although neither of the 2 methods below have uniqueness guarantees
-        // it is unlikely for them to collide at the same time
+        // it is unlikely for them to collide xsigma the same time
         args.collect(static_cast<uint64_t>(typeid(T).hash_code()));
         args.collect(std::string(typeid(T).name()));
 
@@ -341,7 +343,7 @@ struct CppNode : public Node
         {
             auto ptr = ctx_.grad_fn_.lock();
             TORCH_INTERNAL_ASSERT(ptr);
-            for (const auto i : c10::irange(ptr->next_edges().size()))
+            for (const auto i : xsigma::irange(ptr->next_edges().size()))
             {
                 needs_input_grad.push_back(ptr->task_should_compute_output(i));
             }
@@ -364,13 +366,13 @@ struct CppNode : public Node
         // misses. An alternative is to pass the schema to Python so that it can be
         // an input to a function, but the schema can't be put into an FX graph
         // right now.
-        std::vector<at::TypePtr> schema;
+        std::vector<xsigma::TypePtr> schema;
         schema.reserve(args.size());
         for (const auto& ivalue : args)
         {
             if (ivalue.isTensor())
             {
-                schema.emplace_back(at::TensorType::get());
+                schema.emplace_back(xsigma::TensorType::get());
             }
             else
             {
@@ -411,7 +413,7 @@ struct ExtractVariables : IterArgs<ExtractVariables>
     ExtractVariables(std::vector<bool>& is_var, variable_list& list) : is_var_(is_var), list_(list)
     {
     }
-    void operator()(const std::optional<at::Tensor>& x)
+    void operator()(const std::optional<xsigma::Tensor>& x)
     {
         if (x.has_value() && x.value().defined())
         {
@@ -423,14 +425,14 @@ struct ExtractVariables : IterArgs<ExtractVariables>
             is_var_.push_back(false);
         }
     }
-    void operator()(const at::Tensor& x)
+    void operator()(const xsigma::Tensor& x)
     {
         is_var_.push_back(true);
         list_.emplace_back(x);
     }
-    void operator()(const at::TensorList& list)
+    void operator()(const xsigma::TensorList& list)
     {
-        for (const at::Tensor& x : list)
+        for (const xsigma::Tensor& x : list)
         {
             is_var_.push_back(true);
             list_.emplace_back(x);
@@ -490,7 +492,7 @@ template <typename X, typename... Args>
 auto Function<T>::apply(Args&&... args)
     -> std::enable_if_t<std::is_same_v<X, T>, forward_t<X, Args...>>
 {
-    const auto& functorch_tls = at::functorch::functorchTLSAccessor();
+    const auto& functorch_tls = xsigma::functorch::functorchTLSAccessor();
     if (functorch_tls)
     {
         // Function support for functorch is handled in Python.
@@ -529,13 +531,13 @@ auto Function<T>::apply(Args&&... args)
 
     _jvp_fn_t jvp_fn = [](const variable_list& inputs, const variable_list& gI) -> variable_list
     {
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             false,
             "jvp is not implemented for the c++ API of custom Function yet.",
             "Please open a feature request on GitHub if you need this.");
     };
 
-    auto view_as_self_fn = [](const at::Tensor& x) -> at::Tensor { return x.view_as(x); };
+    auto view_as_self_fn = [](const xsigma::Tensor& x) -> xsigma::Tensor { return x.view_as(x); };
 
     auto wrapped_outputs = _wrap_outputs(
         input_vars,

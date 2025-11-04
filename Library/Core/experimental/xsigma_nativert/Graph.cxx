@@ -1,11 +1,11 @@
-#include <c10/util/Enumerate.h>
-#include <c10/util/FbcodeMaps.h>
-#include <c10/util/StringUtil.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <torch/nativert/executor/Placement.h>
 #include <torch/nativert/graph/Graph.h>
 #include <torch/nativert/graph/TensorMeta.h>
+#include <xsigma/util/Enumerate.h>
+#include <xsigma/util/FbcodeMaps.h>
+#include <xsigma/util/StringUtil.h>
 
 #include <limits>
 #include <queue>
@@ -27,7 +27,7 @@ bool isBlank(char n)
 
 size_t consumeWhitespaceImpl(std::string_view source, size_t curPos)
 {
-    while (isBlank(source.at(curPos)))
+    while (isBlank(source.xsigma(curPos)))
     {
         curPos++;
     }
@@ -38,10 +38,10 @@ size_t expectImpl(std::string_view source, std::string_view expected, size_t cur
 {
     curPos            = consumeWhitespaceImpl(source, curPos);
     const auto actual = source.substr(curPos, expected.size());
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         expected == actual,
         fmt::format(
-            "Parser error: expected '{}' at position {}, but found '{}'.",
+            "Parser error: expected '{}' xsigma position {}, but found '{}'.",
             expected,
             curPos,
             actual));
@@ -52,13 +52,13 @@ size_t expectImpl(std::string_view source, std::string_view expected, size_t cur
 size_t expectImpl(std::string_view source, char expected, size_t curPos)
 {
     curPos = consumeWhitespaceImpl(source, curPos);
-    while (isBlank(source.at(curPos)))
+    while (isBlank(source.xsigma(curPos)))
     {
         curPos++;
     }
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         expected == source[curPos],
-        "Parser error: expected '{}' at position {}, but found '{}'.",
+        "Parser error: expected '{}' xsigma position {}, but found '{}'.",
         expected,
         curPos,
         source[curPos]);
@@ -108,7 +108,7 @@ Value* Graph::addValue(const std::optional<std::string>& name, const Type& type,
     ValueId    valueId   = getNextValueId();
     const auto [it, success] =
         values_.insert({valueName, std::make_unique<Value>(valueId, valueName, type, node)});
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         success,
         fmt::format("Tried to create Value with name: '{}', but it already existed", valueName));
     return it->second.get();
@@ -148,25 +148,25 @@ Node* Graph::createNode(
 
 Node* Graph::insertBefore(Node* toInsert, Node* insertionPoint)
 {
-    TORCH_CHECK(insertionPoint != inputNode_, "can't insert before prim.Input");
-    TORCH_CHECK(!toInsert->is_linked(), "expected node to be unlinked: ", *toInsert);
-    TORCH_CHECK(insertionPoint->is_linked(), "expected node to be linked: ", *insertionPoint);
+    XSIGMA_CHECK(insertionPoint != inputNode_, "can't insert before prim.Input");
+    XSIGMA_CHECK(!toInsert->is_linked(), "expected node to be unlinked: ", *toInsert);
+    XSIGMA_CHECK(insertionPoint->is_linked(), "expected node to be linked: ", *insertionPoint);
     auto it = nodes_.insert(nodes_.iterator_to(*insertionPoint), *toInsert);
     return &*it;
 }
 
 Node* Graph::insert(Node* toInsert)
 {
-    TORCH_CHECK(!toInsert->is_linked(), "expected node to be unlinked: ", *toInsert);
+    XSIGMA_CHECK(!toInsert->is_linked(), "expected node to be unlinked: ", *toInsert);
     nodes_.insert(insertBefore_, *toInsert);
     return toInsert;
 }
 
 Node* Graph::insertAfter(Node* toInsert, Node* insertionPoint)
 {
-    TORCH_CHECK(insertionPoint != outputNode_, "can't insert after prim.Output");
-    TORCH_CHECK(!toInsert->is_linked(), "expected node to be unlinked: ", *toInsert);
-    TORCH_CHECK(insertionPoint->is_linked(), "expected node to be linked: ", *insertionPoint);
+    XSIGMA_CHECK(insertionPoint != outputNode_, "can't insert after prim.Output");
+    XSIGMA_CHECK(!toInsert->is_linked(), "expected node to be unlinked: ", *toInsert);
+    XSIGMA_CHECK(insertionPoint->is_linked(), "expected node to be linked: ", *insertionPoint);
 
     auto insertIt = nodes_.iterator_to(*insertionPoint);
     // Increment once because we want to insert after the insertion point
@@ -220,7 +220,7 @@ std::ostream& operator<<(std::ostream& out, const Type& ty)
                     out << "CustomObj";
                     break;
                 default:
-                    TORCH_CHECK(false, "Unhandled type");
+                    XSIGMA_CHECK(false, "Unhandled type");
                 }
             }
             else if constexpr (is_same_v<T, Type::CustomObjData>)
@@ -238,7 +238,7 @@ const NamedArgument* Node::tryGetInput(std::string_view name) const
     // number of elements, so it shouldn't be slow. This allows us to avoid a
     // second datastructure for lookups.
     // Drop a debug check here, just to make sure :)
-    TORCH_INTERNAL_ASSERT_DEBUG_ONLY(inputs_.size() < 1000);
+    XSIGMA_CHECK_DEBUG(inputs_.size() < 1000);
     for (const auto& input : inputs_)
     {
         if (input.name == name)
@@ -254,7 +254,7 @@ const NamedArgument& Node::getInput(std::string_view name) const
     const auto ret = tryGetInput(name);
     if (ret == nullptr)
     {
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             false,
             fmt::format(
                 "Expected input '{}' on node: '{}' to exist, but it does not.",
@@ -270,7 +270,7 @@ const Attribute* Node::tryGetAttribute(std::string_view name) const
     // number of elements, so it shouldn't be slow. This allows us to avoid a
     // second datastructure for lookups.
     // Drop a debug check here, just to make sure :)
-    TORCH_INTERNAL_ASSERT_DEBUG_ONLY(attributes_.size() < 1000);
+    XSIGMA_CHECK_DEBUG(attributes_.size() < 1000);
     for (const auto& attribute : attributes_)
     {
         if (attribute.name == name)
@@ -286,7 +286,7 @@ const Attribute& Node::getAttribute(std::string_view name) const
     const auto ret = tryGetAttribute(name);
     if (ret == nullptr)
     {
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             false,
             fmt::format(
                 "Expected attribute '{}' on node: '{}' to exist, but it does not.",
@@ -300,10 +300,11 @@ void Node::applyDevicePlacement(const Placement& placement)
 {
     for (auto& attribute : attributes_)
     {
-        if (std::holds_alternative<c10::Device>(attribute.value))
+        if (std::holds_alternative<xsigma::Device>(attribute.value))
         {
-            auto device       = std::get<c10::Device>(attribute.value);
-            auto targetDevice = placement.getMappedDevice(std::get<c10::Device>(attribute.value));
+            auto device = std::get<xsigma::Device>(attribute.value);
+            auto targetDevice =
+                placement.getMappedDevice(std::get<xsigma::Device>(attribute.value));
             if (!isSameDevice(targetDevice, device))
             {
                 LOG(INFO) << "Overriding " << device.str() << " to " << targetDevice.str()
@@ -458,7 +459,7 @@ Node* Graph::createListPack(std::vector<Value*> inputs, const Type& inputType)
 {
     std::vector<NamedArgument> nodeInputs;
     nodeInputs.reserve(inputs.size());
-    for (auto [i, input] : c10::enumerate(inputs))
+    for (auto [i, input] : xsigma::enumerate(inputs))
     {
         nodeInputs.push_back({fmt::format("l{}", i), input});
     }
@@ -469,7 +470,7 @@ Node* Graph::createListPack(std::vector<Value*> inputs, const Type& inputType)
     // Make sure all inputs are the same type
     for (auto& input : inputs)
     {
-        TORCH_CHECK(input->type() == inputType);
+        XSIGMA_CHECK(input->type() == inputType);
     }
 
     if (inputType == Type::Kind::Tensor)
@@ -488,7 +489,7 @@ Node* Graph::createOptionalListPack(std::vector<Value*> inputs)
 {
     std::vector<NamedArgument> nodeInputs;
     nodeInputs.reserve(inputs.size());
-    for (auto [i, input] : c10::enumerate(inputs))
+    for (auto [i, input] : xsigma::enumerate(inputs))
     {
         nodeInputs.push_back({fmt::format("l{}", i), input});
     }
@@ -498,7 +499,7 @@ Node* Graph::createOptionalListPack(std::vector<Value*> inputs)
     // Make sure all inputs are either None or Tensor
     for (auto& input : inputs)
     {
-        TORCH_CHECK(input->type() == Type::Kind::None || input->type() == Type::Kind::Tensor);
+        XSIGMA_CHECK(input->type() == Type::Kind::None || input->type() == Type::Kind::Tensor);
     }
     node->addOutput(name, Type::Kind::OptionalTensorList);
 
@@ -511,7 +512,7 @@ Value* Graph::createConstantSymIntValue(int value)
     ValueId valueId          = getNextValueId();
     const auto [it, success] = values_.insert(
         {valueName, std::make_unique<Value>(valueId, valueName, Type::Kind::SymInt, nullptr)});
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         success,
         fmt::format(
             "Tried to create constant SymInt Value with name: '{}', but it already existed",
@@ -524,7 +525,7 @@ Value* Graph::getValue(std::string_view name) const
 {
     // TODO: can eliminate this string copy by enabling heterogeneous lookup for
     // the container
-    return values_.at(std::string(name)).get();
+    return values_.xsigma(std::string(name)).get();
 }
 
 Value* Graph::tryGetValue(std::string_view name) const
@@ -534,7 +535,7 @@ Value* Graph::tryGetValue(std::string_view name) const
     const auto key = std::string(name);
     if (values_.find(key) != values_.end())
     {
-        return values_.at(key).get();
+        return values_.xsigma(key).get();
     }
     return nullptr;
 }
@@ -643,12 +644,12 @@ void Graph::lint() const
         // Some constant symint and None don't have producer nodes
         if (value->type().kind() != Type::Kind::SymInt && value->type().kind() != Type::Kind::None)
         {
-            TORCH_CHECK(value->isFolded() || value->producer() != nullptr);
+            XSIGMA_CHECK(value->isFolded() || value->producer() != nullptr);
         }
     }
     for (const auto& node : nodes())
     {
-        TORCH_CHECK(node.owningGraph() == this);
+        XSIGMA_CHECK(node.owningGraph() == this);
     }
     // Check that every list type is either produced by a prim.ListPack or
     // immediately consumed by a prim.ListUnpack. We make use of this invariant
@@ -663,12 +664,12 @@ void Graph::lint() const
             value->producer(/* resolve_folded = */ true)->target() == "prim.ListPack";
         const bool consumedByListUnpack =
             value->users().size() == 1 && value->users()[0]->target() == "prim.ListUnpack";
-        TORCH_CHECK(producedByListPack || consumedByListUnpack);
+        XSIGMA_CHECK(producedByListPack || consumedByListUnpack);
     }
 
     auto getNames = [](const auto& values)
     {
-        c10::FastSet<std::string> names;
+        xsigma::FastSet<std::string> names;
         for (const auto* value : values)
         {
             if (value)
@@ -701,7 +702,7 @@ void Graph::finalize()
             }
             else
             {
-                TORCH_CHECK(false, "No more constant outputs available");
+                XSIGMA_CHECK(false, "No more constant outputs available");
             }
         }
     }
@@ -732,7 +733,7 @@ void Graph::replaceAllUses(Value* old, Value* replacement)
     {
         // Find this use in the input list and replace it
         auto replaced = replace(user, old, replacement);
-        TORCH_CHECK(replaced);
+        XSIGMA_CHECK(replaced);
         replacement->addUser(user);
     }
     old->eraseAllUsers();
@@ -760,7 +761,7 @@ void Graph::replaceAllUsesAfterNode(Value* old, Value* replacement, Node* afterT
 
 void Graph::applyDevicePlacement(const Placement& placement)
 {
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         !placementApplied_,
         "placement has been applied to the graph! placement must be applied once and once only.");
 
@@ -786,14 +787,14 @@ void Graph::applyDevicePlacement(const Placement& placement)
 }
 
 void Graph::overrideWeightsDevice(
-    const std::unordered_map<std::string, std::optional<c10::Device>>& submodNameToDevice)
+    const std::unordered_map<std::string, std::optional<xsigma::Device>>& submodNameToDevice)
 {
     for (auto& [weightName, weightMeta] : weightsMeta_)
     {
         for (auto& [name, device] : submodNameToDevice)
         {
             if (device.has_value() && weightMeta.device() != device &&
-                c10::starts_with(weightName, name) &&
+                xsigma::starts_with(weightName, name) &&
                 (weightName == name || weightName[name.length()] == '.'))
             {
                 LOG(INFO) << "Overriding " << weightName << " from " << weightMeta.device()
@@ -809,7 +810,7 @@ void Graph::overrideWeightsDevice(
         for (auto& [name, device] : submodNameToDevice)
         {
             if (device.has_value() && tensorMeta.device() != device &&
-                c10::starts_with(tensorName, name) &&
+                xsigma::starts_with(tensorName, name) &&
                 (tensorName == name || tensorName[name.length()] == '.'))
             {
                 LOG(INFO) << "Overriding " << tensorName << " from " << tensorMeta.device()
@@ -823,7 +824,7 @@ void Graph::overrideWeightsDevice(
 
 Node* Graph::nodeAfter(Node* n)
 {
-    TORCH_CHECK(n->owningGraph() == this);
+    XSIGMA_CHECK(n->owningGraph() == this);
     if (n == outputNode_)
     {
         return nullptr;
@@ -834,7 +835,7 @@ Node* Graph::nodeAfter(Node* n)
 
 const Node* Graph::nodeAfter(const Node* n) const
 {
-    TORCH_CHECK(n->owningGraph() == this);
+    XSIGMA_CHECK(n->owningGraph() == this);
     if (n == outputNode_)
     {
         return nullptr;
@@ -845,7 +846,7 @@ const Node* Graph::nodeAfter(const Node* n) const
 
 Node* Graph::nodeBefore(Node* n)
 {
-    TORCH_CHECK(n->owningGraph() == this);
+    XSIGMA_CHECK(n->owningGraph() == this);
     if (n == inputNode_)
     {
         return nullptr;
@@ -856,7 +857,7 @@ Node* Graph::nodeBefore(Node* n)
 
 const Node* Graph::nodeBefore(const Node* n) const
 {
-    TORCH_CHECK(n->owningGraph() == this);
+    XSIGMA_CHECK(n->owningGraph() == this);
     if (n == inputNode_)
     {
         return nullptr;
@@ -867,11 +868,11 @@ const Node* Graph::nodeBefore(const Node* n) const
 
 void Graph::removeNode(Node* n)
 {
-    TORCH_CHECK(n->owningGraph() == this, "Node does not belong to this graph!");
+    XSIGMA_CHECK(n->owningGraph() == this, "Node does not belong to this graph!");
 
     for (auto* outputVal : n->outputs())
     {
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             outputVal->users().empty(),
             "Trying to erase a node that still has users: ",
             outputVal->name());
@@ -884,7 +885,7 @@ void Graph::removeNode(Node* n)
         input.value->eraseUser(n);
     }
 
-    TORCH_CHECK(n->is_linked(), "Node is not linked to the graph!");
+    XSIGMA_CHECK(n->is_linked(), "Node is not linked to the graph!");
     n->unlink();
 
     auto it = std::find_if(
@@ -892,16 +893,16 @@ void Graph::removeNode(Node* n)
         nodesOwner_.end(),
         [n](const std::unique_ptr<Node>& ptr) { return ptr.get() == n; });
 
-    TORCH_CHECK(it != nodesOwner_.end(), "Node not found in nodesOwner_!");
+    XSIGMA_CHECK(it != nodesOwner_.end(), "Node not found in nodesOwner_!");
     nodesOwner_.erase(it);
 }
 
 void Graph::removeValue(Value* value)
 {
     // TODO: assuming not removing from constantSymIntValues_
-    TORCH_CHECK(value->users().empty(), "Cannot erase a value with users.");
+    XSIGMA_CHECK(value->users().empty(), "Cannot erase a value with users.");
     auto it = values_.find(std::string(value->name()));
-    TORCH_CHECK(it != values_.end(), "Attempted to erase a value not in graph ", value->name());
+    XSIGMA_CHECK(it != values_.end(), "Attempted to erase a value not in graph ", value->name());
     values_.erase(it);
 }
 
@@ -910,8 +911,8 @@ std::vector<Value*> Graph::insertGraph(
     std::vector<Value*>                       inputs,
     std::unordered_map<const Value*, Value*>& valueMap)
 {
-    TORCH_CHECK(subgraph.inputs().size() == inputs.size(), "Input size mismatch");
-    for (auto i : c10::irange(subgraph.inputs().size()))
+    XSIGMA_CHECK(subgraph.inputs().size() == inputs.size(), "Input size mismatch");
+    for (auto i : xsigma::irange(subgraph.inputs().size()))
     {
         valueMap[subgraph.inputs()[i]] = inputs[i];
     }
@@ -930,7 +931,7 @@ std::vector<Value*> Graph::insertGraph(
         for (auto& inp : inputs)
         {
             auto it = valueMap.find(inp.value);
-            TORCH_CHECK(it != valueMap.end(), "Missing input value in subgraph");
+            XSIGMA_CHECK(it != valueMap.end(), "Missing input value in subgraph");
             clonedInputs.push_back({inp.name, it->second});
         }
 
@@ -1033,7 +1034,7 @@ void Node::addOutput()
 
 Value* Node::addOutput(const Type& type)
 {
-    TORCH_CHECK(type == Type::Kind::None);
+    XSIGMA_CHECK(type == Type::Kind::None);
     Value* v = owningGraph_->addValue(std::nullopt, type, this);
     outputs_.push_back(v);
     return v;
@@ -1082,9 +1083,9 @@ std::vector<const Value*> Value::getListElements() const
     }
     else
     {
-        TORCH_CHECK(users().size() == 1);
+        XSIGMA_CHECK(users().size() == 1);
         const auto listUnpack = users()[0];
-        TORCH_CHECK(listUnpack->target() == "prim.ListUnpack");
+        XSIGMA_CHECK(listUnpack->target() == "prim.ListUnpack");
         for (const auto v : listUnpack->outputs())
         {
             ret.push_back(v);
@@ -1096,27 +1097,27 @@ std::vector<const Value*> Value::getListElements() const
 template <class>
 [[maybe_unused]] inline constexpr bool AlwaysFalse = false;
 
-c10::IValue constantToIValue(const Constant& constant)
+xsigma::IValue constantToIValue(const Constant& constant)
 {
     // Workaround for MSVC bug: "std" ambiguous symbol.
     using std::string;
     using std::unique_ptr;
     using std::vector;
     return std::visit(
-        [](auto&& arg) -> c10::IValue
+        [](auto&& arg) -> xsigma::IValue
         {
             using T = std::decay_t<decltype(arg)>;
             if constexpr (is_same_v<T, None>)
             {
-                return c10::IValue();
+                return xsigma::IValue();
             }
-            else if constexpr (std::is_convertible_v<T, c10::IValue>)
+            else if constexpr (std::is_convertible_v<T, xsigma::IValue>)
             {
                 return arg;
             }
             else if constexpr (is_same_v<T, unique_ptr<Graph>>)
             {
-                TORCH_CHECK(false, "subgraph arguments cannot be turned into ivalues!");
+                XSIGMA_CHECK(false, "subgraph arguments cannot be turned into ivalues!");
             }
             else
             {
@@ -1144,7 +1145,7 @@ std::ostream& printList(std::ostream& out, bool encloseInSquareBrackets, const T
     {
         out << '[';
     }
-    for (const auto& [idx, el] : c10::enumerate(list))
+    for (const auto& [idx, el] : xsigma::enumerate(list))
     {
         if (idx > 0)
         {
@@ -1194,19 +1195,19 @@ std::ostream& operator<<(std::ostream& out, const Constant& constant)
             {
                 out << quoted(arg);
             }
-            else if constexpr (is_same_v<T, c10::ScalarType>)
+            else if constexpr (is_same_v<T, xsigma::ScalarType>)
             {
                 out << kScalarTypePrefix << arg;
             }
-            else if constexpr (is_same_v<T, c10::MemoryFormat>)
+            else if constexpr (is_same_v<T, xsigma::MemoryFormat>)
             {
                 out << kMemoryFormatPrefix << arg;
             }
-            else if constexpr (is_same_v<T, c10::Layout>)
+            else if constexpr (is_same_v<T, xsigma::Layout>)
             {
                 out << kLayoutPrefix << arg;
             }
-            else if constexpr (is_same_v<T, c10::Device>)
+            else if constexpr (is_same_v<T, xsigma::Device>)
             {
                 out << kDevicePrefix << "{" << arg << "}";
             }
@@ -1305,42 +1306,42 @@ std::ostream& operator<<(std::ostream& out, const Graph& graph)
     return out;
 }
 
-c10::Device convertDevice(std::string_view symbol)
+xsigma::Device convertDevice(std::string_view symbol)
 {
     // Symbol looks like `Device{cuda:1}`
     const auto typeStart = symbol.find('{') + 1;
-    TORCH_CHECK(typeStart < symbol.size());
+    XSIGMA_CHECK(typeStart < symbol.size());
 
     const auto typeEnd = symbol.find(':');
-    TORCH_CHECK(typeEnd != std::string_view::npos);
+    XSIGMA_CHECK(typeEnd != std::string_view::npos);
 
     const auto type       = symbol.substr(typeStart, typeEnd - typeStart);
     const auto indexStart = typeEnd + 1;
-    TORCH_CHECK(indexStart < symbol.size());
+    XSIGMA_CHECK(indexStart < symbol.size());
 
     const auto indexEnd = symbol.find('}');
-    TORCH_CHECK(indexEnd != std::string_view::npos);
+    XSIGMA_CHECK(indexEnd != std::string_view::npos);
 
     const auto index = symbol.substr(indexStart, indexEnd - indexStart);
 
-    c10::Device device((std::string(type)));
-    auto        indexValue = c10::tryToNumber<int64_t>(std::string{index});
-    TORCH_CHECK(indexValue.has_value(), "Invalid device index format");
+    xsigma::Device device((std::string(type)));
+    auto           indexValue = xsigma::tryToNumber<int64_t>(std::string{index});
+    XSIGMA_CHECK(indexValue.has_value(), "Invalid device index format");
     int64_t deviceIndex = indexValue.value();
-    TORCH_CHECK(
-        deviceIndex >= std::numeric_limits<c10::DeviceIndex>::min() &&
-            deviceIndex <= std::numeric_limits<c10::DeviceIndex>::max(),
+    XSIGMA_CHECK(
+        deviceIndex >= std::numeric_limits<xsigma::DeviceIndex>::min() &&
+            deviceIndex <= std::numeric_limits<xsigma::DeviceIndex>::max(),
         "Device index out of range for int8_t");
-    device.set_index(static_cast<c10::DeviceIndex>(deviceIndex));
+    device.set_index(static_cast<xsigma::DeviceIndex>(deviceIndex));
     return device;
 }
 
 Constant convertAtomicConstant(std::string_view symbol)
 {
-    if (c10::starts_with(symbol, "\""))
+    if (xsigma::starts_with(symbol, "\""))
     {
         // chop off the outer quotes and return the string
-        TORCH_CHECK(symbol.size() >= 2);
+        XSIGMA_CHECK(symbol.size() >= 2);
         symbol.remove_prefix(1);
         symbol.remove_suffix(1);
         return std::string(symbol);
@@ -1357,25 +1358,25 @@ Constant convertAtomicConstant(std::string_view symbol)
     {
         return false;
     }
-    else if (c10::starts_with(symbol, kMemoryFormatPrefix))
+    else if (xsigma::starts_with(symbol, kMemoryFormatPrefix))
     {
         torch::_export::MemoryFormat value = torch::_export::MemoryFormat::Unknown;
         symbol.remove_prefix(kMemoryFormatPrefix.length());
         torch::_export::parseEnum(symbol, value);
         return convertJsonMemoryFormat(value);
     }
-    else if (c10::starts_with(symbol, kLayoutPrefix))
+    else if (xsigma::starts_with(symbol, kLayoutPrefix))
     {
         torch::_export::Layout value = torch::_export::Layout::Unknown;
         symbol.remove_prefix(kLayoutPrefix.length());
         torch::_export::parseEnum(symbol, value);
         return convertJsonLayout(value);
     }
-    else if (c10::starts_with(symbol, kDevicePrefix))
+    else if (xsigma::starts_with(symbol, kDevicePrefix))
     {
         return convertDevice(symbol);
     }
-    else if (c10::starts_with(symbol, kScalarTypePrefix))
+    else if (xsigma::starts_with(symbol, kScalarTypePrefix))
     {
         torch::_export::ScalarType value = torch::_export::ScalarType::UNKNOWN;
         symbol.remove_prefix(kScalarTypePrefix.length());
@@ -1385,7 +1386,7 @@ Constant convertAtomicConstant(std::string_view symbol)
 
     // match number
     // We need to disambiguate between int and float constants
-    const auto maybeInt = c10::tryToNumber<int64_t>(std::string{symbol});
+    const auto maybeInt = xsigma::tryToNumber<int64_t>(std::string{symbol});
 
     // Libraries may happily convert "5.0" to an int 5, but we want that to
     // become a float. So add an extra check for whether a '.' is in the string
@@ -1396,13 +1397,13 @@ Constant convertAtomicConstant(std::string_view symbol)
         return maybeInt.value();
     }
 
-    const auto maybeDouble = c10::tryToNumber<double>(std::string{symbol});
+    const auto maybeDouble = xsigma::tryToNumber<double>(std::string{symbol});
     if (maybeDouble.has_value())
     {
         return maybeDouble.value();
     }
 
-    TORCH_CHECK(false, "unhandled symbol: ", symbol);
+    XSIGMA_CHECK(false, "unhandled symbol: ", symbol);
 }
 
 Constant convertListConstant(std::string_view source)
@@ -1418,7 +1419,7 @@ Constant convertListConstant(std::string_view source)
         curPos = consumeWhitespaceImpl(source, curPos);
 
         size_t start = curPos;
-        while (source.at(curPos) != ',' && source.at(curPos) != ']')
+        while (source.xsigma(curPos) != ',' && source.xsigma(curPos) != ']')
         {
             curPos++;
         }
@@ -1443,15 +1444,15 @@ Constant convertListConstant(std::string_view source)
             }
             else
             {
-                TORCH_CHECK(false, "constant lists only support int, float, bool");
+                XSIGMA_CHECK(false, "constant lists only support int, float, bool");
             }
         }
         else
         {
-            TORCH_CHECK(type.index() == val.index(), "lists must have all the same type");
+            XSIGMA_CHECK(type.index() == val.index(), "lists must have all the same type");
         }
         values.push_back(std::move(val));
-        if (source.at(curPos) == ']')
+        if (source.xsigma(curPos) == ']')
         {
             break;
         }
@@ -1493,7 +1494,7 @@ Constant convertListConstant(std::string_view source)
         }
         return inner;
     }
-    TORCH_CHECK(false, "constant lists only support int, float, bool");
+    XSIGMA_CHECK(false, "constant lists only support int, float, bool");
 }
 
 namespace
@@ -1535,7 +1536,7 @@ private:
     std::variant<NamedArgument, Attribute> parseNamedArgument();
     Value*                                 parseSymbolicArgument();
     // Symbols look like %v109, with the same valid ident rules as Python
-    // This returns the symbol *without* the % at the front.
+    // This returns the symbol *without* the % xsigma the front.
     std::string_view parseAtomicSymbol();
 
     size_t                         curPos_ = 0;
@@ -1588,7 +1589,7 @@ bool Parser::nextIf(char expected)
 
 void Parser::parseGraphInputs()
 {
-    TORCH_CHECK(curPos_ == 0);
+    XSIGMA_CHECK(curPos_ == 0);
     expect("graph");
     const auto inputs =
         parseList<std::string_view>('(', ')', [&]() { return parseAtomicSymbol(); });
@@ -1682,7 +1683,7 @@ bool Parser::validIdent(char n)
 }
 
 // Symbols look like %v109, with the same valid ident rules as Python
-// This returns the symbol *without* the % at the front.
+// This returns the symbol *without* the % xsigma the front.
 std::string_view Parser::parseAtomicSymbol()
 {
     expect("%");
@@ -1691,7 +1692,7 @@ std::string_view Parser::parseAtomicSymbol()
 
 char Parser::cur()
 {
-    return source_.at(curPos_);
+    return source_.xsigma(curPos_);
 }
 
 void Parser::consumeWhitespace()
@@ -1802,7 +1803,7 @@ std::variant<NamedArgument, Attribute> Parser::parseNamedArgument()
 std::pair<std::string_view, Type> Parser::parseOutput()
 {
     consumeWhitespace();
-    TORCH_CHECK(cur() == '%', fmt::format("expected % but got {}", cur()));
+    XSIGMA_CHECK(cur() == '%', fmt::format("expected % but got {}", cur()));
 
     auto symbol = parseAtomicSymbol();
     if (nextIf('['))
@@ -1819,7 +1820,7 @@ std::pair<std::string_view, Type> Parser::parseOutput()
 Value* Parser::parseSymbolicArgument()
 {
     consumeWhitespace();
-    TORCH_CHECK(cur() == '%', fmt::format("expected % but got {}", cur()));
+    XSIGMA_CHECK(cur() == '%', fmt::format("expected % but got {}", cur()));
 
     auto                symbol = parseAtomicSymbol();
     std::vector<Value*> listElements;

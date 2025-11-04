@@ -8,12 +8,12 @@
 namespace torch::jit::tensorexpr
 {
 
-#ifdef C10_MOBILE
+#ifdef XSIGMA_MOBILE
 extern "C"
 {
 #endif
 
-#ifndef C10_MOBILE
+#ifndef XSIGMA_MOBILE
     static void nnc_aten_abs(
         int64_t  bufs_num,
         void**   buf_data,
@@ -24,13 +24,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::abs_out(r, self);
+            xsigma::abs_out(r, self);
         }
         catch (...)
         {
@@ -46,13 +46,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::absolute_out(r, self);
+            xsigma::absolute_out(r, self);
         }
         catch (...)
         {
@@ -68,13 +68,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::angle_out(r, self);
+            xsigma::angle_out(r, self);
         }
         catch (...)
         {
@@ -90,13 +90,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::sgn_out(r, self);
+            xsigma::sgn_out(r, self);
         }
         catch (...)
         {
@@ -112,13 +112,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::acos_out(r, self);
+            xsigma::acos_out(r, self);
         }
         catch (...)
         {
@@ -134,13 +134,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::arccos_out(r, self);
+            xsigma::arccos_out(r, self);
         }
         catch (...)
         {
@@ -156,13 +156,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::acosh_out(r, self);
+            xsigma::acosh_out(r, self);
         }
         catch (...)
         {
@@ -178,13 +178,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::arccosh_out(r, self);
+            xsigma::arccosh_out(r, self);
         }
         catch (...)
         {
@@ -200,13 +200,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::asinh_out(r, self);
+            xsigma::asinh_out(r, self);
         }
         catch (...)
         {
@@ -222,13 +222,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::arcsinh_out(r, self);
+            xsigma::arcsinh_out(r, self);
         }
         catch (...)
         {
@@ -244,13 +244,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::atanh_out(r, self);
+            xsigma::atanh_out(r, self);
         }
         catch (...)
         {
@@ -266,13 +266,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::arctanh_out(r, self);
+            xsigma::arctanh_out(r, self);
         }
         catch (...)
         {
@@ -288,13 +288,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::asin_out(r, self);
+            xsigma::asin_out(r, self);
         }
         catch (...)
         {
@@ -310,13 +310,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::arcsin_out(r, self);
+            xsigma::arcsin_out(r, self);
         }
         catch (...)
         {
@@ -332,13 +332,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::atan_out(r, self);
+            xsigma::atan_out(r, self);
         }
         catch (...)
         {
@@ -354,13 +354,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::arctan_out(r, self);
+            xsigma::arctan_out(r, self);
         }
         catch (...)
         {
@@ -376,13 +376,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::bitwise_not_out(r, self);
+            xsigma::bitwise_not_out(r, self);
         }
         catch (...)
         {
@@ -398,14 +398,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::copysign_out(r, self, other);
+            xsigma::copysign_out(r, self, other);
         }
         catch (...)
         {
@@ -421,13 +421,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::logical_not_out(r, self);
+            xsigma::logical_not_out(r, self);
         }
         catch (...)
         {
@@ -443,14 +443,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::logical_xor_out(r, self, other);
+            xsigma::logical_xor_out(r, self, other);
         }
         catch (...)
         {
@@ -466,14 +466,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::logical_and_out(r, self, other);
+            xsigma::logical_and_out(r, self, other);
         }
         catch (...)
         {
@@ -489,14 +489,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::logical_or_out(r, self, other);
+            xsigma::logical_or_out(r, self, other);
         }
         catch (...)
         {
@@ -512,14 +512,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
-        const at::Tensor& mat2 = tensors[2];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
+        const xsigma::Tensor& mat2 = tensors[2];
         try
         {
-            at::bmm_out(r, self, mat2);
+            xsigma::bmm_out(r, self, mat2);
         }
         catch (...)
         {
@@ -535,13 +535,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::ceil_out(r, self);
+            xsigma::ceil_out(r, self);
         }
         catch (...)
         {
@@ -557,14 +557,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
-        const at::Tensor& max  = tensors[2];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
+        const xsigma::Tensor& max  = tensors[2];
         try
         {
-            at::clamp_max_out(r, self, max);
+            xsigma::clamp_max_out(r, self, max);
         }
         catch (...)
         {
@@ -580,14 +580,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
-        const at::Tensor& min  = tensors[2];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
+        const xsigma::Tensor& min  = tensors[2];
         try
         {
-            at::clamp_min_out(r, self, min);
+            xsigma::clamp_min_out(r, self, min);
         }
         catch (...)
         {
@@ -603,14 +603,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& real = tensors[1];
-        const at::Tensor& imag = tensors[2];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& real = tensors[1];
+        const xsigma::Tensor& imag = tensors[2];
         try
         {
-            at::complex_out(r, real, imag);
+            xsigma::complex_out(r, real, imag);
         }
         catch (...)
         {
@@ -626,14 +626,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& abs   = tensors[1];
-        const at::Tensor& angle = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& abs   = tensors[1];
+        const xsigma::Tensor& angle = tensors[2];
         try
         {
-            at::polar_out(r, abs, angle);
+            xsigma::polar_out(r, abs, angle);
         }
         catch (...)
         {
@@ -649,13 +649,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::cos_out(r, self);
+            xsigma::cos_out(r, self);
         }
         catch (...)
         {
@@ -671,13 +671,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::cosh_out(r, self);
+            xsigma::cosh_out(r, self);
         }
         catch (...)
         {
@@ -693,14 +693,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::div_out(r, self, other);
+            xsigma::div_out(r, self, other);
         }
         catch (...)
         {
@@ -716,14 +716,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::divide_out(r, self, other);
+            xsigma::divide_out(r, self, other);
         }
         catch (...)
         {
@@ -739,14 +739,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::true_divide_out(r, self, other);
+            xsigma::true_divide_out(r, self, other);
         }
         catch (...)
         {
@@ -762,14 +762,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r      = tensors[0];
-        const at::Tensor& self   = tensors[1];
-        const at::Tensor& tensor = tensors[2];
+        xsigma::Tensor&       r      = tensors[0];
+        const xsigma::Tensor& self   = tensors[1];
+        const xsigma::Tensor& tensor = tensors[2];
         try
         {
-            at::dot_out(r, self, tensor);
+            xsigma::dot_out(r, self, tensor);
         }
         catch (...)
         {
@@ -785,14 +785,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::vdot_out(r, self, other);
+            xsigma::vdot_out(r, self, other);
         }
         catch (...)
         {
@@ -808,13 +808,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::erf_out(r, self);
+            xsigma::erf_out(r, self);
         }
         catch (...)
         {
@@ -830,13 +830,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::erfc_out(r, self);
+            xsigma::erfc_out(r, self);
         }
         catch (...)
         {
@@ -852,13 +852,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::exp_out(r, self);
+            xsigma::exp_out(r, self);
         }
         catch (...)
         {
@@ -874,13 +874,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::exp2_out(r, self);
+            xsigma::exp2_out(r, self);
         }
         catch (...)
         {
@@ -896,13 +896,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::expm1_out(r, self);
+            xsigma::expm1_out(r, self);
         }
         catch (...)
         {
@@ -918,13 +918,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::floor_out(r, self);
+            xsigma::floor_out(r, self);
         }
         catch (...)
         {
@@ -940,14 +940,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::floor_divide_out(r, self, other);
+            xsigma::floor_divide_out(r, self, other);
         }
         catch (...)
         {
@@ -963,13 +963,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::frac_out(r, self);
+            xsigma::frac_out(r, self);
         }
         catch (...)
         {
@@ -985,14 +985,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::gcd_out(r, self, other);
+            xsigma::gcd_out(r, self, other);
         }
         catch (...)
         {
@@ -1008,14 +1008,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::lcm_out(r, self, other);
+            xsigma::lcm_out(r, self, other);
         }
         catch (...)
         {
@@ -1031,13 +1031,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::inverse_out(r, self);
+            xsigma::inverse_out(r, self);
         }
         catch (...)
         {
@@ -1053,14 +1053,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::kron_out(r, self, other);
+            xsigma::kron_out(r, self, other);
         }
         catch (...)
         {
@@ -1076,14 +1076,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::ldexp_out(r, self, other);
+            xsigma::ldexp_out(r, self, other);
         }
         catch (...)
         {
@@ -1099,13 +1099,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::log_out(r, self);
+            xsigma::log_out(r, self);
         }
         catch (...)
         {
@@ -1121,13 +1121,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::log10_out(r, self);
+            xsigma::log10_out(r, self);
         }
         catch (...)
         {
@@ -1143,13 +1143,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::log1p_out(r, self);
+            xsigma::log1p_out(r, self);
         }
         catch (...)
         {
@@ -1165,13 +1165,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::log2_out(r, self);
+            xsigma::log2_out(r, self);
         }
         catch (...)
         {
@@ -1187,14 +1187,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::logaddexp_out(r, self, other);
+            xsigma::logaddexp_out(r, self, other);
         }
         catch (...)
         {
@@ -1210,14 +1210,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::logaddexp2_out(r, self, other);
+            xsigma::logaddexp2_out(r, self, other);
         }
         catch (...)
         {
@@ -1233,14 +1233,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::xlogy_out(r, self, other);
+            xsigma::xlogy_out(r, self, other);
         }
         catch (...)
         {
@@ -1256,14 +1256,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::matmul_out(r, self, other);
+            xsigma::matmul_out(r, self, other);
         }
         catch (...)
         {
@@ -1279,14 +1279,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r            = tensors[0];
-        const at::Tensor& input        = tensors[1];
-        const at::Tensor& coefficients = tensors[2];
+        xsigma::Tensor&       r            = tensors[0];
+        const xsigma::Tensor& input        = tensors[1];
+        const xsigma::Tensor& coefficients = tensors[2];
         try
         {
-            at::_compute_linear_combination_out(r, input, coefficients);
+            xsigma::_compute_linear_combination_out(r, input, coefficients);
         }
         catch (...)
         {
@@ -1302,14 +1302,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
-        const at::Tensor& mat2 = tensors[2];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
+        const xsigma::Tensor& mat2 = tensors[2];
         try
         {
-            at::mm_out(r, self, mat2);
+            xsigma::mm_out(r, self, mat2);
         }
         catch (...)
         {
@@ -1325,14 +1325,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::mul_out(r, self, other);
+            xsigma::mul_out(r, self, other);
         }
         catch (...)
         {
@@ -1348,14 +1348,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::multiply_out(r, self, other);
+            xsigma::multiply_out(r, self, other);
         }
         catch (...)
         {
@@ -1371,14 +1371,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
-        const at::Tensor& vec  = tensors[2];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
+        const xsigma::Tensor& vec  = tensors[2];
         try
         {
-            at::mv_out(r, self, vec);
+            xsigma::mv_out(r, self, vec);
         }
         catch (...)
         {
@@ -1394,13 +1394,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::rad2deg_out(r, self);
+            xsigma::rad2deg_out(r, self);
         }
         catch (...)
         {
@@ -1416,13 +1416,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::deg2rad_out(r, self);
+            xsigma::deg2rad_out(r, self);
         }
         catch (...)
         {
@@ -1438,13 +1438,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::reciprocal_out(r, self);
+            xsigma::reciprocal_out(r, self);
         }
         catch (...)
         {
@@ -1460,13 +1460,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::neg_out(r, self);
+            xsigma::neg_out(r, self);
         }
         catch (...)
         {
@@ -1482,13 +1482,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::negative_out(r, self);
+            xsigma::negative_out(r, self);
         }
         catch (...)
         {
@@ -1504,13 +1504,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::round_out(r, self);
+            xsigma::round_out(r, self);
         }
         catch (...)
         {
@@ -1526,13 +1526,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::rsqrt_out(r, self);
+            xsigma::rsqrt_out(r, self);
         }
         catch (...)
         {
@@ -1548,13 +1548,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::silu_out(r, self);
+            xsigma::silu_out(r, self);
         }
         catch (...)
         {
@@ -1570,13 +1570,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::mish_out(r, self);
+            xsigma::mish_out(r, self);
         }
         catch (...)
         {
@@ -1592,13 +1592,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::sigmoid_out(r, self);
+            xsigma::sigmoid_out(r, self);
         }
         catch (...)
         {
@@ -1614,13 +1614,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::sin_out(r, self);
+            xsigma::sin_out(r, self);
         }
         catch (...)
         {
@@ -1636,13 +1636,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::sinc_out(r, self);
+            xsigma::sinc_out(r, self);
         }
         catch (...)
         {
@@ -1658,13 +1658,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::sinh_out(r, self);
+            xsigma::sinh_out(r, self);
         }
         catch (...)
         {
@@ -1680,13 +1680,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::sqrt_out(r, self);
+            xsigma::sqrt_out(r, self);
         }
         catch (...)
         {
@@ -1702,13 +1702,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::square_out(r, self);
+            xsigma::square_out(r, self);
         }
         catch (...)
         {
@@ -1724,13 +1724,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::tan_out(r, self);
+            xsigma::tan_out(r, self);
         }
         catch (...)
         {
@@ -1746,13 +1746,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::tanh_out(r, self);
+            xsigma::tanh_out(r, self);
         }
         catch (...)
         {
@@ -1768,13 +1768,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::trunc_out(r, self);
+            xsigma::trunc_out(r, self);
         }
         catch (...)
         {
@@ -1790,13 +1790,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::fix_out(r, self);
+            xsigma::fix_out(r, self);
         }
         catch (...)
         {
@@ -1812,14 +1812,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r      = tensors[0];
-        const at::Tensor& self   = tensors[1];
-        const at::Tensor& values = tensors[2];
+        xsigma::Tensor&       r      = tensors[0];
+        const xsigma::Tensor& self   = tensors[1];
+        const xsigma::Tensor& values = tensors[2];
         try
         {
-            at::heaviside_out(r, self, values);
+            xsigma::heaviside_out(r, self, values);
         }
         catch (...)
         {
@@ -1835,14 +1835,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& mat1 = tensors[1];
-        const at::Tensor& mat2 = tensors[2];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& mat1 = tensors[1];
+        const xsigma::Tensor& mat2 = tensors[2];
         try
         {
-            at::hspmm_out(r, mat1, mat2);
+            xsigma::hspmm_out(r, mat1, mat2);
         }
         catch (...)
         {
@@ -1858,14 +1858,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::bitwise_and_out(r, self, other);
+            xsigma::bitwise_and_out(r, self, other);
         }
         catch (...)
         {
@@ -1881,14 +1881,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::bitwise_or_out(r, self, other);
+            xsigma::bitwise_or_out(r, self, other);
         }
         catch (...)
         {
@@ -1904,14 +1904,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::bitwise_xor_out(r, self, other);
+            xsigma::bitwise_xor_out(r, self, other);
         }
         catch (...)
         {
@@ -1927,14 +1927,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::ne_out(r, self, other);
+            xsigma::ne_out(r, self, other);
         }
         catch (...)
         {
@@ -1950,14 +1950,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::not_equal_out(r, self, other);
+            xsigma::not_equal_out(r, self, other);
         }
         catch (...)
         {
@@ -1973,14 +1973,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::eq_out(r, self, other);
+            xsigma::eq_out(r, self, other);
         }
         catch (...)
         {
@@ -1996,14 +1996,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::ge_out(r, self, other);
+            xsigma::ge_out(r, self, other);
         }
         catch (...)
         {
@@ -2019,14 +2019,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::greater_equal_out(r, self, other);
+            xsigma::greater_equal_out(r, self, other);
         }
         catch (...)
         {
@@ -2042,14 +2042,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::le_out(r, self, other);
+            xsigma::le_out(r, self, other);
         }
         catch (...)
         {
@@ -2065,14 +2065,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::less_equal_out(r, self, other);
+            xsigma::less_equal_out(r, self, other);
         }
         catch (...)
         {
@@ -2088,14 +2088,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::gt_out(r, self, other);
+            xsigma::gt_out(r, self, other);
         }
         catch (...)
         {
@@ -2111,14 +2111,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::greater_out(r, self, other);
+            xsigma::greater_out(r, self, other);
         }
         catch (...)
         {
@@ -2134,14 +2134,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::lt_out(r, self, other);
+            xsigma::lt_out(r, self, other);
         }
         catch (...)
         {
@@ -2157,14 +2157,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::less_out(r, self, other);
+            xsigma::less_out(r, self, other);
         }
         catch (...)
         {
@@ -2180,14 +2180,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& index = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& index = tensors[2];
         try
         {
-            at::take_out(r, self, index);
+            xsigma::take_out(r, self, index);
         }
         catch (...)
         {
@@ -2203,14 +2203,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
-        const at::Tensor& mask = tensors[2];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
+        const xsigma::Tensor& mask = tensors[2];
         try
         {
-            at::masked_select_out(r, self, mask);
+            xsigma::masked_select_out(r, self, mask);
         }
         catch (...)
         {
@@ -2226,13 +2226,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::nonzero_out(r, self);
+            xsigma::nonzero_out(r, self);
         }
         catch (...)
         {
@@ -2248,14 +2248,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r      = tensors[0];
-        const at::Tensor& self   = tensors[1];
-        const at::Tensor& input2 = tensors[2];
+        xsigma::Tensor&       r      = tensors[0];
+        const xsigma::Tensor& self   = tensors[1];
+        const xsigma::Tensor& input2 = tensors[2];
         try
         {
-            at::orgqr_out(r, self, input2);
+            xsigma::orgqr_out(r, self, input2);
         }
         catch (...)
         {
@@ -2271,15 +2271,15 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r         = tensors[0];
-        const at::Tensor& self      = tensors[1];
-        const at::Tensor& LU_data   = tensors[2];
-        const at::Tensor& LU_pivots = tensors[3];
+        xsigma::Tensor&       r         = tensors[0];
+        const xsigma::Tensor& self      = tensors[1];
+        const xsigma::Tensor& LU_data   = tensors[2];
+        const xsigma::Tensor& LU_pivots = tensors[3];
         try
         {
-            at::lu_solve_out(r, self, LU_data, LU_pivots);
+            xsigma::lu_solve_out(r, self, LU_data, LU_pivots);
         }
         catch (...)
         {
@@ -2295,13 +2295,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::lgamma_out(r, self);
+            xsigma::lgamma_out(r, self);
         }
         catch (...)
         {
@@ -2317,13 +2317,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::digamma_out(r, self);
+            xsigma::digamma_out(r, self);
         }
         catch (...)
         {
@@ -2339,13 +2339,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::erfinv_out(r, self);
+            xsigma::erfinv_out(r, self);
         }
         catch (...)
         {
@@ -2361,13 +2361,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::i0_out(r, self);
+            xsigma::i0_out(r, self);
         }
         catch (...)
         {
@@ -2383,13 +2383,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::sign_out(r, self);
+            xsigma::sign_out(r, self);
         }
         catch (...)
         {
@@ -2405,13 +2405,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::signbit_out(r, self);
+            xsigma::signbit_out(r, self);
         }
         catch (...)
         {
@@ -2427,14 +2427,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::atan2_out(r, self, other);
+            xsigma::atan2_out(r, self, other);
         }
         catch (...)
         {
@@ -2450,15 +2450,15 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r      = tensors[0];
-        const at::Tensor& self   = tensors[1];
-        const at::Tensor& end    = tensors[2];
-        const at::Tensor& weight = tensors[3];
+        xsigma::Tensor&       r      = tensors[0];
+        const xsigma::Tensor& self   = tensors[1];
+        const xsigma::Tensor& end    = tensors[2];
+        const xsigma::Tensor& weight = tensors[3];
         try
         {
-            at::lerp_out(r, self, end, weight);
+            xsigma::lerp_out(r, self, end, weight);
         }
         catch (...)
         {
@@ -2474,14 +2474,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::fmod_out(r, self, other);
+            xsigma::fmod_out(r, self, other);
         }
         catch (...)
         {
@@ -2497,14 +2497,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::hypot_out(r, self, other);
+            xsigma::hypot_out(r, self, other);
         }
         catch (...)
         {
@@ -2520,14 +2520,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::igamma_out(r, self, other);
+            xsigma::igamma_out(r, self, other);
         }
         catch (...)
         {
@@ -2543,14 +2543,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::igammac_out(r, self, other);
+            xsigma::igammac_out(r, self, other);
         }
         catch (...)
         {
@@ -2566,14 +2566,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::nextafter_out(r, self, other);
+            xsigma::nextafter_out(r, self, other);
         }
         catch (...)
         {
@@ -2589,14 +2589,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::remainder_out(r, self, other);
+            xsigma::remainder_out(r, self, other);
         }
         catch (...)
         {
@@ -2612,14 +2612,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::fmin_out(r, self, other);
+            xsigma::fmin_out(r, self, other);
         }
         catch (...)
         {
@@ -2635,14 +2635,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::fmax_out(r, self, other);
+            xsigma::fmax_out(r, self, other);
         }
         catch (...)
         {
@@ -2658,14 +2658,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::maximum_out(r, self, other);
+            xsigma::maximum_out(r, self, other);
         }
         catch (...)
         {
@@ -2681,14 +2681,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::max_out(r, self, other);
+            xsigma::max_out(r, self, other);
         }
         catch (...)
         {
@@ -2704,14 +2704,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::minimum_out(r, self, other);
+            xsigma::minimum_out(r, self, other);
         }
         catch (...)
         {
@@ -2727,14 +2727,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::min_out(r, self, other);
+            xsigma::min_out(r, self, other);
         }
         catch (...)
         {
@@ -2750,13 +2750,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::msort_out(r, self);
+            xsigma::msort_out(r, self);
         }
         catch (...)
         {
@@ -2772,14 +2772,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r        = tensors[0];
-        const at::Tensor& self     = tensors[1];
-        const at::Tensor& exponent = tensors[2];
+        xsigma::Tensor&       r        = tensors[0];
+        const xsigma::Tensor& self     = tensors[1];
+        const xsigma::Tensor& exponent = tensors[2];
         try
         {
-            at::pow_out(r, self, exponent);
+            xsigma::pow_out(r, self, exponent);
         }
         catch (...)
         {
@@ -2795,14 +2795,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r        = tensors[0];
-        const at::Tensor& self     = tensors[1];
-        const at::Tensor& exponent = tensors[2];
+        xsigma::Tensor&       r        = tensors[0];
+        const xsigma::Tensor& self     = tensors[1];
+        const xsigma::Tensor& exponent = tensors[2];
         try
         {
-            at::float_power_out(r, self, exponent);
+            xsigma::float_power_out(r, self, exponent);
         }
         catch (...)
         {
@@ -2818,13 +2818,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::hardsigmoid_out(r, self);
+            xsigma::hardsigmoid_out(r, self);
         }
         catch (...)
         {
@@ -2840,13 +2840,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::hardswish_out(r, self);
+            xsigma::hardswish_out(r, self);
         }
         catch (...)
         {
@@ -2862,13 +2862,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::log_sigmoid_out(r, self);
+            xsigma::log_sigmoid_out(r, self);
         }
         catch (...)
         {
@@ -2884,15 +2884,15 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r           = tensors[0];
-        const at::Tensor& grad_output = tensors[1];
-        const at::Tensor& self        = tensors[2];
-        const at::Tensor& buffer      = tensors[3];
+        xsigma::Tensor&       r           = tensors[0];
+        const xsigma::Tensor& grad_output = tensors[1];
+        const xsigma::Tensor& self        = tensors[2];
+        const xsigma::Tensor& buffer      = tensors[3];
         try
         {
-            at::log_sigmoid_backward_out(r, grad_output, self, buffer);
+            xsigma::log_sigmoid_backward_out(r, grad_output, self, buffer);
         }
         catch (...)
         {
@@ -2908,14 +2908,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r           = tensors[0];
-        const at::Tensor& grad_output = tensors[1];
-        const at::Tensor& self        = tensors[2];
+        xsigma::Tensor&       r           = tensors[0];
+        const xsigma::Tensor& grad_output = tensors[1];
+        const xsigma::Tensor& self        = tensors[2];
         try
         {
-            at::adaptive_avg_pool3d_backward_out(r, grad_output, self);
+            xsigma::adaptive_avg_pool3d_backward_out(r, grad_output, self);
         }
         catch (...)
         {
@@ -2931,15 +2931,15 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r           = tensors[0];
-        const at::Tensor& grad_output = tensors[1];
-        const at::Tensor& self        = tensors[2];
-        const at::Tensor& indices     = tensors[3];
+        xsigma::Tensor&       r           = tensors[0];
+        const xsigma::Tensor& grad_output = tensors[1];
+        const xsigma::Tensor& self        = tensors[2];
+        const xsigma::Tensor& indices     = tensors[3];
         try
         {
-            at::adaptive_max_pool2d_backward_out(r, grad_output, self, indices);
+            xsigma::adaptive_max_pool2d_backward_out(r, grad_output, self, indices);
         }
         catch (...)
         {
@@ -2955,15 +2955,15 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r           = tensors[0];
-        const at::Tensor& grad_output = tensors[1];
-        const at::Tensor& self        = tensors[2];
-        const at::Tensor& indices     = tensors[3];
+        xsigma::Tensor&       r           = tensors[0];
+        const xsigma::Tensor& grad_output = tensors[1];
+        const xsigma::Tensor& self        = tensors[2];
+        const xsigma::Tensor& indices     = tensors[3];
         try
         {
-            at::adaptive_max_pool3d_backward_out(r, grad_output, self, indices);
+            xsigma::adaptive_max_pool3d_backward_out(r, grad_output, self, indices);
         }
         catch (...)
         {
@@ -2979,14 +2979,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r           = tensors[0];
-        const at::Tensor& grad_output = tensors[1];
-        const at::Tensor& output      = tensors[2];
+        xsigma::Tensor&       r           = tensors[0];
+        const xsigma::Tensor& grad_output = tensors[1];
+        const xsigma::Tensor& output      = tensors[2];
         try
         {
-            at::sigmoid_backward_out(r, grad_output, output);
+            xsigma::sigmoid_backward_out(r, grad_output, output);
         }
         catch (...)
         {
@@ -3002,14 +3002,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r           = tensors[0];
-        const at::Tensor& grad_output = tensors[1];
-        const at::Tensor& output      = tensors[2];
+        xsigma::Tensor&       r           = tensors[0];
+        const xsigma::Tensor& grad_output = tensors[1];
+        const xsigma::Tensor& output      = tensors[2];
         try
         {
-            at::tanh_backward_out(r, grad_output, output);
+            xsigma::tanh_backward_out(r, grad_output, output);
         }
         catch (...)
         {
@@ -3025,13 +3025,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::isposinf_out(r, self);
+            xsigma::isposinf_out(r, self);
         }
         catch (...)
         {
@@ -3047,13 +3047,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::isneginf_out(r, self);
+            xsigma::isneginf_out(r, self);
         }
         catch (...)
         {
@@ -3069,13 +3069,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::special_entr_out(r, self);
+            xsigma::special_entr_out(r, self);
         }
         catch (...)
         {
@@ -3091,13 +3091,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::special_expm1_out(r, self);
+            xsigma::special_expm1_out(r, self);
         }
         catch (...)
         {
@@ -3113,13 +3113,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::special_exp2_out(r, self);
+            xsigma::special_exp2_out(r, self);
         }
         catch (...)
         {
@@ -3135,13 +3135,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::special_gammaln_out(r, self);
+            xsigma::special_gammaln_out(r, self);
         }
         catch (...)
         {
@@ -3157,13 +3157,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::special_erf_out(r, self);
+            xsigma::special_erf_out(r, self);
         }
         catch (...)
         {
@@ -3179,13 +3179,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::special_erfc_out(r, self);
+            xsigma::special_erfc_out(r, self);
         }
         catch (...)
         {
@@ -3201,13 +3201,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::special_erfinv_out(r, self);
+            xsigma::special_erfinv_out(r, self);
         }
         catch (...)
         {
@@ -3223,14 +3223,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::special_xlog1py_out(r, self, other);
+            xsigma::special_xlog1py_out(r, self, other);
         }
         catch (...)
         {
@@ -3246,13 +3246,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::special_i0e_out(r, self);
+            xsigma::special_i0e_out(r, self);
         }
         catch (...)
         {
@@ -3268,13 +3268,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::special_expit_out(r, self);
+            xsigma::special_expit_out(r, self);
         }
         catch (...)
         {
@@ -3290,13 +3290,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::linalg_cholesky_out(r, self);
+            xsigma::linalg_cholesky_out(r, self);
         }
         catch (...)
         {
@@ -3312,13 +3312,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::linalg_det_out(r, self);
+            xsigma::linalg_det_out(r, self);
         }
         catch (...)
         {
@@ -3334,13 +3334,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::linalg_eigvals_out(r, self);
+            xsigma::linalg_eigvals_out(r, self);
         }
         catch (...)
         {
@@ -3356,14 +3356,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& input = tensors[1];
-        const at::Tensor& tau   = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& input = tensors[1];
+        const xsigma::Tensor& tau   = tensors[2];
         try
         {
-            at::linalg_householder_product_out(r, input, tau);
+            xsigma::linalg_householder_product_out(r, input, tau);
         }
         catch (...)
         {
@@ -3379,13 +3379,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
         try
         {
-            at::linalg_inv_out(r, self);
+            xsigma::linalg_inv_out(r, self);
         }
         catch (...)
         {
@@ -3401,14 +3401,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& self  = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& self  = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::inner_out(r, self, other);
+            xsigma::inner_out(r, self, other);
         }
         catch (...)
         {
@@ -3424,14 +3424,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
-        const at::Tensor& vec2 = tensors[2];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
+        const xsigma::Tensor& vec2 = tensors[2];
         try
         {
-            at::outer_out(r, self, vec2);
+            xsigma::outer_out(r, self, vec2);
         }
         catch (...)
         {
@@ -3447,14 +3447,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r    = tensors[0];
-        const at::Tensor& self = tensors[1];
-        const at::Tensor& vec2 = tensors[2];
+        xsigma::Tensor&       r    = tensors[0];
+        const xsigma::Tensor& self = tensors[1];
+        const xsigma::Tensor& vec2 = tensors[2];
         try
         {
-            at::ger_out(r, self, vec2);
+            xsigma::ger_out(r, self, vec2);
         }
         catch (...)
         {
@@ -3470,13 +3470,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& input = tensors[1];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& input = tensors[1];
         try
         {
-            at::linalg_svdvals_out(r, input);
+            xsigma::linalg_svdvals_out(r, input);
         }
         catch (...)
         {
@@ -3492,14 +3492,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        std::vector<at::Tensor> tensors =
+        std::vector<xsigma::Tensor> tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        const at::Tensor& input = tensors[1];
-        const at::Tensor& other = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        const xsigma::Tensor& input = tensors[1];
+        const xsigma::Tensor& other = tensors[2];
         try
         {
-            at::linalg_solve_out(r, input, other, true);
+            xsigma::linalg_solve_out(r, input, other, true);
         }
         catch (...)
         {
@@ -3713,7 +3713,7 @@ extern "C"
         "nnc_aten_linalg_solve", nnc_aten_linalg_solve);
 #endif
 
-#ifdef C10_MOBILE
+#ifdef XSIGMA_MOBILE
 }  // extern "C"
 #endif
 

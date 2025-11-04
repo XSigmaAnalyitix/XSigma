@@ -11,64 +11,65 @@
 #include <ATen/native/quantized/cpu/conv_serialization.h>
 #include <ATen/native/xnnpack/OpContext.h>
 #include <ATen/quantized/QTensorImpl.h>
-#include <c10/core/TensorImpl.h>
-#include <c10/core/TensorOptions.h>
-#include <c10/util/ArrayRef.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/serialization/import_source.h>
 #include <torch/csrc/jit/serialization/pickle.h>
 #include <torch/csrc/jit/tensorexpr/exceptions.h>
 #include <torch/csrc/jit/tensorexpr/external_functions.h>
 #include <torch/csrc/jit/tensorexpr/external_functions_registry.h>
+#include <xsigma/core/TensorImpl.h>
+#include <xsigma/core/TensorOptions.h>
+#include <xsigma/util/ArrayRef.h>
+#include <xsigma/util/irange.h>
 
 #include <utility>
 
 namespace torch::jit::tensorexpr
 {
 
-static c10::MemoryFormat deduce_memory_format(c10::IntArrayRef strides, c10::IntArrayRef dims)
+static xsigma::MemoryFormat deduce_memory_format(
+    xsigma::IntArrayRef strides, xsigma::IntArrayRef dims)
 {
     if (strides.size() == 4 && strides[3] == dims[1] && strides[1] == 1l)
     {
-        return c10::MemoryFormat::ChannelsLast;
+        return xsigma::MemoryFormat::ChannelsLast;
     }
-    return c10::MemoryFormat::Contiguous;
+    return xsigma::MemoryFormat::Contiguous;
 }
 
-static c10::MemoryFormat deduce_memory_format(
+static xsigma::MemoryFormat deduce_memory_format(
     const std::vector<int64_t>& strides, const std::vector<int64_t>& dims)
 {
-    return deduce_memory_format(c10::IntArrayRef(strides), c10::IntArrayRef(dims));
+    return deduce_memory_format(xsigma::IntArrayRef(strides), xsigma::IntArrayRef(dims));
 }
 
-static at::Tensor from_blob_quantized(
-    void*           data,
-    at::IntArrayRef sizes,
-    at::IntArrayRef strides,
-    double          qscale,
-    int64_t         qzero,
-    at::ScalarType  dtype)
+static xsigma::Tensor from_blob_quantized(
+    void*               data,
+    xsigma::IntArrayRef sizes,
+    xsigma::IntArrayRef strides,
+    double              qscale,
+    int64_t             qzero,
+    xsigma::ScalarType  dtype)
 {
     auto memory_format = deduce_memory_format(strides, sizes);
-    auto qx            = at::_empty_affine_quantized(
-        sizes, dtype, c10::kStrided, at::kCPU, false, qscale, qzero, memory_format);
-    auto        qtensor_impl = static_cast<at::QTensorImpl*>(qx.unsafeGetTensorImpl());
-    auto        typeMeta     = c10::scalarTypeToTypeMeta(dtype);
+    auto qx            = xsigma::_empty_affine_quantized(
+        sizes, dtype, xsigma::kStrided, xsigma::kCPU, false, qscale, qzero, memory_format);
+    auto        qtensor_impl = static_cast<xsigma::QTensorImpl*>(qx.unsafeGetTensorImpl());
+    auto        typeMeta     = xsigma::scalarTypeToTypeMeta(dtype);
     std::size_t size         = 1;
     for (std::int64_t s : sizes)
     {
         size *= static_cast<std::size_t>(s);
     }
     qtensor_impl->ShareExternalPointer(
-        c10::InefficientStdFunctionContext::makeDataPtr(
-            data, [](void*) {}, at::kCPU),
+        xsigma::InefficientStdFunctionContext::makeDataPtr(
+            data, [](void*) {}, xsigma::kCPU),
         typeMeta,
         size * typeMeta.itemsize());
     qtensor_impl->set_sizes_and_strides(sizes, strides);
     return qx;
 }
 
-std::vector<at::Tensor> constructTensors(
+std::vector<xsigma::Tensor> constructTensors(
     int64_t                                               bufs_num,
     void**                                                buf_data,
     int64_t*                                              buf_ranks,
@@ -80,37 +81,37 @@ std::vector<at::Tensor> constructTensors(
     std::vector<void*>                buf_data_vec;
     std::vector<std::vector<int64_t>> buf_dims_vec;
     std::vector<std::vector<int64_t>> buf_strides_vec;
-    std::vector<c10::ScalarType>      buf_dtypes_vec;
+    std::vector<xsigma::ScalarType>   buf_dtypes_vec;
     int64_t                           buf_dims_idx    = 0;
     int64_t                           buf_strides_idx = 0;
-    for (const auto i : c10::irange(bufs_num))
+    for (const auto i : xsigma::irange(bufs_num))
     {
         buf_data_vec.push_back(buf_data[i]);
         buf_dims_vec.emplace_back();
         buf_strides_vec.emplace_back();
-        for (const auto dim : c10::irange(buf_ranks[i]))
+        for (const auto dim : xsigma::irange(buf_ranks[i]))
         {
             (void)dim;
             buf_dims_vec[i].push_back(buf_dims[buf_dims_idx++]);
             buf_strides_vec[i].push_back(buf_strides[buf_strides_idx++]);
         }
-        buf_dtypes_vec.push_back(static_cast<c10::ScalarType>(buf_dtypes[i]));
+        buf_dtypes_vec.push_back(static_cast<xsigma::ScalarType>(buf_dtypes[i]));
     }
 
-    std::vector<at::Tensor> tensors;
+    std::vector<xsigma::Tensor> tensors;
     if (!qdataArg.has_value())
     {
-        for (const auto i : c10::irange(buf_data_vec.size()))
+        for (const auto i : xsigma::irange(buf_data_vec.size()))
         {
             auto options =
-                at::TensorOptions()
+                xsigma::TensorOptions()
                     .dtype(buf_dtypes_vec[i])
-                    .layout(at::kStrided)
-                    .device(at::kCPU)  // TODO: support GPUs too
+                    .layout(xsigma::kStrided)
+                    .device(xsigma::kCPU)  // TODO: support GPUs too
                     .memory_format(deduce_memory_format(buf_strides_vec[i], buf_dims_vec[i]))
                     .requires_grad(false);
             auto tensor =
-                at::from_blob(buf_data_vec[i], buf_dims_vec[i], buf_strides_vec[i], options);
+                xsigma::from_blob(buf_data_vec[i], buf_dims_vec[i], buf_strides_vec[i], options);
             tensors.emplace_back(std::move(tensor));
         }
     }
@@ -122,13 +123,13 @@ std::vector<at::Tensor> constructTensors(
         {
             qdata[qd.first] = qd.second;
         }
-        for (const auto i : c10::irange(buf_data_vec.size()))
+        for (const auto i : xsigma::irange(buf_data_vec.size()))
         {
             auto options =
-                at::TensorOptions()
+                xsigma::TensorOptions()
                     .dtype(buf_dtypes_vec[i])
-                    .layout(at::kStrided)
-                    .device(at::kCPU)  // TODO: support GPUs too
+                    .layout(xsigma::kStrided)
+                    .device(xsigma::kCPU)  // TODO: support GPUs too
                     .memory_format(deduce_memory_format(buf_strides_vec[i], buf_dims_vec[i]))
                     .requires_grad(false);
             if (auto qd = qdata[i])
@@ -145,8 +146,8 @@ std::vector<at::Tensor> constructTensors(
             }
             else
             {
-                auto tensor =
-                    at::from_blob(buf_data_vec[i], buf_dims_vec[i], buf_strides_vec[i], options);
+                auto tensor = xsigma::from_blob(
+                    buf_data_vec[i], buf_dims_vec[i], buf_strides_vec[i], options);
                 tensors.emplace_back(std::move(tensor));
             }
         }
@@ -154,7 +155,7 @@ std::vector<at::Tensor> constructTensors(
     return tensors;
 }
 
-static std::vector<at::Tensor> constructTensors(
+static std::vector<xsigma::Tensor> constructTensors(
     int64_t                                bufs_num,
     void**                                 buf_data,
     int64_t*                               buf_ranks,
@@ -167,7 +168,7 @@ static std::vector<at::Tensor> constructTensors(
     return constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes, opt);
 }
 
-std::vector<at::Tensor> constructTensors2(
+std::vector<xsigma::Tensor> constructTensors2(
     int64_t                                               bufs_in_num,
     void**                                                buf_data,
     int64_t*                                              buf_ranks,
@@ -180,43 +181,43 @@ std::vector<at::Tensor> constructTensors2(
     std::vector<void*>                buf_data_vec;
     std::vector<std::vector<int64_t>> buf_dims_vec;
     std::vector<std::vector<int64_t>> buf_strides_vec;
-    std::vector<c10::ScalarType>      buf_dtypes_vec;
+    std::vector<xsigma::ScalarType>   buf_dtypes_vec;
     int64_t                           buf_dims_idx    = 0;
     int64_t                           buf_strides_idx = 0;
-    for (const auto i : c10::irange(bufs_in_num))
+    for (const auto i : xsigma::irange(bufs_in_num))
     {
         buf_data_vec.push_back(buf_data[bufs_out_num + i]);
         buf_dims_vec.emplace_back();
         buf_strides_vec.emplace_back();
-        for (const auto dim : c10::irange(buf_ranks[i]))
+        for (const auto dim : xsigma::irange(buf_ranks[i]))
         {
             (void)dim;
             buf_dims_vec[i].push_back(buf_dims[buf_dims_idx++]);
             buf_strides_vec[i].push_back(buf_strides[buf_strides_idx++]);
         }
-        buf_dtypes_vec.push_back(static_cast<c10::ScalarType>(buf_dtypes[i]));
+        buf_dtypes_vec.push_back(static_cast<xsigma::ScalarType>(buf_dtypes[i]));
     }
 
-    std::vector<at::Tensor> tensors;
-    at::Tensor              und;
-    for (const auto i : c10::irange(bufs_out_num))
+    std::vector<xsigma::Tensor> tensors;
+    xsigma::Tensor              und;
+    for (const auto i : xsigma::irange(bufs_out_num))
     {
         (void)i;
         tensors.emplace_back(und);
     }
     if (!qdataArg.has_value())
     {
-        for (const auto i : c10::irange(buf_data_vec.size()))
+        for (const auto i : xsigma::irange(buf_data_vec.size()))
         {
             auto options =
-                at::TensorOptions()
+                xsigma::TensorOptions()
                     .dtype(buf_dtypes_vec[i])
-                    .layout(at::kStrided)
-                    .device(at::kCPU)  // TODO: support GPUs too
+                    .layout(xsigma::kStrided)
+                    .device(xsigma::kCPU)  // TODO: support GPUs too
                     .memory_format(deduce_memory_format(buf_strides_vec[i], buf_dims_vec[i]))
                     .requires_grad(false);
             auto tensor =
-                at::from_blob(buf_data_vec[i], buf_dims_vec[i], buf_strides_vec[i], options);
+                xsigma::from_blob(buf_data_vec[i], buf_dims_vec[i], buf_strides_vec[i], options);
             tensors.emplace_back(std::move(tensor));
         }
     }
@@ -228,13 +229,13 @@ std::vector<at::Tensor> constructTensors2(
         {
             qdata[qd.first - bufs_out_num] = qd.second;
         }
-        for (const auto i : c10::irange(buf_data_vec.size()))
+        for (const auto i : xsigma::irange(buf_data_vec.size()))
         {
             auto options =
-                at::TensorOptions()
+                xsigma::TensorOptions()
                     .dtype(buf_dtypes_vec[i])
-                    .layout(at::kStrided)
-                    .device(at::kCPU)  // TODO: support GPUs too
+                    .layout(xsigma::kStrided)
+                    .device(xsigma::kCPU)  // TODO: support GPUs too
                     .memory_format(deduce_memory_format(buf_strides_vec[i], buf_dims_vec[i]))
                     .requires_grad(false);
             if (auto qd = qdata[i])
@@ -251,8 +252,8 @@ std::vector<at::Tensor> constructTensors2(
             }
             else
             {
-                auto tensor =
-                    at::from_blob(buf_data_vec[i], buf_dims_vec[i], buf_strides_vec[i], options);
+                auto tensor = xsigma::from_blob(
+                    buf_data_vec[i], buf_dims_vec[i], buf_strides_vec[i], options);
                 tensors.emplace_back(std::move(tensor));
             }
         }
@@ -260,7 +261,7 @@ std::vector<at::Tensor> constructTensors2(
     return tensors;
 }
 
-static std::vector<at::Tensor> constructTensors2(
+static std::vector<xsigma::Tensor> constructTensors2(
     int64_t                                bufs_in_num,
     void**                                 buf_data,
     int64_t*                               buf_ranks,
@@ -276,53 +277,54 @@ static std::vector<at::Tensor> constructTensors2(
 }
 
 #ifndef _WIN32
-static at::Tensor quantized_add(
-    const at::Tensor& x1, const at::Tensor& x2, double scale, int64_t zero)
+static xsigma::Tensor quantized_add(
+    const xsigma::Tensor& x1, const xsigma::Tensor& x2, double scale, int64_t zero)
 {
-    const auto qadd_op = c10::Dispatcher::singleton()
-                             .findSchemaOrThrow("quantized::add", "")
-                             .typed<at::Tensor(at::Tensor, at::Tensor, double, int64_t)>();
+    const auto qadd_op =
+        xsigma::Dispatcher::singleton()
+            .findSchemaOrThrow("quantized::add", "")
+            .typed<xsigma::Tensor(xsigma::Tensor, xsigma::Tensor, double, int64_t)>();
     return qadd_op.call(x1, x2, scale, zero);
 }
 
-static at::Tensor quantized_mul(
-    const at::Tensor& x1, const at::Tensor& x2, double scale, int64_t zero)
+static xsigma::Tensor quantized_mul(
+    const xsigma::Tensor& x1, const xsigma::Tensor& x2, double scale, int64_t zero)
 {
-    const auto op = c10::Dispatcher::singleton()
+    const auto op = xsigma::Dispatcher::singleton()
                         .findSchemaOrThrow("quantized::mul", "")
-                        .typed<at::Tensor(at::Tensor, at::Tensor, double, int64_t)>();
+                        .typed<xsigma::Tensor(xsigma::Tensor, xsigma::Tensor, double, int64_t)>();
     return op.call(x1, x2, scale, zero);
 }
 
-static at::Tensor quantized_mul_scalar(const at::Tensor& x, double scalar)
+static xsigma::Tensor quantized_mul_scalar(const xsigma::Tensor& x, double scalar)
 {
-    const auto op = c10::Dispatcher::singleton()
+    const auto op = xsigma::Dispatcher::singleton()
                         .findSchemaOrThrow("quantized::mul", "Scalar")
-                        .typed<at::Tensor(at::Tensor, c10::Scalar const&)>();
-    auto s = c10::Scalar(scalar);
+                        .typed<xsigma::Tensor(xsigma::Tensor, xsigma::Scalar const&)>();
+    auto s = xsigma::Scalar(scalar);
     return op.call(x, s);
 }
 
-static at::Tensor quantized_cat(
-    const c10::List<at::Tensor>& qxs,
-    int64_t                      dim,
-    std::optional<double>        scale,
-    std::optional<int64_t>       zero)
+static xsigma::Tensor quantized_cat(
+    const xsigma::List<xsigma::Tensor>& qxs,
+    int64_t                             dim,
+    std::optional<double>               scale,
+    std::optional<int64_t>              zero)
 {
-    const auto op = c10::Dispatcher::singleton()
+    const auto op = xsigma::Dispatcher::singleton()
                         .findSchemaOrThrow("quantized::cat", "")
-                        .typed<at::Tensor(
-                            c10::List<at::Tensor> const&,
+                        .typed<xsigma::Tensor(
+                            xsigma::List<xsigma::Tensor> const&,
                             int64_t,
                             std::optional<double>,
                             std::optional<int64_t>)>();
     return op.redispatch(
-        c10::DispatchKeySet({c10::DispatchKey::QuantizedCPU}), qxs, dim, scale, zero);
+        xsigma::DispatchKeySet({xsigma::DispatchKey::QuantizedCPU}), qxs, dim, scale, zero);
 }
 
 #endif  // _WIN32
 
-#ifdef C10_MOBILE
+#ifdef XSIGMA_MOBILE
 extern "C"
 {
 #endif
@@ -340,15 +342,15 @@ extern "C"
         auto tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
 
-        at::Tensor&       r = tensors[0];
-        const at::Tensor& x = tensors[1];
-        const at::Tensor& w = tensors[2];
+        xsigma::Tensor&       r = tensors[0];
+        const xsigma::Tensor& x = tensors[1];
+        const xsigma::Tensor& w = tensors[2];
         if (args_num > 0)
         {
             // Check that if the extra arguments are provided, then the bias tensor is
             // also present
             TORCH_INTERNAL_ASSERT(args_num == 7 && bufs_num == 4);
-            const at::Tensor& b = tensors[3];
+            const xsigma::Tensor& b = tensors[3];
 
             int64_t strideH   = extra_args[0];
             int64_t strideW   = extra_args[1];
@@ -360,7 +362,7 @@ extern "C"
 
             try
             {
-                r = at::conv2d(
+                r = xsigma::conv2d(
                     x,
                     w,
                     b,
@@ -377,7 +379,7 @@ extern "C"
         {
             try
             {
-                r = at::conv2d(x, w);
+                r = xsigma::conv2d(x, w);
             }
             catch (...)
             {
@@ -398,10 +400,10 @@ extern "C"
         int64_t /*unused*/,
         int64_t* extra_args)
     {
-        const double          x_qscale = ((double*)extra_args)[0];
-        const int64_t         x_qzero  = extra_args[1];
-        const c10::ScalarType x_qdtype = static_cast<c10::ScalarType>(extra_args[2]);
-        auto                  tensors  = constructTensors(
+        const double             x_qscale = ((double*)extra_args)[0];
+        const int64_t            x_qzero  = extra_args[1];
+        const xsigma::ScalarType x_qdtype = static_cast<xsigma::ScalarType>(extra_args[2]);
+        auto                     tensors  = constructTensors(
             bufs_num,
             buf_data,
             buf_ranks,
@@ -428,11 +430,11 @@ extern "C"
         int64_t /*unused*/,
         int64_t* extra_args)
     {
-        const size_t          bufs_out_num = 1u;
-        const double          x_qscale     = ((double*)extra_args)[0];
-        const int64_t         x_qzero      = extra_args[1];
-        const c10::ScalarType x_qdtype     = static_cast<c10::ScalarType>(extra_args[2]);
-        auto                  tensors      = constructTensors2(
+        const size_t             bufs_out_num = 1u;
+        const double             x_qscale     = ((double*)extra_args)[0];
+        const int64_t            x_qzero      = extra_args[1];
+        const xsigma::ScalarType x_qdtype     = static_cast<xsigma::ScalarType>(extra_args[2]);
+        auto                     tensors      = constructTensors2(
             bufs_in_num,
             buf_data,
             buf_ranks,
@@ -448,7 +450,7 @@ extern "C"
         auto          r                = convPackedParams->apply(qx, out_qscale, out_qzero);
         r                              = r.squeeze_(quant_utils::kConv1dSqueezeDim + 2);
         buf_data[0]                    = r.data_ptr();
-        c10::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
+        xsigma::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
         buf_data[bufs_in_num + bufs_out_num] = r.getIntrusivePtr().get();
     }
 
@@ -462,10 +464,10 @@ extern "C"
         int64_t /*unused*/,
         int64_t* extra_args)
     {
-        const double          x_qscale = ((double*)extra_args)[0];
-        const int64_t         x_qzero  = extra_args[1];
-        const c10::ScalarType x_qdtype = static_cast<c10::ScalarType>(extra_args[2]);
-        auto                  tensors  = constructTensors(
+        const double             x_qscale = ((double*)extra_args)[0];
+        const int64_t            x_qzero  = extra_args[1];
+        const xsigma::ScalarType x_qdtype = static_cast<xsigma::ScalarType>(extra_args[2]);
+        auto                     tensors  = constructTensors(
             bufs_num,
             buf_data,
             buf_ranks,
@@ -490,11 +492,11 @@ extern "C"
         int64_t /*unused*/,
         int64_t* extra_args)
     {
-        const size_t          bufs_out_num = 1u;
-        const double          x_qscale     = ((double*)extra_args)[0];
-        const int64_t         x_qzero      = extra_args[1];
-        const c10::ScalarType x_qdtype     = static_cast<c10::ScalarType>(extra_args[2]);
-        auto                  tensors      = constructTensors2(
+        const size_t             bufs_out_num = 1u;
+        const double             x_qscale     = ((double*)extra_args)[0];
+        const int64_t            x_qzero      = extra_args[1];
+        const xsigma::ScalarType x_qdtype     = static_cast<xsigma::ScalarType>(extra_args[2]);
+        auto                     tensors      = constructTensors2(
             bufs_in_num,
             buf_data,
             buf_ranks,
@@ -508,7 +510,7 @@ extern "C"
         const int64_t out_qzero        = extra_args[4];
         auto          r                = convPackedParams->apply(tensors[1], out_qscale, out_qzero);
         buf_data[0]                    = r.data_ptr();
-        c10::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
+        xsigma::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
         buf_data[bufs_in_num + bufs_out_num] = r.getIntrusivePtr().get();
     }
 
@@ -522,10 +524,10 @@ extern "C"
         int64_t /*unused*/,
         int64_t* extra_args)
     {
-        const double          x_qscale = ((double*)extra_args)[0];
-        const int64_t         x_qzero  = extra_args[1];
-        const c10::ScalarType x_qdtype = static_cast<c10::ScalarType>(extra_args[2]);
-        auto                  tensors  = constructTensors(
+        const double             x_qscale = ((double*)extra_args)[0];
+        const int64_t            x_qzero  = extra_args[1];
+        const xsigma::ScalarType x_qdtype = static_cast<xsigma::ScalarType>(extra_args[2]);
+        auto                     tensors  = constructTensors(
             bufs_num,
             buf_data,
             buf_ranks,
@@ -550,11 +552,11 @@ extern "C"
         int64_t /*unused*/,
         int64_t* extra_args)
     {
-        const size_t          bufs_out_num = 1u;
-        const double          x_qscale     = ((double*)extra_args)[0];
-        const int64_t         x_qzero      = extra_args[1];
-        const c10::ScalarType x_qdtype     = static_cast<c10::ScalarType>(extra_args[2]);
-        auto                  tensors      = constructTensors2(
+        const size_t             bufs_out_num = 1u;
+        const double             x_qscale     = ((double*)extra_args)[0];
+        const int64_t            x_qzero      = extra_args[1];
+        const xsigma::ScalarType x_qdtype     = static_cast<xsigma::ScalarType>(extra_args[2]);
+        auto                     tensors      = constructTensors2(
             bufs_in_num,
             buf_data,
             buf_ranks,
@@ -568,7 +570,7 @@ extern "C"
         const int64_t out_qzero        = extra_args[4];
         auto          r = convPackedParams->apply_relu(tensors[1], out_qscale, out_qzero);
         buf_data[0]     = r.data_ptr();
-        c10::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
+        xsigma::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
         buf_data[bufs_in_num + bufs_out_num] = r.getIntrusivePtr().get();
     }
 
@@ -582,10 +584,10 @@ extern "C"
         int64_t /*unused*/,
         int64_t* extra_args)
     {
-        const double          x_qscale = ((double*)extra_args)[0];
-        const int64_t         x_qzero  = extra_args[1];
-        const c10::ScalarType x_qdtype = static_cast<c10::ScalarType>(extra_args[2]);
-        auto                  tensors  = constructTensors(
+        const double             x_qscale = ((double*)extra_args)[0];
+        const int64_t            x_qzero  = extra_args[1];
+        const xsigma::ScalarType x_qdtype = static_cast<xsigma::ScalarType>(extra_args[2]);
+        auto                     tensors  = constructTensors(
             bufs_num,
             buf_data,
             buf_ranks,
@@ -610,11 +612,11 @@ extern "C"
         int64_t /*unused*/,
         int64_t* extra_args)
     {
-        const size_t          bufs_out_num = 1u;
-        const double          x_qscale     = ((double*)extra_args)[0];
-        const int64_t         x_qzero      = extra_args[1];
-        const c10::ScalarType x_qdtype     = static_cast<c10::ScalarType>(extra_args[2]);
-        auto                  tensors      = constructTensors2(
+        const size_t             bufs_out_num = 1u;
+        const double             x_qscale     = ((double*)extra_args)[0];
+        const int64_t            x_qzero      = extra_args[1];
+        const xsigma::ScalarType x_qdtype     = static_cast<xsigma::ScalarType>(extra_args[2]);
+        auto                     tensors      = constructTensors2(
             bufs_in_num,
             buf_data,
             buf_ranks,
@@ -628,7 +630,7 @@ extern "C"
         const int64_t out_qzero          = extra_args[4];
         auto          r = linearPackedParams->apply(tensors[1], out_qscale, out_qzero);
         buf_data[0]     = r.data_ptr();
-        c10::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
+        xsigma::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
         buf_data[bufs_in_num + bufs_out_num] = r.getIntrusivePtr().get();
     }
 
@@ -642,10 +644,10 @@ extern "C"
         int64_t /*unused*/,
         int64_t* extra_args)
     {
-        const double          x_qscale = ((double*)extra_args)[0];
-        const int64_t         x_qzero  = extra_args[1];
-        const c10::ScalarType x_qdtype = static_cast<c10::ScalarType>(extra_args[2]);
-        auto                  tensors  = constructTensors(
+        const double             x_qscale = ((double*)extra_args)[0];
+        const int64_t            x_qzero  = extra_args[1];
+        const xsigma::ScalarType x_qdtype = static_cast<xsigma::ScalarType>(extra_args[2]);
+        auto                     tensors  = constructTensors(
             bufs_num,
             buf_data,
             buf_ranks,
@@ -673,13 +675,13 @@ extern "C"
     {
         // TORCH_INTERNAL_ASSERT(tensors.size() == 3);
 
-        const double          a_qscale = ((double*)extra_args)[0];
-        const int64_t         a_qzero  = extra_args[1];
-        const c10::ScalarType a_qdtype = static_cast<c10::ScalarType>(extra_args[2]);
-        const double          b_qscale = ((double*)extra_args)[3];
-        const int64_t         b_qzero  = extra_args[4];
-        const c10::ScalarType b_qdtype = static_cast<c10::ScalarType>(extra_args[5]);
-        auto                  tensors  = constructTensors(
+        const double             a_qscale = ((double*)extra_args)[0];
+        const int64_t            a_qzero  = extra_args[1];
+        const xsigma::ScalarType a_qdtype = static_cast<xsigma::ScalarType>(extra_args[2]);
+        const double             b_qscale = ((double*)extra_args)[3];
+        const int64_t            b_qzero  = extra_args[4];
+        const xsigma::ScalarType b_qdtype = static_cast<xsigma::ScalarType>(extra_args[5]);
+        auto                     tensors  = constructTensors(
             bufs_num,
             buf_data,
             buf_ranks,
@@ -687,7 +689,7 @@ extern "C"
             buf_strides,
             buf_dtypes,
             {{1u, {a_qscale, a_qzero, toQIntType(a_qdtype)}},
-                               {2u, {b_qscale, b_qzero, toQIntType(b_qdtype)}}});
+                                  {2u, {b_qscale, b_qzero, toQIntType(b_qdtype)}}});
 
         const double  out_qscale = ((double*)extra_args)[6];
         const int64_t out_qzero  = extra_args[7];
@@ -705,13 +707,13 @@ extern "C"
         int64_t /*unused*/,
         int64_t* extra_args)
     {
-        const double          a_qscale = ((double*)extra_args)[0];
-        const int64_t         a_qzero  = extra_args[1];
-        const c10::ScalarType a_qdtype = static_cast<c10::ScalarType>(extra_args[2]);
-        const double          b_qscale = ((double*)extra_args)[3];
-        const int64_t         b_qzero  = extra_args[4];
-        const c10::ScalarType b_qdtype = static_cast<c10::ScalarType>(extra_args[5]);
-        auto                  tensors  = constructTensors(
+        const double             a_qscale = ((double*)extra_args)[0];
+        const int64_t            a_qzero  = extra_args[1];
+        const xsigma::ScalarType a_qdtype = static_cast<xsigma::ScalarType>(extra_args[2]);
+        const double             b_qscale = ((double*)extra_args)[3];
+        const int64_t            b_qzero  = extra_args[4];
+        const xsigma::ScalarType b_qdtype = static_cast<xsigma::ScalarType>(extra_args[5]);
+        auto                     tensors  = constructTensors(
             bufs_num,
             buf_data,
             buf_ranks,
@@ -719,7 +721,7 @@ extern "C"
             buf_strides,
             buf_dtypes,
             {{1u, {a_qscale, a_qzero, toQIntType(a_qdtype)}},
-                               {2u, {b_qscale, b_qzero, toQIntType(b_qdtype)}}});
+                                  {2u, {b_qscale, b_qzero, toQIntType(b_qdtype)}}});
         const double  out_qscale = ((double*)extra_args)[6];
         const int64_t out_qzero  = extra_args[7];
         auto          r          = quantized_mul(tensors[1], tensors[2], out_qscale, out_qzero);
@@ -736,14 +738,14 @@ extern "C"
         int64_t /*unused*/,
         int64_t* extra_args)
     {
-        const size_t          bufs_out_num = 1u;
-        const double          a_qscale     = ((double*)extra_args)[0];
-        const int64_t         a_qzero      = extra_args[1];
-        const c10::ScalarType a_qdtype     = static_cast<c10::ScalarType>(extra_args[2]);
-        const double          b_qscale     = ((double*)extra_args)[3];
-        const int64_t         b_qzero      = extra_args[4];
-        const c10::ScalarType b_qdtype     = static_cast<c10::ScalarType>(extra_args[5]);
-        auto                  tensors      = constructTensors2(
+        const size_t             bufs_out_num = 1u;
+        const double             a_qscale     = ((double*)extra_args)[0];
+        const int64_t            a_qzero      = extra_args[1];
+        const xsigma::ScalarType a_qdtype     = static_cast<xsigma::ScalarType>(extra_args[2]);
+        const double             b_qscale     = ((double*)extra_args)[3];
+        const int64_t            b_qzero      = extra_args[4];
+        const xsigma::ScalarType b_qdtype     = static_cast<xsigma::ScalarType>(extra_args[5]);
+        auto                     tensors      = constructTensors2(
             bufs_in_num,
             buf_data,
             buf_ranks,
@@ -751,13 +753,13 @@ extern "C"
             buf_strides,
             buf_dtypes,
             {{1u, {a_qscale, a_qzero, toQIntType(a_qdtype)}},
-                                   {2u, {b_qscale, b_qzero, toQIntType(b_qdtype)}}},
+                                      {2u, {b_qscale, b_qzero, toQIntType(b_qdtype)}}},
             1u);
         const double  out_qscale = ((double*)extra_args)[6];
         const int64_t out_qzero  = extra_args[7];
         auto          r          = quantized_mul(tensors[1], tensors[2], out_qscale, out_qzero);
         buf_data[0]              = r.data_ptr();
-        c10::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
+        xsigma::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
         buf_data[bufs_in_num + bufs_out_num] = r.getIntrusivePtr().get();
     }
 
@@ -771,10 +773,10 @@ extern "C"
         int64_t /*unused*/,
         int64_t* extra_args)
     {
-        const double          x_qscale = ((double*)extra_args)[0];
-        const int64_t         x_qzero  = extra_args[1];
-        const c10::ScalarType x_qdtype = static_cast<c10::ScalarType>(extra_args[2]);
-        auto                  tensors  = constructTensors(
+        const double             x_qscale = ((double*)extra_args)[0];
+        const int64_t            x_qzero  = extra_args[1];
+        const xsigma::ScalarType x_qdtype = static_cast<xsigma::ScalarType>(extra_args[2]);
+        auto                     tensors  = constructTensors(
             bufs_num,
             buf_data,
             buf_ranks,
@@ -797,11 +799,11 @@ extern "C"
         int64_t /*unused*/,
         int64_t* extra_args)
     {
-        const size_t          bufs_out_num = 1u;
-        const double          x_qscale     = ((double*)extra_args)[0];
-        const int64_t         x_qzero      = extra_args[1];
-        const c10::ScalarType x_qdtype     = static_cast<c10::ScalarType>(extra_args[2]);
-        auto                  tensors      = constructTensors2(
+        const size_t             bufs_out_num = 1u;
+        const double             x_qscale     = ((double*)extra_args)[0];
+        const int64_t            x_qzero      = extra_args[1];
+        const xsigma::ScalarType x_qdtype     = static_cast<xsigma::ScalarType>(extra_args[2]);
+        auto                     tensors      = constructTensors2(
             bufs_in_num,
             buf_data,
             buf_ranks,
@@ -813,7 +815,7 @@ extern "C"
         const double scalar = ((double*)extra_args)[3];
         auto         r      = quantized_mul_scalar(tensors[1], scalar);
         buf_data[0]         = r.data_ptr();
-        c10::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
+        xsigma::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
         buf_data[bufs_in_num + bufs_out_num] = r.getIntrusivePtr().get();
     }
 
@@ -827,10 +829,10 @@ extern "C"
         int64_t /*unused*/,
         int64_t* extra_args)
     {
-        const double          x_qscale = ((double*)extra_args)[0];
-        const int64_t         x_qzero  = extra_args[1];
-        const c10::ScalarType x_qdtype = static_cast<c10::ScalarType>(extra_args[2]);
-        auto                  tensors  = constructTensors(
+        const double             x_qscale = ((double*)extra_args)[0];
+        const int64_t            x_qzero  = extra_args[1];
+        const xsigma::ScalarType x_qdtype = static_cast<xsigma::ScalarType>(extra_args[2]);
+        auto                     tensors  = constructTensors(
             bufs_num,
             buf_data,
             buf_ranks,
@@ -838,7 +840,7 @@ extern "C"
             buf_strides,
             buf_dtypes,
             {{1u, {x_qscale, x_qzero, toQIntType(x_qdtype)}}});
-        auto r = at::relu(tensors[1]);
+        auto r = xsigma::relu(tensors[1]);
         memcpy(buf_data[0], r.const_data_ptr(), r.element_size() * r.numel());
     }
 
@@ -852,10 +854,10 @@ extern "C"
         int64_t /*unused*/,
         int64_t* extra_args)
     {
-        const double          x_qscale = ((double*)extra_args)[0];
-        const int64_t         x_qzero  = extra_args[1];
-        const c10::ScalarType x_qdtype = static_cast<c10::ScalarType>(extra_args[2]);
-        auto                  tensors  = constructTensors(
+        const double             x_qscale = ((double*)extra_args)[0];
+        const int64_t            x_qzero  = extra_args[1];
+        const xsigma::ScalarType x_qdtype = static_cast<xsigma::ScalarType>(extra_args[2]);
+        auto                     tensors  = constructTensors(
             bufs_num,
             buf_data,
             buf_ranks,
@@ -864,7 +866,7 @@ extern "C"
             buf_dtypes,
             {{1u, {x_qscale, x_qzero, toQIntType(x_qdtype)}}});
 
-        auto r = at::sigmoid(tensors[1]);
+        auto r = xsigma::sigmoid(tensors[1]);
         memcpy(buf_data[0], r.const_data_ptr(), r.element_size() * r.numel());
     }
 
@@ -878,11 +880,11 @@ extern "C"
         int64_t /*unused*/,
         int64_t* extra_args)
     {
-        const double          x_qscale     = ((double*)extra_args)[0];
-        const int64_t         x_qzero      = extra_args[1];
-        const c10::ScalarType x_qdtype     = static_cast<c10::ScalarType>(extra_args[2]);
-        const size_t          bufs_out_num = 1u;
-        auto                  tensors      = constructTensors2(
+        const double             x_qscale     = ((double*)extra_args)[0];
+        const int64_t            x_qzero      = extra_args[1];
+        const xsigma::ScalarType x_qdtype     = static_cast<xsigma::ScalarType>(extra_args[2]);
+        const size_t             bufs_out_num = 1u;
+        auto                     tensors      = constructTensors2(
             bufs_in_num,
             buf_data,
             buf_ranks,
@@ -892,9 +894,9 @@ extern "C"
             {{1u, {x_qscale, x_qzero, toQIntType(x_qdtype)}}},
             bufs_out_num);
 
-        auto r      = at::sigmoid(tensors[1]);
+        auto r      = xsigma::sigmoid(tensors[1]);
         buf_data[0] = r.data_ptr();
-        c10::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
+        xsigma::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
         buf_data[bufs_in_num + bufs_out_num] = r.getIntrusivePtr().get();
     }
 
@@ -913,19 +915,20 @@ extern "C"
         const double  out_qscale = ((double*)extra_args)[3 * in_bufs_num + 1];
         const int64_t out_qzero  = extra_args[3 * in_bufs_num + 2];
         qdata.emplace_back(
-            0u, QIData{out_qscale, out_qzero, static_cast<c10::ScalarType>(extra_args[2])});
-        for (const size_t i : c10::irange(in_bufs_num))
+            0u, QIData{out_qscale, out_qzero, static_cast<xsigma::ScalarType>(extra_args[2])});
+        for (const size_t i : xsigma::irange(in_bufs_num))
         {
-            const double          qscale = ((double*)extra_args)[3 * i + 0];
-            const int64_t         qzero  = extra_args[3 * i + 1];
-            const c10::ScalarType qdtype = static_cast<c10::ScalarType>(extra_args[3 * i + 2]);
+            const double             qscale = ((double*)extra_args)[3 * i + 0];
+            const int64_t            qzero  = extra_args[3 * i + 1];
+            const xsigma::ScalarType qdtype =
+                static_cast<xsigma::ScalarType>(extra_args[3 * i + 2]);
             qdata.emplace_back(i + 1u, QIData{qscale, qzero, qdtype});
         }
         auto tensors = constructTensors(
             bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes, qdata);
         const int64_t dim = extra_args[3 * in_bufs_num + 0];
-        auto          qxs =
-            c10::List<at::Tensor>(std::vector<at::Tensor>(tensors.begin() + 1, tensors.end()));
+        auto          qxs = xsigma::List<xsigma::Tensor>(
+            std::vector<xsigma::Tensor>(tensors.begin() + 1, tensors.end()));
         auto r = quantized_cat(qxs, dim, out_qscale, out_qzero);
         memcpy(buf_data[0], r.const_data_ptr(), r.element_size() * r.numel());
     }
@@ -950,7 +953,10 @@ extern "C"
         if (is_quantized)
         {
             qdata = {
-                {1u, {x_qscale, x_qzero, at::toQIntType(static_cast<c10::ScalarType>(x_qdtype))}}};
+                {1u,
+                 {x_qscale,
+                  x_qzero,
+                  xsigma::toQIntType(static_cast<xsigma::ScalarType>(x_qdtype))}}};
         }
         auto tensors = constructTensors(
             bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes, qdata);
@@ -961,12 +967,13 @@ extern "C"
         double  scale_factor_h = ((double*)extra_args)[5];
         double  scale_factor_w = ((double*)extra_args)[6];
 
-        auto r = at::upsample_nearest2d(
+        auto r = xsigma::upsample_nearest2d(
             x,
-            (output_size_h != -1) ? std::optional<at::IntArrayRef>({output_size_h, output_size_w})
-                                  : std::nullopt,
+            (output_size_h != -1)
+                ? std::optional<xsigma::IntArrayRef>({output_size_h, output_size_w})
+                : std::nullopt,
             (scale_factor_h != -1.f)
-                ? std::optional<at::ArrayRef<double>>({scale_factor_h, scale_factor_w})
+                ? std::optional<xsigma::ArrayRef<double>>({scale_factor_h, scale_factor_w})
                 : std::nullopt);
         memcpy(buf_data[0], r.const_data_ptr(), r.element_size() * r.numel());
     }
@@ -991,7 +998,10 @@ extern "C"
         if (is_quantized)
         {
             qdata = {
-                {1u, {x_qscale, x_qzero, at::toQIntType(static_cast<c10::ScalarType>(x_qdtype))}}};
+                {1u,
+                 {x_qscale,
+                  x_qzero,
+                  xsigma::toQIntType(static_cast<xsigma::ScalarType>(x_qdtype))}}};
         }
         auto tensors = constructTensors2(
             bufs_in_num,
@@ -1009,15 +1019,16 @@ extern "C"
         double  scale_factor_h = ((double*)extra_args)[5];
         double  scale_factor_w = ((double*)extra_args)[6];
 
-        auto r = at::upsample_nearest2d(
+        auto r = xsigma::upsample_nearest2d(
             x,
-            (output_size_h != -1) ? std::optional<at::IntArrayRef>({output_size_h, output_size_w})
-                                  : std::nullopt,
+            (output_size_h != -1)
+                ? std::optional<xsigma::IntArrayRef>({output_size_h, output_size_w})
+                : std::nullopt,
             (scale_factor_h != -1.f)
-                ? std::optional<at::ArrayRef<double>>({scale_factor_h, scale_factor_w})
+                ? std::optional<xsigma::ArrayRef<double>>({scale_factor_h, scale_factor_w})
                 : std::nullopt);
         buf_data[0] = r.data_ptr();
-        c10::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
+        xsigma::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
         buf_data[bufs_in_num + bufs_out_num] = r.getIntrusivePtr().get();
     }
 
@@ -1034,11 +1045,11 @@ extern "C"
         auto tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
         // NOLINTNEXTLINE(facebook-hte-LocalUncheckedArrayBounds)
-        at::Tensor            x      = tensors[1];
-        const double          qscale = ((double*)extra_args)[0];
-        const int64_t         qzero  = extra_args[1];
-        const c10::ScalarType qdtype = static_cast<c10::ScalarType>(extra_args[2]);
-        auto                  r      = at::quantize_per_tensor(x, qscale, qzero, qdtype);
+        xsigma::Tensor           x      = tensors[1];
+        const double             qscale = ((double*)extra_args)[0];
+        const int64_t            qzero  = extra_args[1];
+        const xsigma::ScalarType qdtype = static_cast<xsigma::ScalarType>(extra_args[2]);
+        auto                     r      = xsigma::quantize_per_tensor(x, qscale, qzero, qdtype);
         memcpy(buf_data[0], r.const_data_ptr(), r.element_size() * r.numel());
     }
 
@@ -1063,13 +1074,13 @@ extern "C"
             std::nullopt,
             bufs_out_num);
         // NOLINTNEXTLINE(facebook-hte-LocalUncheckedArrayBounds)
-        const at::Tensor&     x      = tensors[1];
-        const double          qscale = ((double*)extra_args)[0];
-        const int64_t         qzero  = extra_args[1];
-        const c10::ScalarType qdtype = static_cast<c10::ScalarType>(extra_args[2]);
-        auto                  r      = at::quantize_per_tensor(x, qscale, qzero, qdtype);
-        buf_data[0]                  = r.data_ptr();
-        c10::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
+        const xsigma::Tensor&    x      = tensors[1];
+        const double             qscale = ((double*)extra_args)[0];
+        const int64_t            qzero  = extra_args[1];
+        const xsigma::ScalarType qdtype = static_cast<xsigma::ScalarType>(extra_args[2]);
+        auto                     r      = xsigma::quantize_per_tensor(x, qscale, qzero, qdtype);
+        buf_data[0]                     = r.data_ptr();
+        xsigma::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
         buf_data[bufs_in_num + bufs_out_num] = r.getIntrusivePtr().get();
     }
 
@@ -1093,8 +1104,8 @@ extern "C"
             buf_dims,
             buf_strides,
             buf_dtypes,
-            {{1u, {qscale, qzero, toQIntType(static_cast<c10::ScalarType>(qdtype))}}});
-        auto r = at::dequantize(tensors[1]);
+            {{1u, {qscale, qzero, toQIntType(static_cast<xsigma::ScalarType>(qdtype))}}});
+        auto r = xsigma::dequantize(tensors[1]);
         memcpy(buf_data[0], r.const_data_ptr(), r.element_size() * r.numel());
     }
 
@@ -1119,11 +1130,11 @@ extern "C"
             buf_dims,
             buf_strides,
             buf_dtypes,
-            {{1u, {qscale, qzero, toQIntType(static_cast<c10::ScalarType>(qdtype))}}},
+            {{1u, {qscale, qzero, toQIntType(static_cast<xsigma::ScalarType>(qdtype))}}},
             bufs_out_num);
-        auto r      = at::dequantize(tensors[1]);
+        auto r      = xsigma::dequantize(tensors[1]);
         buf_data[0] = r.data_ptr();
-        c10::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
+        xsigma::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
         buf_data[bufs_in_num + bufs_out_num] = r.getIntrusivePtr().get();
     }
 
@@ -1140,15 +1151,15 @@ extern "C"
         auto tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
 
-        at::Tensor&       r = tensors[0];
-        const at::Tensor& x = tensors[1];
-        const at::Tensor& w = tensors[2];
+        xsigma::Tensor&       r = tensors[0];
+        const xsigma::Tensor& x = tensors[1];
+        const xsigma::Tensor& w = tensors[2];
         if (args_num > 0)
         {
             // Check that if the extra arguments are provided, then the bias tensor is
             // also present
             TORCH_INTERNAL_ASSERT(args_num == 4 && bufs_num == 4);
-            const at::Tensor& b = tensors[3];
+            const xsigma::Tensor& b = tensors[3];
 
             int64_t stride   = extra_args[0];
             int64_t padding  = extra_args[1];
@@ -1157,7 +1168,7 @@ extern "C"
 
             try
             {
-                r = at::conv1d(x, w, b, {stride}, {padding}, {dilation}, groups);
+                r = xsigma::conv1d(x, w, b, {stride}, {padding}, {dilation}, groups);
             }
             catch (...)
             {
@@ -1167,7 +1178,7 @@ extern "C"
         {
             try
             {
-                r = at::conv1d(x, w);
+                r = xsigma::conv1d(x, w);
             }
             catch (...)
             {
@@ -1198,15 +1209,15 @@ extern "C"
             std::nullopt,
             bufs_out_num);
 
-        at::Tensor        r;
-        const at::Tensor& x = tensors[1];
-        const at::Tensor& w = tensors[2];
+        xsigma::Tensor        r;
+        const xsigma::Tensor& x = tensors[1];
+        const xsigma::Tensor& w = tensors[2];
         if (args_num > 0)
         {
             // Check that if the extra arguments are provided, then the bias tensor is
             // also present
             TORCH_INTERNAL_ASSERT(args_num == 4 && bufs_in_num == 3);
-            const at::Tensor& b = tensors[3];
+            const xsigma::Tensor& b = tensors[3];
 
             int64_t stride   = extra_args[0];
             int64_t padding  = extra_args[1];
@@ -1215,7 +1226,7 @@ extern "C"
 
             try
             {
-                r = at::conv1d(x, w, b, {stride}, {padding}, {dilation}, groups);
+                r = xsigma::conv1d(x, w, b, {stride}, {padding}, {dilation}, groups);
             }
             catch (...)
             {
@@ -1225,7 +1236,7 @@ extern "C"
         {
             try
             {
-                r = at::conv1d(x, w);
+                r = xsigma::conv1d(x, w);
             }
             catch (...)
             {
@@ -1233,7 +1244,7 @@ extern "C"
         }
 
         buf_data[0] = r.data_ptr();
-        c10::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
+        xsigma::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
         buf_data[bufs_in_num + bufs_out_num] = r.getIntrusivePtr().get();
     }
 
@@ -1250,17 +1261,17 @@ extern "C"
         auto tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
 
-        at::Tensor&       r = tensors[0];
-        const at::Tensor& x = tensors[1];
-        int64_t           H = extra_args[0];
-        int64_t           W = H;
+        xsigma::Tensor&       r = tensors[0];
+        const xsigma::Tensor& x = tensors[1];
+        int64_t               H = extra_args[0];
+        int64_t               W = H;
         if (args_num > 1)
         {
             W = extra_args[1];
         }
         try
         {
-            r = at::adaptive_avg_pool2d(x, {H, W});
+            r = xsigma::adaptive_avg_pool2d(x, {H, W});
         }
         catch (...)
         {
@@ -1281,17 +1292,17 @@ extern "C"
         auto tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
 
-        at::Tensor&          r = tensors[0];
-        const at::Tensor&    x = tensors[1];
-        std::vector<int64_t> mean_dims(args_num - 1);
-        bool                 keepdim = (bool)extra_args[args_num - 1];
+        xsigma::Tensor&       r = tensors[0];
+        const xsigma::Tensor& x = tensors[1];
+        std::vector<int64_t>  mean_dims(args_num - 1);
+        bool                  keepdim = (bool)extra_args[args_num - 1];
         if (args_num > 1)
         {
             memcpy(mean_dims.data(), extra_args, sizeof(int64_t) * (args_num - 1));
         }
         try
         {
-            at::mean_out(r, x, mean_dims, keepdim);
+            xsigma::mean_out(r, x, mean_dims, keepdim);
         }
         catch (...)
         {
@@ -1311,13 +1322,13 @@ extern "C"
         auto tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
 
-        at::Tensor&       r        = tensors[0];
-        const at::Tensor& x        = tensors[1];
-        int64_t           max_dim  = extra_args[0];
-        bool              keep_dim = extra_args[1];
+        xsigma::Tensor&       r        = tensors[0];
+        const xsigma::Tensor& x        = tensors[1];
+        int64_t               max_dim  = extra_args[0];
+        bool                  keep_dim = extra_args[1];
         try
         {
-            r = std::get<0>(at::max(x, max_dim, keep_dim));
+            r = std::get<0>(xsigma::max(x, max_dim, keep_dim));
         }
         catch (...)
         {
@@ -1339,20 +1350,20 @@ extern "C"
         auto   tensors =
             constructTensors2(bufs_in_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
 
-        at::Tensor r;
+        xsigma::Tensor r;
         // @lint-ignore CLANGTIDY
-        const at::Tensor& x        = tensors[1];
-        int64_t           max_dim  = extra_args[0];
-        bool              keep_dim = extra_args[1];
+        const xsigma::Tensor& x        = tensors[1];
+        int64_t               max_dim  = extra_args[0];
+        bool                  keep_dim = extra_args[1];
         try
         {
-            r = std::get<0>(at::max(x, max_dim, keep_dim));
+            r = std::get<0>(xsigma::max(x, max_dim, keep_dim));
         }
         catch (...)
         {
         }
         buf_data[0] = r.data_ptr();
-        c10::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
+        xsigma::raw::intrusive_ptr::incref(r.getIntrusivePtr().get());
         buf_data[bufs_in_num + bufs_out_num] = r.getIntrusivePtr().get();
     }
 
@@ -1369,16 +1380,16 @@ extern "C"
         auto tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
 
-        at::Tensor&       r = tensors[0];
-        const at::Tensor& x = tensors[1];
-        const at::Tensor& y = tensors[2];
-        const at::Tensor& z = tensors[3];
+        xsigma::Tensor&       r = tensors[0];
+        const xsigma::Tensor& x = tensors[1];
+        const xsigma::Tensor& y = tensors[2];
+        const xsigma::Tensor& z = tensors[3];
         // TODO: handle other alpha and beta dtypes, e.g. alpha=0.6, beta=0.2
         int64_t beta = extra_args[0], alpha = extra_args[1];
 
         try
         {
-            at::addmm_out(r, x, y, z, beta, alpha);
+            xsigma::addmm_out(r, x, y, z, beta, alpha);
         }
         catch (...)
         {
@@ -1399,13 +1410,14 @@ extern "C"
     {
         auto tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
-        at::Tensor&       r     = tensors[0];
-        at::Tensor        r2    = tensors[2].clone();
-        const at::Tensor& input = tensors[1];
-        const at::Tensor& A     = tensors[2];
+        xsigma::Tensor&       r     = tensors[0];
+        xsigma::Tensor        r2    = tensors[2].clone();
+        const xsigma::Tensor& input = tensors[1];
+        const xsigma::Tensor& A     = tensors[2];
         try
         {
-            at::triangular_solve_out(r, r2, input, A, extra_args[0], extra_args[2], extra_args[3]);
+            xsigma::triangular_solve_out(
+                r, r2, input, A, extra_args[0], extra_args[2], extra_args[3]);
         }
         catch (...)
         {
@@ -1424,13 +1436,13 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        using namespace at::native::mkldnn;
+        using namespace xsigma::native::mkldnn;
 
         auto tensors =
             constructTensors(bufs_num - 1, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
 
-        const at::Tensor& x       = tensors[1];
-        auto              context = reinterpret_cast<ConvOpContext*>(buf_data[2]);
+        const xsigma::Tensor& x       = tensors[1];
+        auto                  context = reinterpret_cast<ConvOpContext*>(buf_data[2]);
 
         context->run(x, buf_data[0]);
     }
@@ -1449,14 +1461,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        using namespace at::native::xnnpack;
+        using namespace xsigma::native::xnnpack;
 
         auto tensors =
             constructTensors(bufs_num - 1, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
 
-        const at::Tensor& x       = tensors[1];
-        auto              context = reinterpret_cast<LinearOpContext*>(buf_data[2]);
-        at::Tensor        output  = context->run(x);
+        const xsigma::Tensor& x       = tensors[1];
+        auto                  context = reinterpret_cast<LinearOpContext*>(buf_data[2]);
+        xsigma::Tensor        output  = context->run(x);
         memcpy(buf_data[0], output.const_data_ptr(), output.element_size() * output.numel());
     }
 
@@ -1470,14 +1482,14 @@ extern "C"
         int64_t  args_num,
         int64_t* extra_args)
     {
-        using namespace at::native::xnnpack;
+        using namespace xsigma::native::xnnpack;
 
         auto tensors =
             constructTensors(bufs_num - 1, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
 
-        const at::Tensor& x       = tensors[1];
-        auto              context = reinterpret_cast<Conv2dOpContext*>(buf_data[2]);
-        at::Tensor        output  = context->run(x);
+        const xsigma::Tensor& x       = tensors[1];
+        auto                  context = reinterpret_cast<Conv2dOpContext*>(buf_data[2]);
+        xsigma::Tensor        output  = context->run(x);
         memcpy(buf_data[0], output.const_data_ptr(), output.element_size() * output.numel());
     }
 
@@ -1496,22 +1508,22 @@ extern "C"
         auto tensors =
             constructTensors(bufs_num, buf_data, buf_ranks, buf_dims, buf_strides, buf_dtypes);
 
-        at::Tensor&       r       = tensors[0];
-        const at::Tensor& weight  = tensors[1];
-        const at::Tensor& indices = tensors[2];
+        xsigma::Tensor&       r       = tensors[0];
+        const xsigma::Tensor& weight  = tensors[1];
+        const xsigma::Tensor& indices = tensors[2];
         try
         {
-            r = at::embedding(weight, indices);
+            r = xsigma::embedding(weight, indices);
         }
         catch (...)
         {
         }
-        // TODO: have to copy output because at::embedding doesn't have an out
+        // TODO: have to copy output because xsigma::embedding doesn't have an out
         // variant and NNC's external calls don't support allocations
         memcpy(buf_data[0], r.const_data_ptr(), r.element_size() * r.numel());
     }
 
-#ifndef C10_MOBILE
+#ifndef XSIGMA_MOBILE
 
     const static RegisterNNCExternalFunction nnc_conv2d("nnc_aten_conv2d", nnc_aten_conv2d);
 
@@ -1593,9 +1605,9 @@ extern "C"
         "nnc_prepacked_conv2d_clamp_run", nnc_prepacked_conv2d_clamp_run);
 #endif  // USE_XNNPACK
 
-#endif  // C10_MOBILE
+#endif  // XSIGMA_MOBILE
 
-#ifdef C10_MOBILE
+#ifdef XSIGMA_MOBILE
 }  // extern "C"
 #endif
 

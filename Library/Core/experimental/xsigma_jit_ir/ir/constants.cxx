@@ -1,5 +1,4 @@
 #include <ATen/core/functional.h>
-#include <c10/util/Exception.h>
 #include <torch/csrc/autograd/variable.h>
 #include <torch/csrc/jit/ir/constants.h>
 #include <torch/csrc/jit/ir/ir.h>
@@ -7,10 +6,12 @@
 #include <torch/csrc/jit/runtime/operator.h>
 #include <torch/csrc/jit/runtime/register_ops_utils.h>
 
+#include "util/exception.h"
+
 namespace torch::jit
 {
 
-static bool insertableTensor(const at::Tensor& ten)
+static bool insertableTensor(const xsigma::Tensor& ten)
 {
     // bail if tensor has no storage i.e. opaque tensor used in MKLdnn.
     // or gradients because we have no way of serializing them & are mutable
@@ -30,7 +31,7 @@ static bool insertableIValue(const IValue& ivalue)
     }
     if (ivalue.isList() || ivalue.isTuple())
     {
-        c10::ArrayRef<IValue> elems;
+        xsigma::ArrayRef<IValue> elems;
         if (ivalue.isTuple())
         {
             elems = ivalue.toTupleRef().elements();
@@ -65,7 +66,7 @@ Value* insertConstant(
     {
         return *value;
     }
-    TORCH_CHECK(false, "Unsupported value kind: ", val.tagKind());
+    XSIGMA_CHECK(false, "Unsupported value kind: ", val.tagKind());
 }
 
 // IValue -> Constant node
@@ -75,7 +76,7 @@ std::optional<Value*> tryInsertConstant(
     Node* n = g.create(prim::Constant);
     if (val.isTensor())
     {
-        at::Tensor ref = val.toTensor();
+        xsigma::Tensor ref = val.toTensor();
         if (!insertableTensor(val.toTensor()))
         {
             n->destroy();
@@ -251,7 +252,7 @@ std::optional<IValue> toIValue(const Value* v)
     }
     else if (type == DeviceObjType::get())
     {
-        auto d = c10::Device(node->s(attr::value));
+        auto d = xsigma::Device(node->s(attr::value));
         return d;
     }
     else if (type == GeneratorType::get())
@@ -281,7 +282,7 @@ std::optional<IValue> toIValue(const Value* v)
     }
     else
     {
-        TORCH_CHECK(false, "constant literal not supported for: ", type->str());
+        XSIGMA_CHECK(false, "constant literal not supported for: ", type->str());
     }
 }
 

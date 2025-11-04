@@ -110,7 +110,7 @@ public:
     BitCast(Dtype dtype, ExprPtr src_value)
         : ExprNodeBase(dtype, kBitCast), src_value_(std::move(src_value))
     {
-        TORCH_CHECK(src_value_->dtype().byte_size() == dtype.byte_size());
+        XSIGMA_CHECK(src_value_->dtype().byte_size() == dtype.byte_size());
     }
 
     bool isConstant() const override { return src_value_->isConstant(); }
@@ -475,7 +475,7 @@ public:
     std::vector<ExprPtr> indices() const { return indices_; }
     ExprPtr              flat_index() const
     {
-        TORCH_CHECK(indices_.size() == 1, "Indices haven't been flattened.");
+        XSIGMA_CHECK(indices_.size() == 1, "Indices haven't been flattened.");
         return indices_[0];
     }
     BufPtr buf() const { return buf_; }

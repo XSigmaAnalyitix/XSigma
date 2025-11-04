@@ -1,11 +1,5 @@
 #include <cstring>
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <c10/macros/Export.h>
-#include <c10/util/ApproximateClock.h>
-#include <c10/util/Exception.h>
-#include <c10/util/flat_hash_map.h>
-#include <c10/util/irange.h>
-#include <c10/util/overloaded.h>
 #include <torch/csrc/autograd/profiler_kineto.h>
 #include <torch/csrc/profiler/api.h>
 #include <torch/csrc/profiler/collection.h>
@@ -18,9 +12,16 @@
 #include <torch/csrc/profiler/standalone/nvtx_observer.h>
 #include <torch/csrc/profiler/standalone/privateuse1_observer.h>
 #include <torch/csrc/profiler/util.h>
+#include <xsigma/macros/Export.h>
+#include <xsigma/util/ApproximateClock.h>
+#include <xsigma/util/flat_hash_map.h>
+#include <xsigma/util/irange.h>
+#include <xsigma/util/overloaded.h>
 
 #include <stdexcept>
 #include <utility>
+
+#include "util/exception.h"
 
 #ifdef USE_KINETO
 #include <ApproximateClock.h>
@@ -38,7 +39,7 @@ extern "C"
     __attribute__((weak)) int acc_get_device_type();
     __attribute__((weak)) int acc_get_device_type()
     {
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             false, "Dummy implementation of acc_get_device_type is not supposed to be called!");
     }
 }  // extern "C"
@@ -57,7 +58,7 @@ inline int64_t getTimeNs()
 #ifdef USE_KINETO
     return libkineto::timeSinceEpoch(std::chrono::system_clock::now());
 #else
-    return c10::getTime();
+    return xsigma::getTime();
 #endif  // USE_KINETO
 }
 
@@ -83,7 +84,7 @@ struct OpArgData
     bool                              hasData;
     std::vector<shape>                shapes;
     std::vector<std::string>          dtypes;
-    std::vector<c10::IValue>          concreteInputs;
+    std::vector<xsigma::IValue>       concreteInputs;
     std::vector<std::vector<int64_t>> shapesForKinetoEvent;
     std::vector<shape>                strides;
 };
@@ -100,13 +101,13 @@ auto parseArgData(
     std::vector<shape>                strides(input_shapes.size());
     std::vector<std::vector<int64_t>> shapesForKinetoEvent(input_shapes.size());
 
-    std::vector<std::string> dtypes(input_shapes.size());
-    std::vector<c10::IValue> concrete_inputs_list;
+    std::vector<std::string>    dtypes(input_shapes.size());
+    std::vector<xsigma::IValue> concrete_inputs_list;
 
-    for (const auto& i : c10::irange(input_shapes.size()))
+    for (const auto& i : xsigma::irange(input_shapes.size()))
     {
         std::visit(
-            c10::overloaded(
+            xsigma::overloaded(
                 [&](const TensorMetadata& t)
                 {
                     shapes[i]               = t.sizes_;
@@ -129,7 +130,7 @@ auto parseArgData(
                     strides[i] = stride;
                     dtypes[i]  = "TensorList";
                 },
-                [&](const c10::IValue&) { dtypes[i] = "Scalar"; },
+                [&](const xsigma::IValue&) { dtypes[i] = "Scalar"; },
                 [&](const auto&) {}),
             input_shapes[i]);
     }
@@ -139,16 +140,16 @@ auto parseArgData(
     {
         concrete_inputs_list.resize(input_shapes.size());
 
-        for (const auto& i : c10::irange(input_shapes.size()))
+        for (const auto& i : xsigma::irange(input_shapes.size()))
         {
             std::visit(
-                c10::overloaded(
-                    [&](const c10::IValue& val) { concrete_inputs_list[i] = val; },
+                xsigma::overloaded(
+                    [&](const xsigma::IValue& val) { concrete_inputs_list[i] = val; },
                     [&](const auto&) {}),
                 input_shapes[i]);
             std::visit(
-                c10::overloaded(
-                    [&](const c10::IValue& val)
+                xsigma::overloaded(
+                    [&](const xsigma::IValue& val)
                     {
                         concrete_inputs_list[i] = val;
                         dtypes[i]               = "ScalarList";
@@ -300,7 +301,7 @@ struct AddGenericMetadata : public MetadataBase
                 isStringList = std::all_of(
                     list.begin(),
                     list.end(),
-                    [](const c10::IValue& item) { return item.isString(); });
+                    [](const xsigma::IValue& item) { return item.isString(); });
             }
 
             if (!isValidType && !isStringList)
@@ -314,8 +315,8 @@ struct AddGenericMetadata : public MetadataBase
             if (isStringList)
             {
                 // For list of strings, use ivalueListToStr
-                auto                     list = val.toListRef();
-                std::vector<c10::IValue> stringList(list.begin(), list.end());
+                auto                        list = val.toListRef();
+                std::vector<xsigma::IValue> stringList(list.begin(), list.end());
                 addMetadata(key, ivalueListToStr(stringList));
             }
             else
@@ -333,7 +334,7 @@ struct AddGenericMetadata : public MetadataBase
         if (config_ && !config_->experimental_config.performance_events.empty())
         {
             auto& event_names = config_->experimental_config.performance_events;
-            for (const auto i : c10::irange(op_event.perf_event_counters_->size()))
+            for (const auto i : xsigma::irange(op_event.perf_event_counters_->size()))
             {
                 addMetadata(event_names[i], std::to_string((*op_event.perf_event_counters_)[i]));
             }
@@ -400,8 +401,7 @@ struct KinetoThreadLocalState : public ProfilerStateBase
     static KinetoThreadLocalState* get(bool global)
     {
         auto* state = ProfilerStateBase::get(/*global=*/global);
-        TORCH_INTERNAL_ASSERT_DEBUG_ONLY(
-            state == nullptr || state->profilerType() == ActiveProfilerType::KINETO);
+        XSIGMA_CHECK_DEBUG(state == nullptr || state->profilerType() == ActiveProfilerType::KINETO);
         return static_cast<KinetoThreadLocalState*>(state);
     }
 
@@ -411,21 +411,21 @@ struct KinetoThreadLocalState : public ProfilerStateBase
     {
         if (!config_.disabled())
         {
-            recordQueue.getSubqueue()->emplace_vulkan_event(c10::getApproximateTime(), id);
+            recordQueue.getSubqueue()->emplace_vulkan_event(xsigma::getApproximateTime(), id);
         }
     }
 
     void reportMemoryUsage(
-        void*       ptr,
-        int64_t     alloc_size,
-        size_t      total_allocated,
-        size_t      total_reserved,
-        c10::Device device) override
+        void*          ptr,
+        int64_t        alloc_size,
+        size_t         total_allocated,
+        size_t         total_reserved,
+        xsigma::Device device) override
     {
         if (config_.profile_memory && !config_.disabled())
         {
             recordQueue.getSubqueue()->emplace_allocation_event(
-                c10::getApproximateTime(),
+                xsigma::getApproximateTime(),
                 ptr,
                 alloc_size,
                 total_allocated,
@@ -436,15 +436,15 @@ struct KinetoThreadLocalState : public ProfilerStateBase
     }
 
     void reportOutOfMemory(
-        int64_t     alloc_size,
-        size_t      total_allocated,
-        size_t      total_reserved,
-        c10::Device device) override
+        int64_t        alloc_size,
+        size_t         total_allocated,
+        size_t         total_reserved,
+        xsigma::Device device) override
     {
         if (config_.profile_memory && !config_.disabled())
         {
             recordQueue.getSubqueue()->emplace_ooms_event(
-                c10::getApproximateTime(),
+                xsigma::getApproximateTime(),
                 alloc_size,
                 total_allocated,
                 total_reserved,
@@ -498,7 +498,7 @@ struct KinetoThreadLocalState : public ProfilerStateBase
     {
         for (auto& e : events)
         {
-            if (e->parent_.expired() && e->deviceType() == c10::DeviceType::CPU)
+            if (e->parent_.expired() && e->deviceType() == xsigma::DeviceType::CPU)
             {
                 eventTree.push_back(e);
             }
@@ -506,7 +506,7 @@ struct KinetoThreadLocalState : public ProfilerStateBase
             if (e->finished_)
             {
                 e->visit(
-                    c10::overloaded(
+                    xsigma::overloaded(
                         [this](ExtraFields<EventType::TorchOp>& i) { invokeCallback(i); },
                         [this](ExtraFields<EventType::Backend>& i) { invokeCallback(i); },
                         [](auto&) {}));
@@ -521,17 +521,17 @@ struct KinetoThreadLocalState : public ProfilerStateBase
         }
     }
 
-    uint64_t                                 startTime;
-    c10::ApproximateClockToUnixTimeConverter clockConverter;
-    torch::profiler::impl::RecordQueue       recordQueue;
-    std::vector<KinetoEvent>                 kinetoEvents;
-    std::vector<experimental_event_t>        eventTree;
+    uint64_t                                    startTime;
+    xsigma::ApproximateClockToUnixTimeConverter clockConverter;
+    torch::profiler::impl::RecordQueue          recordQueue;
+    std::vector<KinetoEvent>                    kinetoEvents;
+    std::vector<experimental_event_t>           eventTree;
     // Optional, if event post-processing is enabled.
     post_process_t eventPostProcessCb;
 };
 
 template <bool use_global_state_ptr = false>
-std::unique_ptr<at::ObserverContext> onFunctionEnter(const at::RecordFunction& fn)
+std::unique_ptr<xsigma::ObserverContext> onFunctionEnter(const xsigma::RecordFunction& fn)
 {
     auto state_ptr = KinetoThreadLocalState::get(use_global_state_ptr);
     if (!state_ptr)
@@ -543,7 +543,7 @@ std::unique_ptr<at::ObserverContext> onFunctionEnter(const at::RecordFunction& f
 
 // @lint-ignore CLANGTIDY clang-diagnostic-unused-parameter
 template <bool use_global_state_ptr = false>
-void onFunctionExit(const at::RecordFunction& fn, at::ObserverContext* ctx_ptr)
+void onFunctionExit(const xsigma::RecordFunction& fn, xsigma::ObserverContext* ctx_ptr)
 {
     auto state_ptr = KinetoThreadLocalState::get(use_global_state_ptr);
     if (!state_ptr)
@@ -553,13 +553,13 @@ void onFunctionExit(const at::RecordFunction& fn, at::ObserverContext* ctx_ptr)
     const auto& config   = state_ptr->config();
     auto* kineto_ctx_ptr = static_cast<torch::profiler::impl::KinetoObserverContext*>(ctx_ptr);
     TORCH_INTERNAL_ASSERT(kineto_ctx_ptr != nullptr);
-    kineto_ctx_ptr->event_->end_time_ = c10::getApproximateTime();
+    kineto_ctx_ptr->event_->end_time_ = xsigma::getApproximateTime();
     if (!config.experimental_config.performance_events.empty())
     {
         state_ptr->recordQueue.getSubqueue()->disable_perf_profiler(
             *kineto_ctx_ptr->event_->counters_);
     }
-    kineto_ctx_ptr->event_->basic_fields_.end_tid_ = at::RecordFunction::currentThreadId();
+    kineto_ctx_ptr->event_->basic_fields_.end_tid_ = xsigma::RecordFunction::currentThreadId();
     if (fn.isNcclMeta())
     {
         auto& extra_meta = *(kineto_ctx_ptr->event_->extra_nccl_meta_);
@@ -592,7 +592,7 @@ void onFunctionExit(const at::RecordFunction& fn, at::ObserverContext* ctx_ptr)
 
     if (!config.experimental_config.disable_external_correlation)
     {
-        if (fn.scope() == at::RecordScope::USER_SCOPE)
+        if (fn.scope() == xsigma::RecordScope::USER_SCOPE)
         {
             torch::profiler::impl::kineto::popUserCorrelationId();
         }
@@ -604,43 +604,44 @@ void onFunctionExit(const at::RecordFunction& fn, at::ObserverContext* ctx_ptr)
 }
 
 template <bool use_global_callback = false>
-void pushProfilingCallbacks(const std::unordered_set<at::RecordScope>& scopes)
+void pushProfilingCallbacks(const std::unordered_set<xsigma::RecordScope>& scopes)
 {
     auto registration_state_ptr = KinetoThreadLocalState::get(use_global_callback);
     TORCH_INTERNAL_ASSERT(registration_state_ptr, "Expected profiler state set");
     auto recordFunctionCallback =
-        at::RecordFunctionCallback(
+        xsigma::RecordFunctionCallback(
             onFunctionEnter<use_global_callback>, onFunctionExit<use_global_callback>)
             .needsInputs(registration_state_ptr->config().report_input_shapes)
             .scopes(scopes);
 
     if constexpr (use_global_callback)
     {
-        registration_state_ptr->setCallbackHandle(at::addGlobalCallback(recordFunctionCallback));
+        registration_state_ptr->setCallbackHandle(
+            xsigma::addGlobalCallback(recordFunctionCallback));
     }
     else
     {
         registration_state_ptr->setCallbackHandle(
-            at::addThreadLocalCallback(recordFunctionCallback));
+            xsigma::addThreadLocalCallback(recordFunctionCallback));
     }
 }
 
 struct ProfilerStateInfo
 {
     std::shared_ptr<KinetoThreadLocalState> state_ptr;
-    std::unordered_set<at::RecordScope>     scopes;
+    std::unordered_set<xsigma::RecordScope> scopes;
 };
 std::shared_ptr<ProfilerStateInfo> profiler_state_info_ptr{nullptr};
 
 }  // namespace
 
 void reportBackendEventToActiveKinetoProfiler(
-    const int64_t         start_time_us,
-    const int64_t         end_time_us,
-    const int64_t         debug_handle,
-    const at::RecordScope scope,
-    const std::string&    event_name,
-    const std::string&    backend_name)
+    const int64_t             start_time_us,
+    const int64_t             end_time_us,
+    const int64_t             debug_handle,
+    const xsigma::RecordScope scope,
+    const std::string&        event_name,
+    const std::string&        backend_name)
 {
     TORCH_INTERNAL_ASSERT(
         KinetoThreadLocalState::get(/*global=*/true) == nullptr,
@@ -671,15 +672,15 @@ void prepareProfiler(
     {
         return;
     }
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         config.state == ProfilerState::KINETO ||
             config.state == ProfilerState::KINETO_GPU_FALLBACK ||
             config.state == ProfilerState::KINETO_PRIVATEUSE1_FALLBACK,
         "Supported only in Kineto profiler");
     torch::profiler::impl::kineto::prepareTrace(
         /*cpuOnly=*/!(
-            at::hasCUDA() || at::hasXPU() || at::hasMTIA() ||
-            c10::get_privateuse1_backend() != "privateuseone"),
+            xsigma::hasCUDA() || xsigma::hasXPU() || xsigma::hasMTIA() ||
+            xsigma::get_privateuse1_backend() != "privateuseone"),
         activities,
         config.experimental_config,
         config.trace_id);
@@ -687,14 +688,14 @@ void prepareProfiler(
     if (!config.experimental_config.performance_events.empty())
     {
         /* For now only CPU activity is supported */
-        TORCH_CHECK(
+        XSIGMA_CHECK(
             activities.count(torch::autograd::profiler::ActivityType::CPU),
             "Cannot run cpu hardware profiler without CPU activities, please only use CPU activity "
             "type");
         /*
      * Sending a warning and passing the non-standard event to the backend
      * Backend can abort if the event is not supported.
-     * TODO Should we gracefully drop the invalid event if we have at least one
+     * TODO Should we gracefully drop the invalid event if we have xsigma least one
      * valid?
      */
         auto is_standard_event = [](const std::string& event) -> bool
@@ -816,11 +817,11 @@ void enableProfilerWithEventPostProcess(
     const torch::profiler::impl::ProfilerConfig&         config,
     const std::set<torch::profiler::impl::ActivityType>& activities,
     post_process_t&&                                     cb,
-    const std::unordered_set<at::RecordScope>&           scopes)
+    const std::unordered_set<xsigma::RecordScope>&       scopes)
 {
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         config.state != ProfilerState::NVTX, "NVTX does not support post processing callback.");
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         config.state != ProfilerState::ITT, "ITT does not support post processing callback.");
     TORCH_INTERNAL_ASSERT(
         KinetoThreadLocalState::get(/*global=*/true) == nullptr,
@@ -834,10 +835,10 @@ void enableProfilerWithEventPostProcess(
 void enableProfiler(
     const torch::profiler::impl::ProfilerConfig&         config,
     const std::set<torch::profiler::impl::ActivityType>& activities,
-    const std::unordered_set<at::RecordScope>&           scopes)
+    const std::unordered_set<xsigma::RecordScope>&       scopes)
 {
     const auto has_cpu = activities.count(ActivityType::CPU);
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         KinetoThreadLocalState::get(/*global=*/config.global()) == nullptr,
         "Profiler is already enabled",
         (config.global() ? "." : " on this thread."));
@@ -858,11 +859,11 @@ void enableProfiler(
         return;
     }
 
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         config.state == ProfilerState::KINETO ||
         config.state == ProfilerState::KINETO_GPU_FALLBACK ||
         config.state == ProfilerState::KINETO_PRIVATEUSE1_FALLBACK || config.global());
-    TORCH_CHECK(!activities.empty(), "No activities specified.");
+    XSIGMA_CHECK(!activities.empty(), "No activities specified.");
     TORCH_INTERNAL_ASSERT(
         has_cpu || !config.global(), "Ondemand profiling must enable CPU tracing");
 
@@ -897,8 +898,8 @@ bool isProfilerEnabledInMainThread()
 void enableProfilerInChildThread()
 {
     auto state_info_ptr = profiler_state_info_ptr;
-    TORCH_CHECK(state_info_ptr, "Profiler is not enabled in main thread.");
-    TORCH_CHECK(
+    XSIGMA_CHECK(state_info_ptr, "Profiler is not enabled in main thread.");
+    XSIGMA_CHECK(
         KinetoThreadLocalState::get(/*global=*/false) == nullptr,
         "Profiler is already enabled in this thread.");
 
@@ -909,7 +910,7 @@ void enableProfilerInChildThread()
 void disableProfilerInChildThread()
 {
     auto state_ptr = ProfilerStateBase::pop();
-    TORCH_CHECK(state_ptr, "Can't disable Kineto profiler when it's not running in this thread");
+    XSIGMA_CHECK(state_ptr, "Can't disable Kineto profiler when it's not running in this thread");
     state_ptr->removeCallback();
 }
 
@@ -920,7 +921,7 @@ std::unique_ptr<ProfilerResult> disableProfiler()
 
     auto        state_ptr = ProfilerStateBase::pop();
     const auto& config    = state_ptr->config();
-    TORCH_CHECK(
+    XSIGMA_CHECK(
         state_ptr && (config.state == ProfilerState::KINETO ||
                       config.state == ProfilerState::KINETO_GPU_FALLBACK ||
                       config.state == ProfilerState::KINETO_PRIVATEUSE1_FALLBACK ||
@@ -1024,7 +1025,7 @@ bool KinetoEvent::hasShapes() const
     return !shapes_.empty();
 }
 
-const c10::ArrayRef<std::vector<int64_t>> KinetoEvent::shapes() const
+const xsigma::ArrayRef<std::vector<int64_t>> KinetoEvent::shapes() const
 {
     return shapes_;
 }
@@ -1034,7 +1035,7 @@ bool KinetoEvent::hasTypes() const
     return !dtypes_.empty();
 }
 
-const c10::ArrayRef<std::string> KinetoEvent::dtypes() const
+const xsigma::ArrayRef<std::string> KinetoEvent::dtypes() const
 {
     return dtypes_;
 }
@@ -1044,7 +1045,7 @@ bool KinetoEvent::hasConcreteInputs() const
     return !concrete_inputs_.empty();
 }
 
-const c10::ArrayRef<c10::IValue> KinetoEvent::concreteInputs() const
+const xsigma::ArrayRef<xsigma::IValue> KinetoEvent::concreteInputs() const
 {
     return concrete_inputs_;
 }
@@ -1059,12 +1060,12 @@ bool KinetoEvent::isHiddenEvent() const
     return result_ && result_->hidden_;
 }
 
-const std::unordered_map<std::string, c10::IValue> KinetoEvent::kwinputs() const
+const std::unordered_map<std::string, xsigma::IValue> KinetoEvent::kwinputs() const
 {
     return kwinputs_;
 }
 
-const c10::ArrayRef<std::string> KinetoEvent::stack() const
+const xsigma::ArrayRef<std::string> KinetoEvent::stack() const
 {
     auto get = [&](const auto& i) -> auto&
     { return !i.jit_stack_.empty() ? i.jit_stack_ : python_stack_; };
@@ -1081,7 +1082,7 @@ const c10::ArrayRef<std::string> KinetoEvent::stack() const
     return python_stack_;
 }
 
-const c10::ArrayRef<std::string> KinetoEvent::moduleHierarchy() const
+const xsigma::ArrayRef<std::string> KinetoEvent::moduleHierarchy() const
 {
     auto const& extra_fields = result_->extra_fields_;
     if (auto p = std::get_if<ExtraFields<EventType::TorchOp>>(&extra_fields))
@@ -1108,7 +1109,7 @@ uint64_t KinetoEvent::durationNs() const
 int64_t KinetoEvent::debugHandle() const
 {
     return result_->visit(
-        c10::overloaded(
+        xsigma::overloaded(
             [](const ExtraFields<EventType::TorchOp>& i) { return i.debug_handle_; },
             [](const ExtraFields<EventType::Backend>& i) { return i.debug_handle_; },
             [](const auto&) -> int64_t { return -1; }));
@@ -1117,7 +1118,7 @@ int64_t KinetoEvent::debugHandle() const
 int KinetoEvent::deviceIndex() const
 {
     return result_->visit(
-        c10::overloaded(
+        xsigma::overloaded(
             [](const ExtraFields<EventType::Allocation>& i)
             { return static_cast<int>(i.device_index_); },
             [](const ExtraFields<EventType::OutOfMemory>& i)
@@ -1166,7 +1167,7 @@ int64_t KinetoEvent::privateuse1ElapsedUs() const
 void KinetoEvent::getPerfEventCounters(std::vector<uint64_t>& in) const
 {
     return result_->visit(
-        c10::overloaded(
+        xsigma::overloaded(
             [&in](const ExtraFields<EventType::TorchOp>& e) -> void
             {
                 const size_t n = e.perf_event_counters_->size();
@@ -1186,7 +1187,7 @@ void KinetoEvent::getPerfEventCounters(std::vector<uint64_t>& in) const
 std::string KinetoEvent::metadataJson() const
 {
     return result_->visit(
-        c10::overloaded(
+        xsigma::overloaded(
             [](const ExtraFields<EventType::TorchOp>& op) -> std::string
             { return op.metadata_json_; },
             [](const ExtraFields<EventType::Kineto>& op) -> std::string
@@ -1220,7 +1221,7 @@ FORWARD_FROM_RESULT(deviceResourceId, kineto_info_.resource)
     {                                                                                            \
         using out_t = decltype(std::declval<KinetoEvent>().method_name());                       \
         return result_->visit(                                                                   \
-            c10::overloaded(                                                                     \
+            xsigma::overloaded(                                                                  \
                 [](const ExtraFields<EventType::event_type>& e) -> out_t { return expression; }, \
                 [](const auto&) -> out_t { return default_value; }));                            \
     }

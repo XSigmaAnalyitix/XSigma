@@ -1,4 +1,3 @@
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/frontend/error_report.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/dead_code_elimination.h>
@@ -7,6 +6,7 @@
 #include <torch/csrc/jit/passes/onnx/remove_inplace_ops_for_onnx.h>
 #include <torch/csrc/jit/passes/remove_inplace_ops.h>
 #include <torch/csrc/jit/passes/remove_mutation.h>
+#include <xsigma/util/irange.h>
 
 namespace torch::jit
 {
@@ -14,7 +14,7 @@ namespace torch::jit
 namespace
 {
 
-const std::set<c10::Symbol> inplace_ops = {
+const std::set<xsigma::Symbol> inplace_ops = {
     aten::append, aten::index_put_, aten::pop, aten::insert, aten::Delete};
 
 // InplaceConverter defines a set of functions that together enables the
@@ -224,13 +224,13 @@ std::pair<Value*, Value*> PrepareInplaceOpsInBlocksForONNX(Node* node)
         return {};
 
     auto name       = node->schema().name();
-    bool inplace_op = name.at(name.size() - 1) == '_';
+    bool inplace_op = name.xsigma(name.size() - 1) == '_';
     if (!inplace_op)
         return {};
 
     auto new_schema = name.substr(0, name.size() - 1);
 
-    Node* input_node = node->inputs().at(0)->node();
+    Node* input_node = node->inputs().xsigma(0)->node();
 
     auto graph    = node->owningGraph();
     auto new_node = graph->create(Symbol::fromQualString(new_schema), 1);
@@ -251,7 +251,7 @@ std::pair<Value*, Value*> PrepareInplaceOpsInBlocksForONNX(Node* node)
         auto            false_val_ = graph->insertConstant(false);
 
         auto new_copy = graph->create(aten::copy_, 1);
-        new_copy->addInput(new_node->inputs().at(0));
+        new_copy->addInput(new_node->inputs().xsigma(0));
         new_copy->addInput(new_node->output());
         new_copy->addInput(false_val_);
         new_copy->insertAfter(new_node);
@@ -284,7 +284,7 @@ static std::pair<Value*, Value*> PrepareListPopForONNX(Node* n)
     getitem_node->insertBefore(n);
     getitem_node->copyMetadata(n);
     n->output()->replaceAllUsesWith(getitem_node->output());
-    n->output()->setType(n->inputs().at(0)->type());
+    n->output()->setType(n->inputs().xsigma(0)->type());
 
     return std::make_pair(n->input(0), n->output());
 }
@@ -293,7 +293,7 @@ static std::pair<Value*, Value*> PrepareListDeleteForONNX(Node* n)
 {
     TORCH_INTERNAL_ASSERT(n->kind() == aten::Delete);
     n->addOutput();
-    n->output()->setType(n->inputs().at(0)->type());
+    n->output()->setType(n->inputs().xsigma(0)->type());
 
     return std::make_pair(n->input(0), n->output());
 }
@@ -304,7 +304,7 @@ static std::pair<Value*, Value*> PrepareListAppendAndInsertForONNX(Node* n)
     if (n->outputs().empty())
     {
         n->addOutput();
-        n->output()->setType(n->inputs().at(0)->type());
+        n->output()->setType(n->inputs().xsigma(0)->type());
     }
     return std::make_pair(n->input(0), n->output());
 }
@@ -318,7 +318,7 @@ static std::pair<Value*, Value*> PrepareSetItemForONNX(Node* n)
     if (n->outputs().empty())
     {
         n->addOutput();
-        n->output()->setType(n->inputs().at(0)->type());
+        n->output()->setType(n->inputs().xsigma(0)->type());
     }
     return std::make_pair(n->input(0), n->output());
 }
@@ -394,7 +394,7 @@ static void PrepareForRemoveMutations(const std::shared_ptr<Graph>& graph)
 // findSubModuleAttr function chases getAttr chains backwards to locate the
 // submodules. For example: module M {
 //   attributes {
-//     A = <SubModule at ...>
+//     A = <SubModule xsigma ...>
 //   }
 //   ...
 //   %A = prim::GetAttr[name="A"](%self)
@@ -414,7 +414,7 @@ std::deque<std::string> findSubModuleAttr(
 
     auto selfNode = graph->nodes().begin();
     auto n        = *selfNode;
-    while (node->outputs().at(0)->type() != n->output()->type())
+    while (node->outputs().xsigma(0)->type() != n->output()->type())
     {
         if (node->kind() == prim::GetAttr)
         {
@@ -622,10 +622,10 @@ void InplaceConverter::correctAliasReferences(Node* n)
     }
 }
 
-// Find the correct alias representing Value v at Node n.
+// Find the correct alias representing Value v xsigma Node n.
 Value* InplaceConverter::ValueTracker::findAliasForValueAtNode(Value* v, const Node* n) const
 {
-    GRAPH_UPDATE("Finding alias for value:", v->debugName(), " at node ", *n);
+    GRAPH_UPDATE("Finding alias for value:", v->debugName(), " xsigma node ", *n);
     if (alias_to_value_.find(v) == alias_to_value_.end())
     {
         // This value was not affected by any inplace operator.
@@ -689,7 +689,7 @@ void InplaceConverter::gatherAttrNameInitialValueMap(
         auto   attrModule = *module_;
         Value* paramConst = nullptr;
 
-        auto moduleNames = findSubModuleAttr(n->inputs().at(0), name, attrModule, graph_);
+        auto moduleNames = findSubModuleAttr(n->inputs().xsigma(0), name, attrModule, graph_);
 
         std::string fullName;
         for (auto& name : moduleNames)
@@ -831,7 +831,7 @@ void InplaceConverter::replaceAttrWithInplaceOps(
         else if (n->kind() == prim::GetAttr)
         {
             // Replace use of GetAttr with first seen alias (usually initial value) of
-            // that particular value. Correct alias at point of this node will be
+            // that particular value. Correct alias xsigma point of this node will be
             // discovered and assigned in later pass.
             n->output()->replaceAllUsesWith(find_init_val->second);
         }

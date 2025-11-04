@@ -1,7 +1,7 @@
-#include <c10/util/Logging.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/tensorexpr/reduction.h>
 #include <torch/csrc/jit/tensorexpr/tensor.h>
+#include <xsigma/util/Logging.h>
+#include <xsigma/util/irange.h>
 
 namespace torch::jit::tensorexpr
 {
@@ -46,7 +46,7 @@ StmtPtr Tensor::constructStmt(
     {
         TORCH_INTERNAL_ASSERT(reduce_op != nullptr);
 
-        for (const auto i : c10::irange(reduce_ndim))
+        for (const auto i : xsigma::irange(reduce_ndim))
         {
             // Going in reverse order: from innermost loop to the outermost
             size_t      dim_index = reduce_ndim - i - 1;
@@ -72,9 +72,9 @@ StmtPtr Tensor::constructStmt(
         }
     }
 
-    TORCH_INTERNAL_ASSERT_DEBUG_ONLY(
-        buf_->is_contiguous() || buf_->is_contiguous(at::MemoryFormat::ChannelsLast) ||
-        buf_->is_contiguous(at::MemoryFormat::ChannelsLast3d) ||
+    XSIGMA_CHECK_DEBUG(
+        buf_->is_contiguous() || buf_->is_contiguous(xsigma::MemoryFormat::ChannelsLast) ||
+        buf_->is_contiguous(xsigma::MemoryFormat::ChannelsLast3d) ||
         buf_->is_channels_last_1d_contiguous());
 
     auto loop_order_fn = [&]()
@@ -87,11 +87,11 @@ StmtPtr Tensor::constructStmt(
                 loop_order.push_back(i);
             }
         }
-        else if (buf_->is_contiguous(c10::MemoryFormat::ChannelsLast))
+        else if (buf_->is_contiguous(xsigma::MemoryFormat::ChannelsLast))
         {
             loop_order = {1, 3, 2, 0};
         }
-        else if (buf_->is_contiguous(c10::MemoryFormat::ChannelsLast3d))
+        else if (buf_->is_contiguous(xsigma::MemoryFormat::ChannelsLast3d))
         {
             loop_order = {1, 4, 3, 2, 0};
         }

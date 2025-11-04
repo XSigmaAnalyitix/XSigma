@@ -10,14 +10,14 @@ struct TORCH_API VariableInfo
     explicit VariableInfo();
     explicit VariableInfo(const Variable& var, bool use_zeros_like = false);
 
-    Variable zeros(at::OptionalDeviceGuard& device_guard) const;
+    Variable zeros(xsigma::OptionalDeviceGuard& device_guard) const;
 
-    at::Layout               layout      = at::Layout::Strided;
-    at::Device               device      = at::kCPU;
-    at::ScalarType           scalar_type = at::kFloat;
-    std::vector<c10::SymInt> size;
-    bool                     requires_grad;
-    bool                     is_empty;
+    xsigma::Layout              layout      = xsigma::Layout::Strided;
+    xsigma::Device              device      = xsigma::kCPU;
+    xsigma::ScalarType          scalar_type = xsigma::kFloat;
+    std::vector<xsigma::SymInt> size;
+    bool                        requires_grad;
+    bool                        is_empty;
     // needed for e.g. NJTs since they only support zeros_like()
     std::optional<Variable> the_var;
 };
