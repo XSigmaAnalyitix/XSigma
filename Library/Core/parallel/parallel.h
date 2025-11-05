@@ -49,12 +49,12 @@ XSIGMA_API void set_thread_num(int /*id*/);
 class XSIGMA_VISIBILITY thread_id_guard
 {
 public:
-    thread_id_guard(int new_id) : old_id_(xsigma::get_thread_num()) { set_thread_num(new_id); }
+    thread_id_guard(int id) : id_(xsigma::get_thread_num()) { set_thread_num(id); }
 
-    ~thread_id_guard() { set_thread_num(old_id_); }
+    ~thread_id_guard() { set_thread_num(id_); }
 
 private:
-    int old_id_;
+    int id_;
 };
 
 }  // namespace internal

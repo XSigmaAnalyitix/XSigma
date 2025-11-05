@@ -21,10 +21,8 @@
 
 namespace xsigma
 {
-
 namespace
 {
-
 std::string get_env_var(const char* var_name, const char* def_value = nullptr)
 {
     auto env = xsigma::utils::get_env(var_name);
