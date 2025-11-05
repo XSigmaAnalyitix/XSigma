@@ -18,16 +18,16 @@ Nodes are represented by the `Node` class, which is the fundamental unit of comp
 struct TORCH_API Node : std::enable_shared_from_this<Node> {
   // Unique sequence number (thread-local, monotonically increasing)
   uint64_t sequence_nr_;
-  
+
   // Outgoing edges to next nodes in the graph
   edge_list next_edges_;
-  
+
   // Input metadata (shape, dtype, device, etc.)
   std::vector<InputMetadata> input_metadata_;
-  
+
   // Topological number for execution ordering
   uint64_t topological_nr_;
-  
+
   // Thread ID where this node was created
   uint64_t thread_id_;
 };
@@ -54,7 +54,7 @@ Edges represent data dependencies between nodes:
 struct Edge {
   // Pointer to the target function/node
   std::shared_ptr<Node> function;
-  
+
   // Which input of the target function this edge connects to
   uint32_t input_nr;
 };
@@ -75,19 +75,19 @@ The `GraphTask` structure holds metadata for a single backward execution:
 struct GraphTask : std::enable_shared_from_this<GraphTask> {
   // Nodes waiting for inputs (not ready to execute)
   std::unordered_map<Node*, InputBuffer> not_ready_;
-  
+
   // Dependency count for each node
   std::unordered_map<Node*, int> dependencies_;
-  
+
   // Nodes in the graph
   std::unordered_set<Node*> nodes_in_graph_;
-  
+
   // Root nodes of the backward graph
-  xsigma::SmallVector<Node*, 4> graph_roots_;
-  
+  xsigma::small_vector<Node*, 4> graph_roots_;
+
   // Execution info for selective execution
   std::unordered_map<Node*, ExecInfo> exec_info_;
-  
+
   // Captured gradients for .grad() calls
   std::vector<at::Tensor> captured_vars_;
 };
@@ -109,7 +109,7 @@ inline void set_history(
     const std::shared_ptr<Node>& grad_fn) {
   // Add input metadata to the grad_fn
   auto output_nr = grad_fn->add_input_metadata(variable);
-  
+
   // Set the gradient edge on the output tensor
   impl::set_gradient_edge(variable, {grad_fn, output_nr});
 }
@@ -145,7 +145,7 @@ class Exp(Function):
         result = i.exp()
         ctx.save_for_backward(result)
         return result
-    
+
     @staticmethod
     def backward(ctx, grad_output):
         result, = ctx.saved_tensors
@@ -186,18 +186,18 @@ auto Engine::execute(
     bool create_graph,
     bool accumulate_grad,
     const edge_list& outputs) -> variable_list {
-  
+
   // Create GraphTask with metadata
   auto graph_task = std::make_shared<GraphTask>(
       keep_graph, create_graph, reentrant_depth,
       local_ready_queue, graph_roots);
-  
+
   // Create GraphRoot node
   auto graph_root = std::make_shared<GraphRoot>(root_edges, inputs);
-  
+
   // Compute dependencies
   compute_dependencies(graph_root.get(), *graph_task, min_topo_nr);
-  
+
   // Initialize execution info
   if (!outputs.empty()) {
     graph_task->init_to_execute(*graph_root, outputs, accumulate_grad, min_topo_nr);
@@ -217,7 +217,7 @@ struct ReadyQueue {
     bool operator()(NodeTask const& t1, NodeTask const& t2) {
       // Shutdown tasks first
       if (t2.isShutdownTask_) return true;
-      
+
       // Then by reentrant depth
       if (t1.getReentrantDepth() == t2.getReentrantDepth()) {
         // Then by sequence number (higher = earlier)
@@ -226,7 +226,7 @@ struct ReadyQueue {
       return t1.getReentrantDepth() > t2.getReentrantDepth();
     }
   };
-  
+
   std::priority_queue<NodeTask, std::vector<NodeTask>, CompareNodeTaskTime> heap_;
 };
 ```
@@ -307,4 +307,3 @@ PyTorch's graph system elegantly combines:
 - **Scalability** via multi-threaded execution
 
 The design enables both research flexibility and production performance.
-

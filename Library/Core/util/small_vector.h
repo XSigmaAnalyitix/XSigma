@@ -1,4 +1,4 @@
-//===- llvm/ADT/SmallVector.h - 'Normally small' vectors --------*- C++ -*-===//
+//===- llvm/ADT/small_vector.h - 'Normally small' vectors --------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,16 +6,16 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the SmallVector class.
+// This file defines the small_vector class.
 //
 //===----------------------------------------------------------------------===//
 
-// ATen: modified from llvm::SmallVector.
+// ATen: modified from llvm::small_vector.
 // used std::is_trivially_{copy,move}_constructible
 // replaced iterator_range constructor with inline Container&& constructor
 // replaced LLVM_NODISCARD, LLVM_LIKELY, and LLVM_UNLIKELY with xsigma equivalents
 // removed LLVM_GSL_OWNER
-// added SmallVector::at
+// added small_vector::at
 // added operator<< for std::ostream
 // added XSIGMA_API to export SmallVectorBase
 
@@ -44,9 +44,9 @@ namespace xsigma
 /// This is all the stuff common to all SmallVectors.
 ///
 /// The template parameter specifies the type which should be used to hold the
-/// Size and Capacity of the SmallVector, so it can be adjusted.
-/// Using 32 bit size is desirable to shrink the size of the SmallVector.
-/// Using 64 bit size is desirable for cases like SmallVector<char>, where a
+/// Size and Capacity of the small_vector, so it can be adjusted.
+/// Using 32 bit size is desirable to shrink the size of the small_vector.
+/// Using 64 bit size is desirable for cases like small_vector<char>, where a
 /// 32 bit size would limit the vector to ~4GB. SmallVectors are used for
 /// buffering bitcode output - which can exceed 4GB.
 template <class Size_T>
@@ -301,7 +301,7 @@ public:
     /// Return a pointer to the vector's buffer, even if empty().
     const_pointer data() const { return const_pointer(begin()); }
 
-    // SmallVector::at is NOT from LLVM.
+    // small_vector::at is NOT from LLVM.
     reference at(size_type idx)
     {
         assert(idx < size());
@@ -565,7 +565,7 @@ protected:
         std::enable_if_t<std::is_same_v<std::remove_const_t<T1>, T2>>* /*unused*/
         = nullptr)
     {
-        // Use memcpy for PODs iterated by pointers (which includes SmallVector
+        // Use memcpy for PODs iterated by pointers (which includes small_vector
         // iterators): std::uninitialized_copy optimizes to memmove, but we can
         // use memcpy here. Note that I and E are iterators and thus might be
         // invalid for memcpy if they are equal.
@@ -625,8 +625,8 @@ public:
     void pop_back() { this->set_size(this->size() - 1); }
 };
 
-/// This class consists of common code factored out of the SmallVector class to
-/// reduce code duplication based on the SmallVector 'N' template parameter.
+/// This class consists of common code factored out of the small_vector class to
+/// reduce code duplication based on the small_vector 'N' template parameter.
 template <typename T>
 class SmallVectorImpl : public SmallVectorTemplateBase<T>
 {
@@ -725,7 +725,7 @@ public:
 
     void swap(SmallVectorImpl& RHS) noexcept;
 
-    /// Add the specified range to the end of the SmallVector.
+    /// Add the specified range to the end of the small_vector.
     template <
         typename in_iter,
         typename = std::enable_if_t<std::is_convertible_v<
@@ -1198,7 +1198,7 @@ SmallVectorImpl<T>& SmallVectorImpl<T>::operator=(SmallVectorImpl<T>&& RHS) noex
     return *this;
 }
 
-/// Storage for the SmallVector elements.  This is specialized for the N=0 case
+/// Storage for the small_vector elements.  This is specialized for the N=0 case
 /// to avoid allocating unnecessary storage.
 template <typename T, unsigned N>
 struct SmallVectorStorage
@@ -1214,14 +1214,14 @@ struct alignas(T) SmallVectorStorage<T, 0>
 {
 };
 
-/// Forward declaration of SmallVector so that
+/// Forward declaration of small_vector so that
 /// calculateSmallVectorDefaultInlinedElements can reference
-/// `sizeof(SmallVector<T, 0>)`.
+/// `sizeof(small_vector<T, 0>)`.
 template <typename T, unsigned N>
-class /* LLVM_GSL_OWNER */ SmallVector;
+class /* LLVM_GSL_OWNER */ small_vector;
 
 /// Helper class for calculating the default number of inline elements for
-/// `SmallVector<T>`.
+/// `small_vector<T>`.
 ///
 /// This should be migrated to a constexpr function when our minimum
 /// compiler support is enough for multi-statement constexpr functions.
@@ -1229,11 +1229,11 @@ template <typename T>
 struct CalculateSmallVectorDefaultInlinedElements
 {
     // Parameter controlling the default number of inlined elements
-    // for `SmallVector<T>`.
+    // for `small_vector<T>`.
     //
     // The default number of inlined elements ensures that
     // 1. There is at least one inlined element.
-    // 2. `sizeof(SmallVector<T>) <= kPreferredSmallVectorSizeof` unless
+    // 2. `sizeof(small_vector<T>) <= kPreferredSmallVectorSizeof` unless
     // it contradicts 1.
     static constexpr size_t kPreferredSmallVectorSizeof = 64;
 
@@ -1242,14 +1242,14 @@ struct CalculateSmallVectorDefaultInlinedElements
     // Because our policy guarantees at least one inlined element, it is possible
     // for an arbitrarily large inlined element to allocate an arbitrarily large
     // amount of inline storage. We generally consider it an antipattern for a
-    // SmallVector to allocate an excessive amount of inline storage, so we want
+    // small_vector to allocate an excessive amount of inline storage, so we want
     // to call attention to these cases and make sure that users are making an
     // intentional decision if they request a lot of inline storage.
     //
     // We want this assertion to trigger in pathological cases, but otherwise
     // not be too easy to hit. To accomplish that, the cutoff is actually somewhat
     // larger than kPreferredSmallVectorSizeof (otherwise,
-    // `SmallVector<SmallVector<T>>` would be one easy way to trip it, and that
+    // `small_vector<small_vector<T>>` would be one easy way to trip it, and that
     // pattern seems useful in practice).
     //
     // One wrinkle is that this assertion is in theory non-portable, since
@@ -1262,14 +1262,14 @@ struct CalculateSmallVectorDefaultInlinedElements
     static_assert(
         sizeof(T) <= 256,
         "You are trying to use a default number of inlined elements for "
-        "`SmallVector<T>` but `sizeof(T)` is really big! Please use an "
-        "explicit number of inlined elements with `SmallVector<T, N>` to make "
+        "`small_vector<T>` but `sizeof(T)` is really big! Please use an "
+        "explicit number of inlined elements with `small_vector<T, N>` to make "
         "sure you really want that much inline storage.");
 
     // Discount the size of the header itself when calculating the maximum inline
     // bytes.
     static constexpr size_t PreferredInlineBytes =
-        kPreferredSmallVectorSizeof - sizeof(SmallVector<T, 0>);
+        kPreferredSmallVectorSizeof - sizeof(small_vector<T, 0>);
     static constexpr size_t NumElementsThatFit = PreferredInlineBytes / sizeof(T);
     static constexpr size_t value              = NumElementsThatFit == 0 ? 1 : NumElementsThatFit;
 };
@@ -1282,27 +1282,27 @@ struct CalculateSmallVectorDefaultInlinedElements
 ///
 /// \note
 /// In the absence of a well-motivated choice for the number of inlined
-/// elements \p N, it is recommended to use \c SmallVector<T> (that is,
+/// elements \p N, it is recommended to use \c small_vector<T> (that is,
 /// omitting the \p N). This will choose a default number of inlined elements
 /// reasonable for allocation on the stack (for example, trying to keep \c
-/// sizeof(SmallVector<T>) around 64 bytes).
+/// sizeof(small_vector<T>) around 64 bytes).
 ///
 /// \warning This does not attempt to be exception safe.
 ///
 /// \see https://llvm.org/docs/ProgrammersManual.html#llvm-adt-smallvector-h
 template <typename T, unsigned N = CalculateSmallVectorDefaultInlinedElements<T>::value>
-class /* LLVM_GSL_OWNER */ SmallVector : public SmallVectorImpl<T>, SmallVectorStorage<T, N>
+class /* LLVM_GSL_OWNER */ small_vector : public SmallVectorImpl<T>, SmallVectorStorage<T, N>
 {
 public:
-    SmallVector() : SmallVectorImpl<T>(N) {}
+    small_vector() : SmallVectorImpl<T>(N) {}
 
-    ~SmallVector()
+    ~small_vector()
     {
         // Destroy the constructed elements in the vector.
         this->destroy_range(this->begin(), this->end());
     }
 
-    explicit SmallVector(size_t Size, const T& Value = T()) : SmallVectorImpl<T>(N)
+    explicit small_vector(size_t Size, const T& Value = T()) : SmallVectorImpl<T>(N)
     {
         this->assign(Size, Value);
     }
@@ -1312,7 +1312,7 @@ public:
         typename = std::enable_if_t<std::is_convertible_v<
             typename std::iterator_traits<ItTy>::iterator_category,
             std::input_iterator_tag>>>
-    SmallVector(ItTy S, ItTy E) : SmallVectorImpl<T>(N)
+    small_vector(ItTy S, ItTy E) : SmallVectorImpl<T>(N)
     {
         this->append(S, E);
     }
@@ -1331,26 +1331,26 @@ public:
                         decltype(std::declval<Container>().end())>::iterator_category,
                     std::input_iterator_tag>,
             int> = 0>
-    explicit SmallVector(Container&& c) : SmallVectorImpl<T>(N)
+    explicit small_vector(Container&& c) : SmallVectorImpl<T>(N)
     {
         this->append(c.begin(), c.end());
     }
 
-    SmallVector(std::initializer_list<T> IL) : SmallVectorImpl<T>(N) { this->assign(IL); }
+    small_vector(std::initializer_list<T> IL) : SmallVectorImpl<T>(N) { this->assign(IL); }
 
-    SmallVector(const SmallVector& RHS) : SmallVectorImpl<T>(N)
+    small_vector(const small_vector& RHS) : SmallVectorImpl<T>(N)
     {
         if (!RHS.empty())
             SmallVectorImpl<T>::operator=(RHS);
     }
 
-    SmallVector& operator=(const SmallVector& RHS)
+    small_vector& operator=(const small_vector& RHS)
     {
         SmallVectorImpl<T>::operator=(RHS);
         return *this;
     }
 
-    SmallVector(SmallVector&& RHS) noexcept(std::is_nothrow_move_assignable_v<SmallVectorImpl<T>>)
+    small_vector(small_vector&& RHS) noexcept(std::is_nothrow_move_assignable_v<SmallVectorImpl<T>>)
         : SmallVectorImpl<T>(N)
     {
         if (!RHS.empty())
@@ -1371,13 +1371,13 @@ public:
                         decltype(std::declval<Container>().end())>::iterator_category,
                     std::input_iterator_tag>,
             int> = 0>
-    SmallVector& operator=(const Container& RHS)
+    small_vector& operator=(const Container& RHS)
     {
         this->assign(RHS.begin(), RHS.end());
         return *this;
     }
 
-    SmallVector(SmallVectorImpl<T>&& RHS) noexcept(
+    small_vector(SmallVectorImpl<T>&& RHS) noexcept(
         std::is_nothrow_move_assignable_v<SmallVectorImpl<T>>)
         : SmallVectorImpl<T>(N)
     {
@@ -1385,14 +1385,14 @@ public:
             SmallVectorImpl<T>::operator=(::std::move(RHS));
     }
 
-    SmallVector& operator=(SmallVector&& RHS) noexcept(
+    small_vector& operator=(small_vector&& RHS) noexcept(
         std::is_nothrow_move_assignable_v<SmallVectorImpl<T>>)
     {
         SmallVectorImpl<T>::operator=(::std::move(RHS));
         return *this;
     }
 
-    SmallVector& operator=(SmallVectorImpl<T>&& RHS) noexcept(
+    small_vector& operator=(SmallVectorImpl<T>&& RHS) noexcept(
         std::is_nothrow_move_constructible_v<SmallVectorImpl<T>>)
     {
         SmallVectorImpl<T>::operator=(::std::move(RHS));
@@ -1414,13 +1414,13 @@ public:
                     std::input_iterator_tag>,
             int> = 0>
     // NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
-    SmallVector& operator=(Container&& C)
+    small_vector& operator=(Container&& C)
     {
         this->assign(C.begin(), C.end());
         return *this;
     }
 
-    SmallVector& operator=(std::initializer_list<T> IL)
+    small_vector& operator=(std::initializer_list<T> IL)
     {
         this->assign(IL);
         return *this;
@@ -1428,13 +1428,13 @@ public:
 };
 
 template <typename T, unsigned N>
-inline size_t capacity_in_bytes(const SmallVector<T, N>& X)
+inline size_t capacity_in_bytes(const small_vector<T, N>& X)
 {
     return X.capacity_in_bytes();
 }
 
 template <typename T, unsigned N>
-std::ostream& operator<<(std::ostream& out, const SmallVector<T, N>& list)
+std::ostream& operator<<(std::ostream& out, const small_vector<T, N>& list)
 {
     int i = 0;
     out << "[";
@@ -1453,16 +1453,16 @@ using ValueTypeFromRangeType =
     std::remove_const_t<std::remove_reference_t<decltype(*std::begin(std::declval<RangeType&>()))>>;
 
 /// Given a range of type R, iterate the entire range and return a
-/// SmallVector with elements of the vector.  This is useful, for example,
+/// small_vector with elements of the vector.  This is useful, for example,
 /// when you want to iterate a range and then sort the results.
 template <unsigned Size, typename R>
 // NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
-SmallVector<ValueTypeFromRangeType<R>, Size> to_vector(R&& Range)
+small_vector<ValueTypeFromRangeType<R>, Size> to_vector(R&& Range)
 {
     return {std::begin(Range), std::end(Range)};
 }
 template <typename R>
-SmallVector<
+small_vector<
     ValueTypeFromRangeType<R>,
     CalculateSmallVectorDefaultInlinedElements<ValueTypeFromRangeType<R>>::value>
 // NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
@@ -1476,16 +1476,16 @@ to_vector(R&& Range)
 namespace std
 {
 
-/// Implement std::swap in terms of SmallVector swap.
+/// Implement std::swap in terms of small_vector swap.
 template <typename T>
 inline void swap(xsigma::SmallVectorImpl<T>& LHS, xsigma::SmallVectorImpl<T>& RHS) noexcept
 {
     LHS.swap(RHS);
 }
 
-/// Implement std::swap in terms of SmallVector swap.
+/// Implement std::swap in terms of small_vector swap.
 template <typename T, unsigned N>
-inline void swap(xsigma::SmallVector<T, N>& LHS, xsigma::SmallVector<T, N>& RHS) noexcept
+inline void swap(xsigma::small_vector<T, N>& LHS, xsigma::small_vector<T, N>& RHS) noexcept
 {
     LHS.swap(RHS);
 }

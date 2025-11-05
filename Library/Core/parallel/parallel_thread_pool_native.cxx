@@ -89,10 +89,8 @@ size_t get_num_interop_threads()
         // return default value
         return xsigma::task_thread_pool_base::default_num_threads();
     }
-    else
-    {
-        return get_pool().size();
-    }
+
+    return get_pool().size();
 }
 
 namespace internal

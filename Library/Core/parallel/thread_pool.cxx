@@ -1,5 +1,7 @@
 #include "thread_pool.h"
 
+#include <algorithm>
+
 #include "logging/logger.h"
 #include "smp/Advanced/thread_name.h"
 #if !defined(__powerpc__) && !defined(__s390x__)
@@ -18,7 +20,7 @@ size_t task_thread_pool_base::default_num_threads()
         // In cpuinfo parlance cores are physical ones and processors are virtual
         // thread_pool should be defaulted to number of physical cores
         size_t const num_cores = cpuinfo_get_cores_count();
-        num_threads      = cpuinfo_get_processors_count();
+        num_threads            = cpuinfo_get_processors_count();
         if (num_cores > 0 && num_cores < num_threads)
         {
             return num_cores;
@@ -69,15 +71,12 @@ thread_pool::~thread_pool()
         condition_.notify_all();
     }
 
+    // Join all threads. Threads should exit cleanly when running_ is set to false.
     for (auto& t : threads_)
     {
-        try
+        if (t.joinable())
         {
             t.join();
-            // NOLINTNEXTLINE(bugprone-empty-catch)
-        }
-        catch (const std::exception&)
-        {
         }
     }
 }
@@ -95,14 +94,10 @@ size_t thread_pool::num_available() const
 
 bool thread_pool::in_thread_pool() const
 {
-    for (const auto& thread : threads_)
-    {
-        if (thread.get_id() == std::this_thread::get_id())
-        {
-            return true;
-        }
-    }
-    return false;
+    return std::any_of(
+        threads_.begin(),
+        threads_.end(),
+        [](const std::thread& thread) { return thread.get_id() == std::this_thread::get_id(); });
 }
 
 void thread_pool::run(std::function<void()> func)

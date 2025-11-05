@@ -29,14 +29,14 @@ struct DeviceStats {
   StatArray segment;              // Device memory segments
   StatArray active;               // Active memory blocks
   StatArray inactive_split;       // Inactive split blocks
-  
+
   // Memory usage (bytes)
   StatArray allocated_bytes;      // Total allocated
   StatArray reserved_bytes;       // Total reserved (allocated + cached)
   StatArray active_bytes;         // Bytes in active blocks
   StatArray inactive_split_bytes; // Bytes in inactive splits
   StatArray requested_bytes;      // Bytes requested by user
-  
+
   // Performance metrics
   int64_t num_alloc_retries;      // Failed allocations requiring cache flush
   int64_t num_ooms;               // Out-of-memory errors
@@ -127,14 +127,14 @@ DataPtr allocate(size_t size) {
   if (forceUncachedAllocator() || !isEnabled()) {
     return uncached_allocate(size);  // Direct cudaMalloc
   }
-  
+
   // Get current CUDA stream
   CUDAStream stream = cuda::getCurrentCUDAStream(device);
-  
+
   // Allocate through caching allocator
   void* devPtr = nullptr;
   this->malloc(&devPtr, device, size, stream);
-  
+
   return DataPtr(devPtr, device, &local_raw_delete);
 }
 
@@ -142,21 +142,21 @@ DataPtr allocate(size_t size) {
 void malloc(void** devPtr, DeviceIndex device, size_t size, cudaStream_t stream) {
   // Round size to allocation bucket
   size_t rounded_size = round_size(size);
-  
+
   // Select appropriate pool (small or large)
   BlockPool& pool = get_pool(rounded_size, stream);
-  
+
   // Calculate actual allocation size
   size_t alloc_size = get_allocation_size(rounded_size);
-  
+
   // Try to find free block in cache
   Block* block = get_free_block(pool, rounded_size, stream);
-  
+
   if (!block) {
     // No cached block available
     // Try to allocate new block from device
     block = alloc_block(device, alloc_size, stream);
-    
+
     if (!block) {
       // Device memory exhausted
       // Flush cache and retry
@@ -164,7 +164,7 @@ void malloc(void** devPtr, DeviceIndex device, size_t size, cudaStream_t stream)
       block = alloc_block(device, alloc_size, stream);
     }
   }
-  
+
   *devPtr = block->ptr;
 }
 
@@ -186,14 +186,14 @@ static size_t get_allocation_size(size_t size) {
 **Block Splitting** (when allocated block is larger than needed):
 ```
 Before:  [████████████████] (16MB block)
-         
+
 After:   [████] (4MB allocated) + [████████████] (12MB free)
 ```
 
 **Block Merging** (when adjacent blocks are freed):
 ```
 Before:  [free] [allocated] [free]
-         
+
 After:   [free + free] [allocated]
 ```
 
@@ -203,13 +203,13 @@ After:   [free + free] [allocated]
 bool get_free_block(BlockPool& pool, size_t size, cudaStream_t stream) {
   // Search for smallest block >= requested size
   auto it = pool.blocks.lower_bound(&search_key);
-  
+
   if (it == pool.blocks.end()) {
     return false;  // No suitable block found
   }
-  
+
   Block* block = *it;
-  
+
   // Check if block is safe to reuse
   if (block->stream != stream) {
     // Block is associated with different stream
@@ -218,7 +218,7 @@ bool get_free_block(BlockPool& pool, size_t size, cudaStream_t stream) {
       return false;  // Stream still using block
     }
   }
-  
+
   // Block is safe to reuse
   pool.blocks.erase(it);
   return true;
@@ -238,23 +238,23 @@ bool alloc_block(AllocParams& p, bool isRetry) {
   if (isRetry) {
     stats.num_alloc_retries++;
   }
-  
+
   // Check memory limit
   if (set_fraction && reserved_bytes > allowed_maximum) {
     return false;
   }
-  
+
   // Attempt device allocation
   void* ptr = cudaMalloc(&ptr, p.alloc_size);
-  
+
   if (!ptr) {
     return false;  // Allocation failed
   }
-  
+
   // Create block and track statistics
   p.block = new Block(device, stream, p.alloc_size, pool, ptr);
   stats.reserved_bytes.increase(p.alloc_size);
-  
+
   return true;
 }
 ```
@@ -287,7 +287,7 @@ The `recordStream()` function associates a memory allocation with a CUDA stream:
 void record_stream_cuda(Tensor& self, c10::Stream stream) {
   // Pack stream information
   struct c10::StreamData3 data = stream.pack3();
-  
+
   // Record stream with allocator
   c10::cuda::CUDACachingAllocator::recordStream(
     self.storage().data_ptr(),
@@ -386,7 +386,7 @@ The allocator implements garbage collection to prevent unbounded cache growth:
 if (garbage_collection_threshold > 0.0) {
   // Track block reuse intervals
   ++pool.get_free_blocks_call_count;
-  
+
   // If block not reused for N calls, evict it
   if (block->gc_count > GC_THRESHOLD) {
     release_block(block);
@@ -461,7 +461,7 @@ For financial computing:
    buffer = torch.zeros(10000, 10000, device='cuda')
    for i in range(1000):
        result = compute(buffer)
-   
+
    # Avoid: Frequent small allocations
    for i in range(1000):
        buffer = torch.zeros(100, 100, device='cuda')
@@ -1153,4 +1153,3 @@ export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
 - NVIDIA CUDA Best Practices Guide
 - PyTorch Performance Tuning Documentation
 - xsigma_tensor Optimization Guide (forthcoming)
-

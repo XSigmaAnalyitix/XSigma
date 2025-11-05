@@ -154,7 +154,7 @@ struct GraphTask {
   std::unordered_map<Node*, InputBuffer> not_ready_;
   std::unordered_map<Node*, int> dependencies_;
   std::unordered_set<Node*> nodes_in_graph_;
-  xsigma::SmallVector<Node*, 4> graph_roots_;
+  xsigma::small_vector<Node*, 4> graph_roots_;
   std::unordered_map<Node*, ExecInfo> exec_info_;
   std::vector<at::Tensor> captured_vars_;
 };
@@ -168,7 +168,7 @@ struct GraphTask {
 struct ExecInfo {
   bool needed_ = false;  // Should this node execute?
   std::unique_ptr<std::vector<Capture>> captures_;  // For .grad()
-  
+
   struct Capture {
     int input_idx_;   // Which input of this node
     int output_idx_;  // Where to store in captured_vars_
@@ -309,4 +309,3 @@ torch/csrc/autograd/
 | How is execution ordered? | `ReadyQueue` comparator | `engine.h:90-100` |
 | How are dependencies computed? | `compute_dependencies()` | `engine.cpp` |
 | How is selective execution done? | `ExecInfo` filtering | `graph_task.h:47-130` |
-

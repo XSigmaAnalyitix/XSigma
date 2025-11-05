@@ -21,7 +21,7 @@ static std::shared_mutex& get_env_mutex()
 // Set an environment variable.
 void set_env(const char* name, const char* value, bool overwrite)
 {
-    std::lock_guard lk(get_env_mutex());
+    std::scoped_lock const lk(get_env_mutex());
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4996)
@@ -43,19 +43,18 @@ void set_env(const char* name, const char* value, bool overwrite)
     auto err = setenv(name, value, static_cast<int>(overwrite));
     XSIGMA_CHECK(err == 0, "setenv failed for environment \"", name, "\", the error is: ", err);
 #endif
-    return;
 }
 
 // Reads an environment variable and returns the content if it is set
 std::optional<std::string> get_env(const char* name) noexcept
 {
-    std::shared_lock lk(get_env_mutex());
+    std::shared_lock const lk(get_env_mutex());
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4996)
 #endif
     // NOLINTNEXTLINE(concurrency-mt-unsafe)
-    auto envar = std::getenv(name);
+    auto* envar = std::getenv(name);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif

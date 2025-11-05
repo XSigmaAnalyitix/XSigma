@@ -1,4 +1,4 @@
-//===- llvm/ADT/SmallVector.cpp - 'Normally small' vectors ----------------===//
+//===- llvm/ADT/small_vector.cpp - 'Normally small' vectors ----------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,11 +6,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the SmallVector class.
+// This file implements the small_vector class.
 //
 //===----------------------------------------------------------------------===//
 
-// ATen: modified from llvm::SmallVector.
+// ATen: modified from llvm::small_vector.
 // replaced llvm::safe_malloc with std::bad_alloc
 // deleted LLVM_ENABLE_EXCEPTIONS
 
@@ -26,7 +26,7 @@ namespace
 {
 // These structures may cause binary compat warnings on AIX. Suppress the
 // warning since we are only using these types for the static assertions below.
-#if defined(_AIX)
+#ifdef _AIX
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Waix-compat"
 #endif
@@ -38,31 +38,31 @@ struct Struct32B
 {
     alignas(32) void* X;
 };
-#if defined(_AIX)
+#ifdef _AIX
 #pragma GCC diagnostic pop
 #endif
 }  // namespace
 static_assert(
-    sizeof(SmallVector<void*, 0>) == sizeof(unsigned) * 2 + sizeof(void*),
-    "wasted space in SmallVector size 0");
+    sizeof(small_vector<void*, 0>) == (sizeof(unsigned) * 2) + sizeof(void*),
+    "wasted space in small_vector size 0");
 static_assert(
-    alignof(SmallVector<Struct16B, 0>) >= alignof(Struct16B),
+    alignof(small_vector<Struct16B, 0>) >= alignof(Struct16B),
     "wrong alignment for 16-byte aligned T");
 static_assert(
-    alignof(SmallVector<Struct32B, 0>) >= alignof(Struct32B),
+    alignof(small_vector<Struct32B, 0>) >= alignof(Struct32B),
     "wrong alignment for 32-byte aligned T");
 static_assert(
-    sizeof(SmallVector<Struct16B, 0>) >= alignof(Struct16B),
+    sizeof(small_vector<Struct16B, 0>) >= alignof(Struct16B),
     "missing padding for 16-byte aligned T");
 static_assert(
-    sizeof(SmallVector<Struct32B, 0>) >= alignof(Struct32B),
+    sizeof(small_vector<Struct32B, 0>) >= alignof(Struct32B),
     "missing padding for 32-byte aligned T");
 static_assert(
-    sizeof(SmallVector<void*, 1>) == sizeof(unsigned) * 2 + sizeof(void*) * 2,
-    "wasted space in SmallVector size 1");
+    sizeof(small_vector<void*, 1>) == (sizeof(unsigned) * 2) + (sizeof(void*) * 2),
+    "wasted space in small_vector size 1");
 
 static_assert(
-    sizeof(SmallVector<char, 0>) == sizeof(void*) * 2 + sizeof(void*),
+    sizeof(small_vector<char, 0>) == (sizeof(void*) * 2) + sizeof(void*),
     "1 byte elements have word-sized type for size and capacity");
 
 /// Report that MinSize doesn't fit into this vector's size type. Throws
@@ -70,8 +70,8 @@ static_assert(
 [[noreturn]] static void report_size_overflow(size_t MinSize, size_t MaxSize);
 static void              report_size_overflow(size_t MinSize, size_t MaxSize)
 {
-    std::string Reason =
-        "SmallVector unable to grow. Requested capacity (" + std::to_string(MinSize) +
+    std::string const Reason =
+        "small_vector unable to grow. Requested capacity (" + std::to_string(MinSize) +
         ") is larger than maximum value for size type (" + std::to_string(MaxSize) + ")";
     throw std::length_error(Reason);
 }
@@ -81,32 +81,36 @@ static void              report_size_overflow(size_t MinSize, size_t MaxSize)
 [[noreturn]] static void report_at_maximum_capacity(size_t MaxSize);
 static void              report_at_maximum_capacity(size_t MaxSize)
 {
-    std::string Reason =
-        "SmallVector capacity unable to grow. Already at maximum size " + std::to_string(MaxSize);
+    std::string const Reason =
+        "small_vector capacity unable to grow. Already at maximum size " + std::to_string(MaxSize);
     throw std::length_error(Reason);
 }
 
 // Note: Moving this function into the header may cause performance regression.
 template <class Size_T>
-static size_t getNewCapacity(size_t MinSize, size_t TSize, size_t OldCapacity)
+static size_t getNewCapacity(size_t MinSize, size_t OldCapacity)
 {
     constexpr size_t MaxSize = std::numeric_limits<Size_T>::max();
 
     // Ensure we can fit the new capacity.
     // This is only going to be applicable when the capacity is 32 bit.
     if (MinSize > MaxSize)
+    {
         report_size_overflow(MinSize, MaxSize);
+    }
 
     // Ensure we can meet the guarantee of space for at least one more element.
     // The above check alone will not catch the case where grow is called with a
     // default MinSize of 0, but the current capacity cannot be increased.
     // This is only going to be applicable when the capacity is 32 bit.
     if (OldCapacity == MaxSize)
+    {
         report_at_maximum_capacity(MaxSize);
+    }
 
     // In theory 2*capacity can overflow if the capacity is 64 bit, but the
     // original capacity would never be large enough for this to be a problem.
-    size_t NewCapacity = 2 * OldCapacity + 1;  // Always grow.
+    size_t const NewCapacity = (2 * OldCapacity) + 1;  // Always grow.
     return std::min(std::max(NewCapacity, MinSize), MaxSize);
 }
 
@@ -114,9 +118,9 @@ static size_t getNewCapacity(size_t MinSize, size_t TSize, size_t OldCapacity)
 template <class Size_T>
 void* SmallVectorBase<Size_T>::mallocForGrow(size_t MinSize, size_t TSize, size_t& NewCapacity)
 {
-    NewCapacity = getNewCapacity<Size_T>(MinSize, TSize, this->capacity());
+    NewCapacity = getNewCapacity<Size_T>(MinSize, this->capacity());
     // NOLINTNEXTLINE(cppcoreguidelines-no-malloc)
-    auto Result = std::malloc(NewCapacity * TSize);
+    auto* Result = std::malloc(NewCapacity * TSize);
     if (Result == nullptr)
     {
         throw std::bad_alloc();
@@ -128,8 +132,8 @@ void* SmallVectorBase<Size_T>::mallocForGrow(size_t MinSize, size_t TSize, size_
 template <class Size_T>
 void SmallVectorBase<Size_T>::grow_pod(const void* FirstEl, size_t MinSize, size_t TSize)
 {
-    size_t NewCapacity = getNewCapacity<Size_T>(MinSize, TSize, this->capacity());
-    void*  NewElts     = nullptr;
+    size_t const NewCapacity = getNewCapacity<Size_T>(MinSize, this->capacity());
+    void*        NewElts     = nullptr;
     if (BeginX == FirstEl)
     {
         // NOLINTNEXTLINE(cppcoreguidelines-no-malloc)

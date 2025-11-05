@@ -74,7 +74,7 @@ inline scalar_t parallel_reduce(
         return f(begin, end, ident);
     }
 
-    xsigma::SmallVector<scalar_t, 64> results(max_threads, ident);
+    xsigma::small_vector<scalar_t, 64> results(max_threads, ident);
     internal::invoke_parallel(
         begin,
         end,

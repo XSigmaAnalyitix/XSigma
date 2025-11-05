@@ -14,13 +14,13 @@ explicit Node(uint64_t sequence_nr, edge_list&& next_edges = edge_list())
   for (const Edge& edge : next_edges_) {
     update_topological_nr(edge);
   }
-  
+
   // Store anomaly metadata if enabled
   if (AnomalyMode::is_enabled()) {
     metadata()->store_stack();
     assign_parent();
   }
-  
+
   // Record thread ID for profiling
   thread_id_ = at::RecordFunction::currentThreadId();
 }
@@ -86,7 +86,7 @@ inline void set_history(
   if (variable.defined()) {
     // Add input metadata to grad_fn
     auto output_nr = grad_fn->add_input_metadata(variable);
-    
+
     // Set gradient edge on output tensor
     impl::set_gradient_edge(variable, {grad_fn, output_nr});
   } else {
@@ -154,37 +154,37 @@ auto Engine::execute(
     bool create_graph,
     bool accumulate_grad,
     const edge_list& outputs) -> variable_list {
-  
+
   // Validate outputs
   validate_outputs(root_edges, const_cast<variable_list&>(inputs),
       [](const std::string& msg) { return msg; });
-  
+
   // Initialize ready queue
   init_local_ready_queue();
   bool not_reentrant_backward_call = worker_device == NO_DEVICE;
-  
+
   // Extract root nodes
-  xsigma::SmallVector<Node*, 4> temp_roots{root_edges.size()};
+  xsigma::small_vector<Node*, 4> temp_roots{root_edges.size()};
   for (const auto i : xsigma::irange(root_edges.size())) {
     temp_roots[i] = root_edges[i].function.get();
   }
-  
+
   // Create graph task
   auto graph_task = std::make_shared<GraphTask>(
       keep_graph, create_graph,
       not_reentrant_backward_call ? 0 : total_depth + 1,
       local_ready_queue, std::move(temp_roots));
-  
+
   // Create graph root (entry point)
   bool skip_dummy_node = root_edges.size() == 1 && compiled_autograd == nullptr;
   auto graph_root = skip_dummy_node
       ? root_edges.at(0).function
       : std::make_shared<GraphRoot>(root_edges, inputs);
-  
+
   // Compute dependencies
   auto min_topo_nr = compute_min_topological_nr(outputs);
   compute_dependencies(graph_root.get(), *graph_task, min_topo_nr);
-  
+
   // Initialize execution info for selective execution
   if (!outputs.empty()) {
     graph_task->init_to_execute(*graph_root, outputs, accumulate_grad, min_topo_nr);
@@ -202,7 +202,7 @@ void GraphTask::init_to_execute(
     const edge_list& outputs,
     bool accumulate_grad,
     uint64_t min_topo_nr) {
-  
+
   // Mark output nodes as needed
   int output_idx = 0;
   for (auto& output_edge : outputs) {
@@ -218,13 +218,13 @@ void GraphTask::init_to_execute(
       info.captures_->emplace_back(output_edge.input_nr, output_idx++);
     }
   }
-  
+
   // Traverse graph to mark needed nodes
   struct Frame {
     Frame(Node* fn) : fn_(fn) {}
     Node* fn_{};
     size_t next_next_fn_{};
-    
+
     Node* get_next_fn() {
       const auto& next = fn_->next_edges();
       auto num_next = next.size();
@@ -235,24 +235,24 @@ void GraphTask::init_to_execute(
       return nullptr;
     }
   };
-  
+
   std::vector<Frame> stack;
   std::unordered_set<Node*> seen;
   stack.emplace_back(&graph_root);
   exec_info_.emplace(stack.back().fn_, ExecInfo());
-  
+
   // Iterative DFS to mark needed nodes
   while (!stack.empty()) {
     auto& frame = stack.back();
     const auto fn = frame.fn_;
-    
+
     Node* child_fn = nullptr;
     while ((child_fn = frame.get_next_fn()) && !seen.emplace(child_fn).second) {
       if (nodeShouldExecute(child_fn)) {
         exec_info_[fn].needed_ = true;
       }
     }
-    
+
     if (child_fn) {
       stack.emplace_back(child_fn);
       exec_info_.emplace(child_fn, ExecInfo());
@@ -281,7 +281,7 @@ struct ReadyQueue {
       } else if (!t2.fn_) {
         return true;
       }
-      
+
       // Sort by reentrant depth (lower depth = higher priority)
       else if (t1.getReentrantDepth() == t2.getReentrantDepth()) {
         // Within same depth, higher sequence number = higher priority
@@ -290,9 +290,9 @@ struct ReadyQueue {
       return t1.getReentrantDepth() > t2.getReentrantDepth();
     }
   };
-  
+
   std::priority_queue<NodeTask, std::vector<NodeTask>, CompareNodeTaskTime> heap_;
-  
+
   void push(NodeTask item, bool incrementOutstandingTasks = true);
   NodeTask pop();
   bool empty() const;
@@ -316,11 +316,11 @@ struct TORCH_API GraphRoot : public Node {
       add_input_metadata(t);
     }
   }
-  
+
   variable_list apply(variable_list&& inputs) override {
     return outputs;  // Return root gradients
   }
-  
+
   variable_list outputs;
 };
 
@@ -328,9 +328,9 @@ struct TORCH_API GraphRoot : public Node {
 struct TORCH_API Error : public Node {
   Error(std::string msg, edge_list&& next_edges)
       : Node(std::move(next_edges)), msg(std::move(msg)) {}
-  
+
   variable_list apply(variable_list&& inputs) override;
-  
+
   std::string msg;
 };
 ```
@@ -347,12 +347,12 @@ class Function(_SingleLevelFunction):
     def forward(ctx, *args, **kwargs):
         """Compute forward pass and save tensors for backward"""
         raise NotImplementedError
-    
+
     @staticmethod
     def backward(ctx, *grad_outputs):
         """Compute gradients given output gradients"""
         raise NotImplementedError
-    
+
     @classmethod
     def apply(cls, *args, **kwargs):
         """Apply the function (creates backward node)"""
@@ -368,7 +368,7 @@ class Exp(Function):
         result = i.exp()
         ctx.save_for_backward(result)
         return result
-    
+
     @staticmethod
     def backward(ctx, grad_output):
         result, = ctx.saved_tensors
@@ -387,4 +387,3 @@ output = Exp.apply(input)  # Creates ExpBackward node
 4. **Metadata Storage:** Enables gradient shape inference
 5. **Thread Safety:** Shared pointers and mutex protection
 6. **Selective Execution:** Only execute nodes needed for outputs
-

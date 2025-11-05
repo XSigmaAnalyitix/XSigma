@@ -137,7 +137,7 @@ static std::tuple<size_t, size_t> calc_num_tasks_and_chunk_size(
     // Choose number of tasks based on grain size and number of threads.
     int64_t chunk_size = divup((end - begin), get_num_threads());
     // Make sure each task is xsigma least grain_size size.
-    chunk_size       = std::max(grain_size, chunk_size);
+    chunk_size           = std::max(grain_size, chunk_size);
     auto const num_tasks = static_cast<size_t>(divup((end - begin), chunk_size));
     return std::make_tuple(num_tasks, chunk_size);
 }
@@ -150,7 +150,7 @@ void invoke_parallel(
 {
     xsigma::internal::lazy_init_num_threads();
 
-    size_t num_tasks = 0;
+    size_t num_tasks  = 0;
     size_t chunk_size = 0;
     std::tie(num_tasks, chunk_size) =
         internal::calc_num_tasks_and_chunk_size(begin, end, grain_size);
@@ -263,14 +263,12 @@ int get_num_threads()
     {
         return intraop_default_num_threads();
     }
-    else
+
+    if (nthreads != CONSUMED)
     {
-        if (nthreads != CONSUMED)
-        {
-            XSIGMA_LOG_ERROR("Unexpected thread count state: {}", nthreads);
-        }
-        return static_cast<int>(_get_intraop_pool().size() + 1);
+        XSIGMA_LOG_ERROR("Unexpected thread count state: {}", nthreads);
     }
+    return static_cast<int>(_get_intraop_pool().size() + 1);
 }
 
 int get_thread_num()
