@@ -5,6 +5,21 @@
 
 #include "common/export.h"
 #include "common/macros.h"
+#include "parallel/parallel_guard.h"
+#include "util/exception.h"
+#include "util/small_vector.h"
+
+#ifdef _OPENMP
+#include <algorithm>
+#include <atomic>
+#include <cstddef>
+#include <exception>
+#include <omp.h>
+#endif
+
+// Define INTRA_OP_PARALLEL for both OpenMP and native backends
+// This enables parallel execution in parallel_for and parallel_reduce
+#define INTRA_OP_PARALLEL
 
 namespace xsigma
 {
@@ -155,12 +170,144 @@ XSIGMA_API void intraop_launch(const std::function<void()>& func);
 // Returns number of intra-op threads used by default
 XSIGMA_API int intraop_default_num_threads();
 
-}  // namespace xsigma
-
+// Forward declarations for invoke_parallel implementations
+namespace internal
+{
 #if XSIGMA_HAS_OPENMP
-#include "parallel/openmp/parallel_openmp.h"  // IWYU pragma: keep
-#else
-#include "parallel/native/parallel_native.h"  // IWYU pragma: keep
-#endif
+// OpenMP implementation of invoke_parallel
+// This template function is used by parallel_for and parallel_reduce
+// when XSIGMA_HAS_OPENMP is enabled
+template <typename F>
+inline void invoke_parallel(int64_t begin, int64_t end, int64_t grain_size, const F& f)
+{
+    std::atomic<bool> has_error{false};
 
-#include "parallel.hxx"  // IWYU pragma: keep
+#pragma omp parallel
+    {
+        // choose number of tasks based on grain size and number of threads
+        // can't use num_threads clause due to bugs in GOMP's thread pool (See
+        // #32008)
+        int64_t num_threads = omp_get_num_threads();
+        if (grain_size > 0)
+        {
+            num_threads = std::min(num_threads, divup((end - begin), grain_size));
+        }
+
+        int64_t tid        = omp_get_thread_num();
+        int64_t chunk_size = divup((end - begin), num_threads);
+        int64_t begin_tid  = begin + tid * chunk_size;
+        if (begin_tid < end && !has_error.load())
+        {
+            internal::thread_id_guard tid_guard(tid);
+            // Note: Error handling removed - function f should handle errors internally
+            f(begin_tid, std::min(end, chunk_size + begin_tid));
+        }
+    }
+}
+#else
+// Native implementation declaration - implemented in parallel.cxx
+XSIGMA_API void invoke_parallel(
+    const int64_t                                begin,
+    const int64_t                                end,
+    const int64_t                                grain_size,
+    const std::function<void(int64_t, int64_t)>& f);
+#endif
+}  // namespace internal
+
+// ============================================================================
+// Template Implementations
+// ============================================================================
+
+template <class F>
+inline void parallel_for(
+    const int64_t begin, const int64_t end, const int64_t grain_size, const F& f)
+{
+    XSIGMA_CHECK_DEBUG(grain_size >= 0);
+    if (begin >= end)
+    {
+        return;
+    }
+
+#ifdef INTRA_OP_PARALLEL
+    xsigma::internal::lazy_init_num_threads();
+    const auto numiter = end - begin;
+    const bool use_parallel =
+        (numiter > grain_size && numiter > 1 && !xsigma::in_parallel_region() &&
+         xsigma::get_num_threads() > 1);
+    if (!use_parallel)
+    {
+        internal::thread_id_guard tid_guard(0);
+        xsigma::parallel_guard    guard(true);
+        f(begin, end);
+        return;
+    }
+
+    internal::invoke_parallel(
+        begin,
+        end,
+        grain_size,
+        [&](int64_t begin, int64_t end)
+        {
+            xsigma::parallel_guard guard(true);
+            f(begin, end);
+        });
+#else
+    internal::thread_id_guard tid_guard(0);
+    xsigma::parallel_guard    guard(true);
+    f(begin, end);
+#endif
+}
+
+template <class scalar_t, class F, class SF>
+inline scalar_t parallel_reduce(
+    const int64_t  begin,
+    const int64_t  end,
+    const int64_t  grain_size,
+    const scalar_t ident,
+    const F&       f,
+    const SF&      sf)
+{
+    XSIGMA_CHECK(grain_size >= 0);
+    if (begin >= end)
+    {
+        return ident;
+    }
+
+#ifdef INTRA_OP_PARALLEL
+    xsigma::internal::lazy_init_num_threads();
+    const auto max_threads = xsigma::get_num_threads();
+    const bool use_parallel =
+        ((end - begin) > grain_size && !xsigma::in_parallel_region() && max_threads > 1);
+    if (!use_parallel)
+    {
+        internal::thread_id_guard tid_guard(0);
+        xsigma::parallel_guard    guard(true);
+        return f(begin, end, ident);
+    }
+
+    xsigma::small_vector<scalar_t, 64> results(max_threads, ident);
+    internal::invoke_parallel(
+        begin,
+        end,
+        grain_size,
+        [&](const int64_t my_begin, const int64_t my_end)
+        {
+            const auto             tid = xsigma::get_thread_num();
+            xsigma::parallel_guard guard(true);
+            results[tid] = f(my_begin, my_end, ident);
+        });
+
+    scalar_t result = ident;
+    for (auto partial_result : results)
+    {
+        result = sf(result, partial_result);
+    }
+    return result;
+#else
+    internal::thread_id_guard tid_guard(0);
+    xsigma::parallel_guard    guard(true);
+    return f(begin, end, ident);
+#endif
+}
+
+}  // namespace xsigma

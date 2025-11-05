@@ -1,6 +1,7 @@
 #include <sstream>
 #include <thread>
-
+#include <atomic>
+#include <utility>
 
 #include "parallel.h"
 #include "thread_pool.h"
@@ -81,17 +82,14 @@ std::string get_parallel_info()
 {
     std::ostringstream ss;
 
-    ss << "ATen/Parallel:\n\tat::get_num_threads() : " << xsigma::get_num_threads() << '\n';
-    ss << "\tat::get_num_interop_threads() : " << xsigma::get_num_interop_threads() << '\n';
+    ss << "XSigma/Parallel:\n\tat::get_num_threads() : " << xsigma::get_num_threads() << '\n';
+    ss << "\txsigma::get_num_interop_threads() : " << xsigma::get_num_interop_threads() << '\n';
 
 #ifdef _OPENMP
     ss << xsigma::get_openmp_version() << '\n';
     ss << "\tomp_get_max_threads() : " << omp_get_max_threads() << '\n';
 #endif
 
-#if defined(__x86_64__) || defined(_M_X64)
-    ss << xsigma::get_mkl_version() << '\n';
-#endif
 #if XSIGMA_HAS_MKL
     ss << "\tmkl_get_max_threads() : " << mkl_get_max_threads() << '\n';
 #endif
@@ -100,10 +98,11 @@ std::string get_parallel_info()
     ss << "Environment variables:" << '\n';
     ss << "\tOMP_NUM_THREADS : " << get_env_var("OMP_NUM_THREADS", "[not set]") << '\n';
 #if defined(__x86_64__) || defined(_M_X64)
+    ss << xsigma::get_mkl_version() << '\n';
     ss << "\tMKL_NUM_THREADS : " << get_env_var("MKL_NUM_THREADS", "[not set]") << '\n';
 #endif
 
-    ss << "ATen parallel backend: ";
+    ss << "XSigma parallel backend: ";
 #if XSIGMA_HAS_OPENMP
     ss << "OpenMP";
 #elif !XSIGMA_HAS_OPENMP
@@ -141,6 +140,532 @@ int intraop_default_num_threads()
         nthreads = xsigma::task_thread_pool_base::default_num_threads();
     }
     return static_cast<int>(nthreads);
+}
+
+// ============================================================================
+// Parallel Implementation Functions
+// ============================================================================
+// The following functions have different implementations for OpenMP and native
+// thread pool backends, selected via conditional compilation at the function level.
+
+// ============================================================================
+// Shared State Variables
+// ============================================================================
+// These variables are used by both OpenMP and native implementations
+
+namespace
+{
+#if XSIGMA_HAS_OPENMP
+// OpenMP backend state
+// Number of threads set by the user
+std::atomic<int> num_threads{-1};
+thread_local int this_thread_id{0};
+#else
+// Native backend state
+// used with _set_in_parallel_region to mark master thread
+// as in parallel region while executing parallel primitives
+thread_local bool in_parallel_region_ = false;
+
+// thread number (task_id) set by parallel primitive
+thread_local int thread_num_ = 0;
+
+void _set_in_parallel_region(bool in_region)
+{
+    in_parallel_region_ = in_region;
+}
+
+void _unset_thread_num()
+{
+    thread_num_ = 0;
+}
+
+const int NOT_SET  = -1;
+const int CONSUMED = -2;
+
+// Number of threads set by the user
+// NOT_SET -> positive value -> CONSUMED
+// or
+// NOT_SET -> CONSUMED
+// Meaning:
+//  - NOT_SET - pool not initialized, user value is not set
+//  - positive value - pool not initialized, user value set
+//  - CONSUMED - pool is initialized
+std::atomic<int> num_intraop_threads{NOT_SET};
+#endif
+
+}  // namespace
+
+// ============================================================================
+// Core Parallel Functions
+// ============================================================================
+// Each function contains conditional compilation to select between OpenMP
+// and native thread pool implementations
+
+void init_num_threads()
+{
+#if XSIGMA_HAS_OPENMP
+    // OpenMP implementation
+    auto nthreads = num_threads.load();
+    if (nthreads > 0)
+    {
+        set_num_threads(nthreads);
+    }
+    else
+    {
+#if defined(_OPENMP) && XSIGMA_HAS_MKL && !XSIGMA_MKL_SEQUENTIAL
+        // If we are using MKL an OpenMP make sure the number of threads match.
+        // Otherwise, MKL and our OpenMP-enabled functions will keep changing the
+        // size of the OpenMP thread pool, resulting in worse performance (and memory
+        // leaks in GCC 5.4)
+        omp_set_num_threads(mkl_get_max_threads());
+#elif defined(_OPENMP)
+        omp_set_num_threads(intraop_default_num_threads());
+#endif
+    }
+#else
+    // Native implementation
+#ifdef _OPENMP
+    omp_set_num_threads(1);
+#endif
+
+#if XSIGMA_HAS_MKL
+    mkl_set_num_threads(1);
+#endif
+#endif
+}
+
+void set_num_threads(int nthreads)
+{
+    // Validate input (common to both implementations)
+    if (nthreads <= 0)
+    {
+        XSIGMA_LOG_ERROR("Expected positive number of threads, got {}", nthreads);
+        return;
+    }
+
+#if XSIGMA_HAS_OPENMP
+    // OpenMP implementation
+    num_threads.store(nthreads);
+#ifdef _OPENMP
+    omp_set_num_threads(nthreads);
+#endif
+#if XSIGMA_HAS_MKL
+    mkl_set_num_threads_local(nthreads);
+    mkl_set_dynamic(false);
+#endif
+#else
+    // Native implementation
+    int no_value = NOT_SET;
+    if (!num_intraop_threads.compare_exchange_strong(no_value, nthreads))
+    {
+        // num_intraop_threads either stores a positive integer or CONSUMED,
+        // check that requested size is the same as the current one
+        int stored_nthreads = num_intraop_threads.load();
+        if (stored_nthreads <= 0)
+        {
+            // plus one because of master thread
+            stored_nthreads = static_cast<int>(_get_intraop_pool().size() + 1);
+        }
+        if (stored_nthreads != nthreads)
+        {
+            XSIGMA_LOG_WARNING(
+                "Cannot set number of intraop threads "
+                "after parallel work has started or after set_num_threads call "
+                "when using native parallel backend");
+        }
+    }
+#endif
+}
+
+int get_num_threads()
+{
+#if XSIGMA_HAS_OPENMP
+    // OpenMP implementation
+    // Explicitly calling omp_get_max_threads() as the size of the parallel
+    // region might be different in the new thread;
+    // Use init_num_threads() during thread initialization to ensure
+    // consistent size of parallel region in different threads
+#ifdef _OPENMP
+    xsigma::internal::lazy_init_num_threads();
+    return omp_get_max_threads();
+#else
+    return 1;
+#endif
+#else
+    // Native implementation
+    xsigma::internal::lazy_init_num_threads();
+    // not initializing pool unnecessarily,
+    // because pool cannot be resized after initialization
+    int nthreads = num_intraop_threads.load();
+    if (nthreads > 0)
+    {
+        return nthreads;
+    }
+    if (nthreads == NOT_SET)
+    {
+        return intraop_default_num_threads();
+    }
+
+    if (nthreads != CONSUMED)
+    {
+        XSIGMA_LOG_ERROR("Unexpected thread count state: {}", nthreads);
+    }
+    return static_cast<int>(_get_intraop_pool().size() + 1);
+#endif
+}
+
+int get_thread_num()
+{
+#if XSIGMA_HAS_OPENMP
+    // OpenMP implementation
+    return this_thread_id;
+#else
+    // Native implementation
+    return thread_num_;
+#endif
+}
+
+namespace internal
+{
+void set_thread_num(int id)
+{
+#if XSIGMA_HAS_OPENMP
+    // OpenMP implementation
+    this_thread_id = id;
+#else
+    // Native implementation
+    thread_num_ = id;
+#endif
+}
+}  // namespace internal
+
+bool in_parallel_region()
+{
+#if XSIGMA_HAS_OPENMP
+    // OpenMP implementation
+#ifdef _OPENMP
+    return omp_in_parallel();
+#else
+    return false;
+#endif
+#else
+    // Native implementation
+    return in_parallel_region_ || (num_intraop_threads.load() == CONSUMED &&
+                                   // Needed as intraop_launch() doesn't set in_parallel_region().
+                                   _get_intraop_pool().in_thread_pool());
+#endif
+}
+
+void intraop_launch(const std::function<void()>& func)
+{
+#if XSIGMA_HAS_OPENMP
+    // OpenMP implementation - execute inline
+    func();
+#else
+    // Native implementation - use thread pool if not in parallel region
+    if (!in_parallel_region() && get_num_threads() > 1)
+    {
+        _get_intraop_pool().run(func);
+    }
+    else
+    {
+        // execute inline if we're in parallel region
+        func();
+    }
+#endif
+}
+
+// ============================================================================
+// Native Backend Helper Functions
+// ============================================================================
+// These functions are only used by the native backend implementation
+
+#if !XSIGMA_HAS_OPENMP
+
+namespace
+{
+
+int _num_pool_threads(int nthreads)
+{
+    if (nthreads == NOT_SET)
+    {
+        nthreads = intraop_default_num_threads();
+    }
+    else
+    {
+        if (nthreads <= 0)
+        {
+            XSIGMA_LOG_ERROR("Invalid number of threads: {}", nthreads);
+            nthreads = 1;
+        }
+    }
+    // minus one because of the master thread
+    return nthreads - 1;
+}
+
+xsigma::task_thread_pool_base& _get_intraop_pool()
+{
+    static std::shared_ptr<xsigma::task_thread_pool_base> const pool = ThreadPoolRegistry()->run(
+        "XSIGMA",
+        /* device_id */ 0,
+        /* pool_size */ _num_pool_threads(num_intraop_threads.exchange(CONSUMED)),
+        /* create_new */ true);  // create a separate thread pool for intra-op
+    return *pool;
+}
+
+// Run lambda function `fn` over `task_id` in [0, `range`) with threadpool.
+// `fn` will be called with params: task_id.
+void _run_with_pool(const std::function<void(size_t)>& fn, size_t range)
+{
+    for (size_t i = 1; i < range; ++i)
+    {
+        _get_intraop_pool().run([fn, i]() { fn(i); });
+    }
+    // Run the first task on the current thread directly.
+    fn(0);
+}
+
+// RAII guard helps to support in_parallel_region() and get_thread_num() API.
+struct parallel_region_guard
+{
+    parallel_region_guard(int task_id)
+    {
+        internal::set_thread_num(task_id);
+        _set_in_parallel_region(true);
+    }
+    parallel_region_guard(const parallel_region_guard&)            = delete;
+    parallel_region_guard(parallel_region_guard&&)                 = delete;
+    parallel_region_guard& operator=(const parallel_region_guard&) = delete;
+    parallel_region_guard& operator=(parallel_region_guard&&)      = delete;
+
+    ~parallel_region_guard()
+    {
+        _set_in_parallel_region(false);
+        _unset_thread_num();
+    }
+};
+
+}  // namespace
+
+namespace internal
+{
+
+static std::tuple<size_t, size_t> calc_num_tasks_and_chunk_size(
+    int64_t begin, int64_t end, int64_t grain_size)
+{
+    if ((end - begin) < grain_size)
+    {
+        return std::make_tuple(1, std::max((int64_t)0, end - begin));
+    }
+    // Choose number of tasks based on grain size and number of threads.
+    int64_t chunk_size = divup((end - begin), get_num_threads());
+    // Make sure each task is xsigma least grain_size size.
+    chunk_size           = std::max(grain_size, chunk_size);
+    auto const num_tasks = static_cast<size_t>(divup((end - begin), chunk_size));
+    return std::make_tuple(num_tasks, chunk_size);
+}
+
+void invoke_parallel(
+    const int64_t                                begin,
+    const int64_t                                end,
+    const int64_t                                grain_size,
+    const std::function<void(int64_t, int64_t)>& f)
+{
+    xsigma::internal::lazy_init_num_threads();
+
+    size_t num_tasks  = 0;
+    size_t chunk_size = 0;
+    std::tie(num_tasks, chunk_size) =
+        internal::calc_num_tasks_and_chunk_size(begin, end, grain_size);
+
+    // Synchronization state for parallel execution
+    // IMPORTANT: remaining must be initialized to num_tasks BEFORE launching tasks
+    // to avoid race condition where tasks complete before counter is set
+    struct
+    {
+        std::atomic_flag        err_flag = ATOMIC_FLAG_INIT;
+        std::exception_ptr      eptr;
+        std::mutex              mutex;
+        std::atomic_size_t      remaining;
+        std::condition_variable cv;
+    } state;
+
+    // Initialize remaining counter BEFORE launching any tasks to prevent race condition
+    state.remaining.store(num_tasks, std::memory_order_release);
+
+    auto task = [f, &state, begin, end, chunk_size](size_t task_id)
+    {
+        auto const local_start = static_cast<int64_t>(begin + (task_id * chunk_size));
+        if (local_start < end)
+        {
+            int64_t const local_end = std::min(end, static_cast<int64_t>(chunk_size + local_start));
+            try
+            {
+                parallel_region_guard const guard(static_cast<int>(task_id));
+                f(local_start, local_end);
+            }
+            catch (...)
+            {
+                if (!state.err_flag.test_and_set())
+                {
+                    state.eptr = std::current_exception();
+                }
+            }
+        }
+        // Decrement remaining counter with proper synchronization
+        // Use acquire-release semantics to ensure all task work is visible
+        {
+            std::unique_lock<std::mutex> const lk(state.mutex);
+            if (state.remaining.fetch_sub(1, std::memory_order_acq_rel) == 1)
+            {
+                // This was the last task to complete
+                state.cv.notify_one();
+            }
+        }
+    };
+
+    // Launch all tasks - counter is already initialized above
+    _run_with_pool(std::move(task), num_tasks);
+
+    // Wait for all tasks to finish
+    // Use acquire semantics to ensure we see all worker thread writes
+    {
+        std::unique_lock<std::mutex> lk(state.mutex);
+        state.cv.wait(lk, [&state]() { return state.remaining.load(std::memory_order_acquire) == 0; });
+    }
+
+    if (state.eptr)
+    {
+        std::rethrow_exception(state.eptr);
+    }
+}
+
+}  // namespace internal
+
+#endif  // !XSIGMA_HAS_OPENMP
+
+// ============================================================================
+// Inter-op Thread Pool Functions
+// ============================================================================
+// These functions manage the inter-op thread pool for both OpenMP and native
+// backends. The native backend uses a separate thread pool for inter-op tasks.
+
+#if !XSIGMA_HAS_OPENMP
+// Native backend inter-op thread pool state and helper functions
+namespace
+{
+// Number of inter-op threads set by the user;
+// NOT_SET -> positive value -> CONSUMED
+// (CONSUMED - thread pool is initialized)
+// or
+// NOT_SET -> CONSUMED
+std::atomic<int> num_interop_threads{NOT_SET};
+
+// thread pool global instance is hidden,
+// users should use xsigma::launch and get/set_num_interop_threads interface
+xsigma::task_thread_pool_base& get_interop_pool()
+{
+    static std::shared_ptr<xsigma::task_thread_pool_base> const pool = ThreadPoolRegistry()->run(
+        "XSIGMA",
+        /* device_id */ 0,
+        /* pool_size */ num_interop_threads.exchange(CONSUMED),
+        /* create_new */ true);
+    return *pool;
+}
+
+// Factory function for ThreadPoolRegistry
+std::shared_ptr<xsigma::task_thread_pool_base> create_xsigma_threadpool(
+    int device_id, int pool_size, bool create_new)
+{
+    // For now, the only accepted device id is 0
+    if (device_id != 0)
+    {
+        XSIGMA_LOG_ERROR("Invalid device_id: {}, expected 0", device_id);
+        return nullptr;
+    }
+    // Create new thread pool
+    if (!create_new)
+    {
+        XSIGMA_LOG_ERROR("create_new must be true");
+        return nullptr;
+    }
+    return std::make_shared<xsigma::thread_pool>(pool_size);
+}
+
+}  // namespace
+
+XSIGMA_REGISTER_CREATOR(ThreadPoolRegistry, XSIGMA, create_xsigma_threadpool)
+#endif  // !XSIGMA_HAS_OPENMP
+
+void set_num_interop_threads(int nthreads)
+{
+#if XSIGMA_HAS_OPENMP
+    // OpenMP backend doesn't use a separate inter-op thread pool
+    // This is a no-op for compatibility
+    (void)nthreads;  // Suppress unused parameter warning
+#else
+    // Native backend implementation
+    if (nthreads <= 0)
+    {
+        XSIGMA_LOG_ERROR("Expected positive number of threads, got {}", nthreads);
+        return;
+    }
+
+    int no_value = NOT_SET;
+    if (!num_interop_threads.compare_exchange_strong(no_value, nthreads))
+    {
+        XSIGMA_LOG_ERROR(
+            "Error: cannot set number of interop threads after parallel work "
+            "has started or set_num_interop_threads called");
+    }
+#endif
+}
+
+size_t get_num_interop_threads()
+{
+#if XSIGMA_HAS_OPENMP
+    // OpenMP backend - inter-op threads are the same as intra-op threads
+    return static_cast<size_t>(get_num_threads());
+#else
+    // Native backend implementation
+    xsigma::internal::lazy_init_num_threads();
+    int const nthreads = num_interop_threads.load();
+    if (nthreads > 0)
+    {
+        return nthreads;
+    }
+    if (nthreads == NOT_SET)
+    {
+        // return default value
+        return xsigma::task_thread_pool_base::default_num_threads();
+    }
+
+    return get_interop_pool().size();
+#endif
+}
+
+namespace internal
+{
+void launch_no_thread_state(std::function<void()> fn)
+{
+#if XSIGMA_HAS_OPENMP
+    // OpenMP backend - execute inline
+    fn();
+#else
+    // Native backend - use thread pool
+#if XSIGMA_HAS_EXPERIMENTAL
+    intraop_launch(std::move(fn));
+#else
+    get_interop_pool().run(std::move(fn));
+#endif
+#endif
+}
+}  // namespace internal
+
+void launch(std::function<void()> func)
+{
+    // Both backends use the same implementation
+    internal::launch_no_thread_state(std::move(func));
 }
 
 }  // namespace xsigma
