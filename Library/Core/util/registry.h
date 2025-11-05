@@ -213,5 +213,15 @@ public:
 #define XSIGMA_REGISTER_CLASS(RegistryName, key, ...) \
     XSIGMA_REGISTER_TYPED_CLASS(RegistryName, #key, __VA_ARGS__)
 
+// XSIGMA_DECLARE_SHARED_REGISTRY and XSIGMA_DEFINE_SHARED_REGISTRY use std::shared_ptr
+// instead of std::unique_ptr for shared ownership semantics
+#define XSIGMA_DECLARE_SHARED_REGISTRY(RegistryName, ObjectType, ...) \
+    XSIGMA_DECLARE_TYPED_REGISTRY(                                    \
+        RegistryName, std::string, ObjectType, std::shared_ptr, ##__VA_ARGS__)
+
+#define XSIGMA_DEFINE_SHARED_REGISTRY(RegistryName, ObjectType, ...) \
+    XSIGMA_DEFINE_TYPED_REGISTRY(                                    \
+        RegistryName, std::string, ObjectType, std::shared_ptr, ##__VA_ARGS__)
+
 }  // namespace xsigma
 #endif  // ! __XSIGMA_WRAP__

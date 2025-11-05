@@ -313,7 +313,7 @@ class TracerBase:
         pt_files = [
             "torch/fx/proxy.py",
             "torch/fx/_symbolic_trace.py",
-            "torch/fx/experimental/proxy_tensor.py",
+            "torch/fx/proxy_tensor.py",
             "torch/_ops.py",
             "torch/_tensor.py",
             "torch/utils/_python_dispatch.py",

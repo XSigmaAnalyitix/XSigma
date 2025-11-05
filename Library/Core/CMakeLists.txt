@@ -38,8 +38,8 @@ file(
   "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/profiler/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/smp_new/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/c17/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/parallel/*.h"
   ${xsigma_headers}
 )
 
@@ -52,8 +52,8 @@ file(
   "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.cxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/profiler/*.cxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.cxx"
-  "${CMAKE_CURRENT_SOURCE_DIR}/smp_new/*.cxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/c17/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/parallel/*.cxx"
   ${xsigma_sources}
 )
 
@@ -65,7 +65,6 @@ file(
   "${CMAKE_CURRENT_SOURCE_DIR}/logging/*.hxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.hxx"
   "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.hxx"
-  "${CMAKE_CURRENT_SOURCE_DIR}/smp_new/*.hxx"
   ${xsigma_templates}
 )
 

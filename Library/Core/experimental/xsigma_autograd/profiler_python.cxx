@@ -11,7 +11,6 @@
 #include <torch/csrc/utils/python_compat.h>
 #include <torch/csrc/utils/python_numbers.h>
 #include <torch/csrc/utils/python_strings.h>
-#include <xsigma/macros/Macros.h>
 #include <xsigma/util/ApproximateClock.h>
 #include <xsigma/util/Logging.h>
 #include <xsigma/util/flat_hash_map.h>
@@ -28,6 +27,7 @@
 #include <utility>
 #include <vector>
 
+#include "common/macros.h"
 #include "util/exception.h"
 
 namespace py = pybind11;

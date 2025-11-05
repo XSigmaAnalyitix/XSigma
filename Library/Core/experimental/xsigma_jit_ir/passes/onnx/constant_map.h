@@ -3,9 +3,10 @@
 #include <onnx/shape_inference/implementation.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/serialization/export.h>
-#include <xsigma/macros/Macros.h>
 
 #include <unordered_map>
+
+#include "common/macros.h"
 
 namespace torch::jit
 {

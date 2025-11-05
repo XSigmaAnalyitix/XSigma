@@ -3,10 +3,11 @@
 #include <ATen/Config.h>
 #include <ATen/Functions.h>
 #include <torch/csrc/Export.h>
-#include <xsigma/macros/Macros.h>
 
 #include <cstdint>
 #include <vector>
+
+#include "common/macros.h"
 
 #define FOR_ALL_EXTERNAL_FUNCTIONS(_)     \
     _(nnc_aten_adaptive_avg_pool2d)       \

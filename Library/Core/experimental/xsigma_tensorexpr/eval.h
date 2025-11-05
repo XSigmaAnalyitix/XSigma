@@ -7,13 +7,14 @@
 #include <torch/csrc/jit/tensorexpr/tensor.h>
 #include <torch/csrc/jit/tensorexpr/types.h>
 #include <torch/csrc/jit/tensorexpr/var_substitutor.h>
-#include <xsigma/macros/Macros.h>
 #include <xsigma/util/Logging.h>
 
 #include <cmath>
 #include <cstring>
 #include <utility>
 #include <vector>
+
+#include "common/macros.h"
 
 namespace torch::jit::tensorexpr
 {

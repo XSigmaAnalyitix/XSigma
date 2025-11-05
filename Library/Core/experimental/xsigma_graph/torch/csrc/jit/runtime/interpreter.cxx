@@ -24,11 +24,11 @@
 #include <torch/csrc/jit/runtime/vararg_functions.h>
 #include <torch/csrc/utils/cpp_stacktraces.h>
 #include <xsigma/core/thread_pool.h>
-#include <xsigma/macros/Macros.h>
 #include <xsigma/util/irange.h>
 
 #include <string>
 
+#include "common/macros.h"
 #include "util/exception.h"
 
 #ifdef USE_RPC

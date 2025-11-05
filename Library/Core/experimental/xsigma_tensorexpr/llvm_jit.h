@@ -2,10 +2,10 @@
 
 #ifdef TORCH_ENABLE_LLVM
 #include <torch/csrc/Export.h>
-#include <xsigma/macros/Macros.h>
 
 #include <optional>
 
+#include "common/macros.h"
 #include "util/exception.h"
 
 XSIGMA_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wsuggest-override")
