@@ -479,7 +479,6 @@ pool.wait_work_complete();
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 2025-11-04  
+**Document Version:** 1.0
+**Last Updated:** 2025-11-04
 **Maintainer:** XSigma Development Team
-

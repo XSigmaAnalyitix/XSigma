@@ -109,8 +109,8 @@ XSIGMATEST(ThreadPool, many_threads)
 // Test 7: Tasks are executed (order not guaranteed)
 XSIGMATEST(ThreadPool, task_execution)
 {
-    thread_pool                pool(4);
-    std::atomic<int>           completed{0};
+    thread_pool                    pool(4);
+    std::atomic<int>               completed{0};
     std::vector<std::atomic<bool>> executed(100);
 
     // Initialize all elements to false

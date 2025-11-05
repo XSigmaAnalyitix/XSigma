@@ -17,7 +17,7 @@ size_t task_thread_pool_base::default_num_threads()
     {
         // In cpuinfo parlance cores are physical ones and processors are virtual
         // thread_pool should be defaulted to number of physical cores
-        size_t num_cores = cpuinfo_get_cores_count();
+        size_t const num_cores = cpuinfo_get_cores_count();
         num_threads      = cpuinfo_get_processors_count();
         if (num_cores > 0 && num_cores < num_threads)
         {
@@ -64,7 +64,7 @@ thread_pool::~thread_pool()
 {
     // Set running flag to false then notify all threads.
     {
-        std::unique_lock<std::mutex> lock(mutex_);
+        std::unique_lock<std::mutex> const lock(mutex_);
         running_ = false;
         condition_.notify_all();
     }
@@ -89,13 +89,13 @@ size_t thread_pool::size() const
 
 size_t thread_pool::num_available() const
 {
-    std::unique_lock<std::mutex> lock(mutex_);
+    std::unique_lock<std::mutex> const lock(mutex_);
     return available_;
 }
 
 bool thread_pool::in_thread_pool() const
 {
-    for (auto& thread : threads_)
+    for (const auto& thread : threads_)
     {
         if (thread.get_id() == std::this_thread::get_id())
         {
@@ -107,12 +107,12 @@ bool thread_pool::in_thread_pool() const
 
 void thread_pool::run(std::function<void()> func)
 {
-    if (threads_.size() == 0)
+    if (threads_.empty())
     {
         XSIGMA_LOG_ERROR("No threads to run a task");
         return;
     }
-    std::unique_lock<std::mutex> lock(mutex_);
+    std::unique_lock<std::mutex> const lock(mutex_);
 
     // Set task and signal condition variable so that a worker thread will
     // wake up and use the task.
@@ -147,7 +147,7 @@ void thread_pool::main_loop(std::size_t index)
         // useful in the event that the function contains
         // shared_ptr arguments bound via bind.
         {
-            task_element_t tasks = std::move(tasks_.front());
+            task_element_t const tasks = std::move(tasks_.front());
             tasks_.pop();
             // Decrement count, indicating thread is no longer available.
             --available_;

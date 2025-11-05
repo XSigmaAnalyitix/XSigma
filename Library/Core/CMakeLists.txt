@@ -60,12 +60,9 @@ file(
 file(
   GLOB_RECURSE templates
   LIST_DIRECTORIES false
-  "${CMAKE_CURRENT_SOURCE_DIR}/util/*.hxx"
-  "${CMAKE_CURRENT_SOURCE_DIR}/common/*.hxx"
-  "${CMAKE_CURRENT_SOURCE_DIR}/logging/*.hxx"
-  "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.hxx"
-  "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.hxx"
-  ${xsigma_templates}
+  "${CMAKE_CURRENT_SOURCE_DIR}/util/*.hxx" "${CMAKE_CURRENT_SOURCE_DIR}/common/*.hxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/logging/*.hxx" "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.hxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.hxx" ${xsigma_templates}
 )
 
 # Remove GPU files if neither CUDA nor HIP is enabled

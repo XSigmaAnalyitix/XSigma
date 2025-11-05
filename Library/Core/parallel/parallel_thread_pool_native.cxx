@@ -28,7 +28,7 @@ std::atomic<int> num_interop_threads{NOT_SET};
 // users should use xsigma::launch and get/set_num_interop_threads interface
 xsigma::task_thread_pool_base& get_pool()
 {
-    static std::shared_ptr<xsigma::task_thread_pool_base> pool = ThreadPoolRegistry()->run(
+    static std::shared_ptr<xsigma::task_thread_pool_base> const pool = ThreadPoolRegistry()->run(
         "C10",
         /* device_id */ 0,
         /* pool_size */ num_interop_threads.exchange(CONSUMED),
@@ -79,12 +79,12 @@ void set_num_interop_threads(int nthreads)
 size_t get_num_interop_threads()
 {
     xsigma::internal::lazy_init_num_threads();
-    int nthreads = num_interop_threads.load();
+    int const nthreads = num_interop_threads.load();
     if (nthreads > 0)
     {
         return nthreads;
     }
-    else if (nthreads == NOT_SET)
+    if (nthreads == NOT_SET)
     {
         // return default value
         return xsigma::task_thread_pool_base::default_num_threads();

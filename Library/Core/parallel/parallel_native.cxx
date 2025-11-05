@@ -82,7 +82,7 @@ int _num_pool_threads(int nthreads)
 
 xsigma::task_thread_pool_base& _get_intraop_pool()
 {
-    static std::shared_ptr<xsigma::task_thread_pool_base> pool = ThreadPoolRegistry()->run(
+    static std::shared_ptr<xsigma::task_thread_pool_base> const pool = ThreadPoolRegistry()->run(
         "C10",
         /* device_id */ 0,
         /* pool_size */ _num_pool_threads(num_intraop_threads.exchange(CONSUMED)),
@@ -92,7 +92,7 @@ xsigma::task_thread_pool_base& _get_intraop_pool()
 
 // Run lambda function `fn` over `task_id` in [0, `range`) with threadpool.
 // `fn` will be called with params: task_id.
-static void _run_with_pool(const std::function<void(size_t)>& fn, size_t range)
+void _run_with_pool(const std::function<void(size_t)>& fn, size_t range)
 {
     for (size_t i = 1; i < range; ++i)
     {
@@ -138,7 +138,7 @@ static std::tuple<size_t, size_t> calc_num_tasks_and_chunk_size(
     int64_t chunk_size = divup((end - begin), get_num_threads());
     // Make sure each task is xsigma least grain_size size.
     chunk_size       = std::max(grain_size, chunk_size);
-    size_t num_tasks = static_cast<size_t>(divup((end - begin), chunk_size));
+    auto const num_tasks = static_cast<size_t>(divup((end - begin), chunk_size));
     return std::make_tuple(num_tasks, chunk_size);
 }
 
@@ -150,7 +150,8 @@ void invoke_parallel(
 {
     xsigma::internal::lazy_init_num_threads();
 
-    size_t num_tasks = 0, chunk_size = 0;
+    size_t num_tasks = 0;
+    size_t chunk_size = 0;
     std::tie(num_tasks, chunk_size) =
         internal::calc_num_tasks_and_chunk_size(begin, end, grain_size);
 
@@ -165,13 +166,13 @@ void invoke_parallel(
 
     auto task = [f, &state, begin, end, chunk_size](size_t task_id)
     {
-        int64_t local_start = static_cast<int64_t>(begin + task_id * chunk_size);
+        auto const local_start = static_cast<int64_t>(begin + (task_id * chunk_size));
         if (local_start < end)
         {
-            int64_t local_end = std::min(end, static_cast<int64_t>(chunk_size + local_start));
+            int64_t const local_end = std::min(end, static_cast<int64_t>(chunk_size + local_start));
             try
             {
-                parallel_region_guard guard(static_cast<int>(task_id));
+                parallel_region_guard const guard(static_cast<int>(task_id));
                 f(local_start, local_end);
             }
             catch (...)
@@ -183,7 +184,7 @@ void invoke_parallel(
             }
         }
         {
-            std::unique_lock<std::mutex> lk(state.mutex);
+            std::unique_lock<std::mutex> const lk(state.mutex);
             if (--state.remaining == 0)
             {
                 state.cv.notify_one();
@@ -258,7 +259,7 @@ int get_num_threads()
     {
         return nthreads;
     }
-    else if (nthreads == NOT_SET)
+    if (nthreads == NOT_SET)
     {
         return intraop_default_num_threads();
     }

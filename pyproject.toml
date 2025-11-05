@@ -111,7 +111,7 @@ pyyaml = ["pyyaml"]
 [tool.setuptools.packages.find]
 where = ["Tools", "Library"]
 include = ["Tools*", "Library*"]
-exclude = ["ThirdParty*", "Cmake*", "Scripts*", "tmp_ci_logs*", "build_*"]
+exclude = ["ThirdParty*", "Cmake*", "Scripts*", "tmp_ci_logs*", "build_*", "*experimental*", "*Experimental*"]
 
 # Linter tools #################################################################
 
@@ -119,7 +119,7 @@ exclude = ["ThirdParty*", "Cmake*", "Scripts*", "tmp_ci_logs*", "build_*"]
 src_paths = ["XSigma"]
 extra_standard_library = ["typing_extensions"]
 skip_gitignore = true
-skip_glob = ["ThirdParty/*"]
+skip_glob = ["ThirdParty/*", "**/experimental/*", "**/Experimental/*"]
 atomic = true
 profile = "black"
 indent = 4
@@ -136,6 +136,7 @@ standard_library = ["typing_extensions"]
 [tool.ruff]
 line-length = 88
 src = ["Tools", "Library"]
+exclude = ["**/experimental/**", "**/Experimental/**", "ThirdParty/**"]
 
 [tool.ruff.format]
 docstring-code-format = true

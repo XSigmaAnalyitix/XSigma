@@ -1,5 +1,5 @@
 ---
-HeaderFilterRegex: '^(?!.*ThirdParty).*'  # Exclude third party folder from checks
+HeaderFilterRegex: '^(?!.*(ThirdParty|experimental|Experimental)).*'  # Exclude third party and experimental folders from checks
 Checks: "-*,\
 bugprone-*,\
 -bugprone-unchecked-optional-access,\

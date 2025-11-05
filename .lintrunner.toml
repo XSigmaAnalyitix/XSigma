@@ -4,6 +4,8 @@ include_patterns = ['**/*.py','Scripts/**/*.py']
 exclude_patterns = [
     '.git/**',
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'venv/**',
     '**/*.pyi',
     'Tools/**',
@@ -44,6 +46,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     '.lintrunner.toml',
     '.vscode/**',
     '.git/**',
@@ -75,6 +79,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     'venv/**',
     'build/**',
@@ -126,6 +132,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     'venv/**',
     'build/**',
@@ -156,6 +164,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -198,6 +208,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     '**/generated/**',
     '**/*pb.h',
     '**/*inl.h',
@@ -231,6 +243,8 @@ code = 'TYPEIGNORE'
 include_patterns = ['**/*.py', '**/*.pyi']
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -275,6 +289,8 @@ code = 'NOQA'
 include_patterns = ['**/*.py', '**/*.pyi']
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -331,6 +347,8 @@ code = 'NEWLINE'
 include_patterns=['**']
 exclude_patterns=[
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     '**/*.bat',
     '**/*.expect',
     '**/*.ipynb',
@@ -357,6 +375,8 @@ code = 'SPACES'
 include_patterns = ['**']
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     '**/*.diff',
     '**/*.patch',
     'Tools/**',
@@ -383,6 +403,8 @@ code = 'TABS'
 include_patterns = ['**']
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     '**/*.svg',
     '**/*Makefile',
     '**/.gitattributes',
@@ -504,6 +526,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -538,6 +562,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -572,6 +598,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -604,6 +632,8 @@ exclude_patterns = [
     '**/*.py',
     '**/*.md',
     '**/*.diff',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -631,6 +661,8 @@ code = 'EXEC'
 include_patterns = ['**']
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     '**/*.so',
     '**/*.py',
     '**/*.sh',
@@ -658,6 +690,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -711,6 +745,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -759,6 +795,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -787,6 +825,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -815,6 +855,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -843,6 +885,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -873,6 +917,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'test/run_test.py',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -892,6 +938,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -1004,6 +1052,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -1036,6 +1086,8 @@ include_patterns = [
 exclude_patterns = [
     '.lintrunner.toml',
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -1066,6 +1118,8 @@ command = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -1130,6 +1184,8 @@ code = 'COPYRIGHT'
 include_patterns = ['**']
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     '.lintrunner.toml',
     'Docs/lintrunner_codes.md',
     'Tools/**',
@@ -1177,6 +1233,8 @@ code = 'LINTRUNNER_VERSION'
 include_patterns = ['**']
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -1197,6 +1255,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'ThirdParty/**',
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',
@@ -1251,6 +1311,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     "ThirdParty/**",
+    '**/experimental/**',
+    '**/Experimental/**',
     'Tools/**',
     '.vscode/**',
     '.git/**',

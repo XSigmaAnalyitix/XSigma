@@ -1,5 +1,6 @@
 [MASTER]
-ignore=tests
+ignore=tests,experimental,Experimental
+ignore-patterns=.*experimental.*,.*Experimental.*
 jobs=1
 extension-pkg-whitelist=
 persistent=yes
