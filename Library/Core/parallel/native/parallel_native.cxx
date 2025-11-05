@@ -5,8 +5,8 @@
 #include <utility>
 
 #include "logging/logger.h"
-#include "parallel.h"
-#include "thread_pool.h"
+#include "parallel/parallel.h"
+#include "parallel/thread_pool.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -83,7 +83,7 @@ int _num_pool_threads(int nthreads)
 xsigma::task_thread_pool_base& _get_intraop_pool()
 {
     static std::shared_ptr<xsigma::task_thread_pool_base> const pool = ThreadPoolRegistry()->run(
-        "C10",
+        "XSIGMA",
         /* device_id */ 0,
         /* pool_size */ _num_pool_threads(num_intraop_threads.exchange(CONSUMED)),
         /* create_new */ true);  // create a separate thread pool for intra-op

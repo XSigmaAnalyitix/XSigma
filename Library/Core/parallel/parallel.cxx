@@ -1,11 +1,9 @@
 #include <sstream>
 #include <thread>
 
-// TODO: Files do not exist - need to be created or removed
-// #include "Config.h"
+
 #include "parallel.h"
 #include "thread_pool.h"
-// #include "Version.h"
 #include "logging/logger.h"
 #include "util/env.h"
 
@@ -59,6 +57,28 @@ size_t get_env_num_threads(const char* var_name, size_t def_value = 0)
 
 }  // namespace
 
+std::string get_openmp_version()
+{
+#ifdef _OPENMP
+    std::ostringstream ss;
+    ss << "OpenMP " << _OPENMP;
+    return ss.str();
+#else
+    return "OpenMP not available";
+#endif
+}
+
+std::string get_mkl_version()
+{
+#if XSIGMA_HAS_MKL
+    std::ostringstream ss;
+    ss << "MKL Version";
+    return ss.str();
+#else
+    return "MKL not available";
+#endif
+}
+
 std::string get_parallel_info()
 {
     std::ostringstream ss;
@@ -106,9 +126,6 @@ int intraop_default_num_threads()
     nthreads        = get_env_num_threads("MKL_NUM_THREADS", nthreads);
     if (nthreads == 0)
     {
-#if defined(FBCODE_CAFFE2) && defined(__aarch64__)
-        nthreads = 1;
-#else
 #if defined(__aarch64__) && defined(__APPLE__)
         // On Apple Silicon there are efficient and performance core
         // Restrict parallel algorithms to performance cores by default
@@ -124,7 +141,6 @@ int intraop_default_num_threads()
         }
 #endif
         nthreads = xsigma::task_thread_pool_base::default_num_threads();
-#endif
     }
     return static_cast<int>(nthreads);
 }

@@ -1,17 +1,12 @@
-// TODO: File does not exist - needs to be created or removed
-// #include "Config.h"
-#if XSIGMA_HAS_OPENMP || !XSIGMA_HAS_OPENMP
 #include <atomic>
 #include <functional>
 
-#include "parallel.h"
-//#include "thread_local_state.h"
+#include "parallel/parallel.h"
 #include "logging/logger.h"
-#include "thread_pool.h"
+#include "parallel/thread_pool.h"
 
 namespace xsigma
 {
-
 namespace
 {
 const int NOT_SET  = -1;
@@ -29,7 +24,7 @@ std::atomic<int> num_interop_threads{NOT_SET};
 xsigma::task_thread_pool_base& get_pool()
 {
     static std::shared_ptr<xsigma::task_thread_pool_base> const pool = ThreadPoolRegistry()->run(
-        "C10",
+        "XSIGMA",
         /* device_id */ 0,
         /* pool_size */ num_interop_threads.exchange(CONSUMED),
         /* create_new */ true);
@@ -37,7 +32,7 @@ xsigma::task_thread_pool_base& get_pool()
 }
 
 // Factory function for ThreadPoolRegistry
-std::shared_ptr<xsigma::task_thread_pool_base> create_c10_threadpool(
+std::shared_ptr<xsigma::task_thread_pool_base> create_xsigma_threadpool(
     int device_id, int pool_size, bool create_new)
 {
     // For now, the only accepted device id is 0
@@ -57,7 +52,7 @@ std::shared_ptr<xsigma::task_thread_pool_base> create_c10_threadpool(
 
 }  // namespace
 
-XSIGMA_REGISTER_CREATOR(ThreadPoolRegistry, C10, create_c10_threadpool)
+XSIGMA_REGISTER_CREATOR(ThreadPoolRegistry, XSIGMA, create_xsigma_threadpool)
 
 void set_num_interop_threads(int nthreads)
 {
@@ -111,4 +106,3 @@ void launch(std::function<void()> func)
 }
 
 }  // namespace xsigma
-#endif

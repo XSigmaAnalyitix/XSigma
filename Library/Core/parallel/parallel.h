@@ -5,8 +5,6 @@
 
 #include "common/export.h"
 #include "common/macros.h"
-// TODO: File does not exist - needs to be created or removed
-// #include "Config.h"
 
 namespace xsigma
 {
@@ -132,6 +130,12 @@ inline scalar_t parallel_reduce(
 // Returns a detailed string describing parallelization settings
 XSIGMA_API std::string get_parallel_info();
 
+// Returns OpenMP version information as a string
+XSIGMA_API std::string get_openmp_version();
+
+// Returns MKL version information as a string
+XSIGMA_API std::string get_mkl_version();
+
 // Sets number of threads used for inter-op parallelism
 XSIGMA_API void set_num_interop_threads(int /*nthreads*/);
 
@@ -154,9 +158,9 @@ XSIGMA_API int intraop_default_num_threads();
 }  // namespace xsigma
 
 #if XSIGMA_HAS_OPENMP
-#include "parallel_openmp.h"  // IWYU pragma: keep
-#elif !XSIGMA_HAS_OPENMP
-#include "parallel_native.h"  // IWYU pragma: keep
+#include "parallel/openmp/parallel_openmp.h"  // IWYU pragma: keep
+#else
+#include "parallel/native/parallel_native.h"  // IWYU pragma: keep
 #endif
 
-#include "parallel-inl.h"  // IWYU pragma: keep
+#include "parallel.hxx"  // IWYU pragma: keep

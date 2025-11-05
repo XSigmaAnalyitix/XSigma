@@ -28,7 +28,7 @@
 XSIGMATEST(CPUinfo, CPUinfo)
 {
     START_LOG_TO_FILE_NAME(CPUinfo);
-
+    xsigma::cpu_info::initialize();
     xsigma::cpu_info::info();
 
     END_LOG_TO_FILE_NAME(CPUinfo);
@@ -48,6 +48,7 @@ XSIGMATEST(CPUinfo, cpuinfo_cache_retrieval)
     std::ptrdiff_t l3_count = 0;
 
     // Call the function to retrieve cache information
+    xsigma::cpu_info::initialize();
     xsigma::cpu_info::cpuinfo_cach(l1, l2, l3, l3_count);
 
     // Verify that cache sizes are non-negative
@@ -86,6 +87,7 @@ XSIGMATEST(CPUinfo, cpuinfo_cache_consistency)
     std::ptrdiff_t l3_first       = 0;
     std::ptrdiff_t l3_count_first = 0;
 
+    xsigma::cpu_info::initialize();
     xsigma::cpu_info::cpuinfo_cach(l1_first, l2_first, l3_first, l3_count_first);
 
     std::ptrdiff_t l1_second       = 0;
@@ -112,6 +114,7 @@ XSIGMATEST(CPUinfo, cpuinfo_cache_hierarchy)
     std::ptrdiff_t l3       = 0;
     std::ptrdiff_t l3_count = 0;
 
+    xsigma::cpu_info::initialize();
     xsigma::cpu_info::cpuinfo_cach(l1, l2, l3, l3_count);
 
     // If all caches are present, verify hierarchy

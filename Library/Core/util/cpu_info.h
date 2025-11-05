@@ -9,6 +9,12 @@ class XSIGMA_VISIBILITY cpu_info
     XSIGMA_DELETE_CLASS(cpu_info);
 
 public:
+    XSIGMA_API static bool initialize();
+
+    XSIGMA_API static int number_of_cores();
+
+    XSIGMA_API static int number_of_threads();
+
     XSIGMA_API static void info();
 
     XSIGMA_API static void cpuinfo_cach(

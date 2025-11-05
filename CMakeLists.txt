@@ -227,6 +227,7 @@ include(logging)
 include(compression)
 
 # Configure optional features
+include(openmp)
 include(cuda)
 include(hip)
 include(mkl)

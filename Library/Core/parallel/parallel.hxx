@@ -1,6 +1,6 @@
 #pragma once
 
-#include "parallel_guard.h"
+#include "parallel/parallel_guard.h"
 #include "util/exception.h"
 #include "util/small_vector.h"
 

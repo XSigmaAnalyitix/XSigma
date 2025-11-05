@@ -1,26 +1,22 @@
-#include "thread_pool.h"
+#include "parallel/thread_pool.h"
 
 #include <algorithm>
 
 #include "logging/logger.h"
 #include "smp/Advanced/thread_name.h"
-#if !defined(__powerpc__) && !defined(__s390x__)
-#include <cpuinfo.h>
-#endif
+#include "util/cpu_info.h"
 
 namespace xsigma
 {
-
 size_t task_thread_pool_base::default_num_threads()
 {
     size_t num_threads = 0;
-#if !defined(__powerpc__) && !defined(__s390x__)
-    if (cpuinfo_initialize())
+    if (cpu_info::initialize())
     {
         // In cpuinfo parlance cores are physical ones and processors are virtual
         // thread_pool should be defaulted to number of physical cores
-        size_t const num_cores = cpuinfo_get_cores_count();
-        num_threads            = cpuinfo_get_processors_count();
+        size_t const num_cores = cpu_info::number_of_cores();
+        num_threads            = cpu_info::number_of_threads();
         if (num_cores > 0 && num_cores < num_threads)
         {
             return num_cores;
@@ -30,7 +26,6 @@ size_t task_thread_pool_base::default_num_threads()
             return num_threads;
         }
     }
-#endif
     num_threads = std::thread::hardware_concurrency();
     if (num_threads == 0)
     {

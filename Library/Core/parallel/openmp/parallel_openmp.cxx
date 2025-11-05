@@ -2,8 +2,8 @@
 #include <atomic>
 
 #include "logging/logger.h"
-#include "parallel.h"
-#include "thread_pool.h"
+#include "parallel/parallel.h"
+#include "parallel/thread_pool.h"
 
 #if XSIGMA_HAS_MKL
 #include <mkl.h>

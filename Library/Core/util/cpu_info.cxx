@@ -8,9 +8,23 @@
 #include "fmt/base.h"
 namespace xsigma
 {
+bool cpu_info::initialize()
+{
+    return cpuinfo_initialize();
+}
+
+int cpu_info::number_of_cores()
+{
+    return cpuinfo_get_cores_count();
+}
+
+int cpu_info::number_of_threads()
+{
+    return cpuinfo_get_processors_count();
+}
+
 void cpu_info::info()
 {
-    cpuinfo_initialize();
     const struct cpuinfo_package* package = cpuinfo_get_package(0);
     if (package != nullptr)
     {
@@ -119,8 +133,6 @@ void cpu_info::info()
 void cpu_info::cpuinfo_cach(
     std::ptrdiff_t& l1, std::ptrdiff_t& l2, std::ptrdiff_t& l3, std::ptrdiff_t& l3_count)
 {
-    cpuinfo_initialize();
-
     const struct cpuinfo_cache* l1d_cache = cpuinfo_get_l1d_caches();
     const struct cpuinfo_cache* l2_cache  = cpuinfo_get_l2_caches();
     const struct cpuinfo_cache* l3_cache  = cpuinfo_get_l3_caches();
