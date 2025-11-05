@@ -1,18 +1,19 @@
 #pragma once
 
+#include <c10/core/Allocator.h>
+#include <c10/macros/Export.h>
+#include <c10/util/Flags.h>
+
 #include <cstdint>
 #include <cstring>
 #include <mutex>
 #include <unordered_map>
 
-#include <c10/core/Allocator.h>
-#include <c10/macros/Export.h>
-#include <c10/util/Flags.h>
-
 // TODO: rename to c10
 C10_DECLARE_bool(caffe2_report_cpu_memory_usage);
 
-namespace c10 {
+namespace c10
+{
 
 using MemoryDeleter = void (*)(void*);
 
@@ -21,18 +22,19 @@ C10_API void NoDelete(void* /*unused*/);
 
 // A simple struct that is used to report C10's memory allocation,
 // deallocation status and out-of-memory events to the profiler
-class C10_API ProfiledCPUMemoryReporter {
- public:
-  ProfiledCPUMemoryReporter() = default;
-  void New(void* ptr, size_t nbytes);
-  void OutOfMemory(size_t nbytes);
-  void Delete(void* ptr);
+class C10_API ProfiledCPUMemoryReporter
+{
+public:
+    ProfiledCPUMemoryReporter() = default;
+    void New(void* ptr, size_t nbytes);
+    void OutOfMemory(size_t nbytes);
+    void Delete(void* ptr);
 
- private:
-  std::mutex mutex_;
-  std::unordered_map<void*, size_t> size_table_;
-  size_t allocated_ = 0;
-  size_t log_cnt_ = 0;
+private:
+    std::mutex                        mutex_;
+    std::unordered_map<void*, size_t> size_table_;
+    size_t                            allocated_ = 0;
+    size_t                            log_cnt_   = 0;
 };
 
 C10_API ProfiledCPUMemoryReporter& profiledCPUMemoryReporter();
@@ -56,4 +58,4 @@ C10_API void SetCPUCachingAllocator(Allocator* alloc, uint8_t priority = 0);
 // Get the CPU Caching Allocator
 C10_API Allocator* GetCPUCachingAllocator();
 
-} // namespace c10
+}  // namespace c10

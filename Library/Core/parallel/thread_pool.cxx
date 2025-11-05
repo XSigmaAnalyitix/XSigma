@@ -1,3 +1,122 @@
+/**
+ * @file thread_pool.cxx
+ * @brief Implementation of Thread Pool for XSigma Parallel Execution
+ *
+ * This file implements the thread pool classes used by the XSigma parallel module
+ * for both intra-op and inter-op parallelism. The thread pool is used by the native
+ * backend (when OpenMP is not available) to execute parallel tasks.
+ *
+ * ARCHITECTURE:
+ * =============
+ * The implementation provides three classes:
+ *
+ * 1. task_thread_pool_base (Abstract Base Class):
+ *    - Provides default_num_threads() static method
+ *    - Determines optimal thread count based on hardware
+ *
+ * 2. thread_pool (Concrete Implementation):
+ *    - Implements producer-consumer pattern with task queue
+ *    - Manages worker threads using RAII
+ *    - Provides synchronization via mutex and condition variables
+ *    - Supports both simple tasks and tasks with thread ID parameter
+ *
+ * 3. task_thread_pool (Specialized Thread Pool):
+ *    - Extends thread_pool with thread naming and NUMA awareness
+ *    - Sets thread names for debugging ("XsigmaTaskThread")
+ *    - Optionally binds threads to NUMA nodes
+ *
+ * DESIGN PATTERNS:
+ * ================
+ * Producer-Consumer Pattern:
+ * - Main thread produces tasks (via run() or run_task_with_id())
+ * - Worker threads consume tasks from queue
+ * - Mutex protects shared queue
+ * - Condition variable signals task availability
+ *
+ * RAII Pattern:
+ * - Thread pool manages thread lifetime automatically
+ * - Constructor creates worker threads
+ * - Destructor joins all threads (blocks until complete)
+ * - No manual thread management required
+ *
+ * SYNCHRONIZATION:
+ * ================
+ * Primitives Used:
+ * - mutex_: Protects task queue and state variables
+ * - condition_: Signals worker threads when tasks are available
+ * - completed_: Signals main thread when all tasks complete
+ * - running_: Atomic flag for shutdown coordination
+ *
+ * Synchronization Flow:
+ * 1. Task Submission: Lock mutex, add task to queue, signal condition_
+ * 2. Task Execution: Worker waits on condition_, dequeues task, executes
+ * 3. Completion: Worker signals completed_ when queue becomes empty
+ * 4. Shutdown: Set running_=false, signal all workers, join threads
+ *
+ * THREAD LIFECYCLE:
+ * =================
+ * 1. Construction:
+ *    - Creates pool_size worker threads
+ *    - Each thread runs main_loop() in infinite loop
+ *    - Threads wait on condition variable for tasks
+ *
+ * 2. Task Execution:
+ *    - Worker wakes up when task is available
+ *    - Dequeues task from queue
+ *    - Executes task (either simple or with thread ID)
+ *    - Updates available_ counter
+ *    - Signals completed_ if queue is empty
+ *
+ * 3. Destruction:
+ *    - Sets running_ = false
+ *    - Signals all workers via condition_.notify_all()
+ *    - Joins all threads (blocks until all exit)
+ *
+ * THREAD SAFETY:
+ * ==============
+ * - All public methods are thread-safe
+ * - Task queue protected by mutex
+ * - Atomic operations for running_ flag
+ * - Condition variables for synchronization
+ * - No data races or race conditions
+ *
+ * CODING STANDARDS:
+ * =================
+ * - Follows XSigma C++ coding standards
+ * - snake_case naming convention
+ * - RAII for resource management (threads, mutexes)
+ * - No exceptions in destructors
+ * - Proper const correctness
+ * - Comprehensive error handling
+ *
+ * HARDWARE DETECTION:
+ * ===================
+ * The default_num_threads() method determines optimal thread count:
+ * 1. Query cpuinfo for physical cores and logical threads
+ * 2. Prefer physical cores over logical threads (avoids hyperthreading overhead)
+ * 3. Fall back to std::thread::hardware_concurrency()
+ * 4. Minimum of 1 thread if detection fails
+ *
+ * NUMA AWARENESS:
+ * ===============
+ * If XSIGMA_HAS_NUMA=1:
+ * - Threads can be bound to specific NUMA nodes
+ * - Reduces memory access latency on NUMA systems
+ * - Improves cache locality and performance
+ *
+ * USAGE:
+ * ======
+ * The thread pool is typically accessed via ThreadPoolRegistry:
+ * @code
+ * auto pool = ThreadPoolRegistry()->Create("MyPool", device_id, pool_size, true);
+ * pool->run([]() { do_work(); });
+ * pool->wait_work_complete();
+ * @endcode
+ *
+ * For the native parallel backend, the thread pool is used internally by
+ * invoke_parallel() in parallel.cxx.
+ */
+
 #include "parallel/thread_pool.h"
 
 #include <algorithm>

@@ -78,34 +78,31 @@
 
 // See documentation above
 #define AT_DISPATCH_V2(TYPE, NAME, BODY, ...) \
-  AT_DISPATCH_SWITCH(TYPE, NAME, AT_AP_VAR(AT_WRAP(BODY), TYPE, __VA_ARGS__))
+    AT_DISPATCH_SWITCH(TYPE, NAME, AT_AP_VAR(AT_WRAP(BODY), TYPE, __VA_ARGS__))
 
 // This macro lets you pass an arbitrary expression that may contain internal
 // commas to another macro without having the commas causing the expression
 // to be interpreted as being multiple arguments
 #define AT_WRAP(...) __VA_ARGS__
 
-#define AT_FLOAT8_TYPES                                          \
-  c10::kFloat8_e5m2, c10::kFloat8_e5m2fnuz, c10::kFloat8_e4m3fn, \
-      c10::kFloat8_e4m3fnuz, c10::kFloat8_e8m0fnu
+#define AT_FLOAT8_TYPES                                                                   \
+    c10::kFloat8_e5m2, c10::kFloat8_e5m2fnuz, c10::kFloat8_e4m3fn, c10::kFloat8_e4m3fnuz, \
+        c10::kFloat8_e8m0fnu
 
-#define AT_INTEGRAL_TYPES \
-  c10::kByte, c10::kChar, c10::kInt, c10::kLong, c10::kShort
+#define AT_INTEGRAL_TYPES c10::kByte, c10::kChar, c10::kInt, c10::kLong, c10::kShort
 #define AT_FLOATING_TYPES c10::kDouble, c10::kFloat
 #define AT_BAREBONES_UNSIGNED_TYPES c10::kUInt16, c10::kUInt32, c10::kUInt64
-#define AT_INTEGRAL_TYPES_V2 \
-  AT_EXPAND(AT_INTEGRAL_TYPES), AT_EXPAND(AT_BAREBONES_UNSIGNED_TYPES)
+#define AT_INTEGRAL_TYPES_V2 AT_EXPAND(AT_INTEGRAL_TYPES), AT_EXPAND(AT_BAREBONES_UNSIGNED_TYPES)
 #define AT_COMPLEX_TYPES c10::kComplexDouble, c10::kComplexFloat
 #define AT_QINT_TYPES c10::kQInt8, c10::kQUInt8, c10::kQInt32
 // NB: not *actually* all types
 #define AT_ALL_TYPES AT_EXPAND(AT_INTEGRAL_TYPES), AT_EXPAND(AT_FLOATING_TYPES)
-#define AT_ALL_TYPES_AND_COMPLEX \
-  AT_EXPAND(AT_ALL_TYPES), AT_EXPAND(AT_COMPLEX_TYPES)
+#define AT_ALL_TYPES_AND_COMPLEX AT_EXPAND(AT_ALL_TYPES), AT_EXPAND(AT_COMPLEX_TYPES)
 
 // Helper macros
 
 #define AT_AP_VAR(N, T, ...) \
-  AT_EXPAND(AT_CONCAT(AT_AP, AT_NUM_ARGS(__VA_ARGS__))(AT_WRAP(N), __VA_ARGS__))
+    AT_EXPAND(AT_CONCAT(AT_AP, AT_NUM_ARGS(__VA_ARGS__))(AT_WRAP(N), __VA_ARGS__))
 #define AT_CONCAT(a, b) AT_CONCAT_AUX(a, b)
 #define AT_CONCAT_AUX(a, b) a##b
 #define AT_EXPAND(X) X

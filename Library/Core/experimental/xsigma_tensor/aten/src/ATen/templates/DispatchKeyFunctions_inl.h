@@ -4,9 +4,9 @@
 // NB: The implementing C++ file is RegisterDispatchKey.cpp
 
 // The only #includes we need are for custom classes that have defaults in the C++ API
+#include <ATen/core/Reduction.h>
 #include <c10/core/MemoryFormat.h>
 #include <c10/core/Scalar.h>
-#include <ATen/core/Reduction.h>
 
 #if defined(AT_PER_OPERATOR_HEADERS) && defined(TORCH_ASSERT_ONLY_METHOD_OPERATORS)
 #error This change adds a dependency on all pytorch operators, meaning the     \
@@ -18,5 +18,7 @@
 
 ${DispatchKeyFunctions_inl_includes}
 
-
-${dispatch_namespaced_declarations}
+$
+{
+    dispatch_namespaced_declarations
+}

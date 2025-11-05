@@ -1,11 +1,104 @@
-#include <sstream>
-#include <thread>
-#include <atomic>
-#include <utility>
+/**
+ * @file parallel.cxx
+ * @brief Implementation of XSigma Parallel Execution Framework
+ *
+ * This file contains the implementation of the parallel execution framework for XSigma.
+ * It provides both OpenMP and native backend implementations selected at compile time
+ * via the XSIGMA_HAS_OPENMP flag.
+ *
+ * ARCHITECTURE:
+ * =============
+ * The implementation uses function-level conditional compilation to support two backends:
+ *
+ * 1. OpenMP Backend (XSIGMA_HAS_OPENMP=1):
+ *    - Uses OpenMP pragmas for parallel execution
+ *    - Template implementation of invoke_parallel in header (parallel.h)
+ *    - Leverages OpenMP runtime for thread management
+ *    - Provides omp_get_num_threads(), omp_set_num_threads(), etc.
+ *
+ * 2. Native Backend (XSIGMA_HAS_OPENMP=0):
+ *    - Uses custom thread pool implementation
+ *    - Function implementation of invoke_parallel in this file
+ *    - Manual thread management via thread_pool class
+ *    - Emulates OpenMP API using thread-local storage
+ *
+ * CONDITIONAL COMPILATION STRATEGY:
+ * ==================================
+ * This file uses FUNCTION-LEVEL conditional compilation:
+ * - Each function contains #if XSIGMA_HAS_OPENMP / #else / #endif blocks
+ * - Both backends are in the same file for easier maintenance
+ * - Clear separation between backend-specific code
+ * - Shared utility functions (get_env_var, get_env_num_threads) are backend-agnostic
+ *
+ * CONSOLIDATION HISTORY:
+ * ======================
+ * This file was created by consolidating:
+ * - parallel/openmp/parallel_openmp.cxx (OpenMP implementation)
+ * - parallel/native/parallel_native.cxx (Native implementation)
+ *
+ * The consolidation provides:
+ * - Single source file for all parallel implementations
+ * - Easier maintenance and code review
+ * - Reduced code duplication
+ * - Clear backend comparison
+ *
+ * THREAD SAFETY:
+ * ==============
+ * - All public API functions are thread-safe
+ * - Thread-local storage used for per-thread state (thread ID, parallel region flag)
+ * - Atomic operations used for shared counters
+ * - Mutex protection for thread pool access
+ * - Condition variables for synchronization
+ *
+ * MEMORY ORDERING:
+ * ================
+ * - Native backend uses acquire-release semantics for task synchronization
+ * - Atomic operations use appropriate memory ordering (relaxed, acquire, release, acq_rel)
+ * - OpenMP backend relies on OpenMP's implicit barriers
+ *
+ * RACE CONDITION FIX:
+ * ===================
+ * The native invoke_parallel implementation was fixed to prevent a race condition:
+ * - BEFORE: state.remaining was set AFTER launching tasks (race condition)
+ * - AFTER: state.remaining is initialized BEFORE launching tasks (correct)
+ * - Uses std::memory_order_release for initialization
+ * - Uses std::memory_order_acq_rel for decrement
+ * - Uses predicate with std::memory_order_acquire for wait
+ *
+ * CODING STANDARDS:
+ * =================
+ * - Follows XSigma C++ coding standards
+ * - snake_case naming convention
+ * - No exceptions in public API (uses return values for errors)
+ * - RAII for resource management
+ * - Proper const correctness
+ * - Comprehensive error handling
+ *
+ * ENVIRONMENT VARIABLES:
+ * ======================
+ * The implementation respects these environment variables:
+ * - OMP_NUM_THREADS: Sets number of intra-op threads (OpenMP standard)
+ * - XSIGMA_NUM_THREADS: XSigma-specific thread count override
+ * - XSIGMA_NUM_INTEROP_THREADS: Sets number of inter-op threads
+ *
+ * DEPENDENCIES:
+ * =============
+ * - parallel.h: API declarations and template implementations
+ * - thread_pool.h: Native backend thread pool
+ * - parallel_guard.h: RAII guard for parallel region state
+ * - OpenMP library (if XSIGMA_HAS_OPENMP=1)
+ * - MKL library (if XSIGMA_HAS_MKL=1)
+ */
 
 #include "parallel.h"
-#include "thread_pool.h"
+
+#include <atomic>
+#include <sstream>
+#include <thread>
+#include <utility>
+
 #include "logging/logger.h"
+#include "thread_pool.h"
 #include "util/env.h"
 
 #if XSIGMA_HAS_MKL
@@ -531,7 +624,8 @@ void invoke_parallel(
     // Use acquire semantics to ensure we see all worker thread writes
     {
         std::unique_lock<std::mutex> lk(state.mutex);
-        state.cv.wait(lk, [&state]() { return state.remaining.load(std::memory_order_acquire) == 0; });
+        state.cv.wait(
+            lk, [&state]() { return state.remaining.load(std::memory_order_acquire) == 0; });
     }
 
     if (state.eptr)

@@ -26,4 +26,7 @@
 // - All other files that want the cpu fastpath functions can include CPUFunctions.h directly.
 // - This also means that static dispatch build, CPUFunctions.h only needs to
 //   #include TensorBody.h, and it will automatically bring in CPUFunctions_inl.h.
-${inline_headers}
+$
+{
+    inline_headers
+}

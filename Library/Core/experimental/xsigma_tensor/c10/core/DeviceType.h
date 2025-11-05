@@ -9,7 +9,8 @@
 #include <ostream>
 #include <string>
 
-namespace c10 {
+namespace c10
+{
 
 C10_API std::string DeviceTypeName(DeviceType d, bool lower_case = false);
 
@@ -22,9 +23,10 @@ C10_API std::string get_privateuse1_backend(bool lower_case = true);
 
 C10_API bool is_privateuse1_backend_registered();
 
-} // namespace c10
+}  // namespace c10
 
-namespace torch {
+namespace torch
+{
 // NOLINTNEXTLINE(misc-unused-using-decls)
 using c10::DeviceType;
-} // namespace torch
+}  // namespace torch

@@ -682,8 +682,9 @@ TEST(IntrusivePtrTest, CanBePutInUnorderedSet)
 TEST(IntrusivePtrTest, CanBePutInMap)
 {
     std::map<intrusive_ptr<SomeClass1Parameter>, intrusive_ptr<SomeClass1Parameter>> map;
-    map.insert(std::make_pair(
-        make_intrusive<SomeClass1Parameter>(5), make_intrusive<SomeClass1Parameter>(3)));
+    map.insert(
+        std::make_pair(
+            make_intrusive<SomeClass1Parameter>(5), make_intrusive<SomeClass1Parameter>(3)));
     EXPECT_EQ(5, map.begin()->first->param);
     EXPECT_EQ(3, map.begin()->second->param);
 }
@@ -691,8 +692,9 @@ TEST(IntrusivePtrTest, CanBePutInMap)
 TEST(IntrusivePtrTest, CanBePutInUnorderedMap)
 {
     std::unordered_map<intrusive_ptr<SomeClass1Parameter>, intrusive_ptr<SomeClass1Parameter>> map;
-    map.insert(std::make_pair(
-        make_intrusive<SomeClass1Parameter>(3), make_intrusive<SomeClass1Parameter>(5)));
+    map.insert(
+        std::make_pair(
+            make_intrusive<SomeClass1Parameter>(3), make_intrusive<SomeClass1Parameter>(5)));
     EXPECT_EQ(3, map.begin()->first->param);
     EXPECT_EQ(5, map.begin()->second->param);
 }

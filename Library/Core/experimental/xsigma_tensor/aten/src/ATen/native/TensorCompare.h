@@ -2,20 +2,22 @@
 
 #include <ATen/native/DispatchStub.h>
 
-namespace c10 {
+namespace c10
+{
 class Scalar;
 }
 
-namespace at {
+namespace at
+{
 class Tensor;
 struct TensorIterator;
 struct TensorIteratorBase;
-} // namespace at
+}  // namespace at
 
-namespace at::native {
+namespace at::native
+{
 
-using reduce_minmax_fn =
-    void (*)(Tensor&, Tensor&, const Tensor&, int64_t, bool);
+using reduce_minmax_fn = void (*)(Tensor&, Tensor&, const Tensor&, int64_t, bool);
 using structured_reduce_minmax_fn =
     void (*)(const Tensor&, const Tensor&, const Tensor&, int64_t, bool);
 
@@ -35,22 +37,22 @@ DECLARE_DISPATCH(mode_fn, mode_stub)
 using clamp_tensor_fn = void (*)(TensorIteratorBase&);
 DECLARE_DISPATCH(clamp_tensor_fn, clamp_stub)
 
-namespace detail {
-enum class ClampLimits { Min, Max, MinMax };
+namespace detail
+{
+enum class ClampLimits
+{
+    Min,
+    Max,
+    MinMax
+};
 }
 
 DECLARE_DISPATCH(
-    void (*)(TensorIteratorBase&, const c10::Scalar&, const c10::Scalar&),
-    clamp_scalar_stub)
-DECLARE_DISPATCH(
-    void (*)(TensorIteratorBase&, c10::Scalar),
-    clamp_min_scalar_stub)
-DECLARE_DISPATCH(
-    void (*)(TensorIteratorBase&, c10::Scalar),
-    clamp_max_scalar_stub)
+    void (*)(TensorIteratorBase&, const c10::Scalar&, const c10::Scalar&), clamp_scalar_stub)
+DECLARE_DISPATCH(void (*)(TensorIteratorBase&, c10::Scalar), clamp_min_scalar_stub)
+DECLARE_DISPATCH(void (*)(TensorIteratorBase&, c10::Scalar), clamp_max_scalar_stub)
 
-using isin_default_fn =
-    void (*)(const Tensor&, const Tensor&, bool, const Tensor&);
+using isin_default_fn = void (*)(const Tensor&, const Tensor&, bool, const Tensor&);
 DECLARE_DISPATCH(isin_default_fn, isin_default_stub)
 
-} // namespace at::native
+}  // namespace at::native

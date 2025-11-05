@@ -10,7 +10,8 @@
 
 #include <c10/core/impl/LocalDispatchKeySet.h>
 
-namespace at {
+namespace at
+{
 
 // A RAII, thread local (!) guard that will disable dispatch to variable
 // handler.
@@ -58,37 +59,41 @@ namespace at {
  * Users should use `c10::InferenceMode` here so that it'll properly throw an
  * error saying "one of the variables needed for gradient computation has be modified."
  */
-struct TORCH_API AutoDispatchBelowAutograd {
-  AutoDispatchBelowAutograd() :
-    autograd_guard_(c10::autograd_dispatch_keyset) {
-  }
+struct TORCH_API AutoDispatchBelowAutograd
+{
+    AutoDispatchBelowAutograd() : autograd_guard_(c10::autograd_dispatch_keyset) {}
 
-  // disable all autograd dispatch keys
-  c10::impl::ExcludeDispatchKeyGuard autograd_guard_;
+    // disable all autograd dispatch keys
+    c10::impl::ExcludeDispatchKeyGuard autograd_guard_;
 };
 
 // TODO: AutoNonVariableTypeMode should be removed in release 1.10.
-struct TORCH_API AutoNonVariableTypeMode {
-  AutoNonVariableTypeMode(bool enabled = true) :
-    autograd_guard_(c10::autograd_dispatch_keyset) {
-    TORCH_WARN_ONCE("AutoNonVariableTypeMode is deprecated and will be removed in 1.10 release. "
-        "For kernel implementations please use AutoDispatchBelowADInplaceOrView instead, "
-        "If you are looking for a user facing API to enable running your inference-only "
-        "workload, please use c10::InferenceMode. Using AutoDispatchBelowADInplaceOrView in user code "
-        "is under risk of producing silent wrong result in some edge cases. "
-        "See Note [AutoDispatchBelowAutograd] for more details.");
-    TORCH_INTERNAL_ASSERT(enabled);
-  }
+struct TORCH_API AutoNonVariableTypeMode
+{
+    AutoNonVariableTypeMode(bool enabled = true) : autograd_guard_(c10::autograd_dispatch_keyset)
+    {
+        TORCH_WARN_ONCE(
+            "AutoNonVariableTypeMode is deprecated and will be removed in 1.10 release. "
+            "For kernel implementations please use AutoDispatchBelowADInplaceOrView instead, "
+            "If you are looking for a user facing API to enable running your inference-only "
+            "workload, please use c10::InferenceMode. Using AutoDispatchBelowADInplaceOrView in "
+            "user code "
+            "is under risk of producing silent wrong result in some edge cases. "
+            "See Note [AutoDispatchBelowAutograd] for more details.");
+        TORCH_INTERNAL_ASSERT(enabled);
+    }
 
-  // disable all autograd dispatch keys
-  c10::impl::ExcludeDispatchKeyGuard autograd_guard_;
+    // disable all autograd dispatch keys
+    c10::impl::ExcludeDispatchKeyGuard autograd_guard_;
 };
 
-struct TORCH_API AutoDispatchSkipFunctionalize {
-  AutoDispatchSkipFunctionalize() :
-    dispatch_key_guard_(c10::DispatchKeySet(c10::DispatchKey::Functionalize)) {
-  }
-  c10::impl::ExcludeDispatchKeyGuard dispatch_key_guard_;
+struct TORCH_API AutoDispatchSkipFunctionalize
+{
+    AutoDispatchSkipFunctionalize()
+        : dispatch_key_guard_(c10::DispatchKeySet(c10::DispatchKey::Functionalize))
+    {
+    }
+    c10::impl::ExcludeDispatchKeyGuard dispatch_key_guard_;
 };
 
 /* Note [AutoDispatchBelowADInplaceOrView]
@@ -101,11 +106,13 @@ struct TORCH_API AutoDispatchSkipFunctionalize {
  *   you never go back to a kernel on same dispatch key until
  *   you finish the current op.
  */
-struct TORCH_API AutoDispatchBelowADInplaceOrView {
-  AutoDispatchBelowADInplaceOrView() :
-    dispatch_key_guard_(c10::autograd_dispatch_keyset_with_ADInplaceOrView) {
-  }
-  // disable Autograd & ADInplaceOrView dispatch keys
-  c10::impl::ExcludeDispatchKeyGuard dispatch_key_guard_;
+struct TORCH_API AutoDispatchBelowADInplaceOrView
+{
+    AutoDispatchBelowADInplaceOrView()
+        : dispatch_key_guard_(c10::autograd_dispatch_keyset_with_ADInplaceOrView)
+    {
+    }
+    // disable Autograd & ADInplaceOrView dispatch keys
+    c10::impl::ExcludeDispatchKeyGuard dispatch_key_guard_;
 };
-} // namespace at
+}  // namespace at

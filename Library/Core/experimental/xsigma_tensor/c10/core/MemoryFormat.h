@@ -25,13 +25,15 @@
 //    Regardless of input tensors format, the output should be in channels_last
 //    format.
 
-namespace c10 {
-enum class MemoryFormat : int8_t {
-  Contiguous,
-  Preserve,
-  ChannelsLast,
-  ChannelsLast3d,
-  NumOptions
+namespace c10
+{
+enum class MemoryFormat : int8_t
+{
+    Contiguous,
+    Preserve,
+    ChannelsLast,
+    ChannelsLast3d,
+    NumOptions
 };
 
 // If you are seeing this, it means that this call site was not checked if
@@ -39,79 +41,84 @@ enum class MemoryFormat : int8_t {
 // behaviour of contiguous
 #define LEGACY_CONTIGUOUS_MEMORY_FORMAT c10::get_contiguous_memory_format()
 
-inline MemoryFormat get_contiguous_memory_format() {
-  return MemoryFormat::Contiguous;
+inline MemoryFormat get_contiguous_memory_format()
+{
+    return MemoryFormat::Contiguous;
 }
 
-inline std::ostream& operator<<(
-    std::ostream& stream,
-    at::MemoryFormat memory_format) {
-  switch (memory_format) {
+inline std::ostream& operator<<(std::ostream& stream, at::MemoryFormat memory_format)
+{
+    switch (memory_format)
+    {
     case MemoryFormat::Preserve:
-      return stream << "Preserve";
+        return stream << "Preserve";
     case MemoryFormat::Contiguous:
-      return stream << "Contiguous";
+        return stream << "Contiguous";
     case MemoryFormat::ChannelsLast:
-      return stream << "ChannelsLast";
+        return stream << "ChannelsLast";
     case MemoryFormat::ChannelsLast3d:
-      return stream << "ChannelsLast3d";
+        return stream << "ChannelsLast3d";
     default:
-      TORCH_CHECK(false, "Unknown memory format ", memory_format);
-  }
+        TORCH_CHECK(false, "Unknown memory format ", memory_format);
+    }
 }
 
 // Note: Hardcoded the channel last stride indices here to get better
 // performance
 template <typename T>
-inline std::vector<T> get_channels_last_strides_2d(ArrayRef<T> sizes) {
-  std::vector<T> strides(sizes.size());
-  switch (sizes.size()) {
+inline std::vector<T> get_channels_last_strides_2d(ArrayRef<T> sizes)
+{
+    std::vector<T> strides(sizes.size());
+    switch (sizes.size())
+    {
     case 4:
-      strides[1] = 1;
-      strides[3] = sizes[1];
-      strides[2] = strides[3] * sizes[3];
-      strides[0] = strides[2] * sizes[2];
-      return strides;
+        strides[1] = 1;
+        strides[3] = sizes[1];
+        strides[2] = strides[3] * sizes[3];
+        strides[0] = strides[2] * sizes[2];
+        return strides;
     case 3:
-      strides[0] = 1;
-      strides[2] = sizes[0];
-      strides[1] = strides[2] * sizes[2];
-      return strides;
+        strides[0] = 1;
+        strides[2] = sizes[0];
+        strides[1] = strides[2] * sizes[2];
+        return strides;
     default:
-      TORCH_INTERNAL_ASSERT(
-          false, "ChannelsLast2d doesn't support size ", sizes.size());
-  }
+        TORCH_INTERNAL_ASSERT(false, "ChannelsLast2d doesn't support size ", sizes.size());
+    }
 }
 
-inline std::vector<int64_t> get_channels_last_strides_2d(IntArrayRef sizes) {
-  return get_channels_last_strides_2d<int64_t>(sizes);
+inline std::vector<int64_t> get_channels_last_strides_2d(IntArrayRef sizes)
+{
+    return get_channels_last_strides_2d<int64_t>(sizes);
 }
 
 template <typename T>
-std::vector<T> get_channels_last_strides_3d(ArrayRef<T> sizes) {
-  std::vector<T> strides(sizes.size());
-  switch (sizes.size()) {
+std::vector<T> get_channels_last_strides_3d(ArrayRef<T> sizes)
+{
+    std::vector<T> strides(sizes.size());
+    switch (sizes.size())
+    {
     case 5:
-      strides[1] = 1;
-      strides[4] = sizes[1];
-      strides[3] = strides[4] * sizes[4];
-      strides[2] = strides[3] * sizes[3];
-      strides[0] = strides[2] * sizes[2];
-      return strides;
+        strides[1] = 1;
+        strides[4] = sizes[1];
+        strides[3] = strides[4] * sizes[4];
+        strides[2] = strides[3] * sizes[3];
+        strides[0] = strides[2] * sizes[2];
+        return strides;
     case 4:
-      strides[0] = 1;
-      strides[3] = sizes[0];
-      strides[2] = strides[3] * sizes[3];
-      strides[1] = strides[2] * sizes[2];
-      return strides;
+        strides[0] = 1;
+        strides[3] = sizes[0];
+        strides[2] = strides[3] * sizes[3];
+        strides[1] = strides[2] * sizes[2];
+        return strides;
     default:
-      TORCH_INTERNAL_ASSERT(
-          false, "ChannelsLast3d doesn't support size ", sizes.size());
-  }
+        TORCH_INTERNAL_ASSERT(false, "ChannelsLast3d doesn't support size ", sizes.size());
+    }
 }
 
-inline std::vector<int64_t> get_channels_last_strides_3d(IntArrayRef sizes) {
-  return get_channels_last_strides_3d<int64_t>(sizes);
+inline std::vector<int64_t> get_channels_last_strides_3d(IntArrayRef sizes)
+{
+    return get_channels_last_strides_3d<int64_t>(sizes);
 }
 
 // NOTE:
@@ -126,71 +133,81 @@ inline std::vector<int64_t> get_channels_last_strides_3d(IntArrayRef sizes) {
 // 3. All helper functions have similar comments, only 1st helper function is
 // commented here.
 template <typename T>
-inline bool is_channels_last_strides_2d_s4(
-    const ArrayRef<T> sizes,
-    const ArrayRef<T> strides) {
-  T min = 0;
-  // special case for trivial C dimension. default to NCHW
-  if (strides[1] == 0) {
-    return false;
-  }
-  // loop strides indices
-  for (auto& d : {1, 3, 2, 0}) {
-    if (sizes[d] == 0) {
-      return false;
+inline bool is_channels_last_strides_2d_s4(const ArrayRef<T> sizes, const ArrayRef<T> strides)
+{
+    T min = 0;
+    // special case for trivial C dimension. default to NCHW
+    if (strides[1] == 0)
+    {
+        return false;
     }
-    if (strides[d] < min) {
-      return false;
+    // loop strides indices
+    for (auto& d : {1, 3, 2, 0})
+    {
+        if (sizes[d] == 0)
+        {
+            return false;
+        }
+        if (strides[d] < min)
+        {
+            return false;
+        }
+        // Fallback to NCHW as default layout for ambiguous cases
+        // This is the flaw of implicit memory_format from strides.
+        // N111 tensor with identical strides for size 1 dimension;
+        // Two cases could lead us here:
+        // a. N111 contiguous Tensor ([N,1,1,1]@[1,1,1,1])
+        // b. N11W contiguous Tensor sliced on the W-dimension.
+        // ([N,1,1,1]@[W,W,W,W])
+        if (d == 0 && min == strides[1])
+        {
+            return false;
+        }
+        // This is necessary to:
+        // 1. distinguish the memory_format of N1H1;
+        //     [H, 1, 1, 1] channels_last stride
+        //     [H, H, 1, 1] contiguous stride
+        // 2. permutation of 1C1W:
+        //     [1, C, 1, H]@[HC, H, H, 1] transpose(1, 3)
+        //     [1, H, 1, C]@[HC, 1, H, H] shouldn't be identified as channels_last
+        min = strides[d];
+        if (sizes[d] > 1)
+        {
+            min *= sizes[d];
+        }
     }
-    // Fallback to NCHW as default layout for ambiguous cases
-    // This is the flaw of implicit memory_format from strides.
-    // N111 tensor with identical strides for size 1 dimension;
-    // Two cases could lead us here:
-    // a. N111 contiguous Tensor ([N,1,1,1]@[1,1,1,1])
-    // b. N11W contiguous Tensor sliced on the W-dimension.
-    // ([N,1,1,1]@[W,W,W,W])
-    if (d == 0 && min == strides[1]) {
-      return false;
-    }
-    // This is necessary to:
-    // 1. distinguish the memory_format of N1H1;
-    //     [H, 1, 1, 1] channels_last stride
-    //     [H, H, 1, 1] contiguous stride
-    // 2. permutation of 1C1W:
-    //     [1, C, 1, H]@[HC, H, H, 1] transpose(1, 3)
-    //     [1, H, 1, C]@[HC, 1, H, H] shouldn't be identified as channels_last
-    min = strides[d];
-    if (sizes[d] > 1) {
-      min *= sizes[d];
-    }
-  }
-  return true;
+    return true;
 }
 
 template <typename T>
-inline bool is_channels_last_strides_3d_s5(
-    const ArrayRef<T> sizes,
-    const ArrayRef<T> strides) {
-  T min = 0;
-  if (strides[1] == 0) {
-    return false;
-  }
-  for (auto& d : {1, 4, 3, 2, 0}) {
-    if (sizes[d] == 0) {
-      return false;
+inline bool is_channels_last_strides_3d_s5(const ArrayRef<T> sizes, const ArrayRef<T> strides)
+{
+    T min = 0;
+    if (strides[1] == 0)
+    {
+        return false;
     }
-    if (strides[d] < min) {
-      return false;
+    for (auto& d : {1, 4, 3, 2, 0})
+    {
+        if (sizes[d] == 0)
+        {
+            return false;
+        }
+        if (strides[d] < min)
+        {
+            return false;
+        }
+        if (d == 0 && min == strides[1])
+        {
+            return false;
+        }
+        min = strides[d];
+        if (sizes[d] > 1)
+        {
+            min *= sizes[d];
+        }
     }
-    if (d == 0 && min == strides[1]) {
-      return false;
-    }
-    min = strides[d];
-    if (sizes[d] > 1) {
-      min *= sizes[d];
-    }
-  }
-  return true;
+    return true;
 }
 
 // Note [Ambiguous is_channels_last_strides_xd]
@@ -244,47 +261,45 @@ inline bool is_channels_last_strides_3d_s5(
 // (is_channels_last_strides_*d_s*) for more details.
 
 template <typename T>
-inline bool is_channels_last_strides_2d(
-    const ArrayRef<T> sizes,
-    const ArrayRef<T> strides) {
-  switch (sizes.size()) {
+inline bool is_channels_last_strides_2d(const ArrayRef<T> sizes, const ArrayRef<T> strides)
+{
+    switch (sizes.size())
+    {
     case 4:
-      return is_channels_last_strides_2d_s4(sizes, strides);
-      // NOLINTNEXTLINE(bugprone-branch-clone)
+        return is_channels_last_strides_2d_s4(sizes, strides);
+        // NOLINTNEXTLINE(bugprone-branch-clone)
     case 3:
-      // TODO dim == 3 case will be enabled once it is fully tested
-      return false;
+        // TODO dim == 3 case will be enabled once it is fully tested
+        return false;
     default:
-      return false;
-  }
+        return false;
+    }
 }
 
 template <typename T>
-inline bool is_channels_last_strides_3d(
-    const ArrayRef<T> sizes,
-    const ArrayRef<T> strides) {
-  switch (sizes.size()) {
+inline bool is_channels_last_strides_3d(const ArrayRef<T> sizes, const ArrayRef<T> strides)
+{
+    switch (sizes.size())
+    {
     case 5:
-      return is_channels_last_strides_3d_s5(sizes, strides);
-      // NOLINTNEXTLINE(bugprone-branch-clone)
+        return is_channels_last_strides_3d_s5(sizes, strides);
+        // NOLINTNEXTLINE(bugprone-branch-clone)
     case 4:
-      // TODO dim == 4 case will be enabled once it is fully tested
-      return false;
+        // TODO dim == 4 case will be enabled once it is fully tested
+        return false;
     default:
-      return false;
-  }
+        return false;
+    }
 }
 
-inline bool is_channels_last_strides_2d(
-    const IntArrayRef sizes,
-    const IntArrayRef strides) {
-  return is_channels_last_strides_2d<int64_t>(sizes, strides);
+inline bool is_channels_last_strides_2d(const IntArrayRef sizes, const IntArrayRef strides)
+{
+    return is_channels_last_strides_2d<int64_t>(sizes, strides);
 }
 
-inline bool is_channels_last_strides_3d(
-    const IntArrayRef sizes,
-    const IntArrayRef strides) {
-  return is_channels_last_strides_3d<int64_t>(sizes, strides);
+inline bool is_channels_last_strides_3d(const IntArrayRef sizes, const IntArrayRef strides)
+{
+    return is_channels_last_strides_3d<int64_t>(sizes, strides);
 }
 
-} // namespace c10
+}  // namespace c10

@@ -4,7 +4,8 @@
 #include <c10/core/StorageImpl.h>
 #include <c10/util/intrusive_ptr.h>
 
-namespace at {
+namespace at
+{
 
 class TensorBase;
 
@@ -30,10 +31,7 @@ C10_EXPORT c10::intrusive_ptr<c10::StorageImpl> new_shm_fd_storage(size_t size);
  * @param src  src tensor
  * @param non_blocking  (default false) whether this operation blocks caller
  */
-C10_EXPORT void storage_copy(
-    c10::Storage& dst,
-    const c10::Storage& src,
-    bool non_blocking = false);
+C10_EXPORT void storage_copy(c10::Storage& dst, const c10::Storage& src, bool non_blocking = false);
 
 /**
  * In place change the storage to shm based.
@@ -46,4 +44,4 @@ C10_EXPORT void storage_copy(
  */
 C10_EXPORT void share_memory_(TensorBase& t);
 
-} // namespace at
+}  // namespace at
