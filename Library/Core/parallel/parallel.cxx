@@ -8,7 +8,7 @@
  *
  * ARCHITECTURE:
  * =============
- * The implementation uses function-level conditional compilation to support two backends:
+ * The implementation uses function-level conditional compilation to support three backends:
  *
  * 1. OpenMP Backend (XSIGMA_HAS_OPENMP=1):
  *    - Uses OpenMP pragmas for parallel execution
@@ -16,7 +16,13 @@
  *    - Leverages OpenMP runtime for thread management
  *    - Provides omp_get_num_threads(), omp_set_num_threads(), etc.
  *
- * 2. Native Backend (XSIGMA_HAS_OPENMP=0):
+ * 2. TBB Backend (XSIGMA_HAS_TBB=1 and XSIGMA_HAS_OPENMP=0):
+ *    - Uses Intel TBB (Threading Building Blocks) for parallel execution
+ *    - Template implementation of invoke_parallel in header (parallel.h)
+ *    - Leverages TBB's task scheduler for work stealing and load balancing
+ *    - Provides TBB-based thread management with task arena
+ *
+ * 3. Native Backend (XSIGMA_HAS_OPENMP=0 and XSIGMA_HAS_TBB=0):
  *    - Uses custom thread pool implementation
  *    - Function implementation of invoke_parallel in this file
  *    - Manual thread management via thread_pool class
@@ -25,10 +31,11 @@
  * CONDITIONAL COMPILATION STRATEGY:
  * ==================================
  * This file uses FUNCTION-LEVEL conditional compilation:
- * - Each function contains #if XSIGMA_HAS_OPENMP / #else / #endif blocks
- * - Both backends are in the same file for easier maintenance
+ * - Each function contains #if XSIGMA_HAS_OPENMP / #elif XSIGMA_HAS_TBB / #else / #endif blocks
+ * - All three backends are in the same file for easier maintenance
  * - Clear separation between backend-specific code
  * - Shared utility functions (get_env_var, get_env_num_threads) are backend-agnostic
+ * - Backend priority: OpenMP > TBB > Native (first available backend is used)
  *
  * CONSOLIDATION HISTORY:
  * ======================
@@ -107,6 +114,21 @@
 
 #ifdef _OPENMP
 #include <omp.h>
+#endif
+
+#if XSIGMA_HAS_TBB
+// Disable TBB implicit linkage on MSVC to avoid linker issues
+#ifdef _MSC_VER
+#pragma push_macro("__TBB_NO_IMPLICIT_LINKAGE")
+#define __TBB_NO_IMPLICIT_LINKAGE 1
+#endif
+
+#include <tbb/global_control.h>
+#include <tbb/task_arena.h>
+
+#ifdef _MSC_VER
+#pragma pop_macro("__TBB_NO_IMPLICIT_LINKAGE")
+#endif
 #endif
 
 #if defined(__APPLE__) && defined(__aarch64__)
@@ -198,7 +220,9 @@ std::string get_parallel_info()
     ss << "XSigma parallel backend: ";
 #if XSIGMA_HAS_OPENMP
     ss << "OpenMP";
-#elif !XSIGMA_HAS_OPENMP
+#elif XSIGMA_HAS_TBB
+    ss << "Intel TBB (Threading Building Blocks)";
+#else
     ss << "native thread pool";
 #endif
     ss << '\n';
@@ -244,7 +268,7 @@ int intraop_default_num_threads()
 // ============================================================================
 // Shared State Variables
 // ============================================================================
-// These variables are used by both OpenMP and native implementations
+// These variables are used by OpenMP, TBB, and native implementations
 
 namespace
 {
@@ -253,6 +277,21 @@ namespace
 // Number of threads set by the user
 std::atomic<int> num_threads{-1};
 thread_local int this_thread_id{0};
+
+#elif XSIGMA_HAS_TBB
+// TBB backend state
+// Number of threads set by the user
+std::atomic<int> num_threads{-1};
+thread_local int this_thread_id{0};
+
+// TBB global control for thread count management
+// This is a unique_ptr to allow lazy initialization
+std::unique_ptr<tbb::global_control> tbb_thread_control;
+
+// TBB task arena for thread management
+// This is a unique_ptr to allow lazy initialization
+std::unique_ptr<tbb::task_arena> tbb_arena;
+
 #else
 // Native backend state
 // used with _set_in_parallel_region to mark master thread
@@ -315,6 +354,21 @@ void init_num_threads()
         omp_set_num_threads(intraop_default_num_threads());
 #endif
     }
+
+#elif XSIGMA_HAS_TBB
+    // TBB implementation
+    auto nthreads = num_threads.load();
+    if (nthreads > 0)
+    {
+        set_num_threads(nthreads);
+    }
+    else
+    {
+        // Use default number of threads for TBB
+        const int default_threads = intraop_default_num_threads();
+        set_num_threads(default_threads);
+    }
+
 #else
     // Native implementation
 #ifdef _OPENMP
@@ -329,7 +383,7 @@ void init_num_threads()
 
 void set_num_threads(int nthreads)
 {
-    // Validate input (common to both implementations)
+    // Validate input (common to all implementations)
     if (nthreads <= 0)
     {
         XSIGMA_LOG_ERROR("Expected positive number of threads, got {}", nthreads);
@@ -346,6 +400,24 @@ void set_num_threads(int nthreads)
     mkl_set_num_threads_local(nthreads);
     mkl_set_dynamic(false);
 #endif
+
+#elif XSIGMA_HAS_TBB
+    // TBB implementation
+    num_threads.store(nthreads);
+
+    // Initialize TBB global control to limit thread count
+    // Note: TBB uses global_control to set the maximum number of threads
+    tbb_thread_control.reset(
+        new tbb::global_control(tbb::global_control::max_allowed_parallelism, nthreads));
+
+    // Initialize TBB task arena with the specified number of threads
+    tbb_arena.reset(new tbb::task_arena(nthreads));
+
+#if XSIGMA_HAS_MKL
+    mkl_set_num_threads_local(nthreads);
+    mkl_set_dynamic(false);
+#endif
+
 #else
     // Native implementation
     int no_value = NOT_SET;
@@ -384,6 +456,18 @@ int get_num_threads()
 #else
     return 1;
 #endif
+
+#elif XSIGMA_HAS_TBB
+    // TBB implementation
+    xsigma::internal::lazy_init_num_threads();
+    auto nthreads = num_threads.load();
+    if (nthreads > 0)
+    {
+        return nthreads;
+    }
+    // Return default if not set
+    return intraop_default_num_threads();
+
 #else
     // Native implementation
     xsigma::internal::lazy_init_num_threads();
@@ -412,6 +496,9 @@ int get_thread_num()
 #if XSIGMA_HAS_OPENMP
     // OpenMP implementation
     return this_thread_id;
+#elif XSIGMA_HAS_TBB
+    // TBB implementation
+    return this_thread_id;
 #else
     // Native implementation
     return thread_num_;
@@ -424,6 +511,9 @@ void set_thread_num(int id)
 {
 #if XSIGMA_HAS_OPENMP
     // OpenMP implementation
+    this_thread_id = id;
+#elif XSIGMA_HAS_TBB
+    // TBB implementation
     this_thread_id = id;
 #else
     // Native implementation
@@ -441,6 +531,13 @@ bool in_parallel_region()
 #else
     return false;
 #endif
+
+#elif XSIGMA_HAS_TBB
+    // TBB implementation
+    // TBB doesn't have a direct equivalent to omp_in_parallel()
+    // We use the parallel_guard to track parallel region state
+    return xsigma::parallel_guard::is_enabled();
+
 #else
     // Native implementation
     return in_parallel_region_ || (num_intraop_threads.load() == CONSUMED &&
@@ -454,6 +551,12 @@ void intraop_launch(const std::function<void()>& func)
 #if XSIGMA_HAS_OPENMP
     // OpenMP implementation - execute inline
     func();
+
+#elif XSIGMA_HAS_TBB
+    // TBB implementation - execute inline
+    // TBB handles task scheduling internally
+    func();
+
 #else
     // Native implementation - use thread pool if not in parallel region
     if (!in_parallel_region() && get_num_threads() > 1)
@@ -473,7 +576,7 @@ void intraop_launch(const std::function<void()>& func)
 // ============================================================================
 // These functions are only used by the native backend implementation
 
-#if !XSIGMA_HAS_OPENMP
+#if !XSIGMA_HAS_OPENMP && !XSIGMA_HAS_TBB
 
 namespace
 {
@@ -644,7 +747,7 @@ void invoke_parallel(
 // These functions manage the inter-op thread pool for both OpenMP and native
 // backends. The native backend uses a separate thread pool for inter-op tasks.
 
-#if !XSIGMA_HAS_OPENMP
+#if !XSIGMA_HAS_OPENMP && !XSIGMA_HAS_TBB
 // Native backend inter-op thread pool state and helper functions
 namespace
 {
@@ -689,12 +792,16 @@ std::shared_ptr<xsigma::task_thread_pool_base> create_xsigma_threadpool(
 }  // namespace
 
 XSIGMA_REGISTER_CREATOR(ThreadPoolRegistry, XSIGMA, create_xsigma_threadpool)
-#endif  // !XSIGMA_HAS_OPENMP
+#endif  // !XSIGMA_HAS_OPENMP && !XSIGMA_HAS_TBB
 
 void set_num_interop_threads(int nthreads)
 {
 #if XSIGMA_HAS_OPENMP
     // OpenMP backend doesn't use a separate inter-op thread pool
+    // This is a no-op for compatibility
+    (void)nthreads;  // Suppress unused parameter warning
+#elif XSIGMA_HAS_TBB
+    // TBB backend doesn't use a separate inter-op thread pool
     // This is a no-op for compatibility
     (void)nthreads;  // Suppress unused parameter warning
 #else
@@ -720,6 +827,9 @@ size_t get_num_interop_threads()
 #if XSIGMA_HAS_OPENMP
     // OpenMP backend - inter-op threads are the same as intra-op threads
     return static_cast<size_t>(get_num_threads());
+#elif XSIGMA_HAS_TBB
+    // TBB backend - inter-op threads are the same as intra-op threads
+    return static_cast<size_t>(get_num_threads());
 #else
     // Native backend implementation
     xsigma::internal::lazy_init_num_threads();
@@ -744,6 +854,9 @@ void launch_no_thread_state(std::function<void()> fn)
 {
 #if XSIGMA_HAS_OPENMP
     // OpenMP backend - execute inline
+    fn();
+#elif XSIGMA_HAS_TBB
+    // TBB backend - execute inline
     fn();
 #else
     // Native backend - use thread pool
