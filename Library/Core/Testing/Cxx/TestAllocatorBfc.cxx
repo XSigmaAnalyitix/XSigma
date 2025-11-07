@@ -18,9 +18,9 @@
 
 #include "Testing/xsigmaTest.h"
 #include "common/pointer.h"
-#include "logging/tracing/traceme.h"
-#include "logging/tracing/traceme_encode.h"
-#include "logging/tracing/traceme_recorder.h"
+#include "profiler/tracing/traceme.h"
+#include "profiler/tracing/traceme_encode.h"
+#include "profiler/tracing/traceme_recorder.h"
 #include "memory/backend/allocator_bfc.h"
 #include "memory/backend/allocator_pool.h"
 #include "memory/helper/memory_allocator.h"

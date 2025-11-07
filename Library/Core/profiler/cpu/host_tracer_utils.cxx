@@ -40,7 +40,7 @@ limitations under the License.
 #include <string_view>
 #include <utility>
 
-#include "logging/tracing/traceme_recorder.h"
+#include "profiler/tracing/traceme_recorder.h"
 #include "profiler/exporters/xplane/xplane.h"
 #include "profiler/exporters/xplane/xplane_builder.h"
 #include "profiler/exporters/xplane/xplane_utils.h"

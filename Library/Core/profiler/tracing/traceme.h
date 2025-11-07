@@ -41,8 +41,8 @@ limitations under the License.
 #include <utility>
 
 #include "logging/logger.h"
-#include "logging/tracing/traceme_encode.h"
-#include "logging/tracing/traceme_recorder.h"
+#include "profiler/tracing/traceme_encode.h"
+#include "profiler/tracing/traceme_recorder.h"
 #include "util/no_init.h"
 
 namespace xsigma

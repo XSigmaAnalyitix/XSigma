@@ -25,9 +25,9 @@
 #include <thread>
 #include <vector>
 
-#include "logging/tracing/traceme.h"
-#include "logging/tracing/traceme_encode.h"
-#include "logging/tracing/traceme_recorder.h"
+#include "profiler/tracing/traceme.h"
+#include "profiler/tracing/traceme_encode.h"
+#include "profiler/tracing/traceme_recorder.h"
 #include "xsigmaTest.h"
 
 using namespace xsigma;

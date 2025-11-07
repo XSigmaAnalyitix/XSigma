@@ -41,8 +41,8 @@ limitations under the License.
 
 #include "common/macros.h"
 #include "logging/logger.h"
-#include "logging/tracing/traceme.h"
-#include "logging/tracing/traceme_recorder.h"
+#include "profiler/tracing/traceme.h"
+#include "profiler/tracing/traceme_recorder.h"
 #include "profiler/core/profiler_collection.h"
 #include "profiler/core/profiler_interface.h"
 #include "profiler/cpu/host_tracer_utils.h"

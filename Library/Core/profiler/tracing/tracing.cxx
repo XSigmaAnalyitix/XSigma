@@ -17,7 +17,7 @@
  * Website: https://www.xsigma.co.uk
  */
 
-#include "logging/tracing/tracing.h"
+#include "profiler/tracing/tracing.h"
 
 #include <mutex>
 #include <string>

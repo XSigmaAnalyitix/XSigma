@@ -58,7 +58,7 @@
 #include <vector>
 
 #include "common/macros.h"
-#include "logging/tracing/traceme.h"
+#include "profiler/tracing/traceme.h"
 #include "profiler/core/profiler_interface.h"
 #include "profiler/core/profiler_lock.h"
 #include "profiler/core/profiler_options.h"

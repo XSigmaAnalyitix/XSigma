@@ -99,4 +99,4 @@ XSIGMA_API const char* get_log_dir();
 
 }  // namespace xsigma::tracing
 
-#include "logging/tracing/tracing_impl.h"
+#include "profiler/tracing/tracing_impl.h"

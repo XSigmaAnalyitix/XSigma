@@ -46,7 +46,7 @@
 #include <utility>
 
 #include "logging/logger.h"
-#include "logging/tracing/traceme.h"
+#include "profiler/tracing/traceme.h"
 #include "memory/helper/memory_allocator.h"
 #include "util/exception.h"
 

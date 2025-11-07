@@ -17,7 +17,7 @@
  * Website: https://www.xsigma.co.uk
  */
 
-#include "logging/tracing/traceme_recorder.h"
+#include "profiler/tracing/traceme_recorder.h"
 
 #include <algorithm>
 #include <atomic>
