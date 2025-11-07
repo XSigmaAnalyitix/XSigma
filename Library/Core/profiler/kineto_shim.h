@@ -31,9 +31,7 @@
 #include "common/export.h"
 #include "common/macros.h"
 
-#if XSIGMA_HAS_KINETO
 #include <ActivityType.h>
-#endif
 
 // Forward declarations to avoid including libkineto.h in headers
 namespace libkineto

@@ -346,13 +346,13 @@ private:
     static int64_t sequenceNumberForRunningRecordFunction(
         DispatchKey dispatchKey, DispatchKeySet dispatchKeySet);
     static void runRecordFunction(
-        at::RecordFunction&              guard,
-        at::RecordFunction::schema_ref_t schema_ref,
+        at::record_function&              guard,
+        at::record_function::schema_ref_t schema_ref,
         DispatchKey                      dispatchKey,
         DispatchKeySet                   dispatchKeySet);
     static void runRecordFunction(
-        at::RecordFunction&              guard,
-        at::RecordFunction::schema_ref_t schema_ref,
+        at::record_function&              guard,
+        at::record_function::schema_ref_t schema_ref,
         DispatchKey                      dispatchKey,
         DispatchKeySet                   dispatchKeySet,
         c10::ArrayRef<const c10::IValue> args);
@@ -360,10 +360,10 @@ private:
 #ifdef FBCODE_CAFFE2
     static bool profilingOperatorEvents();
     static void fireOpStartUSDT(
-        at::RecordFunction::schema_ref_t schema_ref,
+        at::record_function::schema_ref_t schema_ref,
         std::vector<void*>&              argsAddresses,
         std::vector<const char*>&        argsTypes);
-    static void fireOpEndUSDT(at::RecordFunction::schema_ref_t schema_ref);
+    static void fireOpEndUSDT(at::record_function::schema_ref_t schema_ref);
 #endif  // FBCODE_CAFFE2
 
     OperatorHandle findOrRegisterSchema_(FunctionSchema&& schema);
@@ -698,7 +698,7 @@ inline Return Dispatcher::callWithDispatchKeySlowPath(
 {
     // If callbacks need inputs, we box the arguments and pass them to the guard.
     // Note: For perf reasons we wouldn't want to prematurely box the arguments.
-    at::RecordFunction guard(std::move(stepCallbacks));
+    at::record_function guard(std::move(stepCallbacks));
     TORCH_INTERNAL_ASSERT_DEBUG_ONLY(op.operatorDef_->op.isObserved());
     auto           dispatchKey    = dispatchKeySet.highestPriorityTypeId();
     auto&          schema         = op.schema();
@@ -749,7 +749,7 @@ inline Return Dispatcher::callWithDispatchKeySlowPath(
     if (C10_UNLIKELY(guard.needsOutputs()))
     {
         // Calls the kernel and capture the output temporarily to pass to
-        // RecordFunction.
+        // record_function.
         detail::CaptureKernelCall<Return> captureKernelCall(
             kernel, op, dispatchKeySet, std::forward<Args>(args)...);
         guard.setOutputs(captureKernelCall.getOutputs());
@@ -794,7 +794,7 @@ Dispatcher::call(const TypedOperatorHandle<Return(Args...)>& op, Args... args) c
         struct FireOpRAII
         {
             FireOpRAII(
-                at::RecordFunction::schema_ref_t schema_ref,
+                at::record_function::schema_ref_t schema_ref,
                 std::vector<void*>&              argsAddresses,
                 std::vector<const char*>&        argsTypes)
                 : schema_ref_(schema_ref)
@@ -802,7 +802,7 @@ Dispatcher::call(const TypedOperatorHandle<Return(Args...)>& op, Args... args) c
                 fireOpStartUSDT(schema_ref, argsAddresses, argsTypes);
             }
             ~FireOpRAII() { fireOpEndUSDT(schema_ref_); }
-            at::RecordFunction::schema_ref_t schema_ref_;
+            at::record_function::schema_ref_t schema_ref_;
         } event(op.schema(), argsAddresses, argsTypes);
         return kernel.template call<Return, Args...>(
             op, dispatchKeySet, std::forward<Args>(args)...);
@@ -824,7 +824,7 @@ inline Return Dispatcher::redispatch(
     DispatchKeySet                              currentDispatchKeySet,
     Args... args) const
 {
-    // do not use RecordFunction on redispatch
+    // do not use record_function on redispatch
 #if defined(HAS_TORCH_SHOW_DISPATCH_TRACE) || !defined(NDEBUG)
     DispatchTraceNestingGuard debug_guard;
     if (show_dispatch_trace())
@@ -856,7 +856,7 @@ inline void Dispatcher::callBoxed(const OperatorHandle& op, Stack* stack) const
     auto step_callbacks = at::getStepCallbacksUnlessEmpty(at::RecordScope::FUNCTION);
     if (C10_UNLIKELY(step_callbacks.has_value() && entry.isObserved()))
     {
-        at::RecordFunction guard(std::move(*step_callbacks));
+        at::record_function guard(std::move(*step_callbacks));
         auto               dispatchKey = dispatchKeySet.highestPriorityTypeId();
         auto&              schema      = op.schema();
         auto               schema_ref  = std::reference_wrapper<const FunctionSchema>(schema);

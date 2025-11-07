@@ -495,7 +495,7 @@ struct InterpreterStateImpl : xsigma::intrusive_ptr_target {
                     xsigma::ivalue::Tuple::create(jit::last(stack, num_outputs)));
               }
             }
-            // destroy the last frame and call RecordFunction's end callbacks
+            // destroy the last frame and call record_function's end callbacks
             leaveFrame();
             return false;
           }
@@ -955,7 +955,7 @@ struct InterpreterStateImpl : xsigma::intrusive_ptr_target {
           xsigma::RecordScope::TORCHSCRIPT_FUNCTION);
       if (XSIGMA_UNLIKELY(step_callbacks.has_value())) {
         auto rec_fn =
-            std::make_unique<xsigma::RecordFunction>(std::move(*step_callbacks));
+            std::make_unique<xsigma::record_function>(std::move(*step_callbacks));
         XSIGMA_CHECK_DEBUG(rec_fn->isActive());
         if (rec_fn->needsInputs()) {
           rec_fn->before(

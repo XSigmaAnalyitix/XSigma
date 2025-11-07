@@ -143,21 +143,21 @@ TORCH_API void reportBackendEventToActiveKinetoProfiler(
     const std::string&        backend_name);
 
 TORCH_API void enableProfiler(
-    const torch::profiler::impl::ProfilerConfig&         config,
-    const std::set<torch::profiler::impl::ActivityType>& activities,
+    const torch::profiler::impl::profiler_config&         config,
+    const std::set<torch::profiler::impl::activity_type_enum>& activities,
     const std::unordered_set<xsigma::RecordScope>&       scopes = {});
 
 /*
  * Same as enableProfiler but with callback to do post-processing of
  * KinetoEvents.
  * enableProfilerWithEventPostProcess enables profiler to capture
- * specified activities, with specified RecordFunction scope, if any.
+ * specified activities, with specified record_function scope, if any.
  * Additionally, it takes a functor that does in-place post processing of
  * events, e.g. populate stack trace or module hierarchy information lazily
  * using debug_handle.
  * Example usage is with lite interpreter that has recording scope of
  * LITE_INTERPRETER. In this case lite interpreter runtime, records debug
- * handles in RecordFunction, along with other information. Debug handles are
+ * handles in record_function, along with other information. Debug handles are
  * eventually passed down to KinetoEvent and recorded as part of the event.
  * KinetoEdgeCPUProfiler, in torch/csrc/jit/mobile/profiler_edge.cpp, enables
  * profiler using post-processing callback, via
@@ -170,19 +170,19 @@ using post_process_t = std::function<void(
     /*jit_stack    */ std::vector<std::string>&,
     /*jit_modules  */ std::vector<std::string>&)>;
 TORCH_API void enableProfilerWithEventPostProcess(
-    const torch::profiler::impl::ProfilerConfig&         config,
-    const std::set<torch::profiler::impl::ActivityType>& activities,
+    const torch::profiler::impl::profiler_config&         config,
+    const std::set<torch::profiler::impl::activity_type_enum>& activities,
     post_process_t&&                                     cb,
     const std::unordered_set<xsigma::RecordScope>&       scopes = {});
 
 TORCH_API std::unique_ptr<ProfilerResult> disableProfiler();
 
 TORCH_API void prepareProfiler(
-    const torch::profiler::impl::ProfilerConfig&         config,
-    const std::set<torch::profiler::impl::ActivityType>& activities);
+    const torch::profiler::impl::profiler_config&         config,
+    const std::set<torch::profiler::impl::activity_type_enum>& activities);
 
 TORCH_API void toggleCollectionDynamic(
-    const bool enable, const std::set<torch::profiler::impl::ActivityType>& activities);
+    const bool enable, const std::set<torch::profiler::impl::activity_type_enum>& activities);
 
 TORCH_API void startMemoryProfile();
 TORCH_API void stopMemoryProfile();

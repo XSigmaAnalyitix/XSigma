@@ -15,35 +15,35 @@ namespace profiler
 {
 
 // ============================================================================
-// == ProfilerGuard Implementation ============================================
+// == profiler_guard Implementation ============================================
 // ============================================================================
 
-ProfilerGuard::ProfilerGuard(const ProfilerConfig& config) : config_(config)
+profiler_guard::profiler_guard(const profiler_config& config) : config_(config)
 {
-    auto& profiler = ProfilerSession::instance();
+    auto& profiler = profiler_session::instance();
     was_profiling_ = profiler.start(config);
 }
 
-ProfilerGuard::~ProfilerGuard()
+profiler_guard::~profiler_guard()
 {
     if (was_profiling_)
     {
-        auto& profiler = ProfilerSession::instance();
+        auto& profiler = profiler_session::instance();
         profiler.stop();
     }
 }
 
-bool ProfilerGuard::export_trace(const std::string& path)
+bool profiler_guard::export_trace(const std::string& path)
 {
-    auto& profiler = ProfilerSession::instance();
+    auto& profiler = profiler_session::instance();
     return profiler.export_trace(path);
 }
 
 // ============================================================================
-// == RecordFunction Implementation ===========================================
+// == record_function Implementation ===========================================
 // ============================================================================
 
-RecordFunction::RecordFunction(const char* name) : name_(name)
+record_function::record_function(const char* name) : name_(name)
 {
     // Record start time
     start_time_ns_ = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -56,12 +56,13 @@ RecordFunction::RecordFunction(const char* name) : name_(name)
     // Check if profiler is active
     if (profiler_enabled())
     {
+        //fixme:
         // In a full implementation, this would register the function
         // with the active profiler for event collection
     }
 }
 
-RecordFunction::~RecordFunction()
+record_function::~record_function()
 {
     // Record end time
     end_time_ns_ = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -74,16 +75,17 @@ RecordFunction::~RecordFunction()
     // Check if profiler is active
     if (profiler_enabled())
     {
+         //fixme:
         // In a full implementation, this would finalize the function
         // recording and add it to the event collection
     }
 }
 
 // ============================================================================
-// == ScopedActivity Implementation ===========================================
+// == scoped_activity Implementation ===========================================
 // ============================================================================
 
-ScopedActivity::ScopedActivity(const char* name) : name_(name)
+scoped_activity::scoped_activity(const char* name) : name_(name)
 {
     // Emit ITT range push if available
 #if XSIGMA_HAS_ITT
@@ -91,7 +93,7 @@ ScopedActivity::ScopedActivity(const char* name) : name_(name)
 #endif
 }
 
-ScopedActivity::~ScopedActivity()
+scoped_activity::~scoped_activity()
 {
     // Emit ITT range pop if available
 #if XSIGMA_HAS_ITT

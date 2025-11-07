@@ -245,7 +245,7 @@ struct AddTensorboardFields : public MetadataBase
 struct AddGenericMetadata : public MetadataBase
 {
     AddGenericMetadata(
-        std::shared_ptr<Result>& result, const torch::profiler::impl::ProfilerConfig* config)
+        std::shared_ptr<Result>& result, const torch::profiler::impl::profiler_config* config)
         : MetadataBase(result), config_(config)
     {
         result->visit(*this);
@@ -384,13 +384,13 @@ struct AddGenericMetadata : public MetadataBase
 
 private:
     /* To get names of the performance events */
-    const torch::profiler::impl::ProfilerConfig* config_;
+    const torch::profiler::impl::profiler_config* config_;
 };
 
 struct KinetoThreadLocalState : public ProfilerStateBase
 {
     explicit KinetoThreadLocalState(
-        const ProfilerConfig& config, std::set<torch::profiler::impl::ActivityType> activities)
+        const profiler_config& config, std::set<torch::profiler::impl::activity_type_enum> activities)
         : ProfilerStateBase(config),
           startTime(getTimeNs()),
           recordQueue(config, std::move(activities))
@@ -531,7 +531,7 @@ struct KinetoThreadLocalState : public ProfilerStateBase
 };
 
 template <bool use_global_state_ptr = false>
-std::unique_ptr<xsigma::ObserverContext> onFunctionEnter(const xsigma::RecordFunction& fn)
+std::unique_ptr<xsigma::ObserverContext> onFunctionEnter(const xsigma::record_function& fn)
 {
     auto state_ptr = KinetoThreadLocalState::get(use_global_state_ptr);
     if (!state_ptr)
@@ -543,7 +543,7 @@ std::unique_ptr<xsigma::ObserverContext> onFunctionEnter(const xsigma::RecordFun
 
 // @lint-ignore CLANGTIDY clang-diagnostic-unused-parameter
 template <bool use_global_state_ptr = false>
-void onFunctionExit(const xsigma::RecordFunction& fn, xsigma::ObserverContext* ctx_ptr)
+void onFunctionExit(const xsigma::record_function& fn, xsigma::ObserverContext* ctx_ptr)
 {
     auto state_ptr = KinetoThreadLocalState::get(use_global_state_ptr);
     if (!state_ptr)
@@ -559,7 +559,7 @@ void onFunctionExit(const xsigma::RecordFunction& fn, xsigma::ObserverContext* c
         state_ptr->recordQueue.getSubqueue()->disable_perf_profiler(
             *kineto_ctx_ptr->event_->counters_);
     }
-    kineto_ctx_ptr->event_->basic_fields_.end_tid_ = xsigma::RecordFunction::currentThreadId();
+    kineto_ctx_ptr->event_->basic_fields_.end_tid_ = xsigma::record_function::currentThreadId();
     if (fn.isNcclMeta())
     {
         auto& extra_meta = *(kineto_ctx_ptr->event_->extra_nccl_meta_);
@@ -568,7 +568,7 @@ void onFunctionExit(const xsigma::RecordFunction& fn, xsigma::ObserverContext* c
         auto additonal_nccl_meta = torch::profiler::impl::saveNcclMeta(fn, ncclMetaConfig);
         extra_meta.insert(additonal_nccl_meta.begin(), additonal_nccl_meta.end());
     }
-    if (config.state == ProfilerState::KINETO_GPU_FALLBACK)
+    if (config.state == profiler_state_enum::KINETO_GPU_FALLBACK)
     {
         try
         {
@@ -582,7 +582,7 @@ void onFunctionExit(const xsigma::RecordFunction& fn, xsigma::ObserverContext* c
             LOG(WARNING) << "Failed to record CUDA event. " << e.what();
         }
     }
-    else if (config.state == ProfilerState::KINETO_PRIVATEUSE1_FALLBACK)
+    else if (config.state == profiler_state_enum::KINETO_PRIVATEUSE1_FALLBACK)
     {
         auto fallback = kineto_ctx_ptr->fallback_;
         TORCH_INTERNAL_ASSERT(fallback != nullptr);
@@ -665,17 +665,17 @@ void reportBackendEventToActiveKinetoProfiler(
 }
 
 void prepareProfiler(
-    const torch::profiler::impl::ProfilerConfig&         config,
-    const std::set<torch::profiler::impl::ActivityType>& activities)
+    const torch::profiler::impl::profiler_config&         config,
+    const std::set<torch::profiler::impl::activity_type_enum>& activities)
 {
-    if (config.state == ProfilerState::NVTX || config.state == ProfilerState::ITT)
+    if (config.state == profiler_state_enum::NVTX || config.state == profiler_state_enum::ITT)
     {
         return;
     }
     XSIGMA_CHECK(
-        config.state == ProfilerState::KINETO ||
-            config.state == ProfilerState::KINETO_GPU_FALLBACK ||
-            config.state == ProfilerState::KINETO_PRIVATEUSE1_FALLBACK,
+        config.state == profiler_state_enum::KINETO ||
+            config.state == profiler_state_enum::KINETO_GPU_FALLBACK ||
+            config.state == profiler_state_enum::KINETO_PRIVATEUSE1_FALLBACK,
         "Supported only in Kineto profiler");
     torch::profiler::impl::kineto::prepareTrace(
         /*cpuOnly=*/!(
@@ -689,7 +689,7 @@ void prepareProfiler(
     {
         /* For now only CPU activity is supported */
         XSIGMA_CHECK(
-            activities.count(torch::autograd::profiler::ActivityType::CPU),
+            activities.count(torch::autograd::profiler::activity_type_enum::CPU),
             "Cannot run cpu hardware profiler without CPU activities, please only use CPU activity "
             "type");
         /*
@@ -775,31 +775,31 @@ static void toggleCPUCollectionDynamic(bool enable)
 }
 
 void toggleCollectionDynamic(
-    const bool enable, const std::set<torch::profiler::impl::ActivityType>& activities)
+    const bool enable, const std::set<torch::profiler::impl::activity_type_enum>& activities)
 {
-    if (activities.count(torch::autograd::profiler::ActivityType::CPU) > 0 &&
-        (activities.count(torch::autograd::profiler::ActivityType::CUDA) == 0 ||
-         activities.count(torch::autograd::profiler::ActivityType::XPU) == 0))
+    if (activities.count(torch::autograd::profiler::activity_type_enum::CPU) > 0 &&
+        (activities.count(torch::autograd::profiler::activity_type_enum::CUDA) == 0 ||
+         activities.count(torch::autograd::profiler::activity_type_enum::XPU) == 0))
     {
         LOG(WARNING) << "Toggling CPU activity with GPU activity on may result in traces with GPU "
                         "events on artibrary tracks";
     }
     else if (
-        (activities.count(torch::autograd::profiler::ActivityType::CUDA) > 0 ||
-         activities.count(torch::autograd::profiler::ActivityType::XPU) > 0) &&
-        activities.count(torch::autograd::profiler::ActivityType::CPU) == 0)
+        (activities.count(torch::autograd::profiler::activity_type_enum::CUDA) > 0 ||
+         activities.count(torch::autograd::profiler::activity_type_enum::XPU) > 0) &&
+        activities.count(torch::autograd::profiler::activity_type_enum::CPU) == 0)
     {
         LOG(WARNING) << "Toggling GPU activity with CPU activity on may result in traces with "
                         "incorrect correlation between CPU and GPU events";
     }
     for (auto act : activities)
     {
-        if (act == torch::autograd::profiler::ActivityType::CUDA ||
-            act == torch::autograd::profiler::ActivityType::XPU)
+        if (act == torch::autograd::profiler::activity_type_enum::CUDA ||
+            act == torch::autograd::profiler::activity_type_enum::XPU)
         {
             torch::profiler::impl::kineto::toggleCollectionDynamic(enable);
         }
-        else if (act == torch::autograd::profiler::ActivityType::CPU)
+        else if (act == torch::autograd::profiler::activity_type_enum::CPU)
         {
             toggleCPUCollectionDynamic(enable);
         }
@@ -814,15 +814,15 @@ void toggleCollectionDynamic(
 }
 
 void enableProfilerWithEventPostProcess(
-    const torch::profiler::impl::ProfilerConfig&         config,
-    const std::set<torch::profiler::impl::ActivityType>& activities,
+    const torch::profiler::impl::profiler_config&         config,
+    const std::set<torch::profiler::impl::activity_type_enum>& activities,
     post_process_t&&                                     cb,
     const std::unordered_set<xsigma::RecordScope>&       scopes)
 {
     XSIGMA_CHECK(
-        config.state != ProfilerState::NVTX, "NVTX does not support post processing callback.");
+        config.state != profiler_state_enum::NVTX, "NVTX does not support post processing callback.");
     XSIGMA_CHECK(
-        config.state != ProfilerState::ITT, "ITT does not support post processing callback.");
+        config.state != profiler_state_enum::ITT, "ITT does not support post processing callback.");
     TORCH_INTERNAL_ASSERT(
         KinetoThreadLocalState::get(/*global=*/true) == nullptr,
         "On-demand profiling does not support post processing callback");
@@ -833,36 +833,36 @@ void enableProfilerWithEventPostProcess(
 }
 
 void enableProfiler(
-    const torch::profiler::impl::ProfilerConfig&         config,
-    const std::set<torch::profiler::impl::ActivityType>& activities,
+    const torch::profiler::impl::profiler_config&         config,
+    const std::set<torch::profiler::impl::activity_type_enum>& activities,
     const std::unordered_set<xsigma::RecordScope>&       scopes)
 {
-    const auto has_cpu = activities.count(ActivityType::CPU);
+    const auto has_cpu = activities.count(activity_type_enum::CPU);
     XSIGMA_CHECK(
         KinetoThreadLocalState::get(/*global=*/config.global()) == nullptr,
         "Profiler is already enabled",
         (config.global() ? "." : " on this thread."));
 
-    if (config.state == ProfilerState::NVTX)
+    if (config.state == profiler_state_enum::NVTX)
     {
         torch::profiler::impl::pushNVTXCallbacks(config, scopes);
         return;
     }
-    else if (config.state == ProfilerState::ITT)
+    else if (config.state == profiler_state_enum::ITT)
     {
         torch::profiler::impl::pushITTCallbacks(config, scopes);
         return;
     }
-    else if (config.state == ProfilerState::PRIVATEUSE1)
+    else if (config.state == profiler_state_enum::PRIVATEUSE1)
     {
         torch::profiler::impl::pushPRIVATEUSE1CallbacksStub(config, scopes);
         return;
     }
 
     XSIGMA_CHECK(
-        config.state == ProfilerState::KINETO ||
-        config.state == ProfilerState::KINETO_GPU_FALLBACK ||
-        config.state == ProfilerState::KINETO_PRIVATEUSE1_FALLBACK || config.global());
+        config.state == profiler_state_enum::KINETO ||
+        config.state == profiler_state_enum::KINETO_GPU_FALLBACK ||
+        config.state == profiler_state_enum::KINETO_PRIVATEUSE1_FALLBACK || config.global());
     XSIGMA_CHECK(!activities.empty(), "No activities specified.");
     TORCH_INTERNAL_ASSERT(
         has_cpu || !config.global(), "Ondemand profiling must enable CPU tracing");
@@ -922,12 +922,12 @@ std::unique_ptr<ProfilerResult> disableProfiler()
     auto        state_ptr = ProfilerStateBase::pop();
     const auto& config    = state_ptr->config();
     XSIGMA_CHECK(
-        state_ptr && (config.state == ProfilerState::KINETO ||
-                      config.state == ProfilerState::KINETO_GPU_FALLBACK ||
-                      config.state == ProfilerState::KINETO_PRIVATEUSE1_FALLBACK ||
-                      config.state == ProfilerState::KINETO_ONDEMAND ||
-                      config.state == ProfilerState::NVTX || config.state == ProfilerState::ITT ||
-                      config.state == ProfilerState::PRIVATEUSE1),
+        state_ptr && (config.state == profiler_state_enum::KINETO ||
+                      config.state == profiler_state_enum::KINETO_GPU_FALLBACK ||
+                      config.state == profiler_state_enum::KINETO_PRIVATEUSE1_FALLBACK ||
+                      config.state == profiler_state_enum::KINETO_ONDEMAND ||
+                      config.state == profiler_state_enum::NVTX || config.state == profiler_state_enum::ITT ||
+                      config.state == profiler_state_enum::PRIVATEUSE1),
         "Can't disable Kineto profiler when it's not running");
 
     state_ptr->removeCallback();
@@ -942,15 +942,15 @@ std::unique_ptr<ProfilerResult> disableProfiler()
     // Shared among NVTX, PRIVATEUSE1, KINETO, KINETO_GPU_FALLBACK,
     // KINETO_PRIVATEUSE1_FALLBACK
     std::unique_ptr<ProfilerResult> result;
-    if (state_ptr->config().state == ProfilerState::NVTX ||
-        state_ptr->config().state == ProfilerState::PRIVATEUSE1)
+    if (state_ptr->config().state == profiler_state_enum::NVTX ||
+        state_ptr->config().state == profiler_state_enum::PRIVATEUSE1)
     {
         result = std::make_unique<ProfilerResult>();
     }
 
-    if (config.state == ProfilerState::KINETO ||
-        config.state == ProfilerState::KINETO_GPU_FALLBACK ||
-        config.state == ProfilerState::KINETO_PRIVATEUSE1_FALLBACK)
+    if (config.state == profiler_state_enum::KINETO ||
+        config.state == profiler_state_enum::KINETO_GPU_FALLBACK ||
+        config.state == profiler_state_enum::KINETO_PRIVATEUSE1_FALLBACK)
     {
         auto kineto_state_ptr = std::static_pointer_cast<KinetoThreadLocalState>(state_ptr);
         auto trace            = kineto_state_ptr->finalizeTrace();

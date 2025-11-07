@@ -137,7 +137,7 @@ public:
 
         // Store the thread_id of the forward operator.
         // See NOTE [ Sequence Numbers ]
-        thread_id_ = xsigma::RecordFunction::currentThreadId();
+        thread_id_ = xsigma::record_function::currentThreadId();
     }
 
     explicit Node(edge_list&& next_edges = edge_list())
@@ -172,7 +172,7 @@ public:
             xsigma::getStepCallbacksUnlessEmpty(xsigma::RecordScope::BACKWARD_FUNCTION);
         if (XSIGMA_UNLIKELY(step_callbacks.has_value()))
         {
-            xsigma::RecordFunction guard(std::move(*step_callbacks));
+            xsigma::record_function guard(std::move(*step_callbacks));
             // Using sequence number and thread id to correlate with
             // the forward pass function
             guard.setForwardThreadId(thread_id_);

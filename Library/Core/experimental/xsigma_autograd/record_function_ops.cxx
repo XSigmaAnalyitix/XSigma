@@ -9,16 +9,16 @@ namespace caffe2
 {
 // Required for cpp_custom_type_hack to work
 // NOLINTNEXTLINE(bugprone-exception-escape)
-CAFFE_KNOWN_TYPE(xsigma::RecordFunction)
+CAFFE_KNOWN_TYPE(xsigma::record_function)
 }  // namespace caffe2
 
 namespace torch::autograd::profiler
 {
 
-// Creates a new profiling scope using RecordFunction and invokes its starting
+// Creates a new profiling scope using record_function and invokes its starting
 // callbacks.
 static void record_function_enter(
-    const std::string& name, const std::optional<std::string>& args, xsigma::RecordFunction& rec)
+    const std::string& name, const std::optional<std::string>& args, xsigma::record_function& rec)
 {
     if (rec.isActive())
     {
@@ -37,7 +37,7 @@ static void record_function_enter(
 static xsigma::Tensor record_function_enter_legacy(
     const std::string& name, const std::optional<std::string>& args)
 {
-    auto rec = std::make_unique<xsigma::RecordFunction>(xsigma::RecordScope::USER_SCOPE);
+    auto rec = std::make_unique<xsigma::record_function>(xsigma::RecordScope::USER_SCOPE);
     record_function_enter(name, args, *rec);
     return xsigma::cpp_custom_type_hack::create(std::move(rec), xsigma::TensorOptions());
 }
@@ -51,14 +51,14 @@ xsigma::intrusive_ptr<PythonRecordFunction> record_function_enter_new(
     return rec;
 }
 
-static xsigma::RecordFunction& getRecordFunctionFromTensor(const xsigma::Tensor& handle)
+static xsigma::record_function& getRecordFunctionFromTensor(const xsigma::Tensor& handle)
 {
-    auto& rec = xsigma::cpp_custom_type_hack::cast<xsigma::RecordFunction>(handle);
+    auto& rec = xsigma::cpp_custom_type_hack::cast<xsigma::record_function>(handle);
     return rec;
 }
 
 // Ends the profiling scope created with record_function_enter.
-static void record_function_exit(xsigma::RecordFunction& rec)
+static void record_function_exit(xsigma::record_function& rec)
 {
     rec.end();
 }
@@ -106,11 +106,11 @@ static xsigma::intrusive_ptr<xsigma::ivalue::Future> _call_end_callbacks_on_fut_
     const xsigma::Tensor& handle, const xsigma::intrusive_ptr<xsigma::ivalue::Future>& fut)
 {
     return _call_end_callbacks_on_fut(
-        [handle]() -> xsigma::RecordFunction&
+        [handle]() -> xsigma::record_function&
         {
             TORCH_INTERNAL_ASSERT(
                 handle.defined(),
-                "Undefined RecordFunction handle. This can happen if the handle is "
+                "Undefined record_function handle. This can happen if the handle is "
                 "not correctly persisted and is destroyed before the future is "
                 "realized.");
 
@@ -125,7 +125,7 @@ xsigma::intrusive_ptr<xsigma::ivalue::Future> _call_end_callbacks_on_fut_new(
     const xsigma::intrusive_ptr<xsigma::ivalue::Future>& fut)
 {
     return _call_end_callbacks_on_fut(
-        [record]() -> xsigma::RecordFunction& { return record->record; }, fut);
+        [record]() -> xsigma::record_function& { return record->record; }, fut);
 }
 
 // Internal only, do not use directly, use Python's record_function()

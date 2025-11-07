@@ -277,7 +277,7 @@ struct TORCH_API ProfilerDisableOptions
     {
     }
     // Whether we should clean up profiler states that are thread local, such as
-    // ThreadLocalDebugInfo and thread local RecordFunction callbacks.
+    // ThreadLocalDebugInfo and thread local record_function callbacks.
     bool cleanupTLSState = true;
     // Whether we should consolidate all currently recorded profiled events. If
     // false, will not consolidate and other threads can continue to write to the
@@ -287,7 +287,7 @@ struct TORCH_API ProfilerDisableOptions
 
 // NOTE: profiler mode is thread local, with automatic propagation
 // across thread boundary (e.g. xsigma::launch tasks)
-TORCH_API void enableProfilerLegacy(const torch::profiler::impl::ProfilerConfig& /*new_config*/);
+TORCH_API void enableProfilerLegacy(const torch::profiler::impl::profiler_config& /*new_config*/);
 using thread_event_lists = std::vector<std::vector<LegacyEvent>>;
 TORCH_API thread_event_lists
 disableProfilerLegacy(std::optional<ProfilerDisableOptions> profilerDisableOptions = std::nullopt);
@@ -330,7 +330,7 @@ private:
 struct TORCH_API TLSLegacyProfilerGuard
 {
     explicit TLSLegacyProfilerGuard(
-        const torch::profiler::impl::ProfilerConfig&                  cfg,
+        const torch::profiler::impl::profiler_config&                  cfg,
         std::optional<std::function<void(const thread_event_lists&)>> resultCallback = std::nullopt,
         std::optional<ProfilerDisableOptions> profilerDisableOptions                 = std::nullopt)
         : cb_(std::move(resultCallback)), profilerDisableOptions_(profilerDisableOptions)

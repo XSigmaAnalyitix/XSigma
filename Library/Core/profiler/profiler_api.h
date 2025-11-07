@@ -13,11 +13,11 @@
  * - Thread-safe operation
  *
  * Usage:
- *   xsigma::profiler::ProfilerConfig config;
- *   config.activities = {xsigma::profiler::ActivityType::CPU};
+ *   xsigma::profiler::profiler_config config;
+ *   config.activities = {xsigma::profiler::activity_type_enum::CPU};
  *   config.output_file = "trace.json";
  *
- *   auto& profiler = xsigma::profiler::ProfilerSession::instance();
+ *   auto& profiler = xsigma::profiler::profiler_session::instance();
  *   profiler.start(config);
  *   // ... code to profile ...
  *   profiler.stop();
@@ -25,9 +25,6 @@
  */
 
 #pragma once
-
-#ifndef XSIGMA_PROFILER_API_H
-#define XSIGMA_PROFILER_API_H
 
 #include <cstdint>
 #include <memory>
@@ -50,7 +47,7 @@ namespace profiler
 /**
  * @brief Types of activities that can be profiled
  */
-enum class ActivityType
+enum class activity_type_enum
 {
     CPU    = 0,  ///< CPU operations
     CUDA   = 1,  ///< NVIDIA CUDA operations
@@ -66,7 +63,7 @@ enum class ActivityType
 /**
  * @brief Profiler operational state
  */
-enum class ProfilerState
+enum class profiler_state_enum
 {
     Disabled  = 0,  ///< Profiler not running
     Ready     = 1,  ///< Profiler configured, ready to start
@@ -80,10 +77,10 @@ enum class ProfilerState
 /**
  * @brief Configuration for profiler session
  */
-struct ProfilerConfig
+struct profiler_config
 {
     /// Activities to profile
-    std::set<ActivityType> activities;
+    std::set<activity_type_enum> activities;
 
     /// Record tensor shapes
     bool record_shapes = false;
@@ -114,13 +111,13 @@ struct ProfilerConfig
  * Singleton class managing profiler lifecycle and event collection.
  * Thread-safe for concurrent profiling from multiple threads.
  */
-class XSIGMA_API ProfilerSession
+class XSIGMA_API profiler_session
 {
 public:
     /**
    * @brief Get singleton instance
    */
-    static ProfilerSession& instance();
+    static profiler_session& instance();
 
     /**
    * @brief Start profiling with given configuration
@@ -128,7 +125,7 @@ public:
    * @param config Profiler configuration
    * @return true if profiling started successfully
    */
-    bool start(const ProfilerConfig& config);
+    bool start(const profiler_config& config);
 
     /**
    * @brief Stop profiling and collect events
@@ -147,16 +144,16 @@ public:
     /**
    * @brief Get current profiler state
    *
-   * @return Current ProfilerState
+   * @return Current profiler_state_enum
    */
-    ProfilerState get_state() const;
+    profiler_state_enum get_state() const;
 
     /**
    * @brief Get current configuration
    *
-   * @return Current ProfilerConfig
+   * @return Current profiler_config
    */
-    const ProfilerConfig& get_config() const;
+    const profiler_config& get_config() const;
 
     /**
    * @brief Export collected trace to file
@@ -184,17 +181,17 @@ public:
     void reset();
 
 private:
-    ProfilerSession()  = default;
-    ~ProfilerSession() = default;
+    profiler_session()  = default;
+    ~profiler_session() = default;
 
     // Prevent copying
-    ProfilerSession(const ProfilerSession&)            = delete;
-    ProfilerSession& operator=(const ProfilerSession&) = delete;
+    profiler_session(const profiler_session&)            = delete;
+    profiler_session& operator=(const profiler_session&) = delete;
 
     // State management
     mutable std::mutex state_mutex_;
-    ProfilerState      state_ = ProfilerState::Disabled;
-    ProfilerConfig     config_;
+    profiler_state_enum      state_ = profiler_state_enum::Disabled;
+    profiler_config     config_;
 
 // Event collection
 // Note: C4251 warning suppressed for private member - not part of public interface
@@ -225,18 +222,16 @@ XSIGMA_API bool profiler_enabled();
 /**
  * @brief Get current profiler state
  *
- * @return Current ProfilerState
+ * @return Current profiler_state_enum
  */
-XSIGMA_API ProfilerState get_profiler_state();
+XSIGMA_API profiler_state_enum get_profiler_state();
 
 /**
  * @brief Get current profiler configuration
  *
- * @return Current ProfilerConfig
+ * @return Current profiler_config
  */
-XSIGMA_API const ProfilerConfig& get_profiler_config();
+XSIGMA_API const profiler_config& get_profiler_config();
 
 }  // namespace profiler
 }  // namespace xsigma
-
-#endif  // XSIGMA_PROFILER_API_H

@@ -77,7 +77,7 @@ namespace torch::autograd::profiler
 // ThreadLocalState also automatically propagates profiler callbacks.
 //
 //
-// xsigma::RecordFunction and observers
+// xsigma::record_function and observers
 //
 // Profiler uses observers mechanism to add a pair of thread local callbacks
 // that are executed on a number of predetermined ranges, including:
@@ -119,7 +119,7 @@ using torch::profiler::impl::ProfilerStateBase;
 
 struct ProfilerLegacyThreadLocalState : public ProfilerStateBase
 {
-    explicit ProfilerLegacyThreadLocalState(const torch::profiler::impl::ProfilerConfig& config)
+    explicit ProfilerLegacyThreadLocalState(const torch::profiler::impl::profiler_config& config)
         : ProfilerStateBase(config), remoteProfiledEvents_{std::nullopt}
     {
     }
@@ -139,11 +139,11 @@ struct ProfilerLegacyThreadLocalState : public ProfilerStateBase
     void setOrAddRemoteProfiledEvents(std::vector<LegacyEvent>&& remoteProfiledEvents);
 
     void pushRange(
-        const xsigma::RecordFunction&       fn,
+        const xsigma::record_function&       fn,
         const bool                          record_cuda,
         std::vector<std::vector<int64_t>>&& shapes = {});
 
-    void popRange(const xsigma::RecordFunction& fn, const bool record_cuda);
+    void popRange(const xsigma::record_function& fn, const bool record_cuda);
 
     void reportMemoryUsage(
         void* /* unused */,
@@ -191,7 +191,7 @@ void ProfilerLegacyThreadLocalState::mark(std::string name, bool include_cuda)
     {
         return;
     }
-    if (config_.state == torch::profiler::impl::ProfilerState::NVTX)
+    if (config_.state == torch::profiler::impl::profiler_state_enum::NVTX)
     {
         torch::profiler::impl::cudaStubs()->mark(name.c_str());
     }
@@ -200,9 +200,9 @@ void ProfilerLegacyThreadLocalState::mark(std::string name, bool include_cuda)
         LegacyEvent evt(
             EventKind::Mark,
             xsigma::StringView(std::move(name)),
-            xsigma::RecordFunction::currentThreadId(),
-            include_cuda && config_.state == torch::profiler::impl::ProfilerState::CUDA);
-        evt.setNodeId(xsigma::RecordFunction::getDefaultNodeId());
+            xsigma::record_function::currentThreadId(),
+            include_cuda && config_.state == torch::profiler::impl::profiler_state_enum::CUDA);
+        evt.setNodeId(xsigma::record_function::getDefaultNodeId());
         getEventList().record(std::move(evt));
     }
 }
@@ -223,7 +223,7 @@ void ProfilerLegacyThreadLocalState::setOrAddRemoteProfiledEvents(
 }
 
 void ProfilerLegacyThreadLocalState::pushRange(
-    const xsigma::RecordFunction&       fn,
+    const xsigma::record_function&       fn,
     const bool                          record_cuda,
     std::vector<std::vector<int64_t>>&& shapes)
 {
@@ -231,7 +231,7 @@ void ProfilerLegacyThreadLocalState::pushRange(
     {
         return;
     }
-    if (config_.state == torch::profiler::impl::ProfilerState::NVTX)
+    if (config_.state == torch::profiler::impl::profiler_state_enum::NVTX)
     {
         torch::profiler::impl::cudaStubs()->rangePush(
             torch::profiler::impl::getNvtxStr(fn.name(), fn.seqNr(), shapes).c_str());
@@ -241,11 +241,11 @@ void ProfilerLegacyThreadLocalState::pushRange(
         LegacyEvent evt(
             EventKind::PushRange,
             xsigma::StringView(std::string(fn.name())),
-            xsigma::RecordFunction::currentThreadId(),
+            xsigma::record_function::currentThreadId(),
             record_cuda,
             fn.handle(),
             std::move(shapes),
-            xsigma::RecordFunction::getDefaultNodeId(),
+            xsigma::record_function::getDefaultNodeId(),
             fn.isAsync());
         evt.setSequenceNr(fn.seqNr());
         evt.setFwdThreadId(fn.forwardThreadId());
@@ -276,29 +276,29 @@ void ProfilerLegacyThreadLocalState::pushRange(
 }
 
 void ProfilerLegacyThreadLocalState::popRange(
-    const xsigma::RecordFunction& fn, const bool record_cuda)
+    const xsigma::record_function& fn, const bool record_cuda)
 {
     if (config_.disabled())
     {
         return;
     }
-    if (config_.state == torch::profiler::impl::ProfilerState::NVTX)
+    if (config_.state == torch::profiler::impl::profiler_state_enum::NVTX)
     {
         torch::profiler::impl::cudaStubs()->rangePop();
     }
     else
     {
-        // In some cases RecordFunction (and popRange) may be
+        // In some cases record_function (and popRange) may be
         // called on a different thread than pushRange
         // As a convention, we put the async pop on the original
         // thread and save current thread id in pop event
         LegacyEvent evt(
             EventKind::PopRange,
             xsigma::StringView(""),
-            xsigma::RecordFunction::currentThreadId(),
+            xsigma::record_function::currentThreadId(),
             record_cuda,
             fn.handle());
-        evt.setNodeId(xsigma::RecordFunction::getDefaultNodeId());
+        evt.setNodeId(xsigma::record_function::getDefaultNodeId());
         getEventList(fn.threadId()).record(std::move(evt));
     }
 }
@@ -312,12 +312,12 @@ void ProfilerLegacyThreadLocalState::reportMemoryUsage(
 {
     if (config_.profile_memory && !config_.disabled())
     {
-        uint64_t    thread_id = xsigma::RecordFunction::currentThreadId();
+        uint64_t    thread_id = xsigma::record_function::currentThreadId();
         LegacyEvent evt(
             EventKind::MemoryAlloc,
             xsigma::StringView(""),
             thread_id,
-            config_.state == torch::profiler::impl::ProfilerState::CUDA);
+            config_.state == torch::profiler::impl::profiler_state_enum::CUDA);
         evt.updateMemoryStats(alloc_size, device);
         getEventList(thread_id).record(std::move(evt));
     }
@@ -327,7 +327,7 @@ RangeEventList& ProfilerLegacyThreadLocalState::getEventList(std::optional<uint6
 {
     if (!thread_id.has_value())
     {
-        thread_id = xsigma::RecordFunction::currentThreadId();
+        thread_id = xsigma::record_function::currentThreadId();
     }
     RangeEventList*             list_ptr = nullptr;
     std::lock_guard<std::mutex> guard(state_mutex_);
@@ -385,7 +385,7 @@ void pushProfilingCallbacksLegacy()
     TORCH_INTERNAL_ASSERT(registration_state_ptr, "Expected profiler state set");
     auto handle = xsigma::addThreadLocalCallback(
         xsigma::RecordFunctionCallback(
-            [](const xsigma::RecordFunction& fn) -> std::unique_ptr<xsigma::ObserverContext>
+            [](const xsigma::record_function& fn) -> std::unique_ptr<xsigma::ObserverContext>
             {
                 auto state_ptr = ProfilerLegacyThreadLocalState::getTLS();
                 if (!state_ptr || state_ptr->config().disabled())
@@ -393,7 +393,7 @@ void pushProfilingCallbacksLegacy()
                     return nullptr;
                 }
                 bool record_cuda =
-                    state_ptr->config().state == torch::profiler::impl::ProfilerState::CUDA;
+                    state_ptr->config().state == torch::profiler::impl::profiler_state_enum::CUDA;
                 if (record_cuda &&
                     disable_cuda_profiling.find(fn.name()) != disable_cuda_profiling.end())
                 {
@@ -412,7 +412,7 @@ void pushProfilingCallbacksLegacy()
 
                 return nullptr;
             },
-            [](const xsigma::RecordFunction& fn, xsigma::ObserverContext*)
+            [](const xsigma::record_function& fn, xsigma::ObserverContext*)
             {
                 auto state_ptr = ProfilerLegacyThreadLocalState::getTLS();
                 if (!state_ptr || state_ptr->config().disabled())
@@ -420,7 +420,7 @@ void pushProfilingCallbacksLegacy()
                     return;
                 }
                 bool record_cuda =
-                    state_ptr->config().state == torch::profiler::impl::ProfilerState::CUDA;
+                    state_ptr->config().state == torch::profiler::impl::profiler_state_enum::CUDA;
                 if (record_cuda &&
                     disable_cuda_profiling.find(fn.name()) != disable_cuda_profiling.end())
                 {
@@ -435,14 +435,14 @@ void pushProfilingCallbacksLegacy()
 
 }  // namespace
 
-void enableProfilerLegacy(const torch::profiler::impl::ProfilerConfig& new_config)
+void enableProfilerLegacy(const torch::profiler::impl::profiler_config& new_config)
 {
     XSIGMA_CHECK(
-        new_config.state != torch::profiler::impl::ProfilerState::NVTX ||
+        new_config.state != torch::profiler::impl::profiler_state_enum::NVTX ||
             torch::profiler::impl::cudaStubs()->enabled(),
         "Can't use NVTX profiler - PyTorch was compiled without CUDA");
 
-    XSIGMA_CHECK(new_config.state != torch::profiler::impl::ProfilerState::KINETO);
+    XSIGMA_CHECK(new_config.state != torch::profiler::impl::profiler_state_enum::KINETO);
 
     auto state_ptr = ProfilerLegacyThreadLocalState::getTLS();
     XSIGMA_CHECK(!state_ptr, "Profiler is already enabled on this thread");
@@ -477,7 +477,7 @@ thread_event_lists disableProfilerLegacy(
         "Can't disable profiler when it's not running");
 
     cleanupTLSState ? state_ptr->removeCallback() : state_ptr->leakHandle();
-    if (!consolidate || state_ptr->config().state == torch::profiler::impl::ProfilerState::NVTX)
+    if (!consolidate || state_ptr->config().state == torch::profiler::impl::profiler_state_enum::NVTX)
     {
         return thread_event_lists();
     }
@@ -690,7 +690,7 @@ RecordProfile::RecordProfile(const std::string& filename)
 void RecordProfile::init()
 {
     enableProfilerLegacy(
-        torch::profiler::impl::ProfilerConfig(torch::profiler::impl::ProfilerState::CPU));
+        torch::profiler::impl::profiler_config(torch::profiler::impl::profiler_state_enum::CPU));
 }
 
 RecordProfile::~RecordProfile()

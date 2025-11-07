@@ -270,7 +270,7 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused)
             })
         // stack traces of the PyTorch CPU events
         .def("stack", [](const KinetoEvent& e) { return e.stack().vec(); })
-        // type of the RecordFunction that generated a PyTorch CPU event
+        // type of the record_function that generated a PyTorch CPU event
         // (op, torchscript function, user label, etc)
         .def("scope", [](const KinetoEvent& e) { return e.scope(); })
         // device number, for CPU - process id
@@ -331,7 +331,7 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused)
     // NOTICE: These record functions are not torch operators and may not show up
     // in TorchScript tracing, FX transforms, or operator serialization. For these
     // use cases, please use `torch.profiler.record_function`.
-    // Creates a new profiling scope using RecordFunction and invokes its starting
+    // Creates a new profiling scope using record_function and invokes its starting
     // callbacks.
     m.def(
         "_record_function_with_args_enter",
@@ -379,37 +379,37 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused)
         "_supported_activities",
         []()
         {
-            std::set<torch::profiler::impl::ActivityType> activities{
-                torch::profiler::impl::ActivityType::CPU};
+            std::set<torch::profiler::impl::activity_type_enum> activities{
+                torch::profiler::impl::activity_type_enum::CPU};
 #if defined(USE_KINETO) && (!defined(LIBKINETO_NOCUPTI) || !defined(LIBKINETO_NOROCTRACER))
             if (xsigma::hasMTIA())
             {
-                activities.insert(torch::profiler::impl::ActivityType::MTIA);
+                activities.insert(torch::profiler::impl::activity_type_enum::MTIA);
             }
             if (xsigma::hasHPU())
             {
-                activities.insert(torch::profiler::impl::ActivityType::HPU);
+                activities.insert(torch::profiler::impl::activity_type_enum::HPU);
             }
             if (xsigma::getNumGPUs() > 0)
             {
-                activities.insert(torch::profiler::impl::ActivityType::CUDA);
+                activities.insert(torch::profiler::impl::activity_type_enum::CUDA);
             }
 #elif defined(USE_KINETO)
             if (xsigma::hasXPU())
             {
-                activities.insert(torch::profiler::impl::ActivityType::XPU);
+                activities.insert(torch::profiler::impl::activity_type_enum::XPU);
             }
             if (xsigma::hasHPU())
             {
-                activities.insert(torch::profiler::impl::ActivityType::HPU);
+                activities.insert(torch::profiler::impl::activity_type_enum::HPU);
             }
             if (xsigma::hasMTIA())
             {
-                activities.insert(torch::profiler::impl::ActivityType::MTIA);
+                activities.insert(torch::profiler::impl::activity_type_enum::MTIA);
             }
             if (xsigma::get_privateuse1_backend() != "privateuseone")
             {
-                activities.insert(torch::profiler::impl::ActivityType::PrivateUse1);
+                activities.insert(torch::profiler::impl::activity_type_enum::PrivateUse1);
             }
 #endif
             return activities;

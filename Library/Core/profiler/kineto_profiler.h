@@ -20,8 +20,7 @@
  *   }
  */
 
-#ifndef XSIGMA_KINETO_PROFILER_H_
-#define XSIGMA_KINETO_PROFILER_H_
+#pragma once
 
 #include <memory>
 #include <mutex>
@@ -191,5 +190,3 @@ private:
 
 }  // namespace kineto_profiler
 }  // namespace xsigma
-
-#endif  // XSIGMA_KINETO_PROFILER_H_

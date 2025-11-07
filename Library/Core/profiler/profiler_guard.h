@@ -12,9 +12,9 @@
  *
  * Usage:
  *   {
- *       xsigma::profiler::ProfilerConfig config;
- *       config.activities = {xsigma::profiler::ActivityType::CPU};
- *       xsigma::profiler::ProfilerGuard guard(config);
+ *       xsigma::profiler::profiler_config config;
+ *       config.activities = {xsigma::profiler::activity_type_enum::CPU};
+ *       xsigma::profiler::profiler_guard guard(config);
  *       // Profiling active here
  *       // ... code to profile ...
  *   } // Profiling stops automatically
@@ -22,12 +22,9 @@
 
 #pragma once
 
-#ifndef XSIGMA_PROFILER_GUARD_H
-#define XSIGMA_PROFILER_GUARD_H
-
 #include <string>
 
-#include "../common/export.h"
+#include "common/export.h"
 #include "profiler_api.h"
 
 namespace xsigma
@@ -45,7 +42,7 @@ namespace profiler
  * Starts profiler on construction, stops on destruction.
  * Ensures proper cleanup even if exceptions occur.
  */
-class XSIGMA_API ProfilerGuard
+class XSIGMA_API profiler_guard
 {
 public:
     /**
@@ -53,12 +50,12 @@ public:
    *
    * @param config Profiler configuration
    */
-    explicit ProfilerGuard(const ProfilerConfig& config);
+    explicit profiler_guard(const profiler_config& config);
 
     /**
    * @brief Destruct and stop profiler
    */
-    ~ProfilerGuard();
+    ~profiler_guard();
 
     /**
    * @brief Check if profiler is active
@@ -77,7 +74,7 @@ public:
 
 private:
     bool           was_profiling_ = false;
-    ProfilerConfig config_;
+    profiler_config config_;
 };
 
 // ============================================================================
@@ -92,11 +89,11 @@ private:
  *
  * Usage:
  *   void my_function() {
- *       xsigma::profiler::RecordFunction record("my_function");
+ *       xsigma::profiler::record_function record("my_function");
  *       // ... function code ...
  *   } // Automatically recorded
  */
-class XSIGMA_API RecordFunction
+class XSIGMA_API record_function
 {
 public:
     /**
@@ -104,12 +101,12 @@ public:
    *
    * @param name Function name (must be string literal or persistent)
    */
-    explicit RecordFunction(const char* name);
+    explicit record_function(const char* name);
 
     /**
    * @brief Destruct and record function exit
    */
-    ~RecordFunction();
+    ~record_function();
 
     /**
    * @brief Get function name
@@ -150,11 +147,11 @@ private:
  *
  * Usage:
  *   {
- *       xsigma::profiler::ScopedActivity activity("matrix_multiply");
+ *       xsigma::profiler::scoped_activity activity("matrix_multiply");
  *       // ... code to profile ...
  *   } // Activity automatically recorded
  */
-class XSIGMA_API ScopedActivity
+class XSIGMA_API scoped_activity
 {
 public:
     /**
@@ -162,12 +159,12 @@ public:
    *
    * @param name Activity name
    */
-    explicit ScopedActivity(const char* name);
+    explicit scoped_activity(const char* name);
 
     /**
    * @brief Destruct and stop activity
    */
-    ~ScopedActivity();
+    ~scoped_activity();
 
     /**
    * @brief Get activity name
@@ -182,5 +179,3 @@ private:
 
 }  // namespace profiler
 }  // namespace xsigma
-
-#endif  // XSIGMA_PROFILER_GUARD_H

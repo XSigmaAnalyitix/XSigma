@@ -323,6 +323,46 @@ const int CONSUMED = -2;
 //  - positive value - pool not initialized, user value set
 //  - CONSUMED - pool is initialized
 std::atomic<int> num_intraop_threads{NOT_SET};
+
+// Helper functions for native backend (must be defined before use)
+int _num_pool_threads(int nthreads)
+{
+    if (nthreads == NOT_SET)
+    {
+        nthreads = intraop_default_num_threads();
+    }
+    else
+    {
+        if (nthreads <= 0)
+        {
+            XSIGMA_LOG_ERROR("Invalid number of threads: {}", nthreads);
+            nthreads = 1;
+        }
+    }
+    // minus one because of the master thread
+    return nthreads - 1;
+}
+
+xsigma::task_thread_pool_base& _get_intraop_pool()
+{
+    static std::shared_ptr<xsigma::task_thread_pool_base> const pool = ThreadPoolRegistry()->run(
+        "XSIGMA",
+        /* device_id */ 0,
+        /* pool_size */ _num_pool_threads(num_intraop_threads.exchange(CONSUMED)),
+        /* create_new */ true);  // create a separate thread pool for intra-op
+    return *pool;
+}
+
+// `fn` will be called with params: task_id.
+void _run_with_pool(const std::function<void(size_t)>& fn, size_t range)
+{
+    for (size_t i = 1; i < range; ++i)
+    {
+        _get_intraop_pool().run([fn, i]() { fn(i); });
+    }
+    // Run the first task on the current thread directly.
+    fn(0);
+}
 #endif
 
 }  // namespace
@@ -575,51 +615,14 @@ void intraop_launch(const std::function<void()>& func)
 // Native Backend Helper Functions
 // ============================================================================
 // These functions are only used by the native backend implementation
+// Note: _num_pool_threads, _get_intraop_pool, and _run_with_pool are now
+// defined earlier in the file (in the namespace block) to avoid forward
+// declaration issues.
 
 #if !XSIGMA_HAS_OPENMP && !XSIGMA_HAS_TBB
 
 namespace
 {
-
-int _num_pool_threads(int nthreads)
-{
-    if (nthreads == NOT_SET)
-    {
-        nthreads = intraop_default_num_threads();
-    }
-    else
-    {
-        if (nthreads <= 0)
-        {
-            XSIGMA_LOG_ERROR("Invalid number of threads: {}", nthreads);
-            nthreads = 1;
-        }
-    }
-    // minus one because of the master thread
-    return nthreads - 1;
-}
-
-xsigma::task_thread_pool_base& _get_intraop_pool()
-{
-    static std::shared_ptr<xsigma::task_thread_pool_base> const pool = ThreadPoolRegistry()->run(
-        "XSIGMA",
-        /* device_id */ 0,
-        /* pool_size */ _num_pool_threads(num_intraop_threads.exchange(CONSUMED)),
-        /* create_new */ true);  // create a separate thread pool for intra-op
-    return *pool;
-}
-
-// Run lambda function `fn` over `task_id` in [0, `range`) with threadpool.
-// `fn` will be called with params: task_id.
-void _run_with_pool(const std::function<void(size_t)>& fn, size_t range)
-{
-    for (size_t i = 1; i < range; ++i)
-    {
-        _get_intraop_pool().run([fn, i]() { fn(i); });
-    }
-    // Run the first task on the current thread directly.
-    fn(0);
-}
 
 // RAII guard helps to support in_parallel_region() and get_thread_num() API.
 struct parallel_region_guard
