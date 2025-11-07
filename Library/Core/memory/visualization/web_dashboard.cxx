@@ -475,7 +475,7 @@ std::string web_dashboard::get_allocator_type_name(Allocator* allocator)
     }
     if (type_name.find("allocator_device") != std::string::npos)
     {
-        return "Device";
+        return "device_option";
     }
     return "Custom";
 }

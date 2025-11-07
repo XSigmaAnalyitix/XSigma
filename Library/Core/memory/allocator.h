@@ -91,7 +91,7 @@ public:
      * @brief Allocate memory on the specified device
      * @param n Number of elements to allocate
      * @param type Target device type (CPU, CUDA, HIP)
-     * @param device_index Device index for multi-GPU systems (default: 0)
+     * @param device_index device_option index for multi-GPU systems (default: 0)
      * @return Pointer to allocated memory
      * @throws std::bad_alloc if allocation fails
      */
@@ -146,8 +146,8 @@ public:
     /**
      * @brief Free memory allocated on the specified device
      * @param ptr Reference to pointer to memory to free (will be set to nullptr)
-     * @param type Device type where memory was allocated
-     * @param device_index Device index for multi-GPU systems (default: 0)
+     * @param type device_option type where memory was allocated
+     * @param device_index device_option index for multi-GPU systems (default: 0)
      * @param count Number of elements (for tracking purposes, default: 0)
      */
     XSIGMA_FORCE_INLINE static void free(
@@ -346,8 +346,8 @@ public:
 
     /**
      * @brief Configure GPU memory pool for optimal performance
-     * @param device_type Device type to configure
-     * @param device_index Device index to configure
+     * @param device_type device_option type to configure
+     * @param device_index device_option index to configure
      * @param min_block_size Minimum block size in bytes
      * @param max_pool_size Maximum pool size in bytes
      *
@@ -369,8 +369,8 @@ public:
 
     /**
      * @brief Get allocated memory statistics for GPU device
-     * @param device_type Device type to query
-     * @param device_index Device index to query
+     * @param device_type device_option type to query
+     * @param device_index device_option index to query
      * @return Number of bytes currently allocated
      *
      * @note This method is deprecated after gpu_allocator removal.
@@ -409,7 +409,7 @@ inline constexpr std::size_t optimal_alignment(device_enum device_type)
 
 /**
  * @brief Helper function to check if device type supports GPU operations
- * @param device_type Device type to check
+ * @param device_type device_option type to check
  * @return True if device supports GPU operations
  */
 inline constexpr bool is_gpu_device(device_enum device_type)

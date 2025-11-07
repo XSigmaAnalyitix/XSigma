@@ -359,7 +359,7 @@ enum StatType
     kConsumerId,
     kIsRoot,
     kIsAsync,
-    // Device trace arguments.
+    // device_option trace arguments.
     kDeviceId,
     kDeviceTypeString,
     kContextId,
@@ -406,7 +406,7 @@ enum StatType
     kMatrixUnitUtilizationPercent,
     // XLA metadata map related.
     kHloProto,
-    // Device capability related.
+    // device_option capability related.
     kDevCapClockRateKHz,
     // For GPU, this is the number of SMs.
     kDevCapCoreCount,

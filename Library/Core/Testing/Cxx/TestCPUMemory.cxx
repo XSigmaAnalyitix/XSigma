@@ -1285,7 +1285,7 @@ XSIGMATEST(AllocatorBenchmark, PerformanceBenchmark)
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
             BenchmarkResult result;
-            result.allocator_name     = "Device Allocator";
+            result.allocator_name     = "device_option Allocator";
             result.allocation_size    = alloc_size;
             result.iterations         = num_iterations;
             result.total_time_us      = duration.count();

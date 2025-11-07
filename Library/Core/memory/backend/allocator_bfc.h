@@ -2227,7 +2227,7 @@ private:
      * be treated as contiguous. May be disabled for device memory where
      * physical adjacency doesn't guarantee virtual adjacency.
      *
-     * **Use Cases**: Device memory, NUMA-aware allocation, memory mapping
+     * **Use Cases**: device_option memory, NUMA-aware allocation, memory mapping
      */
     const bool coalesce_regions_{true};
 

@@ -42,7 +42,7 @@ public:
      */
     enum class device_type_enum : int16_t
     {
-        UNSPECIFIED      = 0,  ///< Device type not specified
+        UNSPECIFIED      = 0,  ///< device_option type not specified
         CPU              = 1,  ///< Central Processing Unit
         GPU              = 2,  ///< Graphics Processing Unit
         TPU              = 3,  ///< Tensor Processing Unit

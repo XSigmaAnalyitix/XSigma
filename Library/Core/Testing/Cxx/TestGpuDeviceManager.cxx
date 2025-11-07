@@ -119,7 +119,7 @@ XSIGMATEST(GpuDeviceManager, enumerates_available_devices)
         EXPECT_GE(device.multiprocessor_count, 0);
 
         XSIGMA_LOG_INFO(
-            "Device {}: {} ({}MB)",
+            "device_option {}: {} ({}MB)",
             device.device_index,
             device.name,
             device.total_memory / (1024ULL));
@@ -151,13 +151,15 @@ XSIGMATEST(GpuDeviceManager, retrieves_specific_device_info)
             EXPECT_GT(device_info.total_memory, 0);
 
             XSIGMA_LOG_INFO(
-                "Device 0 info: {} ({}MB)", device_info.name, device_info.total_memory / (1024ULL));
+                "device_option 0 info: {} ({}MB)",
+                device_info.name,
+                device_info.total_memory / (1024ULL));
 
             XSIGMA_LOG_INFO("GPU device manager specific device info test passed");
         }
         catch (const std::exception& e)
         {
-            XSIGMA_LOG_INFO("Device info retrieval failed: {}", e.what());
+            XSIGMA_LOG_INFO("device_option info retrieval failed: {}", e.what());
         }
     }
     else
@@ -182,7 +184,7 @@ XSIGMATEST(GpuDeviceManager, checks_device_availability)
         bool device0_available = manager.is_device_available(device_enum::CUDA, 0);
         EXPECT_TRUE(device0_available);
 
-        XSIGMA_LOG_INFO("Device 0 availability: {}", device0_available);
+        XSIGMA_LOG_INFO("device_option 0 availability: {}", device0_available);
     }
 
     // Test invalid device
@@ -221,7 +223,7 @@ XSIGMATEST(GpuDeviceManager, manages_device_context)
         }
         catch (const std::exception& e)
         {
-            XSIGMA_LOG_INFO("Device context management failed: {}", e.what());
+            XSIGMA_LOG_INFO("device_option context management failed: {}", e.what());
         }
     }
     else
@@ -264,7 +266,7 @@ XSIGMATEST(GpuDeviceManager, generates_system_report)
     // Report should contain some expected content
     EXPECT_TRUE(
         report.find("GPU") != std::string::npos || report.find("CUDA") != std::string::npos ||
-        report.find("Device") != std::string::npos);
+        report.find("device_option") != std::string::npos);
 
     XSIGMA_LOG_INFO("System report length: {} characters", report.length());
 

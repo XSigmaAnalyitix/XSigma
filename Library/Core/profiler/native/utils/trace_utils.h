@@ -124,8 +124,8 @@ static inline bool is_derived_thread_id(int thread_id)
  * - "/device:GPU:3" -> 3
  * - "GPU:1" -> 1
  *
- * @param device_name Device name string to parse
- * @return Device ordinal if successfully parsed, std::nullopt otherwise
+ * @param device_name device_option name string to parse
+ * @return device_option ordinal if successfully parsed, std::nullopt otherwise
  */
 static inline std::optional<uint32_t> parse_device_ordinal(std::string_view device_name)
 {

@@ -27,7 +27,7 @@ xsigma::device_enum device_option::type() const noexcept
 
 std::ostream& operator<<(std::ostream& str, xsigma::device_enum const& s)
 {
-    str << "Device type: " << static_cast<int>(s);
+    str << "device_option type: " << static_cast<int>(s);
     return str;
 }
 

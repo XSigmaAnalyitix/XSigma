@@ -285,7 +285,7 @@ const StatTypeMap& GetStatTypeMap()
          {"_c", kConsumerId},
          {"_r", kIsRoot},
          {"_a", kIsAsync},
-         // Device trace arguments.
+         // device_option trace arguments.
          {"device_id", kDeviceId},
          {"device_type_string", kDeviceTypeString},
          {"context_id", kContextId},
@@ -333,7 +333,7 @@ const StatTypeMap& GetStatTypeMap()
          {"EdgeTPU Model information", kEdgeTpuModelInfo},
          {"EdgeTPU Model Profile information", kEdgeTpuModelProfileInfo},
          {"EdgeTPU MLIR", kEdgeTpuMlir},
-         // Device capability related.
+         // device_option capability related.
          {"clock_rate", kDevCapClockRateKHz},
          {"core_count", kDevCapCoreCount},
          {"memory_bandwidth", kDevCapMemoryBandwidth},
@@ -628,12 +628,12 @@ bool IsInternalStat(std::optional<int64_t> stat_type)
 //const std::string_view kMegaScaleTopologyDiscovery = "MegaScale: Communication Topology Discovery.";
 //const std::string_view kMegaScaleBarrier           = "MegaScale: Barrier.";
 //const std::string_view kMegaScaleHostCommand       = "MegaScale: HostCommandHandle";
-//const std::string_view kMegaScaleD2HTransferStart  = "MegaScale: Device to Host Action";
+//const std::string_view kMegaScaleD2HTransferStart  = "MegaScale: device_option to Host Action";
 //const std::string_view kMegaScaleD2HTransferFinished =
-//    "MegaScale: Device to Host Transfer Finished";
-//const std::string_view kMegaScaleH2DTransferStart = "MegaScale: Host to Device Action";
+//    "MegaScale: device_option to Host Transfer Finished";
+//const std::string_view kMegaScaleH2DTransferStart = "MegaScale: Host to device_option Action";
 //const std::string_view kMegaScaleH2DTransferFinished =
-//    "MegaScale: Host to Device Transfer Finished";
+//    "MegaScale: Host to device_option Transfer Finished";
 //const std::string_view kMegaScaleReductionStart        = "MegaScale: Reduction";
 //const std::string_view kMegaScaleReductionFinished     = "MegaScale: Reduction Finished";
 //const std::string_view kMegaScaleCompressionStart      = "MegaScale: Compression";
@@ -646,12 +646,12 @@ const std::string_view kMegaScaleDcnMemCopy        = "MegaScale: DCN Memory Copy
 const std::string_view kMegaScaleTopologyDiscovery = "MegaScale: Topology Discovery";
 const std::string_view kMegaScaleBarrier           = "MegaScale: Barrier";
 const std::string_view kMegaScaleHostCommand       = "MegaScale: Host Command";
-const std::string_view kMegaScaleD2HTransferStart  = "MegaScale: Device to Host Transfer";
+const std::string_view kMegaScaleD2HTransferStart  = "MegaScale: device_option to Host Transfer";
 const std::string_view kMegaScaleD2HTransferFinished =
-    "MegaScale: Device to Host Transfer Finished";
-const std::string_view kMegaScaleH2DTransferStart = "MegaScale: Host to Device Transfer";
+    "MegaScale: device_option to Host Transfer Finished";
+const std::string_view kMegaScaleH2DTransferStart = "MegaScale: Host to device_option Transfer";
 const std::string_view kMegaScaleH2DTransferFinished =
-    "MegaScale: Host to Device Transfer Finished";
+    "MegaScale: Host to device_option Transfer Finished";
 const std::string_view kMegaScaleReductionStart        = "MegaScale: Reduction";
 const std::string_view kMegaScaleReductionFinished     = "MegaScale: Reduction Finished";
 const std::string_view kMegaScaleCompressionStart      = "MegaScale: Compression";

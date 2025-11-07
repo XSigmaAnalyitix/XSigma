@@ -872,7 +872,7 @@ bool IsHostPlane(const xplane& plane)
 
 bool IsDevicePlane(const xplane& plane)
 {
-    // Device and host planes should be mutually exclusive.
+    // device_option and host planes should be mutually exclusive.
     if (IsHostPlane(plane))
     {
         return false;

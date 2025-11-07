@@ -34,7 +34,7 @@ limitations under the License.
 
 #include <memory>  // for make_unique, unique_ptr
 
-#include "common/macros.h"                     // for XSIGMA_UNUSED
+#include "common/macros.h"                            // for XSIGMA_UNUSED
 #include "profiler/native/core/profiler_factory.h"    // for register_profiler_factory
 #include "profiler/native/core/profiler_interface.h"  // for profiler_interface
 #include "profiler/native/core/profiler_options.h"    // for profile_options

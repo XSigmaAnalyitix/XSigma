@@ -806,10 +806,10 @@ struct XSIGMA_API allocator_attributes
      * **Layout**:
      * - Bits 0-3: Standard attributes (host, nic, gpu, pjrt)
      * - Bits 4-23: Reserved for future use
-     * - Bits 24-31: Device-specific attributes
+     * - Bits 24-31: device_option-specific attributes
      *
-     * **Device-Specific Usage**: Upper 8 bits (24-31) are reserved for
-     * device-specific interpretations. Device implementations can use these
+     * **device_option-Specific Usage**: Upper 8 bits (24-31) are reserved for
+     * device-specific interpretations. device_option implementations can use these
      * bits for custom allocation policies.
      */
     uint32_t value{0};
