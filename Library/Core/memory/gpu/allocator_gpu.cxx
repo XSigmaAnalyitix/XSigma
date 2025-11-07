@@ -11,8 +11,8 @@
 #include <sstream>
 
 #include "logging/logger.h"
-#include "profiler/tracing/traceme.h"
 #include "memory/helper/memory_allocator.h"
+#include "profiler/tracing/traceme.h"
 #include "util/exception.h"
 
 #if XSIGMA_HAS_CUDA

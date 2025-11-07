@@ -38,8 +38,8 @@ limitations under the License.
 #include <cstdint>
 
 #include "common/macros.h"
-#include "profiler/tracing/traceme_recorder.h"
 #include "profiler/exporters/xplane/xplane.h"
+#include "profiler/tracing/traceme_recorder.h"
 
 namespace xsigma
 {

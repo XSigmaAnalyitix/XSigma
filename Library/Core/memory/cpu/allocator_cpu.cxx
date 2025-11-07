@@ -38,12 +38,12 @@
 
 #include "common/macros.h"
 #include "logging/logger.h"
-#include "profiler/tracing/traceme.h"
-#include "profiler/tracing/traceme_encode.h"
 #include "memory/cpu/allocator.h"
 #include "memory/helper/memory_allocator.h"
 #include "memory/helper/memory_info.h"
 #include "profiler/memory/scoped_memory_debug_annotation.h"
+#include "profiler/tracing/traceme.h"
+#include "profiler/tracing/traceme_encode.h"
 
 namespace xsigma
 {

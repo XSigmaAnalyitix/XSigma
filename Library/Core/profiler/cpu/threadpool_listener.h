@@ -24,9 +24,9 @@
 #include <string>
 
 #include "common/export.h"
-#include "profiler/tracing/tracing.h"
 #include "profiler/core/profiler_interface.h"
 #include "profiler/exporters/xplane/xplane.h"
+#include "profiler/tracing/tracing.h"
 
 namespace xsigma::profiler
 {

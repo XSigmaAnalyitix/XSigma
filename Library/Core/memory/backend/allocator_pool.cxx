@@ -46,8 +46,8 @@
 #include <utility>
 
 #include "logging/logger.h"
-#include "profiler/tracing/traceme.h"
 #include "memory/helper/memory_allocator.h"
+#include "profiler/tracing/traceme.h"
 #include "util/exception.h"
 
 namespace xsigma

@@ -412,11 +412,11 @@
 #include <vector>
 
 #include "Testing/xsigmaTest.h"
-#include "profiler/tracing/traceme.h"
-#include "profiler/tracing/traceme_recorder.h"
 #include "profiler/analysis/statistical_analyzer.h"
 #include "profiler/memory/memory_tracker.h"
 #include "profiler/session/profiler.h"
+#include "profiler/tracing/traceme.h"
+#include "profiler/tracing/traceme_recorder.h"
 
 using namespace xsigma;
 

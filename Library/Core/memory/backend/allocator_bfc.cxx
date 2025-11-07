@@ -49,10 +49,10 @@
 
 #include "common/macros.h"
 #include "logging/logger.h"
-#include "profiler/tracing/traceme.h"
-#include "profiler/tracing/traceme_encode.h"
 #include "memory/cpu/allocator.h"
 #include "profiler/memory/scoped_memory_debug_annotation.h"
+#include "profiler/tracing/traceme.h"
+#include "profiler/tracing/traceme_encode.h"
 #include "util/exception.h"
 #include "util/flat_hash.h"
 #include "util/string_util.h"
