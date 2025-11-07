@@ -12,8 +12,8 @@
 #include <sstream>
 #include <string_view>
 
-#include "profiler/exporters/chrome_trace_exporter.h"
-#include "profiler/exporters/xplane/xplane_builder.h"
+#include "profiler/native/exporters/chrome_trace_exporter.h"
+#include "profiler/native/exporters/xplane/xplane_builder.h"
 #include "xsigmaTest.h"
 
 using namespace xsigma;

@@ -10,7 +10,7 @@
 #include <string>
 
 #include "Testing/xsigmaTest.h"
-#include "profiler/exporters/xplane/xplane_schema.h"
+#include "profiler/native/exporters/xplane/xplane_schema.h"
 
 using namespace xsigma;
 

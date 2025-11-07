@@ -87,7 +87,7 @@
 
 namespace xsigma
 {
-    /**
+/**
  * @brief Abstract base class for thread pool implementations.
  *
  * Defines the interface that all thread pool implementations must provide.
@@ -98,10 +98,10 @@ namespace xsigma
  * Design Pattern: Abstract base class with virtual interface.
  * Coding Standard: Follows XSigma C++ standards (snake_case, virtual destructor).
  */
-    class XSIGMA_VISIBILITY task_thread_pool_base
-    {
-    public:
-        /**
+class XSIGMA_VISIBILITY task_thread_pool_base
+{
+public:
+    /**
      * @brief Submits a task to the thread pool for asynchronous execution.
      *
      * The task is added to the thread pool's queue and will be executed by an
@@ -112,18 +112,18 @@ namespace xsigma
      *
      * Thread Safety: Must be thread-safe (implementation-dependent).
      */
-        virtual void run(std::function<void()> func) = 0;
+    virtual void run(std::function<void()> func) = 0;
 
-        /**
+    /**
      * @brief Returns the total number of worker threads in the pool.
      *
      * @return Total number of threads (does not include the main thread)
      *
      * Thread Safety: Must be thread-safe (implementation-dependent).
      */
-        virtual size_t size() const = 0;
+    virtual size_t size() const = 0;
 
-        /**
+    /**
      * @brief Returns the number of idle (available) threads in the pool.
      *
      * An available thread is one that is not currently executing a task.
@@ -133,25 +133,25 @@ namespace xsigma
      *
      * Thread Safety: Must be thread-safe (implementation-dependent).
      */
-        virtual size_t num_available() const = 0;
+    virtual size_t num_available() const = 0;
 
-        /**
+    /**
      * @brief Checks if the current thread is a worker thread from this pool.
      *
      * @return true if the calling thread is a worker thread, false otherwise
      *
      * Thread Safety: Must be thread-safe (implementation-dependent).
      */
-        virtual bool in_thread_pool() const = 0;
+    virtual bool in_thread_pool() const = 0;
 
-        /**
+    /**
      * @brief Virtual destructor for proper cleanup of derived classes.
      *
      * @note noexcept ensures destructor never throws (required for RAII).
      */
-        virtual ~task_thread_pool_base() noexcept = default;
+    virtual ~task_thread_pool_base() noexcept = default;
 
-        /**
+    /**
      * @brief Returns the default number of threads for a thread pool.
      *
      * Determines the default thread count based on hardware concurrency
@@ -162,10 +162,10 @@ namespace xsigma
      *
      * Thread Safety: Thread-safe.
      */
-        static size_t default_num_threads();
-    };
+    static XSIGMA_API size_t default_num_threads();
+};
 
-    /**
+/**
      * @brief Concrete thread pool implementation with task queue and worker threads.
      *
      * This class implements a producer-consumer thread pool where the main thread
@@ -195,10 +195,10 @@ namespace xsigma
      * Design Pattern: Producer-Consumer with RAII thread management.
      * Coding Standard: Follows XSigma C++ standards (snake_case, RAII).
      */
-    class XSIGMA_VISIBILITY thread_pool : public xsigma::task_thread_pool_base
-    {
-    protected:
-        /**
+class XSIGMA_VISIBILITY thread_pool : public xsigma::task_thread_pool_base
+{
+protected:
+    /**
          * @brief Task element that can hold either a simple task or a task with thread ID.
          *
          * This union-like structure allows the task queue to hold two types of tasks:
@@ -207,54 +207,54 @@ namespace xsigma
          *
          * The run_with_id flag determines which function pointer is valid.
          */
-        struct task_element_t
-        {
-            bool run_with_id;  ///< true if with_id is valid, false if no_id is valid
+    struct task_element_t
+    {
+        bool run_with_id;  ///< true if with_id is valid, false if no_id is valid
 
-            // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
-            const std::function<void()> no_id;  ///< Simple task (no parameters)
+        // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
+        const std::function<void()> no_id;  ///< Simple task (no parameters)
 
-            // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
-            const std::function<void(std::size_t)> with_id;  ///< Task with thread ID parameter
+        // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
+        const std::function<void(std::size_t)> with_id;  ///< Task with thread ID parameter
 
-            /**
+        /**
              * @brief Constructs task element for simple task (no ID).
              * @param f Task function with signature void()
              */
-            explicit task_element_t(std::function<void()> f)
-                : run_with_id(false), no_id(std::move(f)), with_id(nullptr)
-            {
-            }
+        explicit task_element_t(std::function<void()> f)
+            : run_with_id(false), no_id(std::move(f)), with_id(nullptr)
+        {
+        }
 
-            /**
+        /**
              * @brief Constructs task element for task with thread ID.
              * @param f Task function with signature void(size_t)
              */
-            explicit task_element_t(std::function<void(std::size_t)> f)
-                : run_with_id(true), no_id(nullptr), with_id(std::move(f))
-            {
-            }
-        };
+        explicit task_element_t(std::function<void(std::size_t)> f)
+            : run_with_id(true), no_id(nullptr), with_id(std::move(f))
+        {
+        }
+    };
 
-        // Member variables (protected for derived class access)
-        std::queue<task_element_t> tasks_;      ///< FIFO task queue (protected by mutex_)
-        std::vector<std::thread>   threads_;    ///< Worker threads (managed via RAII)
-        mutable std::mutex         mutex_;      ///< Protects task queue and state
-        std::condition_variable    condition_;  ///< Signals workers when tasks available
-        std::condition_variable    completed_;  ///< Signals main thread when work complete
-        std::atomic_bool           running_;    ///< Shutdown flag (atomic for lock-free check)
-        bool                       complete_;   ///< true if task queue is empty (protected by mutex_)
-        std::size_t                available_;  ///< Number of idle threads (protected by mutex_)
-        std::size_t                total_;      ///< Total number of worker threads
-        int                        numa_node_id_;  ///< NUMA node ID for thread affinity (-1 = no affinity)
+    // Member variables (protected for derived class access)
+    std::queue<task_element_t> tasks_;      ///< FIFO task queue (protected by mutex_)
+    std::vector<std::thread>   threads_;    ///< Worker threads (managed via RAII)
+    mutable std::mutex         mutex_;      ///< Protects task queue and state
+    std::condition_variable    condition_;  ///< Signals workers when tasks available
+    std::condition_variable    completed_;  ///< Signals main thread when work complete
+    std::atomic_bool           running_;    ///< Shutdown flag (atomic for lock-free check)
+    bool                       complete_;   ///< true if task queue is empty (protected by mutex_)
+    std::size_t                available_;  ///< Number of idle threads (protected by mutex_)
+    std::size_t                total_;      ///< Total number of worker threads
+    int numa_node_id_;                      ///< NUMA node ID for thread affinity (-1 = no affinity)
 
-    public:
-        /**
+public:
+    /**
          * @brief Default constructor is deleted (pool size must be specified).
          */
-        thread_pool() = delete;
+    thread_pool() = delete;
 
-        /**
+    /**
          * @brief Constructs thread pool with specified size and optional NUMA affinity.
          *
          * Creates pool_size worker threads, each running main_loop(). Optionally
@@ -269,12 +269,10 @@ namespace xsigma
          *
          * @note Worker threads start immediately and wait for tasks.
          */
-        explicit thread_pool(
-            int                          pool_size,
-            int                          numa_node_id = -1,
-            const std::function<void()>& init_thread  = nullptr);
+    XSIGMA_API explicit thread_pool(
+        int pool_size, int numa_node_id = -1, const std::function<void()>& init_thread = nullptr);
 
-        /**
+    /**
          * @brief Destructor joins all worker threads.
          *
          * Sets running_ = false to signal shutdown, notifies all worker threads,
@@ -284,30 +282,30 @@ namespace xsigma
          *
          * @note Blocks until all worker threads exit (may take time if tasks are running).
          */
-        ~thread_pool() override;
+    XSIGMA_API ~thread_pool() override;
 
-        /**
+    /**
          * @brief Returns total number of worker threads.
          * @return Total thread count
          * Thread Safety: Thread-safe.
          */
-        size_t size() const override;
+    XSIGMA_API size_t size() const override;
 
-        /**
+    /**
          * @brief Returns number of idle (available) worker threads.
          * @return Number of threads not currently executing tasks
          * Thread Safety: Thread-safe (protected by mutex).
          */
-        size_t num_available() const override;
+    XSIGMA_API size_t num_available() const override;
 
-        /**
+    /**
          * @brief Checks if current thread is a worker thread from this pool.
          * @return true if calling thread is a worker thread, false otherwise
          * Thread Safety: Thread-safe.
          */
-        bool in_thread_pool() const override;
+    XSIGMA_API bool in_thread_pool() const override;
 
-        /**
+    /**
          * @brief Submits a simple task to the thread pool.
          *
          * Adds the task to the queue and signals a worker thread to execute it.
@@ -317,9 +315,9 @@ namespace xsigma
          *
          * Thread Safety: Thread-safe (protected by mutex).
          */
-        void run(std::function<void()> func) override;
+    XSIGMA_API void run(std::function<void()> func) override;
 
-        /**
+    /**
          * @brief Submits a task with thread ID parameter to the thread pool.
          *
          * Similar to run() but the task receives the worker thread's index as a
@@ -338,18 +336,18 @@ namespace xsigma
          * });
          * @endcode
          */
-        template <typename Task>
-        void run_task_with_id(Task task)
-        {
-            std::unique_lock<std::mutex> lock(mutex_);
+    template <typename Task>
+    void run_task_with_id(Task task)
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
 
-            // Add task to queue and signal a worker thread
-            tasks_.emplace(static_cast<std::function<void(std::size_t)>>(task));
-            complete_ = false;
-            condition_.notify_one();
-        }
+        // Add task to queue and signal a worker thread
+        tasks_.emplace(static_cast<std::function<void(std::size_t)>>(task));
+        complete_ = false;
+        condition_.notify_one();
+    }
 
-        /**
+    /**
          * @brief Waits until all tasks in the queue have completed.
          *
          * Blocks the calling thread until the task queue is empty and all worker
@@ -360,10 +358,10 @@ namespace xsigma
          *
          * @note This does NOT wait for tasks submitted after this call.
          */
-        void wait_work_complete();
+    XSIGMA_API void wait_work_complete();
 
-    private:
-        /**
+private:
+    /**
          * @brief Entry point for worker threads (runs in loop until shutdown).
          *
          * Each worker thread runs this function in a loop:
@@ -377,10 +375,10 @@ namespace xsigma
          *
          * Thread Safety: Thread-safe (each thread has unique index).
          */
-        void main_loop(std::size_t index);
-    };
+    void main_loop(std::size_t index);
+};
 
-    /**
+/**
      * @brief Specialized thread pool with thread naming and NUMA awareness.
      *
      * This class extends thread_pool with additional features:
@@ -394,10 +392,10 @@ namespace xsigma
      * Design Pattern: Decorator pattern (adds functionality to thread_pool).
      * Coding Standard: Follows XSigma C++ standards.
      */
-    class XSIGMA_VISIBILITY task_thread_pool : public xsigma::thread_pool
-    {
-    public:
-        /**
+class XSIGMA_VISIBILITY task_thread_pool : public xsigma::thread_pool
+{
+public:
+    /**
          * @brief Constructs task thread pool with thread naming and NUMA binding.
          *
          * Creates a thread pool where each worker thread:
@@ -413,25 +411,25 @@ namespace xsigma
          * @note NUMA binding can improve performance on NUMA systems by reducing
          *       memory access latency.
          */
-        explicit task_thread_pool(int pool_size, int numa_node_id = -1)
-            : thread_pool(
-                  pool_size,
-                  numa_node_id,
-                  [numa_node_id]()
-                  {
-                      // Set thread name for debugging/profiling
-                      xsigma::detail::smp::Advanced::set_thread_name("XsigmaTaskThread");
+    explicit task_thread_pool(int pool_size, int numa_node_id = -1)
+        : thread_pool(
+              pool_size,
+              numa_node_id,
+              [numa_node_id]()
+              {
+                  // Set thread name for debugging/profiling
+                  xsigma::detail::smp::Advanced::set_thread_name("XsigmaTaskThread");
 
 #if XSIGMA_HAS_NUMA
-                      // Bind thread to NUMA node if NUMA support is enabled
-                      NUMABind(numa_node_id);
+                  // Bind thread to NUMA node if NUMA support is enabled
+                  NUMABind(numa_node_id);
 #endif
-                  })
-        {
-        }
-    };
+              })
+    {
+    }
+};
 
-    /**
+/**
      * @brief Registry for managing thread pool instances.
      *
      * This registry provides centralized management of thread pool instances.
@@ -452,6 +450,6 @@ namespace xsigma
      * @note The registry manages shared_ptr instances, so pools are automatically
      *       destroyed when no longer referenced.
      */
-    XSIGMA_DECLARE_SHARED_REGISTRY(ThreadPoolRegistry, task_thread_pool_base, int, int, bool);
+XSIGMA_DECLARE_SHARED_REGISTRY(ThreadPoolRegistry, task_thread_pool_base, int, int, bool);
 
 }  // namespace xsigma

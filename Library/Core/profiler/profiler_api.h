@@ -189,8 +189,8 @@ private:
     profiler_session& operator=(const profiler_session&) = delete;
 
     // State management
-    mutable std::mutex state_mutex_;
-    profiler_state_enum      state_ = profiler_state_enum::Disabled;
+    mutable std::mutex  state_mutex_;
+    profiler_state_enum state_ = profiler_state_enum::Disabled;
     profiler_config     config_;
 
 // Event collection

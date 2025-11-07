@@ -11,7 +11,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "itt_wrapper.h"
+#include "profiler/pytroch_profiler/itt_wrapper.h"
 
 namespace xsigma
 {
@@ -46,7 +46,6 @@ bool profiler_session::start(const profiler_config& config)
 
     // Initialize Kineto if needed
     initialize_kineto();
-    
 
     // Initialize ITT if needed
     if (config_.verbose)

@@ -21,6 +21,9 @@
 
 #pragma once
 
+#pragma warning(push)
+#pragma warning(disable : 4324)  // Disable C4324 for this section
+
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -36,6 +39,7 @@
 #include <utility>
 
 #include "common/align_of.h"
+#include "common/export.h"
 #include "common/macros.h"
 
 namespace xsigma
@@ -50,7 +54,7 @@ namespace xsigma
 /// 32 bit size would limit the vector to ~4GB. SmallVectors are used for
 /// buffering bitcode output - which can exceed 4GB.
 template <class Size_T>
-class XSIGMA_API SmallVectorBase
+class XSIGMA_VISIBILITY SmallVectorBase
 {
 protected:
     void*  BeginX;
@@ -66,12 +70,12 @@ protected:
     /// This is a helper for \a grow() that's out of line to reduce code
     /// duplication.  This function will report a fatal error if it can't grow at
     /// least to \p MinSize.
-    void* mallocForGrow(size_t MinSize, size_t TSize, size_t& NewCapacity);
+    XSIGMA_API void* malloc_for_grow(size_t MinSize, size_t TSize, size_t& NewCapacity);
 
     /// This is an implementation of the grow() method which only works
     /// on POD-like data types and is out of line to reduce code duplication.
     /// This function will report a fatal error if it cannot increase capacity.
-    void grow_pod(const void* FirstEl, size_t MinSize, size_t TSize);
+    XSIGMA_API void grow_pod(const void* FirstEl, size_t MinSize, size_t TSize);
 
 public:
     SmallVectorBase() = delete;
@@ -112,7 +116,7 @@ struct SmallVectorAlignmentAndSize
 };
 
 /// This is the part of SmallVectorTemplateBase which does not depend on whether
-/// the type T is a POD. The extra dummy template argument is used by ArrayRef
+/// the type T is a POD. The extra dummy template argument is used by array_ref
 /// to avoid unnecessarily requiring T to be complete.
 template <typename T, typename = void>
 class SmallVectorTemplateCommon : public SmallVectorBase<SmallVectorSizeType<T>>
@@ -403,9 +407,9 @@ protected:
 
     /// Create a new allocation big enough for \p MinSize and pass back its size
     /// in \p NewCapacity. This is the first section of \a grow().
-    T* mallocForGrow(size_t MinSize, size_t& NewCapacity)
+    T* malloc_for_grow(size_t MinSize, size_t& NewCapacity)
     {
-        return static_cast<T*>(SmallVectorBase<SmallVectorSizeType<T>>::mallocForGrow(
+        return static_cast<T*>(SmallVectorBase<SmallVectorSizeType<T>>::malloc_for_grow(
             MinSize, sizeof(T), NewCapacity));
     }
 
@@ -437,7 +441,7 @@ protected:
     {
         // Grow manually in case Elt is an internal reference.
         size_t NewCapacity = 0;
-        T*     NewElts     = mallocForGrow(NumElts, NewCapacity);
+        T*     NewElts     = malloc_for_grow(NumElts, NewCapacity);
         std::uninitialized_fill_n(NewElts, NumElts, Elt);
         this->destroy_range(this->begin(), this->end());
         takeAllocationForGrow(NewElts, NewCapacity);
@@ -449,7 +453,7 @@ protected:
     {
         // Grow manually in case one of Args is an internal reference.
         size_t NewCapacity = 0;
-        T*     NewElts     = mallocForGrow(0, NewCapacity);
+        T*     NewElts     = malloc_for_grow(0, NewCapacity);
         ::new ((void*)(NewElts + this->size())) T(std::forward<ArgTypes>(Args)...);
         moveElementsForGrow(NewElts);
         takeAllocationForGrow(NewElts, NewCapacity);
@@ -485,7 +489,7 @@ template <typename T, bool TriviallyCopyable>
 void SmallVectorTemplateBase<T, TriviallyCopyable>::grow(size_t MinSize)
 {
     size_t NewCapacity = 0;
-    T*     NewElts     = mallocForGrow(MinSize, NewCapacity);
+    T*     NewElts     = malloc_for_grow(MinSize, NewCapacity);
     moveElementsForGrow(NewElts);
     takeAllocationForGrow(NewElts, NewCapacity);
 }
@@ -1210,7 +1214,7 @@ struct SmallVectorStorage
 /// the pointer math in \a SmallVectorTemplateCommon::getFirstEl() is
 /// well-defined.
 template <typename T>
-struct alignas(T) SmallVectorStorage<T, 0>
+struct alignas(T) SmallVectorStorage<T, 0>  //NOLINT
 {
 };
 
@@ -1491,3 +1495,4 @@ inline void swap(xsigma::small_vector<T, N>& LHS, xsigma::small_vector<T, N>& RH
 }
 
 }  // end namespace std
+#pragma warning(pop)  // Re-enable the warning after

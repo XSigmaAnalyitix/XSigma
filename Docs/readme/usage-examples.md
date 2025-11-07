@@ -309,7 +309,7 @@ The Enhanced Profiler is an experimental feature providing:
 ### Usage Example
 
 ```cpp
-#include "profiler/core/profiler.h"
+#include "profiler/native/core/profiler.h"
 
 void example_function() {
     // Profile entire function

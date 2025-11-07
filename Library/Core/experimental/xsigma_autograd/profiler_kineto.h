@@ -1,12 +1,12 @@
 #pragma once
 
-#include <torch/csrc/profiler/api.h>
-#include <torch/csrc/profiler/events.h>
-#include <torch/csrc/profiler/stubs/base.h>
-#include <torch/csrc/profiler/util.h>
-
 #include <string>
 #include <vector>
+
+#include "profiler/pytorch_profiler/api.h"
+#include "profiler/pytorch_profiler/base.h"
+#include "profiler/pytorch_profiler/events.h"
+#include "profiler/pytorch_profiler/util.h"
 
 namespace torch
 {
@@ -143,9 +143,9 @@ TORCH_API void reportBackendEventToActiveKinetoProfiler(
     const std::string&        backend_name);
 
 TORCH_API void enableProfiler(
-    const torch::profiler::impl::profiler_config&         config,
+    const torch::profiler::impl::profiler_config&              config,
     const std::set<torch::profiler::impl::activity_type_enum>& activities,
-    const std::unordered_set<xsigma::RecordScope>&       scopes = {});
+    const std::unordered_set<xsigma::RecordScope>&             scopes = {});
 
 /*
  * Same as enableProfiler but with callback to do post-processing of
@@ -170,15 +170,15 @@ using post_process_t = std::function<void(
     /*jit_stack    */ std::vector<std::string>&,
     /*jit_modules  */ std::vector<std::string>&)>;
 TORCH_API void enableProfilerWithEventPostProcess(
-    const torch::profiler::impl::profiler_config&         config,
+    const torch::profiler::impl::profiler_config&              config,
     const std::set<torch::profiler::impl::activity_type_enum>& activities,
-    post_process_t&&                                     cb,
-    const std::unordered_set<xsigma::RecordScope>&       scopes = {});
+    post_process_t&&                                           cb,
+    const std::unordered_set<xsigma::RecordScope>&             scopes = {});
 
 TORCH_API std::unique_ptr<ProfilerResult> disableProfiler();
 
 TORCH_API void prepareProfiler(
-    const torch::profiler::impl::profiler_config&         config,
+    const torch::profiler::impl::profiler_config&              config,
     const std::set<torch::profiler::impl::activity_type_enum>& activities);
 
 TORCH_API void toggleCollectionDynamic(

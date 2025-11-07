@@ -52,9 +52,9 @@ namespace xsigma
 // =============================================================================
 
 // Workload sizes
-constexpr int64_t kSmallSize   = 1000;
-constexpr int64_t kMediumSize  = 100000;
-constexpr int64_t kLargeSize   = 10000000;
+constexpr int64_t kSmallSize  = 1000;
+constexpr int64_t kMediumSize = 100000;
+constexpr int64_t kLargeSize  = 10000000;
 
 // Grain sizes (minimum chunk size for parallel work distribution)
 constexpr int64_t kSmallGrain  = 100;
@@ -764,7 +764,7 @@ BENCHMARK(BM_SMP_For_Memory_Medium);
  */
 static void BM_Parallel_For_ThreadScaling(benchmark::State& state)
 {
-    const int num_threads = static_cast<int>(state.range(0));
+    const int           num_threads = static_cast<int>(state.range(0));
     std::vector<double> data(kMediumSize, 0.0);
 
     // Set thread count for this benchmark
@@ -798,7 +798,7 @@ BENCHMARK(BM_Parallel_For_ThreadScaling)->DenseRange(1, 8, 1);
 
 static void BM_SMP_For_ThreadScaling(benchmark::State& state)
 {
-    const int num_threads = static_cast<int>(state.range(0));
+    const int           num_threads = static_cast<int>(state.range(0));
     std::vector<double> data(kMediumSize, 0.0);
 
     // Set thread count for this benchmark
@@ -839,7 +839,7 @@ BENCHMARK(BM_SMP_For_ThreadScaling)->DenseRange(1, 8, 1);
  */
 static void BM_Parallel_For_GrainSize(benchmark::State& state)
 {
-    const int64_t grain_size = state.range(0);
+    const int64_t    grain_size = state.range(0);
     std::vector<int> data(kMediumSize, 0);
 
     for (auto _ : state)
@@ -865,7 +865,7 @@ BENCHMARK(BM_Parallel_For_GrainSize)->Arg(100)->Arg(500)->Arg(1000)->Arg(5000)->
 
 static void BM_SMP_For_GrainSize(benchmark::State& state)
 {
-    const int grain_size = static_cast<int>(state.range(0));
+    const int        grain_size = static_cast<int>(state.range(0));
     std::vector<int> data(kMediumSize, 0);
 
     for (auto _ : state)
@@ -901,8 +901,8 @@ BENCHMARK(BM_SMP_For_GrainSize)->Arg(100)->Arg(500)->Arg(1000)->Arg(5000)->Arg(1
  */
 static void BM_Parallel_For_Nested(benchmark::State& state)
 {
-    const int64_t outer_size = 100;
-    const int64_t inner_size = 1000;
+    const int64_t                 outer_size = 100;
+    const int64_t                 inner_size = 1000;
     std::vector<std::vector<int>> data(outer_size, std::vector<int>(inner_size, 0));
 
     for (auto _ : state)
@@ -932,8 +932,8 @@ BENCHMARK(BM_Parallel_For_Nested);
 
 static void BM_SMP_For_Nested(benchmark::State& state)
 {
-    const int outer_size = 100;
-    const int inner_size = 1000;
+    const int                     outer_size = 100;
+    const int                     inner_size = 1000;
     std::vector<std::vector<int>> data(outer_size, std::vector<int>(inner_size, 0));
 
     for (auto _ : state)
@@ -1025,4 +1025,3 @@ BENCHMARK(BM_SMP_For_Overhead);
 }  // namespace xsigma
 
 // Note: BENCHMARK_MAIN() is not needed - using benchmark_main library instead
-

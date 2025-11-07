@@ -1,12 +1,9 @@
+#include "profiler/pytorch_profiler/profiler_python.h"
+
 #include <ATen/core/TensorBase.h>
 #include <Python.h>
 #include <frameobject.h>
-#include <torch/csrc/autograd/profiler_python.h>
 #include <torch/csrc/autograd/python_variable.h>
-#include <torch/csrc/profiler/collection.h>
-#include <torch/csrc/profiler/containers.h>
-#include <torch/csrc/profiler/orchestration/python_tracer.h>
-#include <torch/csrc/profiler/util.h>
 #include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/python_compat.h>
 #include <torch/csrc/utils/python_numbers.h>
@@ -28,6 +25,10 @@
 #include <vector>
 
 #include "common/macros.h"
+#include "profiler/pytorch_profiler/collection.h"
+#include "profiler/pytorch_profiler/containers.h"
+#include "profiler/pytorch_profiler/python_tracer.h"
+#include "profiler/pytorch_profiler/util.h"
 #include "util/exception.h"
 
 namespace py = pybind11;

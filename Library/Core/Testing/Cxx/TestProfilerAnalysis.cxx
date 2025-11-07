@@ -9,7 +9,7 @@
 #include <cmath>
 #include <sstream>
 
-#include "profiler/analysis/stats_calculator.h"
+#include "profiler/native/analysis/stats_calculator.h"
 #include "xsigmaTest.h"
 
 using namespace xsigma;

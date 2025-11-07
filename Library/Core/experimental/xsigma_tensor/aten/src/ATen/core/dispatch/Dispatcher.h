@@ -348,21 +348,21 @@ private:
     static void runRecordFunction(
         at::record_function&              guard,
         at::record_function::schema_ref_t schema_ref,
-        DispatchKey                      dispatchKey,
-        DispatchKeySet                   dispatchKeySet);
+        DispatchKey                       dispatchKey,
+        DispatchKeySet                    dispatchKeySet);
     static void runRecordFunction(
         at::record_function&              guard,
         at::record_function::schema_ref_t schema_ref,
-        DispatchKey                      dispatchKey,
-        DispatchKeySet                   dispatchKeySet,
-        c10::ArrayRef<const c10::IValue> args);
+        DispatchKey                       dispatchKey,
+        DispatchKeySet                    dispatchKeySet,
+        c10::ArrayRef<const c10::IValue>  args);
 
 #ifdef FBCODE_CAFFE2
     static bool profilingOperatorEvents();
     static void fireOpStartUSDT(
         at::record_function::schema_ref_t schema_ref,
-        std::vector<void*>&              argsAddresses,
-        std::vector<const char*>&        argsTypes);
+        std::vector<void*>&               argsAddresses,
+        std::vector<const char*>&         argsTypes);
     static void fireOpEndUSDT(at::record_function::schema_ref_t schema_ref);
 #endif  // FBCODE_CAFFE2
 
@@ -795,8 +795,8 @@ Dispatcher::call(const TypedOperatorHandle<Return(Args...)>& op, Args... args) c
         {
             FireOpRAII(
                 at::record_function::schema_ref_t schema_ref,
-                std::vector<void*>&              argsAddresses,
-                std::vector<const char*>&        argsTypes)
+                std::vector<void*>&               argsAddresses,
+                std::vector<const char*>&         argsTypes)
                 : schema_ref_(schema_ref)
             {
                 fireOpStartUSDT(schema_ref, argsAddresses, argsTypes);
@@ -857,16 +857,16 @@ inline void Dispatcher::callBoxed(const OperatorHandle& op, Stack* stack) const
     if (C10_UNLIKELY(step_callbacks.has_value() && entry.isObserved()))
     {
         at::record_function guard(std::move(*step_callbacks));
-        auto               dispatchKey = dispatchKeySet.highestPriorityTypeId();
-        auto&              schema      = op.schema();
-        auto               schema_ref  = std::reference_wrapper<const FunctionSchema>(schema);
+        auto                dispatchKey = dispatchKeySet.highestPriorityTypeId();
+        auto&               schema      = op.schema();
+        auto                schema_ref  = std::reference_wrapper<const FunctionSchema>(schema);
         guard.needsInputs() ? runRecordFunction(
                                   guard,
                                   schema_ref,
                                   dispatchKey,
                                   dispatchKeySet,
                                   c10::ArrayRef<const c10::IValue>(stack->data(), stack->size()))
-                                           : runRecordFunction(guard, schema_ref, dispatchKey, dispatchKeySet);
+                                            : runRecordFunction(guard, schema_ref, dispatchKey, dispatchKeySet);
 
         // keeping the guard alive while executing the kernel
         kernel.callBoxed(op, dispatchKeySet, stack);

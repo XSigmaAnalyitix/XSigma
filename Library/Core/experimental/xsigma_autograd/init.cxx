@@ -22,8 +22,6 @@
 #include <torch/csrc/autograd/utils/python_arg_parsing.h>
 #include <torch/csrc/autograd/utils/wrap_outputs.h>
 #include <torch/csrc/jit/python/pybind_utils.h>
-#include <torch/csrc/profiler/collection.h>
-#include <torch/csrc/profiler/kineto_shim.h>
 #include <torch/csrc/python_headers.h>
 #include <torch/csrc/utils.h>
 #include <torch/csrc/utils/disable_torch_function.h>
@@ -39,6 +37,9 @@
 #include <set>
 #include <unordered_set>
 #include <utility>
+
+#include "profiler/pytorch_profiler/collection.h"
+#include "profiler/pytorch_profiler/kineto_shim.h"
 
 using torch::impl::py_context_manager;
 using torch::impl::py_context_manager_DEPRECATED;

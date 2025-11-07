@@ -8,7 +8,7 @@
  */
 
 #include "Testing/xsigmaTest.h"
-#include "profiler/cpu/annotation_stack.h"
+#include "profiler/native/cpu/annotation_stack.h"
 
 using namespace xsigma::profiler;
 

@@ -8,7 +8,7 @@
  */
 
 #include "Testing/xsigmaTest.h"
-#include "profiler/core/timespan.h"
+#include "profiler/native/core/timespan.h"
 
 using namespace xsigma;
 

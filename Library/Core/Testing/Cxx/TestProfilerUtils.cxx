@@ -9,7 +9,7 @@
 #include <chrono>
 #include <thread>
 
-#include "profiler/utils/time_utils.h"
+#include "profiler/native/utils/time_utils.h"
 #include "xsigmaTest.h"
 
 using namespace xsigma;

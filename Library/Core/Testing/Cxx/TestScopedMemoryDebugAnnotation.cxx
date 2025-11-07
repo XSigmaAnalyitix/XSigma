@@ -11,7 +11,7 @@
 #include <thread>
 
 #include "Testing/xsigmaTest.h"
-#include "profiler/memory/scoped_memory_debug_annotation.h"
+#include "profiler/native/memory/scoped_memory_debug_annotation.h"
 
 using namespace xsigma;
 

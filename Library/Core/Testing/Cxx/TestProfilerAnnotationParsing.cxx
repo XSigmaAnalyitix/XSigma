@@ -7,7 +7,7 @@
 #include <string_view>
 
 #include "Testing/xsigmaTest.h"
-#include "profiler/utils/parse_annotation.h"
+#include "profiler/native/utils/parse_annotation.h"
 
 using namespace xsigma::profiler;
 using namespace std::literals;

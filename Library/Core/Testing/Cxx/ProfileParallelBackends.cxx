@@ -29,7 +29,7 @@
 
 #include "parallel/parallel.h"
 #include "profiler/kineto_shim.h"
-#include "profiler/session/profiler.h"
+#include "profiler/native/session/profiler.h"
 
 #if XSIGMA_HAS_KINETO
 #include <ActivityType.h>
@@ -46,10 +46,10 @@ namespace profiling
 // ============================================================================
 
 /// Workload sizes for profiling
-constexpr int64_t kSmallSize   = 1000;        // 1K elements
-constexpr int64_t kMediumSize  = 10000;       // 10K elements
-constexpr int64_t kLargeSize   = 100000;      // 100K elements
-constexpr int64_t kXLargeSize  = 1000000;     // 1M elements
+constexpr int64_t kSmallSize  = 1000;     // 1K elements
+constexpr int64_t kMediumSize = 10000;    // 10K elements
+constexpr int64_t kLargeSize  = 100000;   // 100K elements
+constexpr int64_t kXLargeSize = 1000000;  // 1M elements
 
 /// Grain sizes for parallel_for
 constexpr int64_t kSmallGrain  = 100;
@@ -123,7 +123,7 @@ private:
 void workload_memory_bound(std::vector<double>& data)
 {
     XSIGMA_PROFILE_SCOPE("workload_memory_bound");
-    
+
     parallel_for(
         0,
         static_cast<int64_t>(data.size()),
@@ -145,7 +145,7 @@ void workload_memory_bound(std::vector<double>& data)
 void workload_compute_intensive(std::vector<double>& data)
 {
     XSIGMA_PROFILE_SCOPE("workload_compute_intensive");
-    
+
     parallel_for(
         0,
         static_cast<int64_t>(data.size()),
@@ -174,7 +174,7 @@ void workload_compute_intensive(std::vector<double>& data)
 double workload_reduction_sum(const std::vector<double>& data)
 {
     XSIGMA_PROFILE_SCOPE("workload_reduction_sum");
-    
+
     return parallel_reduce(
         0,
         static_cast<int64_t>(data.size()),
@@ -201,7 +201,7 @@ double workload_reduction_sum(const std::vector<double>& data)
 double workload_reduction_max(const std::vector<double>& data)
 {
     XSIGMA_PROFILE_SCOPE("workload_reduction_max");
-    
+
     return parallel_reduce(
         0,
         static_cast<int64_t>(data.size()),
@@ -228,7 +228,7 @@ double workload_reduction_max(const std::vector<double>& data)
 double workload_reduction_min(const std::vector<double>& data)
 {
     XSIGMA_PROFILE_SCOPE("workload_reduction_min");
-    
+
     return parallel_reduce(
         0,
         static_cast<int64_t>(data.size()),
@@ -256,16 +256,16 @@ double workload_reduction_min(const std::vector<double>& data)
 void profile_grain_size_variation()
 {
     XSIGMA_PROFILE_SCOPE("profile_grain_size_variation");
-    
+
     std::cout << "\n=== Grain Size Variation ===" << std::endl;
-    
-    std::vector<double> data(kMediumSize, 1.0);
+
+    std::vector<double>        data(kMediumSize, 1.0);
     const std::vector<int64_t> grain_sizes = {kSmallGrain, kMediumGrain, kLargeGrain};
-    
+
     for (int64_t grain : grain_sizes)
     {
         XSIGMA_PROFILE_SCOPE("grain_size_test");
-        
+
         timer t;
         parallel_for(
             0,
@@ -278,11 +278,10 @@ void profile_grain_size_variation()
                     data[i] += 1.0;
                 }
             });
-        
+
         double elapsed = t.elapsed_ms();
-        std::cout << "  Grain size " << std::setw(6) << grain 
-                  << ": " << std::fixed << std::setprecision(3) 
-                  << elapsed << " ms" << std::endl;
+        std::cout << "  Grain size " << std::setw(6) << grain << ": " << std::fixed
+                  << std::setprecision(3) << elapsed << " ms" << std::endl;
     }
 }
 
@@ -292,23 +291,22 @@ void profile_grain_size_variation()
 void profile_thread_scaling()
 {
     XSIGMA_PROFILE_SCOPE("profile_thread_scaling");
-    
+
     std::cout << "\n=== Thread Scaling ===" << std::endl;
-    
+
     std::vector<double> data(kLargeSize, 1.0);
-    
+
     for (int num_threads : kThreadCounts)
     {
         XSIGMA_PROFILE_SCOPE("thread_scaling_test");
-        
+
         set_num_threads(num_threads);
-        
+
         timer t;
         workload_compute_intensive(data);
         double elapsed = t.elapsed_ms();
-        
-        std::cout << "  Threads " << num_threads 
-                  << ": " << std::fixed << std::setprecision(3) 
+
+        std::cout << "  Threads " << num_threads << ": " << std::fixed << std::setprecision(3)
                   << elapsed << " ms" << std::endl;
     }
 }
@@ -319,25 +317,24 @@ void profile_thread_scaling()
 void profile_data_size_variation()
 {
     XSIGMA_PROFILE_SCOPE("profile_data_size_variation");
-    
+
     std::cout << "\n=== Data Size Variation ===" << std::endl;
-    
-    const std::vector<int64_t> sizes = {kSmallSize, kMediumSize, kLargeSize, kXLargeSize};
+
+    const std::vector<int64_t>     sizes      = {kSmallSize, kMediumSize, kLargeSize, kXLargeSize};
     const std::vector<std::string> size_names = {"1K", "10K", "100K", "1M"};
-    
+
     for (size_t i = 0; i < sizes.size(); ++i)
     {
         XSIGMA_PROFILE_SCOPE("data_size_test");
-        
+
         std::vector<double> data(sizes[i], 1.0);
-        
+
         timer t;
         workload_memory_bound(data);
         double elapsed = t.elapsed_ms();
-        
-        std::cout << "  Size " << std::setw(4) << size_names[i] 
-                  << ": " << std::fixed << std::setprecision(3) 
-                  << elapsed << " ms" << std::endl;
+
+        std::cout << "  Size " << std::setw(4) << size_names[i] << ": " << std::fixed
+                  << std::setprecision(3) << elapsed << " ms" << std::endl;
     }
 }
 
@@ -359,31 +356,31 @@ void profile_reduction_operations()
     // Sum reduction
     {
         XSIGMA_PROFILE_SCOPE("reduction_sum");
-        timer t;
-        double sum = workload_reduction_sum(data);
+        timer  t;
+        double sum     = workload_reduction_sum(data);
         double elapsed = t.elapsed_ms();
-        std::cout << "  Sum reduction: " << std::fixed << std::setprecision(3)
-                  << elapsed << " ms (result: " << sum << ")" << std::endl;
+        std::cout << "  Sum reduction: " << std::fixed << std::setprecision(3) << elapsed
+                  << " ms (result: " << sum << ")" << std::endl;
     }
 
     // Max reduction
     {
         XSIGMA_PROFILE_SCOPE("reduction_max");
-        timer t;
+        timer  t;
         double max_val = workload_reduction_max(data);
         double elapsed = t.elapsed_ms();
-        std::cout << "  Max reduction: " << std::fixed << std::setprecision(3)
-                  << elapsed << " ms (result: " << max_val << ")" << std::endl;
+        std::cout << "  Max reduction: " << std::fixed << std::setprecision(3) << elapsed
+                  << " ms (result: " << max_val << ")" << std::endl;
     }
 
     // Min reduction
     {
         XSIGMA_PROFILE_SCOPE("reduction_min");
-        timer t;
+        timer  t;
         double min_val = workload_reduction_min(data);
         double elapsed = t.elapsed_ms();
-        std::cout << "  Min reduction: " << std::fixed << std::setprecision(3)
-                  << elapsed << " ms (result: " << min_val << ")" << std::endl;
+        std::cout << "  Min reduction: " << std::fixed << std::setprecision(3) << elapsed
+                  << " ms (result: " << min_val << ")" << std::endl;
     }
 }
 
@@ -404,8 +401,8 @@ void profile_workload_types()
         timer t;
         workload_memory_bound(data);
         double elapsed = t.elapsed_ms();
-        std::cout << "  Memory-bound: " << std::fixed << std::setprecision(3)
-                  << elapsed << " ms" << std::endl;
+        std::cout << "  Memory-bound: " << std::fixed << std::setprecision(3) << elapsed << " ms"
+                  << std::endl;
     }
 
     // Compute-intensive workload
@@ -414,8 +411,8 @@ void profile_workload_types()
         timer t;
         workload_compute_intensive(data);
         double elapsed = t.elapsed_ms();
-        std::cout << "  Compute-intensive: " << std::fixed << std::setprecision(3)
-                  << elapsed << " ms" << std::endl;
+        std::cout << "  Compute-intensive: " << std::fixed << std::setprecision(3) << elapsed
+                  << " ms" << std::endl;
     }
 }
 
@@ -428,7 +425,7 @@ void profile_parallel_overhead()
 
     std::cout << "\n=== Parallel Region Overhead ===" << std::endl;
 
-    const int num_iterations = 1000;
+    const int           num_iterations = 1000;
     std::vector<double> data(100, 1.0);
 
     timer t;
@@ -446,13 +443,13 @@ void profile_parallel_overhead()
                 }
             });
     }
-    double elapsed = t.elapsed_ms();
+    double elapsed           = t.elapsed_ms();
     double overhead_per_call = elapsed / num_iterations;
 
-    std::cout << "  Total time for " << num_iterations << " parallel regions: "
-              << std::fixed << std::setprecision(3) << elapsed << " ms" << std::endl;
-    std::cout << "  Average overhead per parallel region: "
-              << std::fixed << std::setprecision(6) << overhead_per_call << " ms" << std::endl;
+    std::cout << "  Total time for " << num_iterations << " parallel regions: " << std::fixed
+              << std::setprecision(3) << elapsed << " ms" << std::endl;
+    std::cout << "  Average overhead per parallel region: " << std::fixed << std::setprecision(6)
+              << overhead_per_call << " ms" << std::endl;
 }
 
 /**
@@ -506,7 +503,8 @@ int main(int argc, char** argv)
 
     if (!profiler::kineto_is_profiler_registered())
     {
-        std::cerr << "Warning: Kineto profiler not available - running without profiling" << std::endl;
+        std::cerr << "Warning: Kineto profiler not available - running without profiling"
+                  << std::endl;
         run_comprehensive_profiling();
         return 0;
     }
@@ -563,4 +561,3 @@ int main(int argc, char** argv)
 
     return 0;
 }
-

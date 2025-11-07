@@ -12,8 +12,8 @@
 #include <thread>
 #include <vector>
 
-#include "profiler/platform/env_time.h"
-#include "profiler/platform/env_var.h"
+#include "profiler/native/platform/env_time.h"
+#include "profiler/native/platform/env_var.h"
 #include "xsigmaTest.h"
 
 using namespace xsigma;

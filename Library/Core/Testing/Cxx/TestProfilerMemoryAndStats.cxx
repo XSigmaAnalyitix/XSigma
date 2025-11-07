@@ -10,7 +10,7 @@
 #include <thread>
 #include <vector>
 
-#include "profiler/session/profiler.h"
+#include "profiler/native/session/profiler.h"
 #include "xsigmaTest.h"
 
 using namespace xsigma;

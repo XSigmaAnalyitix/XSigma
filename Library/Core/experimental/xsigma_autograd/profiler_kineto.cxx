@@ -1,17 +1,5 @@
 #include <cstring>
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <torch/csrc/autograd/profiler_kineto.h>
-#include <torch/csrc/profiler/api.h>
-#include <torch/csrc/profiler/collection.h>
-#include <torch/csrc/profiler/containers.h>
-#include <torch/csrc/profiler/events.h>
-#include <torch/csrc/profiler/kineto_shim.h>
-#include <torch/csrc/profiler/orchestration/observer.h>
-#include <torch/csrc/profiler/perf.h>
-#include <torch/csrc/profiler/standalone/itt_observer.h>
-#include <torch/csrc/profiler/standalone/nvtx_observer.h>
-#include <torch/csrc/profiler/standalone/privateuse1_observer.h>
-#include <torch/csrc/profiler/util.h>
 #include <xsigma/macros/Export.h>
 #include <xsigma/util/ApproximateClock.h>
 #include <xsigma/util/flat_hash_map.h>
@@ -21,6 +9,18 @@
 #include <stdexcept>
 #include <utility>
 
+#include "profiler/pytorch_profiler/api.h"
+#include "profiler/pytorch_profiler/collection.h"
+#include "profiler/pytorch_profiler/containers.h"
+#include "profiler/pytorch_profiler/events.h"
+#include "profiler/pytorch_profiler/itt_observer.h"
+#include "profiler/pytorch_profiler/kineto_shim.h"
+#include "profiler/pytorch_profiler/nvtx_observer.h"
+#include "profiler/pytorch_profiler/observer.h"
+#include "profiler/pytorch_profiler/perf.h"
+#include "profiler/pytorch_profiler/privateuse1_observer.h"
+#include "profiler/pytorch_profiler/profiler_kineto.h"
+#include "profiler/pytorch_profiler/util.h"
 #include "util/exception.h"
 
 #ifdef USE_KINETO
@@ -390,7 +390,8 @@ private:
 struct KinetoThreadLocalState : public ProfilerStateBase
 {
     explicit KinetoThreadLocalState(
-        const profiler_config& config, std::set<torch::profiler::impl::activity_type_enum> activities)
+        const profiler_config&                              config,
+        std::set<torch::profiler::impl::activity_type_enum> activities)
         : ProfilerStateBase(config),
           startTime(getTimeNs()),
           recordQueue(config, std::move(activities))
@@ -665,7 +666,7 @@ void reportBackendEventToActiveKinetoProfiler(
 }
 
 void prepareProfiler(
-    const torch::profiler::impl::profiler_config&         config,
+    const torch::profiler::impl::profiler_config&              config,
     const std::set<torch::profiler::impl::activity_type_enum>& activities)
 {
     if (config.state == profiler_state_enum::NVTX || config.state == profiler_state_enum::ITT)
@@ -814,13 +815,14 @@ void toggleCollectionDynamic(
 }
 
 void enableProfilerWithEventPostProcess(
-    const torch::profiler::impl::profiler_config&         config,
+    const torch::profiler::impl::profiler_config&              config,
     const std::set<torch::profiler::impl::activity_type_enum>& activities,
-    post_process_t&&                                     cb,
-    const std::unordered_set<xsigma::RecordScope>&       scopes)
+    post_process_t&&                                           cb,
+    const std::unordered_set<xsigma::RecordScope>&             scopes)
 {
     XSIGMA_CHECK(
-        config.state != profiler_state_enum::NVTX, "NVTX does not support post processing callback.");
+        config.state != profiler_state_enum::NVTX,
+        "NVTX does not support post processing callback.");
     XSIGMA_CHECK(
         config.state != profiler_state_enum::ITT, "ITT does not support post processing callback.");
     TORCH_INTERNAL_ASSERT(
@@ -833,9 +835,9 @@ void enableProfilerWithEventPostProcess(
 }
 
 void enableProfiler(
-    const torch::profiler::impl::profiler_config&         config,
+    const torch::profiler::impl::profiler_config&              config,
     const std::set<torch::profiler::impl::activity_type_enum>& activities,
-    const std::unordered_set<xsigma::RecordScope>&       scopes)
+    const std::unordered_set<xsigma::RecordScope>&             scopes)
 {
     const auto has_cpu = activities.count(activity_type_enum::CPU);
     XSIGMA_CHECK(
@@ -926,7 +928,8 @@ std::unique_ptr<ProfilerResult> disableProfiler()
                       config.state == profiler_state_enum::KINETO_GPU_FALLBACK ||
                       config.state == profiler_state_enum::KINETO_PRIVATEUSE1_FALLBACK ||
                       config.state == profiler_state_enum::KINETO_ONDEMAND ||
-                      config.state == profiler_state_enum::NVTX || config.state == profiler_state_enum::ITT ||
+                      config.state == profiler_state_enum::NVTX ||
+                      config.state == profiler_state_enum::ITT ||
                       config.state == profiler_state_enum::PRIVATEUSE1),
         "Can't disable Kineto profiler when it's not running");
 

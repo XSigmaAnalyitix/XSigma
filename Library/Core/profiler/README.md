@@ -55,7 +55,7 @@ Chrome Trace Event JSON produced by the profiler uses nanoseconds for timestamps
 ### Basic Usage
 
 ```cpp
-#include "profiler/core/profiler.h"
+#include "profiler/native/core/profiler.h"
 
 using namespace xsigma::profiler;
 

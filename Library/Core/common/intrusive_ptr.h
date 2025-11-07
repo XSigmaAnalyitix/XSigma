@@ -5,6 +5,7 @@
 #include <memory>
 #include <type_traits>
 
+#include "common/export.h"
 #include "common/maybe_owned.h"
 #include "util/exception.h"
 
@@ -141,7 +142,7 @@ inline uint32_t atomic_weakcount_decrement(std::atomic<uint64_t>& combined_refco
 // intrusive_ptr for you!
 
 // NOLINTNEXTLINE(cppcoreguidelines-virtual-class-destructor)
-class XSIGMA_API intrusive_ptr_target
+class XSIGMA_VISIBILITY intrusive_ptr_target
 {
     // Note [Weak references for intrusive refcounting]
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -8,9 +8,9 @@
  */
 
 #include "Testing/xsigmaTest.h"
-#include "profiler/exporters/xplane/xplane.h"
-#include "profiler/exporters/xplane/xplane_builder.h"
-#include "profiler/exporters/xplane/xplane_visitor.h"
+#include "profiler/native/exporters/xplane/xplane.h"
+#include "profiler/native/exporters/xplane/xplane_builder.h"
+#include "profiler/native/exporters/xplane/xplane_visitor.h"
 
 using namespace xsigma;
 

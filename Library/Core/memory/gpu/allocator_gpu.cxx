@@ -12,7 +12,7 @@
 
 #include "logging/logger.h"
 #include "memory/helper/memory_allocator.h"
-#include "profiler/tracing/traceme.h"
+#include "profiler/native/tracing/traceme.h"
 #include "util/exception.h"
 
 #if XSIGMA_HAS_CUDA

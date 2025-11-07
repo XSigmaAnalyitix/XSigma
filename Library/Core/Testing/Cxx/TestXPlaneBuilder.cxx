@@ -12,9 +12,9 @@
 #include <vector>
 
 #include "Testing/xsigmaTest.h"
-#include "profiler/core/timespan.h"
-#include "profiler/exporters/xplane/xplane.h"
-#include "profiler/exporters/xplane/xplane_builder.h"
+#include "profiler/native/core/timespan.h"
+#include "profiler/native/exporters/xplane/xplane.h"
+#include "profiler/native/exporters/xplane/xplane_builder.h"
 
 using namespace xsigma;
 

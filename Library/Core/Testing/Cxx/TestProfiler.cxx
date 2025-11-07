@@ -26,10 +26,10 @@
 
 #include "common/configure.h"  // IWYU pragma: keep
 #include "logging/logger.h"
-#include "profiler/core/profiler_factory.h"
-#include "profiler/core/profiler_lock.h"
-#include "profiler/core/profiler_options.h"
-#include "profiler/session/profiler.h"
+#include "profiler/native/core/profiler_factory.h"
+#include "profiler/native/core/profiler_lock.h"
+#include "profiler/native/core/profiler_options.h"
+#include "profiler/native/session/profiler.h"
 #include "xsigmaTest.h"
 
 // ============================================================================

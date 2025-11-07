@@ -139,7 +139,7 @@ struct ProfilerLegacyThreadLocalState : public ProfilerStateBase
     void setOrAddRemoteProfiledEvents(std::vector<LegacyEvent>&& remoteProfiledEvents);
 
     void pushRange(
-        const xsigma::record_function&       fn,
+        const xsigma::record_function&      fn,
         const bool                          record_cuda,
         std::vector<std::vector<int64_t>>&& shapes = {});
 
@@ -223,7 +223,7 @@ void ProfilerLegacyThreadLocalState::setOrAddRemoteProfiledEvents(
 }
 
 void ProfilerLegacyThreadLocalState::pushRange(
-    const xsigma::record_function&       fn,
+    const xsigma::record_function&      fn,
     const bool                          record_cuda,
     std::vector<std::vector<int64_t>>&& shapes)
 {
@@ -477,7 +477,8 @@ thread_event_lists disableProfilerLegacy(
         "Can't disable profiler when it's not running");
 
     cleanupTLSState ? state_ptr->removeCallback() : state_ptr->leakHandle();
-    if (!consolidate || state_ptr->config().state == torch::profiler::impl::profiler_state_enum::NVTX)
+    if (!consolidate ||
+        state_ptr->config().state == torch::profiler::impl::profiler_state_enum::NVTX)
     {
         return thread_event_lists();
     }

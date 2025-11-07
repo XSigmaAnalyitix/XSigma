@@ -1,9 +1,6 @@
 #pragma once
 
 #include <torch/csrc/Export.h>
-#include <torch/csrc/profiler/api.h>
-#include <torch/csrc/profiler/stubs/base.h>
-#include <torch/csrc/profiler/util.h>
 
 #include <cstdint>
 #include <iostream>
@@ -11,6 +8,10 @@
 #include <mutex>
 #include <string>
 #include <vector>
+
+#include "profiler/pytorch_profiler/api.h"
+#include "profiler/pytorch_profiler/base.h"
+#include "profiler/pytorch_profiler/util.h"
 
 namespace torch::autograd::profiler
 {
@@ -330,7 +331,7 @@ private:
 struct TORCH_API TLSLegacyProfilerGuard
 {
     explicit TLSLegacyProfilerGuard(
-        const torch::profiler::impl::profiler_config&                  cfg,
+        const torch::profiler::impl::profiler_config&                 cfg,
         std::optional<std::function<void(const thread_event_lists&)>> resultCallback = std::nullopt,
         std::optional<ProfilerDisableOptions> profilerDisableOptions                 = std::nullopt)
         : cb_(std::move(resultCallback)), profilerDisableOptions_(profilerDisableOptions)

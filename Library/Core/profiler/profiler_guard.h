@@ -73,7 +73,7 @@ public:
     static bool export_trace(const std::string& path);
 
 private:
-    bool           was_profiling_ = false;
+    bool            was_profiling_ = false;
     profiler_config config_;
 };
 

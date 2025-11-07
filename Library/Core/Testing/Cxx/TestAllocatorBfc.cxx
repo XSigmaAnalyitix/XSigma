@@ -21,12 +21,12 @@
 #include "memory/backend/allocator_bfc.h"
 #include "memory/backend/allocator_pool.h"
 #include "memory/helper/memory_allocator.h"
-#include "profiler/analysis/statistical_analyzer.h"
-#include "profiler/memory/memory_tracker.h"
-#include "profiler/session/profiler.h"
-#include "profiler/tracing/traceme.h"
-#include "profiler/tracing/traceme_encode.h"
-#include "profiler/tracing/traceme_recorder.h"
+#include "profiler/native/analysis/statistical_analyzer.h"
+#include "profiler/native/memory/memory_tracker.h"
+#include "profiler/native/session/profiler.h"
+#include "profiler/native/tracing/traceme.h"
+#include "profiler/native/tracing/traceme_encode.h"
+#include "profiler/native/tracing/traceme_recorder.h"
 
 using namespace xsigma;
 

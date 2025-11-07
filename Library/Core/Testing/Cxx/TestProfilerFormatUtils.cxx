@@ -7,7 +7,7 @@
 #include <string>
 
 #include "Testing/xsigmaTest.h"
-#include "profiler/utils/format_utils.h"
+#include "profiler/native/utils/format_utils.h"
 
 using namespace xsigma::profiler;
 

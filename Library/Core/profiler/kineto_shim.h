@@ -24,14 +24,14 @@
 
 #pragma once
 
+#include <ActivityType.h>
+
 #include <memory>
 #include <set>
 #include <string>
 
 #include "common/export.h"
 #include "common/macros.h"
-
-#include <ActivityType.h>
 
 // Forward declarations to avoid including libkineto.h in headers
 namespace libkineto

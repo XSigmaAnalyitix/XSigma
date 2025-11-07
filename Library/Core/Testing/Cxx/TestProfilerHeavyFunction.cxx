@@ -32,7 +32,7 @@
 // BASIC USAGE:
 // ------------
 //
-// #include "profiler/session/profiler.h"
+// #include "profiler/native/session/profiler.h"
 //
 // void my_function() {
 //     // Configure profiler options
@@ -268,7 +268,7 @@
 // COMPLETE EXAMPLE:
 // -----------------
 //
-// #include "profiler/session/profiler.h"
+// #include "profiler/native/session/profiler.h"
 // #include "profiler/kineto_shim.h"
 // #include "profiler/itt_wrapper.h"
 //
@@ -412,11 +412,11 @@
 #include <vector>
 
 #include "Testing/xsigmaTest.h"
-#include "profiler/analysis/statistical_analyzer.h"
-#include "profiler/memory/memory_tracker.h"
-#include "profiler/session/profiler.h"
-#include "profiler/tracing/traceme.h"
-#include "profiler/tracing/traceme_recorder.h"
+#include "profiler/native/analysis/statistical_analyzer.h"
+#include "profiler/native/memory/memory_tracker.h"
+#include "profiler/native/session/profiler.h"
+#include "profiler/native/tracing/traceme.h"
+#include "profiler/native/tracing/traceme_recorder.h"
 
 using namespace xsigma;
 
@@ -839,7 +839,7 @@ XSIGMATEST(Profiler, heavy_function_comprehensive_computational_profiling)
 // HOW TO USE:
 // 1. Run this test to generate kineto_trace.json
 // 2. View with PyTorch Profiler:
-//    python -m torch.profiler.viewer kineto_trace.json
+//    python -m xsigma.profiler.viewer kineto_trace.json
 // 3. Or view in Chrome:
 //    - Open chrome://tracing
 //    - Load the JSON file
@@ -1127,7 +1127,7 @@ XSIGMATEST(Profiler, kineto_heavy_function_profiling)
 #include <fstream>
 #include <sstream>
 
-#include "profiler/itt_wrapper.h"
+#include "profiler/pytroch_profiler/itt_wrapper.h"
 
 XSIGMATEST(Profiler, itt_api_heavy_function_profiling)
 {
@@ -1551,7 +1551,7 @@ XSIGMATEST(Profiler, combined_kineto_itt_heavy_function_profiling)
     std::cout << "     - Visit https://ui.perfetto.dev\n";
     std::cout << "     - Open either JSON file\n";
     std::cout << "  3. PyTorch Profiler (Kineto trace):\n";
-    std::cout << "     - python -m torch.profiler.viewer " << kineto_combined_file << "\n";
+    std::cout << "     - python -m xsigma.profiler.viewer " << kineto_combined_file << "\n";
     std::cout << "  4. Intel VTune (ITT annotations):\n";
     std::cout << "     - vtune -collect hotspots -app ./CoreCxxTests.exe\n";
     std::cout << "     - Look for 'XSigmaCombinedProfilingTest' domain\n";

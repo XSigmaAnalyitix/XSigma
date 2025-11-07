@@ -104,7 +104,7 @@ public:
      *
      * Thread Safety: Thread-safe, returns thread-local value.
      */
-    static bool is_enabled();
+    static XSIGMA_API bool is_enabled();
 
     /**
      * @brief Constructs guard and sets new parallel region state.
@@ -124,7 +124,7 @@ public:
      * }  // State automatically restored to previous value
      * @endcode
      */
-    parallel_guard(bool state);
+    XSIGMA_API parallel_guard(bool state);
 
     /**
      * @brief Destructor restores previous parallel region state.
@@ -137,7 +137,7 @@ public:
      *
      * @note Never throws exceptions (required for RAII correctness).
      */
-    ~parallel_guard();
+    XSIGMA_API ~parallel_guard();
 
     // Non-copyable and non-movable (RAII guard semantics)
     parallel_guard(const parallel_guard&)            = delete;

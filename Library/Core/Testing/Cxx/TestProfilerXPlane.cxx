@@ -6,8 +6,8 @@
 
 #include <gtest/gtest.h>
 
-#include "profiler/exporters/xplane/xplane.h"
-#include "profiler/exporters/xplane/xplane_builder.h"
+#include "profiler/native/exporters/xplane/xplane.h"
+#include "profiler/native/exporters/xplane/xplane_builder.h"
 #include "xsigmaTest.h"
 
 using namespace xsigma;

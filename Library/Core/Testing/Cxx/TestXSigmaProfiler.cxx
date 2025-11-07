@@ -67,7 +67,7 @@ TEST_F(ProfilerSessionTest, SingletonInstance)
 TEST_F(ProfilerSessionTest, InitialState)
 {
     // Test that profiler starts in Disabled or Ready state
-    auto&         session = profiler_session::instance();
+    auto&               session = profiler_session::instance();
     profiler_state_enum state   = get_profiler_state();
 
     // After cleanup, profiler should be in Disabled or Ready state
@@ -234,8 +234,9 @@ TEST_F(ProfilerSessionTest, ConfigurationActivities)
 {
     // Test configuration with multiple activity types
     profiler_config config;
-    config.activities = {activity_type_enum::CPU, activity_type_enum::CUDA, activity_type_enum::Memory};
-    config.verbose    = false;
+    config.activities = {
+        activity_type_enum::CPU, activity_type_enum::CUDA, activity_type_enum::Memory};
+    config.verbose = false;
 
     auto& session = profiler_session::instance();
     bool  started = session.start(config);
@@ -300,7 +301,9 @@ TEST_F(ProfilerSessionTest, StateTransitions)
 
     // Initial state (after cleanup)
     profiler_state_enum initial_state = get_profiler_state();
-    EXPECT_TRUE(initial_state == profiler_state_enum::Disabled || initial_state == profiler_state_enum::Ready);
+    EXPECT_TRUE(
+        initial_state == profiler_state_enum::Disabled ||
+        initial_state == profiler_state_enum::Ready);
 
     // Start profiler
     profiler_config config;

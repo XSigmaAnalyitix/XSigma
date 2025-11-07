@@ -25,7 +25,6 @@
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch/csrc/jit/python/python_tracer.h>
-#include <torch/csrc/profiler/api.h>
 #include <torch/csrc/python_headers.h>
 #include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/python_numbers.h>
@@ -41,6 +40,8 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
+#include "profiler/pytorch_profiler/api.h"
 
 using namespace torch;
 using namespace torch::autograd;

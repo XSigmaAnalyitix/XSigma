@@ -43,7 +43,7 @@
 #include "memory/backend/allocator_pool.h"
 #include "memory/backend/allocator_tracking.h"
 #include "memory/cpu/allocator.h"
-#include "profiler/platform/env_var.h"
+#include "profiler/native/platform/env_var.h"
 #include "util/exception.h"
 #include "util/string_util.h"
 

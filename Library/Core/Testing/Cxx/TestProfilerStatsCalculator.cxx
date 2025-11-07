@@ -8,8 +8,8 @@
  */
 
 #include "Testing/xsigmaTest.h"
-#include "profiler/analysis/stat_summarizer_options.h"
-#include "profiler/analysis/stats_calculator.h"
+#include "profiler/native/analysis/stat_summarizer_options.h"
+#include "profiler/native/analysis/stats_calculator.h"
 
 using namespace xsigma;
 

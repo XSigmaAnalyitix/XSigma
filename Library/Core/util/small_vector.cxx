@@ -116,7 +116,7 @@ static size_t getNewCapacity(size_t MinSize, size_t OldCapacity)
 
 // Note: Moving this function into the header may cause performance regression.
 template <class Size_T>
-void* SmallVectorBase<Size_T>::mallocForGrow(size_t MinSize, size_t TSize, size_t& NewCapacity)
+void* SmallVectorBase<Size_T>::malloc_for_grow(size_t MinSize, size_t TSize, size_t& NewCapacity)
 {
     NewCapacity = getNewCapacity<Size_T>(MinSize, this->capacity());
     // NOLINTNEXTLINE(cppcoreguidelines-no-malloc)
