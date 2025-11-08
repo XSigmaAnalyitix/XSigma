@@ -150,7 +150,7 @@ public:
     XSIGMA_API virtual ~exception();
 
     // xsigma-style exception constructor.
-    // NB: the implementation of this is actually in exception.cxx
+    // NB: the implementation of this is actually in exception.cpp
     XSIGMA_API exception(
         source_location source_location, std::string msg, exception_category category);
 

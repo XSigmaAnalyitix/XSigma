@@ -6,7 +6,7 @@
 # ============================================================================= Test Source Files
 # Discovery
 # =============================================================================
-file(GLOB_RECURSE test_sources LIST_DIRECTORIES false "${CMAKE_CURRENT_SOURCE_DIR}/Test*.cxx")
+file(GLOB_RECURSE test_sources LIST_DIRECTORIES false "${CMAKE_CURRENT_SOURCE_DIR}/Test*.cpp")
 
 set(TestFiles)
 foreach(_test_source IN ITEMS ${test_sources})

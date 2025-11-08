@@ -8,7 +8,7 @@ Successfully completed comprehensive refactoring of the XSigma SMP (Symmetric Mu
 
 ### 1. ✅ Added `GetIntraopPool()` Implementation to Internal Namespace
 
-**File Modified:** `Library/Core/smp_new/parallel/parallel_api.cxx`
+**File Modified:** `Library/Core/smp_new/parallel/parallel_api.cpp`
 
 **Change:** Renamed `EnsureIntraopPool()` to `GetIntraopPool()` to match the forward declaration in the header file.
 
@@ -16,7 +16,7 @@ Successfully completed comprehensive refactoring of the XSigma SMP (Symmetric Mu
 - Function is properly implemented in the `internal` namespace (lines 192-208)
 - Includes thread-safe lazy initialization with mutex protection
 - Returns reference to intra-op thread pool: `core::TaskThreadPoolBase&`
-- Accessible to both `parallel_api.cxx` and `parallelize_1d.cxx`
+- Accessible to both `parallel_api.cpp` and `parallelize_1d.cpp`
 
 ### 2. ✅ Consolidated Template Implementations from `.hxx` to `.h`
 
@@ -40,21 +40,21 @@ Successfully completed comprehensive refactoring of the XSigma SMP (Symmetric Mu
 
 **Files Reviewed:**
 - `Library/Core/smp_new/parallel/parallel_api.h` - Declarations and templates only
-- `Library/Core/smp_new/parallel/parallel_api.cxx` - Non-template implementations
+- `Library/Core/smp_new/parallel/parallel_api.cpp` - Non-template implementations
 - `Library/Core/smp_new/parallel/parallelize_1d.h` - Declarations and inline functions
-- `Library/Core/smp_new/parallel/parallelize_1d.cxx` - Work-stealing implementation
+- `Library/Core/smp_new/parallel/parallelize_1d.cpp` - Work-stealing implementation
 - `Library/Core/smp_new/core/thread_pool.h` - Class declarations
-- `Library/Core/smp_new/core/thread_pool.cxx` - Implementations
+- `Library/Core/smp_new/core/thread_pool.cpp` - Implementations
 - `Library/Core/smp_new/native/parallel_native.h` - Declarations
-- `Library/Core/smp_new/native/parallel_native.cxx` - Implementations
+- `Library/Core/smp_new/native/parallel_native.cpp` - Implementations
 - `Library/Core/smp_new/openmp/parallel_openmp.h` - Declarations
-- `Library/Core/smp_new/openmp/parallel_openmp.cxx` - Implementations
+- `Library/Core/smp_new/openmp/parallel_openmp.cpp` - Implementations
 - `Library/Core/smp_new/tbb/parallel_tbb.h` - Declarations and template implementations
-- `Library/Core/smp_new/tbb/parallel_tbb.cxx` - Implementations
+- `Library/Core/smp_new/tbb/parallel_tbb.cpp` - Implementations
 
 **Findings:**
-- All non-template implementations properly placed in `.cxx` files
-- No `XSIGMA_API` or `XSIGMA_VISIBILITY` macros found in `.cxx` files
+- All non-template implementations properly placed in `.cpp` files
+- No `XSIGMA_API` or `XSIGMA_VISIBILITY` macros found in `.cpp` files
 - Template implementations correctly remain in header files
 - Code organization follows XSigma standards
 

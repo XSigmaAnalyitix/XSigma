@@ -46,14 +46,14 @@ file(
 file(
   GLOB_RECURSE sources
   LIST_DIRECTORIES false
-  "${CMAKE_CURRENT_SOURCE_DIR}/common/*.cxx"
-  "${CMAKE_CURRENT_SOURCE_DIR}/util/*.cxx"
-  "${CMAKE_CURRENT_SOURCE_DIR}/logging/*.cxx"
-  "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.cxx"
-  "${CMAKE_CURRENT_SOURCE_DIR}/profiler/*.cxx"
-  "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.cxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/common/*.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/util/*.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/logging/*.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/profiler/*.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/c17/*.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/parallel/*.cxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/parallel/*.cpp"
   ${xsigma_sources}
 )
 
@@ -67,40 +67,40 @@ file(
 
 # Remove GPU files if neither CUDA nor HIP is enabled
 if(NOT XSIGMA_ENABLE_CUDA OR XSIGMA_ENABLE_HIP)
-  file(GLOB_RECURSE GPU_SOURCE_FILES memory/gpu/*.cxx)
+  file(GLOB_RECURSE GPU_SOURCE_FILES memory/gpu/*.cpp)
   file(GLOB_RECURSE GPU_HEADER_FILES memory/gpu/*.h memory/gpu/*.hxx)
   list(REMOVE_ITEM headers ${GPU_HEADER_FILES})
   list(REMOVE_ITEM sources ${GPU_SOURCE_FILES})
-  list(REMOVE_ITEM sources "${CMAKE_CURRENT_SOURCE_DIR}/memory/cpu/allocator_device.cxx")
+  list(REMOVE_ITEM sources "${CMAKE_CURRENT_SOURCE_DIR}/memory/cpu/allocator_device.cpp")
   list(REMOVE_ITEM headers "${CMAKE_CURRENT_SOURCE_DIR}/memory/cpu/allocator_device.h")
 endif()
 
 if(XSIGMA_ENABLE_COMPRESSION)
   if(XSIGMA_COMPRESSION_TYPE STREQUAL "SNAPPY")
     list(APPEND headers "${CMAKE_CURRENT_SOURCE_DIR}/compression/snappy.h")
-    list(APPEND sources "${CMAKE_CURRENT_SOURCE_DIR}/compression/snappy.cxx")
+    list(APPEND sources "${CMAKE_CURRENT_SOURCE_DIR}/compression/snappy.cpp")
   endif()
 endif()
 
-# Remove logging.cxx and logging.h for NATIVE backend (uses simplified implementation in logger.cxx)
+# Remove logging.cpp and logging.h for NATIVE backend (uses simplified implementation in logger.cpp)
 if(XSIGMA_USE_NATIVE_LOGGING)
-  list(REMOVE_ITEM sources "${CMAKE_CURRENT_SOURCE_DIR}/logging/logging.cxx")
+  list(REMOVE_ITEM sources "${CMAKE_CURRENT_SOURCE_DIR}/logging/logging.cpp")
   list(REMOVE_ITEM headers "${CMAKE_CURRENT_SOURCE_DIR}/logging/logging.h")
   message(
     STATUS
-      "NATIVE logging backend: Excluding logging.cxx and logging.h (using simplified fmt-based implementation)"
+      "NATIVE logging backend: Excluding logging.cpp and logging.h (using simplified fmt-based implementation)"
   )
 endif()
 
 if(XSIGMA_ENABLE_TBB)
   # If TBB is enabled, remove STDThread files
-  file(GLOB_RECURSE TBB_FILES smp/STDThread/*.cxx)
+  file(GLOB_RECURSE TBB_FILES smp/STDThread/*.cpp)
   list(REMOVE_ITEM sources ${TBB_FILES})
   file(GLOB_RECURSE TBB_HEADER_FILES smp/STDThread/*.h smp/STDThread/*.hxx)
   list(REMOVE_ITEM headers ${TBB_HEADER_FILES})
   list(REMOVE_ITEM templates ${TBB_HEADER_FILES})
 else()
-  file(GLOB_RECURSE TBB_FILES smp/TBB/*.cxx)
+  file(GLOB_RECURSE TBB_FILES smp/TBB/*.cpp)
   list(REMOVE_ITEM sources ${TBB_FILES})
   file(GLOB_RECURSE TBB_HEADER_FILES smp/TBB/*.h smp/TBB/*.hxx)
   list(REMOVE_ITEM headers ${TBB_HEADER_FILES})
@@ -109,7 +109,7 @@ endif()
 
 # Remove Kineto files if Kineto is disabled
 if(NOT XSIGMA_ENABLE_KINETO)
-  file(GLOB_RECURSE KINETO_SOURCE_FILES profiler/kineto_*.cxx)
+  file(GLOB_RECURSE KINETO_SOURCE_FILES profiler/kineto_*.cpp)
   file(GLOB_RECURSE KINETO_HEADER_FILES profiler/kineto_*.h)
   list(REMOVE_ITEM sources ${KINETO_SOURCE_FILES})
   list(REMOVE_ITEM headers ${KINETO_HEADER_FILES})

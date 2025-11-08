@@ -43,20 +43,20 @@ Successfully renamed **14 files** from CamelCase to snake_case in the `Library/C
 
 | Old Name (CamelCase) | New Name (snake_case) | Size | Status |
 |----------------------|----------------------|------|--------|
-| `ParallelCommon.cxx` | `parallel_common.cxx` | ~100 lines | ✅ Renamed |
-| `ParallelNative.cxx` | `parallel_native.cxx` | ~250 lines | ✅ Renamed |
-| `ParallelOpenMP.cxx` | `parallel_openmp.cxx` | ~120 lines | ✅ Renamed |
-| `ParallelThreadPoolNative.cxx` | `parallel_thread_pool_native.cxx` | ~100 lines | ✅ Renamed |
-| `ThreadPool.cxx` | `thread_pool_legacy.cxx` | ~200 lines | ✅ Renamed |
+| `ParallelCommon.cpp` | `parallel_common.cpp` | ~100 lines | ✅ Renamed |
+| `ParallelNative.cpp` | `parallel_native.cpp` | ~250 lines | ✅ Renamed |
+| `ParallelOpenMP.cpp` | `parallel_openmp.cpp` | ~120 lines | ✅ Renamed |
+| `ParallelThreadPoolNative.cpp` | `parallel_thread_pool_native.cpp` | ~100 lines | ✅ Renamed |
+| `ThreadPool.cpp` | `thread_pool_legacy.cpp` | ~200 lines | ✅ Renamed |
 
 ### 1.3 Files Already Compliant (4 files)
 
 | File Name | Type | Status |
 |-----------|------|--------|
 | `thread_pool.h` | Header | ✅ No change needed |
-| `thread_pool.cxx` | Implementation | ✅ No change needed |
+| `thread_pool.cpp` | Implementation | ✅ No change needed |
 | `thread_pool_guard.h` | Header | ✅ No change needed |
-| `thread_pool_guard.cxx` | Implementation | ✅ No change needed |
+| `thread_pool_guard.cpp` | Implementation | ✅ No change needed |
 
 ---
 
@@ -70,12 +70,12 @@ Updated include directives in the following files:
 |------|------------------|---------|
 | `parallel.h` | 3 | `ParallelOpenMP.h` → `parallel_openmp.h`<br>`ParallelNative.h` → `parallel_native.h`<br>`Parallel-inl.h` → `parallel-inl.h` |
 | `parallel-inl.h` | 1 | `ParallelGuard.h` → `parallel_guard.h` |
-| `parallel_common.cxx` | 1 | `Parallel.h` → `parallel.h` |
-| `parallel_native.cxx` | 1 | `Parallel.h` → `parallel.h` |
-| `parallel_openmp.cxx` | 1 | `Parallel.h` → `parallel.h` |
-| `parallel_thread_pool_native.cxx` | 2 | `Parallel.h` → `parallel.h`<br>`ThreadLocalState.h` → `thread_local_state.h` |
+| `parallel_common.cpp` | 1 | `Parallel.h` → `parallel.h` |
+| `parallel_native.cpp` | 1 | `Parallel.h` → `parallel.h` |
+| `parallel_openmp.cpp` | 1 | `Parallel.h` → `parallel.h` |
+| `parallel_thread_pool_native.cpp` | 2 | `Parallel.h` → `parallel.h`<br>`ThreadLocalState.h` → `thread_local_state.h` |
 | `thread_pool_legacy.h` | 1 | `ThreadPoolCommon.h` → `thread_pool_common.h` |
-| `thread_pool_legacy.cxx` | 2 | `ThreadPool.h` → `thread_pool_legacy.h`<br>`WorkersPool.h` → `workers_pool.h` |
+| `thread_pool_legacy.cpp` | 2 | `ThreadPool.h` → `thread_pool_legacy.h`<br>`WorkersPool.h` → `workers_pool.h` |
 | `workers_pool.h` | 1 | `experimental/xsigma_parallel/thread_name.h` → `smp/Advanced/thread_name.h` |
 
 **Total Include Updates:** 13 directives across 9 files
@@ -95,7 +95,7 @@ Updated thread naming function calls in `workers_pool.h`:
 
 **Verification Command:**
 ```bash
-grep -r "experimental/xsigma_parallel/" Library/Core --include="*.h" --include="*.cxx" -l | grep -v "experimental/xsigma_parallel/"
+grep -r "experimental/xsigma_parallel/" Library/Core --include="*.h" --include="*.cpp" -l | grep -v "experimental/xsigma_parallel/"
 ```
 
 **Result:** Empty (no external dependencies found)
@@ -110,12 +110,12 @@ The following files were referenced in include directives but did not exist:
 
 | Missing File | Referenced In | Status |
 |--------------|---------------|--------|
-| `PTThreadPool.h` | `ParallelNative.cxx`, `ParallelCommon.cxx`, `ParallelThreadPoolNative.cxx` | ✅ Already removed by user |
-| `ParallelFuture.h` | `ParallelNative.cxx`, `ParallelOpenMP.cxx` | ✅ Already removed by user |
+| `PTThreadPool.h` | `ParallelNative.cpp`, `ParallelCommon.cpp`, `ParallelThreadPoolNative.cpp` | ✅ Already removed by user |
+| `ParallelFuture.h` | `ParallelNative.cpp`, `ParallelOpenMP.cpp` | ✅ Already removed by user |
 
 **Verification:**
 ```bash
-grep -n "PTThreadPool\|ParallelFuture" *.h *.cxx
+grep -n "PTThreadPool\|ParallelFuture" *.h *.cpp
 ```
 
 **Result:** No matches found (references already removed in previous user edits)
@@ -128,7 +128,7 @@ grep -n "PTThreadPool\|ParallelFuture" *.h *.cxx
 
 **Verification Command:**
 ```bash
-grep -n "experimental/xsigma_parallel/[A-Z]" *.h *.cxx
+grep -n "experimental/xsigma_parallel/[A-Z]" *.h *.cpp
 ```
 
 **Result:** No CamelCase include paths found ✅
@@ -148,22 +148,22 @@ ls -1 *.{h,cxx} | grep -E "[A-Z]"
 
 **Complete File List:**
 ```
-parallel_common.cxx
+parallel_common.cpp
 parallel_guard.h
-parallel_native.cxx
+parallel_native.cpp
 parallel_native.h
-parallel_openmp.cxx
+parallel_openmp.cpp
 parallel_openmp.h
-parallel_thread_pool_native.cxx
+parallel_thread_pool_native.cpp
 parallel-inl.h
 parallel.h
 thread_local_state.h
 thread_pool_common.h
-thread_pool_guard.cxx
+thread_pool_guard.cpp
 thread_pool_guard.h
-thread_pool_legacy.cxx
+thread_pool_legacy.cpp
 thread_pool_legacy.h
-thread_pool.cxx
+thread_pool.cpp
 thread_pool.h
 workers_pool.h
 ```
@@ -204,11 +204,11 @@ workers_pool.h
 
 ### 5.3 Missing Legacy Files
 
-**Issue:** `ThreadPool.h`, `ThreadPool.cxx`, and `WorkersPool.h` were deleted during rename due to case-insensitive file system conflicts.
+**Issue:** `ThreadPool.h`, `ThreadPool.cpp`, and `WorkersPool.h` were deleted during rename due to case-insensitive file system conflicts.
 
 **Resolution:** Restored files from git history with new snake_case names:
 - `ThreadPool.h` → `thread_pool_legacy.h`
-- `ThreadPool.cxx` → `thread_pool_legacy.cxx`
+- `ThreadPool.cpp` → `thread_pool_legacy.cpp`
 - `WorkersPool.h` → `workers_pool.h`
 
 ---

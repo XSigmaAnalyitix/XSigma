@@ -6,7 +6,7 @@ This directory contains a comprehensive review of PyTorch's graph construction a
 
 ## 📚 Documentation Files
 
-### 1. **PYTORCH_GRAPH_SUMMARY.md** ⭐ START HERE
+### 1. **PYXSIGMA_GRAPH_SUMMARY.md** ⭐ START HERE
 **Best for:** Quick overview and executive summary
 
 Contains:
@@ -23,7 +23,7 @@ Contains:
 
 ---
 
-### 2. **PYTORCH_GRAPH_ARCHITECTURE.md**
+### 2. **PYXSIGMA_GRAPH_ARCHITECTURE.md**
 **Best for:** Detailed technical understanding
 
 Contains:
@@ -44,7 +44,7 @@ Contains:
 
 ---
 
-### 3. **PYTORCH_GRAPH_DETAILED_EXAMPLES.md**
+### 3. **PYXSIGMA_GRAPH_DETAILED_EXAMPLES.md**
 **Best for:** Code-level implementation details
 
 Contains:
@@ -63,7 +63,7 @@ Contains:
 
 ---
 
-### 4. **PYTORCH_GRAPH_DATA_FLOW.md**
+### 4. **PYXSIGMA_GRAPH_DATA_FLOW.md**
 **Best for:** Practical examples and data flow
 
 Contains:
@@ -84,7 +84,7 @@ Contains:
 
 ---
 
-### 5. **PYTORCH_GRAPH_QUICK_REFERENCE.md**
+### 5. **PYXSIGMA_GRAPH_QUICK_REFERENCE.md**
 **Best for:** Quick lookup and reference
 
 Contains:
@@ -113,27 +113,27 @@ Contains:
 ## 🎯 Reading Paths
 
 ### Path 1: Quick Understanding (30 minutes)
-1. Read **PYTORCH_GRAPH_SUMMARY.md** (sections 1-7)
-2. Skim **PYTORCH_GRAPH_QUICK_REFERENCE.md** (sections 1-8)
-3. Look at examples in **PYTORCH_GRAPH_DATA_FLOW.md** (sections 1-2)
+1. Read **PYXSIGMA_GRAPH_SUMMARY.md** (sections 1-7)
+2. Skim **PYXSIGMA_GRAPH_QUICK_REFERENCE.md** (sections 1-8)
+3. Look at examples in **PYXSIGMA_GRAPH_DATA_FLOW.md** (sections 1-2)
 
 ### Path 2: Deep Technical Understanding (2-3 hours)
-1. Read **PYTORCH_GRAPH_SUMMARY.md** (all sections)
-2. Read **PYTORCH_GRAPH_ARCHITECTURE.md** (all sections)
-3. Study **PYTORCH_GRAPH_DETAILED_EXAMPLES.md** (all sections)
-4. Reference **PYTORCH_GRAPH_QUICK_REFERENCE.md** as needed
+1. Read **PYXSIGMA_GRAPH_SUMMARY.md** (all sections)
+2. Read **PYXSIGMA_GRAPH_ARCHITECTURE.md** (all sections)
+3. Study **PYXSIGMA_GRAPH_DETAILED_EXAMPLES.md** (all sections)
+4. Reference **PYXSIGMA_GRAPH_QUICK_REFERENCE.md** as needed
 
 ### Path 3: Implementation Study (4-5 hours)
-1. Start with **PYTORCH_GRAPH_SUMMARY.md**
-2. Read **PYTORCH_GRAPH_ARCHITECTURE.md** carefully
-3. Study **PYTORCH_GRAPH_DETAILED_EXAMPLES.md** with source code open
-4. Work through **PYTORCH_GRAPH_DATA_FLOW.md** examples
-5. Use **PYTORCH_GRAPH_QUICK_REFERENCE.md** for lookups
+1. Start with **PYXSIGMA_GRAPH_SUMMARY.md**
+2. Read **PYXSIGMA_GRAPH_ARCHITECTURE.md** carefully
+3. Study **PYXSIGMA_GRAPH_DETAILED_EXAMPLES.md** with source code open
+4. Work through **PYXSIGMA_GRAPH_DATA_FLOW.md** examples
+5. Use **PYXSIGMA_GRAPH_QUICK_REFERENCE.md** for lookups
 
 ### Path 4: Practical Examples (1-2 hours)
-1. Read **PYTORCH_GRAPH_DATA_FLOW.md** (all sections)
-2. Reference **PYTORCH_GRAPH_QUICK_REFERENCE.md** (sections 11-17)
-3. Try examples from **PYTORCH_GRAPH_SUMMARY.md** (sections 6-7)
+1. Read **PYXSIGMA_GRAPH_DATA_FLOW.md** (all sections)
+2. Reference **PYXSIGMA_GRAPH_QUICK_REFERENCE.md** (sections 11-17)
+3. Try examples from **PYXSIGMA_GRAPH_SUMMARY.md** (sections 6-7)
 
 ---
 
@@ -285,11 +285,11 @@ After reading this documentation, you should understand:
 
 | Document | Sections | Focus |
 |----------|----------|-------|
-| PYTORCH_GRAPH_SUMMARY.md | 13 | Executive summary |
-| PYTORCH_GRAPH_ARCHITECTURE.md | 6 | Technical details |
-| PYTORCH_GRAPH_DETAILED_EXAMPLES.md | 7 | Code examples |
-| PYTORCH_GRAPH_DATA_FLOW.md | 8 | Practical examples |
-| PYTORCH_GRAPH_QUICK_REFERENCE.md | 17 | Quick lookup |
+| PYXSIGMA_GRAPH_SUMMARY.md | 13 | Executive summary |
+| PYXSIGMA_GRAPH_ARCHITECTURE.md | 6 | Technical details |
+| PYXSIGMA_GRAPH_DETAILED_EXAMPLES.md | 7 | Code examples |
+| PYXSIGMA_GRAPH_DATA_FLOW.md | 8 | Practical examples |
+| PYXSIGMA_GRAPH_QUICK_REFERENCE.md | 17 | Quick lookup |
 
 ---
 
@@ -308,11 +308,11 @@ After reading this documentation, you should understand:
 
 ## 🚀 Next Steps
 
-1. **Start with:** PYTORCH_GRAPH_SUMMARY.md
-2. **Deep dive:** PYTORCH_GRAPH_ARCHITECTURE.md
-3. **Study code:** PYTORCH_GRAPH_DETAILED_EXAMPLES.md
-4. **Practice:** PYTORCH_GRAPH_DATA_FLOW.md
-5. **Reference:** PYTORCH_GRAPH_QUICK_REFERENCE.md
+1. **Start with:** PYXSIGMA_GRAPH_SUMMARY.md
+2. **Deep dive:** PYXSIGMA_GRAPH_ARCHITECTURE.md
+3. **Study code:** PYXSIGMA_GRAPH_DETAILED_EXAMPLES.md
+4. **Practice:** PYXSIGMA_GRAPH_DATA_FLOW.md
+5. **Reference:** PYXSIGMA_GRAPH_QUICK_REFERENCE.md
 
 Happy learning! 🎉
 

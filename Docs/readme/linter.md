@@ -227,7 +227,7 @@ lintrunner --apply-patches
 lintrunner --take PYFMT -- python/path/to_module.py
 
 # Check C++ formatting
-lintrunner --take CLANGFORMAT -- Library/**/*.h Library/**/*.cxx
+lintrunner --take CLANGFORMAT -- Library/**/*.h Library/**/*.cpp
 
 # Run clang-tidy on C++ files
 lintrunner --take CLANGTIDY -- Library/**/*.cpp
@@ -280,7 +280,7 @@ python Tools/linter/adapters/flake8_linter.py Library/**/*.py
 # Run clang-format directly
 python Tools/linter/adapters/clangformat_linter.py \
   --binary=.lintbin/clang-format \
-  Library/**/*.h Library/**/*.cxx
+  Library/**/*.h Library/**/*.cpp
 
 # Run cmake linter directly
 python Tools/linter/adapters/cmake_linter.py \
@@ -440,7 +440,7 @@ lintrunner -- path/to/specific/file.py
 Example:
 ```toml
 # ✓ Correct (works on all platforms)
-include_patterns = ['Library/**/*.h', 'Library/**/*.cxx']
+include_patterns = ['Library/**/*.h', 'Library/**/*.cpp']
 
 # ✗ Incorrect (Windows-specific)
 include_patterns = ['Library\\**\\*.h']

@@ -150,9 +150,9 @@ The security module is cross-platform and uses platform-specific secure APIs:
 
 Comprehensive tests are provided in:
 
-- `TestInputValidator.cxx` - Input validation tests
-- `TestSanitizer.cxx` - Sanitization tests
-- `TestCrypto.cxx` - Cryptographic operation tests
+- `TestInputValidator.cpp` - Input validation tests
+- `TestSanitizer.cpp` - Sanitization tests
+- `TestCrypto.cpp` - Cryptographic operation tests
 
 Run tests with:
 ```bash

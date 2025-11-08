@@ -8,28 +8,28 @@
 
 This inventory consists of four comprehensive documents:
 
-### 1. **PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md** (Main Catalog)
+### 1. **PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md** (Main Catalog)
    - **Purpose:** Complete catalog of all 80+ source files
    - **Organization:** By functional area (Graph Structure, Building, Execution, Infrastructure)
    - **Format:** Organized tables with file paths, purposes, key classes, and line counts
    - **Best For:** Finding which file implements a specific feature
    - **Read Time:** 30-45 minutes
 
-### 2. **PYTORCH_AUTOGRAD_FILE_DETAILS.md** (Deep Dive)
+### 2. **PYXSIGMA_AUTOGRAD_FILE_DETAILS.md** (Deep Dive)
    - **Purpose:** In-depth information about key files
    - **Content:** Detailed descriptions of core components
    - **Includes:** Algorithms, key methods, usage examples
    - **Best For:** Understanding how specific components work
    - **Read Time:** 45-60 minutes
 
-### 3. **PYTORCH_AUTOGRAD_DEPENDENCY_MAP.md** (Architecture)
+### 3. **PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md** (Architecture)
    - **Purpose:** Visual representation of file dependencies
    - **Content:** Dependency graphs, include hierarchies, compilation order
    - **Includes:** Circular dependency prevention, impact analysis
    - **Best For:** Understanding system architecture and dependencies
    - **Read Time:** 20-30 minutes
 
-### 4. **PYTORCH_AUTOGRAD_INVENTORY_INDEX.md** (This Document)
+### 4. **PYXSIGMA_AUTOGRAD_INVENTORY_INDEX.md** (This Document)
    - **Purpose:** Navigation guide and quick reference
    - **Content:** How to use the inventory, quick lookups, common tasks
    - **Best For:** Finding what you need quickly
@@ -42,43 +42,43 @@ This inventory consists of four comprehensive documents:
 ### I want to understand...
 
 **How nodes are represented**
-→ Read: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/function.h"
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/function.h"
 → File: `torch/csrc/autograd/function.h` (lines 113-792)
 
 **How edges connect nodes**
-→ Read: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/edge.h"
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/edge.h"
 → File: `torch/csrc/autograd/edge.h` (lines 1-57)
 
 **How the backward pass executes**
-→ Read: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/engine.cpp"
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/engine.cpp"
 → File: `torch/csrc/autograd/engine.cpp` (lines 1288-1380)
 
 **How gradients are accumulated**
-→ Read: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/input_buffer.h"
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/input_buffer.h"
 → File: `torch/csrc/autograd/input_buffer.h/cpp`
 
 **How tensors connect to grad_fn**
-→ Read: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/functions/utils.h"
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/functions/utils.h"
 → File: `torch/csrc/autograd/functions/utils.h` (lines 66-91)
 
 **How custom functions work**
-→ Read: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/custom_function.h"
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/custom_function.h"
 → File: `torch/csrc/autograd/custom_function.h/cpp`
 
 **How to write custom autograd functions**
-→ Read: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "torch/autograd/function.py"
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/autograd/function.py"
 → File: `torch/autograd/function.py` (lines 472-566)
 
 **How to inspect the graph**
-→ Read: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "torch/autograd/graph.py"
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/autograd/graph.py"
 → File: `torch/autograd/graph.py`
 
 **How to debug autograd issues**
-→ Read: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/anomaly_mode.h"
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/anomaly_mode.h"
 → File: `torch/csrc/autograd/anomaly_mode.h/cpp`
 
 **How forward AD works**
-→ Read: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/forward_grad.h"
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/forward_grad.h"
 → File: `torch/csrc/autograd/forward_grad.h/cpp`
 
 ---
@@ -236,61 +236,61 @@ torch/autograd/
 ### By Functional Area
 
 **Graph Structure:**
-- Main: `PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md` → Section 1
-- Details: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "CORE GRAPH STRUCTURE FILES"
-- Dependencies: `PYTORCH_AUTOGRAD_DEPENDENCY_MAP.md` → Section 1
+- Main: `PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md` → Section 1
+- Details: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "CORE GRAPH STRUCTURE FILES"
+- Dependencies: `PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md` → Section 1
 
 **Graph Building:**
-- Main: `PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md` → Section 2
-- Details: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "GRAPH BUILDING FILES"
-- Dependencies: `PYTORCH_AUTOGRAD_DEPENDENCY_MAP.md` → Section 2
+- Main: `PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md` → Section 2
+- Details: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "GRAPH BUILDING FILES"
+- Dependencies: `PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md` → Section 2
 
 **Graph Execution:**
-- Main: `PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md` → Section 3
-- Details: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "GRAPH EXECUTION FILES"
-- Dependencies: `PYTORCH_AUTOGRAD_DEPENDENCY_MAP.md` → Section 3
+- Main: `PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md` → Section 3
+- Details: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "GRAPH EXECUTION FILES"
+- Dependencies: `PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md` → Section 3
 
 **Supporting Infrastructure:**
-- Main: `PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md` → Section 4
-- Details: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "SUPPORTING INFRASTRUCTURE FILES"
-- Dependencies: `PYTORCH_AUTOGRAD_DEPENDENCY_MAP.md` → Section 4
+- Main: `PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md` → Section 4
+- Details: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "SUPPORTING INFRASTRUCTURE FILES"
+- Dependencies: `PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md` → Section 4
 
 **Python API:**
-- Main: `PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md` → Section 5
-- Details: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "PYTHON API FILES"
-- Dependencies: `PYTORCH_AUTOGRAD_DEPENDENCY_MAP.md` → Section 5
+- Main: `PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md` → Section 5
+- Details: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "PYTHON API FILES"
+- Dependencies: `PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md` → Section 5
 
 ---
 
 ## 💡 COMMON TASKS
 
 ### Task: Add a new operation's backward function
-1. Read: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/functions/tensor.h"
+1. Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/functions/tensor.h"
 2. File: `torch/csrc/autograd/functions/tensor.h/cpp`
 3. Reference: `torch/csrc/autograd/functions/basic_ops.h` for examples
 
 ### Task: Implement a custom autograd function
-1. Read: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "torch/autograd/function.py"
+1. Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/autograd/function.py"
 2. File: `torch/autograd/function.py`
 3. Reference: Examples in documentation
 
 ### Task: Debug a backward pass issue
-1. Read: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/anomaly_mode.h"
+1. Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/anomaly_mode.h"
 2. File: `torch/csrc/autograd/anomaly_mode.h/cpp`
 3. Reference: `torch/autograd/anomaly_mode.py` for Python API
 
 ### Task: Optimize backward execution
-1. Read: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/engine.cpp"
+1. Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/engine.cpp"
 2. File: `torch/csrc/autograd/engine.h/cpp`
-3. Reference: `PYTORCH_AUTOGRAD_DEPENDENCY_MAP.md` for impact analysis
+3. Reference: `PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md` for impact analysis
 
 ### Task: Add profiling support
-1. Read: `PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md` → Section 4.4
+1. Read: `PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md` → Section 4.4
 2. Files: `torch/csrc/autograd/profiler*.h/cpp`
 3. Reference: `torch/autograd/profiler.py` for Python API
 
 ### Task: Implement forward AD
-1. Read: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/forward_grad.h"
+1. Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/forward_grad.h"
 2. File: `torch/csrc/autograd/forward_grad.h/cpp`
 3. Reference: `torch/autograd/forward_ad.py` for Python API
 
@@ -299,19 +299,19 @@ torch/autograd/
 ## 🚀 GETTING STARTED
 
 ### For Beginners
-1. Start with: `PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md` (overview)
-2. Then read: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` (core files)
-3. Finally: `PYTORCH_AUTOGRAD_DEPENDENCY_MAP.md` (architecture)
+1. Start with: `PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md` (overview)
+2. Then read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` (core files)
+3. Finally: `PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md` (architecture)
 
 ### For Intermediate Users
-1. Start with: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` (specific files)
-2. Reference: `PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md` (quick lookup)
-3. Check: `PYTORCH_AUTOGRAD_DEPENDENCY_MAP.md` (dependencies)
+1. Start with: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` (specific files)
+2. Reference: `PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md` (quick lookup)
+3. Check: `PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md` (dependencies)
 
 ### For Advanced Users
-1. Use: `PYTORCH_AUTOGRAD_DEPENDENCY_MAP.md` (architecture)
-2. Reference: `PYTORCH_AUTOGRAD_FILE_DETAILS.md` (implementation details)
-3. Consult: `PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md` (complete catalog)
+1. Use: `PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md` (architecture)
+2. Reference: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` (implementation details)
+3. Consult: `PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md` (complete catalog)
 
 ---
 

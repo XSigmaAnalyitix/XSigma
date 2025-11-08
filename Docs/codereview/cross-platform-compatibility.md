@@ -377,7 +377,7 @@ content = content.replace('\r\n', '\n')  # Convert CRLF to LF
 
 ```toml
 # Good: Forward slashes work on all platforms
-include_patterns = ['Library/**/*.h', 'Library/**/*.cxx']
+include_patterns = ['Library/**/*.h', 'Library/**/*.cpp']
 
 # Bad: Backslashes only work on Windows
 include_patterns = ['Library\\**\\*.h']

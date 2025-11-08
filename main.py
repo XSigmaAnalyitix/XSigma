@@ -1,3 +1,4 @@
+# Bulk migration helper for quickly renaming file extensions and replacing text.
 import os
 import argparse
 from pathlib import Path
@@ -105,8 +106,24 @@ def main():
                         help='Comma-separated list of file extensions to process for content replacement (e.g., txt,py,md)')
     parser.add_argument('--dry-run', action='store_true',
                         help='Preview changes without making them')
+    parser.add_argument('--helper', action='store_true',
+                        help='Show extended usage information and exit')
     
     args = parser.parse_args()
+
+    if args.helper:
+        print("""XSigma Bulk File Utility
+-------------------------
+Use this script to automate two workflows:
+  1. Rename file extensions: --from .old --to .new
+  2. Replace text in files: --replace foo,bar --with baz,qux [--extensions cpp,h]
+
+Examples:
+  python main.py Library --from .cpp --to .cpp
+  python main.py . --replace c10::,at:: --with xsigma::,xsigma:: --extensions h,cpp
+
+Combine --dry-run with either mode to preview changes without touching disk.""")
+        return
     
     directory = args.directory
     

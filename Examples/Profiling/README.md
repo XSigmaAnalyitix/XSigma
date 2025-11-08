@@ -14,7 +14,7 @@ Each profiler can be used individually or combined for comprehensive performance
 
 ## Examples
 
-### `example_profiling_basic.cxx`
+### `example_profiling_basic.cpp`
 
 A complete, runnable example demonstrating all three profiling systems with realistic computational workloads.
 

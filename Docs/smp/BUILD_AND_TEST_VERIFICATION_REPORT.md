@@ -184,5 +184,5 @@ All 107 SMP tests pass on both compilers with no regressions.
 
 - Code Review Document: `Docs/smp/smp.md`
 - Implementation Status: `Docs/smp/CODE_REVIEW_FIXES_IMPLEMENTED.md`
-- Test Files: `Library/Core/Testing/Cxx/TestSmp*.cxx`
+- Test Files: `Library/Core/Testing/Cxx/TestSmp*.cpp`
 - Source Files: `Library/Core/smp_new/`

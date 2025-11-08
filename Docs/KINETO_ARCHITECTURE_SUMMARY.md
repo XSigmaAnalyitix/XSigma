@@ -36,7 +36,7 @@
 ## Main Entry Points
 
 ### 1. **enableProfiler()** - Start Profiling
-**Location:** `profiler_kineto.cxx:834`
+**Location:** `profiler_kineto.cpp:834`
 
 **Signature:**
 ```cpp
@@ -62,7 +62,7 @@ void enableProfiler(
 ---
 
 ### 2. **disableProfiler()** - Stop Profiling
-**Location:** `profiler_kineto.cxx:915`
+**Location:** `profiler_kineto.cpp:915`
 
 **Signature:**
 ```cpp
@@ -88,7 +88,7 @@ std::unique_ptr<ProfilerResult> disableProfiler();
 ## Core Classes
 
 ### **KinetoThreadLocalState**
-**Location:** `profiler_kineto.cxx:390`
+**Location:** `profiler_kineto.cpp:390`
 
 Manages thread-local profiling state:
 - Inherits from `ProfilerStateBase`
@@ -331,15 +331,15 @@ void onFunctionExit(at::ObserverContext* ctx);
 ```
 Library/Core/profiler/pytroch_profiler/
 ├── profiler_kineto.h          # Main API
-├── profiler_kineto.cxx        # Implementation
+├── profiler_kineto.cpp        # Implementation
 ├── observer.h                 # Config classes
-├── observer.cxx               # Config implementation
+├── observer.cpp               # Config implementation
 ├── record_function.h          # RecordFunction interface
-├── record_function.cxx        # RecordFunction implementation
+├── record_function.cpp        # RecordFunction implementation
 ├── kineto_shim.h              # libkineto wrapper
-├── kineto_shim.cxx            # libkineto wrapper impl
+├── kineto_shim.cpp            # libkineto wrapper impl
 ├── collection.h               # Event collection
-├── collection.cxx             # Event collection impl
+├── collection.cpp             # Event collection impl
 ├── events.h                   # Event structures
 ├── containers.h               # Container types
 ├── api.h                      # API aliases

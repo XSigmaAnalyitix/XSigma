@@ -13,6 +13,21 @@ namespace xsigma
 namespace detail
 {
 
+/// Helper function to check if a value is negative.
+/// Returns true for signed types when value < 0, false for unsigned types.
+template <typename T, std::enable_if_t<std::is_signed_v<T>, int> = 0>
+constexpr bool is_negative(T value)
+{
+    return value < T(0);
+}
+
+/// Specialization for unsigned types - always returns false.
+template <typename T, std::enable_if_t<!std::is_signed_v<T>, int> = 0>
+constexpr bool is_negative(T XSIGMA_UNUSED)
+{
+    return false;
+}
+
 template <typename I, bool one_sided = false, std::enable_if_t<std::is_integral_v<I>, int> = 0>
 struct integer_iterator
 {
@@ -55,13 +70,6 @@ struct integer_iterator
         {
             return value == other.value;
         }
-        // Suppress "warning: missing return statement at end of non-void function"
-        // which Nvidia's Robert Crovella confirms is an NVCC compiler error
-        // here https://stackoverflow.com/a/64561686/752843 on 2020-10-27
-        // `__builtin_unreachable();` would be best here, but it's not
-        // available with all compilers. So we instead return an arbitrary
-        // value trusting that this line will, in fact, never be reached.
-        return false;  // Horrible hack
     }
 
     constexpr bool operator!=(const integer_iterator& other) const { return !(*this == other); }

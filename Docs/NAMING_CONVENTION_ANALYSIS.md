@@ -29,16 +29,16 @@ This report identifies all naming convention violations in the `` module accordi
 |--------------------------|----------------------------|------|-------|--------|
 | `Parallel.h` | `parallel.h` | Header | 163 | ❌ Rename Required |
 | `Parallel-inl.h` | `parallel-inl.h` | Inline Header | 104 | ❌ Rename Required |
-| `ParallelCommon.cxx` | `parallel_common.cxx` | Implementation | ~100 | ❌ Rename Required |
+| `ParallelCommon.cpp` | `parallel_common.cpp` | Implementation | ~100 | ❌ Rename Required |
 | `ParallelGuard.h` | `parallel_guard.h` | Header | 24 | ❌ Rename Required |
 | `ParallelNative.h` | `parallel_native.h` | Header | 18 | ❌ Rename Required |
-| `ParallelNative.cxx` | `parallel_native.cxx` | Implementation | ~250 | ❌ Rename Required |
+| `ParallelNative.cpp` | `parallel_native.cpp` | Implementation | ~250 | ❌ Rename Required |
 | `ParallelOpenMP.h` | `parallel_openmp.h` | Header | 48 | ❌ Rename Required |
-| `ParallelOpenMP.cxx` | `parallel_openmp.cxx` | Implementation | ~120 | ❌ Rename Required |
-| `ParallelThreadPoolNative.cxx` | `parallel_thread_pool_native.cxx` | Implementation | ~100 | ❌ Rename Required |
+| `ParallelOpenMP.cpp` | `parallel_openmp.cpp` | Implementation | ~120 | ❌ Rename Required |
+| `ParallelThreadPoolNative.cpp` | `parallel_thread_pool_native.cpp` | Implementation | ~100 | ❌ Rename Required |
 | `ThreadLocalState.h` | `thread_local_state.h` | Header | 132 | ❌ Rename Required |
 | `ThreadPool.h` | `thread_pool_legacy.h` | Header (Legacy Caffe2) | 82 | ❌ Rename Required |
-| `ThreadPool.cxx` | `thread_pool_legacy.cxx` | Implementation (Legacy) | ~200 | ❌ Rename Required |
+| `ThreadPool.cpp` | `thread_pool_legacy.cpp` | Implementation (Legacy) | ~200 | ❌ Rename Required |
 | `ThreadPoolCommon.h` | `thread_pool_common.h` | Header | 20 | ❌ Rename Required |
 | `WorkersPool.h` | `workers_pool.h` | Header | 419 | ❌ Rename Required |
 
@@ -47,9 +47,9 @@ This report identifies all naming convention violations in the `` module accordi
 | File Name | Type | Status |
 |-----------|------|--------|
 | `thread_pool.h` | Header | ✅ Compliant |
-| `thread_pool.cxx` | Implementation | ✅ Compliant |
+| `thread_pool.cpp` | Implementation | ✅ Compliant |
 | `thread_pool_guard.h` | Header | ✅ Compliant |
-| `thread_pool_guard.cxx` | Implementation | ✅ Compliant |
+| `thread_pool_guard.cpp` | Implementation | ✅ Compliant |
 
 ---
 
@@ -163,7 +163,7 @@ The following files contain `#include` directives referencing the  module and wi
    #include "parallel_guard.h"
    ```
 
-3. **ParallelNative.cxx** (lines 7-10)
+3. **ParallelNative.cpp** (lines 7-10)
    ```cpp
    #include "thread_pool.h"
    #include "Parallel.h"
@@ -178,7 +178,7 @@ The following files contain `#include` directives referencing the  module and wi
    #include "thread_pool.h"
    ```
 
-4. **ParallelOpenMP.cxx** (lines 7-9)
+4. **ParallelOpenMP.cpp** (lines 7-9)
    ```cpp
    #include "Parallel.h"
    #include "thread_pool.h"
@@ -189,7 +189,7 @@ The following files contain `#include` directives referencing the  module and wi
    #include "parallel_future.h"
    ```
 
-5. **ParallelCommon.cxx** (lines 6-7)
+5. **ParallelCommon.cpp** (lines 6-7)
    ```cpp
    #include "thread_pool.h"
    #include "Parallel.h"
@@ -200,7 +200,7 @@ The following files contain `#include` directives referencing the  module and wi
    #include "parallel.h"
    ```
 
-6. **ParallelThreadPoolNative.cxx** (lines 6-8)
+6. **ParallelThreadPoolNative.cpp** (lines 6-8)
    ```cpp
    #include "thread_pool.h"
    #include "Parallel.h"
@@ -222,7 +222,7 @@ The following files contain `#include` directives referencing the  module and wi
    #include "thread_pool_common.h"
    ```
 
-8. **thread_pool_guard.cxx**
+8. **thread_pool_guard.cpp**
    - Includes to update (if any)
 
 ---
@@ -241,11 +241,11 @@ The following files contain `#include` directives referencing the  module and wi
 9. `WorkersPool.h` → `workers_pool.h`
 
 ### Phase 2: Rename Implementation Files
-1. `ParallelCommon.cxx` → `parallel_common.cxx`
-2. `ParallelNative.cxx` → `parallel_native.cxx`
-3. `ParallelOpenMP.cxx` → `parallel_openmp.cxx`
-4. `ParallelThreadPoolNative.cxx` → `parallel_thread_pool_native.cxx`
-5. `ThreadPool.cxx` → `thread_pool_legacy.cxx`
+1. `ParallelCommon.cpp` → `parallel_common.cpp`
+2. `ParallelNative.cpp` → `parallel_native.cpp`
+3. `ParallelOpenMP.cpp` → `parallel_openmp.cpp`
+4. `ParallelThreadPoolNative.cpp` → `parallel_thread_pool_native.cpp`
+5. `ThreadPool.cpp` → `thread_pool_legacy.cpp`
 
 ### Phase 3: Update All Include Directives
 - Update all `#include` statements in files listed in Section 5.1
@@ -297,8 +297,8 @@ The following files are referenced in includes but do not exist. These should be
 
 | Referenced File | Referenced In | Line | Action Required |
 |-----------------|---------------|------|-----------------|
-| `thread_pool.h` | ParallelNative.cxx | 7 | ❌ **File does not exist** - needs creation or removal |
-| `thread_pool.h` | ParallelNative.cxx, ParallelOpenMP.cxx | 9, 9 | ❌ **File does not exist** - needs creation or removal |
+| `thread_pool.h` | ParallelNative.cpp | 7 | ❌ **File does not exist** - needs creation or removal |
+| `thread_pool.h` | ParallelNative.cpp, ParallelOpenMP.cpp | 9, 9 | ❌ **File does not exist** - needs creation or removal |
 | `Config.h` | Multiple files (commented out) | Various | ⚠️ Already commented out |
 | `FuncTorchTLS.h` | ThreadLocalState.h | 9 | ⚠️ Already commented out |
 | `PythonTorchFunctionTLS.h` | ThreadLocalState.h | 10 | ⚠️ Already commented out |
@@ -328,22 +328,22 @@ The following files are referenced in includes but do not exist. These should be
 |-----------|------|--------------|---------------|--------|
 | `Parallel.h` | Header | 163 | ❌ CamelCase | Rename to `parallel.h` |
 | `Parallel-inl.h` | Inline Header | 104 | ❌ CamelCase | Rename to `parallel-inl.h` |
-| `ParallelCommon.cxx` | Implementation | ~100 | ❌ CamelCase | Rename to `parallel_common.cxx` |
+| `ParallelCommon.cpp` | Implementation | ~100 | ❌ CamelCase | Rename to `parallel_common.cpp` |
 | `ParallelGuard.h` | Header | 24 | ❌ CamelCase | Rename to `parallel_guard.h` |
 | `ParallelNative.h` | Header | 18 | ❌ CamelCase | Rename to `parallel_native.h` |
-| `ParallelNative.cxx` | Implementation | ~250 | ❌ CamelCase | Rename to `parallel_native.cxx` |
+| `ParallelNative.cpp` | Implementation | ~250 | ❌ CamelCase | Rename to `parallel_native.cpp` |
 | `ParallelOpenMP.h` | Header | 48 | ❌ CamelCase | Rename to `parallel_openmp.h` |
-| `ParallelOpenMP.cxx` | Implementation | ~120 | ❌ CamelCase | Rename to `parallel_openmp.cxx` |
-| `ParallelThreadPoolNative.cxx` | Implementation | ~100 | ❌ CamelCase | Rename to `parallel_thread_pool_native.cxx` |
+| `ParallelOpenMP.cpp` | Implementation | ~120 | ❌ CamelCase | Rename to `parallel_openmp.cpp` |
+| `ParallelThreadPoolNative.cpp` | Implementation | ~100 | ❌ CamelCase | Rename to `parallel_thread_pool_native.cpp` |
 | `ThreadLocalState.h` | Header | 132 | ❌ CamelCase | Rename to `thread_local_state.h` |
 | `ThreadPool.h` | Header (Legacy) | 82 | ❌ CamelCase | Rename to `thread_pool_legacy.h` |
-| `ThreadPool.cxx` | Implementation (Legacy) | ~200 | ❌ CamelCase | Rename to `thread_pool_legacy.cxx` |
+| `ThreadPool.cpp` | Implementation (Legacy) | ~200 | ❌ CamelCase | Rename to `thread_pool_legacy.cpp` |
 | `ThreadPoolCommon.h` | Header | 20 | ❌ CamelCase | Rename to `thread_pool_common.h` |
 | `WorkersPool.h` | Header | 419 | ❌ CamelCase | Rename to `workers_pool.h` |
 | `thread_pool.h` | Header | 130 | ✅ snake_case | No action |
-| `thread_pool.cxx` | Implementation | ~150 | ✅ snake_case | No action |
+| `thread_pool.cpp` | Implementation | ~150 | ✅ snake_case | No action |
 | `thread_pool_guard.h` | Header | ~20 | ✅ snake_case | No action |
-| `thread_pool_guard.cxx` | Implementation | ~15 | ✅ snake_case | No action |
+| `thread_pool_guard.cpp` | Implementation | ~15 | ✅ snake_case | No action |
 
 **Total Files:** 18
 **Files Requiring Rename:** 14
@@ -370,17 +370,17 @@ find Library/Core -name "CMakeLists.txt" -exec grep -l "Parallel\|ThreadPool\|Wo
 ```cmake
 # Before:
 set(SOURCES
-    ParallelNative.cxx
-    ParallelOpenMP.cxx
-    ParallelCommon.cxx
+    ParallelNative.cpp
+    ParallelOpenMP.cpp
+    ParallelCommon.cpp
     ...
 )
 
 # After:
 set(SOURCES
-    parallel_native.cxx
-    parallel_openmp.cxx
-    parallel_common.cxx
+    parallel_native.cpp
+    parallel_openmp.cpp
+    parallel_common.cpp
     ...
 )
 ```
@@ -400,7 +400,7 @@ Based on codebase search, the following external files may include headers from 
 
 **Search command:**
 ```bash
-grep -r "/Parallel" Library/Core --include="*.h" --include="*.cxx" | grep -v "/"
+grep -r "/Parallel" Library/Core --include="*.h" --include="*.cpp" | grep -v "/"
 ```
 
 **Action:** Run this search before renaming to identify all external dependencies.

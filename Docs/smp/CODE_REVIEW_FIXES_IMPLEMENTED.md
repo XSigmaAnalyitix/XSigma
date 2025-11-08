@@ -12,7 +12,7 @@ A detailed code review of the XSigma SMP (Symmetric Multi-Processing) module ide
 
 **Issue**: The `exception_` member variable in `ThreadPool` was being written without holding the mutex lock, while being read under lock in `WaitWorkComplete()`. This created a data race condition.
 
-**Location**: `Library/Core/smp_new/core/thread_pool.cxx` (lines 138-156)
+**Location**: `Library/Core/smp_new/core/thread_pool.cpp` (lines 138-156)
 
 **Fix Applied**:
 ```cpp
@@ -45,7 +45,7 @@ catch (...)
 
 **Issue**: The `intraop_launch()` function was checking the wrong pool's availability. It checked `GetInteropPool().NumAvailable()` instead of `GetIntraopPool().NumAvailable()`, causing incorrect decisions about whether to launch work on the intra-op pool.
 
-**Location**: `Library/Core/smp_new/parallel/parallel_api.cxx` (line 70)
+**Location**: `Library/Core/smp_new/parallel/parallel_api.cpp` (line 70)
 
 **Fix Applied**:
 ```cpp
@@ -104,7 +104,7 @@ internal::set_in_parallel_region(prev_in_parallel);
 
 **Issue**: The `set_num_intraop_threads()` and `set_num_interop_threads()` functions accepted invalid thread counts (zero or negative values).
 
-**Location**: `Library/Core/smp_new/parallel/parallel_api.cxx` (lines 92-109, 121-138)
+**Location**: `Library/Core/smp_new/parallel/parallel_api.cpp` (lines 92-109, 121-138)
 
 **Fix Applied**:
 ```cpp
@@ -205,7 +205,7 @@ void parallel_for(int64_t begin, int64_t end, int64_t grain_size, const Functor&
 
 **Issue**: `parallelize_1d` created a new thread pool per call via `core::CreateThreadPool()`, which is expensive. Should reuse the intra-op pool instead.
 
-**Location**: `Library/Core/smp_new/parallel/parallelize_1d.cxx` (line 109)
+**Location**: `Library/Core/smp_new/parallel/parallelize_1d.cpp` (line 109)
 
 **Fix Applied**:
 ```cpp
@@ -231,8 +231,8 @@ auto& pool = internal::GetIntraopPool();
 - `flags` parameter in `parallelize_1d()` (documented as unused)
 
 **Locations**:
-- `Library/Core/smp_new/core/thread_pool.h` and `.cxx`
-- `Library/Core/smp_new/parallel/parallelize_1d.h` and `.cxx`
+- `Library/Core/smp_new/core/thread_pool.h` and `.cpp`
+- `Library/Core/smp_new/parallel/parallelize_1d.h` and `.cpp`
 
 **Fixes Applied**:
 
@@ -287,4 +287,4 @@ The implementation maintains backward compatibility, follows XSigma coding stand
 - Parallel API: `Library/Core/smp_new/parallel/parallel_api.{h,hxx,cxx}`
 - Parallelize 1D: `Library/Core/smp_new/parallel/parallelize_1d.{h,cxx}`
 - TBB Backend: `Library/Core/smp_new/tbb/parallel_tbb.{h,cxx}`
-- Tests: `Library/Core/Testing/Cxx/TestSmpNew*.cxx`
+- Tests: `Library/Core/Testing/Cxx/TestSmpNew*.cpp`

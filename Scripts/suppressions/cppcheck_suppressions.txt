@@ -15,7 +15,7 @@ missingInclude:*
 
 # Suppress false positives for intentional design patterns
 # Virtual call in destructor is intentional (stop() is final in host_tracer)
-#virtualCallInConstructor:Library/Core/profiler/cpu/host_tracer.cxx:71
+#virtualCallInConstructor:Library/Core/profiler/cpu/host_tracer.cpp:71
 
 # Test helper function - pointer is not modified
 #constParameterPointer:Library/Core/Testing/xsigmaTest.h:234

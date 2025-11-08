@@ -15,7 +15,7 @@ PyTorch's autograd system builds a **dynamic computational graph** during the fo
 Nodes are represented by the `Node` class, which is the fundamental unit of computation in the autograd graph:
 
 ```cpp
-struct TORCH_API Node : std::enable_shared_from_this<Node> {
+struct XSIGMA_API Node : std::enable_shared_from_this<Node> {
   // Unique sequence number (thread-local, monotonically increasing)
   uint64_t sequence_nr_;
 

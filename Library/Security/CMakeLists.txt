@@ -7,7 +7,7 @@ set(xsigma_security_sources)
 # Collect all header and source files
 file(GLOB_RECURSE headers LIST_DIRECTORIES false "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 
-file(GLOB_RECURSE sources LIST_DIRECTORIES false "${CMAKE_CURRENT_SOURCE_DIR}/*.cxx")
+file(GLOB_RECURSE sources LIST_DIRECTORIES false "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
 # Remove test files from the library sources
 list(FILTER sources EXCLUDE REGEX ".*/Testing/.*")

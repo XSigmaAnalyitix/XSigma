@@ -129,17 +129,17 @@ for (const auto& event : result->events()) {
 
 | Function | Purpose | Location |
 |----------|---------|----------|
-| `enableProfiler()` | Start profiling | `profiler_kineto.cxx:834` |
-| `disableProfiler()` | Stop profiling, return results | `profiler_kineto.cxx:915` |
-| `enableProfilerInChildThread()` | Enable profiling in child thread | `profiler_kineto.cxx:896` |
-| `disableProfilerInChildThread()` | Disable profiling in child thread | `profiler_kineto.cxx:908` |
-| `isProfilerEnabledInMainThread()` | Check if main thread is profiling | `profiler_kineto.cxx:891` |
+| `enableProfiler()` | Start profiling | `profiler_kineto.cpp:834` |
+| `disableProfiler()` | Stop profiling, return results | `profiler_kineto.cpp:915` |
+| `enableProfilerInChildThread()` | Enable profiling in child thread | `profiler_kineto.cpp:896` |
+| `disableProfilerInChildThread()` | Disable profiling in child thread | `profiler_kineto.cpp:908` |
+| `isProfilerEnabledInMainThread()` | Check if main thread is profiling | `profiler_kineto.cpp:891` |
 
 ### Core Classes
 
 | Class | Purpose | Location |
 |-------|---------|----------|
-| `KinetoThreadLocalState` | Thread-local profiler state | `profiler_kineto.cxx:390` |
+| `KinetoThreadLocalState` | Thread-local profiler state | `profiler_kineto.cpp:390` |
 | `ProfilerConfig` | Profiler configuration | `observer.h:140` |
 | `KinetoEvent` | Individual profiled event | `profiler_kineto.h:28` |
 | `ProfilerResult` | Final profiling output | `profiler_kineto.h:92` |
@@ -233,15 +233,15 @@ User can save/analyze results
 ```
 Library/Core/profiler/pytroch_profiler/
 ├── profiler_kineto.h          # Main API header
-├── profiler_kineto.cxx        # Implementation
+├── profiler_kineto.cpp        # Implementation
 ├── observer.h                 # Config classes
-├── observer.cxx               # Config implementation
+├── observer.cpp               # Config implementation
 ├── record_function.h          # RecordFunction interface
-├── record_function.cxx        # RecordFunction implementation
+├── record_function.cpp        # RecordFunction implementation
 ├── kineto_shim.h              # libkineto wrapper
-├── kineto_shim.cxx            # libkineto wrapper impl
+├── kineto_shim.cpp            # libkineto wrapper impl
 ├── collection.h               # Event collection
-├── collection.cxx             # Event collection impl
+├── collection.cpp             # Event collection impl
 ├── events.h                   # Event structures
 ├── containers.h               # Container types
 ├── api.h                      # API aliases

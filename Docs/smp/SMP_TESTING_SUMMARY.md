@@ -10,13 +10,13 @@ This document summarizes the comprehensive testing and benchmarking implementati
 
 #### New Test Files Created
 
-1. **`Library/Core/Testing/Cxx/TestSMPComprehensive.cxx`** (18 tests)
+1. **`Library/Core/Testing/Cxx/TestSMPComprehensive.cpp`** (18 tests)
    - Comprehensive test suite covering core SMP functionality
    - Tests backend retrieval and initialization
    - Tests parallel for loops with various configurations
    - Tests thread management and parallelism settings
 
-2. **`Library/Core/Testing/Cxx/TestSMPTransformFillSort.cxx`** (21 tests)
+2. **`Library/Core/Testing/Cxx/TestSMPTransformFillSort.cpp`** (21 tests)
    - Tests for Transform, Fill, and Sort operations
    - Covers various data types and workload sizes
    - Tests edge cases (empty ranges, single elements)
@@ -24,7 +24,7 @@ This document summarizes the comprehensive testing and benchmarking implementati
 
 #### Test Coverage Details
 
-##### TestSMPComprehensive.cxx (18 tests)
+##### TestSMPComprehensive.cpp (18 tests)
 
 **Backend and Initialization Tests:**
 - `get_backend` - Verify backend retrieval (STDThread or TBB)
@@ -50,7 +50,7 @@ This document summarizes the comprehensive testing and benchmarking implementati
 - `get_single_thread` - Test single thread mode query
 - `is_parallel_scope_outside` - Verify parallel scope detection
 
-##### TestSMPTransformFillSort.cxx (21 tests)
+##### TestSMPTransformFillSort.cpp (21 tests)
 
 **Transform Operation Tests:**
 - `transform_basic` - Basic transform (100 elements, x*2)
@@ -81,16 +81,16 @@ This document summarizes the comprehensive testing and benchmarking implementati
 
 #### Existing Tests (Already Present)
 
-- **`TestSMP.cxx`** - Basic placeholder test
-- **`TestSmpAdvancedThreadName.cxx`** - Thread naming tests (7 tests)
-- **`TestSmpAdvancedThreadPool.cxx`** - Thread pool tests (multiple tests)
-- **`TestSmpAdvancedParallelThreadPoolNative.cxx`** - Native thread pool tests (multiple tests)
+- **`TestSMP.cpp`** - Basic placeholder test
+- **`TestSmpAdvancedThreadName.cpp`** - Thread naming tests (7 tests)
+- **`TestSmpAdvancedThreadPool.cpp`** - Thread pool tests (multiple tests)
+- **`TestSmpAdvancedParallelThreadPoolNative.cpp`** - Native thread pool tests (multiple tests)
 
 ### 2. Benchmarking for `smp` Module
 
 #### New Benchmark File Created
 
-**`Library/Core/Testing/Benchmark/BenchmarkSMP.cxx`**
+**`Library/Core/Testing/Benchmark/BenchmarkSMP.cpp`**
 
 This comprehensive benchmark suite measures performance across various workload sizes and operation types.
 
@@ -135,14 +135,14 @@ Each benchmark reports:
 #### Automatic Test Discovery
 
 The CMake build system automatically discovers and builds all test files:
-- Pattern: `Test*.cxx` files in `Library/Core/Testing/Cxx/`
+- Pattern: `Test*.cpp` files in `Library/Core/Testing/Cxx/`
 - All new test files are automatically included
 - No manual CMakeLists.txt modification required
 
 #### Benchmark Build Configuration
 
 Benchmarks are built when `XSIGMA_ENABLE_BENCHMARK=ON`:
-- Pattern: `Benchmark*.cxx` files in `Library/Core/Testing/Benchmark/`
+- Pattern: `Benchmark*.cpp` files in `Library/Core/Testing/Benchmark/`
 - Linked with Google Benchmark library
 - Executable: `CoreCxxBenchmark`
 

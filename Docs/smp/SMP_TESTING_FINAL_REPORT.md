@@ -27,15 +27,15 @@ Successfully implemented comprehensive testing and benchmarking for the XSigma S
 
 | File | Tests | Purpose |
 |------|-------|---------|
-| `TestSMPComprehensive.cxx` | 18 | Core SMP API functionality |
-| `TestSMPTransformFillSort.cxx` | 21 | Transform, Fill, Sort operations |
+| `TestSMPComprehensive.cpp` | 18 | Core SMP API functionality |
+| `TestSMPTransformFillSort.cpp` | 21 | Transform, Fill, Sort operations |
 | **Total New Tests** | **39** | **Comprehensive coverage** |
 
 ### 2. New Benchmark Files
 
 | File | Benchmarks | Purpose |
 |------|------------|---------|
-| `BenchmarkSMP.cxx` | 13 | Performance measurement across workload sizes |
+| `BenchmarkSMP.cpp` | 13 | Performance measurement across workload sizes |
 
 ### 3. Documentation
 
@@ -257,9 +257,9 @@ Based on the benchmark design:
 The CMake build system automatically discovers and builds test files:
 
 ```cmake
-# Pattern: Test*.cxx in Library/Core/Testing/Cxx/
+# Pattern: Test*.cpp in Library/Core/Testing/Cxx/
 file(GLOB_RECURSE test_sources
-     "${CMAKE_CURRENT_SOURCE_DIR}/Test*.cxx")
+     "${CMAKE_CURRENT_SOURCE_DIR}/Test*.cpp")
 ```
 
 **Benefits:**
@@ -272,9 +272,9 @@ file(GLOB_RECURSE test_sources
 Benchmarks are built when `XSIGMA_ENABLE_BENCHMARK=ON`:
 
 ```cmake
-# Pattern: Benchmark*.cxx in Library/Core/Testing/Benchmark/
+# Pattern: Benchmark*.cpp in Library/Core/Testing/Benchmark/
 file(GLOB_RECURSE bench_sources
-     "${CMAKE_CURRENT_SOURCE_DIR}/Benchmark*.cxx")
+     "${CMAKE_CURRENT_SOURCE_DIR}/Benchmark*.cpp")
 ```
 
 ---

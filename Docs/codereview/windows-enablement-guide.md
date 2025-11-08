@@ -618,7 +618,7 @@ lintrunner --take MYPY -- Scripts/**/*.py
 
 # Test C++ linters
 lintrunner --take CLANGFORMAT -- Library/**/*.h
-lintrunner --take CLANGTIDY -- Library/**/*.cxx
+lintrunner --take CLANGTIDY -- Library/**/*.cpp
 
 # Test CMake linters
 lintrunner --take CMAKE -- CMakeLists.txt

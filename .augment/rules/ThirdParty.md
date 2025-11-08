@@ -6,7 +6,7 @@ Do not modify any code or CMake files within third-party submodules or external 
 
 - Any files within third-party submodule directories (e.g., directories managed by git submodules)
 - CMakeLists.txt files that belong to third-party libraries
-- Source code (.cpp, .h, .cxx, .hpp files) in third-party dependencies
+- Source code (.cpp, .h, .cpp, .hpp files) in third-party dependencies
 - Configuration files within third-party library directories
 - Build scripts or setup files that are part of external dependencies
 

@@ -129,7 +129,7 @@ pool.run([]() { /* task code */ });
 
 **Purpose:** Native std::thread-based thread pool with work queue.
 
-**Location:** `thread_pool.h`, `thread_pool.cxx`
+**Location:** `thread_pool.h`, `thread_pool.cpp`
 
 **Base Class:** `task_thread_pool_base`
 
@@ -240,7 +240,7 @@ pool.run([]() { /* task */ });
 
 **Purpose:** Factory registry for creating thread pools by name.
 
-**Location:** `thread_pool.h`, `thread_pool.cxx`
+**Location:** `thread_pool.h`, `thread_pool.cpp`
 
 **Type:** `XSIGMA_DECLARE_SHARED_REGISTRY(ThreadPoolRegistry, task_thread_pool_base, int, int, bool)`
 
@@ -298,18 +298,18 @@ auto pool = ThreadPoolRegistry()->Create("C10", device_id, pool_size, create_new
 Library/Core//
 ├── Parallel.h                    # Main API header
 ├── Parallel-inl.h                # Template implementations (parallel_for, parallel_reduce)
-├── ParallelNative.h/.cxx         # Native backend implementation
-├── ParallelOpenMP.h/.cxx         # OpenMP backend implementation
-├── ParallelCommon.cxx            # Shared utilities
+├── ParallelNative.h/.cpp         # Native backend implementation
+├── ParallelOpenMP.h/.cpp         # OpenMP backend implementation
+├── ParallelCommon.cpp            # Shared utilities
 ├── thread_pool.h              # Future/promise abstractions
 ├── ParallelGuard.h               # RAII guards
 ├── thread_pool.h                # PyTorch-style thread pool
-├── thread_pool.h/.cxx            # Core thread pool implementation
-├── ThreadPool.h/.cxx             # Legacy Caffe2 thread pool
+├── thread_pool.h/.cpp            # Core thread pool implementation
+├── ThreadPool.h/.cpp             # Legacy Caffe2 thread pool
 ├── WorkersPool.h                 # Work-stealing pool
 ├── ThreadLocalState.h            # Thread-local state management
-├── thread_pool_guard.h/.cxx      # Thread pool guards
-└── pthreadpool.h/.cxx            # Legacy pthreadpool compatibility
+├── thread_pool_guard.h/.cpp      # Thread pool guards
+└── pthreadpool.h/.cpp            # Legacy pthreadpool compatibility
 ```
 
 ---
@@ -423,13 +423,13 @@ The framework supports multiple backends selected at compile time:
 - Uses `std::thread` and custom thread pool
 - Full control over thread lifecycle
 - Supports NUMA affinity
-- Implementation: `ParallelNative.cxx`
+- Implementation: `ParallelNative.cpp`
 
 **OpenMP Backend** (`AT_PARALLEL_OPENMP`):
 - Uses OpenMP directives (`#pragma omp`)
 - Integrates with MKL
 - Compiler-managed thread pool
-- Implementation: `ParallelOpenMP.cxx`
+- Implementation: `ParallelOpenMP.cpp`
 
 ---
 

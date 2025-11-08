@@ -610,17 +610,17 @@ std::vector<error_info> process_with_indices(const std::vector<int>& data) {
 
 ### File Naming Convention
 
-Function declarations and their implementations must follow a consistent naming convention. If a function is declared in a `.h` header file, its implementation **must** be in the corresponding `.cxx` implementation file with the same base name.
+Function declarations and their implementations must follow a consistent naming convention. If a function is declared in a `.h` header file, its implementation **must** be in the corresponding `.cpp` implementation file with the same base name.
 
 ### Correct File Organization
 
 | Declaration | Implementation | ✅ Correct | ❌ Incorrect |
 |-------------|----------------|-----------|-------------|
-| `my_class.h` | `my_class.cxx` | ✅ Yes | - |
-| `my_class.h` | `my_class_impl.cxx` | - | ❌ No |
-| `my_class.h` | `my_class_implementation.cxx` | - | ❌ No |
-| `data_processor.h` | `data_processor.cxx` | ✅ Yes | - |
-| `data_processor.h` | `processor_impl.cxx` | - | ❌ No |
+| `my_class.h` | `my_class.cpp` | ✅ Yes | - |
+| `my_class.h` | `my_class_impl.cpp` | - | ❌ No |
+| `my_class.h` | `my_class_implementation.cpp` | - | ❌ No |
+| `data_processor.h` | `data_processor.cpp` | ✅ Yes | - |
+| `data_processor.h` | `processor_impl.cpp` | - | ❌ No |
 
 ### Why This Matters
 
@@ -654,7 +654,7 @@ class XSIGMA_VISIBILITY my_class {
 }  // namespace xsigma
 ```
 
-**File: `Core/data/my_class.cxx`** (✅ Correct)
+**File: `Core/data/my_class.cpp`** (✅ Correct)
 ```cpp
 #include "data/my_class.h"
 
@@ -675,9 +675,9 @@ std::string my_class::get_result() const {
 }  // namespace xsigma
 ```
 
-**File: `Core/data/my_class_impl.cxx`** (❌ Incorrect - Wrong naming)
+**File: `Core/data/my_class_impl.cpp`** (❌ Incorrect - Wrong naming)
 ```cpp
-// This file should NOT exist. Implementation should be in my_class.cxx
+// This file should NOT exist. Implementation should be in my_class.cpp
 ```
 
 ### Inline Implementations
@@ -691,7 +691,7 @@ class XSIGMA_VISIBILITY my_class {
   // Simple getter - can be inline
   int get_value() const { return value_; }
 
-  // Complex method - should be in .cxx file
+  // Complex method - should be in .cpp file
   XSIGMA_API void process_complex_data(const std::vector<int>& data);
 
  private:
@@ -704,14 +704,14 @@ class XSIGMA_VISIBILITY my_class {
 XSigma uses **strict file extension conventions** to maintain consistency across the codebase:
 
 - **Header files**: `.h` (not `.hpp`, `.hxx`, or other variants)
-- **Implementation files**: `.cxx` (not `.cpp`, `.cc`, `.c++`, or other variants)
+- **Implementation files**: `.cpp` (not `.cpp`, `.cc`, `.c++`, or other variants)
 
 This convention applies to all C++ source files in the XSigma project.
 
 **Rationale:**
 - **Consistency**: Uniform extensions across the entire codebase make it easier to identify file types
-- **Build System Integration**: CMake and other build tools are configured to recognize `.h` and `.cxx` files
-- **Cross-Platform Compatibility**: `.cxx` is more portable than `.cpp` on some systems
+- **Build System Integration**: CMake and other build tools are configured to recognize `.h` and `.cpp` files
+- **Cross-Platform Compatibility**: `.cpp` is more portable than `.cpp` on some systems
 - **Clarity**: Distinguishes XSigma files from third-party code that may use different conventions
 
 **Examples:**
@@ -719,26 +719,26 @@ This convention applies to all C++ source files in the XSigma project.
 ✅ **Correct file extensions:**
 ```
 Core/data/my_class.h
-Core/data/my_class.cxx
+Core/data/my_class.cpp
 Core/processing/data_processor.h
-Core/processing/data_processor.cxx
+Core/processing/data_processor.cpp
 Library/utilities/string_helper.h
-Library/utilities/string_helper.cxx
+Library/utilities/string_helper.cpp
 ```
 
 ❌ **Incorrect file extensions:**
 ```
 Core/data/my_class.hpp          // Wrong - use .h
-Core/data/my_class.cpp          // Wrong - use .cxx
+Core/data/my_class.cpp          // Wrong - use .cpp
 Core/data/my_class.hxx          // Wrong - use .h
-Core/data/my_class.cc           // Wrong - use .cxx
-Core/data/my_class.c++          // Wrong - use .cxx
-Core/data/my_class_impl.cpp     // Wrong - use .cxx and match header name
+Core/data/my_class.cc           // Wrong - use .cpp
+Core/data/my_class.c++          // Wrong - use .cpp
+Core/data/my_class_impl.cpp     // Wrong - use .cpp and match header name
 ```
 
 ### One Class Per File Pair
 
-Each `.h`/`.cxx` file pair **should contain exactly one primary class**. Small helper classes or nested classes that are only used within that primary class are acceptable exceptions.
+Each `.h`/`.cpp` file pair **should contain exactly one primary class**. Small helper classes or nested classes that are only used within that primary class are acceptable exceptions.
 
 **Rationale:**
 - **Maintainability**: Clear separation of concerns makes code easier to understand and modify
@@ -810,34 +810,34 @@ File names **must** match the name of the main class they contain. The file name
 ✅ **Correct - File names match class names:**
 ```
 Class: my_class
-Files: my_class.h, my_class.cxx
+Files: my_class.h, my_class.cpp
 
 Class: data_processor
-Files: data_processor.h, data_processor.cxx
+Files: data_processor.h, data_processor.cpp
 
 Class: string_helper
-Files: string_helper.h, string_helper.cxx
+Files: string_helper.h, string_helper.cpp
 
 Class: configuration_builder
-Files: configuration_builder.h, configuration_builder.cxx
+Files: configuration_builder.h, configuration_builder.cpp
 ```
 
 ❌ **Incorrect - File names don't match class names:**
 ```
 Class: my_class
-Files: processor.h, processor.cxx          // Wrong - name doesn't match
+Files: processor.h, processor.cpp          // Wrong - name doesn't match
 
 Class: data_processor
-Files: data_proc.h, data_proc.cxx          // Wrong - abbreviated name
+Files: data_proc.h, data_proc.cpp          // Wrong - abbreviated name
 
 Class: string_helper
-Files: helper.h, helper.cxx                // Wrong - incomplete name
+Files: helper.h, helper.cpp                // Wrong - incomplete name
 
 Class: configuration_builder
-Files: builder.h, builder.cxx              // Wrong - incomplete name
+Files: builder.h, builder.cpp              // Wrong - incomplete name
 
 Class: my_class
-Files: my_class_impl.h, my_class_impl.cxx  // Wrong - extra suffix
+Files: my_class_impl.h, my_class_impl.cpp  // Wrong - extra suffix
 ```
 
 **File Path Examples:**
@@ -846,19 +846,19 @@ Files: my_class_impl.h, my_class_impl.cxx  // Wrong - extra suffix
 Core/
 ├── data/
 │   ├── my_class.h              ✅ Correct
-│   ├── my_class.cxx
+│   ├── my_class.cpp
 │   ├── data_processor.h        ✅ Correct
-│   ├── data_processor.cxx
+│   ├── data_processor.cpp
 │   └── processor.h             ❌ Wrong - should be data_processor.h
 │
 ├── processing/
 │   ├── string_helper.h         ✅ Correct
-│   ├── string_helper.cxx
+│   ├── string_helper.cpp
 │   └── helper.h                ❌ Wrong - should be string_helper.h
 │
 └── builders/
     ├── configuration_builder.h ✅ Correct
-    ├── configuration_builder.cxx
+    ├── configuration_builder.cpp
     └── builder.h               ❌ Wrong - should be configuration_builder.h
 ```
 
@@ -959,7 +959,7 @@ class XSIGMA_VISIBILITY my_class_builder {
 ### Builder Implementation Example
 
 ```cpp
-// ✅ Correct builder implementation in .cxx file
+// ✅ Correct builder implementation in .cpp file
 namespace xsigma {
 
 my_class_builder::my_class_builder()
@@ -1326,7 +1326,7 @@ python setup.py config.build.ninja.clang.clangtidy
 
 # Or run clang-tidy on specific files
 cd ../build_ninja_clangtidy
-clang-tidy -p . ../Core/path/to/file.cxx
+clang-tidy -p . ../Core/path/to/file.cpp
 ```
 
 ### Enabled Clang-Tidy Checks
@@ -1446,14 +1446,14 @@ void* ptr = static_cast<void*>(&value);  // Clear intent
 Clang-Tidy output typically looks like:
 
 ```
-/path/to/file.cxx:42:5: warning: variable 'result' of type 'std::vector<int>' can be constructed with std::move [modernize-use-move-on-return]
+/path/to/file.cpp:42:5: warning: variable 'result' of type 'std::vector<int>' can be constructed with std::move [modernize-use-move-on-return]
   std::vector<int> result = data;
   ^
   std::move(data)
 ```
 
 **Format breakdown:**
-- **File and line**: `/path/to/file.cxx:42:5`
+- **File and line**: `/path/to/file.cpp:42:5`
 - **Message type**: `warning`
 - **Description**: What the issue is
 - **Check name**: `[modernize-use-move-on-return]` - Use this to understand the rule
@@ -1723,8 +1723,8 @@ std::unique_ptr<my_class> obj = std::make_unique<my_class>();
 - ❌ Using `auto` when the deduced type is not obvious from context
 - ❌ Ignoring clang-tidy warnings without justification or suppression comments
 - ❌ Suppressing clang-tidy warnings without explaining why in a comment
-- ❌ Using `.cpp`, `.hpp`, `.hxx`, or other non-standard extensions instead of `.h` and `.cxx`
-- ❌ Placing multiple unrelated classes in a single `.h`/`.cxx` file pair
+- ❌ Using `.cpp`, `.hpp`, `.hxx`, or other non-standard extensions instead of `.h` and `.cpp`
+- ❌ Placing multiple unrelated classes in a single `.h`/`.cpp` file pair
 - ❌ File names that don't match the class name they contain (e.g., `processor.h` for `class data_processor`)
 - ❌ Using suffixes like `_impl`, `_implementation`, or `_helper` in file names when they should match the class name exactly
 - ❌ Public constructors in classes that have builder classes (should be `private` or `protected`)

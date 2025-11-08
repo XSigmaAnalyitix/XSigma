@@ -291,7 +291,7 @@ XSigma includes a Security library with cryptographic utilities. Mark the follow
 **Justification text:**
 ```
 XSigma uses only publicly published and reviewed cryptographic algorithms:
-- SHA-256 for hashing (Library/Security/crypto.cxx)
+- SHA-256 for hashing (Library/Security/crypto.cpp)
 - Platform-specific secure random: BCryptGenRandom (Windows), SecRandomCopyBytes (macOS), getrandom (Linux)
 All algorithms are industry-standard and publicly documented. See Library/Security/README.md lines 75-101.
 ```
@@ -308,7 +308,7 @@ XSigma's Security library calls platform-specific cryptographic APIs rather than
 - Windows: BCryptGenRandom for secure random
 - macOS: SecRandomCopyBytes for secure random
 - Linux: getrandom() for secure random
-SHA-256 implementation follows FIPS 180-4 specification. See Library/Security/crypto.cxx lines 8-22.
+SHA-256 implementation follows FIPS 180-4 specification. See Library/Security/crypto.cpp lines 8-22.
 ```
 
 ---
@@ -341,7 +341,7 @@ XSigma's cryptographic utilities use SHA-256 (256-bit hash, exceeds NIST 224-bit
 
 **Justification text:**
 ```
-XSigma does not use broken cryptographic algorithms. SHA-256 is used for hashing (not MD4, MD5, SHA-1, or single DES). Platform-specific secure random generators are used (not weak PRNGs). See Library/Security/crypto.cxx.
+XSigma does not use broken cryptographic algorithms. SHA-256 is used for hashing (not MD4, MD5, SHA-1, or single DES). Platform-specific secure random generators are used (not weak PRNGs). See Library/Security/crypto.cpp.
 ```
 
 ---
@@ -389,7 +389,7 @@ XSigma uses cryptographically secure random number generators for all security-s
 - Windows: BCryptGenRandom (CSPRNG)
 - macOS: SecRandomCopyBytes (CSPRNG)
 - Linux: getrandom() (CSPRNG)
-See Library/Security/crypto.cxx lines 33-48 and Library/Security/README.md lines 85-95.
+See Library/Security/crypto.cpp lines 33-48 and Library/Security/README.md lines 85-95.
 ```
 
 ---

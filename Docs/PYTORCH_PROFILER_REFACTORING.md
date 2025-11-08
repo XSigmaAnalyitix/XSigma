@@ -16,7 +16,7 @@ Successfully refactored the `Library/Core/profiler/pytroch_profiler` directory t
   - `torch/csrc/profiler/stubs/`
   - `torch/csrc/profiler/unwind/`
 
-- **After**: All 66 C++ files (.h and .cxx) moved to base `pytroch_profiler` directory
+- **After**: All 66 C++ files (.h and .cpp) moved to base `pytroch_profiler` directory
 - Removed all empty nested directories
 - Preserved Python files and documentation in original locations
 
@@ -26,25 +26,25 @@ Successfully refactored the `Library/Core/profiler/pytroch_profiler` directory t
 - Updated all internal includes to use relative paths
 - Updated downstream references in `Library/Core/experimental/xsigma_autograd/`:
   - `profiler_kineto.h`
-  - `profiler_kineto.cxx`
+  - `profiler_kineto.cpp`
   - `profiler_legacy.h`
-  - `init.cxx`
-  - `profiler_python.cxx`
-  - `python_function.cxx`
+  - `init.cpp`
+  - `profiler_python.cpp`
+  - `python_function.cpp`
 
 ### 3. Macro Replacements
 Replaced PyTorch-specific macros with XSigma equivalents:
 
 | PyTorch Macro | XSigma Macro | Purpose |
 |---|---|---|
-| `TORCH_API` | `XSIGMA_API` | Function export/import |
-| `TORCH_PYTHON_API` | `XSIGMA_API` | Python-facing function export |
-| `TORCH_INTERNAL_ASSERT` | `XSIGMA_CHECK` | Internal assertions |
-| `TORCH_INTERNAL_ASSERT_DEBUG_ONLY` | `XSIGMA_CHECK_DEBUG` | Debug-only assertions |
-| `TORCH_CHECK` | `XSIGMA_CHECK` | Runtime checks |
-| `C10_API_ENUM` | (removed) | Enum visibility (not needed) |
-| `C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED` | `XSIGMA_DIAGNOSTIC_PUSH` | Diagnostic control |
-| `C10_DIAGNOSTIC_POP` | `XSIGMA_DIAGNOSTIC_POP` | Diagnostic control |
+| `XSIGMA_API` | `XSIGMA_API` | Function export/import |
+| `XSIGMA_PYTHON_API` | `XSIGMA_API` | Python-facing function export |
+| `XSIGMA_INTERNAL_ASSERT` | `XSIGMA_CHECK` | Internal assertions |
+| `XSIGMA_INTERNAL_ASSERT_DEBUG_ONLY` | `XSIGMA_CHECK_DEBUG` | Debug-only assertions |
+| `XSIGMA_CHECK` | `XSIGMA_CHECK` | Runtime checks |
+| `XSIGMA_API_ENUM` | (removed) | Enum visibility (not needed) |
+| `XSIGMA_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED` | `XSIGMA_DIAGNOSTIC_PUSH` | Diagnostic control |
+| `XSIGMA_DIAGNOSTIC_POP` | `XSIGMA_DIAGNOSTIC_POP` | Diagnostic control |
 
 ### 4. Visibility and API Macros
 - Added `XSIGMA_VISIBILITY` before public class declarations
@@ -66,17 +66,17 @@ All files moved from nested directories to base `pytroch_profiler` directory:
 - `kineto_shim.h/cxx`, `kineto_client_interface.h/cxx`, `api.h`
 - `observer.h/cxx`, `python_tracer.h/cxx`, `vulkan.h/cxx` (from orchestration/)
 - `execution_trace_observer.h/cxx`, `itt_observer.h/cxx`, `nvtx_observer.h/cxx`, `privateuse1_observer.h/cxx` (from standalone/)
-- `base.h/cxx`, `cuda.cxx`, `itt.cxx` (from stubs/)
-- `unwind.h/cxx`, `unwind_fb.cxx`, `unwind_error.h`, `unwinder.h`, and 20+ header files (from unwind/)
+- `base.h/cxx`, `cuda.cpp`, `itt.cpp` (from stubs/)
+- `unwind.h/cxx`, `unwind_fb.cpp`, `unwind_error.h`, `unwinder.h`, and 20+ header files (from unwind/)
 - `util.h/cxx`, `perf.h/cxx`, `perf-inl.h`, `init.h/cxx`, `pybind.h`
 
 ### Downstream Files Updated (6 total)
 - `Library/Core/experimental/xsigma_autograd/profiler_kineto.h`
-- `Library/Core/experimental/xsigma_autograd/profiler_kineto.cxx`
+- `Library/Core/experimental/xsigma_autograd/profiler_kineto.cpp`
 - `Library/Core/experimental/xsigma_autograd/profiler_legacy.h`
-- `Library/Core/experimental/xsigma_autograd/init.cxx`
-- `Library/Core/experimental/xsigma_autograd/profiler_python.cxx`
-- `Library/Core/experimental/xsigma_autograd/python_function.cxx`
+- `Library/Core/experimental/xsigma_autograd/init.cpp`
+- `Library/Core/experimental/xsigma_autograd/profiler_python.cpp`
+- `Library/Core/experimental/xsigma_autograd/python_function.cpp`
 
 ## XSigma Infrastructure Used
 - **Export Macros**: `Library/Core/common/export.h` (XSIGMA_API, XSIGMA_VISIBILITY)

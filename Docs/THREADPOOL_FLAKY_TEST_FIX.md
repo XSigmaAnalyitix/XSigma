@@ -364,7 +364,7 @@ if (data.load(std::memory_order_acquire) == 42) { ... }  // ✅ Sees correct val
 
 ---
 
-**Files Modified**: `Library/Core/Testing/Cxx/TestThreadPool.cxx`
+**Files Modified**: `Library/Core/Testing/Cxx/TestThreadPool.cpp`
 **Lines Changed**: ~30 lines
 **Test Success Rate**: 35% → 100%
 **Build Status**: ✅ SUCCESS

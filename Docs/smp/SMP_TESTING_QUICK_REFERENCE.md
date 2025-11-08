@@ -113,12 +113,12 @@ cd ../build_ninja
 
 | File | Location | Tests |
 |------|----------|-------|
-| TestSMPComprehensive.cxx | Library/Core/Testing/Cxx/ | 18 |
-| TestSMPTransformFillSort.cxx | Library/Core/Testing/Cxx/ | 21 |
-| TestSmpAdvancedParallelThreadPoolNative.cxx | Library/Core/Testing/Cxx/ | 10 |
-| TestSmpAdvancedThreadName.cxx | Library/Core/Testing/Cxx/ | 9 |
-| TestSmpAdvancedThreadPool.cxx | Library/Core/Testing/Cxx/ | 12 |
-| BenchmarkSMP.cxx | Library/Core/Testing/Benchmark/ | 13 |
+| TestSMPComprehensive.cpp | Library/Core/Testing/Cxx/ | 18 |
+| TestSMPTransformFillSort.cpp | Library/Core/Testing/Cxx/ | 21 |
+| TestSmpAdvancedParallelThreadPoolNative.cpp | Library/Core/Testing/Cxx/ | 10 |
+| TestSmpAdvancedThreadName.cpp | Library/Core/Testing/Cxx/ | 9 |
+| TestSmpAdvancedThreadPool.cpp | Library/Core/Testing/Cxx/ | 12 |
+| BenchmarkSMP.cpp | Library/Core/Testing/Benchmark/ | 13 |
 
 ---
 
@@ -299,7 +299,7 @@ llvm-cov show ./bin/CoreCxxTests -instr-profile=default.profdata
 
 ### 1. Create Test File
 ```bash
-# File: Library/Core/Testing/Cxx/TestMyFeature.cxx
+# File: Library/Core/Testing/Cxx/TestMyFeature.cpp
 ```
 
 ### 2. Write Tests
@@ -365,8 +365,8 @@ stage('Test SMP Module') {
 - **Full Documentation:** `Docs/SMP_TESTING_SUMMARY.md`
 - **Final Report:** `Docs/SMP_TESTING_FINAL_REPORT.md`
 - **Source Code:** `Library/Core/smp/`
-- **Tests:** `Library/Core/Testing/Cxx/TestSMP*.cxx`
-- **Benchmarks:** `Library/Core/Testing/Benchmark/BenchmarkSMP.cxx`
+- **Tests:** `Library/Core/Testing/Cxx/TestSMP*.cpp`
+- **Benchmarks:** `Library/Core/Testing/Benchmark/BenchmarkSMP.cpp`
 
 ---
 

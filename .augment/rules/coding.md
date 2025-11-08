@@ -213,7 +213,7 @@ Apply these macros consistently across all public headers to ensure correct symb
 
 | Context                          | Macro               | Description                                | When to Use |
 | -------------------------------- | ------------------- | ------------------------------------------ | ----------- |
-| Function (implemented in `.cxx`) | `XSIGMA_API`        | Mark all externally visible functions      | Before function return type |
+| Function (implemented in `.cpp`) | `XSIGMA_API`        | Mark all externally visible functions      | Before function return type |
 | Class declaration                | `XSIGMA_VISIBILITY` | Required for all public class declarations | Before `class` keyword |
 
 **IMPORTANT:** Omitting these macros will cause linking errors on Windows and symbol visibility issues on Linux/macOS.

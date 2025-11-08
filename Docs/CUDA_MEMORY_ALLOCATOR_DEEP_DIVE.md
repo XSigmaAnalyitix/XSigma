@@ -426,7 +426,7 @@ For financial computing:
 
 1. **Batch Operations**: Reduce allocation frequency
 2. **Stream Pooling**: Reuse streams to improve cache hit rate
-3. **Memory Limits**: Set `PYTORCH_CUDA_ALLOC_CONF` to control cache size
+3. **Memory Limits**: Set `PYXSIGMA_CUDA_ALLOC_CONF` to control cache size
 4. **Monitoring**: Use `getDeviceStats()` to track usage
 
 ---
@@ -470,7 +470,7 @@ For financial computing:
 5. **Set Memory Limits**:
    ```bash
    # Limit cache to 50% of GPU memory
-   export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
+   export PYXSIGMA_CUDA_ALLOC_CONF=max_split_size_mb:512
    ```
 
 ### Comparison: Cached vs. Uncached Allocation
@@ -1090,29 +1090,29 @@ Fragmentation ratio: 5%
 
 ```bash
 # Disable caching (use direct cudaMalloc)
-export PYTORCH_CUDA_ALLOC_CONF=caching_allocator:False
+export PYXSIGMA_CUDA_ALLOC_CONF=caching_allocator:False
 
 # Set maximum split size (default: 512MB)
-export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:256
+export PYXSIGMA_CUDA_ALLOC_CONF=max_split_size_mb:256
 
 # Set garbage collection threshold
-export PYTORCH_CUDA_ALLOC_CONF=garbage_collection_threshold:0.8
+export PYXSIGMA_CUDA_ALLOC_CONF=garbage_collection_threshold:0.8
 
 # Combine multiple settings
-export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:256,garbage_collection_threshold:0.8
+export PYXSIGMA_CUDA_ALLOC_CONF=max_split_size_mb:256,garbage_collection_threshold:0.8
 ```
 
 ### Monitoring Environment Variables
 
 ```bash
 # Enable memory profiling
-export PYTORCH_CUDA_ALLOC_CONF=trace_malloc_mode:1
+export PYXSIGMA_CUDA_ALLOC_CONF=trace_malloc_mode:1
 
 # Enable debug output
 export CUDA_LAUNCH_BLOCKING=1
 
 # Set memory fraction (limit GPU memory usage)
-export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
+export PYXSIGMA_CUDA_ALLOC_CONF=max_split_size_mb:512
 ```
 
 ---

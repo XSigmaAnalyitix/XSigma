@@ -36,11 +36,11 @@ This comprehensive documentation explains the Kineto Profiler architecture in XS
 
 | Function | Purpose | File | Line |
 |----------|---------|------|------|
-| `enableProfiler()` | Start profiling | profiler_kineto.cxx | 834 |
-| `disableProfiler()` | Stop profiling | profiler_kineto.cxx | 915 |
-| `enableProfilerInChildThread()` | Enable in child thread | profiler_kineto.cxx | 896 |
-| `disableProfilerInChildThread()` | Disable in child thread | profiler_kineto.cxx | 908 |
-| `isProfilerEnabledInMainThread()` | Check main thread status | profiler_kineto.cxx | 891 |
+| `enableProfiler()` | Start profiling | profiler_kineto.cpp | 834 |
+| `disableProfiler()` | Stop profiling | profiler_kineto.cpp | 915 |
+| `enableProfilerInChildThread()` | Enable in child thread | profiler_kineto.cpp | 896 |
+| `disableProfilerInChildThread()` | Disable in child thread | profiler_kineto.cpp | 908 |
+| `isProfilerEnabledInMainThread()` | Check main thread status | profiler_kineto.cpp | 891 |
 | `reportBackendEventToActiveKinetoProfiler()` | Report backend event | profiler_kineto.h | 138 |
 | `enableProfilerWithEventPostProcess()` | Enable with post-processing | profiler_kineto.h | 173 |
 | `prepareProfiler()` | Prepare profiler | profiler_kineto.h | 181 |
@@ -57,7 +57,7 @@ This comprehensive documentation explains the Kineto Profiler architecture in XS
 
 | Class | Purpose | File | Line |
 |-------|---------|------|------|
-| `KinetoThreadLocalState` | Thread-local state | profiler_kineto.cxx | 390 |
+| `KinetoThreadLocalState` | Thread-local state | profiler_kineto.cpp | 390 |
 | `ProfilerStateBase` | Base profiler state | observer.h | 173 |
 | `ProfilerConfig` | Configuration | observer.h | 140 |
 | `ExperimentalConfig` | Experimental options | observer.h | 57 |
@@ -149,9 +149,9 @@ enum class ActiveProfilerType {
 
 | Function | Purpose | File | Line |
 |----------|---------|------|------|
-| `onFunctionEnter()` | Function entry hook | profiler_kineto.cxx | 534 |
-| `onFunctionExit()` | Function exit hook | profiler_kineto.cxx | ~600 |
-| `pushProfilingCallbacks()` | Register callbacks | profiler_kineto.cxx | ~700 |
+| `onFunctionEnter()` | Function entry hook | profiler_kineto.cpp | 534 |
+| `onFunctionExit()` | Function exit hook | profiler_kineto.cpp | ~600 |
+| `pushProfilingCallbacks()` | Register callbacks | profiler_kineto.cpp | ~700 |
 
 ---
 
@@ -165,11 +165,11 @@ enum class ActiveProfilerType {
 - `api.h` - API aliases
 
 ### Implementation Files
-- `profiler_kineto.cxx` - Main implementation
-- `observer.cxx` - Configuration implementation
-- `record_function.cxx` - RecordFunction implementation
-- `kineto_shim.cxx` - libkineto wrapper implementation
-- `collection.cxx` - Event collection implementation
+- `profiler_kineto.cpp` - Main implementation
+- `observer.cpp` - Configuration implementation
+- `record_function.cpp` - RecordFunction implementation
+- `kineto_shim.cpp` - libkineto wrapper implementation
+- `collection.cpp` - Event collection implementation
 
 ### Supporting Files
 - `events.h` - Event structures
@@ -240,7 +240,7 @@ Chrome Trace JSON Output
 ### Advanced
 1. Read KINETO_PROFILER_GUIDE.md (detailed)
 2. Study KINETO_IMPLEMENTATION_DETAILS.md
-3. Review source code in profiler_kineto.cxx
+3. Review source code in profiler_kineto.cpp
 4. Understand libkineto integration
 
 ### Expert
@@ -350,7 +350,7 @@ auto result = disableProfiler();
 **From KINETO_PROFILER_GUIDE.md:**
 - See KINETO_QUICK_REFERENCE.md for quick lookup
 - See KINETO_IMPLEMENTATION_DETAILS.md for implementation details
-- See source code in profiler_kineto.cxx for actual implementation
+- See source code in profiler_kineto.cpp for actual implementation
 
 **From KINETO_QUICK_REFERENCE.md:**
 - See KINETO_PROFILER_GUIDE.md for detailed explanations

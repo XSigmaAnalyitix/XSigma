@@ -40,7 +40,7 @@ This document provides a comprehensive audit of the XSigma project against the [
 | **Project description** | ✅ PASS | README.md lines 9-19 | Clear, comprehensive description |
 | **FLOSS license** | ✅ PASS | LICENSE (GPL-3.0 + Commercial) | Dual-license model, SPDX identifier |
 | **License location** | ✅ PASS | LICENSE file in root | Clearly documented |
-| **License statement in files** | ✅ PASS | All source files | SPDX headers in .cxx/.h files |
+| **License statement in files** | ✅ PASS | All source files | SPDX headers in .cpp/.h files |
 
 **Score**: 5/5 ✅
 

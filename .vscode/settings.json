@@ -102,6 +102,7 @@
         "scoped_allocator": "cpp",
         "source_location": "cpp",
         "stack": "cpp",
-        "xtree": "cpp"
+        "xtree": "cpp",
+        "valarray": "cpp"
     }
 }

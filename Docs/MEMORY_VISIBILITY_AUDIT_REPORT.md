@@ -25,21 +25,21 @@ Conducted a comprehensive audit of all concurrent test files to identify memory 
 ### 1. File Discovery
 Searched for all test files using concurrent primitives:
 ```bash
-find Library -name "Test*.cxx" | xargs grep -l "parallel_for|parallel_reduce|thread_pool|\.run("
+find Library -name "Test*.cpp" | xargs grep -l "parallel_for|parallel_reduce|thread_pool|\.run("
 ```
 
 **Files Found**: 11 test files
-- `TestParallelApi.cxx`
-- `TestParallelFor.cxx`
-- `TestParallelGuard.cxx`
-- `TestParallelReduce.cxx`
-- `TestSMPComprehensive.cxx`
-- `TestSMPEnhanced.cxx`
-- `TestThreadPool.cxx`
-- `TestSmpAdvancedParallelThreadPoolNative.cxx`
-- `TestSmpAdvancedThreadPool.cxx`
-- `TestEnhancedProfiler.cxx`
-- `TestProfiler.cxx`
+- `TestParallelApi.cpp`
+- `TestParallelFor.cpp`
+- `TestParallelGuard.cpp`
+- `TestParallelReduce.cpp`
+- `TestSMPComprehensive.cpp`
+- `TestSMPEnhanced.cpp`
+- `TestThreadPool.cpp`
+- `TestSmpAdvancedParallelThreadPoolNative.cpp`
+- `TestSmpAdvancedThreadPool.cpp`
+- `TestEnhancedProfiler.cpp`
+- `TestProfiler.cpp`
 
 ### 2. Pattern Identification
 Searched for high-risk patterns:
@@ -58,7 +58,7 @@ Ran suspected tests 50 times each to measure failure rates
 ### Category 1: Confirmed Flaky Tests (FIXED)
 
 #### 1.1 `ThreadPool.task_execution`
-**File**: `Library/Core/Testing/Cxx/TestThreadPool.cxx`
+**File**: `Library/Core/Testing/Cxx/TestThreadPool.cpp`
 **Status**: ✅ **FIXED**
 
 **Original Code**:
@@ -75,7 +75,7 @@ std::vector<bool> executed(100, false);  // ❌ Non-atomic
 ---
 
 #### 1.2 `ParallelFor.all_elements_processed`
-**File**: `Library/Core/Testing/Cxx/TestParallelFor.cxx`
+**File**: `Library/Core/Testing/Cxx/TestParallelFor.cpp`
 **Status**: ✅ **FIXED**
 
 **Original Code**:
@@ -96,7 +96,7 @@ std::vector<bool> processed(1000, false);  // ❌ Non-atomic
 These tests have the memory visibility bug pattern but are not currently failing. They are **technically incorrect** and could fail on other systems or under different conditions.
 
 #### 2.1 `ParallelApi.thread_num_parallel`
-**File**: `Library/Core/Testing/Cxx/TestParallelApi.cxx:55`
+**File**: `Library/Core/Testing/Cxx/TestParallelApi.cpp:55`
 
 **Pattern**:
 ```cpp
@@ -123,7 +123,7 @@ for (int i = 0; i < 100; ++i) {
 ---
 
 #### 2.2 `ParallelFor.basic_range`
-**File**: `Library/Core/Testing/Cxx/TestParallelFor.cxx:28`
+**File**: `Library/Core/Testing/Cxx/TestParallelFor.cpp:28`
 
 **Pattern**:
 ```cpp
@@ -149,7 +149,7 @@ for (int i = 0; i < 100; ++i) {
 ---
 
 #### 2.3 `ThreadPool.independent_writes`
-**File**: `Library/Core/Testing/Cxx/TestThreadPool.cxx:212`
+**File**: `Library/Core/Testing/Cxx/TestThreadPool.cpp:212`
 
 **Pattern**:
 ```cpp
@@ -176,14 +176,14 @@ for (int i = 0; i < 100; ++i) {
 
 #### 2.4 Other Tests with Similar Patterns
 
-**File**: `TestParallelFor.cxx`
+**File**: `TestParallelFor.cpp`
 - `single_element` (line 118): `std::vector<int>` - 🟡 MEDIUM risk
 - `range_smaller_than_grain` (line 138): `std::vector<int>` - 🟡 MEDIUM risk
 - `large_range` (line 161): `std::vector<int>` - 🟡 MEDIUM risk
 - `nested_loop` (line 184): `std::vector<int>` - 🟡 MEDIUM risk
 - `double_precision` (line 259): `std::vector<double>` - 🟡 MEDIUM risk
 
-**File**: `TestSMPComprehensive.cxx`
+**File**: `TestSMPComprehensive.cpp`
 - `parallel_for_basic` (line 58): `std::vector<int>` - 🟡 MEDIUM risk
 - `parallel_for_small_grain` (line 82): `std::vector<int>` - 🟡 MEDIUM risk
 - `parallel_for_large_grain` (line 105): `std::vector<int>` - 🟡 MEDIUM risk
@@ -191,7 +191,7 @@ for (int i = 0; i < 100; ++i) {
 - `parallel_for_stress` (line 181): `std::vector<int>` - 🟡 MEDIUM risk
 - `parallel_for_double` (line 205): `std::vector<double>` - 🟡 MEDIUM risk
 
-**File**: `TestSMPEnhanced.cxx`
+**File**: `TestSMPEnhanced.cpp`
 - `parallel_for_single_item` (line 42): `std::vector<int>` - 🟡 MEDIUM risk
 - `parallel_for_small_range` (line 72): `std::vector<int>` - 🟡 MEDIUM risk
 - `parallel_for_medium_range` (line 95): `std::vector<int>` - 🟡 MEDIUM risk
@@ -199,7 +199,7 @@ for (int i = 0; i < 100; ++i) {
 - `parallel_for_stress_test` (line 268): `std::vector<int>` - 🟡 MEDIUM risk
 - `parallel_for_map_*` tests (lines 295-350): `std::vector<int>` - 🟡 MEDIUM risk
 
-**File**: `TestParallelGuard.cxx`
+**File**: `TestParallelGuard.cpp`
 - `nested_parallel_disabled` (line 144): `std::vector<int>` - 🟡 MEDIUM risk
 
 ---
@@ -209,17 +209,17 @@ for (int i = 0; i < 100; ++i) {
 #### 3.1 Read-Only Data
 Tests that use `std::vector<T>` for **read-only** data are safe:
 
-**File**: `TestParallelReduce.cxx`
+**File**: `TestParallelReduce.cpp`
 - `maximum` (line 164): `std::vector<int>` - ✅ SAFE (read-only)
 - `minimum` (line 193): `std::vector<int>` - ✅ SAFE (read-only)
 
 #### 3.2 Proper Atomics
 Tests that already use `std::atomic` are safe:
 
-**File**: `TestParallelFor.cxx`
+**File**: `TestParallelFor.cpp`
 - `chunk_distribution` (line 74): `std::atomic<int>` - ✅ SAFE
 
-**File**: `TestThreadPool.cxx`
+**File**: `TestThreadPool.cpp`
 - `task_execution` (line 109): `std::vector<std::atomic<bool>>` - ✅ SAFE (fixed)
 - `concurrent_execution` (line 150): `std::atomic<int>` - ✅ SAFE
 - `atomic_counter` (line 180): `std::atomic<int>` - ✅ SAFE

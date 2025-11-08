@@ -41,7 +41,7 @@ class XSigmaConfigureDetector:
     CONFIGURE_INCLUDE_PATTERN = r'#include\s+[<"]common/configure\.h[>"]'
 
     # C++ file extensions to analyze
-    CPP_EXTENSIONS = {".h", ".hxx", ".hpp", ".cxx", ".cpp", ".cc", ".c"}
+    CPP_EXTENSIONS = {".h", ".hxx", ".hpp", ".cpp", ".cpp", ".cc", ".c"}
 
     def __init__(self, log_file: Optional[str] = None):
         """Initialize the detector with optional logging."""

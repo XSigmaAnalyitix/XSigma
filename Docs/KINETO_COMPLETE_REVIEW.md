@@ -50,7 +50,7 @@ This document provides a complete review of the Kineto profiler architecture, en
 ## Entry Points (Main Functions)
 
 ### 1. **enableProfiler()** - Start Profiling
-**Location:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cxx:834`
+**Location:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cpp:834`
 
 ```cpp
 void enableProfiler(
@@ -75,7 +75,7 @@ void enableProfiler(
 ---
 
 ### 2. **disableProfiler()** - Stop Profiling
-**Location:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cxx:915`
+**Location:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cpp:915`
 
 ```cpp
 std::unique_ptr<ProfilerResult> disableProfiler();
@@ -115,7 +115,7 @@ void disableProfilerInChildThread();
 ## Core Classes
 
 ### **KinetoThreadLocalState**
-**Location:** `profiler_kineto.cxx:390`
+**Location:** `profiler_kineto.cpp:390`
 
 Manages thread-local profiling state:
 - Inherits from `ProfilerStateBase`
@@ -349,15 +349,15 @@ Abstraction over libkineto:
 ```
 Library/Core/profiler/pytroch_profiler/
 ├── profiler_kineto.h          # Main API
-├── profiler_kineto.cxx        # Implementation
+├── profiler_kineto.cpp        # Implementation
 ├── observer.h                 # Config classes
-├── observer.cxx               # Config implementation
+├── observer.cpp               # Config implementation
 ├── record_function.h          # RecordFunction interface
-├── record_function.cxx        # RecordFunction implementation
+├── record_function.cpp        # RecordFunction implementation
 ├── kineto_shim.h              # libkineto wrapper
-├── kineto_shim.cxx            # libkineto wrapper impl
+├── kineto_shim.cpp            # libkineto wrapper impl
 ├── collection.h               # Event collection
-├── collection.cxx             # Event collection impl
+├── collection.cpp             # Event collection impl
 ├── events.h                   # Event structures
 ├── containers.h               # Container types
 ├── api.h                      # API aliases

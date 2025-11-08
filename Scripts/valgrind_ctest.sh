@@ -97,14 +97,14 @@ extract_xsigma_stack_trace() {
 }
 
 # Parse stack trace line to extract XSigma function and source location
-# Input format: "==12345==    by 0x123456: xsigma::namespace::function() (file.cxx:123)"
+# Input format: "==12345==    by 0x123456: xsigma::namespace::function() (file.cpp:123)"
 parse_stack_frame() {
     local frame="$1"
 
     # Extract the part after the address
     local info="${frame#*: }"
 
-    # Check if this is an XSigma frame (contains xsigma:: or .cxx/.h file)
+    # Check if this is an XSigma frame (contains xsigma:: or .cpp/.h file)
     if [[ "$info" =~ xsigma:: ]] || [[ "$info" =~ \.(cxx|h|hpp|cc|cpp)\: ]]; then
         # Extract function name (everything before the opening paren)
         local func="${info%%(*}"
@@ -311,7 +311,7 @@ generate_valgrind_report() {
                         echo "  Allocated by: $func"
                     fi
 
-                    # Extract file and line number from the format: (filename.cxx:linenum)
+                    # Extract file and line number from the format: (filename.cpp:linenum)
                     local file_line=$(echo "$alloc_site" | sed -n 's/.*(\([^)]*\)).*/\1/p')
                     if [[ -n "$file_line" ]]; then
                         echo "  Location: $file_line"
@@ -357,7 +357,7 @@ generate_valgrind_report() {
             # Extract stack traces and filter for XSigma code
             # Look both before and after the Invalid read/write line
             grep -B 10 -A 10 "Invalid read\|Invalid write" $memcheck_logs 2>/dev/null | \
-            grep -E "xsigma::|\.cxx:|\.h:" | head -20
+            grep -E "xsigma::|\.cpp:|\.h:" | head -20
 
             echo ""
             echo "Full Stack Traces (first 30 frames):"
@@ -388,7 +388,7 @@ generate_valgrind_report() {
             # Extract stack traces and filter for XSigma code
             # Look both before and after the Use of uninitialised value line
             grep -B 10 -A 10 "Use of uninitialised value" $memcheck_logs 2>/dev/null | \
-            grep -E "xsigma::|\.cxx:|\.h:" | head -20
+            grep -E "xsigma::|\.cpp:|\.h:" | head -20
 
             echo ""
             echo "Sample Stack Traces (first 20 frames):"

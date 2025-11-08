@@ -42,7 +42,7 @@ init_command = [
 code = 'CLANGFORMAT'
 include_patterns = [
     '**/*.h',
-    '**/*.cxx',
+    '**/*.cpp',
 ]
 exclude_patterns = [
     'ThirdParty/**',
@@ -204,7 +204,7 @@ code = 'CLANGTIDY'
 include_patterns = [
     'Library/**/*.h',
     'Library/**/*.hxx',
-    'Library/**/*.cxx',
+    'Library/**/*.cpp',
 ]
 exclude_patterns = [
     'ThirdParty/**',
@@ -217,7 +217,7 @@ exclude_patterns = [
     '.vscode/**',
     '.git/**',
     '.augment/**',
-    'Library/**/Testing/**/*.cxx',
+    'Library/**/Testing/**/*.cpp',
 
 ]
 init_command = [
@@ -435,7 +435,7 @@ command = [
 # code = 'XSIGMA_UNUSED'
 # include_patterns = [
 #     '**/*.hxx',
-#     '**/*.cxx',
+#     '**/*.cpp',
 #     '**/*.h',
 # ]
 # exclude_patterns = [
@@ -464,7 +464,7 @@ command = [
 # code = 'XSIGMA_NODISCARD'
 # include_patterns = [
 #     '**/*.hxx',
-#     '**/*.cxx',
+#     '**/*.cpp',
 #     '**/*.h',
 # ]
 # exclude_patterns = [
@@ -521,7 +521,7 @@ command = [
 code = 'PYBIND11_INCLUDE'
 include_patterns = [
     '**/*.hxx',
-    '**/*.cxx',
+    '**/*.cpp',
     '**/*.h',
 ]
 exclude_patterns = [
@@ -593,7 +593,7 @@ command = [
 code = 'PYBIND11_SPECIALIZATION'
 include_patterns = [
     '**/*.hxx',
-    '**/*.cxx',
+    '**/*.cpp',
     '**/*.h',
 ]
 exclude_patterns = [
@@ -1303,10 +1303,10 @@ command = [
 code = 'ATEN_CPU_GPU_AGNOSTIC'
 include_patterns = [
     "Library/**/*.hxx",
-    "Library/**/*.cxx",
+    "Library/**/*.cpp",
     "Library/**/*.h",
     "Tests/**/*.cpp",
-    "Tests/**/*.cxx",
+    "Tests/**/*.cpp",
     "Tests/**/*.h",
 ]
 exclude_patterns = [

@@ -18,7 +18,7 @@ def find_source_files(source_dir):
     source_files = []
     source_dir = Path(source_dir)
 
-    for ext in ["*.cpp", "*.cxx", "*.cc", "*.c"]:
+    for ext in ["*.cpp", "*.cpp", "*.cc", "*.c"]:
         source_files.extend(source_dir.rglob(ext))
 
     return [str(f) for f in source_files]

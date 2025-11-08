@@ -16,10 +16,10 @@ A comprehensive inventory of PyTorch's autograd source code has been created, ca
 
 | Document | Size | Lines | Purpose |
 |----------|------|-------|---------|
-| **PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md** | 19 KB | 332 | Complete catalog of 80+ files organized by functional area |
-| **PYTORCH_AUTOGRAD_FILE_DETAILS.md** | 12 KB | 429 | In-depth information about key source files with algorithms |
-| **PYTORCH_AUTOGRAD_DEPENDENCY_MAP.md** | 14 KB | 393 | Visual dependency graphs and architecture documentation |
-| **PYTORCH_AUTOGRAD_INVENTORY_INDEX.md** | 15 KB | 357 | Master index with quick start and navigation guides |
+| **PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md** | 19 KB | 332 | Complete catalog of 80+ files organized by functional area |
+| **PYXSIGMA_AUTOGRAD_FILE_DETAILS.md** | 12 KB | 429 | In-depth information about key source files with algorithms |
+| **PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md** | 14 KB | 393 | Visual dependency graphs and architecture documentation |
+| **PYXSIGMA_AUTOGRAD_INVENTORY_INDEX.md** | 15 KB | 357 | Master index with quick start and navigation guides |
 
 ---
 
@@ -116,42 +116,42 @@ A comprehensive inventory of PyTorch's autograd source code has been created, ca
 ## 📍 HOW TO USE
 
 ### Quick Lookup
-1. Start with: **PYTORCH_AUTOGRAD_INVENTORY_INDEX.md**
+1. Start with: **PYXSIGMA_AUTOGRAD_INVENTORY_INDEX.md**
 2. Use: "Quick Start Guide" section
 3. Find: What you're looking for
 4. Reference: Appropriate document
 
 ### Deep Understanding
-1. Read: **PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md** (overview)
-2. Study: **PYTORCH_AUTOGRAD_FILE_DETAILS.md** (implementation)
-3. Analyze: **PYTORCH_AUTOGRAD_DEPENDENCY_MAP.md** (architecture)
-4. Navigate: **PYTORCH_AUTOGRAD_INVENTORY_INDEX.md** (cross-references)
+1. Read: **PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md** (overview)
+2. Study: **PYXSIGMA_AUTOGRAD_FILE_DETAILS.md** (implementation)
+3. Analyze: **PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md** (architecture)
+4. Navigate: **PYXSIGMA_AUTOGRAD_INVENTORY_INDEX.md** (cross-references)
 
 ### Specific Tasks
-1. Find task in: **PYTORCH_AUTOGRAD_INVENTORY_INDEX.md**
-2. Get file path from: **PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md**
-3. Read details from: **PYTORCH_AUTOGRAD_FILE_DETAILS.md**
-4. Check dependencies: **PYTORCH_AUTOGRAD_DEPENDENCY_MAP.md**
+1. Find task in: **PYXSIGMA_AUTOGRAD_INVENTORY_INDEX.md**
+2. Get file path from: **PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md**
+3. Read details from: **PYXSIGMA_AUTOGRAD_FILE_DETAILS.md**
+4. Check dependencies: **PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md**
 
 ---
 
 ## 🎓 LEARNING PATHS
 
 ### Beginner (30-45 minutes)
-1. Read: PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md (overview)
-2. Skim: PYTORCH_AUTOGRAD_FILE_DETAILS.md (key files)
-3. Review: PYTORCH_AUTOGRAD_INVENTORY_INDEX.md (navigation)
+1. Read: PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md (overview)
+2. Skim: PYXSIGMA_AUTOGRAD_FILE_DETAILS.md (key files)
+3. Review: PYXSIGMA_AUTOGRAD_INVENTORY_INDEX.md (navigation)
 
 ### Intermediate (2-3 hours)
-1. Study: PYTORCH_AUTOGRAD_FILE_DETAILS.md (all sections)
-2. Reference: PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md (lookups)
-3. Analyze: PYTORCH_AUTOGRAD_DEPENDENCY_MAP.md (architecture)
+1. Study: PYXSIGMA_AUTOGRAD_FILE_DETAILS.md (all sections)
+2. Reference: PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md (lookups)
+3. Analyze: PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md (architecture)
 
 ### Advanced (4-5 hours)
-1. Deep dive: PYTORCH_AUTOGRAD_FILE_DETAILS.md (implementation)
-2. Study: PYTORCH_AUTOGRAD_DEPENDENCY_MAP.md (dependencies)
-3. Reference: PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md (complete catalog)
-4. Navigate: PYTORCH_AUTOGRAD_INVENTORY_INDEX.md (cross-references)
+1. Deep dive: PYXSIGMA_AUTOGRAD_FILE_DETAILS.md (implementation)
+2. Study: PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md (dependencies)
+3. Reference: PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md (complete catalog)
+4. Navigate: PYXSIGMA_AUTOGRAD_INVENTORY_INDEX.md (cross-references)
 
 ---
 
@@ -185,10 +185,10 @@ A comprehensive inventory of PyTorch's autograd source code has been created, ca
 
 Location: `/Users/toufikbellaj/pytorch/`
 
-1. **PYTORCH_AUTOGRAD_SOURCE_INVENTORY.md** (19 KB)
-2. **PYTORCH_AUTOGRAD_FILE_DETAILS.md** (12 KB)
-3. **PYTORCH_AUTOGRAD_DEPENDENCY_MAP.md** (14 KB)
-4. **PYTORCH_AUTOGRAD_INVENTORY_INDEX.md** (15 KB)
+1. **PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md** (19 KB)
+2. **PYXSIGMA_AUTOGRAD_FILE_DETAILS.md** (12 KB)
+3. **PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md** (14 KB)
+4. **PYXSIGMA_AUTOGRAD_INVENTORY_INDEX.md** (15 KB)
 
 **Total:** ~60 KB of comprehensive documentation
 
@@ -260,7 +260,7 @@ Location: `/Users/toufikbellaj/pytorch/`
 
 ## 🚀 NEXT STEPS
 
-1. **Start Reading** - Begin with PYTORCH_AUTOGRAD_INVENTORY_INDEX.md
+1. **Start Reading** - Begin with PYXSIGMA_AUTOGRAD_INVENTORY_INDEX.md
 2. **Choose Path** - Select beginner, intermediate, or advanced learning path
 3. **Deep Dive** - Study specific files using FILE_DETAILS.md
 4. **Understand Architecture** - Review DEPENDENCY_MAP.md

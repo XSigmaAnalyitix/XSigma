@@ -11,7 +11,7 @@ The Kineto profiler is a high-performance profiling system integrated into XSigm
 ### 1. **Entry Points (Main Functions)**
 
 #### `enableProfiler()`
-**Location:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cxx:834`
+**Location:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cpp:834`
 
 ```cpp
 void enableProfiler(
@@ -37,7 +37,7 @@ void enableProfiler(
 ---
 
 #### `disableProfiler()`
-**Location:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cxx:915`
+**Location:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cpp:915`
 
 ```cpp
 std::unique_ptr<ProfilerResult> disableProfiler();
@@ -62,7 +62,7 @@ std::unique_ptr<ProfilerResult> disableProfiler();
 ### 2. **Core State Management**
 
 #### `KinetoThreadLocalState`
-**Location:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cxx:390`
+**Location:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cpp:390`
 
 ```cpp
 struct KinetoThreadLocalState : public ProfilerStateBase {
@@ -91,7 +91,7 @@ struct KinetoThreadLocalState : public ProfilerStateBase {
 ### 3. **Event Recording Callbacks**
 
 #### `onFunctionEnter()` / `onFunctionExit()`
-**Location:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cxx:534`
+**Location:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cpp:534`
 
 ```cpp
 template <bool use_global_state_ptr = false>
@@ -350,8 +350,8 @@ for (const auto& event : result->events()) {
 ## Related Files
 
 - **Headers:** `profiler_kineto.h`, `observer.h`, `kineto_shim.h`
-- **Implementation:** `profiler_kineto.cxx`, `kineto_shim.cxx`
-- **Callbacks:** `record_function.h`, `record_function.cxx`
-- **Collection:** `collection.h`, `collection.cxx`
+- **Implementation:** `profiler_kineto.cpp`, `kineto_shim.cpp`
+- **Callbacks:** `record_function.h`, `record_function.cpp`
+- **Collection:** `collection.h`, `collection.cpp`
 - **Events:** `events.h`, `containers.h`
 

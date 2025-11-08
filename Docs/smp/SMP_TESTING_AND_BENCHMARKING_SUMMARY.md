@@ -18,14 +18,14 @@ This document summarizes the comprehensive testing and benchmarking work complet
 
 | File | Purpose | Test Count | Status |
 |------|---------|------------|--------|
-| `TestSMPEnhanced.cxx` | Enhanced smp module tests | 30 tests | ✅ Complete |
-| `TestSMPComprehensive.cxx` | Existing comprehensive smp tests | 18 tests | ✅ Existing |
-| `TestSMPTransformFillSort.cxx` | Transform/Fill/Sort tests | 21 tests | ✅ Existing |
-| `TestSmpNewParallelFor.cxx` | smp_new parallel_for tests | 15 tests | ✅ Existing |
-| `TestSmpNewParallelReduce.cxx` | smp_new parallel_reduce tests | 16 tests | ✅ Existing |
-| `TestSmpNewBackend.cxx` | smp_new backend tests | 20 tests | ✅ Existing |
-| `TestSmpNewThreadPool.cxx` | smp_new thread pool tests | 18 tests | ✅ Existing |
-| `test_parallelize_1d.cxx` | parallelize_1d tests | 5 tests | ✅ Existing |
+| `TestSMPEnhanced.cpp` | Enhanced smp module tests | 30 tests | ✅ Complete |
+| `TestSMPComprehensive.cpp` | Existing comprehensive smp tests | 18 tests | ✅ Existing |
+| `TestSMPTransformFillSort.cpp` | Transform/Fill/Sort tests | 21 tests | ✅ Existing |
+| `TestSmpNewParallelFor.cpp` | smp_new parallel_for tests | 15 tests | ✅ Existing |
+| `TestSmpNewParallelReduce.cpp` | smp_new parallel_reduce tests | 16 tests | ✅ Existing |
+| `TestSmpNewBackend.cpp` | smp_new backend tests | 20 tests | ✅ Existing |
+| `TestSmpNewThreadPool.cpp` | smp_new thread pool tests | 18 tests | ✅ Existing |
+| `test_parallelize_1d.cpp` | parallelize_1d tests | 5 tests | ✅ Existing |
 
 **Total Test Count:** 177 tests (all passing)
 
@@ -33,8 +33,8 @@ This document summarizes the comprehensive testing and benchmarking work complet
 
 | File | Purpose | Benchmark Count | Status |
 |------|---------|-----------------|--------|
-| `BenchmarkSMPComparison.cxx` | smp vs smp_new comparison | 16 benchmarks | ✅ Complete |
-| `BenchmarkSMP.cxx` | Existing smp benchmarks | 13 benchmarks | ✅ Existing |
+| `BenchmarkSMPComparison.cpp` | smp vs smp_new comparison | 16 benchmarks | ✅ Complete |
+| `BenchmarkSMP.cpp` | Existing smp benchmarks | 13 benchmarks | ✅ Existing |
 
 **Total Benchmark Count:** 29 benchmarks
 
@@ -395,18 +395,18 @@ Continue with coverage improvement plan to reach ≥98% target, then execute ben
 ## Appendix: File Locations
 
 ### Test Files
-- `Library/Core/Testing/Cxx/TestSMPEnhanced.cxx` (NEW)
-- `Library/Core/Testing/Cxx/TestSMPComprehensive.cxx`
-- `Library/Core/Testing/Cxx/TestSMPTransformFillSort.cxx`
-- `Library/Core/Testing/Cxx/TestSmpNewParallelFor.cxx`
-- `Library/Core/Testing/Cxx/TestSmpNewParallelReduce.cxx`
-- `Library/Core/Testing/Cxx/TestSmpNewBackend.cxx`
-- `Library/Core/Testing/Cxx/TestSmpNewThreadPool.cxx`
-- `Library/Core/Testing/Cxx/test_parallelize_1d.cxx`
+- `Library/Core/Testing/Cxx/TestSMPEnhanced.cpp` (NEW)
+- `Library/Core/Testing/Cxx/TestSMPComprehensive.cpp`
+- `Library/Core/Testing/Cxx/TestSMPTransformFillSort.cpp`
+- `Library/Core/Testing/Cxx/TestSmpNewParallelFor.cpp`
+- `Library/Core/Testing/Cxx/TestSmpNewParallelReduce.cpp`
+- `Library/Core/Testing/Cxx/TestSmpNewBackend.cpp`
+- `Library/Core/Testing/Cxx/TestSmpNewThreadPool.cpp`
+- `Library/Core/Testing/Cxx/test_parallelize_1d.cpp`
 
 ### Benchmark Files
-- `Library/Core/Testing/Cxx/BenchmarkSMPComparison.cxx` (NEW)
-- `Library/Core/Testing/Cxx/BenchmarkSMP.cxx`
+- `Library/Core/Testing/Cxx/BenchmarkSMPComparison.cpp` (NEW)
+- `Library/Core/Testing/Cxx/BenchmarkSMP.cpp`
 
 ### Documentation Files
 - `Docs/SMP_PERFORMANCE_ANALYSIS.md` (NEW)

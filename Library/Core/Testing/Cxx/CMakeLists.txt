@@ -6,7 +6,7 @@
 # ============================================================================= Test Source Files
 # Discovery
 # =============================================================================
-file(GLOB_RECURSE test_sources LIST_DIRECTORIES false "${CMAKE_CURRENT_SOURCE_DIR}/Test*.cxx"
+file(GLOB_RECURSE test_sources LIST_DIRECTORIES false "${CMAKE_CURRENT_SOURCE_DIR}/Test*.cpp"
                                                       "${CMAKE_CURRENT_SOURCE_DIR}/Test*.cu"
 )
 
@@ -109,7 +109,7 @@ endif()
 if(XSIGMA_ENABLE_BENCHMARK)
 
   file(GLOB_RECURSE bench_sources LIST_DIRECTORIES false
-       "${CMAKE_CURRENT_SOURCE_DIR}/Benchmark*.cxx" "${CMAKE_CURRENT_SOURCE_DIR}/Benchmark*.cu"
+       "${CMAKE_CURRENT_SOURCE_DIR}/Benchmark*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/Benchmark*.cu"
   )
 
   # Exclude CUDA-related benchmarks when GPU support is disabled
@@ -151,7 +151,7 @@ endif()
 # This executable profiles the parallel backends (OpenMP, TBB, Native) using Kineto
 # Build separately for each backend to compare performance
 
-add_executable(ProfileParallelBackends ProfileParallelBackends.cxx)
+add_executable(ProfileParallelBackends ProfileParallelBackends.cpp)
 
 # Link libraries
 target_link_libraries(ProfileParallelBackends PRIVATE XSigma::Core)

@@ -1074,5 +1074,5 @@ For more information, see:
 - `Library/Core/profiler/` - Source code
 - `Library/Core/profiler/README.md` - Implementation details
 - `Examples/Profiling/` - Complete examples
-- `Library/Core/Testing/Cxx/TestEnhancedProfiler.cxx` - Test cases
+- `Library/Core/Testing/Cxx/TestEnhancedProfiler.cpp` - Test cases
 

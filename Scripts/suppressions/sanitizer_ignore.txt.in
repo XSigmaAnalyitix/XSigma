@@ -11,12 +11,12 @@ src:@XSIGMA_SOURCE_DIR@/ThirdParty/*
 fun:*_Forced_rehash*
 fun:*_Hash*
 fun:*_Uhash_compare*
-src:*/TestHashUtil.cxx
+src:*/TestHashUtil.cpp
 
 # Crash in X86 DAG->DAG Instruction Selection pass on memory allocation patterns
 fun:*AllocatorTest*PerformanceBenchmark*
 fun:*PerformanceBenchmark*TestBody*
-src:*/TestCPUMemory.cxx
+src:*/TestCPUMemory.cpp
 
 # Suppress runtime allocator mismatch issues on Windows with mimalloc
 # Issue: AddressSanitizer detects "bad-free" errors when mixing system allocators

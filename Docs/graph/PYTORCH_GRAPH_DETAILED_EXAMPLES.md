@@ -37,7 +37,7 @@ explicit Node(edge_list&& next_edges = edge_list())
 ```cpp
 // Update topological number when adding edge
 void update_topological_nr(const Edge& edge) {
-  TORCH_INTERNAL_ASSERT(!has_parent_,
+  XSIGMA_INTERNAL_ASSERT(!has_parent_,
       "Cannot update topological_nr after node has a parent");
   Node* node = edge.function.get();
   if (node) {
@@ -82,7 +82,7 @@ void set_next_edges(edge_list&& next_edges) {
 inline void set_history(
     const at::Tensor& variable,
     const std::shared_ptr<Node>& grad_fn) {
-  TORCH_CHECK(grad_fn != nullptr);
+  XSIGMA_CHECK(grad_fn != nullptr);
   if (variable.defined()) {
     // Add input metadata to grad_fn
     auto output_nr = grad_fn->add_input_metadata(variable);
@@ -308,7 +308,7 @@ struct ReadyQueue {
 
 ```cpp
 // GraphRoot: Entry point for backward pass
-struct TORCH_API GraphRoot : public Node {
+struct XSIGMA_API GraphRoot : public Node {
   GraphRoot(edge_list functions, variable_list inputs)
       : Node(std::move(functions)), outputs(std::move(inputs)) {
     // Store metadata for all root gradients
@@ -325,7 +325,7 @@ struct TORCH_API GraphRoot : public Node {
 };
 
 // Error: Represents unsupported backward operation
-struct TORCH_API Error : public Node {
+struct XSIGMA_API Error : public Node {
   Error(std::string msg, edge_list&& next_edges)
       : Node(std::move(next_edges)), msg(std::move(msg)) {}
 

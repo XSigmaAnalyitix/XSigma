@@ -349,7 +349,7 @@ Both tests had the **exact same root cause** but different failure rates:
 
 ---
 
-**Files Modified**: `Library/Core/Testing/Cxx/TestParallelFor.cxx`
+**Files Modified**: `Library/Core/Testing/Cxx/TestParallelFor.cpp`
 **Lines Changed**: ~30 lines
 **Test Success Rate**: 94% → 100%
 **Build Status**: ✅ SUCCESS

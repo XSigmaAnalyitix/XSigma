@@ -23,15 +23,15 @@ cmake_minimum_required(VERSION 3.16)
 # Example Source Files
 # =============================================================================
 set(example_sources
-    example_profiling_basic.cxx
+    example_profiling_basic.cpp
 )
 
 # =============================================================================
 # Build Examples
 # =============================================================================
 foreach(example_source ${example_sources})
-  # Extract example name from filename (remove .cxx extension)
-  string(REPLACE ".cxx" "" example_name ${example_source})
+  # Extract example name from filename (remove .cpp extension)
+  string(REPLACE ".cpp" "" example_name ${example_source})
 
   # Create executable
   add_executable(${example_name} ${example_source})

@@ -67,7 +67,7 @@
  * @endcode
  *
  * For the native parallel backend, the thread pool is used internally by
- * invoke_parallel() in parallel.cxx.
+ * invoke_parallel() in parallel.cpp.
  */
 
 #include <atomic>

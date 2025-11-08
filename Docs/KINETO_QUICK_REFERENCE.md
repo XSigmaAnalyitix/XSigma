@@ -9,7 +9,7 @@ void enableProfiler(
     const std::set<xsigma::profiler::impl::ActivityType>& activities,
     const std::unordered_set<xsigma::RecordScope>& scopes = {});
 ```
-**File:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cxx:834`
+**File:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cpp:834`
 
 **What it does:**
 - Creates thread-local profiler state
@@ -32,7 +32,7 @@ xsigma::autograd::profiler::enableProfiler(config, activities);
 ```cpp
 std::unique_ptr<ProfilerResult> disableProfiler();
 ```
-**File:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cxx:915`
+**File:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cpp:915`
 
 **What it does:**
 - Stops event recording
@@ -148,7 +148,7 @@ struct KinetoEvent {
 ## State Management
 
 ### `KinetoThreadLocalState` - Thread-Local State
-**File:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cxx:390`
+**File:** `Library/Core/profiler/pytroch_profiler/profiler_kineto.cpp:390`
 
 ```cpp
 struct KinetoThreadLocalState : public ProfilerStateBase {
@@ -302,12 +302,12 @@ xsigma::profiler::impl::ProfilerConfig config(
 | Component | File |
 |-----------|------|
 | Main API | `profiler_kineto.h` |
-| Implementation | `profiler_kineto.cxx` |
+| Implementation | `profiler_kineto.cpp` |
 | Configuration | `observer.h` |
 | Events | `events.h`, `containers.h` |
 | Callbacks | `record_function.h` |
 | Collection | `collection.h` |
-| libkineto Shim | `kineto_shim.h`, `kineto_shim.cxx` |
+| libkineto Shim | `kineto_shim.h`, `kineto_shim.cpp` |
 | Client Interface | `kineto_client_interface.h` |
 
 **Base Path:** `Library/Core/profiler/pytroch_profiler/`

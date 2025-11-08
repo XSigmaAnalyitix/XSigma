@@ -27,7 +27,7 @@
  *
  * 3. Native Backend (XSIGMA_HAS_OPENMP=0 and XSIGMA_HAS_TBB=0):
  *    - Custom thread pool implementation (see thread_pool.h)
- *    - Function-based invoke_parallel implementation (in parallel.cxx)
+ *    - Function-based invoke_parallel implementation (in parallel.cpp)
  *    - Provides cross-platform compatibility without OpenMP or TBB dependency
  *    - Uses C++ standard library threading primitives
  *
@@ -35,7 +35,7 @@
  * ==========================
  * This module has been consolidated for maintainability:
  * - Single header file (parallel.h) contains all API declarations and template implementations
- * - Single implementation file (parallel.cxx) with function-level conditional compilation
+ * - Single implementation file (parallel.cpp) with function-level conditional compilation
  * - Backend-specific code is conditionally compiled using #if XSIGMA_HAS_OPENMP / #elif XSIGMA_HAS_TBB / #else
  * - No separate backend-specific header or implementation files
  * - Backend priority: OpenMP > TBB > Native (first available backend is used)
@@ -818,10 +818,10 @@ inline void invoke_parallel(int64_t begin, int64_t end, int64_t grain_size, cons
  *
  * Thread Safety: Thread-safe, uses mutex and atomic operations.
  * Memory Ordering: Uses acquire-release semantics for proper synchronization.
- * Backend: Native only (function implementation in parallel.cxx).
+ * Backend: Native only (function implementation in parallel.cpp).
  *
  * @note This is an internal function called by parallel_for and parallel_reduce.
- * @note Implementation in parallel.cxx uses function-level conditional compilation.
+ * @note Implementation in parallel.cpp uses function-level conditional compilation.
  * @note Follows XSigma coding standards: no exceptions in API, proper error handling.
  */
 XSIGMA_API void invoke_parallel(

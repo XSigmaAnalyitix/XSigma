@@ -41,21 +41,21 @@ This directory contained:
 ### 2. Test Files ✅
 
 **Removed Test Files**:
-1. `Library/Core/Testing/Cxx/TestSmpNewParallelFor.cxx` (16 tests)
-2. `Library/Core/Testing/Cxx/TestSmpNewParallelReduce.cxx` (18 tests)
-3. `Library/Core/Testing/Cxx/TestSmpNewThreadPool.cxx` (18 tests)
-4. `Library/Core/Testing/Cxx/TestSmpNewBackend.cxx` (already deleted by user)
-5. `Library/Core/Testing/Cxx/BenchmarkSMPComparison.cxx` (benchmark)
+1. `Library/Core/Testing/Cxx/TestSmpNewParallelFor.cpp` (16 tests)
+2. `Library/Core/Testing/Cxx/TestSmpNewParallelReduce.cpp` (18 tests)
+3. `Library/Core/Testing/Cxx/TestSmpNewThreadPool.cpp` (18 tests)
+4. `Library/Core/Testing/Cxx/TestSmpNewBackend.cpp` (already deleted by user)
+5. `Library/Core/Testing/Cxx/BenchmarkSMPComparison.cpp` (benchmark)
 
 **Rationale**: The new `parallel/` implementation already has comprehensive tests (72 tests) covering all the same functionality.
 
 ### 3. Example Files ✅
 
 **Removed Example Files**:
-1. `Examples/SMP/example_parallel_for.cxx`
-2. `Examples/SMP/example_parallel_reduce.cxx`
-3. `Examples/SMP/example_parallelize_1d.cxx`
-4. `Examples/SMP/example_thread_configuration.cxx`
+1. `Examples/SMP/example_parallel_for.cpp`
+2. `Examples/SMP/example_parallel_reduce.cpp`
+3. `Examples/SMP/example_parallelize_1d.cpp`
+4. `Examples/SMP/example_thread_configuration.cpp`
 5. `Examples/SMP/CMakeLists.txt`
 6. `Examples/SMP/README.md`
 7. `Examples/SMP/` directory (removed after emptying)
@@ -69,7 +69,7 @@ This directory contained:
 **Removed Lines**:
 ```cmake
 "${CMAKE_CURRENT_SOURCE_DIR}/smp_new/*.h"
-"${CMAKE_CURRENT_SOURCE_DIR}/smp_new/*.cxx"
+"${CMAKE_CURRENT_SOURCE_DIR}/smp_new/*.cpp"
 "${CMAKE_CURRENT_SOURCE_DIR}/smp_new/*.hxx"
 ```
 
@@ -79,8 +79,8 @@ This directory contained:
 
 **Removed Lines**:
 ```
-#identicalInnerCondition:Library/Core/smp_new/parallel/parallel_api.cxx:199
-#identicalInnerCondition:Library/Core/smp_new/parallel/parallel_api.cxx:218
+#identicalInnerCondition:Library/Core/smp_new/parallel/parallel_api.cpp:199
+#identicalInnerCondition:Library/Core/smp_new/parallel/parallel_api.cpp:218
 ```
 
 ### 6. Documentation ✅
@@ -157,9 +157,9 @@ Test Time: 10.52 seconds
 **Files**:
 - `parallel.h` - Main API header
 - `parallel-inl.h` - Template implementations
-- `parallel_guard.h` / `parallel_guard.cxx` - Parallel region tracking
-- `parallel_native.cxx` - Native std::thread backend
-- `parallel_openmp.cxx` - OpenMP backend
+- `parallel_guard.h` / `parallel_guard.cpp` - Parallel region tracking
+- `parallel_native.cpp` - Native std::thread backend
+- `parallel_openmp.cpp` - OpenMP backend
 - `thread_pool.h` - Thread pool interface
 - Additional implementation files
 
@@ -186,11 +186,11 @@ namespace xsigma {
 ### Test Coverage
 
 **Test Files**:
-1. `TestParallelFor.cxx` - 12 tests ✅
-2. `TestParallelReduce.cxx` - 12 tests ✅
-3. `TestThreadPool.cxx` - 16 tests ✅
-4. `TestParallelApi.cxx` - 20 tests ✅
-5. `TestParallelGuard.cxx` - 12 tests ✅
+1. `TestParallelFor.cpp` - 12 tests ✅
+2. `TestParallelReduce.cpp` - 12 tests ✅
+3. `TestThreadPool.cpp` - 16 tests ✅
+4. `TestParallelApi.cpp` - 20 tests ✅
+5. `TestParallelGuard.cpp` - 12 tests ✅
 
 **Total**: 72 comprehensive tests covering:
 - Basic functionality

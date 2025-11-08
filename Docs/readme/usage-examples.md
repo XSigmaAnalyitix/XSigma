@@ -304,7 +304,7 @@ The Enhanced Profiler is an experimental feature providing:
 ### Location
 
 - **Source**: `Library/Core/profiler`
-- **Tests**: `Library/Core/Testing/Cxx/TestEnhancedProfiler.cxx`
+- **Tests**: `Library/Core/Testing/Cxx/TestEnhancedProfiler.cpp`
 
 ### Usage Example
 
@@ -343,7 +343,7 @@ cmake --build build_profile -j
 cat profile_results.json
 ```
 
-**Note**: The Enhanced Profiler is experimental and may change in future releases. See `Library/Core/Testing/Cxx/TestEnhancedProfiler.cxx` for complete examples.
+**Note**: The Enhanced Profiler is experimental and may change in future releases. See `Library/Core/Testing/Cxx/TestEnhancedProfiler.cpp` for complete examples.
 
 ## Comparison Table
 

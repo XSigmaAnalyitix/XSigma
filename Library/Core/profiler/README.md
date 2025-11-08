@@ -287,7 +287,7 @@ session->set_debug_mode(true);
 
 ## Examples
 
-See the test files in `Library/Core/Testing/Cxx/TestEnhancedProfiler.cxx` for comprehensive usage examples.
+See the test files in `Library/Core/Testing/Cxx/TestEnhancedProfiler.cpp` for comprehensive usage examples.
 
 ## License
 

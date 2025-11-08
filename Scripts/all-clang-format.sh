@@ -32,11 +32,11 @@ fi
 
 echo "Using $FMT"
 
-# Find all C++ headers/sources: .cxx, .hxx, .h (exclude vendor/build and VCS dirs)
-echo "Scanning for .cxx, .hxx, .h files under $REPO_ROOT ..."
+# Find all C++ headers/sources: .cpp, .hxx, .h (exclude vendor/build and VCS dirs)
+echo "Scanning for .cpp, .hxx, .h files under $REPO_ROOT ..."
 find "$REPO_ROOT" \
   -type d \( -name .git -o -name .vscode -o -name .augment -o -name ThirdParty -o -name venv -o -name build -o -name 'build_*' -o -name dist \) -prune -false -o \
-  -type f \( -name "*.cxx" -o -name "*.hxx" -o -name "*.h" \) -print0 \
+  -type f \( -name "*.cpp" -o -name "*.hxx" -o -name "*.h" \) -print0 \
   | xargs -0 -I{} "$FMT" -i {}
 
 echo "clang-format complete."
