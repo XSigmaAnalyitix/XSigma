@@ -1,15 +1,15 @@
-# PyTorch Graph Architecture: Quick Reference Guide
+# XSigma Graph Architecture: Quick Reference Guide
 
 ## 1. KEY COMPONENTS AT A GLANCE
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| **Node** | `torch/csrc/autograd/function.h` | Represents an operation in the graph |
-| **Edge** | `torch/csrc/autograd/edge.h` | Represents data dependency between nodes |
-| **GraphTask** | `torch/csrc/autograd/graph_task.h` | Metadata for a single backward execution |
-| **Engine** | `torch/csrc/autograd/engine.h/cpp` | Executes the backward graph |
-| **ReadyQueue** | `torch/csrc/autograd/engine.h` | Priority queue for node execution |
-| **InputBuffer** | `torch/csrc/autograd/input_buffer.h` | Accumulates gradients for node inputs |
+| **Node** | `xsigma/csrc/autograd/function.h` | Represents an operation in the graph |
+| **Edge** | `xsigma/csrc/autograd/edge.h` | Represents data dependency between nodes |
+| **GraphTask** | `xsigma/csrc/autograd/graph_task.h` | Metadata for a single backward execution |
+| **Engine** | `xsigma/csrc/autograd/engine.h/cpp` | Executes the backward graph |
+| **ReadyQueue** | `xsigma/csrc/autograd/engine.h` | Priority queue for node execution |
+| **InputBuffer** | `xsigma/csrc/autograd/input_buffer.h` | Accumulates gradients for node inputs |
 
 ---
 
@@ -61,7 +61,7 @@ Set output tensor's grad_fn to this node
 Set output tensor's output_nr
 ```
 
-**Key Function:** `set_history()` in `torch/csrc/autograd/functions/utils.h`
+**Key Function:** `set_history()` in `xsigma/csrc/autograd/functions/utils.h`
 
 ---
 
@@ -136,7 +136,7 @@ loss.backward()
 
 ### .grad() - Selective Capture
 ```python
-grad_x = torch.autograd.grad(loss, x)
+grad_x = xsigma.autograd.grad(loss, x)
 # Only executes nodes on path to x
 # Returns gradients without accumulating
 ```
@@ -181,10 +181,10 @@ struct ExecInfo {
 ## 11. COMPLETE EXAMPLE
 
 ```python
-import torch
+import xsigma
 
 # Forward pass: builds graph
-x = torch.tensor([2.0], requires_grad=True)
+x = xsigma.tensor([2.0], requires_grad=True)
 y = x * 3           # Creates MulBackward0
 z = y + 2           # Creates AddBackward0
 loss = z.sum()      # Creates SumBackward0
@@ -209,9 +209,9 @@ print(x.grad)  # tensor([3.])
 ## 12. MULTI-PATH EXAMPLE
 
 ```python
-import torch
+import xsigma
 
-x = torch.tensor([1.0], requires_grad=True)
+x = xsigma.tensor([1.0], requires_grad=True)
 
 # Multiple paths to x
 y = x * 2
@@ -255,7 +255,7 @@ print(x.grad)  # tensor([5.])
 print(loss.grad_fn)  # Shows grad_fn chain
 
 # Enable anomaly detection
-torch.autograd.set_detect_anomaly(True)
+xsigma.autograd.set_detect_anomaly(True)
 loss.backward()  # Prints stack trace if NaN/Inf
 
 # Inspect node information
@@ -283,7 +283,7 @@ loss.backward(retain_graph=True)
 ## 16. SOURCE FILE REFERENCE
 
 ```
-torch/csrc/autograd/
+xsigma/csrc/autograd/
 ├── function.h/cpp          # Node class
 ├── edge.h                  # Edge structure
 ├── engine.h/cpp            # Backward execution

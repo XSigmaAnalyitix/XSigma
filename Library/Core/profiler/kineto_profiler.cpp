@@ -1,7 +1,7 @@
 /*
  * XSigma Kineto Profiler Wrapper Implementation
  *
- * Provides thread-safe profiling session management using PyTorch Kineto.
+ * Provides thread-safe profiling session management using XSigma Kineto.
  * Note: This implementation provides a wrapper interface. Full Kineto integration
  * requires proper linking with the Kineto library and its dependencies.
  */

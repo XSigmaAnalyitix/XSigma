@@ -22,6 +22,8 @@
 #ifndef __xsigma_export_h__
 #define __xsigma_export_h__
 
+#define XSIGMA_VISIBILITY_ENUM
+
 // Platform and build configuration detection
 #if defined(XSIGMA_STATIC_DEFINE)
 // Static library - no symbol decoration needed

@@ -19,7 +19,7 @@ build-backend = "setuptools.build_meta"
 [dependency-groups]
 dev = [
     # This list should be kept in sync with the requirements-build.txt
-    # in PyTorch root until the project fully migrates to pyproject.toml
+    # in XSigma root until the project fully migrates to pyproject.toml
     # after which this can be removed as it is already specified in the
     # [build-system] section
     "setuptools>=70.1.0,<80.0",  # setuptools develop deprecated on 80.0
@@ -33,7 +33,7 @@ dev = [
     "typing-extensions>=4.10.0",
 
     # This list should be kept in sync with the requirements.txt in
-    # PyTorch root until the project fully migrates to pyproject.toml
+    # XSigma root until the project fully migrates to pyproject.toml
     "build[uv]",
     "expecttest>=0.3.0",
     "filelock",

@@ -10,7 +10,7 @@
 7. [Usage Examples](#usage-examples)
 8. [Output Formats and Visualization](#output-formats-and-visualization)
 9. [Intel ITT API Integration](#intel-itt-api-integration)
-10. [PyTorch Kineto Integration](#pytorch-kineto-integration)
+10. [XSigma Kineto Integration](#pytorch-kineto-integration)
 11. [Best Practices](#best-practices)
 12. [Troubleshooting](#troubleshooting)
 
@@ -28,7 +28,7 @@ The XSigma Profiler System is a comprehensive, modular performance analysis fram
 - **Multiple output formats** (console, JSON, CSV, XML, Chrome Trace)
 - **Minimal performance overhead** designed for production use
 - **Intel ITT API integration** for Intel VTune profiling
-- **PyTorch Kineto integration** for comprehensive GPU/CPU profiling
+- **XSigma Kineto integration** for comprehensive GPU/CPU profiling
 
 ### Key Features
 
@@ -98,7 +98,7 @@ The XSigma Profiler System is a comprehensive, modular performance analysis fram
 - **statistical_analyzer.***: Statistical analysis
 - **chrome_trace_exporter.***: Chrome Trace format export
 - **xplane.***: XPlane format support
-- **kineto_shim.***: PyTorch Kineto integration
+- **kineto_shim.***: XSigma Kineto integration
 - **itt_wrapper.***: Intel ITT API integration
 
 ---
@@ -539,9 +539,9 @@ struct profiler_options {
 };
 ```
 
-### PyTorch-Compatible Profiler API
+### XSigma-Compatible Profiler API
 
-XSigma provides a PyTorch-compatible profiler API for seamless integration:
+XSigma provides a XSigma-compatible profiler API for seamless integration:
 
 ```cpp
 #include "profiler/profiler_api.h"
@@ -835,9 +835,9 @@ void itt_mark_event(const char* name);
 
 ---
 
-## PyTorch Kineto Integration
+## XSigma Kineto Integration
 
-XSigma integrates with PyTorch's Kineto profiler for comprehensive CPU and GPU profiling.
+XSigma integrates with XSigma's Kineto profiler for comprehensive CPU and GPU profiling.
 
 ### Building with Kineto Support
 
@@ -1066,7 +1066,7 @@ The XSigma Profiler System provides comprehensive performance analysis capabilit
 - **Multiple output formats**: Console, JSON, CSV, XML, Chrome Trace
 - **Flexible display options**: Print to console, export to files, visualize in browsers
 - **Rich profiling data**: Timing, memory, hierarchical scopes, statistical analysis
-- **Integration options**: Intel ITT API, PyTorch Kineto
+- **Integration options**: Intel ITT API, XSigma Kineto
 - **Low overhead**: Suitable for production use
 - **Easy to use**: Simple macros and builder patterns
 

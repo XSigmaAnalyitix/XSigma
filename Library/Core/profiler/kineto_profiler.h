@@ -1,7 +1,7 @@
 /*
  * XSigma Kineto Profiler Wrapper
  *
- * This header provides a C++ wrapper around PyTorch Kineto profiling library,
+ * This header provides a C++ wrapper around XSigma Kineto profiling library,
  * enabling advanced performance profiling capabilities for XSigma applications.
  *
  * Features:
@@ -83,7 +83,7 @@ struct profiling_result
 /**
  * @brief Main Kineto profiler wrapper class.
  *
- * Provides a thread-safe interface to PyTorch Kineto profiling functionality.
+ * Provides a thread-safe interface to XSigma Kineto profiling functionality.
  * Follows XSigma conventions: snake_case naming, no exceptions, return-value
  * based error handling.
  */

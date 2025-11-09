@@ -282,7 +282,7 @@ if(XSIGMA_ENABLE_MIMALLOC AND TARGET XSigma::mimalloc)
   message(STATUS "Dependency: XSigma::mimalloc added to XSIGMA_DEPENDENCY_LIBS")
 endif()
 
-# PyTorch Kineto profiling library support
+# XSigma Kineto profiling library support
 if(XSIGMA_ENABLE_KINETO)
   # Always add the compile definition and include directories when Kineto is enabled This allows
   # Kineto-specific code to be compiled

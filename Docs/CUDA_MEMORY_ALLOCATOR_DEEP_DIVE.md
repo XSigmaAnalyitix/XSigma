@@ -139,7 +139,7 @@ DataPtr allocate(size_t size) {
 }
 
 // 2. Internal malloc with caching
-void malloc(void** devPtr, DeviceIndex device, size_t size, cudaStream_t stream) {
+void malloc(void** devPtr, device_option::int_t device, size_t size, cudaStream_t stream) {
   // Round size to allocation bucket
   size_t rounded_size = round_size(size);
 
@@ -331,7 +331,7 @@ Timeline:
 ### Allocation Request Flow
 
 ```
-1. Application calls: tensor = torch.zeros(1000, 1000, device='cuda')
+1. Application calls: tensor = xsigma.zeros(1000, 1000, device='cuda')
                               ↓
 2. Allocator receives: allocate(4MB)
                               ↓
@@ -439,7 +439,7 @@ For financial computing:
    ```python
    # Caching is enabled by default
    # Disable only if memory is extremely constrained
-   torch.cuda.empty_cache()  # Manual cache flush
+   xsigma.cuda.empty_cache()  # Manual cache flush
    ```
 
 2. **Use recordStream for Multi-Stream Operations**:
@@ -450,7 +450,7 @@ For financial computing:
 
 3. **Monitor Memory Usage**:
    ```python
-   stats = torch.cuda.memory_stats()
+   stats = xsigma.cuda.memory_stats()
    print(f"Reserved: {stats['reserved_bytes.all.current']}")
    print(f"Allocated: {stats['allocated_bytes.all.current']}")
    ```
@@ -458,13 +458,13 @@ For financial computing:
 4. **Batch Allocations**:
    ```python
    # Good: Allocate once, reuse
-   buffer = torch.zeros(10000, 10000, device='cuda')
+   buffer = xsigma.zeros(10000, 10000, device='cuda')
    for i in range(1000):
        result = compute(buffer)
 
    # Avoid: Frequent small allocations
    for i in range(1000):
-       buffer = torch.zeros(100, 100, device='cuda')
+       buffer = xsigma.zeros(100, 100, device='cuda')
    ```
 
 5. **Set Memory Limits**:
@@ -498,7 +498,7 @@ For financial computing:
 ```
 User Code
    │
-   ├─ tensor = torch.zeros(1000, 1000, device='cuda')
+   ├─ tensor = xsigma.zeros(1000, 1000, device='cuda')
    │
    ▼
 ┌─────────────────────────────────────────────────────┐
@@ -668,8 +668,8 @@ stats.allocated_bytes[StatType::AGGREGATE].decrease(size);
 Symptom: RuntimeError: CUDA out of memory
 Cause: Cache not flushed, fragmentation
 Solution:
-  torch.cuda.empty_cache()  # Force cache flush
-  torch.cuda.reset_peak_memory_stats()  # Reset tracking
+  xsigma.cuda.empty_cache()  # Force cache flush
+  xsigma.cuda.reset_peak_memory_stats()  # Reset tracking
 ```
 
 **Issue 2: Memory Leak**
@@ -679,7 +679,7 @@ Cause: Tensors not released, circular references
 Solution:
   del tensor  # Explicit deletion
   gc.collect()  # Force garbage collection
-  torch.cuda.empty_cache()  # Flush cache
+  xsigma.cuda.empty_cache()  # Flush cache
 ```
 
 **Issue 3: Slow Allocation**
@@ -696,7 +696,7 @@ Solution:
 
 ```python
 # Get detailed statistics
-stats = torch.cuda.memory_stats()
+stats = xsigma.cuda.memory_stats()
 
 # Key metrics
 print(f"Allocated: {stats['allocated_bytes.all.current'] / 1e9:.2f} GB")
@@ -704,8 +704,8 @@ print(f"Reserved: {stats['reserved_bytes.all.current'] / 1e9:.2f} GB")
 print(f"Overhead: {(stats['reserved_bytes.all.current'] - stats['allocated_bytes.all.current']) / stats['reserved_bytes.all.current'] * 100:.1f}%")
 
 # Reset statistics
-torch.cuda.reset_peak_memory_stats()
-torch.cuda.reset_accumulated_stats()
+xsigma.cuda.reset_peak_memory_stats()
+xsigma.cuda.reset_accumulated_stats()
 ```
 
 ---
@@ -765,10 +765,10 @@ Benefit: Prevents data races, enables safe multi-stream ops
 ### Example 1: Basic Allocation and Deallocation
 
 ```python
-import torch
+import xsigma
 
 # Allocation
-tensor = torch.zeros(1000, 1000, dtype=torch.float64, device='cuda')
+tensor = xsigma.zeros(1000, 1000, dtype=xsigma.float64, device='cuda')
 # Internally:
 # 1. Size = 1000 * 1000 * 8 bytes = 8MB
 # 2. Rounded to 20MB (large block)
@@ -790,22 +790,22 @@ del tensor
 ### Example 2: Multi-Stream Operations with recordStream
 
 ```python
-import torch
+import xsigma
 
 # Create streams
-stream0 = torch.cuda.Stream()
-stream1 = torch.cuda.Stream()
+stream0 = xsigma.cuda.Stream()
+stream1 = xsigma.cuda.Stream()
 
 # Allocate tensor
-tensor = torch.zeros(1000, 1000, dtype=torch.float64, device='cuda')
+tensor = xsigma.zeros(1000, 1000, dtype=xsigma.float64, device='cuda')
 
 # Use on stream 0
-with torch.cuda.stream(stream0):
+with xsigma.cuda.stream(stream0):
     result0 = tensor @ tensor.T
     tensor.record_stream(stream0)  # Associate with stream 0
 
 # Use on stream 1 (concurrent)
-with torch.cuda.stream(stream1):
+with xsigma.cuda.stream(stream1):
     result1 = tensor + tensor
     tensor.record_stream(stream1)  # Associate with stream 1
 
@@ -819,16 +819,16 @@ stream1.synchronize()
 ### Example 3: Memory Monitoring
 
 ```python
-import torch
+import xsigma
 
 # Get initial stats
-torch.cuda.reset_peak_memory_stats()
+xsigma.cuda.reset_peak_memory_stats()
 
 # Allocate tensors
-tensors = [torch.randn(1000, 1000, device='cuda') for _ in range(10)]
+tensors = [xsigma.randn(1000, 1000, device='cuda') for _ in range(10)]
 
 # Get statistics
-stats = torch.cuda.memory_stats()
+stats = xsigma.cuda.memory_stats()
 
 print(f"Allocated: {stats['allocated_bytes.all.current'] / 1e9:.2f} GB")
 print(f"Reserved: {stats['reserved_bytes.all.current'] / 1e9:.2f} GB")
@@ -839,13 +839,13 @@ overhead = (stats['reserved_bytes.all.current'] -
 print(f"Memory overhead: {overhead * 100:.1f}%")
 
 # Clear cache
-torch.cuda.empty_cache()
+xsigma.cuda.empty_cache()
 ```
 
 ### Example 4: Batch Processing with Memory Reuse
 
 ```python
-import torch
+import xsigma
 
 class FinancialSimulator:
     def __init__(self, n_assets, n_simulations):
@@ -853,12 +853,12 @@ class FinancialSimulator:
         self.n_simulations = n_simulations
 
         # Pre-allocate buffers (memory reused across iterations)
-        self.prices = torch.zeros(n_simulations, n_assets,
-                                  dtype=torch.float64, device='cuda')
-        self.returns = torch.zeros(n_simulations, n_assets,
-                                   dtype=torch.float64, device='cuda')
-        self.portfolio_values = torch.zeros(n_simulations,
-                                            dtype=torch.float64, device='cuda')
+        self.prices = xsigma.zeros(n_simulations, n_assets,
+                                  dtype=xsigma.float64, device='cuda')
+        self.returns = xsigma.zeros(n_simulations, n_assets,
+                                   dtype=xsigma.float64, device='cuda')
+        self.portfolio_values = xsigma.zeros(n_simulations,
+                                            dtype=xsigma.float64, device='cuda')
 
     def simulate(self, n_iterations):
         for i in range(n_iterations):
@@ -875,16 +875,16 @@ class FinancialSimulator:
 
     def generate_prices(self):
         # Simulate price movements
-        noise = torch.randn_like(self.prices)
+        noise = xsigma.randn_like(self.prices)
         self.prices = self.prices * (1 + 0.01 * noise)
 
     def compute_returns(self):
         # Compute log returns
-        self.returns = torch.log(self.prices / (self.prices + 1e-8))
+        self.returns = xsigma.log(self.prices / (self.prices + 1e-8))
 
     def compute_portfolio_values(self):
         # Compute portfolio values
-        weights = torch.ones(self.n_assets, device='cuda') / self.n_assets
+        weights = xsigma.ones(self.n_assets, device='cuda') / self.n_assets
         self.portfolio_values = (self.prices @ weights)
 
 # Usage
@@ -946,9 +946,9 @@ class PortfolioOptimizer {
 public:
   void optimize() {
     // Pre-allocate buffers
-    weights = torch::zeros({n_assets}, device);
+    weights = xsigma::zeros({n_assets}, device);
     covariance = compute_covariance();
-    gradients = torch::zeros({n_assets}, device);
+    gradients = xsigma::zeros({n_assets}, device);
 
     // Iterate with memory reuse
     for (int iter = 0; iter < max_iterations; iter++) {
@@ -1142,14 +1142,14 @@ export PYXSIGMA_CUDA_ALLOC_CONF=max_split_size_mb:512
 - `aten/src/ATen/native/Memory.cpp` - Memory utilities
 - `aten/src/ATen/native/Resize.cpp` - Tensor resizing
 
-### Related PyTorch Documentation
+### Related XSigma Documentation
 
-- [PyTorch CUDA Memory Management](https://pytorch.org/docs/stable/notes/cuda.html)
+- [XSigma CUDA Memory Management](https://pytorch.org/docs/stable/notes/cuda.html)
 - [CUDA Streams and Events](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#streams-and-events)
 - [Memory Optimization Guide](https://pytorch.org/docs/stable/notes/cuda.html#memory-management)
 
 ### Performance Tuning Resources
 
 - NVIDIA CUDA Best Practices Guide
-- PyTorch Performance Tuning Documentation
+- XSigma Performance Tuning Documentation
 - xsigma_tensor Optimization Guide (forthcoming)

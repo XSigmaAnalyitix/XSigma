@@ -1,8 +1,8 @@
 /*
  * XSigma Kineto Shim - Direct libkineto Integration
  *
- * This header provides direct access to PyTorch Kineto profiling library,
- * aligned with PyTorch's implementation for feature parity.
+ * This header provides direct access to XSigma Kineto profiling library,
+ * aligned with XSigma's implementation for feature parity.
  *
  * Features:
  * - Direct libkineto::api() usage

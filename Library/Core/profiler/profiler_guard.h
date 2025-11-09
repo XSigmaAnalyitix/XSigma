@@ -42,7 +42,7 @@ namespace profiler
  * Starts profiler on construction, stops on destruction.
  * Ensures proper cleanup even if exceptions occur.
  */
-class XSIGMA_API profiler_guard
+class XSIGMA_VISIBILITY profiler_guard
 {
 public:
     /**
@@ -93,7 +93,7 @@ private:
  *       // ... function code ...
  *   } // Automatically recorded
  */
-class XSIGMA_API record_function
+class XSIGMA_VISIBILITY record_function
 {
 public:
     /**
@@ -151,7 +151,7 @@ private:
  *       // ... code to profile ...
  *   } // Activity automatically recorded
  */
-class XSIGMA_API scoped_activity
+class XSIGMA_VISIBILITY scoped_activity
 {
 public:
     /**

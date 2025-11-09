@@ -109,7 +109,7 @@ struct XSIGMA_VISIBILITY gpu_allocator_config
  *
  * @note All allocators created by this factory are thread-safe
  */
-class XSIGMA_API gpu_allocator_factory
+class XSIGMA_VISIBILITY gpu_allocator_factory
 {
 public:
     /**

@@ -1,6 +1,6 @@
-# PyTorch Graph Architecture: Complete Documentation Index
+# XSigma Graph Architecture: Complete Documentation Index
 
-This directory contains a comprehensive review of PyTorch's graph construction and execution mechanisms. The documentation is organized into five complementary documents, each providing different perspectives and levels of detail.
+This directory contains a comprehensive review of XSigma's graph construction and execution mechanisms. The documentation is organized into five complementary documents, each providing different perspectives and levels of detail.
 
 ---
 
@@ -168,15 +168,15 @@ Contains:
 
 | Component | File | Key Lines |
 |-----------|------|-----------|
-| Node class | `torch/csrc/autograd/function.h` | 113-792 |
-| Edge struct | `torch/csrc/autograd/edge.h` | 1-57 |
-| Engine | `torch/csrc/autograd/engine.cpp` | 1288-1380 |
-| GraphTask | `torch/csrc/autograd/graph_task.h` | 17-230 |
-| set_history | `torch/csrc/autograd/functions/utils.h` | 66-91 |
-| GraphRoot | `torch/csrc/autograd/functions/basic_ops.h` | 85-113 |
-| ReadyQueue | `torch/csrc/autograd/engine.h` | 86-125 |
-| Python API | `torch/autograd/function.py` | 472-566 |
-| FX Graph | `torch/fx/graph.py` | 1105-1350 |
+| Node class | `xsigma/csrc/autograd/function.h` | 113-792 |
+| Edge struct | `xsigma/csrc/autograd/edge.h` | 1-57 |
+| Engine | `xsigma/csrc/autograd/engine.cpp` | 1288-1380 |
+| GraphTask | `xsigma/csrc/autograd/graph_task.h` | 17-230 |
+| set_history | `xsigma/csrc/autograd/functions/utils.h` | 66-91 |
+| GraphRoot | `xsigma/csrc/autograd/functions/basic_ops.h` | 85-113 |
+| ReadyQueue | `xsigma/csrc/autograd/engine.h` | 86-125 |
+| Python API | `xsigma/autograd/function.py` | 472-566 |
+| FX Graph | `xsigma/fx/graph.py` | 1105-1350 |
 
 ---
 
@@ -184,9 +184,9 @@ Contains:
 
 ### Simple Forward-Backward
 ```python
-import torch
+import xsigma
 
-x = torch.tensor([2.0], requires_grad=True)
+x = xsigma.tensor([2.0], requires_grad=True)
 y = x * 3           # Creates MulBackward0
 z = y + 2           # Creates AddBackward0
 loss = z.sum()      # Creates SumBackward0
@@ -197,7 +197,7 @@ print(x.grad)       # tensor([3.])
 
 ### Multi-Path Gradient Accumulation
 ```python
-x = torch.tensor([1.0], requires_grad=True)
+x = xsigma.tensor([1.0], requires_grad=True)
 
 y = x * 2
 z = x * 3
@@ -209,7 +209,7 @@ print(x.grad)       # tensor([5.]) - gradients summed!
 
 ### Selective Execution
 ```python
-x = torch.tensor([1.0], requires_grad=True)
+x = xsigma.tensor([1.0], requires_grad=True)
 y = x * 2
 z = y * 3
 
@@ -217,7 +217,7 @@ z = y * 3
 z.backward()
 
 # .grad(): Execute only nodes on path to x, return gradients
-grad_x = torch.autograd.grad(z, x)
+grad_x = xsigma.autograd.grad(z, x)
 ```
 
 ---
@@ -229,7 +229,7 @@ grad_x = torch.autograd.grad(z, x)
 print(loss.grad_fn)
 
 # Enable anomaly detection
-torch.autograd.set_detect_anomaly(True)
+xsigma.autograd.set_detect_anomaly(True)
 
 # Inspect next functions
 print(loss.grad_fn.next_functions)
@@ -258,7 +258,7 @@ loss.backward(retain_graph=True)
 
 After reading this documentation, you should understand:
 
-1. ✅ How PyTorch builds computational graphs during forward pass
+1. ✅ How XSigma builds computational graphs during forward pass
 2. ✅ How nodes and edges represent operations and dependencies
 3. ✅ How the backward pass executes the graph
 4. ✅ How gradients are accumulated and propagated
@@ -274,10 +274,10 @@ After reading this documentation, you should understand:
 ## 🔗 Related Resources
 
 - **Official Autograd Documentation:** https://pytorch.org/docs/stable/autograd.html
-- **Custom Functions Guide:** https://pytorch.org/docs/stable/autograd.html#extending-torch-autograd
+- **Custom Functions Guide:** https://pytorch.org/docs/stable/autograd.html#extending-xsigma-autograd
 - **Profiling Guide:** https://pytorch.org/docs/stable/profiler.html
 - **Anomaly Detection:** https://pytorch.org/docs/stable/autograd.html#anomaly-detection
-- **PyTorch GitHub:** https://github.com/pytorch/pytorch
+- **XSigma GitHub:** https://github.com/pytorch/pytorch
 
 ---
 

@@ -154,6 +154,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     for lint_message in check_file(
-        str(REPO_ROOT) + "/torch/header_only_apis.txt", CPP_TEST_GLOBS
+        str(REPO_ROOT) + "/xsigma/header_only_apis.txt", CPP_TEST_GLOBS
     ):
         print(json.dumps(lint_message._asdict()), flush=True)

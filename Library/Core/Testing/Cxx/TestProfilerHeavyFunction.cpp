@@ -17,7 +17,7 @@
 //
 // This file demonstrates how to use XSigma's three profiling systems:
 // 1. XSigma Native Profiler - Hierarchical CPU profiling with Chrome Trace JSON export
-// 2. Kineto Profiler - PyTorch profiling library for GPU-related CPU operations
+// 2. Kineto Profiler - XSigma profiling library for GPU-related CPU operations
 // 3. ITT Profiler - Intel Instrumentation and Tracing Technology for VTune
 //
 // Each profiler can be used individually or combined for comprehensive analysis.
@@ -89,7 +89,7 @@
 // 2. KINETO PROFILER
 // ============================================================================
 //
-// Kineto is PyTorch's profiling library. It captures GPU-related CPU operations
+// Kineto is XSigma's profiling library. It captures GPU-related CPU operations
 // (CUDA kernel launches, memory transfers). For hierarchical CPU profiling,
 // combine Kineto with XSigma's native profiler.
 //
@@ -167,7 +167,7 @@
 // VIEWING RESULTS:
 // ----------------
 // - XSigma trace (xsigma_trace.json): Chrome DevTools, Perfetto UI
-// - Kineto trace (kineto_trace.json): PyTorch Profiler, Chrome DevTools
+// - Kineto trace (kineto_trace.json): XSigma Profiler, Chrome DevTools
 //
 // ============================================================================
 // 3. ITT PROFILER (INTEL VTUNE)
@@ -823,7 +823,7 @@ XSIGMATEST(Profiler, heavy_function_comprehensive_computational_profiling)
 // ============================================================================
 // KINETO PROFILER TEST
 // ============================================================================
-// Test PyTorch Kineto profiler integration with heavy computational functions
+// Test XSigma Kineto profiler integration with heavy computational functions
 //
 // Kineto provides comprehensive profiling capabilities including:
 // - CPU activity tracing
@@ -832,13 +832,13 @@ XSIGMATEST(Profiler, heavy_function_comprehensive_computational_profiling)
 // - Operator-level profiling
 //
 // OUTPUT: Kineto generates JSON trace files compatible with:
-// - PyTorch Profiler Viewer
+// - XSigma Profiler Viewer
 // - TensorBoard
 // - Chrome DevTools (chrome://tracing)
 //
 // HOW TO USE:
 // 1. Run this test to generate kineto_trace.json
-// 2. View with PyTorch Profiler:
+// 2. View with XSigma Profiler:
 //    python -m xsigma.profiler.viewer kineto_trace.json
 // 3. Or view in Chrome:
 //    - Open chrome://tracing
@@ -1550,7 +1550,7 @@ XSIGMATEST(Profiler, combined_kineto_itt_heavy_function_profiling)
     std::cout << "  2. Perfetto UI (both JSON files):\n";
     std::cout << "     - Visit https://ui.perfetto.dev\n";
     std::cout << "     - Open either JSON file\n";
-    std::cout << "  3. PyTorch Profiler (Kineto trace):\n";
+    std::cout << "  3. XSigma Profiler (Kineto trace):\n";
     std::cout << "     - python -m xsigma.profiler.viewer " << kineto_combined_file << "\n";
     std::cout << "  4. Intel VTune (ITT annotations):\n";
     std::cout << "     - vtune -collect hotspots -app ./CoreCxxTests.exe\n";

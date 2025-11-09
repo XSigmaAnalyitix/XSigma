@@ -1,7 +1,7 @@
 /*
  * XSigma Kineto Shim Implementation
  *
- * Direct libkineto integration matching PyTorch's implementation.
+ * Direct libkineto integration matching XSigma's implementation.
  *
  * Note: This file is only compiled when XSIGMA_HAS_KINETO=ON.
  * Build-time exclusion is handled in CMakeLists.txt.

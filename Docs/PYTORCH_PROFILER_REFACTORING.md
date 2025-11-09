@@ -1,4 +1,4 @@
-# PyTorch Profiler Refactoring Summary
+# XSigma Profiler Refactoring Summary
 
 ## Overview
 Successfully refactored the `Library/Core/profiler/pytroch_profiler` directory to align with XSigma coding standards and conventions.
@@ -8,20 +8,20 @@ Successfully refactored the `Library/Core/profiler/pytroch_profiler` directory t
 ### 1. Directory Structure Flattening
 - **Before**: Nested directory structure with 68 files across multiple levels:
   - `aten/src/ATen/`
-  - `torch/csrc/autograd/`
-  - `torch/csrc/profiler/`
-  - `torch/csrc/profiler/orchestration/`
-  - `torch/csrc/profiler/python/`
-  - `torch/csrc/profiler/standalone/`
-  - `torch/csrc/profiler/stubs/`
-  - `torch/csrc/profiler/unwind/`
+  - `xsigma/csrc/autograd/`
+  - `xsigma/csrc/profiler/`
+  - `xsigma/csrc/profiler/orchestration/`
+  - `xsigma/csrc/profiler/python/`
+  - `xsigma/csrc/profiler/standalone/`
+  - `xsigma/csrc/profiler/stubs/`
+  - `xsigma/csrc/profiler/unwind/`
 
 - **After**: All 66 C++ files (.h and .cpp) moved to base `pytroch_profiler` directory
 - Removed all empty nested directories
 - Preserved Python files and documentation in original locations
 
 ### 2. Include Path Updates
-- **Old Format**: `#include <torch/csrc/profiler/file.h>`
+- **Old Format**: `#include <xsigma/csrc/profiler/file.h>`
 - **New Format**: `#include "file.h"` (relative to pytorch_profiler directory)
 - Updated all internal includes to use relative paths
 - Updated downstream references in `Library/Core/experimental/xsigma_autograd/`:
@@ -33,13 +33,13 @@ Successfully refactored the `Library/Core/profiler/pytroch_profiler` directory t
   - `python_function.cpp`
 
 ### 3. Macro Replacements
-Replaced PyTorch-specific macros with XSigma equivalents:
+Replaced XSigma-specific macros with XSigma equivalents:
 
-| PyTorch Macro | XSigma Macro | Purpose |
+| XSigma Macro | XSigma Macro | Purpose |
 |---|---|---|
 | `XSIGMA_API` | `XSIGMA_API` | Function export/import |
 | `XSIGMA_PYTHON_API` | `XSIGMA_API` | Python-facing function export |
-| `XSIGMA_INTERNAL_ASSERT` | `XSIGMA_CHECK` | Internal assertions |
+| `XSIGMA_CHECK` | `XSIGMA_CHECK` | Internal assertions |
 | `XSIGMA_INTERNAL_ASSERT_DEBUG_ONLY` | `XSIGMA_CHECK_DEBUG` | Debug-only assertions |
 | `XSIGMA_CHECK` | `XSIGMA_CHECK` | Runtime checks |
 | `XSIGMA_API_ENUM` | (removed) | Enum visibility (not needed) |
@@ -53,15 +53,15 @@ Replaced PyTorch-specific macros with XSigma equivalents:
 
 ### 5. Namespace Corrections
 - Preserved `c10::` namespace references (not replaced with `xsigma::`)
-- Preserved `torch::` namespace references where appropriate
-- Maintained compatibility with PyTorch's type system
+- Preserved `xsigma::` namespace references where appropriate
+- Maintained compatibility with XSigma's type system
 
 ## Files Modified
 
 ### Refactored Files (66 total)
 All files moved from nested directories to base `pytroch_profiler` directory:
 - `record_function.h/cxx` (from `aten/src/ATen/`)
-- `profiler_kineto.h/cxx`, `profiler_python.h/cxx`, `profiler.h` (from `torch/csrc/autograd/`)
+- `profiler_kineto.h/cxx`, `profiler_python.h/cxx`, `profiler.h` (from `xsigma/csrc/autograd/`)
 - `collection.h/cxx`, `combined_traceback.h/cxx`, `containers.h`, `data_flow.h/cxx`, `events.h`
 - `kineto_shim.h/cxx`, `kineto_client_interface.h/cxx`, `api.h`
 - `observer.h/cxx`, `python_tracer.h/cxx`, `vulkan.h/cxx` (from orchestration/)
@@ -91,8 +91,8 @@ All files moved from nested directories to base `pytroch_profiler` directory:
 ✅ Maintains cross-platform compatibility
 
 ## Notes
-- Python files in `torch/profiler/` and `torch/autograd/` directories preserved as-is
-- Duplicate `combined_traceback` files in `torch/csrc/profiler/python/` preserved (not moved)
+- Python files in `xsigma/profiler/` and `xsigma/autograd/` directories preserved as-is
+- Duplicate `combined_traceback` files in `xsigma/csrc/profiler/python/` preserved (not moved)
 - README.md documentation preserved in original location
-- All changes maintain backward compatibility with existing PyTorch integration
+- All changes maintain backward compatibility with existing XSigma integration
 

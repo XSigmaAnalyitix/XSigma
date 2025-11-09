@@ -1,8 +1,8 @@
-# PyTorch Graph Construction and Execution Mechanisms: Comprehensive Review
+# XSigma Graph Construction and Execution Mechanisms: Comprehensive Review
 
 ## Overview
 
-PyTorch's autograd system builds a **dynamic computational graph** during the forward pass and executes it in reverse during the backward pass to compute gradients. This document provides a detailed analysis of the graph structure, construction process, and execution mechanisms.
+XSigma's autograd system builds a **dynamic computational graph** during the forward pass and executes it in reverse during the backward pass to compute gradients. This document provides a detailed analysis of the graph structure, construction process, and execution mechanisms.
 
 ---
 
@@ -10,12 +10,12 @@ PyTorch's autograd system builds a **dynamic computational graph** during the fo
 
 ### 1.1 Nodes Representation
 
-**Location:** `torch/csrc/autograd/function.h` (lines 113-792)
+**Location:** `xsigma/csrc/autograd/function.h` (lines 113-792)
 
 Nodes are represented by the `Node` class, which is the fundamental unit of computation in the autograd graph:
 
 ```cpp
-struct XSIGMA_API Node : std::enable_shared_from_this<Node> {
+struct XSIGMA_VISIBILITY Node : std::enable_shared_from_this<Node> {
   // Unique sequence number (thread-local, monotonically increasing)
   uint64_t sequence_nr_;
 
@@ -46,7 +46,7 @@ struct XSIGMA_API Node : std::enable_shared_from_this<Node> {
 
 ### 1.2 Edges Representation
 
-**Location:** `torch/csrc/autograd/edge.h` (lines 1-57)
+**Location:** `xsigma/csrc/autograd/edge.h` (lines 1-57)
 
 Edges represent data dependencies between nodes:
 
@@ -67,7 +67,7 @@ struct Edge {
 
 ### 1.3 Graph Data Structures
 
-**Location:** `torch/csrc/autograd/graph_task.h` (lines 17-230)
+**Location:** `xsigma/csrc/autograd/graph_task.h` (lines 17-230)
 
 The `GraphTask` structure holds metadata for a single backward execution:
 
@@ -99,7 +99,7 @@ struct GraphTask : std::enable_shared_from_this<GraphTask> {
 
 ### 2.1 Forward Pass: Graph Construction
 
-**Location:** `torch/csrc/autograd/functions/utils.h` (lines 66-91)
+**Location:** `xsigma/csrc/autograd/functions/utils.h` (lines 66-91)
 
 During forward pass, operations record themselves via `set_history()`:
 
@@ -124,7 +124,7 @@ inline void set_history(
 
 ### 2.2 Role of Autograd in Graph Building
 
-**Location:** `torch/csrc/autograd/autograd.cpp` (lines 90-203)
+**Location:** `xsigma/csrc/autograd/autograd.cpp` (lines 90-203)
 
 The autograd system:
 - Intercepts tensor operations via dispatch mechanism
@@ -134,7 +134,7 @@ The autograd system:
 
 ### 2.3 Operation Recording
 
-**Location:** `torch/csrc/autograd/python_function.cpp` (lines 1292-1350)
+**Location:** `xsigma/csrc/autograd/python_function.cpp` (lines 1292-1350)
 
 When a custom `Function.apply()` is called:
 
@@ -176,7 +176,7 @@ The framework:
 
 ### 3.1 Backward Pass Initialization
 
-**Location:** `torch/csrc/autograd/engine.cpp` (lines 1288-1380)
+**Location:** `xsigma/csrc/autograd/engine.cpp` (lines 1288-1380)
 
 ```cpp
 auto Engine::execute(
@@ -207,7 +207,7 @@ auto Engine::execute(
 
 ### 3.2 Execution Order and Scheduling
 
-**Location:** `torch/csrc/autograd/engine.h` (lines 86-125)
+**Location:** `xsigma/csrc/autograd/engine.h` (lines 86-125)
 
 The `ReadyQueue` uses a priority queue:
 
@@ -238,7 +238,7 @@ struct ReadyQueue {
 
 ### 3.3 Gradient Computation
 
-**Location:** `torch/csrc/autograd/engine.cpp` (lines 1400-1500)
+**Location:** `xsigma/csrc/autograd/engine.cpp` (lines 1400-1500)
 
 During backward execution:
 1. **Gradient Accumulation:** Multiple edges to same input are summed
@@ -260,24 +260,24 @@ During backward execution:
 
 | File | Purpose |
 |------|---------|
-| `torch/csrc/autograd/function.h` | Node class definition |
-| `torch/csrc/autograd/edge.h` | Edge structure |
-| `torch/csrc/autograd/engine.h/cpp` | Backward execution engine |
-| `torch/csrc/autograd/graph_task.h` | Graph execution metadata |
-| `torch/csrc/autograd/functions/basic_ops.h/cpp` | Basic operation nodes |
-| `torch/csrc/autograd/functions/utils.h` | Graph building utilities |
-| `torch/autograd/function.py` | Python Function API |
-| `torch/fx/graph.py` | FX graph representation |
+| `xsigma/csrc/autograd/function.h` | Node class definition |
+| `xsigma/csrc/autograd/edge.h` | Edge structure |
+| `xsigma/csrc/autograd/engine.h/cpp` | Backward execution engine |
+| `xsigma/csrc/autograd/graph_task.h` | Graph execution metadata |
+| `xsigma/csrc/autograd/functions/basic_ops.h/cpp` | Basic operation nodes |
+| `xsigma/csrc/autograd/functions/utils.h` | Graph building utilities |
+| `xsigma/autograd/function.py` | Python Function API |
+| `xsigma/fx/graph.py` | FX graph representation |
 
 ---
 
 ## 5. EXAMPLE: Simple Forward and Backward
 
 ```python
-import torch
+import xsigma
 
 # Forward pass: builds graph
-x = torch.tensor([2.0], requires_grad=True)
+x = xsigma.tensor([2.0], requires_grad=True)
 y = x * 3  # Creates MulBackward0 node
 z = y + 2  # Creates AddBackward0 node
 loss = z.sum()  # Creates SumBackward0 node
@@ -300,7 +300,7 @@ Backward: x <--[*3]-- y <--[+2]-- z <--[sum]-- loss
 
 ## 6. CONCLUSION
 
-PyTorch's graph system elegantly combines:
+XSigma's graph system elegantly combines:
 - **Dynamic construction** during forward pass
 - **Efficient execution** via topological ordering
 - **Flexible control flow** through eager evaluation

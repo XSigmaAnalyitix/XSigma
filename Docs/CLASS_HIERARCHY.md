@@ -171,9 +171,9 @@ pool.run([]() { /* task */ });
 
 ---
 
-### 4. `pt_thread_pool` (PyTorch-Style Thread Pool)
+### 4. `pt_thread_pool` (XSigma-Style Thread Pool)
 
-**Purpose:** Thread pool matching PyTorch's threading semantics.
+**Purpose:** Thread pool matching XSigma's threading semantics.
 
 **Location:** `thread_pool.h`
 
@@ -303,7 +303,7 @@ Library/Core//
 ├── ParallelCommon.cpp            # Shared utilities
 ├── thread_pool.h              # Future/promise abstractions
 ├── ParallelGuard.h               # RAII guards
-├── thread_pool.h                # PyTorch-style thread pool
+├── thread_pool.h                # XSigma-style thread pool
 ├── thread_pool.h/.cpp            # Core thread pool implementation
 ├── ThreadPool.h/.cpp             # Legacy Caffe2 thread pool
 ├── WorkersPool.h                 # Work-stealing pool
