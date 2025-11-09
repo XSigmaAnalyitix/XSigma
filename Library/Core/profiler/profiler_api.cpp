@@ -133,55 +133,44 @@ bool profiler_session::export_trace(const std::string& path)
         return false;
     }
 
-    try
-    {
-        std::ofstream file(path);
-        if (!file.is_open())
-        {
-            if (config_.verbose)
-            {
-                std::cerr << "Failed to open file: " << path << std::endl;
-            }
-            return false;
-        }
-
-        // Write JSON header
-        file << "{\n";
-        file << "  \"traceEvents\": [\n";
-
-        // Write events
-        for (size_t i = 0; i < events_.size(); ++i)
-        {
-            file << "    " << events_[i];
-            if (i < events_.size() - 1)
-            {
-                file << ",";
-            }
-            file << "\n";
-        }
-
-        file << "  ],\n";
-        file << "  \"displayTimeUnit\": \"ns\",\n";
-        file << R"(  "traceID": ")" << config_.trace_id << "\"\n";
-        file << "}\n";
-
-        file.close();
-
-        if (config_.verbose)
-        {
-            std::cout << "Trace exported to: " << path << std::endl;
-        }
-
-        return true;
-    }
-    catch (const std::exception& e)
+    std::ofstream file(path);
+    if (!file.is_open())
     {
         if (config_.verbose)
         {
-            std::cerr << "Export failed: " << e.what() << std::endl;
+            std::cerr << "Failed to open file: " << path << std::endl;
         }
         return false;
     }
+
+    // Write JSON header
+    file << "{\n";
+    file << "  \"traceEvents\": [\n";
+
+    // Write events
+    for (size_t i = 0; i < events_.size(); ++i)
+    {
+        file << "    " << events_[i];
+        if (i < events_.size() - 1)
+        {
+            file << ",";
+        }
+        file << "\n";
+    }
+
+    file << "  ],\n";
+    file << "  \"displayTimeUnit\": \"ns\",\n";
+    file << R"(  "traceID": ")" << config_.trace_id << "\"\n";
+    file << "}\n";
+
+    file.close();
+
+    if (config_.verbose)
+    {
+        std::cout << "Trace exported to: " << path << std::endl;
+    }
+
+    return true;
 }
 
 void profiler_session::clear()

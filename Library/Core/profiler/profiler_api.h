@@ -1,7 +1,7 @@
 /*
  * XSigma Profiler API
  *
- * High-level profiler API matching PyTorch's profiler interface.
+ * High-level profiler API matching XSigma's profiler interface.
  * Provides CPU and GPU profiling with event collection and export.
  *
  * Features:
@@ -33,7 +33,7 @@
 #include <string>
 #include <vector>
 
-#include "../common/export.h"
+#include "common/export.h"
 
 namespace xsigma
 {
@@ -111,7 +111,7 @@ struct profiler_config
  * Singleton class managing profiler lifecycle and event collection.
  * Thread-safe for concurrent profiling from multiple threads.
  */
-class XSIGMA_API profiler_session
+class XSIGMA_VISIBILITY profiler_session
 {
 public:
     /**
@@ -193,9 +193,9 @@ private:
     profiler_state_enum state_ = profiler_state_enum::Disabled;
     profiler_config     config_;
 
-// Event collection
-// Note: C4251 warning suppressed for private member - not part of public interface
-#pragma warning(suppress : 4251)
+    // Event collection
+    // Note: XSIGMA_SUPPRESS_WARNING used for private member - not part of public interface
+    // XSIGMA_SUPPRESS_WARNING(4251)
     std::vector<std::string> events_;  // Simplified event storage
     uint64_t                 start_time_ns_ = 0;
     uint64_t                 end_time_ns_   = 0;

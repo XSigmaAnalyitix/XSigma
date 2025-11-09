@@ -164,12 +164,12 @@ endif()
 
 if(MSVC)
   # Use the highest warning level for visual c++ compiler.
-  set(CMAKE_CXX_WARNING_LEVEL 4)
-  if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-    string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-  endif()
+  # set(CMAKE_CXX_WARNING_LEVEL 4)
+  # if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
+  #   string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  # else()
+  #   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+  # endif()
   # Enable C++20 support: /Zc:__cplusplus
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:__cplusplus")
   # Treat warnings as errors set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX") Disable C4244: conversion

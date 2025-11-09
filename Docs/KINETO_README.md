@@ -4,7 +4,7 @@
 
 This documentation suite explains how the **Kineto Profiler** works in XSigma, including its architecture, entry points, classes, and functions required to run the profiler.
 
-Kineto is PyTorch's high-performance profiling system that captures detailed execution traces of CPU and GPU operations. XSigma integrates Kineto to provide comprehensive performance profiling capabilities.
+Kineto is XSigma's high-performance profiling system that captures detailed execution traces of CPU and GPU operations. XSigma integrates Kineto to provide comprehensive performance profiling capabilities.
 
 ---
 
@@ -275,7 +275,7 @@ Library/Core/profiler/pytroch_profiler/
 **Viewable in:**
 - Chrome DevTools (chrome://tracing)
 - Perfetto (ui.perfetto.dev)
-- PyTorch TensorBoard plugin
+- XSigma TensorBoard plugin
 
 ---
 
@@ -286,7 +286,7 @@ Library/Core/profiler/pytroch_profiler/
 ✅ **Memory Tracking** - Allocation/deallocation events  
 ✅ **Stack Traces** - Optional call stack capture  
 ✅ **Tensor Metadata** - Shapes, dtypes, concrete inputs  
-✅ **Module Hierarchy** - PyTorch module structure  
+✅ **Module Hierarchy** - XSigma module structure  
 ✅ **Correlation IDs** - Link CPU and GPU events  
 ✅ **Thread-Safe** - Per-thread and global profiling modes  
 ✅ **Extensible** - Custom backend support (PrivateUse1)  
@@ -383,7 +383,7 @@ auto result = disableProfiler();
 
 ## Related Resources
 
-- **PyTorch Kineto:** https://github.com/pytorch/kineto
+- **XSigma Kineto:** https://github.com/pytorch/kineto
 - **Chrome Tracing:** https://www.chromium.org/developers/how-tos/trace-event-profiling-tool
 - **Perfetto:** https://ui.perfetto.dev
 - **XSigma Profiler API:** `Library/Core/profiler/profiler_api.h`

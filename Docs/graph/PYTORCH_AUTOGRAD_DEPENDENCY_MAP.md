@@ -1,4 +1,4 @@
-# PyTorch Autograd: File Dependency Map
+# XSigma Autograd: File Dependency Map
 
 **Visual representation of dependencies between autograd source files**
 
@@ -164,7 +164,7 @@ python_variable_indexing.h/cpp (Python indexing)
 
 init.cpp (Module initialization)
     ├── Depends on: All autograd headers
-    └── Used by: PyTorch initialization
+    └── Used by: XSigma initialization
 
 python_autograd.h (Python autograd module)
     ├── Depends on: python_engine.h, python_function.h
@@ -172,7 +172,7 @@ python_autograd.h (Python autograd module)
 
 functions/init.cpp (Functions module init)
     ├── Depends on: All function headers
-    └── Used by: PyTorch initialization
+    └── Used by: XSigma initialization
 ```
 
 ---
@@ -184,33 +184,33 @@ functions/init.cpp (Functions module init)
 │                      PYTHON API LAYER                           │
 └─────────────────────────────────────────────────────────────────┘
 
-torch/autograd/__init__.py
+xsigma/autograd/__init__.py
     ├── Imports: function.py, grad_mode.py, graph.py
     │           anomaly_mode.py, gradcheck.py, forward_ad.py
     └── Exports: Public autograd API
 
-torch/autograd/function.py (Custom functions)
-    ├── Depends on: torch._C._functions (C++ backend)
+xsigma/autograd/function.py (Custom functions)
+    ├── Depends on: xsigma._C._functions (C++ backend)
     └── Used by: User custom autograd functions
 
-torch/autograd/graph.py (Graph inspection)
-    ├── Depends on: torch._C._autograd (C++ backend)
+xsigma/autograd/graph.py (Graph inspection)
+    ├── Depends on: xsigma._C._autograd (C++ backend)
     └── Used by: Graph inspection and hooks
 
-torch/autograd/grad_mode.py (Gradient modes)
-    ├── Depends on: torch._C (C++ backend)
+xsigma/autograd/grad_mode.py (Gradient modes)
+    ├── Depends on: xsigma._C (C++ backend)
     └── Used by: Controlling gradient computation
 
-torch/autograd/anomaly_mode.py (Anomaly detection)
-    ├── Depends on: torch._C (C++ backend)
+xsigma/autograd/anomaly_mode.py (Anomaly detection)
+    ├── Depends on: xsigma._C (C++ backend)
     └── Used by: Debugging autograd
 
-torch/autograd/gradcheck.py (Gradient checking)
-    ├── Depends on: torch.autograd.grad
+xsigma/autograd/gradcheck.py (Gradient checking)
+    ├── Depends on: xsigma.autograd.grad
     └── Used by: Testing gradients
 
-torch/autograd/forward_ad.py (Forward AD)
-    ├── Depends on: torch._C (C++ backend)
+xsigma/autograd/forward_ad.py (Forward AD)
+    ├── Depends on: xsigma._C (C++ backend)
     └── Used by: Forward mode differentiation
 ```
 
@@ -323,7 +323,7 @@ python_function.h ← python_hook.h
    - Headers remain acyclic
 
 4. **Namespace Isolation**
-   - All autograd code in `torch::autograd` namespace
+   - All autograd code in `xsigma::autograd` namespace
    - Prevents naming conflicts
 
 ---

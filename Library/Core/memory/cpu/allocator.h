@@ -676,7 +676,7 @@ public:
  * Allocator* gpu_alloc = device->GetAllocator(gpu_attrs);
  * ```
  */
-struct XSIGMA_API allocator_attributes
+struct XSIGMA_VISIBILITY allocator_attributes
 {
     /**
      * @brief Sets whether memory should be allocated on host (CPU).

@@ -1,6 +1,6 @@
-# PyTorch Autograd Source Inventory: Master Index
+# XSigma Autograd Source Inventory: Master Index
 
-**Complete guide to PyTorch's computational graph system source code**
+**Complete guide to XSigma's computational graph system source code**
 
 ---
 
@@ -42,44 +42,44 @@ This inventory consists of four comprehensive documents:
 ### I want to understand...
 
 **How nodes are represented**
-→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/function.h"
-→ File: `torch/csrc/autograd/function.h` (lines 113-792)
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "xsigma/csrc/autograd/function.h"
+→ File: `xsigma/csrc/autograd/function.h` (lines 113-792)
 
 **How edges connect nodes**
-→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/edge.h"
-→ File: `torch/csrc/autograd/edge.h` (lines 1-57)
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "xsigma/csrc/autograd/edge.h"
+→ File: `xsigma/csrc/autograd/edge.h` (lines 1-57)
 
 **How the backward pass executes**
-→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/engine.cpp"
-→ File: `torch/csrc/autograd/engine.cpp` (lines 1288-1380)
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "xsigma/csrc/autograd/engine.cpp"
+→ File: `xsigma/csrc/autograd/engine.cpp` (lines 1288-1380)
 
 **How gradients are accumulated**
-→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/input_buffer.h"
-→ File: `torch/csrc/autograd/input_buffer.h/cpp`
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "xsigma/csrc/autograd/input_buffer.h"
+→ File: `xsigma/csrc/autograd/input_buffer.h/cpp`
 
 **How tensors connect to grad_fn**
-→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/functions/utils.h"
-→ File: `torch/csrc/autograd/functions/utils.h` (lines 66-91)
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "xsigma/csrc/autograd/functions/utils.h"
+→ File: `xsigma/csrc/autograd/functions/utils.h` (lines 66-91)
 
 **How custom functions work**
-→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/custom_function.h"
-→ File: `torch/csrc/autograd/custom_function.h/cpp`
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "xsigma/csrc/autograd/custom_function.h"
+→ File: `xsigma/csrc/autograd/custom_function.h/cpp`
 
 **How to write custom autograd functions**
-→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/autograd/function.py"
-→ File: `torch/autograd/function.py` (lines 472-566)
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "xsigma/autograd/function.py"
+→ File: `xsigma/autograd/function.py` (lines 472-566)
 
 **How to inspect the graph**
-→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/autograd/graph.py"
-→ File: `torch/autograd/graph.py`
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "xsigma/autograd/graph.py"
+→ File: `xsigma/autograd/graph.py`
 
 **How to debug autograd issues**
-→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/anomaly_mode.h"
-→ File: `torch/csrc/autograd/anomaly_mode.h/cpp`
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "xsigma/csrc/autograd/anomaly_mode.h"
+→ File: `xsigma/csrc/autograd/anomaly_mode.h/cpp`
 
 **How forward AD works**
-→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/forward_grad.h"
-→ File: `torch/csrc/autograd/forward_grad.h/cpp`
+→ Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "xsigma/csrc/autograd/forward_grad.h"
+→ File: `xsigma/csrc/autograd/forward_grad.h/cpp`
 
 ---
 
@@ -87,7 +87,7 @@ This inventory consists of four comprehensive documents:
 
 ### Core Graph Structure (8 files)
 ```
-torch/csrc/autograd/
+xsigma/csrc/autograd/
 ├── function.h/cpp          # Node class
 ├── edge.h                  # Edge structure
 ├── graph_task.h            # Execution metadata
@@ -100,7 +100,7 @@ torch/csrc/autograd/
 
 ### Graph Building (8 files)
 ```
-torch/csrc/autograd/functions/
+xsigma/csrc/autograd/functions/
 ├── utils.h/cpp             # set_history()
 ├── basic_ops.h/cpp         # GraphRoot, Error
 ├── accumulate_grad.h/cpp   # AccumulateGrad
@@ -110,7 +110,7 @@ torch/csrc/autograd/functions/
 
 ### Graph Execution (8 files)
 ```
-torch/csrc/autograd/
+xsigma/csrc/autograd/
 ├── engine.h/cpp            # Backward engine
 ├── python_engine.h/cpp     # Python engine
 ├── grad_mode.h             # Gradient mode
@@ -122,7 +122,7 @@ torch/csrc/autograd/
 
 ### Supporting Infrastructure (40+ files)
 ```
-torch/csrc/autograd/
+xsigma/csrc/autograd/
 ├── custom_function.h/cpp
 ├── python_function.h/cpp
 ├── python_cpp_function.h/cpp
@@ -142,7 +142,7 @@ torch/csrc/autograd/
 
 ### Python API (8 files)
 ```
-torch/autograd/
+xsigma/autograd/
 ├── __init__.py             # Module initialization
 ├── function.py             # Custom functions
 ├── graph.py                # Graph inspection
@@ -167,11 +167,11 @@ torch/autograd/
 | Tensor metadata | `variable.h` | `input_metadata.h` |
 | History setting | `functions/utils.h` | `variable.h`, `function.h` |
 | Custom functions | `custom_function.h` | `python_function.h` |
-| Python API | `torch/autograd/function.py` | `torch/autograd/graph.py` |
-| Graph inspection | `torch/autograd/graph.py` | `torch/autograd/__init__.py` |
+| Python API | `xsigma/autograd/function.py` | `xsigma/autograd/graph.py` |
+| Graph inspection | `xsigma/autograd/graph.py` | `xsigma/autograd/__init__.py` |
 | Anomaly detection | `anomaly_mode.h` | `python_anomaly_mode.h` |
-| Forward AD | `forward_grad.h` | `torch/autograd/forward_ad.py` |
-| Profiling | `profiler*.h/cpp` | `torch/autograd/profiler.py` |
+| Forward AD | `forward_grad.h` | `xsigma/autograd/forward_ad.py` |
+| Profiling | `profiler*.h/cpp` | `xsigma/autograd/profiler.py` |
 | Hooks | `function_hook.h` | `cpp_hook.h`, `python_hook.h` |
 | Saved tensors | `saved_variable.h` | `saved_variable_hooks.h` |
 
@@ -182,7 +182,7 @@ torch/autograd/
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    PYTHON API LAYER                             │
-│  torch/autograd/*.py - User-facing API                          │
+│  xsigma/autograd/*.py - User-facing API                          │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -265,34 +265,34 @@ torch/autograd/
 ## 💡 COMMON TASKS
 
 ### Task: Add a new operation's backward function
-1. Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/functions/tensor.h"
-2. File: `torch/csrc/autograd/functions/tensor.h/cpp`
-3. Reference: `torch/csrc/autograd/functions/basic_ops.h` for examples
+1. Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "xsigma/csrc/autograd/functions/tensor.h"
+2. File: `xsigma/csrc/autograd/functions/tensor.h/cpp`
+3. Reference: `xsigma/csrc/autograd/functions/basic_ops.h` for examples
 
 ### Task: Implement a custom autograd function
-1. Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/autograd/function.py"
-2. File: `torch/autograd/function.py`
+1. Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "xsigma/autograd/function.py"
+2. File: `xsigma/autograd/function.py`
 3. Reference: Examples in documentation
 
 ### Task: Debug a backward pass issue
-1. Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/anomaly_mode.h"
-2. File: `torch/csrc/autograd/anomaly_mode.h/cpp`
-3. Reference: `torch/autograd/anomaly_mode.py` for Python API
+1. Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "xsigma/csrc/autograd/anomaly_mode.h"
+2. File: `xsigma/csrc/autograd/anomaly_mode.h/cpp`
+3. Reference: `xsigma/autograd/anomaly_mode.py` for Python API
 
 ### Task: Optimize backward execution
-1. Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/engine.cpp"
-2. File: `torch/csrc/autograd/engine.h/cpp`
+1. Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "xsigma/csrc/autograd/engine.cpp"
+2. File: `xsigma/csrc/autograd/engine.h/cpp`
 3. Reference: `PYXSIGMA_AUTOGRAD_DEPENDENCY_MAP.md` for impact analysis
 
 ### Task: Add profiling support
 1. Read: `PYXSIGMA_AUTOGRAD_SOURCE_INVENTORY.md` → Section 4.4
-2. Files: `torch/csrc/autograd/profiler*.h/cpp`
-3. Reference: `torch/autograd/profiler.py` for Python API
+2. Files: `xsigma/csrc/autograd/profiler*.h/cpp`
+3. Reference: `xsigma/autograd/profiler.py` for Python API
 
 ### Task: Implement forward AD
-1. Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "torch/csrc/autograd/forward_grad.h"
-2. File: `torch/csrc/autograd/forward_grad.h/cpp`
-3. Reference: `torch/autograd/forward_ad.py` for Python API
+1. Read: `PYXSIGMA_AUTOGRAD_FILE_DETAILS.md` → "xsigma/csrc/autograd/forward_grad.h"
+2. File: `xsigma/csrc/autograd/forward_grad.h/cpp`
+3. Reference: `xsigma/autograd/forward_ad.py` for Python API
 
 ---
 
@@ -332,11 +332,11 @@ torch/autograd/
 
 ## 📝 NOTES
 
-- All file paths are relative to PyTorch repository root
+- All file paths are relative to XSigma repository root
 - Line numbers are approximate and may vary between versions
-- Some files are generated during build (in `torch/csrc/autograd/generated/`)
-- Python files are in `torch/autograd/` directory
-- C++ files are in `torch/csrc/autograd/` directory
+- Some files are generated during build (in `xsigma/csrc/autograd/generated/`)
+- Python files are in `xsigma/autograd/` directory
+- C++ files are in `xsigma/csrc/autograd/` directory
 - Tools are in `tools/autograd/` directory
 
 ---

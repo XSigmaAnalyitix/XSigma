@@ -9,7 +9,7 @@
 6. [Usage Examples](#usage-examples)
 7. [Function Pipelines](#function-pipelines)
 8. [Intel ITT API Integration](#intel-itt-api-integration)
-9. [PyTorch Kineto Integration](#pytorch-kineto-integration)
+9. [XSigma Kineto Integration](#pytorch-kineto-integration)
 10. [Output Formats](#output-formats)
 11. [Best Practices](#best-practices)
 12. [Troubleshooting](#troubleshooting)
@@ -28,7 +28,7 @@ The XSigma Profiler System is a comprehensive, modular performance analysis fram
 - **Multiple output formats** (console, JSON, CSV, XML, Chrome Trace)
 - **Minimal performance overhead** designed for production use
 - **Intel ITT API integration** for Intel VTune profiling
-- **PyTorch Kineto integration** for comprehensive profiling
+- **XSigma Kineto integration** for comprehensive profiling
 
 ### Key Features
 
@@ -527,7 +527,7 @@ void profile_with_itt() {
 
 ---
 
-## PyTorch Kineto Integration
+## XSigma Kineto Integration
 
 ### Enabling Kineto
 
@@ -1101,6 +1101,6 @@ Timing Statistics:
 ## See Also
 
 - [Intel ITT API Documentation](https://github.com/intel/ittapi)
-- [PyTorch Kineto](https://github.com/pytorch/kineto)
+- [XSigma Kineto](https://github.com/pytorch/kineto)
 - [Chrome Trace Format](https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU)
 - [XPlane Format](Library/Core/profiler/exporters/xplane/)

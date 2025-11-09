@@ -315,7 +315,7 @@ auto result = disableProfiler();
 
 ## 📞 Related Resources
 
-- **PyTorch Kineto:** https://github.com/pytorch/kineto
+- **XSigma Kineto:** https://github.com/pytorch/kineto
 - **Chrome Tracing:** https://www.chromium.org/developers/how-tos/trace-event-profiling-tool
 - **Perfetto:** https://ui.perfetto.dev
 - **XSigma Profiler API:** `Library/Core/profiler/profiler_api.h`
@@ -382,5 +382,5 @@ auto result = disableProfiler();
 
 **Last Updated:** 2025-11-07  
 **Documentation Version:** 1.0  
-**Kineto Version:** PyTorch Kineto (integrated in XSigma)
+**Kineto Version:** XSigma Kineto (integrated in XSigma)
 

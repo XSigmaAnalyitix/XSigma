@@ -97,7 +97,7 @@ static_assert(
     "Expected either int64_t (`getTime`) or uint64_t (some TSC reads).");
 
 // Convert `getCount` results to Nanoseconds since unix epoch.
-class XSIGMA_API ApproximateClockToUnixTimeConverter final
+class XSIGMA_VISIBILITY ApproximateClockToUnixTimeConverter final
 {
 public:
     ApproximateClockToUnixTimeConverter();

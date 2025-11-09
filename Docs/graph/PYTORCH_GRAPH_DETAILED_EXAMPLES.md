@@ -1,10 +1,10 @@
-# PyTorch Graph Construction and Execution: Detailed Code Examples
+# XSigma Graph Construction and Execution: Detailed Code Examples
 
 ## 1. NODE CREATION AND EDGE SETUP
 
 ### 1.1 Node Constructor
 
-**File:** `torch/csrc/autograd/function.h` (lines 115-140)
+**File:** `xsigma/csrc/autograd/function.h` (lines 115-140)
 
 ```cpp
 // Node constructor with sequence number
@@ -32,12 +32,12 @@ explicit Node(edge_list&& next_edges = edge_list())
 
 ### 1.2 Adding Next Edges
 
-**File:** `torch/csrc/autograd/function.h` (lines 298-325)
+**File:** `xsigma/csrc/autograd/function.h` (lines 298-325)
 
 ```cpp
 // Update topological number when adding edge
 void update_topological_nr(const Edge& edge) {
-  XSIGMA_INTERNAL_ASSERT(!has_parent_,
+  XSIGMA_CHECK(!has_parent_,
       "Cannot update topological_nr after node has a parent");
   Node* node = edge.function.get();
   if (node) {
@@ -75,7 +75,7 @@ void set_next_edges(edge_list&& next_edges) {
 
 ### 2.1 Setting Tensor History
 
-**File:** `torch/csrc/autograd/functions/utils.h` (lines 66-91)
+**File:** `xsigma/csrc/autograd/functions/utils.h` (lines 66-91)
 
 ```cpp
 // Single tensor history
@@ -106,7 +106,7 @@ inline void set_history(
 
 ### 2.2 Input Metadata Management
 
-**File:** `torch/csrc/autograd/function.h` (lines 197-231)
+**File:** `xsigma/csrc/autograd/function.h` (lines 197-231)
 
 ```cpp
 // Add metadata for a tensor input
@@ -144,7 +144,7 @@ uint32_t add_input_metadata(undefined_input u) noexcept {
 
 ### 3.1 Engine Execute Method
 
-**File:** `torch/csrc/autograd/engine.cpp` (lines 1288-1352)
+**File:** `xsigma/csrc/autograd/engine.cpp` (lines 1288-1352)
 
 ```cpp
 auto Engine::execute(
@@ -194,7 +194,7 @@ auto Engine::execute(
 
 ### 3.2 Dependency Computation
 
-**File:** `torch/csrc/autograd/engine.cpp` (lines 1666-1760)
+**File:** `xsigma/csrc/autograd/engine.cpp` (lines 1666-1760)
 
 ```cpp
 void GraphTask::init_to_execute(
@@ -267,7 +267,7 @@ void GraphTask::init_to_execute(
 
 ## 4. READY QUEUE AND SCHEDULING
 
-**File:** `torch/csrc/autograd/engine.h` (lines 86-125)
+**File:** `xsigma/csrc/autograd/engine.h` (lines 86-125)
 
 ```cpp
 struct ReadyQueue {
@@ -304,11 +304,11 @@ struct ReadyQueue {
 
 ## 5. BASIC OPERATION NODES
 
-**File:** `torch/csrc/autograd/functions/basic_ops.h` (lines 85-113)
+**File:** `xsigma/csrc/autograd/functions/basic_ops.h` (lines 85-113)
 
 ```cpp
 // GraphRoot: Entry point for backward pass
-struct XSIGMA_API GraphRoot : public Node {
+struct XSIGMA_VISIBILITY GraphRoot : public Node {
   GraphRoot(edge_list functions, variable_list inputs)
       : Node(std::move(functions)), outputs(std::move(inputs)) {
     // Store metadata for all root gradients
@@ -325,7 +325,7 @@ struct XSIGMA_API GraphRoot : public Node {
 };
 
 // Error: Represents unsupported backward operation
-struct XSIGMA_API Error : public Node {
+struct XSIGMA_VISIBILITY Error : public Node {
   Error(std::string msg, edge_list&& next_edges)
       : Node(std::move(next_edges)), msg(std::move(msg)) {}
 
@@ -339,7 +339,7 @@ struct XSIGMA_API Error : public Node {
 
 ## 6. PYTHON CUSTOM FUNCTION EXAMPLE
 
-**File:** `torch/autograd/function.py` (lines 472-566)
+**File:** `xsigma/autograd/function.py` (lines 472-566)
 
 ```python
 class Function(_SingleLevelFunction):

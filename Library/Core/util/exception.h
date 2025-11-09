@@ -396,3 +396,13 @@ inline std::string format_check_msg(const char* cond_str)
         XSIGMA_CHECK(condition, ##__VA_ARGS__); \
     } while (0)
 #endif
+
+#define XSIGMA_WARN_ONCE(msg)                   \
+    do                                          \
+    {                                           \
+        static std::atomic<bool> warned{false}; \
+        if (!warned.exchange(true))             \
+        {                                       \
+            XSIGMA_LOG_WARNING(msg);            \
+        }                                       \
+    } while (0)

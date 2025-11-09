@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Kineto profiler is a high-performance profiling system integrated into XSigma that captures CPU and GPU execution traces. It's built on top of **libkineto** (PyTorch's profiling library) and provides detailed performance insights for debugging and optimization.
+The Kineto profiler is a high-performance profiling system integrated into XSigma that captures CPU and GPU execution traces. It's built on top of **libkineto** (XSigma's profiling library) and provides detailed performance insights for debugging and optimization.
 
 ---
 
@@ -302,7 +302,7 @@ result->save("trace.json");
 ✅ **Memory Tracking:** Allocation/deallocation events  
 ✅ **Stack Traces:** Optional call stack capture  
 ✅ **Tensor Metadata:** Shapes, dtypes, concrete inputs  
-✅ **Module Hierarchy:** Track PyTorch module structure  
+✅ **Module Hierarchy:** Track XSigma module structure  
 ✅ **Correlation IDs:** Link CPU and GPU events  
 ✅ **Thread-Safe:** Per-thread and global profiling modes  
 ✅ **Extensible:** Support for custom backends (PrivateUse1)

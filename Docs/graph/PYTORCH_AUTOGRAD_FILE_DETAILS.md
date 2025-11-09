@@ -1,4 +1,4 @@
-# PyTorch Autograd: Detailed File Reference
+# XSigma Autograd: Detailed File Reference
 
 **In-depth information about key source files in the autograd system**
 
@@ -6,7 +6,7 @@
 
 ## CORE GRAPH STRUCTURE FILES
 
-### torch/csrc/autograd/function.h (Lines 113-792)
+### xsigma/csrc/autograd/function.h (Lines 113-792)
 
 **Purpose:** Defines the `Node` class, the fundamental building block of the computational graph.
 
@@ -32,7 +32,7 @@
 
 ---
 
-### torch/csrc/autograd/edge.h (Lines 1-57)
+### xsigma/csrc/autograd/edge.h (Lines 1-57)
 
 **Purpose:** Defines the `Edge` structure representing data dependencies between nodes.
 
@@ -47,7 +47,7 @@
 
 ---
 
-### torch/csrc/autograd/graph_task.h (Lines 17-230)
+### xsigma/csrc/autograd/graph_task.h (Lines 17-230)
 
 **Purpose:** Defines `GraphTask`, the metadata container for a single backward execution.
 
@@ -76,7 +76,7 @@
 
 ---
 
-### torch/csrc/autograd/input_buffer.h/cpp
+### xsigma/csrc/autograd/input_buffer.h/cpp
 
 **Purpose:** Implements `InputBuffer` for accumulating gradients from multiple edges.
 
@@ -96,7 +96,7 @@
 
 ---
 
-### torch/csrc/autograd/variable.h/cpp
+### xsigma/csrc/autograd/variable.h/cpp
 
 **Purpose:** Manages tensor autograd metadata and grad_fn connections.
 
@@ -122,7 +122,7 @@
 
 ## GRAPH BUILDING FILES
 
-### torch/csrc/autograd/functions/utils.h (Lines 66-91)
+### xsigma/csrc/autograd/functions/utils.h (Lines 66-91)
 
 **Purpose:** Implements `set_history()`, the critical function connecting tensors to their grad_fn.
 
@@ -144,7 +144,7 @@ void set_history(
 
 ---
 
-### torch/csrc/autograd/functions/accumulate_grad.h/cpp
+### xsigma/csrc/autograd/functions/accumulate_grad.h/cpp
 
 **Purpose:** Implements `AccumulateGrad`, the special leaf node that accumulates gradients.
 
@@ -161,7 +161,7 @@ void set_history(
 
 ---
 
-### torch/csrc/autograd/functions/basic_ops.h/cpp
+### xsigma/csrc/autograd/functions/basic_ops.h/cpp
 
 **Purpose:** Implements basic operation nodes used in graph execution.
 
@@ -177,7 +177,7 @@ void set_history(
 
 ## GRAPH EXECUTION FILES
 
-### torch/csrc/autograd/engine.h (Lines 86-125)
+### xsigma/csrc/autograd/engine.h (Lines 86-125)
 
 **Purpose:** Defines the `Engine` class and `ReadyQueue` for backward execution.
 
@@ -200,7 +200,7 @@ void set_history(
 
 ---
 
-### torch/csrc/autograd/engine.cpp (Lines 1288-1380)
+### xsigma/csrc/autograd/engine.cpp (Lines 1288-1380)
 
 **Purpose:** Implements the backward execution algorithm.
 
@@ -226,7 +226,7 @@ void set_history(
 
 ---
 
-### torch/csrc/autograd/python_engine.h/cpp
+### xsigma/csrc/autograd/python_engine.h/cpp
 
 **Purpose:** Python bindings for the backward engine.
 
@@ -241,7 +241,7 @@ void set_history(
 
 ## SUPPORTING INFRASTRUCTURE FILES
 
-### torch/csrc/autograd/saved_variable.h/cpp
+### xsigma/csrc/autograd/saved_variable.h/cpp
 
 **Purpose:** Implements `SavedVariable` for storing tensors in backward.
 
@@ -259,7 +259,7 @@ void set_history(
 
 ---
 
-### torch/csrc/autograd/anomaly_mode.h/cpp
+### xsigma/csrc/autograd/anomaly_mode.h/cpp
 
 **Purpose:** Implements anomaly detection for debugging.
 
@@ -276,7 +276,7 @@ void set_history(
 
 ---
 
-### torch/csrc/autograd/custom_function.h/cpp
+### xsigma/csrc/autograd/custom_function.h/cpp
 
 **Purpose:** Implements custom autograd function support.
 
@@ -290,7 +290,7 @@ void set_history(
 
 ---
 
-### torch/csrc/autograd/forward_grad.h/cpp
+### xsigma/csrc/autograd/forward_grad.h/cpp
 
 **Purpose:** Implements forward-mode AD (tangent computation).
 
@@ -306,7 +306,7 @@ void set_history(
 
 ## PYTHON API FILES
 
-### torch/autograd/function.py (Lines 472-566)
+### xsigma/autograd/function.py (Lines 472-566)
 
 **Purpose:** Python API for custom autograd functions.
 
@@ -337,7 +337,7 @@ class MyFunc(Function):
 
 ---
 
-### torch/autograd/graph.py
+### xsigma/autograd/graph.py
 
 **Purpose:** Graph inspection and manipulation API.
 
@@ -360,7 +360,7 @@ class MyFunc(Function):
 
 ---
 
-### torch/autograd/grad_mode.py
+### xsigma/autograd/grad_mode.py
 
 **Purpose:** Control gradient computation mode.
 
@@ -372,16 +372,16 @@ class MyFunc(Function):
 
 **Usage:**
 ```python
-with torch.no_grad():
+with xsigma.no_grad():
     y = model(x)  # No gradients computed
 
-with torch.enable_grad():
+with xsigma.enable_grad():
     y = model(x)  # Gradients computed
 ```
 
 ---
 
-### torch/autograd/gradcheck.py
+### xsigma/autograd/gradcheck.py
 
 **Purpose:** Gradient checking utilities for testing.
 
@@ -403,7 +403,7 @@ with torch.enable_grad():
 2. VariableType methods (gen_variable_type.py)
 3. Python bindings (gen_python_functions.py)
 
-**Output:** `torch/csrc/autograd/generated/` directory
+**Output:** `xsigma/csrc/autograd/generated/` directory
 
 ---
 
@@ -422,8 +422,8 @@ with torch.enable_grad():
 | Custom functions | `custom_function.h` | `class CustomFunction` |
 | Anomaly detection | `anomaly_mode.h` | `class AnomalyMode` |
 | Forward AD | `forward_grad.h` | `class ForwardGrad` |
-| Python API | `torch/autograd/function.py` | `class Function` |
-| Graph inspection | `torch/autograd/graph.py` | `class Node` |
-| Grad modes | `torch/autograd/grad_mode.py` | `no_grad`, `enable_grad` |
+| Python API | `xsigma/autograd/function.py` | `class Function` |
+| Graph inspection | `xsigma/autograd/graph.py` | `class Node` |
+| Grad modes | `xsigma/autograd/grad_mode.py` | `no_grad`, `enable_grad` |
 
 

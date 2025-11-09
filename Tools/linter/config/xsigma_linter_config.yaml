@@ -23,7 +23,7 @@ header_only:
 
 # Dynamo Registry Configuration
 # =============================
-# Defines paths for PyTorch-compatible dynamo/graph break registry
+# Defines paths for XSigma-compatible dynamo/graph break registry
 dynamo:
   # Path to the graph break registry JSON file (relative to repository root)
   graph_break_registry: "Library/Core/_dynamo/graph_break_registry.json"
@@ -91,10 +91,10 @@ deploy:
 # Defines patterns for detecting device-biased test code
 test_device:
   # Pattern to detect CUDA device specification
-  cuda_pattern: "torch.device('cuda')"
+  cuda_pattern: "xsigma.device('cuda')"
   
   # Recommended replacement
-  replacement_pattern: "torch.device(GPU_TYPE)"
+  replacement_pattern: "xsigma.device(GPU_TYPE)"
 
 # Import Allowlist Configuration
 # ==============================
@@ -104,7 +104,7 @@ import_allowlist:
   - "sympy"
   - "einops"
   - "libfb"
-  - "torch"
+  - "xsigma"
   - "tvm"
   - "_pytest"
   - "tabulate"

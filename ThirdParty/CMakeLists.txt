@@ -658,8 +658,8 @@ add_third_party_library(mimalloc
     XSIGMA_TARGETS "XSigma::mimalloc=mimalloc|mimalloc-static"
 )
 
-# Kineto - PyTorch profiling library
-# Aligned with PyTorch's XSIGMA_ENABLE_KINETO configuration for feature parity.
+# Kineto - XSigma profiling library
+# Aligned with XSigma's XSIGMA_ENABLE_KINETO configuration for feature parity.
 # Supports GPU backends: CUPTI (NVIDIA), ROCtracer (AMD), XPUPTI (Intel XPU), AIUPTI (AI accelerators)
 
 # Configure GPU backend support based on enabled platforms
@@ -708,7 +708,7 @@ add_third_party_library(kineto
 # Disable Kineto if the library was not found
 if(XSIGMA_ENABLE_KINETO AND NOT TARGET XSigma::kineto)
     message(STATUS "Kineto library not found - disabling XSIGMA_ENABLE_KINETO")
-    set(XSIGMA_ENABLE_KINETO OFF CACHE BOOL "Enable PyTorch Kineto profiling library." FORCE)
+    set(XSIGMA_ENABLE_KINETO OFF CACHE BOOL "Enable XSigma Kineto profiling library." FORCE)
 endif()
 
 # =============================================================================

@@ -2,7 +2,7 @@
 
 ## What is Kineto?
 
-**Kineto** is PyTorch's high-performance profiling library that captures detailed execution traces of CPU and GPU operations. XSigma integrates Kineto to provide comprehensive performance profiling capabilities.
+**Kineto** is XSigma's high-performance profiling library that captures detailed execution traces of CPU and GPU operations. XSigma integrates Kineto to provide comprehensive performance profiling capabilities.
 
 ---
 
@@ -287,7 +287,7 @@ bool enabled = isProfilerEnabledInMainThread();
 **Viewable in:**
 - Chrome DevTools (chrome://tracing)
 - Perfetto (ui.perfetto.dev)
-- PyTorch TensorBoard plugin
+- XSigma TensorBoard plugin
 
 ---
 
@@ -318,7 +318,7 @@ void onFunctionExit(at::ObserverContext* ctx);
 ✅ **Memory Tracking** - Allocation/deallocation events  
 ✅ **Stack Traces** - Optional call stack capture  
 ✅ **Tensor Metadata** - Shapes, dtypes, concrete inputs  
-✅ **Module Hierarchy** - PyTorch module structure  
+✅ **Module Hierarchy** - XSigma module structure  
 ✅ **Correlation IDs** - Link CPU and GPU events  
 ✅ **Thread-Safe** - Per-thread and global modes  
 ✅ **Extensible** - Custom backend support (PrivateUse1)  
@@ -380,5 +380,5 @@ for (const auto& event : result->events()) {
 
 - **KINETO_PROFILER_GUIDE.md** - Detailed architecture guide
 - **KINETO_QUICK_REFERENCE.md** - API quick reference
-- **PyTorch Kineto Docs** - https://github.com/pytorch/kineto
+- **XSigma Kineto Docs** - https://github.com/pytorch/kineto
 

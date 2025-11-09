@@ -57,7 +57,7 @@ _MODULE_NAME_ALLOW_LIST.update(
         "sympy",
         "einops",
         "libfb",
-        "torch",
+        "xsigma",
         "tvm",
         "_pytest",
         "tabulate",

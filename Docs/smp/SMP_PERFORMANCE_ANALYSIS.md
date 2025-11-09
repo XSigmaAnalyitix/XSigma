@@ -10,7 +10,7 @@
 
 This document provides a comprehensive performance analysis comparing XSigma's two parallel execution systems:
 - **`smp`** - Legacy parallel execution framework (VTK-based, supports STDThread and TBB backends)
-- **`smp_new`** - Modern parallel execution framework (PyTorch-inspired, supports Native, OpenMP, and TBB backends)
+- **`smp_new`** - Modern parallel execution framework (XSigma-inspired, supports Native, OpenMP, and TBB backends)
 
 ### Key Findings
 
@@ -76,7 +76,7 @@ tools::Sort(data.begin(), data.end());
 
 ### 1.2 smp_new Module Architecture
 
-**Design Philosophy:** PyTorch-inspired parallel execution with modern C++ features
+**Design Philosophy:** XSigma-inspired parallel execution with modern C++ features
 
 **Key Components:**
 - `parallel_api` - Main API with `parallel_for`, `parallel_reduce`, `parallelize_1d`

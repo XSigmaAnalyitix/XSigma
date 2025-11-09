@@ -339,7 +339,7 @@ xsigma::profiler::impl::ProfilerConfig config(
 Viewable in:
 - Chrome DevTools (chrome://tracing)
 - Perfetto (ui.perfetto.dev)
-- PyTorch TensorBoard plugin
+- XSigma TensorBoard plugin
 
 ---
 

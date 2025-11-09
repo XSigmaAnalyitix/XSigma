@@ -7,7 +7,7 @@ This directory contains comprehensive examples demonstrating the usage of XSigma
 XSigma provides three complementary profiling systems:
 
 1. **XSigma Native Profiler** - Hierarchical CPU profiling with Chrome Trace JSON export
-2. **Kineto Profiler** - PyTorch profiling library for GPU-related CPU operations
+2. **Kineto Profiler** - XSigma profiling library for GPU-related CPU operations
 3. **ITT Profiler** - Intel Instrumentation and Tracing Technology for VTune integration
 
 Each profiler can be used individually or combined for comprehensive performance analysis.
@@ -414,7 +414,7 @@ void my_function() {
 - **Chrome Trace Event Format**: https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU
 - **Perfetto UI**: https://ui.perfetto.dev
 - **Intel VTune Profiler**: https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/vtune-profiler.html
-- **PyTorch Kineto**: https://github.com/pytorch/kineto
+- **XSigma Kineto**: https://github.com/pytorch/kineto
 
 ## License
 
