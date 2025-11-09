@@ -23,7 +23,7 @@ constexpr bool is_negative(T value)
 
 /// Specialization for unsigned types - always returns false.
 template <typename T, std::enable_if_t<!std::is_signed_v<T>, int> = 0>
-constexpr bool is_negative(T XSIGMA_UNUSED)
+constexpr bool is_negative(XSIGMA_UNUSED T)
 {
     return false;
 }
