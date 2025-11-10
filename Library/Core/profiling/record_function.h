@@ -299,8 +299,8 @@ struct XSIGMA_VISIBILITY RecordFunction
     //  scope - record scope that this function tracks
     //  pre_sampled - whether this RecordFunction was already pre-sampled with
     //    kLowProb probability
-    explicit RecordFunction(RecordScope scope = RecordScope::FUNCTION);
-    explicit RecordFunction(StepCallbacks&& step_callbacks);
+    XSIGMA_API explicit RecordFunction(RecordScope scope = RecordScope::FUNCTION);
+    XSIGMA_API explicit RecordFunction(StepCallbacks&& step_callbacks);
 
     using schema_ref_t       = std::reference_wrapper<const xsigma::FunctionSchema>;
     using FunctionDescriptor = std::variant<std::string_view, schema_ref_t>;
@@ -369,32 +369,28 @@ struct XSIGMA_VISIBILITY RecordFunction
     }
 
     // Destructor calls end callbacks
-    virtual ~RecordFunction();
+    XSIGMA_API virtual ~RecordFunction();
 
     RecordFunction(const RecordFunction&)            = delete;
     RecordFunction& operator=(const RecordFunction&) = delete;
     RecordFunction(RecordFunction&&)                 = delete;
     RecordFunction& operator=(RecordFunction&&)      = delete;
 
-    const char* name() const;
-    const char* overload_name() const;
+    XSIGMA_API const char* name() const;
+    XSIGMA_API const char* overload_name() const;
 
     int64_t seqNr() const { return sequence_nr_; }
 
     xsigma::array_ref<const IValue> inputs() const
     {
-#ifndef NDEBUG
         XSIGMA_CHECK_DEBUG(inputs_valid_, "Called inputs() outside RecordFunction start callback");
-#endif
         return inputs_;
     }
 
     std::unordered_map<std::string, IValue> kwinputs() const
     {
-#ifndef NDEBUG
         XSIGMA_CHECK_DEBUG(
             inputs_valid_, "Called kwinputs() outside RecordFunction start callback");
-#endif
         return kwinputs_;
     }
 
@@ -404,8 +400,8 @@ struct XSIGMA_VISIBILITY RecordFunction
 
     void setOutputs(xsigma::array_ref<xsigma::IValue> outputs) { outputs_ = outputs.vec(); }
 
-    size_t num_inputs() const;
-    size_t num_outputs() const;
+    XSIGMA_API size_t num_inputs() const;
+    XSIGMA_API size_t num_outputs() const;
 
     // Retrieves the thread_id that this RecordFunction ran start callbacks with.
     // Useful for writing thread safe end callbacks that may be potentially
@@ -423,23 +419,23 @@ struct XSIGMA_VISIBILITY RecordFunction
     RecordScope scope() const { return step_callbacks_.scope_; }
 
     // Returns logical thread_id for the current thread
-    static uint64_t currentThreadId();
+    XSIGMA_API static uint64_t currentThreadId();
 
     // Internal functions, do not use directly;
     // used in python's context manager
 
     // before functions initialize RecordFunction members and call
     // start callbacks
-    void before(FunctionDescriptor schema, int64_t sequence_nr = -1);
+    XSIGMA_API void before(FunctionDescriptor schema, int64_t sequence_nr = -1);
 
     // Sets node ID for distributed profiling
-    static void setDefaultNodeId(int64_t defaultNodeId);
+    XSIGMA_API static void setDefaultNodeId(int64_t defaultNodeId);
     // Gets node ID for distributed profiling
-    static int64_t getDefaultNodeId();
+    XSIGMA_API static int64_t getDefaultNodeId();
 
     // Calls end callbacks. After end(), accessors will no longer provide useful
     // results.
-    void end();
+    XSIGMA_API void end();
 
     // Internal-only, used only force async event for distributed events
     // profiling.

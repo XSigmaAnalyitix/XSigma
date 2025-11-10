@@ -32,50 +32,50 @@ using extra_meta_t         = std::unordered_map<std::string, std::string>;
 
 struct XSIGMA_VISIBILITY KinetoEvent
 {
-    KinetoEvent(
+    XSIGMA_API KinetoEvent(
         const std::shared_ptr<const xsigma::profiler::impl::Result>& /*result*/,
         const bool verbose);
 
-    uint64_t                                              startThreadId() const;
-    uint64_t                                              endThreadId() const;
-    uint8_t                                               activityType() const;
-    uint64_t                                              fwdThreadId() const;
-    bool                                                  hasShapes() const;
-    const xsigma::array_ref<std::vector<int64_t>>         shapes() const;
-    bool                                                  hasTypes() const;
-    const xsigma::array_ref<std::string>                  dtypes() const;
-    bool                                                  hasConcreteInputs() const;
-    const xsigma::array_ref<xsigma::IValue>               concreteInputs() const;
-    bool                                                  hasKwinputs() const;
-    bool                                                  isHiddenEvent() const;
-    const std::unordered_map<std::string, xsigma::IValue> kwinputs() const;
-    uint64_t                                              flops() const;
-    int64_t                                               sequenceNr() const;
-    bool                                                  hasStack() const;
-    const xsigma::array_ref<std::string>                  stack() const;
-    uint8_t                                               scope() const;
-    bool                                                  hasModuleHierarchy() const;
-    const xsigma::array_ref<std::string>                  moduleHierarchy() const;
-    int64_t                                               debugHandle() const;
-    std::string                                           name() const;
-    std::string                                           overload_name() const;
-    xsigma::device_enum                                   deviceType() const;
-    int                                                   deviceIndex() const;
-    int64_t                                               nBytes() const;
-    uint64_t                                              startNs() const;
-    uint64_t                                              endNs() const;
-    uint64_t                                              durationNs() const;
-    bool                                                  isAsync() const;
-    uint64_t                                              correlationId() const;
-    uint64_t                                              linkedCorrelationId() const;
-    int64_t                                               deviceResourceId() const;
-    std::string                                           backend() const;
-    bool                                                  isPythonFunction() const;
-    int64_t                                               cudaElapsedUs() const;
-    int64_t                                               privateuse1ElapsedUs() const;
-    void         getPerfEventCounters(xsigma::profiler::perf_counters_t& /*in*/) const;
-    extra_meta_t extraMeta() const;
-    std::string  metadataJson() const;
+    XSIGMA_API uint64_t startThreadId() const;
+    XSIGMA_API uint64_t endThreadId() const;
+    XSIGMA_API uint8_t  activityType() const;
+    XSIGMA_API uint64_t fwdThreadId() const;
+    XSIGMA_API bool     hasShapes() const;
+    XSIGMA_API const xsigma::array_ref<std::vector<int64_t>> shapes() const;
+    XSIGMA_API bool                                          hasTypes() const;
+    XSIGMA_API const xsigma::array_ref<std::string> dtypes() const;
+    XSIGMA_API bool                                 hasConcreteInputs() const;
+    XSIGMA_API const xsigma::array_ref<xsigma::IValue> concreteInputs() const;
+    XSIGMA_API bool                                    hasKwinputs() const;
+    XSIGMA_API bool                                    isHiddenEvent() const;
+    XSIGMA_API const std::unordered_map<std::string, xsigma::IValue> kwinputs() const;
+    XSIGMA_API uint64_t                                              flops() const;
+    XSIGMA_API int64_t                                               sequenceNr() const;
+    XSIGMA_API bool                                                  hasStack() const;
+    XSIGMA_API const xsigma::array_ref<std::string> stack() const;
+    XSIGMA_API uint8_t                              scope() const;
+    XSIGMA_API bool                                 hasModuleHierarchy() const;
+    XSIGMA_API const xsigma::array_ref<std::string> moduleHierarchy() const;
+    XSIGMA_API int64_t                              debugHandle() const;
+    XSIGMA_API std::string name() const;
+    XSIGMA_API std::string overload_name() const;
+    XSIGMA_API xsigma::device_enum deviceType() const;
+    XSIGMA_API int                 deviceIndex() const;
+    XSIGMA_API int64_t             nBytes() const;
+    XSIGMA_API uint64_t            startNs() const;
+    XSIGMA_API uint64_t            endNs() const;
+    XSIGMA_API uint64_t            durationNs() const;
+    XSIGMA_API bool                isAsync() const;
+    XSIGMA_API uint64_t            correlationId() const;
+    XSIGMA_API uint64_t            linkedCorrelationId() const;
+    XSIGMA_API int64_t             deviceResourceId() const;
+    XSIGMA_API std::string  backend() const;
+    XSIGMA_API bool         isPythonFunction() const;
+    XSIGMA_API int64_t      cudaElapsedUs() const;
+    XSIGMA_API int64_t      privateuse1ElapsedUs() const;
+    XSIGMA_API void         getPerfEventCounters(xsigma::profiler::perf_counters_t& /*in*/) const;
+    XSIGMA_API extra_meta_t extraMeta() const;
+    XSIGMA_API std::string metadataJson() const;
 
 private:
     xsigma::profiler::impl::ProfilerVoidEventStub fallbackStart() const;
@@ -96,13 +96,13 @@ private:
 // memory allocation events)
 struct XSIGMA_VISIBILITY ProfilerResult
 {
-    ProfilerResult();
-    ProfilerResult(
+    XSIGMA_API ProfilerResult();
+    XSIGMA_API ProfilerResult(
         uint64_t                                                                start_time,
         std::vector<KinetoEvent>                                                events,
         std::unique_ptr<xsigma::profiler::impl::kineto::ActivityTraceWrapper>&& trace,
         std::vector<experimental_event_t>&&                                     event_tree);
-    ~ProfilerResult();
+    XSIGMA_API ~ProfilerResult();
 
     uint64_t trace_start_ns() const { return trace_start_ns_; }
 

@@ -3,14 +3,13 @@
 #include <utility>
 
 #include "common/export.h"
-#include "parallel/ThreadLocal.h"
 #include "util/exception.h"
 
 namespace xsigma
 {
 
-XSIGMA_DEFINE_TLS_static(std::shared_ptr<ThreadLocalDebugInfo>, tls_debug_info);
-#define debug_info (tls_debug_info.get())
+static thread_local std::shared_ptr<ThreadLocalDebugInfo> tls_debug_info;
+#define debug_info (tls_debug_info)
 
 /* static */
 DebugInfoBase* ThreadLocalDebugInfo::get(DebugInfoKind kind)

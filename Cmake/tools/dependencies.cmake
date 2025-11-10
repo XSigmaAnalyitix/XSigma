@@ -26,11 +26,11 @@ include_guard(GLOBAL)
 # before feature flag mapping to ensure correct XSIGMA_HAS_* values
 
 # Intel ITT API support - check if library is available
-if(XSIGMA_ENABLE_ITTAPI)
+if(XSIGMA_ENABLE_ITT)
   find_package(ITT)
   if(NOT ITT_FOUND)
-    message(STATUS "ITT API not found - disabling XSIGMA_ENABLE_ITTAPI")
-    set(XSIGMA_ENABLE_ITTAPI OFF CACHE BOOL "Enable Intel ITT API for VTune profiling." FORCE)
+    message(STATUS "ITT API not found - disabling XSIGMA_ENABLE_ITT")
+    set(XSIGMA_ENABLE_ITT OFF CACHE BOOL "Enable Intel ITT API for VTune profiling." FORCE)
   endif()
 endif()
 
@@ -118,9 +118,9 @@ else()
   list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_HAS_KINETO=0)
 endif()
 
-# Intel ITT API support Note: CMake uses XSIGMA_ENABLE_ITTAPI, but C++ code uses XSIGMA_HAS_ITT
-# Note: XSIGMA_ENABLE_ITTAPI may have been disabled in dependencies.cmake if library not found
-if(XSIGMA_ENABLE_ITTAPI)
+# Intel ITT API support Note: CMake uses XSIGMA_ENABLE_ITT, but C++ code uses XSIGMA_HAS_ITT
+# Note: XSIGMA_ENABLE_ITT may have been disabled in dependencies.cmake if library not found
+if(XSIGMA_ENABLE_ITT)
   list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_HAS_ITT=1)
 else()
   list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_HAS_ITT=0)
@@ -303,7 +303,7 @@ endif()
 
 # Intel ITT API support Note: XSIGMA_HAS_ITTAPI is defined via configure_file() in xsigma_features.h
 # ITT library check already performed in early dependency checks section
-if(XSIGMA_ENABLE_ITTAPI AND ITT_FOUND)
+if(XSIGMA_ENABLE_ITT AND ITT_FOUND)
   list(APPEND XSIGMA_DEPENDENCY_LIBS ${ITT_LIBRARIES})
   list(APPEND XSIGMA_DEPENDENCY_INCLUDE_DIRS ${ITT_INCLUDE_DIR})
   message(STATUS "Dependency: ITT libraries added to XSIGMA_DEPENDENCY_LIBS")

@@ -169,8 +169,8 @@ mark_as_advanced(XSIGMA_ENABLE_KINETO)
 
 # Intel ITT API (Instrumentation and Tracing Technology) Flag Controls whether Intel ITT API is
 # enabled. When enabled, provides task/frame annotations for Intel VTune profiling.
-option(XSIGMA_ENABLE_ITTAPI "Enable Intel ITT API for VTune profiling." ON)
-mark_as_advanced(XSIGMA_ENABLE_ITTAPI)
+option(XSIGMA_ENABLE_ITT "Enable Intel ITT API for VTune profiling." ON)
+mark_as_advanced(XSIGMA_ENABLE_ITT)
 
 # ============================================================================= Platform-Specific
 # Configuration and Feature Validation

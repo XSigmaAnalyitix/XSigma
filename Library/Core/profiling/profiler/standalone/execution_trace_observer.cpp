@@ -1,9 +1,23 @@
 #ifdef _WIN32
+
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
-#include <processthreadsapi.h>
+
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include <windows.h>
+//order
+#include <processthreadsapi.h>
+
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 #else
 #include <unistd.h>
 #endif  // _WIN32
@@ -109,6 +123,7 @@ static std::string getScalarValue(const xsigma::IValue& val)
         const std::string& str_val = val.toStringRef();
         return fmt::format("\"{}\"", json_str_escape(str_val));
     }
+}
 #else
 // Stub implementation
 static std::string getScalarValue(const xsigma::IValue& /*val*/)
@@ -334,20 +349,21 @@ static std::ofstream openOutputFile(const std::string& name)
 {
     std::ofstream stream;
     stream.open(name, std::ofstream::out | std::ofstream::trunc);
+
+#if 0 
     if (!stream)
     {
-#if 0
         // Disabled: Logging macros not available in profiler-only build.
         LOG(ERROR) << "Failed to open '" << name << "'";
-#endif
+
     }
     else
     {
-#if 0
         // Disabled: Logging macros not available in profiler-only build.
         VLOG(1) << "XSigma Execution Trace: writing to " << name;
-#endif
+
     }
+#endif
     return stream;
 }
 
@@ -771,8 +787,9 @@ static void handleKernelBackendInfo(FunctionCallContext& fc, const RecordFunctio
 }
 #else
 // Stub implementation
-static void handleKernelBackendInfo(FunctionCallContext& /*fc*/, const RecordFunction& /*fn*/)
+static void handleKernelBackendInfo(FunctionCallContext& /*fc*/, const RecordFunction& fn)
 {
+    XSIGMA_UNUSED const auto& kwinputs = fn.kwinputs();
     // Stub: IValue methods not available in profiler-only build
 }
 #endif

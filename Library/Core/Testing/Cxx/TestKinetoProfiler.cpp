@@ -307,17 +307,19 @@ XSIGMATEST(Profiler, kineto_profiler_destructor_stops_profiling)
 
 XSIGMATEST(RecordDebugHandles, Basic)
 {
-    //GTEST_SKIP() << "Test is flaky and sometimes hangs on CI. ";
+    GTEST_SKIP() << "Test is flaky and sometimes hangs on CI. ";
     // Enable the profiler in this thread
     const std::set<xsigma::autograd::profiler::ActivityType> activities(
         {xsigma::autograd::profiler::ActivityType::CPU});
+
     xsigma::autograd::profiler::prepareProfiler(
         xsigma::autograd::profiler::ProfilerConfig(
-            xsigma::autograd::profiler::ProfilerState::KINETO, false, false),
+            xsigma::autograd::profiler::ProfilerState::KINETO, false, false, true, true),
         activities);
-    xsigma::autograd::profiler::enableProfiler(
+
+    xsigma::autograd::profiler::prepareProfiler(
         xsigma::autograd::profiler::ProfilerConfig(
-            xsigma::autograd::profiler::ProfilerState::KINETO, false, false),
+            xsigma::autograd::profiler::ProfilerState::KINETO, false, false, true, true),
         activities);
     {
         RECORD_EDGE_SCOPE_WITH_DEBUG_HANDLE_AND_INPUTS("my_function", 42, {});

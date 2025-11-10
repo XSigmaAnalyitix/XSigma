@@ -684,7 +684,7 @@ class XsigmaFlags:
             "magic_enum": "XSIGMA_ENABLE_MAGICENUM",
             "mimalloc": "XSIGMA_ENABLE_MIMALLOC",
             "kineto": "XSIGMA_ENABLE_KINETO",
-            "ittapi": "XSIGMA_ENABLE_ITTAPI",
+            "ittapi": "XSIGMA_ENABLE_ITT",
             "external": "XSIGMA_ENABLE_EXTERNAL",
             "cxxstd": "XSIGMA_CXX_STANDARD",
             "cppcheck": "XSIGMA_ENABLE_CPPCHECK",
@@ -750,7 +750,7 @@ class XsigmaFlags:
                 #"kineto": self.ON,  # XSIGMA_ENABLE_KINETO default is ON
                 # CMake options with default OFF - keep OFF in setup.py
                 # (already set by dict.fromkeys above)
-                # "ittapi": self.OFF,  # XSIGMA_ENABLE_ITTAPI default is OFF (STATIC library, MSVC incompatible)
+                # "ittapi": self.OFF,  # XSIGMA_ENABLE_ITT default is OFF (STATIC library, MSVC incompatible)
                 # "benchmark": self.OFF,  # XSIGMA_ENABLE_BENCHMARK default is OFF (changed from ON)
                 # "cuda": self.OFF,  # XSIGMA_ENABLE_CUDA default is OFF
                 # "mkl": self.OFF,  # XSIGMA_ENABLE_MKL default is OFF
@@ -1018,6 +1018,7 @@ class XsigmaConfiguration:
             "verbosity": "",
             "arg_cmake_verbose": "--loglevel=NOTICE",
         }
+        self.__compiler_user_specified = False
         print(f"================= {self.__value['system']} platform =================")
 
     def __fill_compilation_flags(self, args_list):
@@ -1034,6 +1035,8 @@ class XsigmaConfiguration:
             self.__set_clang_compiler(arg)
         elif arg == "clang-cl":
             self.__value["cmake_cxx_compiler"] = "-DCMAKE_GENERATOR_TOOLSET=ClangCL"
+            self.__value["cmake_c_compiler"] = ""
+            self.__compiler_user_specified = True
         elif self.__is_gcc_compiler(arg):
             self.__set_gcc_compiler(arg)
         elif self.__is_visual_studio(arg):
@@ -1091,6 +1094,7 @@ class XsigmaConfiguration:
         self.__value["cmake_cxx_compiler"] = (
             f"-DCMAKE_CXX_COMPILER={arg.replace('clang', 'clang++')}"
         )
+        self.__compiler_user_specified = True
 
     def __is_gcc_compiler(self, arg):
         """Check if argument is a GCC compiler specification (gcc, g++, gcc-11, g++-11, etc.)"""
@@ -1110,6 +1114,7 @@ class XsigmaConfiguration:
             # Replace gcc with g++ to get the CXX compiler
             cxx_compiler = arg.replace("gcc", "g++")
             self.__value["cmake_cxx_compiler"] = f"-DCMAKE_CXX_COMPILER={cxx_compiler}"
+        self.__compiler_user_specified = True
 
     def __is_visual_studio(self, arg):
         return arg in ["vs17", "vs19", "vs22"] and self.__value["system"] == "Windows"
@@ -1126,6 +1131,10 @@ class XsigmaConfiguration:
         self.__value["build_folder"] = (
             f"{base_build_folder}{self.__xsigma_flags.builder_suffix}"
         )
+        if not self.__compiler_user_specified:
+            # Let Visual Studio decide the native MSVC toolchain unless the user requested otherwise.
+            self.__value["cmake_cxx_compiler"] = ""
+            self.__value["cmake_c_compiler"] = ""
 
     def __set_verbose_flags(self):
         self.__value["arg_cmake_verbose"] = "--loglevel=VERBOSE"

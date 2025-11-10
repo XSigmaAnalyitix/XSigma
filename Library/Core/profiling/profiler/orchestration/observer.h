@@ -60,7 +60,7 @@ enum class XSIGMA_VISIBILITY_ENUM ActiveProfilerType
 
 struct XSIGMA_VISIBILITY ExperimentalConfig
 {
-    ExperimentalConfig(
+    XSIGMA_API ExperimentalConfig(
         std::vector<std::string> profiler_metrics             = {},
         bool                     profiler_measure_per_kernel  = false,
         bool                     verbose                      = false,
@@ -74,7 +74,7 @@ struct XSIGMA_VISIBILITY ExperimentalConfig
         bool                     expose_kineto_event_metadata = false,
         std::string              custom_profiler_config       = "",
         bool                     adjust_timestamps            = false);
-    explicit operator bool() const;
+    XSIGMA_API explicit operator bool() const;
 
     std::vector<std::string> profiler_metrics;
     bool                     profiler_measure_per_kernel;
@@ -143,7 +143,7 @@ struct XSIGMA_VISIBILITY ExperimentalConfig
 
 struct XSIGMA_VISIBILITY ProfilerConfig
 {
-    explicit ProfilerConfig(
+    XSIGMA_API explicit ProfilerConfig(
         ProfilerState      state,
         bool               report_input_shapes = false,
         bool               profile_memory      = false,
@@ -153,9 +153,9 @@ struct XSIGMA_VISIBILITY ProfilerConfig
         ExperimentalConfig experimental_config = ExperimentalConfig(),
         std::string        trace_id            = "");
 
-    bool disabled() const;
-    bool global() const;
-    bool pushGlobalCallbacks() const;
+    XSIGMA_API bool disabled() const;
+    XSIGMA_API bool global() const;
+    XSIGMA_API bool pushGlobalCallbacks() const;
 
     ProfilerState      state;
     ExperimentalConfig experimental_config;
@@ -167,11 +167,11 @@ struct XSIGMA_VISIBILITY ProfilerConfig
     std::string        trace_id;
 
     // For serialization
-    xsigma::IValue        toIValue() const;
-    static ProfilerConfig fromIValue(const xsigma::IValue& profilerConfigIValue);
+    XSIGMA_API xsigma::IValue        toIValue() const;
+    XSIGMA_API static ProfilerConfig fromIValue(const xsigma::IValue& profilerConfigIValue);
 };
 
-struct MemoryReportingInfoBase : public DebugInfoBase
+struct XSIGMA_VISIBILITY MemoryReportingInfoBase : public DebugInfoBase
 {
     /**
    * alloc_size corresponds to the size of the ptr.
@@ -199,24 +199,24 @@ struct MemoryReportingInfoBase : public DebugInfoBase
 // ----------------------------------------------------------------------------
 struct XSIGMA_VISIBILITY ProfilerStateBase : public MemoryReportingInfoBase
 {
-    explicit ProfilerStateBase(ProfilerConfig config);
+    XSIGMA_API explicit ProfilerStateBase(ProfilerConfig config);
     ProfilerStateBase(const ProfilerStateBase&)            = delete;
     ProfilerStateBase(ProfilerStateBase&&)                 = delete;
     ProfilerStateBase& operator=(const ProfilerStateBase&) = delete;
     ProfilerStateBase& operator=(ProfilerStateBase&&)      = delete;
-    ~ProfilerStateBase() override;
+    XSIGMA_API ~ProfilerStateBase() override;
 
-    static ProfilerStateBase* get(bool global);
-    static ProfilerStateBase* get()
+    XSIGMA_API static ProfilerStateBase* get(bool global);
+    static ProfilerStateBase*            get()
     {
         auto* out = get(/*global=*/true);
         return out ? out : get(/*global=*/false);
     }
 
-    static void push(std::shared_ptr<ProfilerStateBase>&& state);
+    XSIGMA_API static void push(std::shared_ptr<ProfilerStateBase>&& state);
 
-    static std::shared_ptr<ProfilerStateBase> pop(bool global);
-    static std::shared_ptr<ProfilerStateBase> pop()
+    XSIGMA_API static std::shared_ptr<ProfilerStateBase> pop(bool global);
+    static std::shared_ptr<ProfilerStateBase>            pop()
     {
         auto out = pop(/*global=*/true);
         return out ? std::move(out) : pop(/*global=*/false);
@@ -224,8 +224,8 @@ struct XSIGMA_VISIBILITY ProfilerStateBase : public MemoryReportingInfoBase
 
     const ProfilerConfig& config() const { return config_; }
 
-    void setCallbackHandle(xsigma::CallbackHandle handle);
-    void removeCallback();
+    XSIGMA_API void setCallbackHandle(xsigma::CallbackHandle handle);
+    XSIGMA_API void removeCallback();
 
     bool memoryProfilingEnabled() const override { return config_.profile_memory; }
 

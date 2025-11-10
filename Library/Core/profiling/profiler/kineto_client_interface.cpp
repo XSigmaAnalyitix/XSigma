@@ -8,6 +8,7 @@
 #include <thread>
 
 #include "profiling/autograd/profiler_kineto.h"
+#include "util/env.h"
 
 // Ondemand tracing is not supported on Apple or edge platform
 #if defined(__APPLE__) || defined(EDGE_PROFILER_USE_KINETO)
@@ -110,7 +111,7 @@ void global_kineto_init()
     if (xsigma::utils::get_env("KINETO_USE_DAEMON").has_value())
     {
         libkineto_init(
-            /*cpuOnly=*/!(xsigma::hasCUDA() || xsigma::hasXPU() || xsigma::hasMTIA()),
+            /*cpuOnly=*/!(xsigma::hasCUDA() /*|| xsigma::hasXPU() || xsigma::hasMTIA()*/),
             /*logOnError=*/true);
         libkineto::api().suppressLogMessages();
     }
