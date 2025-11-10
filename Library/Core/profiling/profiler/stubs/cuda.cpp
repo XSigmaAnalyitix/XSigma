@@ -89,7 +89,7 @@ struct CUDAMethods : public ProfilerStubs {
   }
 #else  // ROCM_ON_WINDOWS
   static void printUnavailableWarning() {
-    XSIGMA_WARN_ONCE("Warning: roctracer isn't available on Windows");
+    XSIGMA_LOG_WARNING("Warning: roctracer isn't available on Windows");
   }
   void mark(const char* name) const override {
     printUnavailableWarning();

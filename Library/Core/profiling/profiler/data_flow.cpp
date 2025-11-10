@@ -78,6 +78,8 @@ void calculateUniqueTensorIDs(std::vector<std::shared_ptr<Result>>& sorted_resul
     {
         RawTensors raw_tensors;
 
+#if 0
+        // Disabled: Python bindings not available in profiler-only build.
         // The python tracer caches values, so it's only safe to use the first case.
         ska::flat_hash_set<PyModuleSelf>    seen_modules;
         ska::flat_hash_set<PyOptimizerSelf> seen_optimizers;
@@ -122,6 +124,22 @@ void calculateUniqueTensorIDs(std::vector<std::shared_ptr<Result>>& sorted_resul
                     },
                     [&](auto& i) { raw_tensors(i); }));
         }
+#else
+        // Simplified path: only process TorchOp events when Python support is disabled.
+        for (auto& result : sorted_results)
+        {
+            result->visit(
+                xsigma::overloaded(
+                    [&](ExtraFields<EventType::TorchOp>& torch_op)
+                    {
+                        for (auto& i : torch_op.inputs_)
+                        {
+                            std::visit(raw_tensors, i);
+                        }
+                    },
+                    [&](auto& /*unused*/) { /* Skip non-TorchOp events */ }));
+        }
+#endif
         tensors = std::move(raw_tensors.tensors_);
     }
 
@@ -130,7 +148,7 @@ void calculateUniqueTensorIDs(std::vector<std::shared_ptr<Result>>& sorted_resul
     {
         size_t counter{1};
         using key_t = std::pair<StorageImplData, xsigma::device_option>;
-        ska::flat_hash_map<key_t, size_t, HashCombine> versions;
+        xsigma::flat_hash_map<key_t, size_t, HashCombine> versions;
         for (auto& t : tensors)
         {
             auto inserted = versions.insert({{t.storage_, t.device_}, counter});
@@ -146,7 +164,7 @@ void calculateUniqueTensorIDs(std::vector<std::shared_ptr<Result>>& sorted_resul
     // Handle any allocation events which we cannot prove are for Tensor storage.
     // --------------------------------------------------------------------------
     {
-        ska::flat_hash_set<AllocationID> tensor_set;
+        xsigma::flat_hash_set<AllocationID> tensor_set;
         for (const auto& t : tensors)
         {
             if (t.impl_ != NoTensorImpl)
@@ -170,9 +188,9 @@ void calculateUniqueTensorIDs(std::vector<std::shared_ptr<Result>>& sorted_resul
     // Handle the case that the storage of a TensorImpl changed.
     // --------------------------------------------------------------------------
     using storage_id_pair_t = std::pair<AllocationID, AllocationID>;
-    ska::flat_hash_set<storage_id_pair_t, HashCombine> same_group_set;
+    xsigma::flat_hash_set<storage_id_pair_t, HashCombine> same_group_set;
     {
-        ska::flat_hash_map<TensorImplAddress, AllocationID> impl_map;
+        xsigma::flat_hash_map<TensorImplAddress, AllocationID> impl_map;
         for (const auto& t : tensors)
         {
             // Storage allocations / frees don't have an associated TensorImpl, so
@@ -194,7 +212,7 @@ void calculateUniqueTensorIDs(std::vector<std::shared_ptr<Result>>& sorted_resul
 
     // Coalesce groups and assign final IDs.
     // --------------------------------------------------------------------------
-    ska::flat_hash_map<AllocationID, size_t> id_map;
+    xsigma::flat_hash_map<AllocationID, size_t> id_map;
     {
         std::vector<storage_id_pair_t> unique_pairs;
         for (const auto& i : same_group_set)

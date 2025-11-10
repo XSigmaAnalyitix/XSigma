@@ -308,9 +308,9 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused)
         .def("trace_start_ns", &ProfilerResult::trace_start_ns)
         .def("events", &ProfilerResult::events)
         .def("experimental_event_tree", &ProfilerResult::event_tree)
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
         .def("save", &ProfilerResult::save)
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
         ;
 
     m.def(
@@ -325,8 +325,8 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused)
         "_toggle_collection_dynamic",
         toggleCollectionDynamic,
         py::call_guard<py::gil_scoped_release>());
-    m.def("_add_metadata_json", addMetadataJson);  // Only if `XSIGMA_USE_KINETO` is set
-    m.def("_kineto_step", profilerStep);           // Only if `XSIGMA_USE_KINETO` is set
+    m.def("_add_metadata_json", addMetadataJson);  // Only if `XSIGMA_HAS_KINETO` is set
+    m.def("_kineto_step", profilerStep);           // Only if `XSIGMA_HAS_KINETO` is set
     m.def("kineto_available", []() { return torch::profiler::kKinetoAvailable; });
 
     // NOTICE: These record functions are not torch operators and may not show up
@@ -382,7 +382,7 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused)
         {
             std::set<torch::profiler::impl::activity_type_enum> activities{
                 torch::profiler::impl::activity_type_enum::CPU};
-#if defined(XSIGMA_USE_KINETO) && (!defined(LIBKINETO_NOCUPTI) || !defined(LIBKINETO_NOROCTRACER))
+#if XSIGMA_HAS_KINETO && (!defined(LIBKINETO_NOCUPTI) || !defined(LIBKINETO_NOROCTRACER))
             if (xsigma::hasMTIA())
             {
                 activities.insert(torch::profiler::impl::activity_type_enum::MTIA);
@@ -395,7 +395,7 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused)
             {
                 activities.insert(torch::profiler::impl::activity_type_enum::CUDA);
             }
-#elif defined(XSIGMA_USE_KINETO)
+#elif defined(XSIGMA_HAS_KINETO)
             if (xsigma::hasXPU())
             {
                 activities.insert(torch::profiler::impl::activity_type_enum::XPU);

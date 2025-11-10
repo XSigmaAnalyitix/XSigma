@@ -1,7 +1,7 @@
 #include <sstream>
 #if XSIGMA_HAS_CUDA
 #ifndef ROCM_ON_WINDOWS
-#ifdef XSIGMA_USE_NVTX3
+#ifdef XSIGMA_HAS_NVTX3
 #include <nvtx3/nvtx3.hpp>
 #else
 #include <nvToolsExt.h>

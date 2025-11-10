@@ -1376,9 +1376,9 @@ def _get_openmp_args(
         if config.is_fbcode():
             include_dir_paths.append(build_paths.openmp_include)
 
-            openmp_lib = build_paths.openmp_lib_so
-            fb_openmp_extra_flags = f"-Wp,-fopenmp {openmp_lib}"
-            passthrough_args.append(fb_openmp_extra_flags)
+            #openmp_lib = build_paths.openmp_lib_so
+            #fb_openmp_extra_flags = f"-Wp,-fopenmp {openmp_lib}"
+            #passthrough_args.append(fb_openmp_extra_flags)
 
             libs.append("omp")
         else:

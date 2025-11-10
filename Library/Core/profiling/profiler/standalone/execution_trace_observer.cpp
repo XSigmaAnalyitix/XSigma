@@ -38,6 +38,17 @@
 
 using namespace xsigma;
 
+// Stub declarations for types not available in profiler-only build
+namespace xsigma
+{
+// Stub for StorageImpl - used in execution trace observer
+struct StorageImpl : public xsigma::intrusive_ptr_target
+{
+    // Stub implementation for profiler-only build
+    const void* data() const { return nullptr; }
+};
+}  // namespace xsigma
+
 // Collective property attributes
 // https://github.com/pytorch/pytorch/issues/124674
 #ifdef USE_DISTRIBUTED
@@ -69,6 +80,8 @@ static std::string json_str_escape(const std::string& str);
 
 constexpr size_t kMaxNumElements = 4096;
 
+#if 0
+// Disabled: IValue methods (isDouble, toDouble, isInt, toInt, isBool, toBool, isString, toStringRef) not available in profiler-only build
 static std::string getScalarValue(const xsigma::IValue& val)
 {
     if (val.isDouble())
@@ -96,11 +109,23 @@ static std::string getScalarValue(const xsigma::IValue& val)
         const std::string& str_val = val.toStringRef();
         return fmt::format("\"{}\"", json_str_escape(str_val));
     }
+#else
+// Stub implementation
+static std::string getScalarValue(const xsigma::IValue& /*val*/)
+{
+    return "";
+#endif
+#if 0
+    // Disabled: IValue methods (isDevice, toDevice, tagKind) not available in profiler-only build.
     else if (val.isDevice())
     {
         return fmt::format("\"{}\"", val.toDevice().str());
     }
     return fmt::format("\"<{}>\"", val.tagKind());
+#else
+    // Fallback for profiler-only build
+    return "\"<unknown>\"";
+#endif
 }
 
 static int32_t processId()
@@ -137,6 +162,8 @@ struct XSIGMA_VISIBILITY ExecutionTraceObserver
     std::unordered_map<const void*, ID>               data_ptr_to_storage_id;
     std::unordered_map<const void*, weak_storage_ptr> data_ptr_to_weak_storage_ptr;
 
+#if 0
+    // Disabled: Storage::getWeakStorageImpl() not available in profiler-only build
     ID get_tensor_storage_ID(const xsigma::Storage& t_storage)
     {
         const std::lock_guard<std::recursive_mutex> lock(gMutex);
@@ -170,6 +197,14 @@ struct XSIGMA_VISIBILITY ExecutionTraceObserver
             }
         }
     }
+#else
+    // Stub implementation
+    ID get_tensor_storage_ID(const xsigma::Storage& /*t_storage*/)
+    {
+        const std::lock_guard<std::recursive_mutex> lock(gMutex);
+        return storage_id_++;
+    }
+#endif
 
     // Observer run state.
     enum class RunState
@@ -301,11 +336,17 @@ static std::ofstream openOutputFile(const std::string& name)
     stream.open(name, std::ofstream::out | std::ofstream::trunc);
     if (!stream)
     {
+#if 0
+        // Disabled: Logging macros not available in profiler-only build.
         LOG(ERROR) << "Failed to open '" << name << "'";
+#endif
     }
     else
     {
+#if 0
+        // Disabled: Logging macros not available in profiler-only build.
         VLOG(1) << "XSigma Execution Trace: writing to " << name;
+#endif
     }
     return stream;
 }
@@ -389,7 +430,12 @@ static void writeJsonNode(
     }
     catch (const std::exception& e)
     {
+#if 0
+        // Disabled: Logging macros not available in profiler-only build.
         LOG(ERROR) << "Failed to write json node to execution trace: " << e.what();
+#else
+        (void)e;  // Suppress unused variable warning
+#endif
     }
 }
 
@@ -455,7 +501,10 @@ static void finalizeExecutionTraceOutput(ExecutionTraceObserver& ob)
         timestamp);
 
     ob.out.close();
+#if 0
+    // Disabled: Logging macros not available in profiler-only build.
     VLOG(1) << "XSigma Execution Trace: written to file " << ob.fileName;
+#endif
 }
 
 static ExecutionTraceObserver::ID getObjectID(ExecutionTraceObserver& ob, const void* t)
@@ -487,6 +536,8 @@ static void dumpTensorData2File(std::string& tensor_dump_file_name, xsigma::Tens
     }
 }
 
+#if 0
+// Disabled: IValue methods (tagKind, isTensor, toTensor, isTuple, toTupleRef, isList, toList, isIntegralType) not available in profiler-only build
 static std::tuple<std::string, std::string, std::string, std::string> convertIValue(
     ExecutionTraceObserver&               ob,
     const std::string&                    functionName,
@@ -650,6 +701,22 @@ static std::tuple<std::string, std::string, std::string, std::string> convertIVa
         return std::make_tuple(tensor_shape, tensor_stride, tensor_type, tensor_value);
     }
 }
+#else
+// Stub implementation
+static std::tuple<std::string, std::string, std::string, std::string> convertIValue(
+    ExecutionTraceObserver& /*ob*/,
+    const std::string& /*functionName*/,
+    ExecutionTraceObserver::ID /*opId*/,
+    int& /*tensorIndex*/,
+    std::map<int, std::pair<long, long>>& /*tensor_index_min_max_map*/,
+    bool /*isInput*/,
+    const xsigma::IValue& /*val*/,
+    const bool /*baseType*/      = true,
+    const size_t /*maxArrayLen*/ = kMaxNumElements)
+{
+    return std::make_tuple("[]", "[]", "\"unknown\"", "null");
+}
+#endif
 
 static void appendValueInfo(
     ExecutionTraceObserver&               ob,
@@ -672,6 +739,8 @@ static void appendValueInfo(
     values.push_back(std::get<3>(tuple));
 }
 
+#if 0
+// Disabled: IValue methods (toStringRef, toInt) not available in profiler-only build
 static void handleKernelBackendInfo(FunctionCallContext& fc, const RecordFunction& fn)
 {
     // triton kernel related information are in kwinputs
@@ -700,6 +769,13 @@ static void handleKernelBackendInfo(FunctionCallContext& fc, const RecordFunctio
         }
     }
 }
+#else
+// Stub implementation
+static void handleKernelBackendInfo(FunctionCallContext& /*fc*/, const RecordFunction& /*fn*/)
+{
+    // Stub: IValue methods not available in profiler-only build
+}
+#endif
 
 // Additional attributes for commounication collectives
 inline std::string getCommsNodeAttrs(const RecordFunction& fn)
@@ -956,7 +1032,12 @@ static void onFunctionExit(const RecordFunction& fn, ObserverContext* ctx_ptr)
             const auto  op_schema = fn.operator_schema();
             if (op_schema.has_value())
             {
+#if 0
+                // Disabled: xsigma::toString not available in profiler-only build
                 op_schema_str = json_str_escape(xsigma::toString(op_schema.value()));
+#else
+                op_schema_str = "";  // Stub: toString not available
+#endif
             }
 
             const std::string additiona_attrs = fn.isNcclMeta() ? getCommsNodeAttrs(fn) : "";
@@ -995,8 +1076,9 @@ static void onFunctionExit(const RecordFunction& fn, ObserverContext* ctx_ptr)
         }
         catch (const std::exception& e)
         {
-            //LOG(WARNING) << "Exception in execution trace observer: [" << fc.name
-            << " (" << fc.opId << ")] " << e.what();
+            // LOG(WARNING) << "Exception in execution trace observer: [" << fc.name
+            // << " (" << fc.opId << ")] " << e.what();
+            (void)e;  // Suppress unused variable warning
         }
     }
 }
@@ -1047,12 +1129,11 @@ bool addExecutionTraceObserver(const std::string& output_file_path)
             ob.resourceDir = ob.fileName;
             // 5 is the length of ".json"
             ob.resourceDir.replace(ext_pos, 5, "_resources/");
-            VLOG(1) << "Execution trace resource directory: " << ob.resourceDir << "\n";
+            // VLOG(1) << "Execution trace resource directory: " << ob.resourceDir << "\n";
         }
         else
         {
-            //LOG(WARNING)
-            << "Execution trace output file does not end with \".json\".";
+            // LOG(WARNING) << "Execution trace output file does not end with \".json\".";
         }
 
         ob.cbHandle = addGlobalCallback(RecordFunctionCallback(&onFunctionEnter, &onFunctionExit)
@@ -1062,7 +1143,7 @@ bool addExecutionTraceObserver(const std::string& output_file_path)
         // Default to disabled.
         ob.setState(ExecutionTraceObserver::RunState::disabled);
 
-        VLOG(1) << "XSigma Execution Trace: added observer, output=" << output_file_path;
+        // VLOG(1) << "XSigma Execution Trace: added observer, output=" << output_file_path;
     }
     else if (ObserverManager::get()->cbHandle != INVALID_CALLBACK_HANDLE)
     {
@@ -1090,28 +1171,27 @@ void removeExecutionTraceObserver()
             XSIGMA_CHECK(
                 ObserverManager::pop() != nullptr,
                 "Global state ptr cannot be null before resetting");
-            VLOG(1) << "XSigma Execution Trace: removed observer";
+            // VLOG(1) << "XSigma Execution Trace: removed observer";
         }
         else
         {
-            //LOG(WARNING) << "Execution trace observer was not registered.";
+            // LOG(WARNING) << "Execution trace observer was not registered.";
         }
     }
     else
     {
-        //LOG(WARNING) << "Execution trace observer was not initialized.";
+        // LOG(WARNING) << "Execution trace observer was not initialized.";
     }
 }
 
 void enableExecutionTraceObserver()
 {
-    //LOG(WARNING) << "Enabling Execution Trace Observer";
+    // LOG(WARNING) << "Enabling Execution Trace Observer";
     auto& ob = *ObserverManager::get();
     // Make sure we are not already enabled.
     if (ob.getState() == ExecutionTraceObserver::RunState::enabled)
     {
-        //LOG(WARNING)
-        << "Trying to enable Execution Trace Observer when it's already enabled.";
+        // LOG(WARNING) << "Trying to enable Execution Trace Observer when it's already enabled.";
     }
     else
     {
@@ -1121,7 +1201,7 @@ void enableExecutionTraceObserver()
 
 void disableExecutionTraceObserver()
 {
-    //LOG(WARNING) << "Disabling Execution Trace Observer";
+    // LOG(WARNING) << "Disabling Execution Trace Observer";
     auto& ob = *ObserverManager::get();
     if (ob.getState() != ExecutionTraceObserver::RunState::disabled)
     {
@@ -1129,8 +1209,7 @@ void disableExecutionTraceObserver()
     }
     else
     {
-        //LOG(WARNING)
-        << "Trying to disable Execution Trace Observer when it's already disabled.";
+        // LOG(WARNING) << "Trying to disable Execution Trace Observer when it's already disabled.";
     }
 }
 }  // namespace xsigma::profiler::impl

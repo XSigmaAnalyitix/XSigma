@@ -11,7 +11,7 @@
 #include <type_traits>
 #include <utility>
 
-#if XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 #include <libkineto.h>
 #endif
 
@@ -860,7 +860,7 @@ void mark_finished(std::shared_ptr<Result>& r)
     XSIGMA_CHECK(r->endTimeNS() >= r->start_time_ns_, r->name());
 }
 
-#if XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 // Assumption: Total threads number will not exceed 2^16-1, and total ops will
 // not exceed 2^48 -1.
 static uint64_t getForwardThreadKey(uint64_t tid, uint64_t seqNr)
@@ -922,15 +922,15 @@ void generateForwardBackwardLink(
         }
     }
 }
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 
 void generateForwardBackwardLinks(
     std::unique_ptr<xsigma::profiler::impl::kineto::trace_t>& cpu_trace,
     const std::vector<std::shared_ptr<Result>>&               results)
 {
-#ifndef XSIGMA_USE_KINETO
+#ifndef XSIGMA_HAS_KINETO
 }
-#else   // XSIGMA_USE_KINETO
+#else   // XSIGMA_HAS_KINETO
     XSIGMA_CHECK(cpu_trace->activities.size() == results.size());
 
     // startThreadId_seqNum to pointer of activity.
@@ -980,7 +980,7 @@ void generateForwardBackwardLinks(
         generateForwardBackwardLink(*profiler_result, fwd_bwd_link_id, *activity, tidSeq2activity);
     }
 }
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 
 static constexpr const char* indexKey = "Ev Idx";
 
@@ -1042,7 +1042,7 @@ void passEventsToKineto(
     cpu_trace.transferCpuTrace(static_cast<int64_t>(end_time_ns));
 }
 
-#if XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 // There are two mechanisms that we use to connect Profiler and Kineto events.
 // The first is the correlation ID. The profiler pushes a unique integer at the
 // start of an op and pops it at the end. Kineto then associates the events
@@ -1271,7 +1271,7 @@ private:
     void setParents()
     {
         // First pass: Collect start events and set parent to linked event.
-        ska::flat_hash_map<uint32_t, std::shared_ptr<Result>> flow_map;
+        xsigma::flat_hash_map<uint32_t, std::shared_ptr<Result>> flow_map;
         for (auto& e : results_.get())
         {
             XSIGMA_CHECK(e != nullptr);
@@ -1336,10 +1336,10 @@ private:
 
     static constexpr long long unmatchedIndex = -1;
     static constexpr auto      noTID          = std::numeric_limits<uint64_t>::max();
-    std::reference_wrapper<std::vector<std::shared_ptr<Result>>> results_;
-    const ProfilerConfig&                                        config_;
-    std::vector<const itrace_t*>                                 trace_activities_;
-    ska::flat_hash_map<const itrace_t*, std::shared_ptr<Result>> kineto_events_;
+    std::reference_wrapper<std::vector<std::shared_ptr<Result>>>    results_;
+    const ProfilerConfig&                                           config_;
+    std::vector<const itrace_t*>                                    trace_activities_;
+    xsigma::flat_hash_map<const itrace_t*, std::shared_ptr<Result>> kineto_events_;
 };
 #else
 class XSIGMA_VISIBILITY TransferEvents
@@ -1400,7 +1400,7 @@ void build_tree(std::vector<std::shared_ptr<Result>>& sorted_events)
     set_in_tree_building(sorted_events, true);
 
     using op_fields = ExtraFields<EventType::TorchOp>;
-    ska::flat_hash_map<uint64_t, std::shared_ptr<Result>>                       stacks;
+    xsigma::flat_hash_map<uint64_t, std::shared_ptr<Result>>                    stacks;
     std::priority_queue<result_ptr_t, std::vector<result_ptr_t>, ResultGreater> end_events_;
 
     auto push_event = [&stacks, &end_events_](std::shared_ptr<Result>& event)

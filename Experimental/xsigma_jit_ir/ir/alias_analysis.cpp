@@ -31,7 +31,7 @@ xsigma::MaybeOwned<TypePtr> toSingleType(const AliasTypeSet& mut_types)
 class MutableTypePtrHelper
 {
 public:
-    explicit MutableTypePtrHelper(ska::flat_hash_map<TypePtr, AliasTypeSet>* mutable_type_cache)
+    explicit MutableTypePtrHelper(xsigma::flat_hash_map<TypePtr, AliasTypeSet>* mutable_type_cache)
         : mutable_type_cache_(mutable_type_cache)
     {
     }
@@ -174,11 +174,11 @@ private:
             return std::nullopt;
         }
     }
-    ska::flat_hash_map<TypePtr, AliasTypeSet>* mutable_type_cache_;
+    xsigma::flat_hash_map<TypePtr, AliasTypeSet>* mutable_type_cache_;
 };
 
 bool isMutableTypeImpl(
-    const TypePtr& type, ska::flat_hash_map<TypePtr, AliasTypeSet>* mutable_type_cache)
+    const TypePtr& type, xsigma::flat_hash_map<TypePtr, AliasTypeSet>* mutable_type_cache)
 {
     // Check common cases to avoid recursively constructing type in
     // `mapTypeToAliasTypeSetPtrImpl`

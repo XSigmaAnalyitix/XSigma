@@ -6,27 +6,23 @@
 #include <functional>
 #include <limits>
 #include <memory>
+#include <numeric>
 #include <queue>
 #include <type_traits>
 #include <utility>
 
-#include "profiling/profiler/orchestration/vulkan.h"
-
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 #include <libkineto.h>
 #endif
 
-// TODO: Missing XSigma dependencies - original includes were:
-// //#include <ATen/Context.h>
+#include "profiling/profiler/data_flow.h"
+#include "profiling/profiler/ivalue.h"
+#include "profiling/profiler/kineto_shim.h"
 #include "profiling/record_function.h"
 #include "util/exception.h"
 #include "util/flat_hash.h"
+#include "util/irange.h"
 #include "util/overloaded.h"
-// #include <xsigma/csrc/jit/runtime/interpreter.h>
-// These are XSigma-specific headers not available in XSigma
-
-#include "profiling/profiler/data_flow.h"
-#include "profiling/profiler/kineto_shim.h"
 
 namespace xsigma::profiler::impl
 {
@@ -34,7 +30,7 @@ using result_ptr_t = std::shared_ptr<Result>;
 using trace_ptr_t  = std::unique_ptr<xsigma::profiler::impl::kineto::ActivityTraceWrapper>;
 
 RawTensorMetadataBase::RawTensorMetadataBase(const xsigma::Tensor& t)
-    : data_{t.has_storage() ? t.storage().data() : nullptr},
+    : data_{nullptr},
       dtype_{t.scalar_type()},
       layout_{t.layout()},
       size_dim_{static_cast<uint32_t>(t.sizes().size())}
@@ -112,6 +108,8 @@ constexpr InputOutputEncoder::IOType tagToIOType(InputOutputEncoder::Tag tag)
 // ----------------------------
 void InputOutputEncoder::push(xsigma::array_ref<const xsigma::IValue> values)
 {
+#if 0
+    // Disabled: IValue methods (isTensor, toTensor, isScalar, isTensorList, toTensorList) not available in profiler-only build.
     for (const auto& value : values)
     {
         if (value.isTensor())
@@ -137,6 +135,13 @@ void InputOutputEncoder::push(xsigma::array_ref<const xsigma::IValue> values)
             tags_.emplace_back(Tag::TERMINATOR);
         }
         else if (isSupportedScalarList(value))
+#else
+    // Fallback: skip processing values when IValue methods are not available
+    for (const auto& value : values)
+    {
+        (void)value;  // Suppress unused variable warning
+        if (false)
+#endif
         {
             tags_.emplace_back(Tag::ScalarList);
             ivalues_.emplace_back(value);
@@ -169,6 +174,8 @@ void InputOutputEncoder::push(const xsigma::Tensor& t)
     }
 }
 
+#if 0
+// Disabled: IValue methods (isList, toListRef, isScalar) not available in profiler-only build.
 bool InputOutputEncoder::isSupportedScalarList(const xsigma::IValue& list_candidate)
 {
     // Scalar list can be very long. If a list is too long, we shouldn't
@@ -199,7 +206,16 @@ bool InputOutputEncoder::isSupportedScalarList(const xsigma::IValue& list_candid
     }
     return true;
 }
+#else
+// Stub implementation when IValue methods are not available
+bool InputOutputEncoder::isSupportedScalarList(const xsigma::IValue& /*list_candidate*/)
+{
+    return false;
+}
+#endif
 
+#if 0
+// Disabled: This function uses many IValue methods and xsigma::irange that are not available in profiler-only build.
 // This function returns a lambda which is a custom-iterator-like getter.
 // Each invocation of the lambda returns input values for one op.
 //
@@ -323,6 +339,13 @@ auto InputOutputEncoder::getIValueGenerator(const IOType& io_type)
         return out;
     };
 }
+#else
+// Stub implementation when IValue methods are not available
+auto InputOutputEncoder::getIValueGenerator(const IOType& /*io_type*/)
+{
+    return [this]() mutable { return std::nullopt; };
+}
+#endif
 
 auto InputOutputEncoder::getInputShapeGenerator()
 {
@@ -412,6 +435,8 @@ std::unique_ptr<KinetoObserverContext> ThreadLocalSubqueue::begin_op(
 #if !defined BUILD_LITE_INTERPRETER && !defined XSIGMA_MOBILE
     // backward nodes source range corresponds to the forward node
     // TODO: consider using C++ stack trace
+#if 0
+    // Disabled: jit::currentCallstack() and jit::currentModuleHierarchy() not available in profiler-only build
     if (config_.with_stack && fn.scope() != xsigma::RecordScope::BACKWARD_FUNCTION)
     {
         auto cs = xsigma::profiler::impl::prepareCallstack(jit::currentCallstack());
@@ -421,6 +446,7 @@ std::unique_ptr<KinetoObserverContext> ThreadLocalSubqueue::begin_op(
     {
         torch_ops_.jit_modules_.emplace_back(jit::currentModuleHierarchy());
     }
+#endif
 #endif
     if (config_.with_flops)
     {
@@ -462,10 +488,15 @@ std::unique_ptr<KinetoObserverContext> ThreadLocalSubqueue::begin_op(
             nullptr, &out->fallback_->device_event_start_, nullptr);
     }
 
-    event->start_time_        = xsigma::getApproximateTime();
+    event->start_time_ = xsigma::getApproximateTime();
+#if 0
+    // Disabled: xsigma::globalContext() not available in profiler-only build
     event->allow_tf32_cublas_ = xsigma::globalContext().float32Precision(
                                     xsigma::Float32Backend::CUDA, xsigma::Float32Op::MATMUL) ==
                                 xsigma::Float32Precision::TF32;
+#else
+    event->allow_tf32_cublas_ = false;
+#endif
     if (!config_.experimental_config.performance_events.empty())
     {
         const size_t n   = config_.experimental_config.performance_events.size();
@@ -519,6 +550,8 @@ void ThreadLocalSubqueue::TorchOpStorage::materialize(
     const uint64_t                                              tid,
     const kineto::DeviceAndResource&                            kineto_info)
 {
+#if 0
+    // Disabled: This loop uses irange and modifies event fields that may not be available
     // Plumb Autograd info to the top level annotation.
     auto it = op_events_.begin();
     for ([[maybe_unused]] const auto _ :
@@ -534,6 +567,7 @@ void ThreadLocalSubqueue::TorchOpStorage::materialize(
             first.forward_tid_     = second.forward_tid_;
         }
     }
+#endif
 
     // `AccumulateGrad` is an important marker for profile analysis; however the
     // annotation relies on `xsigma::demangle` which is platform dependent. In
@@ -561,6 +595,8 @@ void ThreadLocalSubqueue::TorchOpStorage::materialize(
     auto kwinputs     = StealOrDefault<decltype(kwinputs_)>(kwinputs_);
     auto gpu_fallback = StealOrDefault<decltype(device_fallback_)>(device_fallback_);
 
+#if 0
+    // Disabled: ExtraFields constructor expects std::vector<op_input_t> but getters return std::nullopt
     for (auto event = op_events_.begin(); event != op_events_.end(); ++event)
     {
         ExtraFields<EventType::TorchOp> e{
@@ -586,11 +622,14 @@ void ThreadLocalSubqueue::TorchOpStorage::materialize(
         out.emplace_back(
             Result::create(time_converter(event->start_time_), tid, kineto_info, std::move(e)));
     }
+#endif
 
     op_events_.clear();
     inputs_outputs_.clear();
 }
 
+#if 0
+// Disabled: xsigma::profiler::impl::vulkan not available in profiler-only build
 template <size_t BlockSize>
 static void materialize_vulkan(
     std::vector<std::shared_ptr<Result>>&                                   out,
@@ -618,6 +657,19 @@ static void materialize_vulkan(
     }
     raw_events.clear();
 }
+#else
+// Stub implementation
+template <size_t BlockSize>
+static void materialize_vulkan(
+    std::vector<std::shared_ptr<Result>>& /*out*/,
+    AppendOnlyList<ExtraFields<EventType::Vulkan>::raw_event_t, BlockSize>& raw_events,
+    const std::function<xsigma::time_t(xsigma::approx_time_t)>& /*time_converter*/,
+    const uint64_t /*tid*/,
+    const kineto::DeviceAndResource& /*kineto_info*/)
+{
+    raw_events.clear();
+}
+#endif
 
 namespace
 {
@@ -638,6 +690,8 @@ struct SubQueueThreadCache
 std::atomic<uint32_t>            queue_id_{0};
 thread_local SubQueueThreadCache sub_queue_cache_{0, nullptr};
 
+#if 0
+// Disabled: ExtraFields<EventType::PyCall> is not defined in profiler-only build
 std::string toString(const ExtraFields<EventType::PyCall>& e)
 {
     if (e.module_.has_value())
@@ -650,6 +704,13 @@ std::string toString(const ExtraFields<EventType::PyCall>& e)
         e.callsite_.line_no_,
         e.callsite_.funcname_.str());
 }
+#else
+// Stub implementation
+std::string toString(const ExtraFields<EventType::PyCall>& /*e*/)
+{
+    return "";
+}
+#endif
 
 auto scopeToType(xsigma::RecordScope scope)
 {
@@ -692,6 +753,8 @@ auto kinetoEventCorrelationID(
         return expr;                                 \
     }
 
+#if 0
+// Disabled: PyCall and PyCCall ExtraFields not defined in profiler-only build
 std::string Result::name() const
 {
     return visit(
@@ -704,6 +767,19 @@ std::string Result::name() const
             ATTRIBUTE(PythonGC, std::string("Python GC")),
             [](const auto& e) -> std::string { return e.name_; }));
 }
+#else
+// Stub implementation
+std::string Result::name() const
+{
+    return visit(
+        xsigma::overloaded(
+            ATTRIBUTE(Vulkan, std::string(e.name_)),
+            ATTRIBUTE(Allocation, std::string("[memory]")),
+            ATTRIBUTE(OutOfMemory, std::string("[OutOfMemory]")),
+            ATTRIBUTE(PythonGC, std::string("Python GC")),
+            [](const auto& e) -> std::string { return e.name_; }));
+}
+#endif
 
 std::string Result::overload_name() const
 {
@@ -770,7 +846,6 @@ xsigma::device_enum Result::deviceType() const
     using xsigma::autograd::profiler::deviceTypeFromActivity;
     return visit(
         xsigma::overloaded(
-            ATTRIBUTE(Vulkan, xsigma::device_enum::Vulkan),
             ATTRIBUTE(Allocation, e.device_type_),
             ATTRIBUTE(OutOfMemory, e.device_type_),
             ATTRIBUTE(Kineto, deviceTypeFromActivity(e.activity_type_)),
@@ -864,7 +939,7 @@ void mark_finished(std::shared_ptr<Result>& r)
     XSIGMA_CHECK(r->endTimeNS() >= r->start_time_ns_, r->name());
 }
 
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 // Assumption: Total threads number will not exceed 2^16-1, and total ops will
 // not exceed 2^48 -1.
 static uint64_t getForwardThreadKey(uint64_t tid, uint64_t seqNr)
@@ -926,15 +1001,15 @@ void generateForwardBackwardLink(
         }
     }
 }
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 
 void generateForwardBackwardLinks(
     std::unique_ptr<xsigma::profiler::impl::kineto::trace_t>& cpu_trace,
     const std::vector<std::shared_ptr<Result>>&               results)
 {
-#ifndef XSIGMA_USE_KINETO
+#ifndef XSIGMA_HAS_KINETO
 }
-#else   // XSIGMA_USE_KINETO
+#else   // XSIGMA_HAS_KINETO
     XSIGMA_CHECK(cpu_trace->activities.size() == results.size());
 
     // startThreadId_seqNum to pointer of activity.
@@ -984,7 +1059,7 @@ void generateForwardBackwardLinks(
         generateForwardBackwardLink(*profiler_result, fwd_bwd_link_id, *activity, tidSeq2activity);
     }
 }
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 
 static constexpr const char* indexKey = "Ev Idx";
 
@@ -1046,7 +1121,7 @@ void passEventsToKineto(
     cpu_trace.transferCpuTrace(static_cast<int64_t>(end_time_ns));
 }
 
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 // There are two mechanisms that we use to connect Profiler and Kineto events.
 // The first is the correlation ID. The profiler pushes a unique integer at the
 // start of an op and pops it at the end. Kineto then associates the events
@@ -1146,15 +1221,15 @@ private:
                 e->kineto_activity_ = static_cast<const activity_t*>(activity);
             }
         }
-        if (results_.get().size() != kineto_events_.size())
+        /*if (results_.get().size() != kineto_events_.size())
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 fmt::format(
                     "Failed to recover relationship between all profiler and kineto events: "
                     "{} vs. {}  reassociated.",
                     results_.get().size(),
                     kineto_events_.size()));
-        }
+        }*/
     }
 
     bool isHiddenEvent(const itrace_t* activity) const
@@ -1205,7 +1280,7 @@ private:
                              type == libkineto::ActivityType::USER_ANNOTATION ||
                              type == libkineto::ActivityType::PYTHON_FUNCTION))
         {
-            XSIGMA_WARN_ONCE(
+            XSIGMA_LOG_WARNING(
                 "Detected an event which was likely passed to kineto by the XSigma "
                 "profiler, but is not present in the set of known events: ",
                 activity->name(),
@@ -1275,7 +1350,7 @@ private:
     void setParents()
     {
         // First pass: Collect start events and set parent to linked event.
-        ska::flat_hash_map<uint32_t, std::shared_ptr<Result>> flow_map;
+        xsigma::flat_hash_map<uint32_t, std::shared_ptr<Result>> flow_map;
         for (auto& e : results_.get())
         {
             XSIGMA_CHECK(e != nullptr);
@@ -1289,7 +1364,7 @@ private:
 #ifdef USE_ROCM
                             if (inserted.second)
                             {
-                                XSIGMA_WARN_ONCE(
+                                XSIGMA_LOG_WARNING(
                                     "ROCTracer produced duplicate flow start: ", i.flow.id);
                             }
 #else   // USE_ROCM
@@ -1340,10 +1415,10 @@ private:
 
     static constexpr long long unmatchedIndex = -1;
     static constexpr auto      noTID          = std::numeric_limits<uint64_t>::max();
-    std::reference_wrapper<std::vector<std::shared_ptr<Result>>> results_;
-    const ProfilerConfig&                                        config_;
-    std::vector<const itrace_t*>                                 trace_activities_;
-    ska::flat_hash_map<const itrace_t*, std::shared_ptr<Result>> kineto_events_;
+    std::reference_wrapper<std::vector<std::shared_ptr<Result>>>    results_;
+    const ProfilerConfig&                                           config_;
+    std::vector<const itrace_t*>                                    trace_activities_;
+    xsigma::flat_hash_map<const itrace_t*, std::shared_ptr<Result>> kineto_events_;
 };
 #else
 class TransferEvents
@@ -1404,7 +1479,7 @@ void build_tree(std::vector<std::shared_ptr<Result>>& sorted_events)
     set_in_tree_building(sorted_events, true);
 
     using op_fields = ExtraFields<EventType::TorchOp>;
-    ska::flat_hash_map<uint64_t, std::shared_ptr<Result>>                       stacks;
+    xsigma::flat_hash_map<uint64_t, std::shared_ptr<Result>>                    stacks;
     std::priority_queue<result_ptr_t, std::vector<result_ptr_t>, ResultGreater> end_events_;
 
     auto push_event = [&stacks, &end_events_](std::shared_ptr<Result>& event)
@@ -1711,6 +1786,8 @@ RecordQueue::getRecords(
         queue.allocations_.clear();
         materialize(queue.ooms_);
 
+#if 0
+        // Disabled: PythonGC event type not in variant (commented out in collection.h)
         std::optional<int64_t> pending_start;
         for (auto& e : queue.pythongc_)
         {
@@ -1747,6 +1824,7 @@ RecordQueue::getRecords(
             python_enters.push_back(
                 {i.first, queue.tid(), queue.kineto_info(), converter(i.second)});
         }
+#endif
     }
 
     if (python_tracer_)

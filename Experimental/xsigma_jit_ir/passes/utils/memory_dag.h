@@ -126,9 +126,9 @@ public:
     // Adding wildcards can trigger extremely expensive cache invalidations. This
     // method adds them in a more efficient cache-aware way.
     void setWildcards(
-        const std::unordered_set<const Value*>&           wildcards,
-        const ska::flat_hash_map<const Value*, Element*>& elementMap,
-        const std::function<Element*(const Value*)>&      getWildcardElement);
+        const std::unordered_set<const Value*>&              wildcards,
+        const xsigma::flat_hash_map<const Value*, Element*>& elementMap,
+        const std::function<Element*(const Value*)>&         getWildcardElement);
     Element* unsafeMakeFreshValue(const Value* v);
 
 private:

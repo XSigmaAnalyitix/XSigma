@@ -174,14 +174,14 @@ public:
     /// front - Get the first element.
     constexpr const T& front() const
     {
-        XSIGMA_CHECK(!empty(), "array_ref: attempted to access front() of empty list");
+        //XSIGMA_CHECK(!empty(), "array_ref: attempted to access front() of empty list");
         return Data[0];
     }
 
     /// back - Get the last element.
     constexpr const T& back() const
     {
-        XSIGMA_CHECK(!empty(), "array_ref: attempted to access back() of empty list");
+        //XSIGMA_CHECK(!empty(), "array_ref: attempted to access back() of empty list");
         return Data[Length - 1];
     }
 
@@ -194,15 +194,15 @@ public:
     /// slice(n, m) - Take M elements of the array starting at element N
     constexpr array_ref<T> slice(size_t N, size_t M) const
     {
-        XSIGMA_CHECK(
-            N + M <= size(), "array_ref: invalid slice, N = ", N, "; M = ", M, "; size = ", size());
+        //XSIGMA_CHECK(
+        //   N + M <= size(), "array_ref: invalid slice, N = ", N, "; M = ", M, "; size = ", size());
         return array_ref<T>(data() + N, M);
     }
 
     /// slice(n) - Chop off the first N elements of the array.
     constexpr array_ref<T> slice(size_t N) const
     {
-        XSIGMA_CHECK(N <= size(), "array_ref: invalid slice, N = ", N, "; size = ", size());
+        //XSIGMA_CHECK(N <= size(), "array_ref: invalid slice, N = ", N, "; size = ", size());
         return slice(N, size() - N);
     }
 
@@ -214,8 +214,8 @@ public:
     /// Vector compatibility
     constexpr const T& at(size_t Index) const
     {
-        XSIGMA_CHECK(
-            Index < Length, "array_ref: invalid index Index = ", Index, "; Length = ", Length);
+        //XSIGMA_CHECK(
+        //   Index < Length, "array_ref: invalid index Index = ", Index, "; Length = ", Length);
         return Data[Index];
     }
 

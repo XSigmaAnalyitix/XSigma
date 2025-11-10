@@ -214,7 +214,7 @@ struct Config<CallType::PyCall>
 {
     using key_t                           = CodeLocation;
     using ephemeral_t                     = no_ephemeral_t;
-    using cache_t                         = ska::flat_hash_map<key_t, PyFrameState>;
+    using cache_t                         = xsigma::flat_hash_map<key_t, PyFrameState>;
     static constexpr EventType event_type = EventType::PyCall;
 };
 
@@ -235,8 +235,8 @@ class XSIGMA_VISIBILITY ExtendedPyCallConfig
     {
         // `nn.Module.forward` or `optim.Optimizer._optimizer_step_code`
         std::optional<CodeLocation>                 location_;
-        ska::flat_hash_map<key_t, ClsAndParameters> cls_and_parameters_;
-        ska::flat_hash_map<cls_t, xsigma::StringView>   cls_names_;
+        xsigma::flat_hash_map<key_t, ClsAndParameters> cls_and_parameters_;
+        xsigma::flat_hash_map<cls_t, xsigma::StringView>   cls_names_;
     };
     using cache_t = Cache;
 
@@ -260,7 +260,7 @@ struct Config<CallType::PyCCall>
 {
     using key_t                           = PyMethod;
     using ephemeral_t                     = PyObject*;
-    using cache_t                         = ska::flat_hash_map<key_t, xsigma::StringView>;
+    using cache_t                         = xsigma::flat_hash_map<key_t, xsigma::StringView>;
     static constexpr EventType event_type = EventType::PyCCall;
 };
 
@@ -588,7 +588,7 @@ class XSIGMA_VISIBILITY TraceKeyCacheState
             value_cache.load<CallType::PyCall>(callsite.caller_));
     }
 
-    ska::flat_hash_map<Callsite<C>, TraceKey, Hash> state_;
+    xsigma::flat_hash_map<Callsite<C>, TraceKey, Hash> state_;
 };
 
 // ============================================================================
@@ -1435,7 +1435,7 @@ private:
             }
         };
 
-        ska::flat_hash_map<size_t, stack_t> stacks;
+        xsigma::flat_hash_map<size_t, stack_t> stacks;
         auto&                               state = get_state<E>();
         // We already own the GIL at this point
         for (const auto& enter : enters)
@@ -1469,7 +1469,7 @@ private:
 
         // Assign system TIDs to start events based on the system TID of the next
         // observed event with the same Python TID.
-        ska::flat_hash_map<size_t, std::pair<size_t, kineto::DeviceAndResource>> tid_map;
+        xsigma::flat_hash_map<size_t, std::pair<size_t, kineto::DeviceAndResource>> tid_map;
         auto                                                                     it = out.rbegin();
         for ([[maybe_unused]] auto _ : xsigma::irange(initial_size, out.size()))
         {
@@ -1490,7 +1490,7 @@ private:
     template <EventType E>
     struct State
     {
-        ska::flat_hash_map<TraceKey, ExtraFields<E>>                 fields_;
+        xsigma::flat_hash_map<TraceKey, ExtraFields<E>>                 fields_;
         std::priority_queue<Exit, std::vector<Exit>, std::greater<>> exits_;
     };
 
@@ -1529,7 +1529,7 @@ class XSIGMA_VISIBILITY PythonIDVisitor
     }
 
     size_t                                                                    current_python_id_{0};
-    ska::flat_hash_map<PyModuleCls, ska::flat_hash_map<PyModuleSelf, size_t>> module_ids_;
+    xsigma::flat_hash_map<PyModuleCls, xsigma::flat_hash_map<PyModuleSelf, size_t>> module_ids_;
 };
 
 std::vector<std::shared_ptr<Result>> PythonTracer::getEvents(

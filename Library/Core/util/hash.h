@@ -393,6 +393,17 @@ struct hash<std::vector<T>>
     size_t operator()(const std::vector<T>& v) const { return hash<xsigma::array_ref<T>>()(v); }
 };
 
+// Specialization for device_option
+template <>
+struct hash<xsigma::device_option>
+{
+    size_t operator()(const xsigma::device_option& opt) const
+    {
+        return hash_combine(
+            _hash_detail::simple_get_hash(opt.type()), _hash_detail::simple_get_hash(opt.index()));
+    }
+};
+
 namespace _hash_detail
 {
 

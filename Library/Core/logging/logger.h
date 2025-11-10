@@ -501,6 +501,7 @@ private:
  * @param ... Optional arguments to format
  */
 #define XSIGMA_LOG_WARNING(format_string, ...) XSIGMA_LOG(WARNING, format_string, ##__VA_ARGS__)
+//#define XSIGMA_WARN_ONCE(format_string, ...) XSIGMA_LOG_WARNING(format_string, ##__VA_ARGS__)
 
 /**
  * @brief Log an error message.

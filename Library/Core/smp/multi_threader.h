@@ -9,19 +9,19 @@
  * execution using pthreads on POSIX systems, or Win32 threads on
  * Windows. This class can be used to execute a single
  * method on multiple threads, or to specify a method per thread.
- * 
+ *
  * This class serves as the foundational threading infrastructure for the XSIGMA
  * library, providing a unified interface for multi-threaded operations across
  * different platforms. It abstracts away the platform-specific threading
  * implementations (pthreads, Win32 threads) and provides a consistent API.
- * 
+ *
  * The class supports two main modes of operation:
  * 1. Single Method Execution - where the same function runs across multiple threads
  * 2. Multiple Method Execution - where different functions can be assigned to different threads
- * 
+ *
  * Additionally, it provides functionality to spawn individual threads outside of
  * the main thread pool, useful for background processing tasks.
- * 
+ *
  * Thread management is handled internally, including thread creation, execution,
  * and termination. The class also provides utilities for controlling the number of
  * threads and handling thread priorities.
@@ -34,18 +34,18 @@
 
 #include "common/macros.h"
 #include "common/macros.h"   // for XSIGMA_DELETE_COPY
-#include "xsigma_threads.h"  // for XSIGMA_MAX_THREADS, XSIGMA_USE_PTHREADS
+#include "xsigma_threads.h"  // for XSIGMA_MAX_THREADS, XSIGMA_HAS_PTHREADS
 
-#if defined(XSIGMA_USE_PTHREADS)
+#if defined(XSIGMA_HAS_PTHREADS)
 #include <pthread.h>    // Needed for PTHREAD implementation of mutex
 #include <sys/types.h>  // Needed for unix implementation of pthreads
 #include <unistd.h>     // Needed for unix implementation of pthreads
 #endif
 
-// If XSIGMA_USE_PTHREADS is defined, then pthread_create() will be
+// If XSIGMA_HAS_PTHREADS is defined, then pthread_create() will be
 // used to create multiple threads
 
-// If XSIGMA_USE_PTHREADS is defined, then the multithreaded
+// If XSIGMA_HAS_PTHREADS is defined, then the multithreaded
 // function is of type void *, and returns nullptr
 // Otherwise the type is void which is correct for WIN32
 
@@ -55,7 +55,7 @@
 //   __XSIGMA_THREAD_RETURN_TYPE__ - Return type for thread functions
 
 // Define platform-specific thread function types and thread ID types
-#ifdef XSIGMA_USE_PTHREADS
+#ifdef XSIGMA_HAS_PTHREADS
 typedef void* (*xsigmaThreadFunctionType)(void*);  // NOLINT
 typedef pthread_t xsigmaThreadProcessIDType;
 // #define __XSIGMA_THREAD_RETURN_VALUE__  nullptr
@@ -63,7 +63,7 @@ typedef pthread_t xsigmaThreadProcessIDType;
 typedef pthread_t xsigmaMultiThreaderIDType;
 #endif
 
-#ifdef XSIGMA_USE_WIN32_THREADS
+#ifdef XSIGMA_HAS_WIN32_THREADS
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -90,7 +90,7 @@ using xsigmaMultiThreaderIDType = xsigmaWindowsDWORD;
 #endif
 
 // Fallback definitions for platforms without specific threading support
-#if !defined(XSIGMA_USE_PTHREADS) && !defined(XSIGMA_USE_WIN32_THREADS)
+#if !defined(XSIGMA_HAS_PTHREADS) && !defined(XSIGMA_HAS_WIN32_THREADS)
 using xsigmaThreadFunctionType  = void (*)(void*);
 using xsigmaThreadProcessIDType = int;
 // #define __XSIGMA_THREAD_RETURN_VALUE__
@@ -102,10 +102,10 @@ namespace xsigma
 {
 /**
  * @brief Main multi-threading utility class for cross-platform thread management
- * 
+ *
  * This class provides a uniform interface for thread management across
  * different platforms (Windows, POSIX). It supports various threading models
- * including parallel execution of a single method, concurrent execution of 
+ * including parallel execution of a single method, concurrent execution of
  * multiple methods, and individual thread spawning.
  */
 class XSIGMA_VISIBILITY multi_threader
@@ -113,7 +113,7 @@ class XSIGMA_VISIBILITY multi_threader
 public:
     /**
      * @brief Default constructor
-     * 
+     *
      * Initializes a multi_threader instance with the default number of threads
      * based on system capabilities and global configuration.
      */
@@ -128,7 +128,7 @@ public:
 
     /**
      * @brief Thread information structure passed to thread functions
-     * 
+     *
      * This structure contains information about the thread context including:
      * - ThreadID: A unique identifier for the thread (0 to NumberOfThreads-1)
      * - NumberOfThreads: Total number of threads in the pool
@@ -149,10 +149,10 @@ public:
     ///@{
     /**
      * @brief Set the number of threads to use for parallel operations
-     * 
+     *
      * The number will be clamped to the range 1 - XSIGMA_MAX_THREADS.
      * Use GetNumberOfThreads() after setting to confirm the actual value.
-     * 
+     *
      * @param _arg Desired number of threads
      */
     void SetNumberOfThreads(int _arg);
@@ -171,10 +171,10 @@ public:
 
     /**
      * @brief Get the effective number of threads that will be used
-     * 
+     *
      * This returns the actual number of threads that will be used, which
      * may be less than the set number if the global maximum is lower.
-     * 
+     *
      * @return Effective number of threads
      */
     virtual int GetNumberOfThreads();
@@ -183,10 +183,10 @@ public:
     ///@{
     /**
      * @brief Get the maximum number of threads supported by the system
-     * 
+     *
      * This is the absolute upper limit on threads, as defined by
      * XSIGMA_MAX_THREADS in the configuration.
-     * 
+     *
      * @return Maximum supported thread count
      */
     static int GetGlobalStaticMaximumNumberOfThreads();
@@ -195,10 +195,10 @@ public:
     ///@{
     /**
      * @brief Set/Get the global maximum number of threads to use
-     * 
+     *
      * This setting affects all multi_threader instances in the application.
      * A value of zero indicates no limit (uses the static maximum).
-     * 
+     *
      * @param val Maximum number of threads to use globally
      * @return Current global maximum thread count
      */
@@ -209,11 +209,11 @@ public:
     ///@{
     /**
      * @brief Set/Get the default number of threads for new instances
-     * 
+     *
      * This value is used to initialize the NumberOfThreads in the constructor.
      * By default, it's set to the number of processors or XSIGMA_MAX_THREADS,
      * whichever is less.
-     * 
+     *
      * @param val Default number of threads for new instances
      * @return Current default thread count
      */
@@ -223,7 +223,7 @@ public:
 
     /**
      * @brief Execute a single method across multiple threads
-     * 
+     *
      * Executes the method specified by SetSingleMethod() on this->NumberOfThreads
      * threads. Each thread receives a ThreadInfo structure with a unique ThreadID.
      */
@@ -231,7 +231,7 @@ public:
 
     /**
      * @brief Execute multiple methods concurrently
-     * 
+     *
      * Executes the methods set with SetMultipleMethod() on this->NumberOfThreads
      * threads. Each method is executed on its corresponding thread.
      */
@@ -239,7 +239,7 @@ public:
 
     /**
      * @brief Set the single method to execute across all threads
-     * 
+     *
      * @param f Function pointer to execute (must be of type xsigmaThreadFunctionType)
      * @param data User data to pass to each thread (available in ThreadInfo)
      */
@@ -247,7 +247,7 @@ public:
 
     /**
      * @brief Set a specific method for a particular thread
-     * 
+     *
      * @param index Thread index (0 to NumberOfThreads-1)
      * @param f Function pointer to execute on the specified thread
      * @param data User data to pass to the thread
@@ -256,10 +256,10 @@ public:
 
     /**
      * @brief Create a new thread for a specific function
-     * 
+     *
      * Creates a new thread outside the main thread pool. Returns a thread ID
      * which can be used to terminate the thread later.
-     * 
+     *
      * @param f Function to execute in the new thread
      * @param data User data to pass to the thread
      * @return Thread ID for the new thread (0 to XSIGMA_MAX_THREADS-1)
@@ -268,14 +268,14 @@ public:
 
     /**
      * @brief Terminate a thread created with SpawnThread
-     * 
+     *
      * @param threadId Thread ID returned by SpawnThread
      */
     void TerminateThread(int threadId);
 
     /**
      * @brief Check if a spawned thread is still active
-     * 
+     *
      * @param threadId Thread ID to check
      * @return true if the thread is still running, false otherwise
      */
@@ -283,14 +283,14 @@ public:
 
     /**
      * @brief Get the thread identifier of the calling thread
-     * 
+     *
      * @return Platform-specific thread ID of the current thread
      */
     static xsigmaMultiThreaderIDType GetCurrentThreadID();
 
     /**
      * @brief Compare two thread identifiers for equality
-     * 
+     *
      * @param t1 First thread ID
      * @param t2 Second thread ID
      * @return true if the thread IDs refer to the same thread

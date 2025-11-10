@@ -11,6 +11,10 @@
 
 namespace xsigma
 {
+constexpr bool hasCUDA()
+{
+    return XSIGMA_HAS_CUDA == 1;
+}
 
 namespace profiler::impl
 {

@@ -66,7 +66,7 @@ check_cxx_source_compiles(
 
 if(XSIGMA_EXCEPTION_PTR_SUPPORTED)
   message("--std::exception_ptr is supported.")
-  set(XSIGMA_USE_EXCEPTION_PTR 1)
+  set(XSIGMA_HAS_EXCEPTION_PTR 1)
 else()
   message("--std::exception_ptr is NOT supported.")
 endif()

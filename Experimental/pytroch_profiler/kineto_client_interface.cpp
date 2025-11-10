@@ -1,4 +1,4 @@
-#if XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 #include "kineto_client_interface.h"
 
 //#include <ATen/Context.h>
@@ -123,4 +123,4 @@ class XSIGMA_VISIBILITY RegisterLibKinetoClient
 #endif
 
 }  // namespace xsigma
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO

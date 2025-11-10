@@ -321,7 +321,7 @@ void Engine::stop()
         // Do not wait for termination of global threads on Windows
         // Because CRT terminates DLL threads before calling
         // global object destructors
-#if !defined(_WIN32) || defined(XSIGMA_USE_MSVC_STATIC_RUNTIME)
+#if !defined(_WIN32) || defined(XSIGMA_HAS_MSVC_STATIC_RUNTIME)
 
         using namespace std::chrono_literals;
         // Set a deadline for how long it is OK to wait device threads to shutdown

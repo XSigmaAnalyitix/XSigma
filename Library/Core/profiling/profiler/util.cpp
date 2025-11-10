@@ -10,7 +10,7 @@
 #include "util/array_ref.h"
 #include "util/irange.h"
 
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 #include <libkineto.h>
 #endif
 #ifdef USE_DISTRIBUTED
@@ -47,7 +47,7 @@ void logSoftAssert(
     // @lint-ignore CLANGTIDY
     const char* args)
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     std::string error;
     error = fmt::format(
         "{} SOFT ASSERT FAILED at {}:{}, func: {}, args: {}", cond, file, line, func, args);
@@ -68,7 +68,7 @@ void logSoftAssert(
     // @lint-ignore CLANGTIDY
     const std::string& args)
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     std::string error;
     error = fmt::format(
         "{} SOFT ASSERT FAILED at {}:{}, func: {}, args: {}", cond, file, line, func, args);
@@ -130,6 +130,8 @@ std::string getNvtxStr(
 // ----------------------------------------------------------------------------
 // -- Op context (shapes, call stack) -----------------------------------------
 // ----------------------------------------------------------------------------
+#if 0
+// Disabled: jit::StackEntry members (range, filename) not available in profiler-only build
 std::vector<FileLineFunc> prepareCallstack(const std::vector<jit::StackEntry>& cs)
 {
     std::vector<FileLineFunc> entries;
@@ -151,6 +153,13 @@ std::vector<FileLineFunc> prepareCallstack(const std::vector<jit::StackEntry>& c
     }
     return entries;
 }
+#else
+// Stub implementation
+std::vector<FileLineFunc> prepareCallstack(const std::vector<jit::StackEntry>& /*cs*/)
+{
+    return std::vector<FileLineFunc>();
+}
+#endif
 
 std::vector<std::string> callstackStr(const std::vector<FileLineFunc>& cs)
 {
@@ -184,23 +193,34 @@ std::string stacksToStr(const std::vector<std::string>& stacks, const char* deli
     return "\"" + rc + "\"";
 }
 
-static std::vector<std::vector<int64_t>> flattenList(const xsigma::List<xsigma::IValue>& list)
+#if 0
+// Disabled: xsigma::List and IValue methods (isTensor, toTensor) not available in profiler-only build
+static std::vector<std::vector<int64_t>> flattenList(const xsigma::IValue& list)
 {
     std::vector<std::vector<int64_t>> tensor_dims;
-    for (const xsigma::IValue& input : list)
-    {
-        if (input.isTensor())
-        {
-            const xsigma::Tensor& tensor = input.toTensor();
-            if (tensor.defined())
-            {
-                tensor_dims.push_back(input.toTensor().sizes().vec());
-            }
-        }
-    }
+    // for (const xsigma::IValue& input : list)
+    // {
+    //     if (input.isTensor())
+    //     {
+    //         const xsigma::Tensor& tensor = input.toTensor();
+    //         if (tensor.defined())
+    //         {
+    //             tensor_dims.push_back(input.toTensor().sizes().vec());
+    //         }
+    //     }
+    // }
     return tensor_dims;
 }
+#else
+// Stub implementation
+static std::vector<std::vector<int64_t>> flattenList(const xsigma::IValue& /*list*/)
+{
+    return std::vector<std::vector<int64_t>>();
+}
+#endif
 
+#if 0
+// Disabled: IValue methods (isTensor, toTensor, isList, toList) not available in profiler-only build
 std::vector<std::vector<int64_t>> inputSizes(
     const xsigma::RecordFunction& fn, bool flatten_list_enabled)
 {
@@ -244,6 +264,14 @@ std::vector<std::vector<int64_t>> inputSizes(
     }
     return sizes;
 }
+#else
+// Stub implementation
+std::vector<std::vector<int64_t>> inputSizes(
+    const xsigma::RecordFunction& /*fn*/, bool /*flatten_list_enabled*/)
+{
+    return std::vector<std::vector<int64_t>>();
+}
+#endif
 
 std::string shapesToStr(const std::vector<std::vector<int64_t>>& shapes)
 {
@@ -352,6 +380,8 @@ std::string strListToStr(const std::vector<std::string>& types)
         return "[" + rc + "]";
     }
 }
+#if 0
+// Disabled: IValue methods (isNone, isBool, operator<<) not available in profiler-only build.
 std::string ivalueToStr(const xsigma::IValue& val, bool isString)
 {
     std::stringstream ss;
@@ -389,7 +419,16 @@ std::string ivalueToStr(const xsigma::IValue& val, bool isString)
         return count > 2 ? "\"None\"" : mystr;
     }
 }
+#else
+// Stub implementation when IValue methods are not available.
+std::string ivalueToStr(const xsigma::IValue& /*val*/, bool /*isString*/)
+{
+    return "\"None\"";
+}
+#endif
 
+#if 0
+// Disabled: IValue methods (isNone, operator<<) not available in profiler-only build.
 std::string ivalueListToStr(const std::vector<xsigma::IValue>& list)
 {
     std::vector<std::string> concrete_str_inputs;
@@ -409,7 +448,16 @@ std::string ivalueListToStr(const std::vector<xsigma::IValue>& list)
     }
     return strListToStr(concrete_str_inputs);
 }
+#else
+// Stub implementation when IValue methods are not available.
+std::string ivalueListToStr(const std::vector<xsigma::IValue>& /*list*/)
+{
+    return "[]";
+}
+#endif
 
+#if 0
+// Disabled: IValue methods (isTensor, toTensor, isScalar, isList, tagKind) not available in profiler-only build.
 std::vector<std::string> inputTypes(const xsigma::RecordFunction& fn)
 {
     std::vector<std::string> types;
@@ -439,6 +487,20 @@ std::vector<std::string> inputTypes(const xsigma::RecordFunction& fn)
     }
     return types;
 }
+#else
+// Stub implementation when IValue methods are not available.
+std::vector<std::string> inputTypes(const xsigma::RecordFunction& fn)
+{
+    std::vector<std::string> types;
+    types.reserve(fn.inputs().size());
+    for (const auto& input_val : fn.inputs())
+    {
+        (void)input_val;       // Suppress unused variable warning
+        types.emplace_back();  // Return empty string for each input
+    }
+    return types;
+}
+#endif
 
 // ----------------------------------------------------------------------------
 // -- NCCL Metadata -----------------------------------------------------------
@@ -481,6 +543,8 @@ static inline std::string format_list(
     }
 }
 
+#if 0
+// Disabled: IValue methods (isTensor, toTensor, isTuple, toTupleRef, isList, toList) not available in profiler-only build.
 std::pair<bool, std::variant<int, std::vector<int>>> findStartAddrForTensors(
     const xsigma::IValue& val)
 {
@@ -540,6 +604,14 @@ std::pair<bool, std::variant<int, std::vector<int>>> findStartAddrForTensors(
         return {false, -1};
     }
 }
+#else
+// Stub implementation when IValue methods are not available.
+std::pair<bool, std::variant<int, std::vector<int>>> findStartAddrForTensors(
+    const xsigma::IValue& /*val*/)
+{
+    return {false, -1};
+}
+#endif
 
 std::unordered_map<std::string, std::string> saveNcclMeta(
     // @lint-ignore CLANGTIDY
@@ -682,6 +754,10 @@ std::unordered_map<std::string, std::string> saveNcclMeta(
     return map;
 }
 
+#if 0
+// Disabled: FLOPS computation requires IValue methods (isTensor, toTensor, isIntList, toDimVector, toInt, toIntVector)
+// not available in profiler-only build.
+
 // ----------------------------------------------------------------------------
 // -- FLOPS -------------------------------------------------------------------
 // ----------------------------------------------------------------------------
@@ -720,7 +796,7 @@ static std::vector<xsigma::IntArrayRef> getInputSizes(
     {
         ss << "Failed to save extra arguments for flops computation of op " << op_name
            << ", min size: " << min_size << ", actual size: " << inputs.size();
-        XSIGMA_WARN(ss.str());
+        XSIGMA_LOG_WARNING(ss.str());
         return {};
     }
     std::vector<xsigma::IntArrayRef> inputSizes = {};
@@ -730,7 +806,7 @@ static std::vector<xsigma::IntArrayRef> getInputSizes(
         {
             ss << "Failed to save extra arguments for flops computation of op " << op_name
                << ", input[" << index << "] must be a tensor.";
-            XSIGMA_WARN(ss.str());
+            XSIGMA_LOG_WARNING(ss.str());
             return {};
         }
         xsigma::Tensor t = inputs[index].toTensor();
@@ -738,7 +814,7 @@ static std::vector<xsigma::IntArrayRef> getInputSizes(
         {
             ss << "Failed to save extra arguments for flops computation of op " << op_name
                << " with input[" << index << "] as nested tensor.";
-            XSIGMA_WARN(ss.str());
+            XSIGMA_LOG_WARNING(ss.str());
             return {};
         }
         inputSizes.emplace_back(t.sizes());
@@ -768,7 +844,7 @@ std::unordered_map<std::string, xsigma::IValue> saveExtraArgs(const xsigma::Reco
         }
         if (inputSizes[1].size() != 4)
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 "Failed to compute flops for op aten::conv2d because it requires a 4D kernel "
                 "tensor.");
             return map;
@@ -865,7 +941,7 @@ uint64_t computeFlops(
             extra_args.find(kStride) == extra_args.end() ||
             extra_args.find(kDilation) == extra_args.end())
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 "Calculating flops for aten::conv2d requires groups, padding, stride, dilation, "
                 "input_size, and weight_size in saved arguments.");
             return 0;
@@ -878,14 +954,14 @@ uint64_t computeFlops(
         auto dilation_ref     = extra_args.at(kDilation);
         if (!input_sizes_ref.isIntList() || !kernel_sizes_ref.isIntList())
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 "Failed to compute flops for op aten::conv2d because it requires input and weight "
                 "tensor sizes.");
             return 0;
         }
         if (!padding_ref.isIntList() || !stride_ref.isIntList() || !dilation_ref.isIntList())
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 "Failed to compute flops for op aten::conv2d because it requires padding, stride, "
                 "and dilation values.");
             return 0;
@@ -899,27 +975,27 @@ uint64_t computeFlops(
         const std::vector<int64_t> dilation     = dilation_ref.toIntVector();
         if (input_sizes.size() != 4 || kernel_sizes.size() != 4)
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 "Failed to compute flops for op aten::conv2d because both input and weight must be "
                 "size 4.");
             return 0;
         }
         if (!groups)
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 "Failed to compute flops for op aten::conv2d because group size must not be 0.");
             return 0;
         }
         if (padding.size() != 2 || dilation.size() != 2)
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 "Failed to compute flops for op aten::conv2d because both padding and dilation "
                 "must be size 2.");
             return 0;
         }
         if (stride.size() != 2 || (stride[0] * stride[1] == 0))
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 "Failed to compute flops for op aten::conv2d because stride must be size 2 and "
                 "cannot be 0.");
             return 0;
@@ -944,7 +1020,7 @@ uint64_t computeFlops(
         if (extra_args.find(kMat1Size) == extra_args.end() ||
             extra_args.find(kMat2Size) == extra_args.end())
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 "Calculating flops for ",
                 op_name,
                 " requires mat1_size and mat2_size in saved arguments.");
@@ -954,7 +1030,7 @@ uint64_t computeFlops(
         auto mat2_sizes_ref = extra_args.at(kMat2Size);
         if (!mat1_sizes_ref.isIntList() || !mat2_sizes_ref.isIntList())
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 "Failed to compute flops for op ",
                 op_name,
                 " because it requires mat1_size and mat2_size to be IntList.");
@@ -993,7 +1069,7 @@ uint64_t computeFlops(
         if (extra_args.find(kMat1Size) == extra_args.end() ||
             extra_args.find(kMat2Size) == extra_args.end())
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 "Calculating flops for ",
                 op_name,
                 " requires mat1_size and mat2_size in saved arguments.");
@@ -1003,7 +1079,7 @@ uint64_t computeFlops(
         auto mat2_sizes_ref = extra_args.at(kMat2Size);
         if (!mat1_sizes_ref.isIntList() || !mat2_sizes_ref.isIntList())
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 "Failed to compute flops for op ",
                 op_name,
                 " because it requires mat1_size and mat2_size to be IntList.");
@@ -1048,14 +1124,14 @@ uint64_t computeFlops(
     {
         if (extra_args.find(kMatSize) == extra_args.end())
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 "Calculating flops for aten::mul.Tensor requires mat_size in saved arguments.");
             return 0;
         }
         auto mat_sizes = extra_args.at(kMatSize);
         if (!mat_sizes.isIntList())
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 "Failed to compute flops for op aten::mul because it requires mat_size to be "
                 "IntList.");
             return 0;
@@ -1073,14 +1149,14 @@ uint64_t computeFlops(
     {
         if (extra_args.find(kMatSize) == extra_args.end())
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 "Calculating flops for aten::add.Tensor requires mat_size in saved arguments.");
             return 0;
         }
         auto mat_sizes = extra_args.at(kMatSize);
         if (!mat_sizes.isIntList())
         {
-            XSIGMA_WARN(
+            XSIGMA_LOG_WARNING(
                 "Failed to compute flops for op aten::add because it requires mat_size to be "
                 "IntList.");
             return 0;
@@ -1096,6 +1172,29 @@ uint64_t computeFlops(
     }
     return 0;
 }
+#else
+// Stub implementations when IValue methods are not available.
+static std::vector<xsigma::IntArrayRef> getInputSizes(
+    const std::string& /*op_name*/,
+    size_t /*min_size*/,
+    xsigma::array_ref<const xsigma::IValue> /*inputs*/,
+    const xsigma::array_ref<int>& /*should_be_tensor*/)
+{
+    return {};
+}
+
+std::unordered_map<std::string, xsigma::IValue> saveExtraArgs(const xsigma::RecordFunction& /*fn*/)
+{
+    return {};
+}
+
+uint64_t computeFlops(
+    const std::string& /*op_name*/,
+    const std::unordered_map<std::string, xsigma::IValue>& /*extra_args*/)
+{
+    return 0;
+}
+#endif
 
 // A function that takes an IValue
 // and returns a conventional string representation of the IValue
@@ -1114,7 +1213,7 @@ bool checkFunctionOutputsForLogging(const xsigma::RecordFunction& fn)
 {
     const auto& outputs     = fn.outputs();
     auto        num_outputs = fn.num_outputs();
-    VLOG(2) << "outputs: " << num_outputs << " " << outputs.size() << '\n';
+    // VLOG(2) << "outputs: " << num_outputs << " " << outputs.size() << '\n';
     // We have two cases: for unboxed kernel, we have num_outputs ==
     // outputs.size() for boxed kernel using stack, there could be more elements
     // on the stack from previous ops.
@@ -1130,7 +1229,7 @@ bool checkFunctionInputsForLogging(const xsigma::RecordFunction& fn)
 {
     auto       num_inputs = fn.num_inputs();
     const auto inputs     = fn.inputs();
-    VLOG(2) << "inputs: " << num_inputs << " " << inputs.size() << '\n';
+    // VLOG(2) << "inputs: " << num_inputs << " " << inputs.size() << '\n';
     // We have two cases: for unboxed kernel, we have num_inputs ==
     // inputs.size() for boxed kernel using stack, there could be more elements
     // on the stack from previous ops.

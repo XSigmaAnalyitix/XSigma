@@ -89,6 +89,8 @@ public:
     std::complex<double> val;
 };
 
+#if 0
+// Disabled: StreamData3 type not available in profiler-only build.
 // Similar to ComplexHolder, for StreamData3
 struct StreamData3Holder : xsigma::intrusive_ptr_target
 {
@@ -97,6 +99,7 @@ public:
     StreamData3Holder() = delete;
     struct xsigma::StreamData3 val;
 };
+#endif
 
 }  // namespace ivalue
 
@@ -128,6 +131,8 @@ struct OptionalArray
     }
 
     // Used when saving an argument for the backwards pass.
+#if 0
+    // Disabled: OptionalArrayRef type not available in profiler-only build.
     OptionalArray& operator=(xsigma::OptionalArrayRef<T> ref)
     {
         if (ref)
@@ -140,6 +145,7 @@ struct OptionalArray
         }
         return *this;
     }
+#endif
 
     operator std::optional<xsigma::array_ref<T>>()
     {
@@ -150,6 +156,8 @@ struct OptionalArray
         return *list;
     }
 
+#if 0
+    // Disabled: OptionalArrayRef type not available in profiler-only build.
     operator xsigma::OptionalArrayRef<T>()
     {
         if (!list)
@@ -158,6 +166,7 @@ struct OptionalArray
         }
         return *list;
     }
+#endif
 };
 
 // Capsule is an internal implementation detail of custom C++ classes. We
@@ -248,6 +257,9 @@ struct Capsule
 ///   // `my_ivalue` is tagged as an int and cannot be used as another type
 ///   xsigma::Tensor my_tensor = my_ivalue.toTensor();
 /// \endrst
+#if 0
+// Disabled: Full IValue struct requires types (UndefinedTensorImpl, Payload, Tag, etc.) not available in profiler-only build.
+// Using stub IValue class from record_function.h instead.
 struct XSIGMA_VISIBILITY IValue final
 {
     IValue(const IValue& rhs) : IValue(rhs.payload, rhs.tag)
@@ -1692,6 +1704,10 @@ private:
     IValue::Tag tag{IValue::Tag::None};
     bool        is_intrusive_ptr{false};
 };
+#endif  // Disabled full IValue struct
+
+#if 0
+// Disabled: Type pointer structures require TypePtr and other types not available in profiler-only build.
 
 // An owning pointer to a type. When the type is class type, it requires a pair
 // of shared_ptrs to the class type and its owning CU, so that the class type is
@@ -1775,6 +1791,7 @@ struct XSIGMA_VISIBILITY WeakOrStrongTypePtr
 
     bool holds_empty_strong_ref() const { return cu_.holdingEmptyStrongRef(); }
 };
+#endif  // Disabled type pointer structures
 
 }  // namespace xsigma
 

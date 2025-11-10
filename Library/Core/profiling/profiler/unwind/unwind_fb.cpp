@@ -10,9 +10,9 @@ namespace xsigma::unwind
 
 std::vector<Frame> symbolize(const std::vector<void*>& frames, Mode mode)
 {
-    static std::mutex                       symbolize_mutex;
-    static llvm::symbolize::LLVMSymbolizer  symbolizer;
-    static ska::flat_hash_map<void*, Frame> frame_map_;
+    static std::mutex                          symbolize_mutex;
+    static llvm::symbolize::LLVMSymbolizer     symbolizer;
+    static xsigma::flat_hash_map<void*, Frame> frame_map_;
 
     std::lock_guard<std::mutex> guard(symbolize_mutex);
     std::vector<Frame>          results;

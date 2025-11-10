@@ -18,29 +18,17 @@
 // These are XSigma-specific headers not available in XSigma
 
 // TODO: replace with pytorch/rfcs#43 when it is ready.
-#define SOFT_ASSERT(cond, ...)
-//[&]() -> bool                                           \
-    //{                                                       \
-    //    if (XSIGMA_UNLIKELY(!(cond)))                       \
-    //    {                                                   \
-    //        xsigma::profiler::impl::logSoftAssert(          \
-    //            __func__,                                   \
-    //            __FILE__,                                   \
-    //            static_cast<uint32_t>(__LINE__),            \
-    //            #cond,                                      \
-    //            ::xsigma::str(__VA_ARGS__));                \
-    //        if (xsigma::profiler::impl::softAssertRaises()) \
-    //        {                                               \
-    //            XSIGMA_CHECK(cond, __VA_ARGS__);            \
-    //        }                                               \
-    //        else                                            \
-    //        {                                               \
-    //            XSIGMA_WARN_ONCE(__VA_ARGS__);              \
-    //        }                                               \
-    //        return false;                                   \
-    //    }                                                   \
-    //    return true;                                        \
-    //}()
+#define SOFT_ASSERT(cond, ...)                                                   \
+    [&]() -> bool                                                                \
+    {                                                                            \
+        if (XSIGMA_UNLIKELY(!(cond)))                                            \
+        {                                                                        \
+            xsigma::profiler::impl::logSoftAssert(                               \
+                __func__, __FILE__, static_cast<uint32_t>(__LINE__), #cond, ""); \
+            return false;                                                        \
+        }                                                                        \
+        return true;                                                             \
+    }()
 
 namespace xsigma::jit
 {

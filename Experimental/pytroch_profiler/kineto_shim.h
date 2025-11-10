@@ -8,7 +8,7 @@
 #include "api.h"
 #include "common/export.h"
 
-#if XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 // Forward declarations so we don't have to include `libkineto.h` in a header.
 namespace libkineto
 {
@@ -23,7 +23,7 @@ namespace xsigma
 namespace profiler
 {
 
-#if XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 constexpr bool kKinetoAvailable{true};
 #else
 constexpr bool kKinetoAvailable{false};
@@ -42,7 +42,7 @@ struct DeviceAndResource
 };
 const DeviceAndResource kineto_ids();
 
-#if XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 using trace_t           = libkineto::CpuTraceBuffer;
 using interface_trace_t = libkineto::ActivityTraceInterface;
 using activity_t        = libkineto::GenericTraceActivity;
@@ -57,7 +57,7 @@ struct DummyTraceInterface
 using trace_t           = DummyTraceBuffer;
 using interface_trace_t = DummyTraceBuffer;
 struct activity_t;
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 
 void addMetadata(activity_t* activity, const std::string& key, const std::string& value);
 
@@ -97,7 +97,7 @@ struct ActivityTraceWrapper
 
 private:
     std::unique_ptr<interface_trace_t> trace_;
-#if XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     bool saved_ = false;  // Kineto's save is destructive
 #endif
 };

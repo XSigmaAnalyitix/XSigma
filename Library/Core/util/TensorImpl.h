@@ -44,16 +44,58 @@
 
 #include "common/export.h"
 #include "common/intrusive_ptr.h"
+#include "memory/device.h"
+#include "util/array_ref.h"
 #include "util/exception.h"
 
 #if 1
 namespace xsigma
 {
+// Stub for Storage - used in execution trace observer and tensor implementations
+struct Storage
+{
+    // Stub implementation for profiler-only build
+    const void* data() const { return nullptr; }
+};
+
+// Minimal stubs sufficient for profiler build. These are NOT full tensor implementations.
+// They intentionally return defaults so profiler paths can compile even when tensors are disabled.
+
 struct TensorImpl : public xsigma::intrusive_ptr_target
 {
+    // Profiler checks for symbolic shapes; return false in the stub.
+    bool has_symbolic_sizes_strides() const noexcept { return false; }
+
+    // Additional methods required by execution trace observer
+    size_t          storage_offset() const noexcept { return 0; }
+    int64_t         numel() const noexcept { return 0; }
+    size_t          itemsize() const noexcept { return 0; }
+    xsigma::Storage storage() const noexcept { return xsigma::Storage(); }
 };
+
 struct Tensor : public xsigma::intrusive_ptr_target
 {
+    // Basic tensor metadata accessors expected by the profiler. All return safe defaults.
+    int scalar_type() const noexcept { return 0; }
+    int layout() const noexcept { return 0; /* xsigma::kStrided */ }
+
+    // Dimensions and strides; empty by default.
+    xsigma::IntArrayRef sizes() const noexcept { return {}; }
+    xsigma::IntArrayRef strides() const noexcept { return {}; }
+
+    // Device information; default to CPU, index -1 (undefined).
+    xsigma::device_option device() const noexcept
+    {
+        return xsigma::device_option(
+            xsigma::device_enum::CPU, static_cast<xsigma::device_option::int_t>(-1));
+    }
+
+    // Defined/nested status; undefined by default to keep encoder in safe path.
+    bool defined() const noexcept { return false; }
+    bool is_nested() const noexcept { return false; }
+
+    // Unsafe access to underlying impl; nullptr in stub (guarded by defined()).
+    const xsigma::TensorImpl* unsafeGetTensorImpl() const noexcept { return nullptr; }
 };
 }  // namespace xsigma
 #else

@@ -2,12 +2,12 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build: Standard (ninja.clang.test.CONFIG)",
+            "label": "Build: Standard (ninja.clang.test)",
             "type": "shell",
             "command": "python3",
             "args": [
                 "setup.py",
-                "build.ninja.clang.test.CONFIG"
+                "build.ninja.clang.test"
             ],
             "options": {
                 "cwd": "${workspaceFolder}/Scripts"

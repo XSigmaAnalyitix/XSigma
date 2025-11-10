@@ -1,9 +1,8 @@
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 //#include <ATen/Context.h>
-#include "profiling/kineto_client_interface.h"
+#include "profiling/profiler/kineto_client_interface.h"
 
 #include <libkineto.h>
-#include <xsigma/csrc/mtia/profiler/MTIAMemoryProfiler.h>
 
 #include <chrono>
 #include <thread>
@@ -31,7 +30,12 @@ using namespace xsigma::autograd::profiler;
 class LibKinetoClient : public libkineto::ClientInterface
 {
 public:
+#if 0
+    // Disabled: ::xsigma::mtia::initMemoryProfiler() not available in profiler-only build
     void init() override { ::xsigma::mtia::initMemoryProfiler(); }
+#else
+    void init() override { /* Stub: mtia not available */ }
+#endif
 
     void prepare(
         bool report_input_shapes = false,
@@ -68,13 +72,19 @@ public:
 
     void start_memory_profile() override
     {
+#if 0
+        // Disabled: LOG macro not available in profiler-only build
         LOG(INFO) << "Starting on-demand memory profile";
+#endif
         startMemoryProfile();
     }
 
     void stop_memory_profile() override
     {
+#if 0
+        // Disabled: LOG macro not available in profiler-only build
         LOG(INFO) << "Stopping on-demand memory profile";
+#endif
         stopMemoryProfile();
     }
 
@@ -124,4 +134,4 @@ struct RegisterLibKinetoClient
 #endif
 
 }  // namespace xsigma
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO

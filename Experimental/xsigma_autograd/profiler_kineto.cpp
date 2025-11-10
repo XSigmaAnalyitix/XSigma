@@ -23,7 +23,7 @@
 #include "profiler/pytorch_profiler/util.h"
 #include "util/exception.h"
 
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 #include <ApproximateClock.h>
 #include <libkineto.h>
 #include <time_since_epoch.h>
@@ -44,7 +44,7 @@ extern "C"
     }
 }  // extern "C"
 #endif  // _MSC_VER
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 
 namespace torch
 {
@@ -55,29 +55,29 @@ namespace
 {
 inline int64_t getTimeNs()
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     return libkineto::timeSinceEpoch(std::chrono::system_clock::now());
 #else
     return xsigma::getTime();
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 using torch::profiler::impl::ActiveProfilerType;
 using torch::profiler::impl::EventType;
 using torch::profiler::impl::ExtraFields;
 using torch::profiler::impl::get_record_concrete_inputs_enabled;
-using torch::profiler::impl::ivalueListToStr;
-using torch::profiler::impl::ivalueToStr;
+//using torch::profiler::impl::ivalueListToStr;
+//using torch::profiler::impl::ivalueToStr;
 using torch::profiler::impl::op_input_t;
 using torch::profiler::impl::ProfilerStateBase;
-using torch::profiler::impl::PyExtraFieldsBase;
+//using torch::profiler::impl::PyExtraFieldsBase;
 using torch::profiler::impl::Result;
-using torch::profiler::impl::shape;
-using torch::profiler::impl::shapesToStr;
-using torch::profiler::impl::stacksToStr;
-using torch::profiler::impl::strListToStr;
+//using torch::profiler::impl::shape;
+//using torch::profiler::impl::shapesToStr;
+//using torch::profiler::impl::stacksToStr;
+//using torch::profiler::impl::strListToStr;
 using torch::profiler::impl::TensorMetadata;
-using torch::profiler::impl::variantShapesToStr;
+//using torch::profiler::impl::variantShapesToStr;
 
 struct OpArgData
 {
@@ -211,21 +211,21 @@ struct AddTensorboardFields : public MetadataBase
         addMetadata("Module Hierarchy", stacksToStr(module_hierarchy.vec(), "."));
         addMetadata("Call stack", stacksToStr(kineto_event.stack().vec(), ";"));
 
-        result->visit_if_base<PyExtraFieldsBase>(
-            [&, this](const auto& i) -> void
-            {
-                this->addMetadata("Python id", std::to_string(i.id_));
+        //result->visit_if_base<PyExtraFieldsBase>(
+        //    [&, this](const auto& i) -> void
+        //    {
+        //        this->addMetadata("Python id", std::to_string(i.id_));
 
-                std::optional<std::string> parent_id;
-                std::shared_ptr<Result>    parent = result->parent_.lock();
-                while (parent && !parent_id.has_value())
-                {
-                    parent->visit_if_base<PyExtraFieldsBase>(
-                        [&](const auto& j) { parent_id = std::to_string(j.id_); });
-                    parent = parent->parent_.lock();
-                }
-                this->addMetadata("Python parent id", parent_id.value_or("null"));
-            });
+        //        std::optional<std::string> parent_id;
+        //        std::shared_ptr<Result>    parent = result->parent_.lock();
+        //        while (parent && !parent_id.has_value())
+        //        {
+        //            parent->visit_if_base<PyExtraFieldsBase>(
+        //                [&](const auto& j) { parent_id = std::to_string(j.id_); });
+        //            parent = parent->parent_.lock();
+        //        }
+        //        this->addMetadata("Python parent id", parent_id.value_or("null"));
+        //    });
     }
 
     void operator()(const ExtraFields<EventType::PyCall>& py_call)
@@ -251,9 +251,9 @@ struct AddGenericMetadata : public MetadataBase
         result->visit(*this);
         if (config->experimental_config.verbose)
         {
-            result->visit_if_base<PyExtraFieldsBase>(
-                [&, this](const auto& i) -> void
-                { this->addMetadata("Python thread", std::to_string(i.python_tid_)); });
+            //result->visit_if_base<PyExtraFieldsBase>(
+            //    [&, this](const auto& i) -> void
+            //    { this->addMetadata("Python thread", std::to_string(i.python_tid_)); });
         }
     }
 
@@ -467,7 +467,7 @@ struct KinetoThreadLocalState : public ProfilerStateBase
 
         std::lock_guard<std::mutex> guard(state_mutex_);
         auto                        converter = clockConverter.makeConverter();
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
         libkineto::get_time_converter() = converter;
 #endif
         auto records_and_trace = recordQueue.getRecords(std::move(converter), startTime, end_time);
@@ -999,8 +999,8 @@ KinetoEvent::KinetoEvent(
         auto parent = result_->parent_.lock();
         while (parent != nullptr)
         {
-            parent->visit_if_base<PyExtraFieldsBase>([&](const auto&)
-                                                     { python_stack_.push_back(parent->name()); });
+            //parent->visit_if_base<PyExtraFieldsBase>([&](const auto&)
+            // { python_stack_.push_back(parent->name()); });
             parent = parent->parent_.lock();
         }
     }
@@ -1019,7 +1019,7 @@ KinetoEvent::KinetoEvent(
 bool KinetoEvent::isPythonFunction() const
 {
     bool out{false};
-    result_->visit_if_base<PyExtraFieldsBase>([&](const auto&) { out = true; });
+    //result_->visit_if_base<PyExtraFieldsBase>([&](const auto&) { out = true; });
     return out;
 }
 

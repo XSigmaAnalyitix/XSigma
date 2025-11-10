@@ -9,7 +9,7 @@
 #include "util/array_ref.h"
 #include "util/irange.h"
 
-#if XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 #include <libkineto.h>
 #endif
 #ifdef USE_DISTRIBUTED
@@ -46,7 +46,7 @@ void logSoftAssert(
     // @lint-ignore CLANGTIDY
     const char* args)
 {
-#if XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     std::string error;
     error = fmt::format(
         "{} SOFT ASSERT FAILED at {}:{}, func: {}, args: {}", cond, file, line, func, args);
@@ -67,7 +67,7 @@ void logSoftAssert(
     // @lint-ignore CLANGTIDY
     const std::string& args)
 {
-#if XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     std::string error;
     error = fmt::format(
         "{} SOFT ASSERT FAILED at {}:{}, func: {}, args: {}", cond, file, line, func, args);

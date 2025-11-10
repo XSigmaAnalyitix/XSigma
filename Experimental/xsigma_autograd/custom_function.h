@@ -134,7 +134,7 @@ struct TORCH_API AutogradContext
     AutogradContext(PackedArgs& packed_args);
 
     /// Can be used to save non-variable data for `backward`.
-    ska::flat_hash_map<std::string, xsigma::IValue> saved_data;
+    xsigma::flat_hash_map<std::string, xsigma::IValue> saved_data;
 
     /// Saves the list of variables for a future call to `backward`. This
     /// should be called xsigma most once from inside of `forward`.

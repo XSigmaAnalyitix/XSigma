@@ -8,18 +8,18 @@
 // When is it explicitly asked for?
 //   KinetoEdgeCPUProfiler uses KinetoProfiler for cpu
 //   event profiling. This has a dependency on cpu only libkineto
-#if defined(XSIGMA_USE_KINETO) && defined(XSIGMA_MOBILE) && !defined(EDGE_PROFILER_USE_KINETO)
-#undef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO && defined(XSIGMA_MOBILE) && !defined(EDGE_PROFILER_USE_KINETO)
+#undef XSIGMA_HAS_KINETO
 #endif
 
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 #include <ActivityType.h>
 #endif
 
 #include "profiling/profiler/api.h"
 #include "util/exception.h"
 
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 // Forward declarations so we don't have to include `libkineto.h` in a header.
 namespace libkineto
 {
@@ -34,7 +34,7 @@ namespace xsigma
 namespace profiler
 {
 
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 constexpr bool kKinetoAvailable{true};
 #else
 constexpr bool kKinetoAvailable{false};
@@ -53,11 +53,11 @@ struct DeviceAndResource
 };
 const DeviceAndResource kineto_ids();
 
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 using trace_t           = libkineto::CpuTraceBuffer;
 using interface_trace_t = libkineto::ActivityTraceInterface;
 using activity_t        = libkineto::GenericTraceActivity;
-using activity_type_t   = libkineto::ActivityType
+using activity_type_t   = libkineto::ActivityType;
 #else
 struct DummyTraceBuffer
 {
@@ -70,9 +70,9 @@ using trace_t           = DummyTraceBuffer;
 using interface_trace_t = DummyTraceBuffer;
 struct activity_t;
 struct activity_type_t;
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 
-    void addMetadata(activity_t* activity, const std::string& key, const std::string& value);
+void addMetadata(activity_t* activity, const std::string& key, const std::string& value);
 
 // Wraps: libkineto::CpuTraceBuffer
 struct TraceWrapper
@@ -111,7 +111,7 @@ struct ActivityTraceWrapper
 
 private:
     std::unique_ptr<interface_trace_t> trace_;
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     bool saved_ = false;  // Kineto's save is destructive
 #endif
 };

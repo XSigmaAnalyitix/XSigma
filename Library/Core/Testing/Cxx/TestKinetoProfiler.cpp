@@ -10,6 +10,7 @@
 
 #include "Testing/xsigmaTest.h"
 #include "profiler/kineto_profiler.h"
+#include "profiling/autograd/profiler_kineto.h"
 
 using namespace xsigma::kineto_profiler;
 
@@ -302,6 +303,51 @@ XSIGMATEST(Profiler, kineto_profiler_destructor_stops_profiling)
     }
     // If we reach here without crash, destructor worked correctly
     EXPECT_TRUE(true);
+}
+
+XSIGMATEST(RecordDebugHandles, Basic)
+{
+    //GTEST_SKIP() << "Test is flaky and sometimes hangs on CI. ";
+    // Enable the profiler in this thread
+    const std::set<xsigma::autograd::profiler::ActivityType> activities(
+        {xsigma::autograd::profiler::ActivityType::CPU});
+    xsigma::autograd::profiler::prepareProfiler(
+        xsigma::autograd::profiler::ProfilerConfig(
+            xsigma::autograd::profiler::ProfilerState::KINETO, false, false),
+        activities);
+    xsigma::autograd::profiler::enableProfiler(
+        xsigma::autograd::profiler::ProfilerConfig(
+            xsigma::autograd::profiler::ProfilerState::KINETO, false, false),
+        activities);
+    {
+        RECORD_EDGE_SCOPE_WITH_DEBUG_HANDLE_AND_INPUTS("my_function", 42, {});
+        float x{5.9999}, y{2.1212};
+        float z = x / y;
+        (void)z;
+    }
+    {
+        RECORD_USER_SCOPE_WITH_INPUTS("not_my_function", {});
+        float x{5.9999}, y{2.1212};
+        float z = x / y;
+        (void)z;
+    }
+    auto        profiler_results_ptr = xsigma::autograd::profiler::disableProfiler();
+    const auto& kineto_events        = profiler_results_ptr->events();
+    size_t      my_events{0};
+    for (const auto& e : kineto_events)
+    {
+        if (e.name() == "my_function")
+        {
+            ASSERT_EQ(e.debugHandle(), 42);
+            my_events++;
+        }
+        else if (e.name() == "not_my_function")
+        {
+            ASSERT_EQ(e.debugHandle(), -1);
+            my_events++;
+        }
+    }
+    ASSERT_EQ(my_events, 2);
 }
 
 // ============================================================================

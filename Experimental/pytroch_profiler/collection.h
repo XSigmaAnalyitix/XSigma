@@ -258,7 +258,7 @@ struct ExtraFields<EventType::OutOfMemory>
 static_assert(
     std::is_trivial_v<ExtraFields<EventType::OutOfMemory>>,
     "Non-Trivial member of ExtraFields<EventType::OutOfMemory>.");
-
+#if 0
 class XSIGMA_VISIBILITY PyFrameState
 {
     int                line_no_;
@@ -360,7 +360,7 @@ struct ExtraFields<EventType::PyCCall> : public PyExtraFieldsBase
 
     xsigma::StringView function_name_;
 };
-
+#endif
 template <>
 struct ExtraFields<EventType::Kineto>
 {
@@ -712,12 +712,12 @@ public:
         uint64_t                                             end_time_ns);
 
 private:
-    uint32_t                                                           id_;
-    ProfilerConfig                                                     config_;
-    std::set<ActivityType>                                             activities_;
-    ska::flat_hash_map<uint64_t, std::unique_ptr<ThreadLocalSubqueue>> sub_queues_;
-    std::mutex                                                         sub_queue_mutex_;
-    std::unique_ptr<python_tracer::PythonTracerBase>                   python_tracer_;
+    uint32_t                                                              id_;
+    ProfilerConfig                                                        config_;
+    std::set<ActivityType>                                                activities_;
+    xsigma::flat_hash_map<uint64_t, std::unique_ptr<ThreadLocalSubqueue>> sub_queues_;
+    std::mutex                                                            sub_queue_mutex_;
+    std::unique_ptr<python_tracer::PythonTracerBase>                      python_tracer_;
 };
 
 XSIGMA_API bool get_record_concrete_inputs_enabled();

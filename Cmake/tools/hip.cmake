@@ -16,10 +16,7 @@ cmake_dependent_option(
 )
 mark_as_advanced(XSIGMA_ENABLE_HIP)
 
-# Use the variable name expected by the rest of the module
-set(XSIGMA_USE_HIP ${XSIGMA_ENABLE_HIP})
-
-if(NOT XSIGMA_USE_HIP)
+if(NOT XSIGMA_ENABLE_HIP)
   return()
 endif()
 
@@ -139,7 +136,7 @@ endif()
 
 # For backward compatibility, set legacy variables (if needed elsewhere)
 set(XSIGMA_HIP_FOUND TRUE)
-set(XSIGMA_USE_HIP ON)
+set(XSIGMA_ENABLE_HIP ON)
 
 # Enable GPU compilation for HIP
 add_compile_definitions(XSIGMA_ENABLE_GPU)

@@ -198,7 +198,7 @@ template <>
 struct Config<CallType::PyCall> {
   using key_t = CodeLocation;
   using ephemeral_t = no_ephemeral_t;
-  using cache_t = ska::flat_hash_map<key_t, PyFrameState>;
+  using cache_t = xsigma::flat_hash_map<key_t, PyFrameState>;
   static constexpr EventType event_type = EventType::PyCall;
 };
 
@@ -216,8 +216,8 @@ struct ExtendedPyCallConfig {
   struct Cache {
     // `nn.Module.forward` or `optim.Optimizer._optimizer_step_code`
     std::optional<CodeLocation> location_;
-    ska::flat_hash_map<key_t, ClsAndParameters> cls_and_parameters_;
-    ska::flat_hash_map<cls_t, xsigma::StringView> cls_names_;
+    xsigma::flat_hash_map<key_t, ClsAndParameters> cls_and_parameters_;
+    xsigma::flat_hash_map<cls_t, xsigma::StringView> cls_names_;
   };
   using cache_t = Cache;
 
@@ -240,7 +240,7 @@ template <>
 struct Config<CallType::PyCCall> {
   using key_t = PyMethod;
   using ephemeral_t = PyObject*;
-  using cache_t = ska::flat_hash_map<key_t, xsigma::StringView>;
+  using cache_t = xsigma::flat_hash_map<key_t, xsigma::StringView>;
   static constexpr EventType event_type = EventType::PyCCall;
 };
 
@@ -547,7 +547,7 @@ struct TraceKeyCacheState {
         value_cache.load<CallType::PyCall>(callsite.caller_));
   }
 
-  ska::flat_hash_map<Callsite<C>, TraceKey, Hash> state_;
+  xsigma::flat_hash_map<Callsite<C>, TraceKey, Hash> state_;
 };
 
 // ============================================================================
@@ -853,27 +853,27 @@ static void registerMonitoringCallback() {
 
   auto sys_module = THPObjectPtr(PyImport_ImportModule("sys"));
   if (!sys_module) {
-    XSIGMA_WARN("Failed to import sys module.");
+    XSIGMA_LOG_WARNING("Failed to import sys module.");
     PyErr_Clear();
     return;
   }
   auto monitoring =
       THPObjectPtr(PyObject_GetAttrString(sys_module, "monitoring"));
   if (!monitoring) {
-    XSIGMA_WARN("Failed to get monitoring from sys module.");
+    XSIGMA_LOG_WARNING("Failed to get monitoring from sys module.");
     PyErr_Clear();
     return;
   }
   auto result = THPObjectPtr(PyObject_CallMethod(
       monitoring, "use_tool_id", "is", PROFILER_ID, "XSigma Profiler"));
   if (!result) {
-    XSIGMA_WARN("Failed to call sys.monitoring.use_tool_id");
+    XSIGMA_LOG_WARNING("Failed to call sys.monitoring.use_tool_id");
     PyErr_Clear();
     return;
   }
   auto handler = THPObjectPtr(PyObject_NEW(PyObject, &_PyEventHandler_Type));
   if (!handler) {
-    XSIGMA_WARN("Failed to create _PyEventHandler object.");
+    XSIGMA_LOG_WARNING("Failed to create _PyEventHandler object.");
     PyErr_Clear();
     return;
   }
@@ -887,7 +887,7 @@ static void registerMonitoringCallback() {
       1 << PY_MONITORING_EVENT_CALL,
       handler.get()));
   if (!result) {
-    XSIGMA_WARN("Failed to call sys.monitoring.register_callback.");
+    XSIGMA_LOG_WARNING("Failed to call sys.monitoring.register_callback.");
     PyErr_Clear();
     return;
   }
@@ -898,7 +898,7 @@ static void registerMonitoringCallback() {
       PROFILER_ID,
       1 << PY_MONITORING_EVENT_CALL));
   if (!result) {
-    XSIGMA_WARN("Failed to call sys.monitoring.set_events.");
+    XSIGMA_LOG_WARNING("Failed to call sys.monitoring.set_events.");
     PyErr_Clear();
     return;
   }
@@ -911,21 +911,21 @@ static void unregisterMonitoringCallback() {
 
   auto sys_module = THPObjectPtr(PyImport_ImportModule("sys"));
   if (!sys_module) {
-    XSIGMA_WARN("Failed to import sys module.");
+    XSIGMA_LOG_WARNING("Failed to import sys module.");
     PyErr_Clear();
     return;
   }
   auto monitoring =
       THPObjectPtr(PyObject_GetAttrString(sys_module, "monitoring"));
   if (!monitoring) {
-    XSIGMA_WARN("Failed to get monitoring from sys module.");
+    XSIGMA_LOG_WARNING("Failed to get monitoring from sys module.");
     PyErr_Clear();
     return;
   }
   auto tool_name = THPObjectPtr(
       PyObject_CallMethod(monitoring, "get_tool", "i", PROFILER_ID));
   if (!tool_name) {
-    XSIGMA_WARN("Failed to call sys.monitoring.use_tool_id");
+    XSIGMA_LOG_WARNING("Failed to call sys.monitoring.use_tool_id");
     PyErr_Clear();
     return;
   }
@@ -946,21 +946,21 @@ static void unregisterMonitoringCallback() {
       1 << PY_MONITORING_EVENT_CALL,
       none.get()));
   if (!result) {
-    XSIGMA_WARN("Failed to call sys.monitoring.register_callback.");
+    XSIGMA_LOG_WARNING("Failed to call sys.monitoring.register_callback.");
     PyErr_Clear();
     return;
   }
   result = THPObjectPtr(
       PyObject_CallMethod(monitoring, "set_events", "ii", PROFILER_ID, 0));
   if (!result) {
-    XSIGMA_WARN("Failed to call sys.monitoring.set_events.");
+    XSIGMA_LOG_WARNING("Failed to call sys.monitoring.set_events.");
     PyErr_Clear();
     return;
   }
   result = THPObjectPtr(
       PyObject_CallMethod(monitoring, "free_tool_id", "i", PROFILER_ID));
   if (!result) {
-    XSIGMA_WARN("Failed to call sys.monitoring.free_tool_id.");
+    XSIGMA_LOG_WARNING("Failed to call sys.monitoring.free_tool_id.");
     PyErr_Clear();
     return;
   }
@@ -1011,7 +1011,7 @@ PythonTracer::PythonTracer(xsigma::profiler::impl::RecordQueue* queue)
   bool expected{false};
   active_ = active_lock_.compare_exchange_strong(expected, true);
   if (!active_) {
-    XSIGMA_WARN(
+    XSIGMA_LOG_WARNING(
         "There is already an active Python tracer. "
         "Refusing to register profile functions.");
     return;
@@ -1021,7 +1021,7 @@ PythonTracer::PythonTracer(xsigma::profiler::impl::RecordQueue* queue)
   interpreter_ = PyInterpreterState_Get();
 
   if (!gil.initial_thread_state()) {
-    XSIGMA_WARN("PyThreadState_Get returned NULL");
+    XSIGMA_LOG_WARNING("PyThreadState_Get returned NULL");
     return;
   }
 
@@ -1163,7 +1163,7 @@ void PythonTracer::restart() {
   gil_and_restore_thread gil;
   active_ = active_lock_.compare_exchange_strong(active_, true);
   if (!active_) {
-    XSIGMA_WARN(
+    XSIGMA_LOG_WARNING(
         "There is already an active Python tracer. "
         "Refusing to register profile functions.");
     return;
@@ -1184,7 +1184,7 @@ void PythonTracer::restart() {
 // NOLINTNEXTLINE(bugprone-exception-escape)
 PythonTracer::~PythonTracer() {
   if (active_) {
-    XSIGMA_WARN("`PythonTracer::stop()` was not called.");
+    XSIGMA_LOG_WARNING("`PythonTracer::stop()` was not called.");
     stop();
   }
 }
@@ -1350,12 +1350,12 @@ class PostProcess {
         std::get<ExtraFields<E>>(stack.back()->extra_fields_).end_time_ns_ = t;
         stack.pop_back();
       } else {
-        XSIGMA_WARN_ONCE(
+        XSIGMA_LOG_WARNING(
             "Python replay stack is empty during pop operation! May result in incorrect stack tracing.");
       }
     };
 
-    ska::flat_hash_map<size_t, stack_t> stacks;
+    xsigma::flat_hash_map<size_t, stack_t> stacks;
     auto& state = get_state<E>();
     // We already own the GIL at this point
     for (const auto& enter : enters) {
@@ -1387,7 +1387,7 @@ class PostProcess {
 
     // Assign system TIDs to start events based on the system TID of the next
     // observed event with the same Python TID.
-    ska::flat_hash_map<size_t, std::pair<size_t, kineto::DeviceAndResource>>
+    xsigma::flat_hash_map<size_t, std::pair<size_t, kineto::DeviceAndResource>>
         tid_map;
     auto it = out.rbegin();
     for ([[maybe_unused]] auto _ : xsigma::irange(initial_size, out.size())) {
@@ -1407,7 +1407,7 @@ class PostProcess {
 
   template <EventType E>
   struct State {
-    ska::flat_hash_map<TraceKey, ExtraFields<E>> fields_;
+    xsigma::flat_hash_map<TraceKey, ExtraFields<E>> fields_;
     std::priority_queue<Exit, std::vector<Exit>, std::greater<>> exits_;
   };
 
@@ -1439,7 +1439,7 @@ struct PythonIDVisitor {
   void operator()(T& /*unused*/) {}
 
   size_t current_python_id_{0};
-  ska::flat_hash_map<PyModuleCls, ska::flat_hash_map<PyModuleSelf, size_t>>
+  xsigma::flat_hash_map<PyModuleCls, xsigma::flat_hash_map<PyModuleSelf, size_t>>
       module_ids_;
 };
 

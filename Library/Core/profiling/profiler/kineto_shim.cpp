@@ -4,7 +4,7 @@
 
 #include "profiling/profiler/collection.h"
 
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 #include <libkineto.h>
 #endif
 
@@ -19,9 +19,9 @@ namespace xsigma
 namespace profiler::impl::kineto
 {
 
-// Here lies pain and `#ifdef XSIGMA_USE_KINETO`
+// Here lies pain and `#if XSIGMA_HAS_KINETO`
 
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 namespace
 {
 const std::set<libkineto::ActivityType> kCpuTypes{
@@ -72,30 +72,30 @@ const std::set<libkineto::ActivityType> kPrivateUse1Types = {
     libkineto::ActivityType::PRIVATEUSE1_DRIVER,
 };
 }  // namespace
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 
 static_assert(
     std::is_trivial_v<DeviceAndResource>, "Kineto specific details should be in `kineto_ids`.");
 
 const DeviceAndResource kineto_ids()
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     return {/*device=*/libkineto::processId(),
             /*resource=*/libkineto::systemThreadId()};
 #else
     return {};
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 void addMetadata(activity_t* activity, const std::string& key, const std::string& value)
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     activity->addMetadata(key, value);
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 TraceWrapper::TraceWrapper(const int64_t start_time, const std::string& name)
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     : cpu_trace_(std::make_unique<libkineto::CpuTraceBuffer>())
 {
     cpu_trace_->span.startTime = start_time;
@@ -105,7 +105,7 @@ TraceWrapper::TraceWrapper(const int64_t start_time, const std::string& name)
 #else
 {
 }
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 
 activity_t* TraceWrapper::addCPUActivity(
     const std::string&            name,
@@ -115,7 +115,7 @@ activity_t* TraceWrapper::addCPUActivity(
     const int64_t                 start_time,
     const int64_t                 end_time)
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     XSIGMA_CHECK((bool)(*this), "Cannot add event to non-existent trace.");
     cpu_trace_->emplace_activity(cpu_trace_->span, type, name);
     auto& act     = libkineto::CpuTraceBuffer::toRef(cpu_trace_->activities.back());
@@ -130,24 +130,24 @@ activity_t* TraceWrapper::addCPUActivity(
     return cpu_trace_->activities.back().get();
 #else
     return nullptr;
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 void TraceWrapper::transferCpuTrace(int64_t end_time)
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     cpu_trace_->span.endTime = end_time;
     libkineto::api().activityProfiler().transferCpuTrace(std::move(cpu_trace_));
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 TraceWrapper::operator bool() const
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     return cpu_trace_ != nullptr;
 #else
     return false;
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 ActivityTraceWrapper::ActivityTraceWrapper(std::unique_ptr<interface_trace_t>&& trace)
@@ -157,16 +157,16 @@ ActivityTraceWrapper::ActivityTraceWrapper(std::unique_ptr<interface_trace_t>&& 
 
 ActivityTraceWrapper::operator bool() const
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     return trace_ != nullptr;
 #else
     return false;
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 void ActivityTraceWrapper::save(const std::string& path)
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     XSIGMA_CHECK(!saved_, "Trace is already saved.");
     XSIGMA_CHECK(trace_ != nullptr, "Missing trace.")
     trace_->save(path);
@@ -174,8 +174,8 @@ void ActivityTraceWrapper::save(const std::string& path)
 #else
     XSIGMA_CHECK(
         false,
-        "Saving a trace requires using xsigma.profiler with Kineto support (XSIGMA_USE_KINETO=1)");
-#endif  // XSIGMA_USE_KINETO
+        "Saving a trace requires using xsigma.profiler with Kineto support (XSIGMA_HAS_KINETO=1)");
+#endif  // XSIGMA_HAS_KINETO
 }
 
 namespace
@@ -194,7 +194,7 @@ public:
     void prepareTraceWithExperimentalOptions(std::set<libkineto::ActivityType>&& enabled_activities)
     {
         std::set<libkineto::ActivityType> k_activities = std::move(enabled_activities);
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
         k_activities.insert(libkineto::ActivityType::CUDA_PROFILER_RANGE);
 
         // Add CPU activities if we are measuring per kernel ranges
@@ -206,7 +206,10 @@ public:
         const size_t      num_metrics = config_.profiler_metrics.size();
         std::stringstream configss;
 
+#if 0
+        // Disabled: Logging macros not available in profiler-only build.
         LOG(INFO) << "CUPTI profiler metrics size = " << num_metrics;
+#endif
 
         configss << "ACTIVITIES_WARMUP_PERIOD_SECS=0\n"
                  << "CUPTI_PROFILER_METRICS=";
@@ -222,10 +225,13 @@ public:
         configss << "\nCUPTI_PROFILER_ENABLE_PER_KERNEL="
                  << (config_.profiler_measure_per_kernel ? "true" : "false") << "\n";
         configss << "CUSTOM_CONFIG=" << config_.custom_profiler_config << "\n";
+#if 0
+        // Disabled: Logging macros not available in profiler-only build.
         LOG(INFO) << "Generated config = " << configss.str();
+#endif
 
         libkineto::api().activityProfiler().prepareTrace(k_activities, configss.str());
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
     }
 
 private:
@@ -243,7 +249,7 @@ bool collectivesProfilerExists()
     return val == "1";
 }
 
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
 static const std::string setTraceID(const std::string& trace_id)
 {
     if (trace_id.empty())
@@ -276,7 +282,7 @@ void prepareTrace(
     const xsigma::profiler::impl::ExperimentalConfig& config,
     const std::string&                                trace_id)
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     libkineto::api().resetKinetoTLS();
     if (!libkineto::api().isProfilerRegistered())
     {
@@ -313,7 +319,10 @@ void prepareTrace(
         k_activities.insert(kCudaTypes.begin(), kCudaTypes.end());
         if (config.enable_cuda_sync_events || get_cuda_sync_enabled())
         {
+#if 0
+            // Disabled: Logging macros not available in profiler-only build.
             LOG(INFO) << "Enabling CUDA Sync Events";
+#endif
             k_activities.insert(libkineto::ActivityType::CUDA_SYNC);
         }
     }
@@ -339,71 +348,71 @@ void prepareTrace(
     const std::string configStr  = appendCustomConfig(traceIdStr, config.custom_profiler_config);
 
     libkineto::api().activityProfiler().prepareTrace(k_activities, configStr);
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 void toggleCollectionDynamic(const bool enable)
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     // TODO: We may want to consider adding another input arg for this function
     // if we want to support turning off certain devices and keeping others on.
     // For now, we can keep it simple at have it turn off all tracing of "CUDA"
     // devices
     libkineto::api().activityProfiler().toggleCollectionDynamic(enable);
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 void startTrace()
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     libkineto::api().activityProfiler().startTrace();
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 ActivityTraceWrapper stopTrace()
 {
     return ActivityTraceWrapper{
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
         libkineto::api().activityProfiler().stopTrace()
 #else
         std::make_unique<interface_trace_t>()
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
     };
 }
 
 void pushCorrelationId(uint64_t correlation_id)
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     libkineto::api().activityProfiler().pushCorrelationId(correlation_id);
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 void pushUserCorrelationId(uint64_t correlation_id)
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     libkineto::api().activityProfiler().pushUserCorrelationId(correlation_id);
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 void popCorrelationId()
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     libkineto::api().activityProfiler().popCorrelationId();
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 void popUserCorrelationId()
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     libkineto::api().activityProfiler().popUserCorrelationId();
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 void recordThreadInfo()
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     libkineto::api().activityProfiler().recordThreadInfo();
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 void logInvariantViolation(
@@ -412,20 +421,21 @@ void logInvariantViolation(
     const std::string& profile_id,
     const std::string& group_profile_id)
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     if (libkineto::api().isProfilerInitialized())
     {
         libkineto::api().activityProfiler().logInvariantViolation(
             profile_id, assertion, error, group_profile_id);
     }
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 }  // namespace profiler::impl::kineto
 
 namespace autograd::profiler
 {
-xsigma::device_enum deviceTypeFromActivity(libkineto::ActivityType activity_type)
+xsigma::device_enum deviceTypeFromActivity(
+    xsigma::profiler::impl::kineto::activity_type_t activity_type)
 {
     // fallthrough
     switch (activity_type)
@@ -440,6 +450,8 @@ xsigma::device_enum deviceTypeFromActivity(libkineto::ActivityType activity_type
         // PrivateUse1 kineto backend reuse above ActivityTypes,
         // If PrivateUse1 backend enabled, this should return
         // xsigma::device_enum::PrivateUse1.
+#if 0
+        // Disabled: get_privateuse1_backend() not available in profiler-only build.
         xsigma::device_enum device_type = []()
         {
             if (xsigma::get_privateuse1_backend() != "privateuseone")
@@ -448,9 +460,14 @@ xsigma::device_enum deviceTypeFromActivity(libkineto::ActivityType activity_type
             }
             return xsigma::device_enum::CUDA;
         }();
+#else
+        xsigma::device_enum device_type = xsigma::device_enum::CUDA;
+#endif
         return device_type;
     }
     // TODO: T151322015
+#if 0
+    // Disabled: MTIA device type not available in profiler-only build.
     case libkineto::ActivityType::MTIA_CCP_EVENTS:
     case libkineto::ActivityType::MTIA_INSIGHT:
     {
@@ -467,8 +484,12 @@ xsigma::device_enum deviceTypeFromActivity(libkineto::ActivityType activity_type
         }();
         return device_type;
     }
+#endif
+#if 0
+    // Disabled: HPU device type not available in profiler-only build.
     case libkineto::ActivityType::HPU_OP:
         return xsigma::device_enum::HPU;
+#endif
     case libkineto::ActivityType::CPU_OP:
     case libkineto::ActivityType::USER_ANNOTATION:
     case libkineto::ActivityType::EXTERNAL_CORRELATION:
@@ -485,7 +506,10 @@ xsigma::device_enum deviceTypeFromActivity(libkineto::ActivityType activity_type
         return xsigma::device_enum::CPU;
     default:
     {
-        XSIGMA_WARN("Unknown activity type (", (uint8_t)activity_type, "), assuming CPU device");
+#if 0
+        // Disabled: XSIGMA_LOG_WARNING macro not available in profiler-only build.
+        XSIGMA_LOG_WARNING("Unknown activity type (", (uint8_t)activity_type, "), assuming CPU device");
+#endif
         return xsigma::device_enum::CPU;
     }
     }
@@ -493,7 +517,7 @@ xsigma::device_enum deviceTypeFromActivity(libkineto::ActivityType activity_type
 
 void addMetadataJson(const std::string& key, const std::string& value)
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     if (libkineto::api().isProfilerInitialized())
     {
         libkineto::api().activityProfiler().addMetadata(key, value);
@@ -504,13 +528,13 @@ void addMetadataJson(const std::string& key, const std::string& value)
     }
 #else
     //LOG(WARNING) << "Adding profiling metadata requires using "
-    << "xsigma.profiler with Kineto support (XSIGMA_USE_KINETO=1)";
-#endif  // XSIGMA_USE_KINETO
+    //<< "xsigma.profiler with Kineto support (XSIGMA_HAS_KINETO=1)";
+#endif  // XSIGMA_HAS_KINETO
 }
 
 void profilerStep()
 {
-#ifdef XSIGMA_USE_KINETO
+#if XSIGMA_HAS_KINETO
     libkineto::api().initProfilerIfRegistered();
 
     if (libkineto::api().isProfilerInitialized())
@@ -519,9 +543,9 @@ void profilerStep()
     }
     else
     {
-        VLOG(1) << "Profiler is not initialized: skipping step() invocation";
+        // VLOG(1) << "Profiler is not initialized: skipping step() invocation";
     }
-#endif  // XSIGMA_USE_KINETO
+#endif  // XSIGMA_HAS_KINETO
 }
 
 }  // namespace autograd::profiler

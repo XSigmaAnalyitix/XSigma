@@ -12,8 +12,8 @@ static bool cached_tensorimpls_enabled = false;
 
 // Like `cached_casts` in autocast_mode, we hash on the TensorImpl*
 //  and keep the pointer alive with a weakref value.
-static ska::flat_hash_map<TensorImpl*, weakref_type> cached_tensorimpls;
-static std::mutex                                    cached_tensorimpl_mutex;
+static xsigma::flat_hash_map<TensorImpl*, weakref_type> cached_tensorimpls;
+static std::mutex                                       cached_tensorimpl_mutex;
 
 bool is_cached_tensor(const at::Tensor& t)
 {

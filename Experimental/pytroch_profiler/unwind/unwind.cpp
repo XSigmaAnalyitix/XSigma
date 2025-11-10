@@ -299,8 +299,8 @@ private:
     }
 
     // sorted by load_bias
-    std::vector<LibraryInfo>               all_libraries_;
-    ska::flat_hash_map<uint64_t, Unwinder> ip_cache_;
+    std::vector<LibraryInfo>                  all_libraries_;
+    xsigma::flat_hash_map<uint64_t, Unwinder> ip_cache_;
 
     xsigma::unwind::Stats stats_;
 
@@ -428,9 +428,9 @@ private:
         std::vector<void*>           queried;
         size_t                       completed = 0;
     };
-    ska::flat_hash_map<std::string, Entry> entries_;
-    ska::flat_hash_map<void*, Frame>       frame_map_;
-    bool                                   has_pending_results_ = true;
+    xsigma::flat_hash_map<std::string, Entry> entries_;
+    xsigma::flat_hash_map<void*, Frame>       frame_map_;
+    bool                                      has_pending_results_ = true;
 
     Entry& getOrCreate(const std::string& name)
     {
@@ -468,8 +468,8 @@ private:
 
 static std::vector<Frame> symbolize_fast(const std::vector<void*>& frames, Mode mode)
 {
-    static std::mutex                                      cache_mutex;
-    static std::array<ska::flat_hash_map<void*, Frame>, 2> frame_maps;
+    static std::mutex                                         cache_mutex;
+    static std::array<xsigma::flat_hash_map<void*, Frame>, 2> frame_maps;
     auto& frame_map = frame_maps[mode == Mode::fast ? 0 : 1];
 
     std::vector<uint32_t> indices_to_lookup;

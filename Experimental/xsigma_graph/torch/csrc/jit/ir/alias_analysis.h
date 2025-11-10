@@ -275,9 +275,9 @@ private:
     std::unique_ptr<MemoryDAG>        memoryDAG_;
 
     // Mapping of values to MemoryDAG elements
-    ska::flat_hash_map<const Value*, Element*> elementMap_;
+    xsigma::flat_hash_map<const Value*, Element*> elementMap_;
     // All wildcard Elements (one for each unique mutable type)
-    ska::flat_hash_map<TypePtr, Element*, HashType, EqualType> wildcardIndex_;
+    xsigma::flat_hash_map<TypePtr, Element*, HashType, EqualType> wildcardIndex_;
     Element*                getWildcard(const TypePtr& type) const;
     std::optional<Element*> tryGetOrCreateWildcard(const TypePtr& type);
     void addContainedTypesToFreshElement(Element* container_elem, const AliasTypeSet& mut_types);
@@ -290,7 +290,7 @@ private:
     bool                  hasWriters(const xsigma::ArrayRef<Value*>& values) const;
 
     // Cached mapping of type ptrs to their mutable types
-    mutable ska::flat_hash_map<TypePtr, AliasTypeSet> mapped_mutable_types_;
+    mutable xsigma::flat_hash_map<TypePtr, AliasTypeSet> mapped_mutable_types_;
 
     /**
    * State for tracking write info.
@@ -302,7 +302,7 @@ private:
     std::unique_ptr<WriteRegistry> writeRegistry_;
 
     // Map of nodes to the memory locations that they write to
-    using TWriteIndex = ska::flat_hash_map<Node*, MemoryLocations>;
+    using TWriteIndex = xsigma::flat_hash_map<Node*, MemoryLocations>;
     std::optional<TWriteIndex> writeIndex_;
     // Collection of all memory locations that are written to.
     std::optional<MemoryLocations> writtenToLocationsIndex_;

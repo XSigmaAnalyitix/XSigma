@@ -26,6 +26,12 @@
 #include "util/flat_hash.h"
 #include "util/strong_type.h"
 
+// Minimal layout constant expected by profiler code for Tensor::layout()
+namespace xsigma
+{
+inline constexpr int kStrided = 0;
+}
+
 namespace xsigma::profiler::impl
 {
 
@@ -270,7 +276,7 @@ struct PyFrameState
 
 template <typename T, typename Tag>
 using strong_t = strong::type<T, Tag, strong::regular, strong::convertible_to<T>, strong::hashable>;
-
+#if 0
 using PyModuleSelf    = strong_t<PyObject*, struct PyModuleSelf_>;
 using PyModuleCls     = strong_t<PyObject*, struct PyModuleCls_>;
 using PyMethod        = strong_t</*PyMethodDef*/ void*, struct PyMethod_>;
@@ -362,6 +368,7 @@ struct ExtraFields<EventType::PyCCall> : public PyExtraFieldsBase
 
     xsigma::StringView function_name_;
 };
+#endif
 
 template <>
 struct ExtraFields<EventType::Kineto>
@@ -444,10 +451,10 @@ struct XSIGMA_VISIBILITY Result : public std::enable_shared_from_this<Result>
         ExtraFields<EventType::Vulkan>,
         ExtraFields<EventType::Allocation>,
         ExtraFields<EventType::OutOfMemory>,
+        ExtraFields<EventType::Kineto>/*,
         ExtraFields<EventType::PyCall>,
         ExtraFields<EventType::PyCCall>,
-        ExtraFields<EventType::Kineto>,
-        ExtraFields<EventType::PythonGC>>
+        ExtraFields<EventType::PythonGC>*/>
         extra_fields_;
 
     std::weak_ptr<Result>                             parent_;
@@ -714,12 +721,12 @@ public:
         uint64_t                                             end_time_ns);
 
 private:
-    uint32_t                                                           id_;
-    ProfilerConfig                                                     config_;
-    std::set<ActivityType>                                             activities_;
-    ska::flat_hash_map<uint64_t, std::unique_ptr<ThreadLocalSubqueue>> sub_queues_;
-    std::mutex                                                         sub_queue_mutex_;
-    std::unique_ptr<python_tracer::PythonTracerBase>                   python_tracer_;
+    uint32_t                                                              id_;
+    ProfilerConfig                                                        config_;
+    std::set<ActivityType>                                                activities_;
+    xsigma::flat_hash_map<uint64_t, std::unique_ptr<ThreadLocalSubqueue>> sub_queues_;
+    std::mutex                                                            sub_queue_mutex_;
+    std::unique_ptr<python_tracer::PythonTracerBase>                      python_tracer_;
 };
 
 XSIGMA_API bool get_record_concrete_inputs_enabled();

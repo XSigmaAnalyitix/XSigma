@@ -1,21 +1,21 @@
 #include <cstring>
+#define XSIGMA_ASSERT_ONLY_METHOD_OPERATORS
 #include <stdexcept>
 #include <utility>
 
-#define XSIGMA_ASSERT_ONLY_METHOD_OPERATORS
+#include "api.h"
+#include "collection.h"
 #include "common/export.h"
-#include "profiling/autograd/profiler_kineto.h"
-#include "profiling/profiler/api.h"
-#include "profiling/profiler/collection.h"
-#include "profiling/profiler/containers.h"
-#include "profiling/profiler/events.h"
-#include "profiling/profiler/kineto_shim.h"
-#include "profiling/profiler/orchestration/observer.h"
-#include "profiling/profiler/perf.h"
-#include "profiling/profiler/standalone/itt_observer.h"
-#include "profiling/profiler/standalone/nvtx_observer.h"
-#include "profiling/profiler/standalone/privateuse1_observer.h"
-#include "profiling/profiler/util.h"
+#include "containers.h"
+#include "events.h"
+#include "kineto_shim.h"
+#include "orchestration/observer.h"
+#include "perf.h"
+#include "profiler_kineto.h"
+#include "standalone/itt_observer.h"
+#include "standalone/nvtx_observer.h"
+#include "standalone/privateuse1_observer.h"
+#include "util.h"
 #include "util/approximate_clock.h"
 #include "util/exception.h"
 #include "util/flat_hash.h"
@@ -40,7 +40,6 @@ extern "C"
     {
         XSIGMA_CHECK(
             false, "Dummy implementation of acc_get_device_type is not supposed to be called!");
-        return -1;  // Never reached, but satisfies compiler
     }
 }  // extern "C"
 #endif  // _MSC_VER
@@ -78,9 +77,8 @@ using xsigma::profiler::impl::Result;
 //using xsigma::profiler::impl::strListToStr;
 using xsigma::profiler::impl::TensorMetadata;
 //using xsigma::profiler::impl::variantShapesToStr;
-using shape = std::variant<std::vector<int64_t>, std::vector<std::vector<int64_t>>>;
 
-struct OpArgData
+class XSIGMA_VISIBILITY OpArgData
 {
     bool                              hasData;
     std::vector<shape>                shapes;
@@ -113,8 +111,8 @@ auto parseArgData(
                 {
                     shapes[i]               = t.sizes_;
                     shapesForKinetoEvent[i] = t.sizes_;
-                    dtypes[i]  = std::string();  //;scalarTypeToTypeMeta(t.dtype_).name());
-                    strides[i] = t.strides_;
+                    dtypes[i]               = std::string(scalarTypeToTypeMeta(t.dtype_).name());
+                    strides[i]              = t.strides_;
                 },
                 [&](const std::vector<TensorMetadata>& l)
                 {
@@ -163,7 +161,7 @@ auto parseArgData(
     return OpArgData{true, shapes, dtypes, concrete_inputs_list, shapesForKinetoEvent, strides};
 }
 
-struct MetadataBase
+class XSIGMA_VISIBILITY MetadataBase
 {
     /* implicit */ MetadataBase(const std::shared_ptr<Result>& result)
         : kinetoActivity_{result->kineto_activity_}
@@ -172,11 +170,11 @@ struct MetadataBase
         {
             // In order to add metadata we have to downcast from
             // `libkineto::ITraceActivity` to `libkineto::GenericTraceActivity`. We
-            // know that all activities provided by XSigma are of the correct type,
+            // know that all activities provided by PyTorch are of the correct type,
             // however Kineto profilers can (and do) add events that inherit directly
             // from ITraceActivity. As a result, any Result which was constructed from
             // an event that Kineto provided is unsafe to cast.
-            if (!(!hasKinetoActivity()))
+            if (!(SOFT_ASSERT(!hasKinetoActivity())))
             {
                 result->kineto_activity_ = nullptr;
             }
@@ -202,40 +200,40 @@ private:
     const xsigma::profiler::impl::kineto::activity_t* kinetoActivity_{nullptr};
 };
 
-struct AddTensorboardFields : public MetadataBase
+class XSIGMA_VISIBILITY AddTensorboardFields : public MetadataBase
 {
     AddTensorboardFields(const std::shared_ptr<Result>& result, KinetoEvent& kineto_event)
         : MetadataBase(result)
     {
         result->visit(*this);
         const auto module_hierarchy = kineto_event.moduleHierarchy();
-        //addMetadata("Module Hierarchy", stacksToStr(module_hierarchy.vec(), "."));
-        //addMetadata("Call stack", stacksToStr(kineto_event.stack().vec(), ";"));
+        addMetadata("Module Hierarchy", stacksToStr(module_hierarchy.vec(), "."));
+        addMetadata("Call stack", stacksToStr(kineto_event.stack().vec(), ";"));
 
-        /*result->visit_if_base<PyExtraFieldsBase>(
-            [&, this](const auto& i) -> void
-            {
-                this->addMetadata("Python id", std::to_string(i.id_));
+        //result->visit_if_base<PyExtraFieldsBase>(
+        //    [&, this](const auto& i) -> void
+        //    {
+        //        this->addMetadata("Python id", std::to_string(i.id_));
 
-                std::optional<std::string> parent_id;
-                std::shared_ptr<Result>    parent = result->parent_.lock();
-                while (parent && !parent_id.has_value())
-                {
-                    parent->visit_if_base<PyExtraFieldsBase>(
-                        [&](const auto& j) { parent_id = std::to_string(j.id_); });
-                    parent = parent->parent_.lock();
-                }
-                this->addMetadata("Python parent id", parent_id.value_or("null"));
-            });*/
+        //        std::optional<std::string> parent_id;
+        //        std::shared_ptr<Result>    parent = result->parent_.lock();
+        //        while (parent && !parent_id.has_value())
+        //        {
+        //            parent->visit_if_base<PyExtraFieldsBase>(
+        //                [&](const auto& j) { parent_id = std::to_string(j.id_); });
+        //            parent = parent->parent_.lock();
+        //        }
+        //        this->addMetadata("Python parent id", parent_id.value_or("null"));
+        //    });
     }
 
-    /*void operator()(const ExtraFields<EventType::PyCall>& py_call)
+    void operator()(const ExtraFields<EventType::PyCall>& py_call)
     {
         if (py_call.module_.has_value())
         {
             addMetadata("Python module id", std::to_string(py_call.module_->id_));
         }
-    }*/
+    }
 
     template <typename T>
     void operator()(const T& /*unused*/)
@@ -243,7 +241,7 @@ struct AddTensorboardFields : public MetadataBase
     }
 };
 
-struct AddGenericMetadata : public MetadataBase
+class XSIGMA_VISIBILITY AddGenericMetadata : public MetadataBase
 {
     AddGenericMetadata(
         std::shared_ptr<Result>& result, const xsigma::profiler::impl::ProfilerConfig* config)
@@ -253,14 +251,14 @@ struct AddGenericMetadata : public MetadataBase
         if (config->experimental_config.verbose)
         {
             //result->visit_if_base<PyExtraFieldsBase>(
-            //   [&, this](const auto& i) -> void
-            // { this->addMetadata("Python thread", std::to_string(i.python_tid_)); });
+            //    [&, this](const auto& i) -> void
+            //    { this->addMetadata("Python thread", std::to_string(i.python_tid_)); });
         }
     }
 
     void operator()(ExtraFields<EventType::TorchOp>& op_event)
     {
-        /*const auto arg_data = parseArgData(op_event.inputs_, op_event.concrete_inputs_);
+        const auto arg_data = parseArgData(op_event.inputs_, op_event.concrete_inputs_);
 
         if (arg_data.hasData)
         {
@@ -285,8 +283,8 @@ struct AddGenericMetadata : public MetadataBase
         {
             if (key == "stream" && !val.isInt())
             {
-                //LOG(WARNING) << "Inputted stream is not an int for op: "
-                << op_event.name_ << " skipping";
+                LOG(WARNING) << "Inputted stream is not an int for op: " << op_event.name_
+                             << " skipping";
                 continue;
             }
 
@@ -307,10 +305,9 @@ struct AddGenericMetadata : public MetadataBase
 
             if (!isValidType && !isStringList)
             {
-                //LOG(WARNING)
-                << "Inputted kwarg: " << key
-                << " is not an int, double, string, bool, or list of strings for op: "
-                << op_event.name_ << " skipping";
+                LOG(WARNING) << "Inputted kwarg: " << key
+                             << " is not an int, double, string, bool, or list of strings for op: "
+                             << op_event.name_ << " skipping";
                 continue;
             }
 
@@ -349,7 +346,6 @@ struct AddGenericMetadata : public MetadataBase
             addMetadata("Fwd thread id", std::to_string(op_event.forward_tid_));
             addMetadata("Sequence number", std::to_string(op_event.sequence_number_));
         }
-        */
         addMetadata("Record function id", std::to_string(op_event.record_function_id_));
     }
 
@@ -582,7 +578,7 @@ void onFunctionExit(const xsigma::RecordFunction& fn, xsigma::ObserverContext* c
         }
         catch (const std::exception& e)
         {
-            //LOG(WARNING) << "Failed to record CUDA event. " << e.what();
+            LOG(WARNING) << "Failed to record CUDA event. " << e.what();
         }
     }
     else if (config.state == ProfilerState::KINETO_PRIVATEUSE1_FALLBACK)
@@ -681,9 +677,9 @@ void prepareProfiler(
             config.state == ProfilerState::KINETO_PRIVATEUSE1_FALLBACK,
         "Supported only in Kineto profiler");
     xsigma::profiler::impl::kineto::prepareTrace(
-        /*cpuOnly=*/!(xsigma::hasCUDA()  //|| xsigma::hasXPU() || xsigma::hasMTIA() ||
-                      //xsigma::get_privateuse1_backend() != "privateuseone"
-                      ),
+        /*cpuOnly=*/!(
+            xsigma::hasCUDA() || xsigma::hasXPU() || xsigma::hasMTIA() ||
+            xsigma::get_privateuse1_backend() != "privateuseone"),
         activities,
         config.experimental_config,
         config.trace_id);
@@ -717,7 +713,7 @@ void prepareProfiler(
         {
             if (!is_standard_event(e))
             {
-                //XSIGMA_LOG_WARNING("Forwarding a non-standard CPU performance event : ", e);
+                XSIGMA_LOG_WARNING("Forwarding a non-standard CPU performance event : ", e);
             }
         }
     }
@@ -784,18 +780,16 @@ void toggleCollectionDynamic(
         (activities.count(xsigma::autograd::profiler::ActivityType::CUDA) == 0 ||
          activities.count(xsigma::autograd::profiler::ActivityType::XPU) == 0))
     {
-        //LOG(WARNING)
-        //<< "Toggling CPU activity with GPU activity on may result in traces with GPU events on "
-        //  "artibrary tracks";
+        LOG(WARNING) << "Toggling CPU activity with GPU activity on may result in traces with GPU "
+                        "events on artibrary tracks";
     }
     else if (
         (activities.count(xsigma::autograd::profiler::ActivityType::CUDA) > 0 ||
          activities.count(xsigma::autograd::profiler::ActivityType::XPU) > 0) &&
         activities.count(xsigma::autograd::profiler::ActivityType::CPU) == 0)
     {
-        //LOG(WARNING)
-        //<< "Toggling GPU activity with CPU activity on may result in traces with incorrect "
-        //   "correlation between CPU and GPU events";
+        LOG(WARNING) << "Toggling GPU activity with CPU activity on may result in traces with "
+                        "incorrect correlation between CPU and GPU events";
     }
     for (auto act : activities)
     {
@@ -810,9 +804,9 @@ void toggleCollectionDynamic(
         }
         else
         {
-            //LOG(WARNING)
-            //<< "Dynamic toggle is only supported for CPU/GPU activity, skipping toggling of "
-            //<< actToString(act);
+            LOG(WARNING)
+                << "Dynamic toggle is only supported for CPU/GPU activity, skipping toggling of "
+                << actToString(act);
             continue;
         }
     }
@@ -1150,8 +1144,7 @@ int64_t KinetoEvent::cudaElapsedUs() const
     }
     catch (std::exception& e)
     {
-        //LOG(WARNING) << "Failed to measure time between two CUDA events. "
-        //<< e.what();
+        LOG(WARNING) << "Failed to measure time between two CUDA events. " << e.what();
     }
     return -1;
 }

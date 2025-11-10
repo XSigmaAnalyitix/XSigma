@@ -118,6 +118,12 @@ if(NOT XSIGMA_ENABLE_KINETO)
   message(STATUS "Kineto disabled: Excluding Kineto source files from build")
 endif()
 
+# Remove duplicate itt_wrapper.cpp from profiling/profiler directory Keep the one in profiler/
+# directory instead
+list(REMOVE_ITEM sources "${CMAKE_CURRENT_SOURCE_DIR}/profiling/profiler/itt_wrapper.cpp")
+list(REMOVE_ITEM headers "${CMAKE_CURRENT_SOURCE_DIR}/profiling/profiler/itt_wrapper.h")
+message(STATUS "Excluding duplicate itt_wrapper files from profiling/profiler directory")
+
 # Create the Core library Respect BUILD_SHARED_LIBS setting for library type
 add_library(Core ${sources} ${headers} ${templates})
 
