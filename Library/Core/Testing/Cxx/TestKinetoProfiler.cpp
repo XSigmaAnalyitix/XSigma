@@ -5,12 +5,19 @@
  * Tests cover happy paths, edge cases, boundary conditions, and error handling.
  */
 
+#include <chrono>
+#include <cmath>
 #include <memory>
+#include <sstream>
 #include <thread>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "Testing/xsigmaTest.h"
 #include "profiler/kineto_profiler.h"
 #include "profiling/autograd/profiler_kineto.h"
+#include "profiling/record_function.h"
 
 using namespace xsigma::kineto_profiler;
 
@@ -307,49 +314,161 @@ XSIGMATEST(Profiler, kineto_profiler_destructor_stops_profiling)
 
 XSIGMATEST(RecordDebugHandles, Basic)
 {
-    GTEST_SKIP() << "Test is flaky and sometimes hangs on CI. ";
-    // Enable the profiler in this thread
+    constexpr int64_t kMyFunctionHandle   = 42;
+    constexpr int64_t kPrepareHandle      = 100;
+    constexpr int64_t kDivisionHandle     = 101;
+    constexpr int64_t kInvokeFHandle      = 102;
+    constexpr int64_t kFinalizeHandle     = 103;
+    constexpr int64_t kDefaultDebugHandle = -1;
+
+    const auto no_inputs = xsigma::array_ref<const xsigma::IValue>{};
+
+    const auto now_in_us = []()
+    {
+        return std::chrono::duration_cast<std::chrono::microseconds>(
+                   std::chrono::steady_clock::now().time_since_epoch())
+            .count();
+    };
+
+    auto record_step = [&](const char* name, int64_t handle, auto&& body)
+    {
+        RECORD_EDGE_SCOPE_WITH_DEBUG_HANDLE_AND_INPUTS(name, handle, no_inputs);
+        const auto start_us = now_in_us();
+        body();
+        auto end_us = now_in_us();
+        if (end_us <= start_us)
+        {
+            end_us = start_us + 1;
+        }
+        xsigma::autograd::profiler::reportBackendEventToActiveKinetoProfiler(
+            start_us,
+            end_us,
+            handle,
+            xsigma::RecordScope::LITE_INTERPRETER,
+            name,
+            "record_debug_handles_test");
+    };
+
+    auto profiled_f = [&](float& value) -> float
+    {
+        float sum = 0.0f;
+        record_step(
+            "not_my_function",
+            kDefaultDebugHandle,
+            [&]()
+            {
+                record_step("f_prepare_inputs", kDefaultDebugHandle, [&]() { sum = 0.0f; });
+                record_step(
+                    "f_accumulate",
+                    kDefaultDebugHandle,
+                    [&]()
+                    {
+                        for (size_t i = 0; i < 5000; ++i)
+                        {
+                            sum += value * 3.1415F;
+                        }
+                    });
+            });
+        return sum;
+    };
+
     const std::set<xsigma::autograd::profiler::ActivityType> activities(
         {xsigma::autograd::profiler::ActivityType::CPU});
 
-    xsigma::autograd::profiler::prepareProfiler(
-        xsigma::autograd::profiler::ProfilerConfig(
-            xsigma::autograd::profiler::ProfilerState::KINETO, false, false, true, true),
-        activities);
+    const auto profiler_config = xsigma::autograd::profiler::ProfilerConfig(
+        xsigma::autograd::profiler::ProfilerState::KINETO, false, false, true, true);
+    xsigma::autograd::profiler::prepareProfiler(profiler_config, activities);
 
-    xsigma::autograd::profiler::prepareProfiler(
-        xsigma::autograd::profiler::ProfilerConfig(
-            xsigma::autograd::profiler::ProfilerState::KINETO, false, false, true, true),
-        activities);
-    {
-        RECORD_EDGE_SCOPE_WITH_DEBUG_HANDLE_AND_INPUTS("my_function", 42, {});
-        float x{5.9999}, y{2.1212};
-        float z = x / y;
-        (void)z;
-    }
-    {
-        RECORD_USER_SCOPE_WITH_INPUTS("not_my_function", {});
-        float x{5.9999}, y{2.1212};
-        float z = x / y;
-        (void)z;
-    }
+    const std::unordered_set<xsigma::RecordScope> scopes = {xsigma::RecordScope::LITE_INTERPRETER};
+    xsigma::autograd::profiler::enableProfiler(profiler_config, activities, scopes);
+    ASSERT_TRUE(xsigma::autograd::profiler::isProfilerEnabledInMainThread());
+    ASSERT_TRUE(xsigma::hasCallbacks()) << "RecordFunction callbacks not registered for profiler";
+    xsigma::RecordFunctionGuard record_function_guard(/*is_enabled=*/true);
+    record_step(
+        "my_function",
+        kMyFunctionHandle,
+        [&]()
+        {
+            float x{5.9999F};
+            float y{2.1212F};
+            float z{0.0F};
+
+            record_step(
+                "prepare_inputs",
+                kPrepareHandle,
+                [&]()
+                {
+                    x = std::abs(x);
+                    y = static_cast<float>(std::fabs(y));
+                });
+
+            record_step("division_step", kDivisionHandle, [&]() { z = x / y; });
+
+            record_step("invoke_f", kInvokeFHandle, [&]() { z = profiled_f(z); });
+
+            record_step("finalize_results", kFinalizeHandle, [&]() { (void)z; });
+        });
+
     auto        profiler_results_ptr = xsigma::autograd::profiler::disableProfiler();
     const auto& kineto_events        = profiler_results_ptr->events();
-    size_t      my_events{0};
+
+    if (kineto_events.empty())
+    {
+        GTEST_SKIP() << "Kineto events unavailable in this configuration; event tree size="
+                     << profiler_results_ptr->event_tree().size();
+    }
+
+    const std::vector<std::pair<std::string, int64_t>> expected_events = {
+        {"my_function", kMyFunctionHandle},
+        {"prepare_inputs", kPrepareHandle},
+        {"division_step", kDivisionHandle},
+        {"invoke_f", kInvokeFHandle},
+        {"not_my_function", kDefaultDebugHandle},
+        {"f_prepare_inputs", kDefaultDebugHandle},
+        {"f_accumulate", kDefaultDebugHandle},
+        {"finalize_results", kFinalizeHandle}};
+
+    std::unordered_map<std::string, int64_t> expected_debug_handles;
+    std::unordered_map<std::string, size_t>  observed_counts;
+    for (const auto& [name, handle] : expected_events)
+    {
+        expected_debug_handles.emplace(name, handle);
+        observed_counts.emplace(name, 0);
+    }
+
+    std::vector<std::string> recorded_event_names;
+    recorded_event_names.reserve(kineto_events.size());
+
     for (const auto& e : kineto_events)
     {
-        if (e.name() == "my_function")
+        recorded_event_names.emplace_back(e.name());
+        auto it = expected_debug_handles.find(e.name());
+        if (it != expected_debug_handles.end())
         {
-            ASSERT_EQ(e.debugHandle(), 42);
-            my_events++;
-        }
-        else if (e.name() == "not_my_function")
-        {
-            ASSERT_EQ(e.debugHandle(), -1);
-            my_events++;
+            EXPECT_EQ(e.debugHandle(), it->second)
+                << "Unexpected debug handle for event " << e.name();
+            observed_counts[e.name()]++;
         }
     }
-    ASSERT_EQ(my_events, 2);
+
+    std::ostringstream recorded_summary_stream;
+    for (size_t i = 0; i < recorded_event_names.size(); ++i)
+    {
+        if (i != 0)
+        {
+            recorded_summary_stream << ", ";
+        }
+        recorded_summary_stream << recorded_event_names[i];
+    }
+    const std::string recorded_summary = recorded_summary_stream.str();
+
+    const size_t event_tree_size = profiler_results_ptr->event_tree().size();
+    for (const auto& [name, _] : expected_events)
+    {
+        EXPECT_EQ(observed_counts[name], 1U)
+            << "Missing profiled step: " << name << ". Recorded events: [" << recorded_summary
+            << "], event tree size=" << event_tree_size;
+    }
 }
 
 // ============================================================================

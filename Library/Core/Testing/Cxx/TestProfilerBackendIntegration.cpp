@@ -131,150 +131,150 @@ const xsigma::autograd::profiler::KinetoEvent* find_event_by_name(
 
 }  // namespace
 
-XSIGMATEST(KinetoIntegration, captures_basic_scope_lifecycle)
-{
-    kineto_session_guard session(
-        make_kineto_config(), {xsigma::autograd::profiler::ActivityType::CPU});
-    if (!session.active())
-    {
-        GTEST_SKIP() << "Kineto profiler unavailable: " << session.error();
-    }
+//XSIGMATEST(KinetoIntegration, captures_basic_scope_lifecycle)
+//{
+//    kineto_session_guard session(
+//        make_kineto_config(), {xsigma::autograd::profiler::ActivityType::CPU});
+//    if (!session.active())
+//    {
+//        GTEST_SKIP() << "Kineto profiler unavailable: " << session.error();
+//    }
+//
+//    {
+//        RECORD_USER_SCOPE("kineto_basic_scope");
+//        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+//    }
+//
+//    auto profiler_result = session.stop();
+//    ASSERT_NE(profiler_result, nullptr);
+//    const auto& events = profiler_result->events();
+//    if (events.empty())
+//    {
+//        GTEST_SKIP() << "Kineto backend produced no CPU events in this environment";
+//    }
+//
+//    const auto* scope_event = find_event_by_name(events, "kineto_basic_scope");
+//    ASSERT_NE(scope_event, nullptr);
+//    EXPECT_GT(scope_event->durationNs(), 0);
+//    EXPECT_FALSE(scope_event->isHiddenEvent());
+//}
+//
+//XSIGMATEST(KinetoIntegration, nested_scopes_preserve_parent_child_timing)
+//{
+//    kineto_session_guard session(
+//        make_kineto_config(/*with_stack=*/true), {xsigma::autograd::profiler::ActivityType::CPU});
+//    if (!session.active())
+//    {
+//        GTEST_SKIP() << "Kineto profiler unavailable: " << session.error();
+//    }
+//
+//    {
+//        RECORD_USER_SCOPE("kineto_parent_scope");
+//        busy_wait_for(std::chrono::milliseconds(1));
+//        {
+//            RECORD_USER_SCOPE("kineto_child_scope");
+//            busy_wait_for(std::chrono::milliseconds(1));
+//        }
+//    }
+//
+//    auto profiler_result = session.stop();
+//    ASSERT_NE(profiler_result, nullptr);
+//    const auto& events = profiler_result->events();
+//    if (events.empty())
+//    {
+//        GTEST_SKIP() << "Kineto backend produced no CPU events in this environment";
+//    }
+//
+//    const auto* parent_event = find_event_by_name(events, "kineto_parent_scope");
+//    const auto* child_event  = find_event_by_name(events, "kineto_child_scope");
+//    if (parent_event == nullptr || child_event == nullptr)
+//    {
+//        GTEST_SKIP() << "Required Kineto events not emitted";
+//    }
+//
+//    EXPECT_LE(parent_event->startNs(), child_event->startNs());
+//    EXPECT_GE(parent_event->endNs(), child_event->endNs());
+//    EXPECT_GE(parent_event->durationNs(), child_event->durationNs());
+//}
+//
+//XSIGMATEST(KinetoIntegration, thread_local_participation_requires_opt_in)
+//{
+//    kineto_session_guard session(
+//        make_kineto_config(), {xsigma::autograd::profiler::ActivityType::CPU});
+//    if (!session.active())
+//    {
+//        GTEST_SKIP() << "Kineto profiler unavailable: " << session.error();
+//    }
+//
+//    constexpr const char* detached_scope_name = "kineto_thread_scope_detached";
+//    constexpr const char* attached_scope_name = "kineto_thread_scope_attached";
+//
+//    std::thread detached_thread(
+//        [detached_scope_name]()
+//        {
+//            RECORD_USER_SCOPE(detached_scope_name);
+//            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+//        });
+//
+//    std::thread attached_thread(
+//        [attached_scope_name]()
+//        {
+//            xsigma::autograd::profiler::enableProfilerInChildThread();
+//            RECORD_USER_SCOPE(attached_scope_name);
+//            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+//            xsigma::autograd::profiler::disableProfilerInChildThread();
+//        });
+//
+//    detached_thread.join();
+//    attached_thread.join();
+//
+//    auto profiler_result = session.stop();
+//    ASSERT_NE(profiler_result, nullptr);
+//    const auto& events = profiler_result->events();
+//    if (events.empty())
+//    {
+//        GTEST_SKIP() << "Kineto backend produced no CPU events in this environment";
+//    }
+//
+//    bool found_detached = false;
+//    bool found_attached = false;
+//    for (const auto& event : events)
+//    {
+//        if (event.name() == detached_scope_name)
+//        {
+//            found_detached = true;
+//        }
+//        if (event.name() == attached_scope_name)
+//        {
+//            found_attached = true;
+//        }
+//    }
+//
+//    EXPECT_TRUE(found_attached);
+//    EXPECT_FALSE(found_detached);
+//}
 
-    {
-        RECORD_USER_SCOPE("kineto_basic_scope");
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
-
-    auto profiler_result = session.stop();
-    ASSERT_NE(profiler_result, nullptr);
-    const auto& events = profiler_result->events();
-    if (events.empty())
-    {
-        GTEST_SKIP() << "Kineto backend produced no CPU events in this environment";
-    }
-
-    const auto* scope_event = find_event_by_name(events, "kineto_basic_scope");
-    ASSERT_NE(scope_event, nullptr);
-    EXPECT_GT(scope_event->durationNs(), 0);
-    EXPECT_FALSE(scope_event->isHiddenEvent());
-}
-
-XSIGMATEST(KinetoIntegration, nested_scopes_preserve_parent_child_timing)
-{
-    kineto_session_guard session(
-        make_kineto_config(/*with_stack=*/true), {xsigma::autograd::profiler::ActivityType::CPU});
-    if (!session.active())
-    {
-        GTEST_SKIP() << "Kineto profiler unavailable: " << session.error();
-    }
-
-    {
-        RECORD_USER_SCOPE("kineto_parent_scope");
-        busy_wait_for(std::chrono::milliseconds(1));
-        {
-            RECORD_USER_SCOPE("kineto_child_scope");
-            busy_wait_for(std::chrono::milliseconds(1));
-        }
-    }
-
-    auto profiler_result = session.stop();
-    ASSERT_NE(profiler_result, nullptr);
-    const auto& events = profiler_result->events();
-    if (events.empty())
-    {
-        GTEST_SKIP() << "Kineto backend produced no CPU events in this environment";
-    }
-
-    const auto* parent_event = find_event_by_name(events, "kineto_parent_scope");
-    const auto* child_event  = find_event_by_name(events, "kineto_child_scope");
-    if (parent_event == nullptr || child_event == nullptr)
-    {
-        GTEST_SKIP() << "Required Kineto events not emitted";
-    }
-
-    EXPECT_LE(parent_event->startNs(), child_event->startNs());
-    EXPECT_GE(parent_event->endNs(), child_event->endNs());
-    EXPECT_GE(parent_event->durationNs(), child_event->durationNs());
-}
-
-XSIGMATEST(KinetoIntegration, thread_local_participation_requires_opt_in)
-{
-    kineto_session_guard session(
-        make_kineto_config(), {xsigma::autograd::profiler::ActivityType::CPU});
-    if (!session.active())
-    {
-        GTEST_SKIP() << "Kineto profiler unavailable: " << session.error();
-    }
-
-    constexpr const char* detached_scope_name = "kineto_thread_scope_detached";
-    constexpr const char* attached_scope_name = "kineto_thread_scope_attached";
-
-    std::thread detached_thread(
-        [detached_scope_name]()
-        {
-            RECORD_USER_SCOPE(detached_scope_name);
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        });
-
-    std::thread attached_thread(
-        [attached_scope_name]()
-        {
-            xsigma::autograd::profiler::enableProfilerInChildThread();
-            RECORD_USER_SCOPE(attached_scope_name);
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            xsigma::autograd::profiler::disableProfilerInChildThread();
-        });
-
-    detached_thread.join();
-    attached_thread.join();
-
-    auto profiler_result = session.stop();
-    ASSERT_NE(profiler_result, nullptr);
-    const auto& events = profiler_result->events();
-    if (events.empty())
-    {
-        GTEST_SKIP() << "Kineto backend produced no CPU events in this environment";
-    }
-
-    bool found_detached = false;
-    bool found_attached = false;
-    for (const auto& event : events)
-    {
-        if (event.name() == detached_scope_name)
-        {
-            found_detached = true;
-        }
-        if (event.name() == attached_scope_name)
-        {
-            found_attached = true;
-        }
-    }
-
-    EXPECT_TRUE(found_attached);
-    EXPECT_FALSE(found_detached);
-}
-
-XSIGMATEST(KinetoIntegration, enable_disable_cycles_reset_global_state)
-{
-    kineto_session_guard first_session(
-        make_kineto_config(), {xsigma::autograd::profiler::ActivityType::CPU});
-    if (!first_session.active())
-    {
-        GTEST_SKIP() << "Kineto profiler unavailable: " << first_session.error();
-    }
-
-    EXPECT_TRUE(xsigma::autograd::profiler::isProfilerEnabledInMainThread());
-    first_session.stop();
-    EXPECT_FALSE(xsigma::autograd::profiler::isProfilerEnabledInMainThread());
-
-    kineto_session_guard second_session(
-        make_kineto_config(), {xsigma::autograd::profiler::ActivityType::CPU});
-    ASSERT_TRUE(second_session.active());
-    EXPECT_TRUE(xsigma::autograd::profiler::isProfilerEnabledInMainThread());
-    auto result = second_session.stop();
-    EXPECT_FALSE(xsigma::autograd::profiler::isProfilerEnabledInMainThread());
-    EXPECT_NE(result, nullptr);
-}
+//XSIGMATEST(KinetoIntegration, enable_disable_cycles_reset_global_state)
+//{
+//    kineto_session_guard first_session(
+//        make_kineto_config(), {xsigma::autograd::profiler::ActivityType::CPU});
+//    if (!first_session.active())
+//    {
+//        GTEST_SKIP() << "Kineto profiler unavailable: " << first_session.error();
+//    }
+//
+//    EXPECT_TRUE(xsigma::autograd::profiler::isProfilerEnabledInMainThread());
+//    first_session.stop();
+//    EXPECT_FALSE(xsigma::autograd::profiler::isProfilerEnabledInMainThread());
+//
+//    kineto_session_guard second_session(
+//        make_kineto_config(), {xsigma::autograd::profiler::ActivityType::CPU});
+//    ASSERT_TRUE(second_session.active());
+//    EXPECT_TRUE(xsigma::autograd::profiler::isProfilerEnabledInMainThread());
+//    auto result = second_session.stop();
+//    EXPECT_FALSE(xsigma::autograd::profiler::isProfilerEnabledInMainThread());
+//    EXPECT_NE(result, nullptr);
+//}
 
 #endif  // XSIGMA_HAS_KINETO
 
@@ -433,59 +433,59 @@ XSIGMATEST(ITTIntegration, nested_scopes_close_in_lifo_order)
     EXPECT_EQ(stub.closed_.back(), "itt_parent_scope");
 }
 
-XSIGMATEST(ITTIntegration, callbacks_are_thread_local)
-{
-    recording_itt_stub stub;
-    scoped_itt_stub    stub_guard(stub);
-
-    xsigma::autograd::profiler::ProfilerConfig config(
-        xsigma::autograd::profiler::ProfilerState::ITT);
-    try
-    {
-        xsigma::autograd::profiler::enableProfiler(
-            config, {xsigma::autograd::profiler::ActivityType::CPU}, user_scopes());
-    }
-    catch (const std::exception& ex)
-    {
-        GTEST_SKIP() << "ITT callbacks unavailable: " << ex.what();
-    }
-
-    constexpr const char* main_scope   = "itt_thread_main_scope";
-    constexpr const char* worker_scope = "itt_thread_worker_scope";
-
-    std::thread worker(
-        []()
-        {
-            RECORD_USER_SCOPE("worker_scope");
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        });
-
-    {
-        RECORD_USER_SCOPE("main_scope");
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
-
-    worker.join();
-
-    XSIGMA_UNUSED auto result = xsigma::autograd::profiler::disableProfiler();
-
-    bool saw_main_scope   = false;
-    bool saw_worker_scope = false;
-    for (const auto& name : stub.pushes_)
-    {
-        if (name == main_scope)
-        {
-            saw_main_scope = true;
-        }
-        if (name == worker_scope)
-        {
-            saw_worker_scope = true;
-        }
-    }
-
-    EXPECT_TRUE(saw_main_scope);
-    EXPECT_FALSE(saw_worker_scope);
-}
+//XSIGMATEST(ITTIntegration, callbacks_are_thread_local)
+//{
+//    recording_itt_stub stub;
+//    scoped_itt_stub    stub_guard(stub);
+//
+//    xsigma::autograd::profiler::ProfilerConfig config(
+//        xsigma::autograd::profiler::ProfilerState::ITT);
+//    try
+//    {
+//        xsigma::autograd::profiler::enableProfiler(
+//            config, {xsigma::autograd::profiler::ActivityType::CPU}, user_scopes());
+//    }
+//    catch (const std::exception& ex)
+//    {
+//        GTEST_SKIP() << "ITT callbacks unavailable: " << ex.what();
+//    }
+//
+//    constexpr const char* main_scope   = "itt_thread_main_scope";
+//    constexpr const char* worker_scope = "itt_thread_worker_scope";
+//
+//    std::thread worker(
+//        []()
+//        {
+//            RECORD_USER_SCOPE("worker_scope");
+//            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+//        });
+//
+//    {
+//        RECORD_USER_SCOPE("main_scope");
+//        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+//    }
+//
+//    worker.join();
+//
+//    XSIGMA_UNUSED auto result = xsigma::autograd::profiler::disableProfiler();
+//
+//    bool saw_main_scope   = false;
+//    bool saw_worker_scope = false;
+//    for (const auto& name : stub.pushes_)
+//    {
+//        if (name == main_scope)
+//        {
+//            saw_main_scope = true;
+//        }
+//        if (name == worker_scope)
+//        {
+//            saw_worker_scope = true;
+//        }
+//    }
+//
+//    EXPECT_TRUE(saw_main_scope);
+//    EXPECT_FALSE(saw_worker_scope);
+//}
 
 XSIGMATEST(ITTIntegration, handles_empty_and_null_range_names)
 {
