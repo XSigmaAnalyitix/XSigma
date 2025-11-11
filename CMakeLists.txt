@@ -148,6 +148,7 @@ set_property(CACHE XSIGMA_VECTORIZATION_TYPE PROPERTY STRINGS no sse avx avx2 av
 # External Library Usage Flag Controls whether external copies of third-party libraries are used by
 # default. When enabled, prefers external library versions over bundled versions.
 option(XSIGMA_ENABLE_EXTERNAL "Use external copies of third party libraries by default" ON)
+mark_as_advanced(XSIGMA_ENABLE_EXTERNAL)
 
 # Magic Enum Static Reflection Flag Controls whether magic_enum is enabled for compile-time enum
 # reflection. When enabled, provides powerful enum introspection capabilities.

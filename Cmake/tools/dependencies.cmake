@@ -284,20 +284,25 @@ endif()
 
 # XSigma Kineto profiling library support
 if(XSIGMA_ENABLE_KINETO)
-  # Always add the compile definition and include directories when Kineto is enabled This allows
-  # Kineto-specific code to be compiled
+  # Always add the compile definition and include directories when Kineto is enabled.
   list(APPEND XSIGMA_DEPENDENCY_INCLUDE_DIRS
        "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/kineto/libkineto/include"
   )
 
-  # If the Kineto target exists, also link with it
-  if(TARGET XSigma::kineto)
+  # Xcode generator has trouble materializing the combined kineto static library from
+  # object libraries. Prefer linking the component libs directly under Xcode.
+  if(CMAKE_GENERATOR STREQUAL "Xcode" AND TARGET kineto_base AND TARGET kineto_api)
+    list(APPEND XSIGMA_DEPENDENCY_LIBS kineto_base kineto_api)
+    message(STATUS "Dependency: using kineto_base + kineto_api (Xcode fallback) in XSIGMA_DEPENDENCY_LIBS")
+  elseif(TARGET XSigma::kineto)
     list(APPEND XSIGMA_DEPENDENCY_LIBS XSigma::kineto)
     message(STATUS "Dependency: XSigma::kineto added to XSIGMA_DEPENDENCY_LIBS")
+  # General fallback (non-aliased targets available)
+  elseif(TARGET kineto AND TARGET kineto_base AND TARGET kineto_api)
+    list(APPEND XSIGMA_DEPENDENCY_LIBS kineto)
+    message(STATUS "Dependency: using raw kineto target in XSIGMA_DEPENDENCY_LIBS")
   else()
-    message(
-      STATUS "Kineto enabled but library not found - Kineto code will compile but may not link"
-    )
+    message(STATUS "Kineto enabled but library target not found; code will compile without linking")
   endif()
 endif()
 

@@ -699,7 +699,7 @@ void AliasDb::analyzeImpl(Node* node)
         const auto analysis = op->aliasAnalysisKind();
 
         const bool registeredAsSpecialCase = analysis == AliasAnalysisKind::INTERNAL_SPECIAL_CASE;
-        if (XSIGMA_UNLIKELY(registeredAsSpecialCase && !hasSpecialCase))
+        if XSIGMA_UNLIKELY(registeredAsSpecialCase && !hasSpecialCase)
         {
             TORCH_INTERNAL_ASSERT(
                 false,
@@ -708,7 +708,7 @@ void AliasDb::analyzeImpl(Node* node)
                 " is registered with AliasAnalysisKind::INTERNAL_SPECIAL_CASE but doesn't have a "
                 "special case.");
         }
-        else if (XSIGMA_UNLIKELY(!registeredAsSpecialCase && hasSpecialCase))
+        else if XSIGMA_UNLIKELY(!registeredAsSpecialCase && hasSpecialCase)
         {
             TORCH_INTERNAL_ASSERT(
                 false,

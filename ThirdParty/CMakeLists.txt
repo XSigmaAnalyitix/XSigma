@@ -5,9 +5,6 @@ message(STATUS "DEBUG: Processing ThirdParty/CMakeLists.txt")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Option to use external libraries instead of bundled ones
-option(XSIGMA_ENABLE_EXTERNAL "Use external copies of third party libraries by default" OFF)
-
 # Global option to control third-party library type (STATIC, SHARED, or DEFAULT)
 # DEFAULT means respect each library's own settings or BUILD_SHARED_LIBS
 set(XSIGMA_THIRDPARTY_TYPE "DEFAULT" CACHE STRING "Default library type for third-party libraries (STATIC, SHARED, or DEFAULT)")
@@ -422,9 +419,10 @@ function(add_third_party_library name)
     # Step 3: Try to find external library first if requested
     # -------------------------------------------------------------------------
     if(XSIGMA_ENABLE_EXTERNAL)
+        #set(CMAKE_FIND_DEBUG_MODE TRUE)
         find_package(${TPL_EXTERNAL_NAME} QUIET)
         if(${TPL_EXTERNAL_NAME}_FOUND OR ${name}_FOUND)
-            message(STATUS "Using external ${name}")
+            message(STATUS "Using external ${name}==================================================")
             if(TPL_ALIASES AND TARGET ${name})
                 _create_third_party_aliases(${name} "${TPL_ALIASES}")
             endif()

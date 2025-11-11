@@ -309,7 +309,7 @@ PyObject* THPVariable_Wrap(const xsigma::TensorBase& var)
         // to the Python object are removed.
     }
 
-    if (XSIGMA_LIKELY(var.device().type() != xsigma::kXLA))
+    if XSIGMA_LIKELY(var.device().type() != xsigma::kXLA)
     {
         return THPVariable_NewWithVar((PyTypeObject*)THPVariableClass, var);
     }
@@ -2442,7 +2442,7 @@ static int THPVariable_subclass_clear(THPVariable* self)
 
     // Assume we never have managed dict for Tensors as we don't set the flag on
     // the base class
-    if (XSIGMA_LIKELY(type->tp_dictoffset))
+    if XSIGMA_LIKELY(type->tp_dictoffset)
     {
         PyObject** dictptr = _PyObject_GetDictPtr((PyObject*)self);
         if (dictptr && *dictptr)
@@ -2536,7 +2536,7 @@ static void THPVariable_subclass_dealloc(PyObject* self)
     }
 
     // All Python defined classes have __dict__
-    if (XSIGMA_LIKELY(type->tp_dictoffset))
+    if XSIGMA_LIKELY(type->tp_dictoffset)
     {
         PyObject** dictptr = _PyObject_GetDictPtr(self);
         if (dictptr != nullptr)
@@ -2791,7 +2791,7 @@ static int THPVariable_subclass_traverse(PyObject* self, visitproc visit, void* 
     }
 
     // All Python defined classes have __dict__
-    if (XSIGMA_LIKELY(type->tp_dictoffset))
+    if XSIGMA_LIKELY(type->tp_dictoffset)
     {
         PyObject** dictptr = _PyObject_GetDictPtr(self);
         if (dictptr && *dictptr)

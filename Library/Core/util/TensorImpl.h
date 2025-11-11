@@ -692,7 +692,7 @@ public:
    */
     IntArrayRef sizes() const
     {
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes))
         {
             return sizes_custom();
         }
@@ -701,7 +701,7 @@ public:
 
     SymIntArrayRef sym_sizes() const
     {
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes))
         {
             return sym_sizes_custom();
         }
@@ -711,7 +711,7 @@ public:
 
     IntArrayRef sizes_default() const
     {
-        if (XSIGMA_UNLIKELY(has_symbolic_sizes_strides_))
+        if XSIGMA_UNLIKELY(has_symbolic_sizes_strides_)
         {
             throw_cannot_call_with_symbolic("sizes");
         }
@@ -792,7 +792,7 @@ public:
    */
     int64_t numel() const
     {
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes))
         {
             return numel_custom();
         }
@@ -801,7 +801,7 @@ public:
 
     xsigma::SymInt sym_numel() const
     {
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes))
         {
             return sym_numel_custom();
         }
@@ -810,7 +810,7 @@ public:
 
     int64_t numel_default() const
     {
-        if (XSIGMA_UNLIKELY(has_symbolic_sizes_strides_))
+        if XSIGMA_UNLIKELY(has_symbolic_sizes_strides_)
         {
             throw_cannot_call_with_symbolic("numel");
         }
@@ -835,7 +835,7 @@ public:
    */
     int64_t dim() const
     {
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes))
         {
             return dim_custom();
         }
@@ -864,7 +864,7 @@ public:
     int64_t storage_offset() const
     {
         // TODO: maybe this should be toggled by strides
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes))
         {
             return storage_offset_custom();
         }
@@ -873,7 +873,7 @@ public:
 
     xsigma::SymInt sym_storage_offset() const
     {
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes))
         {
             return sym_storage_offset_custom();
         }
@@ -882,7 +882,7 @@ public:
 
     int64_t storage_offset_default() const
     {
-        if (XSIGMA_UNLIKELY(has_symbolic_sizes_strides_))
+        if XSIGMA_UNLIKELY(has_symbolic_sizes_strides_)
         {
             throw_cannot_call_with_symbolic("storage_offset");
         }
@@ -907,7 +907,7 @@ public:
    */
     IntArrayRef strides() const
     {
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomStrides)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomStrides))
         {
             return strides_custom();
         }
@@ -916,7 +916,7 @@ public:
 
     xsigma::SymIntArrayRef sym_strides() const
     {
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomStrides)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomStrides))
         {
             return sym_strides_custom();
         }
@@ -925,7 +925,7 @@ public:
 
     IntArrayRef strides_default() const
     {
-        if (XSIGMA_UNLIKELY(has_symbolic_sizes_strides_))
+        if XSIGMA_UNLIKELY(has_symbolic_sizes_strides_)
         {
             throw_cannot_call_with_symbolic("strides");
         }
@@ -947,7 +947,7 @@ public:
     xsigma::SymBool sym_is_contiguous(
         at::MemoryFormat memory_format = at::MemoryFormat::Contiguous) const
     {
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomStrides)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomStrides))
         {
             return sym_is_contiguous_custom(memory_format);
         }
@@ -1002,7 +1002,7 @@ public:
    */
     bool is_contiguous(at::MemoryFormat memory_format = at::MemoryFormat::Contiguous) const
     {
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomStrides)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomStrides))
         {
             return is_contiguous_custom(memory_format);
         }
@@ -1076,7 +1076,7 @@ public:
    */
     int64_t size(int64_t d) const
     {
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes))
         {
             return size_custom(d);
         }
@@ -1086,7 +1086,7 @@ public:
 
     xsigma::SymInt sym_size(int64_t d) const
     {
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomSizes))
         {
             return sym_size_custom(d);
         }
@@ -1105,7 +1105,7 @@ public:
     int64_t stride(int64_t d) const
     {
         d = maybe_wrap_dim(d, dim(), false);
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomStrides)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomStrides))
         {
             // TODO: provide stride_custom, symmetrically with size_custom.
             // There is presently no user for it; only NestedTensor is using
@@ -1248,7 +1248,7 @@ public:
    */
     TENSORIMPL_MAYBE_VIRTUAL const Storage& storage() const
     {
-        if (XSIGMA_UNLIKELY(storage_access_should_throw_))
+        if XSIGMA_UNLIKELY(storage_access_should_throw_)
         {
             throw_storage_access_error();
         }
@@ -1297,7 +1297,7 @@ public:
     {
         // NB: This method is not virtual and avoid dispatches for performance
         // reasons.
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().is_meta();
         }
@@ -1308,7 +1308,7 @@ public:
     {
         // NB: This method is not virtual and avoid dispatches for performance
         // reasons.
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().is_cpu();
         }
@@ -1322,7 +1322,7 @@ public:
     {
         // NB: This method is not virtual and avoid dispatches for performance
         // reasons.
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().is_cuda();
         }
@@ -1333,7 +1333,7 @@ public:
     {
         // NB: This method is not virtual and avoid dispatches for performance
         // reasons.
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().is_xpu();
         }
@@ -1342,7 +1342,7 @@ public:
 
     bool is_ipu() const
     {
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().is_ipu();
         }
@@ -1351,7 +1351,7 @@ public:
 
     bool is_xla() const
     {
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().is_xla();
         }
@@ -1360,7 +1360,7 @@ public:
 
     bool is_mtia() const
     {
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().is_mtia();
         }
@@ -1369,7 +1369,7 @@ public:
 
     bool is_hpu() const
     {
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().is_hpu();
         }
@@ -1378,7 +1378,7 @@ public:
 
     bool is_lazy() const
     {
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().is_lazy();
         }
@@ -1389,7 +1389,7 @@ public:
     {
         // NB: This method is not virtual and avoid dispatches for performance
         // reasons.
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().is_hip();
         }
@@ -1400,7 +1400,7 @@ public:
     {
         // NB: This method is not virtual and avoid dispatches for performance
         // reasons.
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().is_ve();
         }
@@ -1411,7 +1411,7 @@ public:
     {
         // NB: This method is not virtual and avoid dispatches for performance
         // reasons.
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().is_privateuseone();
         }
@@ -1422,7 +1422,7 @@ public:
 
     bool is_vulkan() const
     {
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().is_vulkan();
         }
@@ -1431,7 +1431,7 @@ public:
 
     bool is_metal() const
     {
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().is_metal();
         }
@@ -1440,7 +1440,7 @@ public:
 
     bool is_mps() const
     {
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().is_mps();
         }
@@ -1449,7 +1449,7 @@ public:
 
     bool is_maia() const
     {
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().is_maia();
         }
@@ -1480,7 +1480,7 @@ public:
 
     DeviceIndex get_device() const
     {
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom().index();
         }
@@ -1489,7 +1489,7 @@ public:
 
     device_option device() const
     {
-        if (XSIGMA_UNLIKELY(device_policy_))
+        if XSIGMA_UNLIKELY(device_policy_)
         {
             return device_custom();
         }
@@ -1507,7 +1507,7 @@ protected:
 public:
     Layout layout() const
     {
-        if (XSIGMA_UNLIKELY(layout_policy_))
+        if XSIGMA_UNLIKELY(layout_policy_)
         {
             return layout_custom();
         }
@@ -1848,7 +1848,7 @@ private:
     template <typename T, typename Func>
     __ubsan_ignore_pointer_overflow__ T* data_ptr_impl_impl(const Func& get_data) const
     {
-        if (XSIGMA_UNLIKELY(!has_storage()))
+        if XSIGMA_UNLIKELY(!has_storage())
         {
             throw_data_ptr_access_error();
         }
@@ -1908,7 +1908,7 @@ private:
     template <typename Void, typename Func>
     Void* data_impl(const Func& get_data) const
     {
-        if (XSIGMA_UNLIKELY(!has_storage()))
+        if XSIGMA_UNLIKELY(!has_storage())
         {
             throw_data_ptr_access_error();
         }
@@ -2732,7 +2732,7 @@ public:
 
     bool is_strides_like(at::MemoryFormat memory_format) const
     {
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomStrides)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomStrides))
         {
             return is_strides_like_custom(memory_format);
         }
@@ -2756,7 +2756,7 @@ public:
 
     bool is_non_overlapping_and_dense() const
     {
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomStrides)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomStrides))
         {
             return is_non_overlapping_and_dense_custom();
         }
@@ -2765,7 +2765,7 @@ public:
 
     SymBool sym_is_non_overlapping_and_dense() const
     {
-        if (XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomStrides)))
+        if XSIGMA_UNLIKELY(matches_policy(SizesStridesPolicy::CustomStrides))
         {
             return sym_is_non_overlapping_and_dense_custom();
         }

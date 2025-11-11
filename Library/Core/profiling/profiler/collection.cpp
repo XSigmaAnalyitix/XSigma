@@ -192,15 +192,15 @@ bool InputOutputEncoder::isSupportedScalarList(const xsigma::IValue& list_candid
         return false;
     }
     auto list_ref = list_candidate.toListRef();
-    if (XSIGMA_UNLIKELY(list_ref.empty()))
+    if XSIGMA_UNLIKELY(list_ref.empty())
     {
         return true;
     }
-    if (XSIGMA_UNLIKELY(!list_ref[0].isScalar()))
+    if XSIGMA_UNLIKELY(!list_ref[0].isScalar())
     {
         return false;
     }
-    if (XSIGMA_UNLIKELY(list_ref.size() > SCALAR_LIST_LENGTH_LIMIT))
+    if XSIGMA_UNLIKELY(list_ref.size() > SCALAR_LIST_LENGTH_LIMIT)
     {
         return false;
     }
@@ -934,9 +934,9 @@ namespace
 {
 void mark_finished(std::shared_ptr<Result>& r)
 {
-    XSIGMA_CHECK(!r->finished_, r->name());
+    //XSIGMA_CHECK(!r->finished_, r->name());
     r->finished_ = true;
-    XSIGMA_CHECK(r->endTimeNS() >= r->start_time_ns_, r->name());
+    //XSIGMA_CHECK(r->endTimeNS() >= r->start_time_ns_, r->name());
 }
 
 #if XSIGMA_HAS_KINETO

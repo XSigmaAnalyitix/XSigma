@@ -92,10 +92,15 @@ XSIGMATEST(ParallelFor, chunk_distribution)
         grain_size,
         [&chunk_count](int64_t /*begin*/, int64_t /*end*/) { chunk_count++; });
 
-    // The actual number of chunks depends on the number of threads and implementation
-    // It should be at least 1 and at most total_size/grain_size
+    // The actual number of chunks depends on the number of threads and backend.
+    // Always require at least one chunk. For OpenMP/native backends the number
+    // of chunks is bounded by ceil(total_size/grain_size). TBB may oversubdivide
+    // work beyond this bound due to dynamic splitting, so we relax the upper
+    // bound in that case.
     EXPECT_GE(chunk_count.load(), 1);
+#if !XSIGMA_HAS_TBB
     EXPECT_LE(chunk_count.load(), divup(total_size, grain_size));
+#endif
 }
 
 // ============================================================================

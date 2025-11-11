@@ -119,7 +119,7 @@ When multiple feature flags are used, they are concatenated:
 | `mkl` | `XSIGMA_ENABLE_MKL` | Intel Math Kernel Library | OFF |
 | `numa` | `XSIGMA_ENABLE_NUMA` | NUMA support | OFF |
 | `memkind` | `XSIGMA_ENABLE_MEMKIND` | Memory kind support | OFF |
-| `external` | `XSIGMA_ENABLE_EXTERNAL` | Use external system libraries | OFF |
+| `external` | `XSIGMA_ENABLE_EXTERNAL` | Use external system libraries | ON |
 
 ### Testing Flags
 

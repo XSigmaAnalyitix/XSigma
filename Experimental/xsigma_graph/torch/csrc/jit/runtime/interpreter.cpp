@@ -953,7 +953,7 @@ struct InterpreterStateImpl : xsigma::intrusive_ptr_target {
     if (!frame.record_function) {
       auto step_callbacks = xsigma::getStepCallbacksUnlessEmpty(
           xsigma::RecordScope::TORCHSCRIPT_FUNCTION);
-      if (XSIGMA_UNLIKELY(step_callbacks.has_value())) {
+      if XSIGMA_UNLIKELY(step_callbacks.has_value()) {
         auto rec_fn =
             std::make_unique<xsigma::record_function>(std::move(*step_callbacks));
         XSIGMA_CHECK_DEBUG(rec_fn->isActive());

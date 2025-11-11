@@ -179,7 +179,7 @@ protected:
     bool isSafeToReferenceAfterResize(const void* Elt, size_t NewSize)
     {
         // Past the end.
-        if (XSIGMA_LIKELY(!isReferenceToStorage(Elt)))
+        if XSIGMA_LIKELY(!isReferenceToStorage(Elt))
             return true;
 
         // Return false if Elt will be destroyed by shrinking.
@@ -244,14 +244,14 @@ protected:
     static const T* reserveForParamAndGetAddressImpl(U* This, const T& Elt, size_t N)
     {
         size_t NewSize = This->size() + N;
-        if (XSIGMA_LIKELY(NewSize <= This->capacity()))
+        if XSIGMA_LIKELY(NewSize <= This->capacity())
             return &Elt;
 
         bool    ReferencesStorage = false;
         int64_t Index             = -1;
         if constexpr (!U::TakesParamByValue)
         {
-            if (XSIGMA_UNLIKELY(This->isReferenceToStorage(&Elt)))
+            if XSIGMA_UNLIKELY(This->isReferenceToStorage(&Elt))
             {
                 ReferencesStorage = true;
                 Index             = &Elt - This->begin();
@@ -1011,7 +1011,7 @@ public:
     template <typename... ArgTypes>
     reference emplace_back(ArgTypes&&... Args)
     {
-        if (XSIGMA_UNLIKELY(this->size() >= this->capacity()))
+        if XSIGMA_UNLIKELY(this->size() >= this->capacity())
             return this->growAndEmplaceBack(std::forward<ArgTypes>(Args)...);
 
         ::new ((void*)this->end()) T(std::forward<ArgTypes>(Args)...);

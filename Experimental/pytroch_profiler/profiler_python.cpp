@@ -346,7 +346,7 @@ typename Config<C>::cls_t set_class(
     const typename Config<C>::key_t&       key,
     const typename Config<C>::ephemeral_t& frame)
 {
-    if (XSIGMA_UNLIKELY(!cache.location_.has_value()))
+    if XSIGMA_UNLIKELY(!cache.location_.has_value())
     {
         auto code = THPCodeObjectPtr(PyFrame_GetCode(frame));
         XSIGMA_CHECK(code.get() == getCode<C>());
@@ -398,7 +398,7 @@ template <>
 void ValueCache::store<CallType::PyCall>(const PyCallKey& key, no_ephemeral_t /*unused*/)
 {
     auto& locations = std::get<CallType::PyCall>(state_);
-    if (XSIGMA_UNLIKELY(locations.find(key) == locations.end()))
+    if XSIGMA_UNLIKELY(locations.find(key) == locations.end())
     {
         locations[key] = {
             key.line_number_, xsigma::StringView(key.filename_), xsigma::StringView(key.name_)};
@@ -417,7 +417,7 @@ void ValueCache::store<CallType::PyModuleCall>(
     const PyModuleCallKey& key, Config<CallType::PyModuleCall>::ephemeral_t frame)
 {
     auto& cache = std::get<CallType::PyModuleCall>(state_);
-    if (XSIGMA_UNLIKELY(cache.cls_and_parameters_.find(key) == cache.cls_and_parameters_.end()))
+    if XSIGMA_UNLIKELY(cache.cls_and_parameters_.find(key) == cache.cls_and_parameters_.end())
     {
         auto cls = set_class<CallType::PyModuleCall>(this, cache, key, frame);
 
@@ -457,7 +457,7 @@ void ValueCache::store<CallType::PyOptimizerCall>(
     const PyOptimizerCallKey& key, Config<CallType::PyOptimizerCall>::ephemeral_t frame)
 {
     auto& cache = std::get<CallType::PyOptimizerCall>(state_);
-    if (XSIGMA_UNLIKELY(cache.cls_and_parameters_.find(key) == cache.cls_and_parameters_.end()))
+    if XSIGMA_UNLIKELY(cache.cls_and_parameters_.find(key) == cache.cls_and_parameters_.end())
     {
         auto             cls = set_class<CallType::PyOptimizerCall>(this, cache, key, frame);
         const py::handle self{(PyObject*)key};
@@ -507,7 +507,7 @@ void ValueCache::store<CallType::PyCCall>(
     const PyCCallKey& key, Config<CallType::PyCCall>::ephemeral_t arg)
 {
     auto& names = std::get<CallType::PyCCall>(state_);
-    if (XSIGMA_UNLIKELY(names.find(key) == names.end()))
+    if XSIGMA_UNLIKELY(names.find(key) == names.end())
     {
         names[key] = xsigma::StringView(py::repr(arg));
     }
@@ -572,7 +572,7 @@ class XSIGMA_VISIBILITY TraceKeyCacheState
         Callsite<C> callsite, typename Config<C>::ephemeral_t ephemeral, ValueCache& value_cache)
     {
         auto it = state_.find(callsite);
-        if (XSIGMA_UNLIKELY(it == state_.end()))
+        if XSIGMA_UNLIKELY(it == state_.end())
         {
             value_cache.store<C>(callsite.value_, ephemeral);
             value_cache.store<CallType::PyCall>(callsite.caller_, no_ephemeral_t());

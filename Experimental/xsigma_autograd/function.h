@@ -170,7 +170,7 @@ public:
 
         auto step_callbacks =
             xsigma::getStepCallbacksUnlessEmpty(xsigma::RecordScope::BACKWARD_FUNCTION);
-        if (XSIGMA_UNLIKELY(step_callbacks.has_value()))
+        if XSIGMA_UNLIKELY(step_callbacks.has_value())
         {
             xsigma::record_function guard(std::move(*step_callbacks));
             // Using sequence number and thread id to correlate with

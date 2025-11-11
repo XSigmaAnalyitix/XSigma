@@ -37,7 +37,10 @@ struct DefaultStubs : public ProfilerStubs
     ~DefaultStubs() override = default;
 
 private:
-    void fail() const { XSIGMA_CHECK(false, name_, " used in profiler but not enabled."); }
+    void fail() const
+    {
+        XSIGMA_CHECK(false, "{} used in profiler but not enabled.", name_);
+    }
 
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
     const char* const name_;

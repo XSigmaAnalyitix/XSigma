@@ -694,21 +694,21 @@ static RegisterOperators reg_guard({
                 for (const auto i : xsigma::irange(num_inputs))
                 {
                     xsigma::Tensor tensor = inputs[i].toTensor();
-                    if (XSIGMA_UNLIKELY(
+                    if XSIGMA_UNLIKELY(
                             tensor.device() != device ||
                             tensor.dtype() != expected_scalar_types[i]))
                     {
                         push(stack, false);
                         return;
                     }
-                    if (XSIGMA_UNLIKELY(grad_mode_enabled && tensor.requires_grad()))
+                    if XSIGMA_UNLIKELY(grad_mode_enabled && tensor.requires_grad())
                     {
                         push(stack, false);
                         return;
                     }
                     const auto& sizes    = tensor.sizes();
                     const auto  num_dims = sizes.size();
-                    if (XSIGMA_UNLIKELY(num_dims != expected_dims[i]))
+                    if XSIGMA_UNLIKELY(num_dims != expected_dims[i])
                     {
                         push(stack, false);
                         return;
@@ -720,7 +720,7 @@ static RegisterOperators reg_guard({
                     // property than iterating over dimensions and checking yourself
                     if (striding == StrideInput::TENSOR_CONT)
                     {
-                        if (XSIGMA_UNLIKELY(
+                        if XSIGMA_UNLIKELY(
                                 !tensor.is_contiguous(xsigma::MemoryFormat::Contiguous)))
                         {
                             push(stack, false);
@@ -731,7 +731,7 @@ static RegisterOperators reg_guard({
                     else if (striding == StrideInput::TENSOR_CONT_CHANNELS_LAST)
                     {
                         // TODO: 5D channels last
-                        if (XSIGMA_UNLIKELY(
+                        if XSIGMA_UNLIKELY(
                                 !tensor.is_contiguous(xsigma::MemoryFormat::ChannelsLast)))
                         {
                             push(stack, false);
@@ -750,7 +750,7 @@ static RegisterOperators reg_guard({
                                 dim,
                                 flattened_input_striding,
                                 flattened_stride_offset);
-                            if (XSIGMA_UNLIKELY(
+                            if XSIGMA_UNLIKELY(
                                     summarized_dim !=
                                     flattened_input_striding[dim + flattened_stride_offset]))
                             {
@@ -767,7 +767,7 @@ static RegisterOperators reg_guard({
                         const int64_t tensor_dim = sizes[dim_index];
                         if (dim_value >= 0)
                         {
-                            if (XSIGMA_UNLIKELY(dim_value != tensor_dim))
+                            if XSIGMA_UNLIKELY(dim_value != tensor_dim)
                             {
                                 push(stack, false);
                                 return;
@@ -783,7 +783,7 @@ static RegisterOperators reg_guard({
                             // sym symbol already seen, check value
                             if (flattened_symbolic_dims[flattened_sym_index] >= 0)
                             {
-                                if (XSIGMA_UNLIKELY(flattened_sym_value != tensor_dim))
+                                if XSIGMA_UNLIKELY(flattened_sym_value != tensor_dim)
                                 {
                                     push(stack, false);
                                     return;

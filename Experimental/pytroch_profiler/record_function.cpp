@@ -310,7 +310,7 @@ void CacheEntry::getActiveCallbacksImpl()
     // reaches zero at the start of this function something has gone wrong.
     XSIGMA_CHECK(sampling_countdown_ > 0, sampling_countdown_);
 
-    if (XSIGMA_UNLIKELY(!(--sampling_countdown_)))
+    if XSIGMA_UNLIKELY(!(--sampling_countdown_))
     {
         // Use inferred steps to update sampled callbacks.
         for (auto& i : callbacks_)
@@ -345,7 +345,7 @@ StepCallbacks CacheEntry::getActiveCallbacks()
 std::optional<StepCallbacks> CacheEntry::getActiveCallbacksUnlessEmpty()
 {
     getActiveCallbacksImpl();
-    if (XSIGMA_LIKELY(active_callbacks_.empty()))
+    if XSIGMA_LIKELY(active_callbacks_.empty())
     {
         return std::nullopt;
     }
@@ -430,7 +430,7 @@ const RecordFunctionTLS& LocalCallbackManager::getTLS() const
 void LocalCallbackManager::rebuildActiveCallbacksIfNeeded()
 {
     const auto global_version = GlobalCallbackManager::get().version();
-    if (XSIGMA_UNLIKELY(global_version != global_version_))
+    if XSIGMA_UNLIKELY(global_version != global_version_)
     {
         rebuild_all(GlobalCallbackManager::get().getSnapshot());
     }

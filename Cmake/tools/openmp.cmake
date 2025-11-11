@@ -11,12 +11,11 @@ include_guard(GLOBAL)
 # OpenMP Support Flag Controls whether OpenMP is enabled for parallel processing.
 # When enabled, provides industry-standard parallel programming support with automatic
 # fallback if OpenMP is not available on the system.
-option(XSIGMA_ENABLE_OPENMP "Enable OpenMP parallel processing support" ON)
+option(XSIGMA_ENABLE_OPENMP "Enable OpenMP parallel processing support" OFF)
 mark_as_advanced(XSIGMA_ENABLE_OPENMP)
-
 # Only proceed if OpenMP is enabled
 if(NOT XSIGMA_ENABLE_OPENMP)
-  message(STATUS "OpenMP support is disabled (XSIGMA_ENABLE_OPENMP=OFF)")
+  message("OpenMP support is disabled (XSIGMA_ENABLE_OPENMP=OFF)")
   return()
 endif()
 

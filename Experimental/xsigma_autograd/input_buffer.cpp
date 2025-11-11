@@ -37,7 +37,7 @@ void record_stream_any_impl(Variable& var, const xsigma::Stream& stream)
 
     const auto guard = xsigma::impl::VirtualGuardImpl(device_of(var).value().type());
 
-    if (XSIGMA_UNLIKELY(xsigma::isBatchedTensor(var)))
+    if XSIGMA_UNLIKELY(xsigma::isBatchedTensor(var))
     {
         auto* impl = xsigma::maybeGetBatchedImpl(var);
         if (impl)
