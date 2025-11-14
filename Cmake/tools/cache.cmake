@@ -11,6 +11,19 @@
 # Include guard to prevent multiple inclusions
 include_guard(GLOBAL)
 
+# Distributed compilation with Icecream
+option(XSIGMA_ENABLE_ICECC "Use Icecream distributed compilation" OFF)
+mark_as_advanced(XSIGMA_ENABLE_ICECC)
+
+if(XSIGMA_ENABLE_ICECC)
+  find_program(ICECC_EXECUTABLE icecc)
+  if(ICECC_EXECUTABLE)
+    set(CMAKE_C_COMPILER_LAUNCHER ${ICECC_EXECUTABLE})
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${ICECC_EXECUTABLE})
+    message(STATUS "Using Icecream: ${ICECC_EXECUTABLE}")
+  endif()
+endif()
+
 # Build Speed Optimization Flag Controls whether caching and faster linker optimizations are
 # enabled. When enabled, uses the selected cache type and selects faster linkers when available.
 option(XSIGMA_ENABLE_CACHE "Enable compiler caching and faster linker for faster builds" ON)

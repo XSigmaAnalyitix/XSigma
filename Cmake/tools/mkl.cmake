@@ -1,42 +1,68 @@
-# ============================================================================= XSigma Intel MKL
-# (Math Kernel Library) Configuration Module
+# ============================================================================= 
+# XSigma Intel MKL
+# (Math Kernel Library) Integration Module
 # =============================================================================
-# This module configures Intel MKL for optimized matrix operations and linear algebra. It sets up
-# BLAS/LAPACK backends and threading configuration.
+# This module provides robust MKL integration with automatic fallback support: 1. First attempts to
+# find system-installed MKL (vcpkg, apt, homebrew, Intel oneAPI) 2. If not found, automatically
+# downloads and builds MKL from source 3. Creates consistent XSigma::mkl target regardless of source
 # =============================================================================
+
+cmake_minimum_required(VERSION 3.16)
 
 # Include guard to prevent multiple inclusions
 include_guard(GLOBAL)
 
-# Intel MKL Support Flag Controls whether Intel MKL is enabled for optimized mathematical
-# operations. When enabled, provides high-performance BLAS and LAPACK implementations.
-option(XSIGMA_ENABLE_MKL "Enable MKL" OFF)
-mark_as_advanced(XSIGMA_ENABLE_MKL)
+option(XSIGMA_ENABLE_STATIC_MKL "Prefer to link with MKL statically (Unix only)" OFF)
+mark_as_advanced(XSIGMA_ENABLE_STATIC_MKL)
 
 if(NOT XSIGMA_ENABLE_MKL)
   return()
 endif()
 
-# MKL for Matrix Operations - Must be set BEFORE find_package(Ceres)
-find_package(MKL REQUIRED)
-include_directories("${MKL_ROOT}/include")
-# Set BLAS/LAPACK variables FIRST - before Ceres configuration set(BLA_VENDOR Intel10_64lp CACHE
-# STRING "BLAS vendor") set(BLAS_FOUND TRUE CACHE BOOL "BLAS found") set(LAPACK_FOUND TRUE CACHE
-# BOOL "LAPACK found") set(BLAS_LIBRARIES MKL::MKL CACHE STRING "BLAS libraries")
-# set(LAPACK_LIBRARIES MKL::MKL CACHE STRING "LAPACK libraries")
+find_package(MKL QUIET)
 
-# Core MKL setup
-list(APPEND XSIGMA_MKL_INCLUDE_DIRS "${MKL_INCLUDE}")
-list(APPEND XSIGMA_MKL_INCLUDE_LIBS MKL::MKL)
-add_definitions(-DMKL_ILP64)
-add_definitions(-DEIGEN_USE_MKL_ALL)
-
-# Threading
-if(MKL_THREADING STREQUAL "TBB")
-  xsigma_module_find_package(PACKAGE XSIGMA::tbb REQUIRED)
-  list(APPEND MATH_INCLUDE_LIBS TBB::tbb)
+if(TARGET XSigma::mkl)
+  return()
 endif()
 
-message(STATUS "MKL configured for matrix operations")
-mark_as_advanced(XSIGMA_MKL_INCLUDE_DIRS)
-mark_as_advanced(XSIGMA_MKL_INCLUDE_LIBS)
+if(NOT MKL_FOUND)
+  message(FATAL_ERROR "MKL not found! Please set MKL_ROOT or CMAKE_PREFIX_PATH")
+endif()
+
+add_library(XSigma::mkl INTERFACE IMPORTED)
+target_include_directories(XSigma::mkl INTERFACE ${MKL_INCLUDE_DIR})
+target_link_libraries(XSigma::mkl INTERFACE ${MKL_LIBRARIES})
+
+foreach(MKL_LIB IN LISTS MKL_LIBRARIES)
+  if(EXISTS "${MKL_LIB}")
+    get_filename_component(MKL_LINK_DIR "${MKL_LIB}" DIRECTORY)
+    if(IS_DIRECTORY "${MKL_LINK_DIR}")
+      target_link_directories(XSigma::mkl INTERFACE "${MKL_LINK_DIR}")
+    endif()
+  endif()
+endforeach()
+
+# TODO: This is a hack, it will not pick up architecture dependent
+# MKL libraries correctly; see https://github.com/pytorch/pytorch/issues/73008
+set_property(
+  TARGET XSigma::mkl PROPERTY INTERFACE_LINK_DIRECTORIES
+  ${MKL_ROOT}/lib ${MKL_ROOT}/lib/intel64 ${MKL_ROOT}/lib/intel64_win ${MKL_ROOT}/lib/win-x64)
+
+if(UNIX)
+  if(XSIGMA_ENABLE_STATIC_MKL)
+    foreach(MKL_LIB_PATH IN LISTS MKL_LIBRARIES)
+      if(NOT EXISTS "${MKL_LIB_PATH}")
+        continue()
+      endif()
+
+      get_filename_component(MKL_LIB_NAME "${MKL_LIB_PATH}" NAME)
+
+      # Match archive libraries starting with "libmkl_"
+      if(MKL_LIB_NAME MATCHES "^libmkl_" AND MKL_LIB_NAME MATCHES ".a$")
+        target_link_options(XSigma::mkl INTERFACE "-Wl,--exclude-libs,${MKL_LIB_NAME}")
+      endif()
+    endforeach()
+  endif()
+endif()
+
+

@@ -26,9 +26,9 @@
 #include "profiler/kineto_shim.h"
 #endif
 
-#if XSIGMA_HAS_ITT
+
 #include "profiler/itt_wrapper.h"
-#endif
+
 
 namespace xsigma::examples::profiling
 {

@@ -1,3 +1,12 @@
+# =============================================================================
+# XSigma Main CMake Configuration
+# =============================================================================
+# This is the root CMake configuration file that orchestrates the XSigma build system.
+# It manages third-party dependencies, feature flags, compiler settings, and library targets.
+# Third-party dependencies are handled by ThirdParty/CMakeLists.txt, and feature flags are
+# mapped to compile definitions by Cmake/flags/compile_definitions.cmake.
+# =============================================================================
+
 cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0069 NEW)
 
@@ -24,6 +33,18 @@ set(XSIGMA_VERSION_FULL "${XSIGMA_MAJOR_VERSION}.${XSIGMA_MINOR_VERSION}.${XSIGM
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cmake/tools")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cmake/flags")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cmake/packages")
+
+# Distributed compilation with Icecream
+option(XSIGMA_ENABLE_ICECC "Use Icecream distributed compilation" OFF)
+
+if(XSIGMA_ENABLE_ICECC)
+  find_program(ICECC_EXECUTABLE icecc)
+  if(ICECC_EXECUTABLE)
+    set(CMAKE_C_COMPILER_LAUNCHER ${ICECC_EXECUTABLE})
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${ICECC_EXECUTABLE})
+    message(STATUS "Using Icecream: ${ICECC_EXECUTABLE}")
+  endif()
+endif()
 
 # Enable colored output for diagnostics
 set(CMAKE_COLOR_DIAGNOSTICS ON)
@@ -60,8 +81,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(XSIGMA_DEPENDENCY_LIBS "")
 mark_as_advanced(XSIGMA_DEPENDENCY_LIBS)
+set_property(GLOBAL PROPERTY XSIGMA_DEPENDENCY_LIBS "")
+set_property(GLOBAL PROPERTY XSIGMA_DEPENDENCY_INCLUDE_DIRS "")
+set_property(GLOBAL PROPERTY XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS "")
 
-# ============================================================================= General Project-Wide
+# =============================================================================
+# General Project-Wide
 # Configuration Flags
 # =============================================================================
 # These flags control general project settings that are not specific to individual feature modules.
@@ -88,7 +113,8 @@ if(NOT XSIGMA_GPU_ALLOC MATCHES "^(SYNC|ASYNC|POOL_ASYNC)$")
   )
 endif()
 
-# ============================================================================= Algorithm and
+# =============================================================================
+# Algorithm and
 # Feature Configuration Flags
 # =============================================================================
 # These flags control specific algorithm implementations and optional features.
@@ -102,7 +128,8 @@ option(XSIGMA_SOBOL_1111 "Build support sobol with 1111 dimension" ON)
 # stability. When enabled, improves numerical stability at the cost of additional computation.
 option(XSIGMA_LU_PIVOTING "Enable LU PIVOTING" OFF)
 
-# ============================================================================= Testing and Quality
+# =============================================================================
+# Testing and Quality
 # Assurance Configuration Flags
 # =============================================================================
 # These flags control testing infrastructure, benchmarking, and code quality tools.
@@ -125,7 +152,8 @@ option(XSIGMA_ENABLE_BENCHMARK "Enable google benchmark" OFF)
 # enabled, provides comprehensive testing infrastructure.
 option(XSIGMA_ENABLE_GTEST "Enable google test" ON)
 
-# ============================================================================= Performance and
+# =============================================================================
+# Performance and
 # Optimization Configuration Flags
 # =============================================================================
 # These flags control performance-related settings and optimization strategies.
@@ -138,18 +166,13 @@ set(XSIGMA_VECTORIZATION_TYPE "avx2"
 )
 set_property(CACHE XSIGMA_VECTORIZATION_TYPE PROPERTY STRINGS no sse avx avx2 avx512)
 
-# ============================================================================= Third-Party Library
+# =============================================================================
+# Third-Party Library
 # and Dependency Configuration Flags
 # =============================================================================
 # These flags control the use of external libraries and optional dependencies. Mandatory core
 # dependencies: fmt (formatting), cpuinfo (CPU detection)
 # =============================================================================
-
-# External Library Usage Flag Controls whether external copies of third-party libraries are used by
-# default. When enabled, prefers external library versions over bundled versions.
-option(XSIGMA_ENABLE_EXTERNAL "Use external copies of third party libraries by default" ON)
-mark_as_advanced(XSIGMA_ENABLE_EXTERNAL)
-
 # Magic Enum Static Reflection Flag Controls whether magic_enum is enabled for compile-time enum
 # reflection. When enabled, provides powerful enum introspection capabilities.
 option(XSIGMA_ENABLE_MAGICENUM "Enable magic_enum static reflection for enums." ON)
@@ -170,10 +193,11 @@ mark_as_advanced(XSIGMA_ENABLE_KINETO)
 
 # Intel ITT API (Instrumentation and Tracing Technology) Flag Controls whether Intel ITT API is
 # enabled. When enabled, provides task/frame annotations for Intel VTune profiling.
-option(XSIGMA_ENABLE_ITT "Enable Intel ITT API for VTune profiling." ON)
+option(XSIGMA_ENABLE_ITT "Enable Intel ITT API for VTune profiling." OFF)
 mark_as_advanced(XSIGMA_ENABLE_ITT)
 
-# ============================================================================= Platform-Specific
+# =============================================================================
+# Platform-Specific
 # Configuration and Feature Validation
 # =============================================================================
 # Adjusts feature availability based on platform constraints. Some features are only available on
@@ -190,7 +214,8 @@ if(NOT UNIX OR APPLE)
   set(XSIGMA_ENABLE_MEMKIND OFF)
 endif()
 
-# ============================================================================= Global Project
+# =============================================================================
+# Global Project
 # Variables
 # =============================================================================
 # Set global variables used throughout the build system.
@@ -200,7 +225,8 @@ set(XSIGMA_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(XSIGMA_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 set(XSIGMA_VERSION "${PROJECT_VERSION}")
 
-# ============================================================================= Build Library Type
+# =============================================================================
+# Build Library Type
 # Configuration
 # =============================================================================
 # Controls whether libraries are built as shared or static. XSigma requires shared libraries (DLLs
@@ -240,6 +266,7 @@ include(iwyu)
 include(coverage)
 include(valgrind)
 include(helper_macros)
+include(compile_definitions)
 
 # Create build interface target for common settings
 add_library(xsigmabuild INTERFACE)
@@ -272,12 +299,6 @@ endif()
 
 # Add third-party dependencies
 add_subdirectory(ThirdParty)
-
-# Centralized dependency linking module This must be included AFTER ThirdParty subdirectory is added
-# so that all third-party targets (XSigma::fmt, XSigma::cpuinfo, XSigma::loguru, XSigma::glog,
-# XSigma::kineto, etc.) are available. It must also be AFTER all feature modules (cuda, hip, tbb,
-# etc.) are loaded so that XSIGMA_DEPENDENCY_LIBS can aggregate all enabled dependencies.
-include(dependencies)
 
 # Add subdirectories
 add_subdirectory(Library/Security)

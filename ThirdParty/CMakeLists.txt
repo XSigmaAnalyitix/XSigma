@@ -1,9 +1,22 @@
-# Third-party dependencies for XSigma
+# =============================================================================
+# XSigma Third-Party Dependency Management
+# =============================================================================
+# This file manages all third-party dependencies for XSigma, handling both bundled and
+# external (system-installed) libraries via the XSIGMA_ENABLE_EXTERNAL flag. The
+# add_third_party_library() function automatically populates XSIGMA_DEPENDENCY_LIBS and
+# XSIGMA_DEPENDENCY_INCLUDE_DIRS, which are propagated to the main build system.
+# =============================================================================
+
 cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0069 NEW)
-message(STATUS "DEBUG: Processing ThirdParty/CMakeLists.txt")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# External Library Usage Flag Controls whether external copies of third-party libraries are used by
+# default. When enabled, prefers external library versions over bundled versions.
+option(XSIGMA_ENABLE_EXTERNAL "Use external copies of third party libraries by default" ON)
+mark_as_advanced(XSIGMA_ENABLE_EXTERNAL)
+
 
 # Global option to control third-party library type (STATIC, SHARED, or DEFAULT)
 # DEFAULT means respect each library's own settings or BUILD_SHARED_LIBS
@@ -232,6 +245,7 @@ endfunction()
 #
 function(_create_third_party_aliases name aliases)
     if(NOT aliases)
+        message(WARNING "No aliases provided for ${name}")
         return()
     endif()
 
@@ -274,7 +288,9 @@ endfunction()
 #       "XSigma::gtest=GTest::gtest|gtest;XSigma::gtest_main=GTest::gtest_main|gtest_main"
 #   )
 #
-function(_create_third_party_interface_targets xsigma_targets)
+function(_create_third_party_interface_targets)
+    set(xsigma_targets ${ARGN})
+
     if(NOT xsigma_targets)
         return()
     endif()
@@ -304,17 +320,28 @@ function(_create_third_party_interface_targets xsigma_targets)
         set(target_created FALSE)
         foreach(source_target ${source_target_list})
             if(TARGET ${source_target})
-                # Check if source target is an alias and resolve it
-                get_target_property(aliased_target ${source_target} ALIASED_TARGET)
+                # Check if source target is IMPORTED (from find_package)
+                get_target_property(is_imported ${source_target} IMPORTED)
 
-                if(aliased_target)
-                    # Source is an alias, create XSigma alias to the actual target
-                    add_library(${xsigma_name} ALIAS ${aliased_target})
-                    message(STATUS "Created ${xsigma_name} -> ${source_target} (resolved to ${aliased_target})")
+                if(is_imported)
+                    # For IMPORTED targets, create an INTERFACE library that links to it
+                    # (ALIAS targets cannot alias IMPORTED targets)
+                    add_library(${xsigma_name} INTERFACE IMPORTED GLOBAL)
+                    target_link_libraries(${xsigma_name} INTERFACE ${source_target})
+                    message(STATUS "Created ${xsigma_name} -> ${source_target} (INTERFACE wrapper for IMPORTED target)")
                 else()
-                    # Source is a real target, create alias directly
-                    add_library(${xsigma_name} ALIAS ${source_target})
-                    message(STATUS "Created ${xsigma_name} -> ${source_target}")
+                    # Check if source target is an alias and resolve it
+                    get_target_property(aliased_target ${source_target} ALIASED_TARGET)
+
+                    if(aliased_target)
+                        # Source is an alias, create XSigma alias to the actual target
+                        add_library(${xsigma_name} ALIAS ${aliased_target})
+                        message(STATUS "Created ${xsigma_name} -> ${source_target} (resolved to ${aliased_target})")
+                    else()
+                        # Source is a real target, create alias directly
+                        add_library(${xsigma_name} ALIAS ${source_target})
+                        message(STATUS "Created ${xsigma_name} -> ${source_target}")
+                    endif()
                 endif()
 
                 set(target_created TRUE)
@@ -323,7 +350,7 @@ function(_create_third_party_interface_targets xsigma_targets)
         endforeach()
 
         if(NOT target_created)
-            message(STATUS "Could not create ${xsigma_name}: none of the source targets exist (${source_targets})")
+            message(WARNING "Could not create ${xsigma_name}: none of the source targets exist (${source_targets})")
         endif()
     endforeach()
 endfunction()
@@ -358,6 +385,11 @@ endfunction()
 #   XSIGMA_TARGETS <specs...>   - List of XSigma:: namespace target specifications
 #                                 Format: "XSigma::name=target1|target2|..."
 #                                 Example: "XSigma::fmt=fmt::fmt|fmt"
+#   INCLUDE_DIR <path>          - Include directory path to add to XSIGMA_DEPENDENCY_INCLUDE_DIRS
+#                                 Path is relative to CMAKE_CURRENT_SOURCE_DIR (ThirdParty/)
+#                                 Example: "fmt/include" for fmt library
+#   AUTO_ADD_TO_DEPENDENCIES    - Boolean flag to automatically add to XSIGMA_DEPENDENCY_LIBS
+#                                 Default: ON (automatically adds XSigma::name target)
 #
 # Example Usage:
 #   add_third_party_library(fmt
@@ -379,8 +411,8 @@ function(add_third_party_library name)
     # Parse function arguments
     cmake_parse_arguments(
         TPL                                                           # Prefix
-        "DISABLE_WARNINGS"                                # Options (boolean flags)
-        "SOURCE_DIR;EXTERNAL_NAME;CONDITION;LIBRARY_TYPE;LIBRARY_TYPE_VAR" # One-value keywords
+        "DISABLE_WARNINGS;AUTO_ADD_TO_DEPENDENCIES"       # Options (boolean flags)
+        "SOURCE_DIR;EXTERNAL_NAME;CONDITION;LIBRARY_TYPE;LIBRARY_TYPE_VAR;INCLUDE_DIR" # One-value keywords
         "FILTER_FLAGS;EXTRA_FLAGS;ALIASES;XSIGMA_TARGETS"             # Multi-value keywords
         ${ARGN}                                                       # Arguments to parse
     )
@@ -390,23 +422,101 @@ function(add_third_party_library name)
         set(TPL_EXTERNAL_NAME ${name})
     endif()
 
-    # SOURCE_DIR defaults to the library name if not specified
+    # Default AUTO_ADD_TO_DEPENDENCIES to ON if not explicitly set to OFF
+    # Note: cmake_parse_arguments sets boolean options to FALSE when not specified,
+    # so we check if it's in the ARGN list to determine if it was explicitly set
+    if("AUTO_ADD_TO_DEPENDENCIES" IN_LIST ARGN)
+        # Explicitly specified, use the parsed value
+    else()
+        # Not specified, default to ON
+        set(TPL_AUTO_ADD_TO_DEPENDENCIES ON)
+    endif()
+
+    # -------------------------------------------------------------------------
+    # Step 1: Try to find external library first if requested
+    # -------------------------------------------------------------------------
+    if(XSIGMA_ENABLE_EXTERNAL)
+        find_package(${TPL_EXTERNAL_NAME} QUIET)
+        if(${TPL_EXTERNAL_NAME}_FOUND OR ${name}_FOUND)
+            message(STATUS "================================================================")
+            message(STATUS "Found external ${TPL_EXTERNAL_NAME}")
+
+            # ADD THIS DEBUG OUTPUT:
+            message(STATUS "DEBUG: Checking available targets for ${TPL_EXTERNAL_NAME}:")
+
+            # Check common target naming patterns
+            foreach(target_suffix "" "::${name}" "::${TPL_EXTERNAL_NAME}" "-static" "-shared")
+                set(target_name "${name}${target_suffix}")
+                if(TARGET ${target_name})
+                    message(STATUS "  Found target: ${target_name}")
+                    get_target_property(target_type ${target_name} TYPE)
+                    message(STATUS "    Type: ${target_type}")
+                endif()
+            endforeach()
+
+            # Print all variables set by find_package
+            get_cmake_property(_variableNames VARIABLES)
+            foreach(_variableName ${_variableNames})
+                if(_variableName MATCHES "^${name}" OR _variableName MATCHES "^${TPL_EXTERNAL_NAME}")
+                    message(STATUS "  ${_variableName}=${${_variableName}}")
+                endif()
+            endforeach()
+
+            message(STATUS "================================================================")
+
+            # Create XSigma:: namespace target using XSIGMA_TARGETS if provided, otherwise use default pattern
+            if(TPL_XSIGMA_TARGETS)
+                _create_third_party_interface_targets("${TPL_XSIGMA_TARGETS}")
+            else()
+                _create_third_party_interface_targets(
+                    "XSigma::${name}=${name}::${name}-header-only||${name}::${name}|${name}|${name}-static"
+                )
+            endif()
+
+            # Automatically populate dependency lists if requested (default: ON)
+            if(TARGET XSigma::${name})
+                # Add to XSIGMA_DEPENDENCY_LIBS using global property
+                get_property(_temp_libs GLOBAL PROPERTY _XSIGMA_DEPENDENCY_LIBS)
+                list(APPEND _temp_libs XSigma::${name})
+                set_property(GLOBAL PROPERTY _XSIGMA_DEPENDENCY_LIBS "${_temp_libs}")
+                message(STATUS "Dependency: XSigma::${name} added to XSIGMA_DEPENDENCY_LIBS (external)")
+            endif()
+
+            # Add include directory if specified
+            # For external libraries, try TPL_INCLUDE_DIR first, then fall back to ${name}_INCLUDE_DIR
+            if(DEFINED ${name}_INCLUDE_DIR)
+                # Fall back to the include directory set by find_package
+                get_property(_temp_includes GLOBAL PROPERTY _XSIGMA_DEPENDENCY_INCLUDE_DIRS)
+                list(APPEND _temp_includes ${${name}_INCLUDE_DIR})
+                set_property(GLOBAL PROPERTY _XSIGMA_DEPENDENCY_INCLUDE_DIRS "${_temp_includes}")
+                message(STATUS "Dependency: ${${name}_INCLUDE_DIR} added to XSIGMA_DEPENDENCY_INCLUDE_DIRS (external)")
+            endif()
+
+            return()
+        endif()
+    endif()
+
+   # SOURCE_DIR defaults to the library name if not specified
     if(NOT DEFINED TPL_SOURCE_DIR)
         set(TPL_SOURCE_DIR ${name})
     endif()
 
     # -------------------------------------------------------------------------
-    # Step 1: Check condition (early return pattern)
+    # Step 2: Check condition (early return pattern)
     # -------------------------------------------------------------------------
     if(DEFINED TPL_CONDITION)
         if(NOT ${TPL_CONDITION})
             message(STATUS "Skipping ${name}: condition ${TPL_CONDITION} is not met")
             return()
         endif()
-    endif()
+    endif() 
+
+    message("================================================================")
+    message("Build from source ${TPL_EXTERNAL_NAME}")
+    message("================================================================")
 
     # -------------------------------------------------------------------------
-    # Step 2: Check if already processed to avoid duplicates
+    # Step 3: Check if already processed to avoid duplicates
     # -------------------------------------------------------------------------
     get_property(XSIGMA_${name}_PROCESSED GLOBAL PROPERTY XSIGMA_${name}_PROCESSED)
     if(XSIGMA_${name}_PROCESSED)
@@ -414,24 +524,6 @@ function(add_third_party_library name)
         return()
     endif()
     set_property(GLOBAL PROPERTY XSIGMA_${name}_PROCESSED TRUE)
-
-    # -------------------------------------------------------------------------
-    # Step 3: Try to find external library first if requested
-    # -------------------------------------------------------------------------
-    if(XSIGMA_ENABLE_EXTERNAL)
-        #set(CMAKE_FIND_DEBUG_MODE TRUE)
-        find_package(${TPL_EXTERNAL_NAME} QUIET)
-        if(${TPL_EXTERNAL_NAME}_FOUND OR ${name}_FOUND)
-            message(STATUS "Using external ${name}==================================================")
-            if(TPL_ALIASES AND TARGET ${name})
-                _create_third_party_aliases(${name} "${TPL_ALIASES}")
-            endif()
-            if(TPL_XSIGMA_TARGETS)
-                _create_third_party_interface_targets("${TPL_XSIGMA_TARGETS}")
-            endif()
-            return()
-        endif()
-    endif()
 
     # -------------------------------------------------------------------------
     # Step 4: Determine library type
@@ -588,12 +680,40 @@ function(add_third_party_library name)
         if(TPL_XSIGMA_TARGETS)
             _create_third_party_interface_targets("${TPL_XSIGMA_TARGETS}")
         endif()
+
+        # -------------------------------------------------------------------------
+        # Step 11: Automatically populate dependency lists
+        # -------------------------------------------------------------------------
+        # This step automatically adds the library to XSIGMA_DEPENDENCY_LIBS and
+        # XSIGMA_DEPENDENCY_INCLUDE_DIRS if requested (default: ON)
+
+        if(TPL_AUTO_ADD_TO_DEPENDENCIES)
+            # Check if the XSigma:: namespace target was created
+            if(TARGET XSigma::${name})
+                # Add to XSIGMA_DEPENDENCY_LIBS using global property
+                # We use global properties because PARENT_SCOPE doesn't update the variable
+                # in the current scope, so subsequent function calls wouldn't see the changes
+                get_property(_temp_libs GLOBAL PROPERTY _XSIGMA_DEPENDENCY_LIBS)
+                list(APPEND _temp_libs XSigma::${name})
+                set_property(GLOBAL PROPERTY _XSIGMA_DEPENDENCY_LIBS "${_temp_libs}")
+                message(STATUS "Dependency: XSigma::${name} added to XSIGMA_DEPENDENCY_LIBS")
+            endif()
+
+            # Add include directory if specified
+            if(DEFINED TPL_INCLUDE_DIR)
+                # Add to XSIGMA_DEPENDENCY_INCLUDE_DIRS using global property
+                get_property(_temp_includes GLOBAL PROPERTY _XSIGMA_DEPENDENCY_INCLUDE_DIRS)
+                list(APPEND _temp_includes "${CMAKE_CURRENT_SOURCE_DIR}/${TPL_INCLUDE_DIR}")
+                set_property(GLOBAL PROPERTY _XSIGMA_DEPENDENCY_INCLUDE_DIRS "${_temp_includes}")
+                message(STATUS "Dependency: ${TPL_INCLUDE_DIR} added to XSIGMA_DEPENDENCY_INCLUDE_DIRS")
+            endif()
+        endif()
     else()
         message(WARNING "Third-party library ${name} not found in ${CMAKE_CURRENT_SOURCE_DIR}/${TPL_SOURCE_DIR}")
     endif()
 
     # -------------------------------------------------------------------------
-    # Step 11: Restore original state
+    # Step 12: Restore original state
     # -------------------------------------------------------------------------
     # Restore BUILD_SHARED_LIBS
     set(BUILD_SHARED_LIBS ${_saved_build_shared_libs})
@@ -616,12 +736,14 @@ add_third_party_library(fmt
     LIBRARY_TYPE STATIC
     FILTER_FLAGS "-flto=thin" "-flto=full"
     XSIGMA_TARGETS "XSigma::fmt=fmt::fmt-header-only|fmt::fmt|fmt"
+    INCLUDE_DIR "fmt/include"
 )
 
 # cpuinfo - CPU feature detection library (mandatory dependency)
 add_third_party_library(cpuinfo
     FILTER_FLAGS "-flto=thin" "-flto=full"
-    XSIGMA_TARGETS "XSigma::cpuinfo=cpuinfo"
+    XSIGMA_TARGETS "XSigma::cpuinfo=cpuinfo::cpuinfo|cpuinfo"
+    INCLUDE_DIR "cpuinfo/include"
 )
 
 # magic_enum - Static reflection for enums in C++
@@ -629,6 +751,7 @@ add_third_party_library(magic_enum
     CONDITION XSIGMA_ENABLE_MAGICENUM
     FILTER_FLAGS "-flto=thin" "-flto=full"
     XSIGMA_TARGETS "XSigma::magic_enum=magic_enum::magic_enum|magic_enum"
+    INCLUDE_DIR "magic_enum/include"
 )
 
 # loguru - Lightweight C++ logging library (forced to static)
@@ -637,6 +760,7 @@ add_third_party_library(loguru
     LIBRARY_TYPE STATIC
     FILTER_FLAGS "-flto=thin" "-flto=full"
     XSIGMA_TARGETS "XSigma::loguru=loguru::loguru|loguru"
+    INCLUDE_DIR "loguru"
 )
 
 # glog - Google logging library
@@ -644,6 +768,7 @@ add_third_party_library(glog
     CONDITION XSIGMA_ENABLE_GLOG
     FILTER_FLAGS "-flto=thin" "-flto=full"
     XSIGMA_TARGETS "XSigma::glog=glog::glog|glog"
+    INCLUDE_DIR "glog/src"
 )
 
 # mimalloc - Microsoft's high-performance memory allocator (conditional)
@@ -654,6 +779,7 @@ add_third_party_library(mimalloc
     LIBRARY_TYPE_VAR MI_BUILD_STATIC
     FILTER_FLAGS "-Wno-strict-prototypes" "-flto=thin" "-flto=full"
     XSIGMA_TARGETS "XSigma::mimalloc=mimalloc|mimalloc-static"
+    INCLUDE_DIR "mimalloc/include"
 )
 
 # Kineto - XSigma profiling library
@@ -701,6 +827,8 @@ add_third_party_library(kineto
     DISABLE_WARNINGS
     FILTER_FLAGS "-flto=thin" "-flto=full"
     XSIGMA_TARGETS "XSigma::kineto=kineto"
+    INCLUDE_DIR "kineto/libkineto/include"
+    AUTO_ADD_TO_DEPENDENCIES OFF  # Kineto has special handling in manual section
 )
 
 # Disable Kineto if the library was not found
@@ -720,26 +848,43 @@ endif()
 if(XSIGMA_ENABLE_GTEST)
     # Check if gtest target already exists (avoid duplicate add_subdirectory)
     if(NOT TARGET gtest)
-        message(STATUS "Adding Google Test from ThirdParty/googletest")
+        set(gtest_external_found FALSE)
+        if(XSIGMA_ENABLE_EXTERNAL)
+            find_package(GTest QUIET)
 
-        # Set options before adding subdirectory
-        # Force shared CRT on MSVC to match XSigma's runtime library settings
-        if(MSVC)
-            set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+            if(GTest_FOUND)
+                message(STATUS "Found external Google Test")
+                # Create XSigma:: namespace aliases for googletest
+                _create_third_party_interface_targets(
+                    "XSigma::gtest=GTest::gtest|gtest"
+                    "XSigma::gtest_main=GTest::gtest_main|gtest_main"
+                )
+                set(gtest_external_found TRUE)
+            endif()
         endif()
 
-        # Add googletest subdirectory
-        # This creates targets: gtest, gtest_main, gmock, gmock_main
-        add_subdirectory(
-            "${CMAKE_CURRENT_SOURCE_DIR}/googletest"
-            "${CMAKE_CURRENT_BINARY_DIR}/googletest"
-            EXCLUDE_FROM_ALL
-        )
+        if(NOT gtest_external_found)
+            message(STATUS "Adding Google Test from ThirdParty/googletest")
 
-        # Set folder properties for all googletest targets
-        _set_third_party_folder_properties("googletest" "${CMAKE_CURRENT_BINARY_DIR}/googletest")
+            # Set options before adding subdirectory
+            # Force shared CRT on MSVC to match XSigma's runtime library settings
+            if(MSVC)
+                set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+            endif()
 
-        message(STATUS "Google Test targets created: gtest, gtest_main")
+            # Add googletest subdirectory
+            # This creates targets: gtest, gtest_main, gmock, gmock_main
+            add_subdirectory(
+                "${CMAKE_CURRENT_SOURCE_DIR}/googletest"
+                "${CMAKE_CURRENT_BINARY_DIR}/googletest"
+                EXCLUDE_FROM_ALL
+            )
+
+            # Set folder properties for all googletest targets
+            _set_third_party_folder_properties("googletest" "${CMAKE_CURRENT_BINARY_DIR}/googletest")
+
+            message(STATUS "Google Test targets created: gtest, gtest_main")
+        endif()
     else()
         message(STATUS "Google Test targets already exist, skipping add_subdirectory")
     endif()
@@ -755,20 +900,37 @@ endif()
 if(XSIGMA_ENABLE_BENCHMARK)
     # Check if benchmark target already exists (avoid duplicate add_subdirectory)
     if(NOT TARGET benchmark)
-        message(STATUS "Adding Google Benchmark from ThirdParty/benchmark")
+        set(benchmark_external_found FALSE)
+        if(XSIGMA_ENABLE_EXTERNAL)
+            find_package(benchmark QUIET)
 
-        # Add benchmark subdirectory
-        # This creates targets: benchmark, benchmark_main
-        add_subdirectory(
-            "${CMAKE_CURRENT_SOURCE_DIR}/benchmark"
-            "${CMAKE_CURRENT_BINARY_DIR}/benchmark"
-            EXCLUDE_FROM_ALL
-        )
+            if(benchmark_FOUND)
+                message("Found external Google Benchmark")
+                # Create XSigma:: namespace alias for benchmark
+                _create_third_party_interface_targets(
+                    "XSigma::benchmark=benchmark::benchmark|benchmark"
+                    "XSigma::benchmark_main=benchmark::benchmark_main|benchmark_main"
+                )
+                set(benchmark_external_found TRUE)
+            endif()
+        endif()
 
-        # Set folder properties for all benchmark targets
-        _set_third_party_folder_properties("benchmark" "${CMAKE_CURRENT_BINARY_DIR}/benchmark")
+        if(NOT benchmark_external_found)
+            message(STATUS "Adding Google Benchmark from ThirdParty/benchmark")
 
-        message(STATUS "Google Benchmark targets created: benchmark, benchmark_main")
+            # Add benchmark subdirectory
+            # This creates targets: benchmark, benchmark_main
+            add_subdirectory(
+                "${CMAKE_CURRENT_SOURCE_DIR}/benchmark"
+                "${CMAKE_CURRENT_BINARY_DIR}/benchmark"
+                EXCLUDE_FROM_ALL
+            )
+
+            # Set folder properties for all benchmark targets
+            _set_third_party_folder_properties("benchmark" "${CMAKE_CURRENT_BINARY_DIR}/benchmark")
+
+            message(STATUS "Google Benchmark targets created: benchmark, benchmark_main")
+        endif()
     else()
         message(STATUS "Google Benchmark targets already exist, skipping add_subdirectory")
     endif()
@@ -776,16 +938,79 @@ if(XSIGMA_ENABLE_BENCHMARK)
     # Create XSigma:: namespace alias for benchmark
     _create_third_party_interface_targets(
         "XSigma::benchmark=benchmark::benchmark|benchmark"
+        "XSigma::benchmark_main=benchmark::benchmark_main|benchmark_main"
     )
 endif()
 
-# =============================================================================
-# XSigma Interface Targets
-# =============================================================================
-# All XSigma:: namespace interface targets are now created automatically
-# by the add_third_party_library() function using the XSIGMA_TARGETS parameter.
-# This eliminates code duplication and provides a consistent interface for
-# linking against third-party libraries throughout the XSigma project.
-#
-# See the library declarations above for XSIGMA_TARGETS specifications.
-# =============================================================================
+# -----------------------------------------------------------------------------
+# Kineto - Special handling for Xcode generator
+# -----------------------------------------------------------------------------
+# Kineto requires special handling because the Xcode generator has trouble
+# materializing the combined kineto static library from object libraries.
+# We need to link component libs directly under Xcode.
+if(XSIGMA_ENABLE_KINETO)
+  # Xcode generator has trouble materializing the combined kineto static library from
+  # object libraries. Prefer linking the component libs directly under Xcode.
+  if(CMAKE_GENERATOR STREQUAL "Xcode" AND TARGET kineto_base AND TARGET kineto_api)
+    list(APPEND XSIGMA_DEPENDENCY_LIBS kineto_base kineto_api)
+  endif()
+endif()
+
+# -----------------------------------------------------------------------------
+# ITT - Intel VTune API (External System Dependency)
+# -----------------------------------------------------------------------------
+# ITT is an external system dependency that uses find_package, not bundled
+# in ThirdParty, so it's handled separately here.
+if(XSIGMA_ENABLE_ITT)
+  find_package(ITT)
+  if(ITT_FOUND)
+    list(APPEND XSIGMA_DEPENDENCY_LIBS ${ITT_LIBRARIES})
+    list(APPEND XSIGMA_DEPENDENCY_INCLUDE_DIRS ${ITT_INCLUDE_DIR})
+    message(STATUS "Dependency: ITT libraries added to XSIGMA_DEPENDENCY_LIBS")
+  else()
+    message(STATUS "ITT API not found - disabling XSIGMA_ENABLE_ITT")
+    set(XSIGMA_ENABLE_ITT OFF CACHE BOOL "Enable Intel ITT API for VTune profiling." FORCE)
+  endif()
+endif()
+
+# -----------------------------------------------------------------------------
+# TBB - Threading Building Blocks (Handled by tbb.cmake)
+# -----------------------------------------------------------------------------
+# TBB is configured by tbb.cmake (included before ThirdParty subdirectory)
+# which creates TBB::tbb and TBB::tbbmalloc targets. We add them to the
+# dependency list here.
+if(XSIGMA_ENABLE_TBB)
+  if(TARGET XSigma::tbb)
+    list(APPEND XSIGMA_DEPENDENCY_LIBS XSigma::tbb)
+    message(STATUS "Dependency: TBB::tbb added to XSIGMA_DEPENDENCY_LIBS")
+  endif()
+
+  if(TARGET XSigma::tbbmalloc)
+    list(APPEND XSIGMA_DEPENDENCY_LIBS XSigma::tbbmalloc)
+    message(STATUS "Dependency: TBB::tbbmalloc added to XSIGMA_DEPENDENCY_LIBS")
+  endif()
+endif()
+
+# -----------------------------------------------------------------------------
+# Propagate dependency lists to parent scope
+# -----------------------------------------------------------------------------
+# Read from global properties (populated by add_third_party_library function)
+# and set as regular variables in parent scope for use by the main build system
+
+# Read from global properties and merge with any manually added dependencies
+get_property(_global_libs GLOBAL PROPERTY _XSIGMA_DEPENDENCY_LIBS)
+get_property(_global_includes GLOBAL PROPERTY _XSIGMA_DEPENDENCY_INCLUDE_DIRS)
+
+if(_global_libs)
+    list(APPEND XSIGMA_DEPENDENCY_LIBS ${_global_libs})
+endif()
+if(_global_includes)
+    list(APPEND XSIGMA_DEPENDENCY_INCLUDE_DIRS ${_global_includes})
+endif()
+
+# Propagate to parent scope
+set(XSIGMA_DEPENDENCY_LIBS "${XSIGMA_DEPENDENCY_LIBS}" PARENT_SCOPE)
+set(XSIGMA_DEPENDENCY_INCLUDE_DIRS "${XSIGMA_DEPENDENCY_INCLUDE_DIRS}" PARENT_SCOPE)
+
+message(STATUS "ThirdParty: XSIGMA_DEPENDENCY_LIBS populated with: ${XSIGMA_DEPENDENCY_LIBS}")
+message(STATUS "ThirdParty: XSIGMA_DEPENDENCY_INCLUDE_DIRS populated with: ${XSIGMA_DEPENDENCY_INCLUDE_DIRS}")

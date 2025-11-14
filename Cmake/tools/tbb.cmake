@@ -1,4 +1,5 @@
-# ============================================================================= XSigma Intel TBB
+# ============================================================================= 
+# XSigma Intel TBB
 # (Threading Building Blocks) Integration Module
 # =============================================================================
 # This module provides robust TBB integration with automatic fallback support: 1. First attempts to
@@ -11,6 +12,19 @@ cmake_minimum_required(VERSION 3.16)
 
 # Include guard to prevent multiple inclusions
 include_guard(GLOBAL)
+
+
+function(XSigma_create_tbb_interface_targets)
+  if(TARGET TBB::tbb AND NOT TARGET XSigma::tbb)
+    add_library(XSigma::tbb INTERFACE IMPORTED)
+    target_link_libraries(XSigma::tbb INTERFACE TBB::tbb)
+  endif()
+
+  if(TARGET TBB::tbbmalloc AND NOT TARGET XSigma::tbbmalloc)
+    add_library(XSigma::tbbmalloc INTERFACE IMPORTED)
+    target_link_libraries(XSigma::tbbmalloc INTERFACE TBB::tbbmalloc)
+  endif()
+endfunction()
 
 # Intel TBB (Threading Building Blocks) Support Flag Controls whether Intel TBB is enabled for
 # parallel task scheduling and memory allocation. When enabled, provides automatic fallback to
@@ -29,8 +43,8 @@ endif()
 
 message(STATUS "Configuring Intel TBB (Threading Building Blocks) support...")
 
-# ============================================================================= Configuration
-# Options
+# ============================================================================= 
+# Step 0: Configuration Options
 # =============================================================================
 
 # Option to force building TBB from source (useful for testing)
@@ -49,8 +63,8 @@ set(XSIGMA_TBB_REPOSITORY "https://github.com/oneapi-src/oneTBB.git" CACHE STRIN
 )
 mark_as_advanced(XSIGMA_TBB_REPOSITORY)
 
-# ============================================================================= Step 1: Try to find
-# system-installed TBB
+# ============================================================================= 
+# Step 1: Try to find system-installed TBB
 # =============================================================================
 
 set(TBB_FOUND FALSE)
@@ -80,12 +94,14 @@ if(NOT XSIGMA_TBB_FORCE_BUILD_FROM_SOURCE)
       message(STATUS "   TBB::tbbmalloc target available")
     endif()
 
+    XSigma_create_tbb_interface_targets()
+
     return()
   else()
     message(STATUS "❌ System-installed Intel TBB not found")
 
-    # ============================================================================= Windows + Clang:
-    # Require system-installed TBB
+    # ============================================================================= 
+    # Windows + Clang: Require system-installed TBB
     # =============================================================================
     # Building TBB from source on Windows with Clang has compatibility issues: - Clang targeting
     # MSVC ABI doesn't support TBB's -fPIC flags - DLL export/import symbol visibility issues -
@@ -131,8 +147,8 @@ if(NOT XSIGMA_TBB_FORCE_BUILD_FROM_SOURCE)
   endif()
 endif()
 
-# ============================================================================= Step 2: Build TBB
-# from source using FetchContent
+# ============================================================================= 
+# Step 2: Build TBB from source using FetchContent
 # =============================================================================
 
 message(STATUS "Building Intel TBB from source...")
@@ -214,8 +230,8 @@ message(STATUS "✅ Successfully downloaded Intel TBB source")
 message(STATUS "   Source directory: ${onetbb_SOURCE_DIR}")
 message(STATUS "   Binary directory: ${onetbb_BINARY_DIR}")
 
-# ============================================================================= Step 3: Verify TBB
-# targets were created
+# ============================================================================= 
+# Step 3: Verify TBB targets were created
 # =============================================================================
 
 # Check if the expected targets were created
@@ -237,8 +253,10 @@ if(TARGET TBB::tbbmalloc)
   message(STATUS "   TBB::tbbmalloc target available")
 endif()
 
-# ============================================================================= Step 4: Configure
-# TBB output directories to match XSigma project structure
+XSigma_create_tbb_interface_targets()
+
+# ============================================================================= 
+# Step 4: Configure TBB output directories to match XSigma project structure
 # =============================================================================
 
 # Configure TBB output directories to match XSigma project structure This ensures TBB binaries are
@@ -285,8 +303,8 @@ if(TBB_FROM_SOURCE)
   endforeach()
 endif()
 
-# ============================================================================= Step 5: Export TBB
-# information for other parts of the build system
+# ============================================================================= 
+# Step 5: Export TBB information for other parts of the build system
 # =============================================================================
 
 # Set variables that other parts of the build system might expect

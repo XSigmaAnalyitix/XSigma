@@ -4,6 +4,20 @@
 # found. ITT_INCLUDE_DIR    : path to ITT include dir. ITT_LIBRARIES      : list of libraries for
 # ITT
 
+function(XSigma_create_itt_interface_targets)
+  if(TARGET ittnotify AND NOT TARGET "itt::itt")
+    add_library(XSigma::itt INTERFACE IMPORTED)
+    target_include_directories(XSigma::itt INTERFACE ${ITT_INCLUDE_DIR})
+    target_link_libraries(XSigma::itt INTERFACE ittnotify)
+  endif()
+
+  if(TARGET jitprofiling AND NOT TARGET XSigma::jitprofiling)
+    add_library(XSigma::jitprofiling INTERFACE IMPORTED)
+    target_include_directories(XSigma::jitprofiling INTERFACE ${ITT_INCLUDE_DIR})
+    target_link_libraries(XSigma::jitprofiling INTERFACE jitprofiling)
+  endif()
+endfunction()
+
 if(NOT ITT_FOUND)
   set(ITT_FOUND OFF)
 
@@ -30,5 +44,7 @@ if(NOT ITT_FOUND)
     if(TARGET advisor)
       set_target_properties(advisor PROPERTIES FOLDER "ThirdParty/ittapi")
     endif()
+
+    XSigma_create_itt_interface_targets()
   endif(ITT_INCLUDE_DIR)
 endif(NOT ITT_FOUND)

@@ -1,7 +1,7 @@
 #if 0
 #include <xsigma/csrc/itt.h>
 
-#include "profiling/profiler/itt_wrapper.h"
+#include "profiler/itt_wrapper.h"
 
 namespace xsigma::profiler {
 void initIttBindings(PyObject* module) {

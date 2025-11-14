@@ -615,7 +615,6 @@ class XsigmaFlags:
             "benchmark",
             "gtest",
             "test",
-            "loguru",
             "logging_backend",
             "lto",
             "magic_enum",
@@ -645,7 +644,6 @@ class XsigmaFlags:
             "enable google benchmark",
             "enable google test",
             "enable testing",
-            "enable loguru lightweight C++ logging library",
             "logging backend: NATIVE, LOGURU, or GLOG",
             "enable Link Time Optimization",
             "enable magic_enum static reflection for enums",
@@ -678,7 +676,6 @@ class XsigmaFlags:
             "valgrind": "XSIGMA_ENABLE_VALGRIND",
             "coverage": "XSIGMA_ENABLE_COVERAGE",
             "test": "XSIGMA_BUILD_TESTING",
-            "loguru": "XSIGMA_ENABLE_LOGURU",
             "logging_backend": "XSIGMA_LOGGING_BACKEND",
             "lto": "XSIGMA_ENABLE_LTO",
             "magic_enum": "XSIGMA_ENABLE_MAGICENUM",
@@ -745,7 +742,6 @@ class XsigmaFlags:
                 "lto": self.OFF,  # XSIGMA_ENABLE_LTO default is OFF
                 "gtest": self.ON,  # XSIGMA_ENABLE_GTEST default is ON
                 "magic_enum": self.ON,  # XSIGMA_ENABLE_MAGIC_ENUM default is ON
-                "loguru": self.ON,  # XSIGMA_ENABLE_LOGURU default is ON
                 "mimalloc": self.ON,  # XSIGMA_ENABLE_MIMALLOC default is ON
                 #"kineto": self.ON,  # XSIGMA_ENABLE_KINETO default is ON
                 # CMake options with default OFF - keep OFF in setup.py
@@ -818,7 +814,7 @@ class XsigmaFlags:
                 self.builder_suffix += f"_java{arg}"
             elif arg in self.__key:
                 # Implement inverse logic based on CMake defaults
-                if arg in ["loguru", "gtest", "magic_enum", "mimalloc"]:
+                if arg in ["gtest", "magic_enum", "mimalloc"]:
                     # These have CMake default ON, so providing the arg turns them OFF
                     self.__value[arg] = self.OFF
                 else:

@@ -66,7 +66,7 @@ target_compile_definitions(CoreCxxTests PRIVATE XSIGMA_GOOGLE_TEST USE_GTEST _VA
 
 # Link libraries Core library is linked which transitively brings in all centralized dependencies
 # via XSIGMA_DEPENDENCY_LIBS
-target_link_libraries(CoreCxxTests PRIVATE gtest gtest_main XSigma::Core)
+target_link_libraries(CoreCxxTests PRIVATE XSigma::gtest XSigma::gtest_main XSigma::Core)
 
 # Set target properties
 set_target_properties(
@@ -132,7 +132,7 @@ if(XSIGMA_ENABLE_BENCHMARK)
   # Link libraries Core library is linked which transitively brings in all centralized dependencies
   # via XSIGMA_DEPENDENCY_LIBS Link benchmark_main to provide main() function (instead of
   # BENCHMARK_MAIN() in each file)
-  target_link_libraries(CoreCxxBenchmark PRIVATE benchmark benchmark_main XSigma::Core)
+  target_link_libraries(CoreCxxBenchmark PRIVATE XSigma::benchmark XSigma::benchmark_main XSigma::Core)
 
   # Set target properties
   set_target_properties(CoreCxxBenchmark PROPERTIES FOLDER "Benchmarks")

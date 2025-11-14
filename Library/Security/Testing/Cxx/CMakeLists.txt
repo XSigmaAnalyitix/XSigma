@@ -24,7 +24,7 @@ target_compile_definitions(SecurityCxxTests PRIVATE XSIGMA_GOOGLE_TEST USE_GTEST
 
 # Link libraries Security library is linked which transitively brings in all centralized
 # dependencies
-target_link_libraries(SecurityCxxTests PRIVATE gtest gtest_main XSigma::Security XSigma::Core)
+target_link_libraries(SecurityCxxTests PRIVATE XSigma::gtest XSigma::gtest_main XSigma::Security XSigma::Core)
 
 # Set target properties
 set_target_properties(

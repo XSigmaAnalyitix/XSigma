@@ -1,4 +1,5 @@
-# ============================================================================= XSigma Experimental
+# ============================================================================= 
+# XSigma Experimental
 # Features Configuration Module
 # =============================================================================
 # This module configures experimental features for the XSigma project. Experimental features
@@ -17,23 +18,23 @@ mark_as_advanced(XSIGMA_ENABLE_EXPERIMENTAL)
 
 # Only proceed if experimental features are enabled
 if(NOT XSIGMA_ENABLE_EXPERIMENTAL)
-  message(STATUS "Experimental features are disabled (XSIGMA_ENABLE_EXPERIMENTAL=OFF)")
+  message(WARNING "Experimental features are disabled (XSIGMA_ENABLE_EXPERIMENTAL=OFF)")
   return()
 endif()
 
 message(STATUS "Configuring experimental features...")
 
-# ============================================================================= Experimental
+# ============================================================================= 
+# Experimental
 # Features Configuration
 # =============================================================================
 
 # Set flag to indicate experimental features are available
 set(XSIGMA_EXPERIMENTAL_FOUND TRUE CACHE BOOL "Experimental features are enabled" FORCE)
 
-message(STATUS "✅ Experimental features enabled")
-message(STATUS "   WARNING: Experimental features may be unstable or incomplete")
-message(STATUS "   WARNING: API and behavior may change without notice")
-message(STATUS "   WARNING: Not recommended for production use")
-
-message(STATUS "Experimental features configuration complete")
+message(WARNING "✅ Experimental features enabled")
+message(WARNING "   WARNING: Experimental features may be unstable or incomplete")
+message(WARNING "   WARNING: API and behavior may change without notice")
+message(WARNING "   WARNING: Not recommended for production use")
+message(WARNING "Experimental features configuration complete")
 
