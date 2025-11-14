@@ -56,6 +56,37 @@ foreach(_test_source IN ITEMS ${test_sources})
   list(APPEND TestFiles "${_test_source}")
 endforeach()
 
+set(XSIGMA_NATIVE_PROFILER_TESTS
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerBackendIntegration.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerPlatform.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerXPlane.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerTimespan.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestEnhancedProfiler.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerAnnotationParsing.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerExporters.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerAnnotationStack.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerXPlaneVisitor.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerFormatUtils.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestAllocatorBfc.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerChromeTraceHierarchical.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestXPlaneSchema.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerAnalysis.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestXPlaneUtils.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerHeavyFunction.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestTraceme.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfiler.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerSessionEdgeCases.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestScopedMemoryDebugAnnotation.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerStatsCalculator.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerUtils.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerMemoryAndStats.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestXPlaneBuilder.cpp")
+
+if(NOT XSIGMA_ENABLE_NATIVE_PROFILER)
+  list(REMOVE_ITEM TestFiles ${XSIGMA_NATIVE_PROFILER_TESTS})
+  message(STATUS "Native profiler disabled: excluding native-only Core tests")
+endif()
+
 # ============================================================================= CoreCxxTests
 # Executable
 # =============================================================================

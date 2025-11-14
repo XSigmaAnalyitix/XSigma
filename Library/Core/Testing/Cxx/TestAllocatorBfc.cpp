@@ -1,3 +1,4 @@
+
 /**
  * @file TestAllocatorBfc.cpp
  * @brief Comprehensive test suite for BFC (Best-Fit with Coalescing) allocator
@@ -21,12 +22,14 @@
 #include "memory/backend/allocator_bfc.h"
 #include "memory/backend/allocator_pool.h"
 #include "memory/helper/memory_allocator.h"
+#if XSIGMA_HAS_NATIVE_PROFILER
 #include "profiler/native/analysis/statistical_analyzer.h"
 #include "profiler/native/memory/memory_tracker.h"
 #include "profiler/native/session/profiler.h"
 #include "profiler/native/tracing/traceme.h"
 #include "profiler/native/tracing/traceme_encode.h"
 #include "profiler/native/tracing/traceme_recorder.h"
+#endif
 
 using namespace xsigma;
 
@@ -98,6 +101,7 @@ std::unique_ptr<allocator_bfc> create_test_bfc_allocator()
  */
 XSIGMATEST(AllocatorBFC, basic_allocation_deallocation)
 {
+    #if XSIGMA_HAS_NATIVE_PROFILER
     traceme_recorder::start(3);
     auto allocator = create_test_bfc_allocator();
 
@@ -129,6 +133,7 @@ XSIGMATEST(AllocatorBFC, basic_allocation_deallocation)
         allocator->deallocate_raw(ptr);
     }
     traceme_recorder::stop();
+    #endif
     END_TEST();
 }
 
@@ -648,6 +653,7 @@ XSIGMATEST(AllocatorBFC, MemoryTracking)
 // Test comprehensive memory profiling with BFC allocator
 XSIGMATEST(AllocatorBFC, ComprehensiveMemoryProfiling)
 {
+    #if XSIGMA_HAS_NATIVE_PROFILER
     auto session = profiler_session_builder()
                        .with_timing(true)
                        .with_memory_tracking(true)
@@ -785,11 +791,13 @@ XSIGMATEST(AllocatorBFC, ComprehensiveMemoryProfiling)
     session->print_report();
 
     std::cout << "\nBFC Allocator Profiling Test Completed Successfully\n";
+#endif
 }
 
 // Test memory profiling with allocation hotspots identification
 XSIGMATEST(AllocatorBFC, AllocationHotspotsIdentification)
 {
+    #if XSIGMA_HAS_NATIVE_PROFILER
     auto session = profiler_session_builder()
                        .with_timing(true)
                        .with_memory_tracking(true)
@@ -881,4 +889,5 @@ XSIGMATEST(AllocatorBFC, AllocationHotspotsIdentification)
     session->print_report();
 
     std::cout << "\nAllocation Hotspot Identification Test Completed Successfully\n";
+#endif
 }

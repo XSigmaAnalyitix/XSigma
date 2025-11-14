@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -708,3 +709,4 @@ XSIGMATEST(Profiler, report_customization_hierarchical_data)
     std::string output = report->generate_console_report();
     EXPECT_FALSE(output.empty());
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

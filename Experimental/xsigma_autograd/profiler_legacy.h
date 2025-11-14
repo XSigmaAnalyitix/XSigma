@@ -278,7 +278,7 @@ struct TORCH_API ProfilerDisableOptions
     {
     }
     // Whether we should clean up profiler states that are thread local, such as
-    // ThreadLocalDebugInfo and thread local record_function callbacks.
+    // thread_local_debug_info and thread local record_function callbacks.
     bool cleanupTLSState = true;
     // Whether we should consolidate all currently recorded profiled events. If
     // false, will not consolidate and other threads can continue to write to the

@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -320,3 +321,4 @@ XSIGMATEST(XPlaneUtils, xevents_comparator_nested_events)
     EXPECT_TRUE(comparator(event1, event2));
     EXPECT_FALSE(comparator(event2, event1));
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

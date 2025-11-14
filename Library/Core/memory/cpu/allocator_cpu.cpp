@@ -41,9 +41,11 @@
 #include "memory/cpu/allocator.h"
 #include "memory/helper/memory_allocator.h"
 #include "memory/helper/memory_info.h"
+#if XSIGMA_HAS_NATIVE_PROFILER
 #include "profiler/native/memory/scoped_memory_debug_annotation.h"
 #include "profiler/native/tracing/traceme.h"
 #include "profiler/native/tracing/traceme_encode.h"
+#endif
 
 namespace xsigma
 {
@@ -243,7 +245,9 @@ void* allocator_cpu::allocate_raw(size_t alignment, size_t num_bytes)
         }
 
         // Add profiling trace (outside lock to minimize contention)
+#if XSIGMA_HAS_NATIVE_PROFILER
         AddTraceMe("MemoryAllocation", p, num_bytes, alloc_size);
+#endif
     }
 
     return p;
@@ -264,7 +268,9 @@ void allocator_cpu::deallocate_raw(void* ptr)
         }
 
         // Add profiling trace (outside lock to minimize contention)
+#if XSIGMA_HAS_NATIVE_PROFILER
         AddTraceMe("MemoryDeallocation", ptr, 0, alloc_size);
+#endif
     }
 
     // Perform actual deallocation
@@ -311,6 +317,7 @@ allocator_memory_enum allocator_cpu::GetMemoryType() const noexcept
     return allocator_memory_enum::HOST_PAGEABLE;
 }
 
+#if XSIGMA_HAS_NATIVE_PROFILER
 void allocator_cpu::AddTraceMe(
     std::string_view traceme_name,
     const void*      chunk_ptr,
@@ -342,5 +349,6 @@ void allocator_cpu::AddTraceMe(
         },
         static_cast<int>(xsigma::traceme_level_enum::INFO));
 }
+#endif
 
 }  // namespace xsigma

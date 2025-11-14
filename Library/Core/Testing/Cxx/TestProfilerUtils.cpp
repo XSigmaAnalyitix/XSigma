@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -184,3 +185,4 @@ XSIGMATEST(Profiler, get_current_time_nanos_high_resolution)
     int64_t diff = time2 - time1;
     EXPECT_LT(diff, 1000000000);  // Less than 1 second
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

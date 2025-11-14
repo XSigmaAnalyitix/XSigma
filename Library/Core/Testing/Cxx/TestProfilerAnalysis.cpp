@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -429,3 +430,4 @@ XSIGMATEST(Profiler, stat_output_stream_operator)
     std::string output = oss.str();
     EXPECT_NE(output.find("count=2"), std::string::npos);
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

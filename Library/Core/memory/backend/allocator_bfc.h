@@ -683,6 +683,7 @@ private:
      * **Thread Safety**: Requires external mutex protection
      * **Integration**: Works with external profiling frameworks
      */
+#if XSIGMA_HAS_NATIVE_PROFILER
     void AddTraceMe(std::string_view traceme_name, const void* ptr)
         XSIGMA_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
@@ -706,6 +707,7 @@ private:
         const void*      chunk_ptr,
         int64_t          req_bytes,
         int64_t          alloc_bytes) XSIGMA_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+#endif
 
     /**
      * @brief Handle type for efficient chunk referencing.

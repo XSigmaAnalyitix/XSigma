@@ -1,4 +1,4 @@
-#include "parallel/ThreadLocalDebugInfo.h"
+#include "parallel/thread_local_debug_info.h"
 
 #include <utility>
 
@@ -8,13 +8,13 @@
 namespace xsigma
 {
 
-static thread_local std::shared_ptr<ThreadLocalDebugInfo> tls_debug_info;
+static thread_local std::shared_ptr<thread_local_debug_info> tls_debug_info;
 #define debug_info (tls_debug_info)
 
 /* static */
-DebugInfoBase* ThreadLocalDebugInfo::get(DebugInfoKind kind)
+DebugInfoBase* thread_local_debug_info::get(DebugInfoKind kind)
 {
-    ThreadLocalDebugInfo* cur = debug_info.get();
+    thread_local_debug_info* cur = debug_info.get();
     while (cur)
     {
         if (cur->kind_ == kind)
@@ -27,29 +27,29 @@ DebugInfoBase* ThreadLocalDebugInfo::get(DebugInfoKind kind)
 }
 
 /* static */
-std::shared_ptr<ThreadLocalDebugInfo> ThreadLocalDebugInfo::current()
+std::shared_ptr<thread_local_debug_info> thread_local_debug_info::current()
 {
     return debug_info;
 }
 
 /* static */
-void ThreadLocalDebugInfo::_forceCurrentDebugInfo(std::shared_ptr<ThreadLocalDebugInfo> info)
+void thread_local_debug_info::_forceCurrentDebugInfo(std::shared_ptr<thread_local_debug_info> info)
 {
     debug_info = std::move(info);
 }
 
 /* static */
-void ThreadLocalDebugInfo::_push(DebugInfoKind kind, std::shared_ptr<DebugInfoBase> info)
+void thread_local_debug_info::_push(DebugInfoKind kind, std::shared_ptr<DebugInfoBase> info)
 {
     auto prev_info           = debug_info;
-    debug_info               = std::make_shared<ThreadLocalDebugInfo>();
+    debug_info               = std::make_shared<thread_local_debug_info>();
     debug_info->parent_info_ = prev_info;
     debug_info->kind_        = kind;
     debug_info->info_        = std::move(info);
 }
 
 /* static */
-std::shared_ptr<DebugInfoBase> ThreadLocalDebugInfo::_pop(DebugInfoKind kind)
+std::shared_ptr<DebugInfoBase> thread_local_debug_info::_pop(DebugInfoKind kind)
 {
     XSIGMA_CHECK(
         debug_info && debug_info->kind_ == kind, "Expected debug info of type ", (size_t)kind);
@@ -59,7 +59,7 @@ std::shared_ptr<DebugInfoBase> ThreadLocalDebugInfo::_pop(DebugInfoKind kind)
 }
 
 /* static */
-std::shared_ptr<DebugInfoBase> ThreadLocalDebugInfo::_peek(DebugInfoKind kind)
+std::shared_ptr<DebugInfoBase> thread_local_debug_info::_peek(DebugInfoKind kind)
 {
     XSIGMA_CHECK(
         debug_info && debug_info->kind_ == kind, "Expected debug info of type ", (size_t)kind);
@@ -73,7 +73,7 @@ DebugInfoGuard::DebugInfoGuard(DebugInfoKind kind, std::shared_ptr<DebugInfoBase
         return;
     }
     prev_info_ = debug_info;
-    ThreadLocalDebugInfo::_push(kind, std::move(info));
+    thread_local_debug_info::_push(kind, std::move(info));
     active_ = true;
 }
 
@@ -88,7 +88,7 @@ DebugInfoGuard::~DebugInfoGuard()
 // Used only for setting a debug info after crossing the thread boundary;
 // in this case we assume that thread pool's thread does not have an
 // active debug info
-DebugInfoGuard::DebugInfoGuard(std::shared_ptr<ThreadLocalDebugInfo> info)
+DebugInfoGuard::DebugInfoGuard(std::shared_ptr<thread_local_debug_info> info)
 {
     if (!info)
     {

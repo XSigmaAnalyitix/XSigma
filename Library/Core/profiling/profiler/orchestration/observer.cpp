@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#include "parallel/ThreadLocalDebugInfo.h"
+#include "parallel/thread_local_debug_info.h"
 #include "profiling/profiler/util.h"
 
 namespace xsigma::profiler::impl
@@ -142,7 +142,7 @@ ProfilerStateBase::~ProfilerStateBase()
 /*static*/ ProfilerStateBase* ProfilerStateBase::get(bool global)
 {
     auto* out = global ? GlobalManager::get()
-                       : static_cast<ProfilerStateBase*>(xsigma::ThreadLocalDebugInfo::get(
+                       : static_cast<ProfilerStateBase*>(xsigma::thread_local_debug_info::get(
                              xsigma::DebugInfoKind::PROFILER_STATE));
     XSIGMA_CHECK_DEBUG(!out || out->config().pushGlobalCallbacks() == global);
     return out;
@@ -157,7 +157,7 @@ ProfilerStateBase::~ProfilerStateBase()
     }
     else
     {
-        xsigma::ThreadLocalDebugInfo::_push(xsigma::DebugInfoKind::PROFILER_STATE, state);
+        xsigma::thread_local_debug_info::_push(xsigma::DebugInfoKind::PROFILER_STATE, state);
     }
 }
 
@@ -167,11 +167,11 @@ std::shared_ptr<ProfilerStateBase> popTLS()
 {
     // If there is no active thread local profiler then we simply return null.
     // However if there is an active profiler but it is not the top
-    // `DebugInfoBase`then `xsigma::ThreadLocalDebugInfo::_pop` will throw.
+    // `DebugInfoBase`then `xsigma::thread_local_debug_info::_pop` will throw.
     // TODO(robieta): make `noexcept` version.
-    return xsigma::ThreadLocalDebugInfo::get(xsigma::DebugInfoKind::PROFILER_STATE)
+    return xsigma::thread_local_debug_info::get(xsigma::DebugInfoKind::PROFILER_STATE)
                ? std::static_pointer_cast<ProfilerStateBase>(
-                     xsigma::ThreadLocalDebugInfo::_pop(xsigma::DebugInfoKind::PROFILER_STATE))
+                     xsigma::thread_local_debug_info::_pop(xsigma::DebugInfoKind::PROFILER_STATE))
                : nullptr;
 }
 }  // namespace

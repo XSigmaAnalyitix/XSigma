@@ -12,7 +12,9 @@
 
 #include "logging/logger.h"
 #include "memory/helper/memory_allocator.h"
+#if XSIGMA_HAS_NATIVE_PROFILER
 #include "profiler/native/tracing/traceme.h"
+#endif
 #include "util/exception.h"
 
 #if XSIGMA_HAS_CUDA
@@ -63,7 +65,9 @@ basic_gpu_allocator::~basic_gpu_allocator()
 void* basic_gpu_allocator::Alloc(
     XSIGMA_UNUSED size_t alignment, size_t num_bytes, size_t* bytes_received)
 {
+#if XSIGMA_HAS_NATIVE_PROFILER
     xsigma::traceme const traceme("basic_gpu_allocator::Alloc");
+#endif
 
     void* ptr       = nullptr;
     *bytes_received = num_bytes;
@@ -98,7 +102,9 @@ void* basic_gpu_allocator::Alloc(
 
 void basic_gpu_allocator::Free(void* ptr, size_t num_bytes)
 {
+#if XSIGMA_HAS_NATIVE_PROFILER
     xsigma::traceme const traceme("basic_gpu_allocator::Free");
+#endif
 
     if (num_bytes > 0)
     {
@@ -119,7 +125,9 @@ void basic_gpu_allocator::Free(void* ptr, size_t num_bytes)
 allocator_gpu::allocator_gpu(int device_id, const Options& options, std::string name)
     : device_id_(device_id), options_(options), name_(std::move(name))
 {
+#if XSIGMA_HAS_NATIVE_PROFILER
     xsigma::traceme const traceme("allocator_gpu::allocator_gpu");
+#endif
 
     // Verify device is accessible by attempting to set it
     if (!xsigma::gpu::memory_allocator::set_device(device_id))
@@ -153,7 +161,9 @@ allocator_gpu::allocator_gpu(int device_id, const Options& options, std::string 
 
 allocator_gpu::~allocator_gpu()
 {
+#if XSIGMA_HAS_NATIVE_PROFILER
     xsigma::traceme const traceme("allocator_gpu::~allocator_gpu");
+#endif
 
     // Check for memory leaks
     size_t total_allocated = total_allocated_.load();
@@ -201,7 +211,9 @@ void* allocator_gpu::allocate_raw(
     size_t                                     num_bytes,
     XSIGMA_UNUSED const allocation_attributes& allocation_attr)
 {
+#if XSIGMA_HAS_NATIVE_PROFILER
     xsigma::traceme const traceme("allocator_gpu::allocate_raw");
+#endif
 
     if (num_bytes == 0)
     {
@@ -242,7 +254,9 @@ void* allocator_gpu::allocate_raw(
 
 void allocator_gpu::deallocate_raw(void* ptr)
 {
+#if XSIGMA_HAS_NATIVE_PROFILER
     xsigma::traceme const traceme("allocator_gpu::deallocate_raw");
+#endif
 
     if (ptr == nullptr)
     {

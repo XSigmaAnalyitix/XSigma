@@ -1,5 +1,5 @@
 #include <c10/core/Allocator.h>
-#include <c10/util/ThreadLocalDebugInfo.h>
+#include <c10/util/thread_local_debug_info.h>
 
 #include <array>
 #include <cstring>
@@ -61,7 +61,7 @@ at::Allocator* GetAllocator(const at::DeviceType& t)
 bool memoryProfilingEnabled()
 {
     auto* reporter_ptr = static_cast<MemoryReportingInfoBase*>(
-        ThreadLocalDebugInfo::get(DebugInfoKind::PROFILER_STATE));
+        thread_local_debug_info::get(DebugInfoKind::PROFILER_STATE));
     return reporter_ptr && reporter_ptr->memoryProfilingEnabled();
 }
 
@@ -69,7 +69,7 @@ void reportMemoryUsageToProfiler(
     void* ptr, int64_t alloc_size, size_t total_allocated, size_t total_reserved, Device device)
 {
     auto* reporter_ptr = static_cast<MemoryReportingInfoBase*>(
-        ThreadLocalDebugInfo::get(DebugInfoKind::PROFILER_STATE));
+        thread_local_debug_info::get(DebugInfoKind::PROFILER_STATE));
     if (reporter_ptr)
     {
         reporter_ptr->reportMemoryUsage(ptr, alloc_size, total_allocated, total_reserved, device);
@@ -80,7 +80,7 @@ void reportOutOfMemoryToProfiler(
     int64_t alloc_size, size_t total_allocated, size_t total_reserved, Device device)
 {
     auto* reporter_ptr = static_cast<MemoryReportingInfoBase*>(
-        ThreadLocalDebugInfo::get(DebugInfoKind::PROFILER_STATE));
+        thread_local_debug_info::get(DebugInfoKind::PROFILER_STATE));
     if (reporter_ptr)
     {
         reporter_ptr->reportOutOfMemory(alloc_size, total_allocated, total_reserved, device);

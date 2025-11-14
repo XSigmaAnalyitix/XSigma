@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma Parallel Backends Performance Profiling
  *
@@ -561,3 +562,6 @@ int main(int argc, char** argv)
 
     return 0;
 }
+#else
+int main(int argc, char** argv){ return 0;}
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

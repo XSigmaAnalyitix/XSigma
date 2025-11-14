@@ -196,6 +196,24 @@ mark_as_advanced(XSIGMA_ENABLE_KINETO)
 option(XSIGMA_ENABLE_ITT "Enable Intel ITT API for VTune profiling." OFF)
 mark_as_advanced(XSIGMA_ENABLE_ITT)
 
+# Profiler backend selection controls whether Kineto, Native TraceMe, or ITT
+# instrumentation is used. Defaults to Kineto for downstream compatibility.
+set(XSIGMA_PROFILER_TYPE "KINETO"
+    CACHE STRING "Profiler backend type. Options are KINETO, NATIVE, or ITT")
+set_property(CACHE XSIGMA_PROFILER_TYPE PROPERTY STRINGS KINETO NATIVE ITT)
+
+if(NOT XSIGMA_PROFILER_TYPE MATCHES "^(KINETO|NATIVE|ITT)$")
+  message(
+    FATAL_ERROR
+      "Invalid XSIGMA_PROFILER_TYPE: ${XSIGMA_PROFILER_TYPE}. Valid options are KINETO, NATIVE, or ITT")
+endif()
+
+if(XSIGMA_PROFILER_TYPE STREQUAL "NATIVE")
+  set(XSIGMA_ENABLE_NATIVE_PROFILER ON)
+else()
+  set(XSIGMA_ENABLE_NATIVE_PROFILER OFF)
+endif()
+
 # =============================================================================
 # Platform-Specific
 # Configuration and Feature Validation

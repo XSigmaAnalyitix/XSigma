@@ -39,7 +39,7 @@
 // //#include <ATen/core/TensorBody.h>
 // //#include <ATen/core/function_schema.h>
 // //#include <ATen/core/stack.h>
-#include "parallel/ThreadLocalDebugInfo.h"
+#include "parallel/thread_local_debug_info.h"
 #include "profiling/profiler/standalone/execution_trace_observer.h"
 #include "profiling/profiler/util.h"
 #include "profiling/record_function.h"
@@ -802,7 +802,7 @@ inline std::string getCommsNodeAttrs(const RecordFunction& fn)
 #ifdef USE_DISTRIBUTED
     // We rely on paramcommsdebug object that is available in thread local info
     auto debugInfo = dynamic_cast<ParamCommsDebugInfo*>(
-        xsigma::ThreadLocalDebugInfo::get(xsigma::DebugInfoKind::PARAM_COMMS_INFO));
+        xsigma::thread_local_debug_info::get(xsigma::DebugInfoKind::PARAM_COMMS_INFO));
     if (debugInfo == nullptr)
     {
         //LOG(WARNING) << "ParamCommsDebugInfo not available for function: "

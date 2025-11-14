@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -264,3 +265,4 @@ XSIGMATEST(Profiler, all_features_disabled)
 
     EXPECT_TRUE(session->stop());
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

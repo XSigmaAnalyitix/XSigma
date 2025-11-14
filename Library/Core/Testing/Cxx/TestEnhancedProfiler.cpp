@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -1254,3 +1255,4 @@ XSIGMATEST(Profiler, enhanced_profiler_comprehensive_test)
 
     END_TEST();
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -354,3 +355,4 @@ XSIGMATEST(Profiler, env_var_read_strings_with_trimming_and_default)
 
     unset_env(var_name);
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

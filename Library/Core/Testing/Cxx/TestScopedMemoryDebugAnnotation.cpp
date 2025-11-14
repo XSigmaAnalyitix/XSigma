@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -316,3 +317,4 @@ XSIGMATEST(ScopedMemoryDebugAnnotation, zero_data_type)
         EXPECT_EQ(current.pending_data_type, 0);
     }
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

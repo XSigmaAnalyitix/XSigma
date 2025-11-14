@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -330,3 +331,4 @@ XSIGMATEST(Profiler, stats_calculator_node_detail_access)
     EXPECT_EQ(detail.run_order, 5);
     EXPECT_EQ(detail.times_called, 1);
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

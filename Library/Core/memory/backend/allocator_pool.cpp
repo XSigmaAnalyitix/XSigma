@@ -47,7 +47,9 @@
 
 #include "logging/logger.h"
 #include "memory/helper/memory_allocator.h"
+#if XSIGMA_HAS_NATIVE_PROFILER
 #include "profiler/native/tracing/traceme.h"
+#endif
 #include "util/exception.h"
 
 namespace xsigma
@@ -345,7 +347,9 @@ basic_cpu_allocator::~basic_cpu_allocator() = default;
 
 void* basic_cpu_allocator::Alloc(size_t alignment, size_t num_bytes, size_t* bytes_received)
 {
+#if XSIGMA_HAS_NATIVE_PROFILER
     xsigma::traceme const traceme("basic_cpu_allocator::Alloc");
+#endif
 
     void* ptr       = nullptr;
     *bytes_received = num_bytes;
@@ -360,7 +364,9 @@ void* basic_cpu_allocator::Alloc(size_t alignment, size_t num_bytes, size_t* byt
 
 void basic_cpu_allocator::Free(void* ptr, size_t num_bytes)
 {
+#if XSIGMA_HAS_NATIVE_PROFILER
     xsigma::traceme const traceme("basic_cpu_allocator::Free");
+#endif
 
     if (num_bytes > 0)
     {

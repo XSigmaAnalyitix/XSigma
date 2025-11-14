@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -242,3 +243,4 @@ XSIGMATEST(Profiler, chrome_trace_scope_with_special_characters)
     // Should contain escaped quotes
     EXPECT_NE(json.find("\\\""), std::string::npos);
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

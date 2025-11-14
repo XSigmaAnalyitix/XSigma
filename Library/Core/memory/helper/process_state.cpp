@@ -43,7 +43,7 @@
 #include "memory/backend/allocator_pool.h"
 #include "memory/backend/allocator_tracking.h"
 #include "memory/cpu/allocator.h"
-#include "profiler/native/platform/env_var.h"
+#include "util/env.h"
 #include "util/exception.h"
 #include "util/string_util.h"
 
@@ -107,7 +107,7 @@ Allocator* process_state::GetCPUAllocator(int numa_node)
         bool       use_allocator_bfc      = false;
         bool const use_allocator_tracking = false;
 
-        XSIGMA_UNUSED auto status = read_bool_from_env_var(
+        XSIGMA_UNUSED auto status = xsigma::utils::read_env_bool(
             "CPU_ALLOCATOR_USE_BFC", alloc_visitors_defined, &use_allocator_bfc);
 
         Allocator*     allocator = nullptr;
@@ -121,7 +121,7 @@ Allocator* process_state::GetCPUAllocator(int numa_node)
             // TODO(reedwm): evaluate whether 64GB by default is the best choice.
             int64_t cpu_mem_limit_in_mb = -1;
 
-            XSIGMA_UNUSED auto const status2 = read_int64_from_env_var(
+            XSIGMA_UNUSED auto const status2 = xsigma::utils::read_env_int64(
                 "CPU_BFC_MEM_LIMIT_IN_MB", 1LL << 16 /*64GB max by default*/, &cpu_mem_limit_in_mb);
             int64_t const cpu_mem_limit = cpu_mem_limit_in_mb * (1LL << 20);
             XSIGMA_CHECK_DEBUG(sub_allocator != nullptr);

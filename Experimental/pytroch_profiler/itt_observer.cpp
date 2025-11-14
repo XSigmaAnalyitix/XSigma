@@ -55,7 +55,7 @@ void pushITTCallbacks(
         xsigma::profiler::impl::ittStubs()->enabled(),
         "Can't use ITT profiler - PyTorch was compiled without ITT");
 
-    xsigma::ThreadLocalDebugInfo::_push(
+    xsigma::thread_local_debug_info::_push(
         xsigma::DebugInfoKind::PROFILER_STATE, std::make_shared<ITTThreadLocalState>(config));
 
     auto state_ptr = ITTThreadLocalState::getTLS();

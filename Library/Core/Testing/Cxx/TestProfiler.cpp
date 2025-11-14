@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -329,3 +330,4 @@ XSIGMATEST(Profiler, enhanced_profiler_session_deeply_nested_scopes)
 
     EXPECT_TRUE(session->stop());
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

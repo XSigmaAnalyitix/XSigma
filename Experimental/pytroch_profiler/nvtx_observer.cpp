@@ -174,7 +174,7 @@ void pushNVTXCallbacks(
         xsigma::profiler::impl::cudaStubs()->enabled(),
         "Can't use NVTX profiler - PyTorch was compiled without CUDA");
 
-    xsigma::ThreadLocalDebugInfo::_push(
+    xsigma::thread_local_debug_info::_push(
         xsigma::DebugInfoKind::PROFILER_STATE, std::make_shared<NVTXThreadLocalState>(config));
 
     auto state_ptr = NVTXThreadLocalState::getTLS();

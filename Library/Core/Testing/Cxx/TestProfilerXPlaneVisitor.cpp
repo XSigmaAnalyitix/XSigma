@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -632,3 +633,4 @@ XSIGMATEST(XPlaneVisitor, x_stat_visitor_raw_stat)
                 });
         });
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

@@ -262,6 +262,7 @@ public:
     allocator_cpu& operator=(const allocator_cpu&) = delete;
 
 private:
+#if XSIGMA_HAS_NATIVE_PROFILER
     /**
      * @brief Adds comprehensive profiling trace for memory operations.
      *
@@ -295,6 +296,7 @@ private:
         const void*      chunk_ptr,
         std::size_t      req_bytes,
         std::size_t      alloc_bytes);
+#endif
 
     /**
      * @brief Mutex protecting statistics and warning counters.

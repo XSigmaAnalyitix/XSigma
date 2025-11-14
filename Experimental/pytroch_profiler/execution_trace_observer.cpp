@@ -708,7 +708,7 @@ inline std::string getCommsNodeAttrs(const RecordFunction& fn)
 #ifdef USE_DISTRIBUTED
     // We rely on paramcommsdebug object that is available in thread local info
     auto debugInfo = dynamic_cast<ParamCommsDebugInfo*>(
-        xsigma::ThreadLocalDebugInfo::get(xsigma::DebugInfoKind::PARAM_COMMS_INFO));
+        xsigma::thread_local_debug_info::get(xsigma::DebugInfoKind::PARAM_COMMS_INFO));
     if (debugInfo == nullptr)
     {
         LOG(WARNING) << "ParamCommsDebugInfo not available for function: " << fn.name();

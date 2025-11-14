@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -55,3 +56,4 @@ XSIGMATEST(Profiler, format_handles_zero)
     EXPECT_EQ(three_digits(0.0), "0.000");
     EXPECT_EQ(max_precision(0.0), "0");
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

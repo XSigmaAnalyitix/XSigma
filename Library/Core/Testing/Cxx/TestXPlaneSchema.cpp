@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -399,3 +400,4 @@ XSIGMATEST(XPlaneSchema, hash_of_string_view_consistency)
     // Hash of string and string_view should be the same
     EXPECT_EQ(HashOf(str), HashOf(sv));
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

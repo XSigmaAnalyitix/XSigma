@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -224,3 +225,4 @@ XSIGMATEST(Profiler, xline_duration_ps)
 
     EXPECT_EQ(line->duration_ps(), 1000000);
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

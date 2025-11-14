@@ -62,6 +62,9 @@ compile_definition(XSIGMA_ENABLE_KINETO)
 # Intel ITT API support
 compile_definition(XSIGMA_ENABLE_ITT)
 
+# Native profiler support (derived from XSIGMA_PROFILER_TYPE)
+compile_definition(XSIGMA_ENABLE_NATIVE_PROFILER)
+
 # OpenMP support
 compile_definition(XSIGMA_ENABLE_OPENMP)
 
@@ -126,5 +129,11 @@ endif()
 
 # Allocation statistics support (optional feature flag)
 compile_definition(XSIGMA_ENABLE_ALLOCATION_STATS)
+
+if(XSIGMA_ENABLE_NATIVE_PROFILER)
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_HAS_NATIVE_PROFILER=1)
+else()
+  list(APPEND XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS XSIGMA_HAS_NATIVE_PROFILER=0)
+endif()
 
 message("XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS: ${XSIGMA_DEPENDENCY_COMPILE_DEFINITIONS}")

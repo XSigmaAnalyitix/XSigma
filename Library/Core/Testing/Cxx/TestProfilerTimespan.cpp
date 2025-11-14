@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -292,3 +293,4 @@ XSIGMATEST(Profiler, timespan_zero_duration)
     EXPECT_TRUE(ts.instant());
     EXPECT_EQ(ts.begin_ps(), ts.end_ps());
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

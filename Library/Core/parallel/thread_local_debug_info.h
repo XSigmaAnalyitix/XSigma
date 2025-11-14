@@ -33,16 +33,16 @@ public:
 // the higher layers (e.g. model id) down to the lower levels
 // (e.g. to the operator observers used for debugging, logging,
 // profiling, etc)
-class XSIGMA_API ThreadLocalDebugInfo
+class XSIGMA_API thread_local_debug_info
 {
 public:
     static DebugInfoBase* get(DebugInfoKind kind);
 
-    // Get current ThreadLocalDebugInfo
-    static std::shared_ptr<ThreadLocalDebugInfo> current();
+    // Get current thread_local_debug_info
+    static std::shared_ptr<thread_local_debug_info> current();
 
     // Internal, use DebugInfoGuard/ThreadLocalStateGuard
-    static void _forceCurrentDebugInfo(std::shared_ptr<ThreadLocalDebugInfo> info);
+    static void _forceCurrentDebugInfo(std::shared_ptr<thread_local_debug_info> info);
 
     // Push debug info struct of a given kind
     static void _push(DebugInfoKind kind, std::shared_ptr<DebugInfoBase> info);
@@ -56,23 +56,23 @@ public:
 private:
     std::shared_ptr<DebugInfoBase>        info_;
     DebugInfoKind                         kind_;
-    std::shared_ptr<ThreadLocalDebugInfo> parent_info_;
+    std::shared_ptr<thread_local_debug_info> parent_info_;
 
     friend class DebugInfoGuard;
 };
 
 // DebugInfoGuard is used to set debug information,
-// ThreadLocalDebugInfo is semantically immutable, the values are set
+// thread_local_debug_info is semantically immutable, the values are set
 // through the scope-based guard object.
 // Nested DebugInfoGuard adds/overrides existing values in the scope,
 // restoring the original values after exiting the scope.
-// Users can access the values through the ThreadLocalDebugInfo::get() call;
+// Users can access the values through the thread_local_debug_info::get() call;
 class XSIGMA_API DebugInfoGuard
 {
 public:
     DebugInfoGuard(DebugInfoKind kind, std::shared_ptr<DebugInfoBase> info);
 
-    explicit DebugInfoGuard(std::shared_ptr<ThreadLocalDebugInfo> info);
+    explicit DebugInfoGuard(std::shared_ptr<thread_local_debug_info> info);
 
     ~DebugInfoGuard();
 
@@ -83,7 +83,7 @@ public:
 
 private:
     bool                                  active_    = false;
-    std::shared_ptr<ThreadLocalDebugInfo> prev_info_ = nullptr;
+    std::shared_ptr<thread_local_debug_info> prev_info_ = nullptr;
 };
 
 }  // namespace xsigma

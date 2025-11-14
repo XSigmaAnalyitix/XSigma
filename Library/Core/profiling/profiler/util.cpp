@@ -5,7 +5,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include "parallel/ThreadLocalDebugInfo.h"
+#include "parallel/thread_local_debug_info.h"
 #include "profiling/profiler/collection.h"
 #include "util/array_ref.h"
 #include "util/irange.h"
@@ -622,7 +622,7 @@ std::unordered_map<std::string, std::string> saveNcclMeta(
     std::unordered_map<std::string, std::string> map;
 #ifdef USE_DISTRIBUTED
     auto debugInfo = dynamic_cast<ParamCommsDebugInfo*>(
-        xsigma::ThreadLocalDebugInfo::get(xsigma::DebugInfoKind::PARAM_COMMS_INFO));
+        xsigma::thread_local_debug_info::get(xsigma::DebugInfoKind::PARAM_COMMS_INFO));
 
     if (config.introspectMetadata)
     {

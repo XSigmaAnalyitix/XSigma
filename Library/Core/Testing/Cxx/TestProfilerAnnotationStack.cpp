@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -348,3 +349,4 @@ XSIGMATEST(Profiler, annotation_stack_push_whitespace)
     const std::string& result = annotation_stack::get();
     EXPECT_TRUE(result.find("test name") != std::string::npos);
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

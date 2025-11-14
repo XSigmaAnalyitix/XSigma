@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -716,3 +717,4 @@ XSIGMATEST(TracemeTest, zero_duration_traces)
     XSIGMA_CHECK(true, "Zero duration traces should be handled gracefully");
     END_TEST();
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

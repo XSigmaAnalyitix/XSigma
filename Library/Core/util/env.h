@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <optional>
 #include <string>
 
@@ -26,5 +27,15 @@ XSIGMA_API std::optional<bool> check_env(const char* name);
 // Reads the value of an environment variable if it is set.
 // However, check_env should be used if the value is assumed to be a flag.
 XSIGMA_API std::optional<std::string> get_env(const char* name) noexcept;
+
+// Read a boolean environment variable in a TensorFlow-compatible way.
+// Returns true on success and writes the parsed value; otherwise leaves `value`
+// as the default and returns false.
+XSIGMA_API bool read_env_bool(const char* name, bool default_val, bool* value);
+
+// Read an int64 environment variable with whitespace trimming.
+// Returns true on success and writes the parsed value; otherwise leaves `value`
+// as the default and returns false.
+XSIGMA_API bool read_env_int64(const char* name, int64_t default_val, int64_t* value);
 
 }  // namespace xsigma::utils

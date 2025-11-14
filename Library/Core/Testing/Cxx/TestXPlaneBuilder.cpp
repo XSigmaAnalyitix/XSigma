@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -591,3 +592,4 @@ XSIGMATEST(XPlaneBuilder, xevent_builder_add_stat_value_double)
     event.add_stat_value(*stat_metadata, 3.14);
     EXPECT_TRUE(true);
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

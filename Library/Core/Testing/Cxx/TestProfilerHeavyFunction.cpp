@@ -1,3 +1,4 @@
+
 /**
  * @file TestProfilerHeavyFunction.cpp
  * @brief Comprehensive profiling example with computationally intensive functions

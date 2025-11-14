@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -112,3 +113,4 @@ XSIGMATEST(Profiler, has_metadata_detects_trailing_marker)
     EXPECT_FALSE(has_metadata("kernel"));
     EXPECT_FALSE(has_metadata(""));
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER

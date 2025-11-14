@@ -59,6 +59,24 @@ file(
   ${xsigma_sources}
 )
 
+if(NOT XSIGMA_ENABLE_NATIVE_PROFILER)
+  file(
+    GLOB_RECURSE profiler_native_source_files
+    LIST_DIRECTORIES false
+    "${CMAKE_CURRENT_SOURCE_DIR}/profiler/native/*.cpp"
+  )
+  file(
+    GLOB_RECURSE profiler_native_header_files
+    LIST_DIRECTORIES false
+    "${CMAKE_CURRENT_SOURCE_DIR}/profiler/native/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/profiler/native/*.hxx"
+  )
+
+  list(REMOVE_ITEM sources ${profiler_native_source_files})
+  list(REMOVE_ITEM headers ${profiler_native_header_files})
+  message(STATUS "Native profiler disabled: excluding profiler/native source/header files")
+endif()
+
 file(
   GLOB_RECURSE templates
   LIST_DIRECTORIES false

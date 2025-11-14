@@ -1,6 +1,6 @@
 #include "profiling/profiler/standalone/itt_observer.h"
 
-#include "parallel/ThreadLocalDebugInfo.h"
+#include "parallel/thread_local_debug_info.h"
 #include "profiling/profiler/stubs/base.h"
 #include "profiling/profiler/util.h"
 
@@ -55,7 +55,7 @@ void pushITTCallbacks(
         xsigma::profiler::impl::ittStubs()->enabled(),
         "Can't use ITT profiler - XSigma was compiled without ITT");
 
-    xsigma::ThreadLocalDebugInfo::_push(
+    xsigma::thread_local_debug_info::_push(
         xsigma::DebugInfoKind::PROFILER_STATE, std::make_shared<ITTThreadLocalState>(config));
 
     auto state_ptr = ITTThreadLocalState::getTLS();

@@ -1,6 +1,6 @@
 #include "profiling/profiler/standalone/nvtx_observer.h"
 
-#include "parallel/ThreadLocalDebugInfo.h"
+#include "parallel/thread_local_debug_info.h"
 #include "profiling/profiler/stubs/base.h"
 #include "profiling/profiler/util.h"
 
@@ -175,7 +175,7 @@ void pushNVTXCallbacks(
         xsigma::profiler::impl::cudaStubs()->enabled(),
         "Can't use NVTX profiler - XSigma was compiled without CUDA");
 
-    xsigma::ThreadLocalDebugInfo::_push(
+    xsigma::thread_local_debug_info::_push(
         xsigma::DebugInfoKind::PROFILER_STATE, std::make_shared<NVTXThreadLocalState>(config));
 
     auto state_ptr = NVTXThreadLocalState::getTLS();

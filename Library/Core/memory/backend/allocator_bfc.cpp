@@ -50,9 +50,11 @@
 #include "common/macros.h"
 #include "logging/logger.h"
 #include "memory/cpu/allocator.h"
+#if XSIGMA_HAS_NATIVE_PROFILER
 #include "profiler/native/memory/scoped_memory_debug_annotation.h"
 #include "profiler/native/tracing/traceme.h"
 #include "profiler/native/tracing/traceme_encode.h"
+#endif
 #include "util/exception.h"
 #include "util/flat_hash.h"
 #include "util/string_util.h"
@@ -717,7 +719,9 @@ void* allocator_bfc::AllocateRawInternal(
     void* ptr = FindChunkPtr(bin_num, rounded_bytes, num_bytes, freed_before);  //NOLINT
     if (ptr != nullptr)
     {
+#if XSIGMA_HAS_NATIVE_PROFILER
         AddTraceMe("MemoryAllocation", ptr);
+#endif
         return ptr;
     }
 
@@ -727,7 +731,9 @@ void* allocator_bfc::AllocateRawInternal(
         ptr = FindChunkPtr(bin_num, rounded_bytes, num_bytes, freed_before);
         if (ptr != nullptr)
         {
+#if XSIGMA_HAS_NATIVE_PROFILER
             AddTraceMe("MemoryAllocation", ptr);
+#endif
             return ptr;
         }
     }
@@ -743,7 +749,9 @@ void* allocator_bfc::AllocateRawInternal(
             ptr = FindChunkPtr(bin_num, rounded_bytes, num_bytes, freed_before);
             if (ptr != nullptr)
             {
+#if XSIGMA_HAS_NATIVE_PROFILER
                 AddTraceMe("MemoryAllocation", ptr);
+#endif
                 return ptr;
             }
         }
@@ -758,7 +766,9 @@ void* allocator_bfc::AllocateRawInternal(
         ptr = FindChunkPtr(bin_num, rounded_bytes, num_bytes, freed_before);
         if (ptr != nullptr)
         {
+#if XSIGMA_HAS_NATIVE_PROFILER
             AddTraceMe("MemoryAllocation", ptr);
+#endif
             return ptr;
         }
     }
@@ -805,6 +815,7 @@ double allocator_bfc::GetFragmentation()
     return static_cast<double>(bytes_available - LargestFreeChunk()) / bytes_available;
 }
 
+#if XSIGMA_HAS_NATIVE_PROFILER
 void allocator_bfc::AddTraceMe(std::string_view traceme_name, const void* ptr)
 {
     allocator_bfc::Chunk const* chunk = ChunkFromHandle(region_manager_.get_handle(ptr));
@@ -848,6 +859,7 @@ void allocator_bfc::AddTraceMe(
         },
         /*level=*/static_cast<int>(xsigma::traceme_level_enum::INFO));
 }
+#endif
 
 void* allocator_bfc::FindChunkPtr(
     BinNum bin_num, size_t rounded_bytes, size_t num_bytes, uint64_t freed_before)
@@ -1047,7 +1059,9 @@ void allocator_bfc::DeallocateRawInternal(void* ptr)
 
     // TraceMe needs to be added after MarkFree and InsertFreeChunkIntoBin for
     // correct aggregation stats (bytes_in_use, fragmentation).
+#if XSIGMA_HAS_NATIVE_PROFILER
     AddTraceMe("MemoryDeallocation", chunk_ptr, req_bytes, alloc_bytes);
+#endif
 
     XSIGMA_LOG_INFO_DEBUG_BFC("F: {}", RenderOccupancy());
 }

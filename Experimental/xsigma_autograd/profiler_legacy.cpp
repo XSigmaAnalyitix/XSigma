@@ -9,7 +9,7 @@
 #include <torch/library.h>
 #include <xsigma/core/Allocator.h>
 #include <xsigma/util/ApproximateClock.h>
-#include <xsigma/util/ThreadLocalDebugInfo.h>
+#include <xsigma/util/thread_local_debug_info.h>
 #include <xsigma/util/irange.h>
 
 #include <fstream>
@@ -23,17 +23,17 @@ namespace torch::autograd::profiler
 
 // We decompose the profiler logic into the following components:
 //
-// ThreadLocalDebugInfo:
+// thread_local_debug_info:
 //
-// ThreadLocalDebugInfo is a thread local mapping from slots into
+// thread_local_debug_info is a thread local mapping from slots into
 // the debug information structs.
-// ThreadLocalDebugInfo is automatically propagated across thread
+// thread_local_debug_info is automatically propagated across thread
 // boundaries, including the cases of:
 //  - launching async jobs with xsigma::launch
 //  - executing JIT continuations
 //  - moving from the forward threads into autograd (backward) threads
 //
-// Entries in ThreadLocalDebugInfo are managed by DebugInfoGuard
+// Entries in thread_local_debug_info are managed by DebugInfoGuard
 // which can be used to add or overwrite an entry in the thread local
 // mapping. A corresponding entry is removed when the guard is destroyed,
 // potentially revealing the previously set value for the same slot.
@@ -46,13 +46,13 @@ namespace torch::autograd::profiler
 // (including removal of the entries) in the main thread is not visible
 // to the async task if it happens after launching the task.
 //
-// We use ThreadLocalDebugInfo (slot PROFILER_STATE) to store profiler config,
+// We use thread_local_debug_info (slot PROFILER_STATE) to store profiler config,
 // as well as a list of events that happen during profiling.
-// An instance of ThreadLocalDebugInfo is created each time we enter
+// An instance of thread_local_debug_info is created each time we enter
 // profiler (i.e. enter profiling context manager/call enableConfig) and
 // uniquely identifies a profiling run.
 //
-// We automatically propagate ThreadLocalDebugInfo into async tasks,
+// We automatically propagate thread_local_debug_info into async tasks,
 // as well as across JIT continuations and autograd thread, so all
 // the operations that happen between profiling start and end
 // (not necessarily within the same thread) are recorded.
@@ -86,7 +86,7 @@ namespace torch::autograd::profiler
 //  - user defined named ranges (see `record_function` python context manager)
 //
 // Profiler setups a pair of callbacks that record profiling events and save
-// them into the thread local profiler struct (ThreadLocalDebugInfo,
+// them into the thread local profiler struct (thread_local_debug_info,
 // PROFILER_STATE slot)
 //
 //
@@ -94,21 +94,21 @@ namespace torch::autograd::profiler
 //
 // enableProfiler:
 //  - checks that profiler is not enabled (otherwise throws)
-//  - pushes new ThreadLocalDebugInfo (slot PROFILER_STATE) as the profiler
+//  - pushes new thread_local_debug_info (slot PROFILER_STATE) as the profiler
 //    config for the current thread
 //  - pushes profiling callbacks for the current thread
 //
 // disableProfiler:
-//  - pops PROFILER_STATE slot from the current ThreadLocalDebugInfo and
+//  - pops PROFILER_STATE slot from the current thread_local_debug_info and
 //    consolidates events
 //  - removes profiling callbacks
 //
 // ThreadLocalState:
-//  - propagates ThreadLocalDebugInfo across threads
+//  - propagates thread_local_debug_info across threads
 //  - propagates profiler callbacks across threads
 //
 // Profiler callbacks:
-//  - get the current profiling state (PROFILER slot in ThreadLocalDebugInfo)
+//  - get the current profiling state (PROFILER slot in thread_local_debug_info)
 //  - save profiling events into the profiling state
 //
 
@@ -447,7 +447,7 @@ void enableProfilerLegacy(const torch::profiler::impl::profiler_config& new_conf
     auto state_ptr = ProfilerLegacyThreadLocalState::getTLS();
     XSIGMA_CHECK(!state_ptr, "Profiler is already enabled on this thread");
     auto state = std::make_shared<ProfilerLegacyThreadLocalState>(new_config);
-    xsigma::ThreadLocalDebugInfo::_push(xsigma::DebugInfoKind::PROFILER_STATE, state);
+    xsigma::thread_local_debug_info::_push(xsigma::DebugInfoKind::PROFILER_STATE, state);
 
     pushProfilingCallbacksLegacy();
 
@@ -464,11 +464,11 @@ thread_event_lists disableProfilerLegacy(
     std::shared_ptr<xsigma::DebugInfoBase> state;
     if (cleanupTLSState)
     {
-        state = xsigma::ThreadLocalDebugInfo::_pop(xsigma::DebugInfoKind::PROFILER_STATE);
+        state = xsigma::thread_local_debug_info::_pop(xsigma::DebugInfoKind::PROFILER_STATE);
     }
     else
     {
-        state = xsigma::ThreadLocalDebugInfo::_peek(xsigma::DebugInfoKind::PROFILER_STATE);
+        state = xsigma::thread_local_debug_info::_peek(xsigma::DebugInfoKind::PROFILER_STATE);
     }
 
     auto state_ptr = static_cast<ProfilerLegacyThreadLocalState*>(state.get());

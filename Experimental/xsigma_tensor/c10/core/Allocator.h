@@ -6,7 +6,7 @@
 #include <c10/macros/Export.h>
 #include <c10/macros/Macros.h>
 #include <c10/util/Exception.h>
-#include <c10/util/ThreadLocalDebugInfo.h>
+#include <c10/util/thread_local_debug_info.h>
 #include <c10/util/UniqueVoidPtr.h>
 #include <c10/util/irange.h>
 

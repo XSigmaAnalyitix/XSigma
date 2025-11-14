@@ -1,5 +1,9 @@
 #include "util/env.h"
 
+#include <algorithm>
+#include <cctype>
+#include <cstdint>
+#include <exception>
 #include <fmt/format.h>
 
 #include <cstdlib>
@@ -99,5 +103,94 @@ std::optional<bool> check_env(const char* name)
             "valid values are 0 or 1.");
     }
     return std::nullopt;
+}
+
+bool read_env_bool(const char* name, bool default_val, bool* value)
+{
+    std::string const env_name = name;
+    *value                     = default_val;
+    auto env_opt               = get_env(name);
+    if (!env_opt.has_value())
+    {
+        return true;
+    }
+
+    std::string str_value = *env_opt;
+    std::transform(
+        str_value.begin(),
+        str_value.end(),
+        str_value.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+    if (str_value == "0" || str_value == "false")
+    {
+        *value = false;
+        return true;
+    }
+    if (str_value == "1" || str_value == "true")
+    {
+        *value = true;
+        return true;
+    }
+
+    XSIGMA_LOG_ERROR(
+        "Failed to parse the env-var {} into bool: {}. Use the default value: {}",
+        env_name,
+        str_value,
+        default_val);
+    return false;
+}
+
+bool read_env_int64(const char* name, int64_t default_val, int64_t* value)
+{
+    std::string const env_name = name;
+    *value                     = default_val;
+    auto env_opt               = get_env(name);
+    if (!env_opt.has_value())
+    {
+        return true;
+    }
+
+    std::string str = *env_opt;
+    auto        start = str.find_first_not_of(" \t\n\r");
+    auto        end   = str.find_last_not_of(" \t\n\r");
+    if (start == std::string::npos || end == std::string::npos)
+    {
+        XSIGMA_LOG_ERROR(
+            "Failed to parse the env-var {} into int64: {}. Use the default value: {}",
+            env_name,
+            str,
+            default_val);
+        return false;
+    }
+    str = str.substr(start, end - start + 1);
+
+    try
+    {
+        size_t pos = 0;
+        int64_t val = std::stoll(str, &pos);
+        if (pos == str.length())
+        {
+            *value = val;
+            return true;
+        }
+    }
+    catch (std::exception const& e)
+    {
+        XSIGMA_LOG_ERROR(
+            "Failed to parse the env-var {} into int64: {}. Use the default value: {} ({})",
+            env_name,
+            str,
+            default_val,
+            e.what());
+        return false;
+    }
+
+    XSIGMA_LOG_ERROR(
+        "Failed to parse the env-var {} into int64: {}. Use the default value: {}",
+        env_name,
+        str,
+        default_val);
+    return false;
 }
 }  // namespace xsigma::utils

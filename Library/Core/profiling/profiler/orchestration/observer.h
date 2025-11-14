@@ -5,7 +5,7 @@
 
 #include "common/export.h"
 #include "memory/device.h"
-#include "parallel/ThreadLocalDebugInfo.h"
+#include "parallel/thread_local_debug_info.h"
 #include "profiling/record_function.h"
 #include "util/exception.h"
 

@@ -1,3 +1,4 @@
+#if XSIGMA_HAS_NATIVE_PROFILER
 /*
  * XSigma: High-Performance Quantitative Library
  *
@@ -475,3 +476,4 @@ XSIGMATEST(Profiler, chrome_trace_export_file_success_path)
     file.close();
     std::filesystem::remove(file_path, ec);
 }
+#endif  // XSIGMA_HAS_NATIVE_PROFILER
