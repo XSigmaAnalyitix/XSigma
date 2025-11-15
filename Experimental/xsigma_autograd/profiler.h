@@ -2,4 +2,4 @@
 
 #include <torch/csrc/autograd/profiler_legacy.h>
 
-#include "profiling/autograd/profiler_kineto.h"
+#include "profiler/kineto/profiler_kineto.h"

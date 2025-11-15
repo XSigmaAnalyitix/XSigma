@@ -13,11 +13,11 @@
 #include <vector>
 
 #include "Testing/xsigmaTest.h"
+#include "profiler/base/base.h"
+#include "profiler/common/orchestration/observer.h"
+#include "profiler/common/record_function.h"
+#include "profiler/kineto/profiler_kineto.h"
 #include "profiler/native/session/profiler.h"
-#include "profiling/autograd/profiler_kineto.h"
-#include "profiling/profiler/orchestration/observer.h"
-#include "profiling/profiler/stubs/base.h"
-#include "profiling/record_function.h"
 
 namespace
 {

@@ -1,0 +1,237 @@
+/*
+ * XSigma Profiler API
+ *
+ * High-level profiler API matching XSigma's profiler interface.
+ * Provides CPU and GPU profiling with event collection and export.
+ *
+ * Features:
+ * - CPU operation profiling via callbacks
+ * - GPU profiling via Kineto (NVIDIA, AMD, Intel XPU)
+ * - Memory profiling
+ * - Event tree building
+ * - JSON export
+ * - Thread-safe operation
+ *
+ * Usage:
+ *   xsigma::profiler::profiler_config config;
+ *   config.activities = {xsigma::profiler::activity_type_enum::CPU};
+ *   config.output_file = "trace.json";
+ *
+ *   auto& profiler = xsigma::profiler::profiler_session::instance();
+ *   profiler.start(config);
+ *   // ... code to profile ...
+ *   profiler.stop();
+ *   profiler.export_trace(config.output_file);
+ */
+
+#pragma once
+
+#include <cstdint>
+#include <memory>
+#include <mutex>
+#include <set>
+#include <string>
+#include <vector>
+
+#include "common/export.h"
+
+namespace xsigma
+{
+namespace profiler
+{
+
+// ============================================================================
+// == Activity Types ==========================================================
+// ============================================================================
+
+/**
+ * @brief Types of activities that can be profiled
+ */
+enum class activity_type_enum
+{
+    CPU    = 0,  ///< CPU operations
+    CUDA   = 1,  ///< NVIDIA CUDA operations
+    ROCM   = 2,  ///< AMD ROCm operations
+    XPU    = 3,  ///< Intel XPU operations
+    Memory = 4,  ///< Memory allocations/deallocations
+};
+
+// ============================================================================
+// == Profiler State ==========================================================
+// ============================================================================
+
+/**
+ * @brief Profiler operational state
+ */
+enum class profiler_state_enum
+{
+    Disabled  = 0,  ///< Profiler not running
+    Ready     = 1,  ///< Profiler configured, ready to start
+    Recording = 2,  ///< Profiler actively recording
+};
+
+// ============================================================================
+// == Profiler Configuration ==================================================
+// ============================================================================
+
+/**
+ * @brief Configuration for profiler session
+ */
+struct profiler_config
+{
+    /// Activities to profile
+    std::set<activity_type_enum> activities;
+
+    /// Record tensor shapes
+    bool record_shapes = false;
+
+    /// Profile memory allocations
+    bool profile_memory = false;
+
+    /// Capture call stacks
+    bool with_stack = false;
+
+    /// Output file path for trace
+    std::string output_file;
+
+    /// Trace identifier
+    std::string trace_id;
+
+    /// Enable verbose logging
+    bool verbose = false;
+};
+
+// ============================================================================
+// == Profiler Session ========================================================
+// ============================================================================
+
+/**
+ * @brief Main profiler session manager
+ *
+ * Singleton class managing profiler lifecycle and event collection.
+ * Thread-safe for concurrent profiling from multiple threads.
+ */
+class XSIGMA_VISIBILITY profiler_session
+{
+public:
+    /**
+   * @brief Get singleton instance
+   */
+    static profiler_session& instance();
+
+    /**
+   * @brief Start profiling with given configuration
+   *
+   * @param config Profiler configuration
+   * @return true if profiling started successfully
+   */
+    bool start(const profiler_config& config);
+
+    /**
+   * @brief Stop profiling and collect events
+   *
+   * @return true if profiling stopped successfully
+   */
+    bool stop();
+
+    /**
+   * @brief Check if profiler is currently recording
+   *
+   * @return true if profiling is active
+   */
+    bool is_profiling() const;
+
+    /**
+   * @brief Get current profiler state
+   *
+   * @return Current profiler_state_enum
+   */
+    profiler_state_enum get_state() const;
+
+    /**
+   * @brief Get current configuration
+   *
+   * @return Current profiler_config
+   */
+    const profiler_config& get_config() const;
+
+    /**
+   * @brief Export collected trace to file
+   *
+   * @param path Output file path
+   * @return true if export successful
+   */
+    bool export_trace(const std::string& path);
+
+    /**
+   * @brief Clear collected events
+   */
+    void clear();
+
+    /**
+   * @brief Get number of collected events
+   *
+   * @return Number of events
+   */
+    size_t event_count() const;
+
+    /**
+   * @brief Reset profiler to Disabled state (for testing)
+   */
+    void reset();
+
+private:
+    profiler_session()  = default;
+    ~profiler_session() = default;
+
+    // Prevent copying
+    profiler_session(const profiler_session&)            = delete;
+    profiler_session& operator=(const profiler_session&) = delete;
+
+    // State management
+    mutable std::mutex  state_mutex_;
+    profiler_state_enum state_ = profiler_state_enum::Disabled;
+    profiler_config     config_;
+
+    // Event collection
+    // Note: XSIGMA_SUPPRESS_WARNING used for private member - not part of public interface
+    // XSIGMA_SUPPRESS_WARNING(4251)
+    std::vector<std::string> events_;  // Simplified event storage
+    uint64_t                 start_time_ns_ = 0;
+    uint64_t                 end_time_ns_   = 0;
+
+    // Helper methods
+    void        initialize_kineto() const;
+    static void initialize_itt();
+    static void finalize_kineto();
+    void        finalize_itt();
+    void        collect_events() const;
+};
+
+// ============================================================================
+// == Global API Functions ====================================================
+// ============================================================================
+
+/**
+ * @brief Check if profiler is enabled
+ *
+ * @return true if profiler is available and enabled
+ */
+XSIGMA_API bool profiler_enabled();
+
+/**
+ * @brief Get current profiler state
+ *
+ * @return Current profiler_state_enum
+ */
+XSIGMA_API profiler_state_enum get_profiler_state();
+
+/**
+ * @brief Get current profiler configuration
+ *
+ * @return Current profiler_config
+ */
+XSIGMA_API const profiler_config& get_profiler_config();
+
+}  // namespace profiler
+}  // namespace xsigma

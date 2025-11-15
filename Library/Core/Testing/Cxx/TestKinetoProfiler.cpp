@@ -15,9 +15,9 @@
 #include <vector>
 
 #include "Testing/xsigmaTest.h"
+#include "profiler/common/record_function.h"
+#include "profiler/kineto/profiler_kineto.h"
 #include "profiler/kineto_profiler.h"
-#include "profiling/autograd/profiler_kineto.h"
-#include "profiling/record_function.h"
 
 using namespace xsigma::kineto_profiler;
 

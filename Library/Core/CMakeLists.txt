@@ -36,8 +36,7 @@ file(
   "${CMAKE_CURRENT_SOURCE_DIR}/common/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/logging/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/profiler/*.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/profiling/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/profiler/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/c17/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/parallel/*.h"
@@ -51,8 +50,7 @@ file(
   "${CMAKE_CURRENT_SOURCE_DIR}/util/*.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/logging/*.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.cpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/profiler/*.cpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/profiling/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/profiler/*.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/smp/*.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/c17/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/parallel/*.cpp"
@@ -135,12 +133,6 @@ if(NOT XSIGMA_ENABLE_KINETO)
   list(REMOVE_ITEM headers ${KINETO_HEADER_FILES})
   message(STATUS "Kineto disabled: Excluding Kineto source files from build")
 endif()
-
-# Remove duplicate itt_wrapper.cpp from profiling/profiler directory Keep the one in profiler/
-# directory instead
-list(REMOVE_ITEM sources "${CMAKE_CURRENT_SOURCE_DIR}/profiling/profiler/itt_wrapper.cpp")
-list(REMOVE_ITEM headers "${CMAKE_CURRENT_SOURCE_DIR}/profiling/profiler/itt_wrapper.h")
-message(STATUS "Excluding duplicate itt_wrapper files from profiling/profiler directory")
 
 # Create the Core library Respect BUILD_SHARED_LIBS setting for library type
 add_library(Core ${sources} ${headers} ${templates})
