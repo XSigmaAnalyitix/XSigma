@@ -654,6 +654,7 @@ class XsigmaFlags:
             "enable spell checking with automatic corrections",
             "enable clang-tidy fix-errors and fix options",
             "compiler cache type: none, ccache, sccache, or buildcache",
+            "profiler.<kineto|native|itt>: select profiler backend",
         ]
 
     def __build_cmake_flag(self):
@@ -680,9 +681,8 @@ class XsigmaFlags:
             "lto": "XSIGMA_ENABLE_LTO",
             "magic_enum": "XSIGMA_ENABLE_MAGICENUM",
             "mimalloc": "XSIGMA_ENABLE_MIMALLOC",
-            "kineto": "XSIGMA_ENABLE_KINETO",
-            "ittapi": "XSIGMA_ENABLE_ITT",
             "external": "XSIGMA_ENABLE_EXTERNAL",
+            "profiler_type": "XSIGMA_PROFILER_TYPE",
             "cxxstd": "XSIGMA_CXX_STANDARD",
             "cppcheck": "XSIGMA_ENABLE_CPPCHECK",
             "spell": "XSIGMA_ENABLE_SPELL",
@@ -718,6 +718,7 @@ class XsigmaFlags:
                 "sanitizer": self.OFF,  # Can conflict with other tools
                 "valgrind": self.OFF,  # Can conflict with sanitizer
                 "coverage": self.OFF,  # Coverage analysis is optional
+                "profiler_type": "KINETO",
             }
         )
 
@@ -743,10 +744,9 @@ class XsigmaFlags:
                 "gtest": self.ON,  # XSIGMA_ENABLE_GTEST default is ON
                 "magic_enum": self.ON,  # XSIGMA_ENABLE_MAGIC_ENUM default is ON
                 "mimalloc": self.ON,  # XSIGMA_ENABLE_MIMALLOC default is ON
-                #"kineto": self.ON,  # XSIGMA_ENABLE_KINETO default is ON
+                "profiler_type": "KINETO",
                 # CMake options with default OFF - keep OFF in setup.py
                 # (already set by dict.fromkeys above)
-                # "ittapi": self.OFF,  # XSIGMA_ENABLE_ITT default is OFF (STATIC library, MSVC incompatible)
                 # "benchmark": self.OFF,  # XSIGMA_ENABLE_BENCHMARK default is OFF (changed from ON)
                 # "cuda": self.OFF,  # XSIGMA_ENABLE_CUDA default is OFF
                 # "mkl": self.OFF,  # XSIGMA_ENABLE_MKL default is OFF
@@ -767,6 +767,7 @@ class XsigmaFlags:
         vectorisation_list = ["sse", "avx", "avx2", "avx512"]
         cxx_std_list = ["cxx17", "cxx20", "cxx23"]
         logging_backend_list = ["native", "loguru", "glog"]
+        profiler_choices = {"kineto": "KINETO", "native": "NATIVE", "itt": "ITT"}
         cache_type_list = ["none", "ccache", "sccache", "buildcache"]
 
         # Set default values for special flags
@@ -792,6 +793,20 @@ class XsigmaFlags:
             elif arg in vectorisation_list:
                 self.__value["vectorisation"] = arg
                 self.builder_suffix += f"_{arg}"
+            elif arg.startswith("profiler."):
+                backend_key = arg.split(".", 1)[1].lower()
+                if backend_key in profiler_choices:
+                    self.__value["profiler_type"] = profiler_choices[backend_key]
+                    self.builder_suffix += f"_profiler_{backend_key}"
+                    print_status(
+                        f"Selecting profiler backend: {profiler_choices[backend_key]}", "INFO"
+                    )
+                else:
+                    print_status(
+                        f"Unknown profiler option '{arg}'. Valid options: {', '.join(profiler_choices.keys())}",
+                        "WARNING",
+                    )
+                # Skip other processing for profiler flags
             elif arg in logging_backend_list:
                 # Set logging backend (NATIVE, LOGURU, or GLOG)
                 self.__value["logging_backend"] = arg.upper()
@@ -1519,21 +1534,6 @@ def parse_args(args):
                 )
                 sys.exit(1)
         # Handle individual sanitizer enable flags
-        elif arg in ["--enable-sanitizer", "--sanitizer"]:
-            processed_args.append("sanitizer")
-        # Handle sanitizer type specification
-        elif arg.startswith("--sanitizer-type="):
-            sanitizer_type = arg.split("=", 1)[1].lower()
-            valid_sanitizers = ["address", "undefined", "thread", "memory", "leak"]
-            if sanitizer_type in valid_sanitizers:
-                processed_args.extend(["sanitizer", sanitizer_type])
-            else:
-                print_status(
-                    f"Invalid sanitizer type: {sanitizer_type}. Valid options: {', '.join(valid_sanitizers)}",
-                    "ERROR",
-                )
-                sys.exit(1)
-        # Handle logging backend flags with dot notation (e.g., --logging.GLOG)
         elif arg.startswith("--logging."):
             backend_type = arg.split(".", 1)[1].upper()
             valid_backends = ["NATIVE", "LOGURU", "GLOG"]
@@ -1543,6 +1543,18 @@ def parse_args(args):
             else:
                 print_status(
                     f"Invalid logging backend: {backend_type}. Valid options: {', '.join(valid_backends)}",
+                    "ERROR",
+                )
+                sys.exit(1)
+        elif arg.startswith("--profiler."):
+            backend_type = arg.split(".", 1)[1].upper()
+            valid_backends = ["KINETO", "ITT", "NATIVE"]
+            if backend_type in valid_backends:
+                processed_args.append(f"profiler.{backend_type.lower()}")
+                print_status(f"Profiler backend set to {backend_type}", "INFO")
+            else:
+                print_status(
+                    f"Invalid profiler backend: {backend_type}. Valid options: {', '.join(valid_backends)}",
                     "ERROR",
                 )
                 sys.exit(1)

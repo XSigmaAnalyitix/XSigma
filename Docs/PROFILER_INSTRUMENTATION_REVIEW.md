@@ -33,7 +33,7 @@ This document captures the current issues, root causes, and recommended remediat
 ### 3.1 Stabilize Profiler State Handling
 - Refactor `profiler_state_info_ptr` into a synchronized structure (e.g., mutex + optional) or embed the state/scopes directly in `KinetoThreadLocalState`.
 - Guard every dereference (`toggleTorchOpCollectionDynamic`, child-thread helpers) with null checks and fallbacks.
-- Ensure NVTX/ITT/PRIVATEUSE1 sessions clear or reinitialize the stored scopes so subsequent CPU sessions do not re-use stale data.
+- Ensure NVTX/ITT/PRIVATEUSE1 sessions clear or reinitialize the stored scopes so subsequent CPU sessions do not reuse stale data.
 
 ### 3.2 Export Observer Entry Points
 - Annotate `pushITTCallbacks`, `pushNVTXCallbacks`, and any similar helpers with `XSIGMA_API`/`XSIGMA_VISIBILITY`.

@@ -780,7 +780,7 @@ command = [
     '--linter-name=DEPLOY_DETECTION',
     '--error-name=properly detect deploy runner',
     """--error-description=\
-        Do not use sys.executable to detect if running within deploy/multipy, use xsigma._running_with_deploy().
+        Do not use sys.executable to detect if running within deploy/multiply, use xsigma._running_with_deploy().
     """,
     '--',
     '@{{PATHSFILE}}'

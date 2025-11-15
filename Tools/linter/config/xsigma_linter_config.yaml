@@ -78,7 +78,7 @@ patterns:
 
 # Deploy Detection Configuration
 # ==============================
-# Defines patterns for detecting deploy/multipy runners
+# Defines patterns for detecting deploy/multiply runners
 deploy:
   # Pattern to detect torch_deploy (deprecated)
   deprecated_pattern: "sys.executable == 'torch_deploy'"

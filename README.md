@@ -83,6 +83,16 @@ The `setup.py` script uses a standardized flag ordering convention to organize b
 - **build** - Compiles the source code and builds the project
 - **test** - Runs the test suite after building
 
+##### Profiler selection
+
+Use the `--profiler.<backend>` flag (where `<backend>` is `kineto`, `native`, or `itt`) to control `XSIGMA_PROFILER_TYPE` and automatically toggle the matching Kineto/TraceMe/ITT feature set. Example:
+
+```bash
+python setup.py config.build.ninja.clang.release --profiler.native
+```
+
+If you omit the profiler flag, `KINETO` is selected by default. The helper no longer exposes separate `kineto` or `ittapi` switches – the single `profiler.xxx` option now controls which profiler backend you are compiling for.
+
 #### Unix/Linux (GCC and Clang)
 
 **Using setup.py (Recommended):**

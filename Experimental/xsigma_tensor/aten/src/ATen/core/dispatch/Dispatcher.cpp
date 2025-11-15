@@ -149,7 +149,7 @@ void Dispatcher::waitForDef(const FunctionSchema& schema)
         "Expected main interpreter to define ",
         schema.operator_name(),
         ", but this didn't happen within timeout.  Are you trying to load "
-        "different models in the same torchdeploy/multipy instance?  You "
+        "different models in the same torchdeploy/multiply instance?  You "
         "must warmup each interpreter identically, e.g., import all "
         "the same dependencies.");
 }
@@ -176,7 +176,7 @@ void Dispatcher::waitForImpl(const OperatorName& op_name, std::optional<c10::Dis
         " for ",
         op_name,
         ", but this didn't happen within timeout.  Are you trying to load "
-        "different models in the same torchdeploy/multipy instance?  You "
+        "different models in the same torchdeploy/multiply instance?  You "
         "must warmup each interpreter identically, e.g., import all "
         "the same dependencies.");
 }
@@ -566,8 +566,8 @@ RegistrationHandleRAII Dispatcher::registerFallback(
     auto idx = getDispatchTableIndexForDispatchKey(dispatchKey);
     TORCH_CHECK(
         idx >= 0 && static_cast<uint64_t>(idx) < backendFallbackKernels_.size(), "idx=", idx);
-    // NB: Perserve BC for registering fallback for AutogradPrivateUse1 multiple time,
-    // refer to https://github.com/pytorch/pytorch/issues/163979 for more informations.
+    // NB: Preserve BC for registering fallback for AutogradPrivateUse1 multiple time,
+    // refer to https://github.com/pytorch/pytorch/issues/163979 for more information.
     TORCH_CHECK(
         dispatchKey == DispatchKey::AutogradPrivateUse1 ||
             !backendFallbackKernels_[idx].kernel.isValid(),
