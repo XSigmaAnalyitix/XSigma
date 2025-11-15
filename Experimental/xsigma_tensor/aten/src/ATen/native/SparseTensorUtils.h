@@ -1,14 +1,14 @@
 #pragma once
 
-#include <ATen/Parallel.h>
-#include <ATen/SparseTensorImpl.h>
-#include <ATen/core/Tensor.h>
+#include <XSigma/Parallel.h>
+#include <XSigma/SparseTensorImpl.h>
+#include <XSigma/core/Tensor.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/empty.h>
-#include <ATen/ops/tensor.h>
+#include <XSigma/ops/empty.h>
+#include <XSigma/ops/tensor.h>
 #endif
 
 namespace at::sparse
@@ -62,7 +62,7 @@ inline bool is_same_density(const SparseTensor& self, const SparseTensor& src)
 
 // Give us a new values tensor, with the same dimensionality
 // as 'values' but with a new number of non-zero elements.
-// TODO: Expose this for real in ATen, some day?
+// TODO: Expose this for real in XSigma, some day?
 // NB: Doesn't preserve data.
 inline Tensor new_values_with_size_of(const Tensor& values, int64_t nnz)
 {

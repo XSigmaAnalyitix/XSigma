@@ -1,10 +1,10 @@
 #pragma once
 
-#include <ATen/core/Dimname.h>
-#include <ATen/core/class_type.h>
-#include <ATen/core/jit_type.h>
-#include <ATen/core/stack.h>
-#include <ATen/core/symbol.h>
+#include <XSigma/core/Dimname.h>
+#include <XSigma/core/class_type.h>
+#include <XSigma/core/jit_type.h>
+#include <XSigma/core/stack.h>
+#include <XSigma/core/symbol.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/jit/frontend/source_range.h>
 #include <torch/csrc/utils/variadic.h>
@@ -92,10 +92,10 @@ private:
 };
 
 // This is meant to be used as a thread local place, where we can store extra
-// info that gets lost when we call into ATen from Python bindings. One example
+// info that gets lost when we call into XSigma from Python bindings. One example
 // for when this happens is when we get an IntArrayRef argument with e.g. sizes
 // for view. When tracing, those might be tensors, which let us encode extra
-// data dependencies, but once they get to the ATen call where we actually have
+// data dependencies, but once they get to the XSigma call where we actually have
 // the tracing logic, they get converted into a raw IntArrayRef, and we loose
 // all information. To prevent this, we temporarily stash it in here.
 struct ArgumentStash

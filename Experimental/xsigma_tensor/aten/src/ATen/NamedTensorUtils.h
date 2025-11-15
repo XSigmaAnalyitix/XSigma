@@ -1,9 +1,9 @@
 #pragma once
-#include <ATen/NamedTensor.h>
-#include <ATen/TensorNames.h>
-#include <ATen/WrapDimUtilsMulti.h>
-#include <ATen/core/DimVector.h>
-#include <ATen/core/Tensor.h>
+#include <XSigma/NamedTensor.h>
+#include <XSigma/TensorNames.h>
+#include <XSigma/WrapDimUtilsMulti.h>
+#include <XSigma/core/DimVector.h>
+#include <XSigma/core/Tensor.h>
 
 namespace at
 {

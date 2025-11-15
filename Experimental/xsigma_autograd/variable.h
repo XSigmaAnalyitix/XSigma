@@ -1,8 +1,8 @@
 #pragma once
 
-#include <ATen/NamedTensorUtils.h>
-#include <ATen/core/Tensor.h>
-#include <ATen/core/VariableHooksInterface.h>
+#include <XSigma/NamedTensorUtils.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/core/VariableHooksInterface.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/autograd/cpp_hook.h>
 #include <torch/csrc/autograd/edge.h>

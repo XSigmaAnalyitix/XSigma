@@ -6,10 +6,10 @@
 #include <torch/csrc/jit/passes/utils/optimization_utils.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/ones_like.h>
-#include <ATen/ops/zeros_like.h>
+#include <XSigma/ops/ones_like.h>
+#include <XSigma/ops/zeros_like.h>
 #endif
 
 namespace torch::jit

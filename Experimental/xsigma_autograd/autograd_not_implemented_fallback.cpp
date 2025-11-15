@@ -1,6 +1,6 @@
-#include <ATen/core/TorchDispatchUtils.h>
-#include <ATen/core/dispatch/Dispatcher.h>
-#include <ATen/core/ivalue.h>
+#include <XSigma/core/TorchDispatchUtils.h>
+#include <XSigma/core/dispatch/Dispatcher.h>
+#include <XSigma/core/ivalue.h>
 #include <torch/csrc/autograd/VariableTypeUtils.h>
 #include <torch/csrc/autograd/autograd.h>
 #include <torch/csrc/autograd/autograd_not_implemented_fallback.h>

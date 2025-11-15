@@ -8,14 +8,14 @@
   See NOTE: [Tensor vs. TensorBase]
 #endif
 
-#include <ATen/MethodOperators.h>
-#include <ATen/core/CheckMemoryFormat.h>
-#include <ATen/core/DeprecatedTypeProperties.h>
-#include <ATen/core/DeprecatedTypePropertiesRegistry.h>
-#include <ATen/core/NamedTensor.h>
-#include <ATen/core/QuantizerBase.h>
-#include <ATen/core/TensorAccessor.h>
-#include <ATen/core/TensorBase.h>
+#include <XSigma/MethodOperators.h>
+#include <XSigma/core/CheckMemoryFormat.h>
+#include <XSigma/core/DeprecatedTypeProperties.h>
+#include <XSigma/core/DeprecatedTypePropertiesRegistry.h>
+#include <XSigma/core/NamedTensor.h>
+#include <XSigma/core/QuantizerBase.h>
+#include <XSigma/core/TensorAccessor.h>
+#include <XSigma/core/TensorBase.h>
 #include <c10/core/Device.h>
 #include <c10/core/Layout.h>
 #include <c10/core/MemoryFormat.h>
@@ -545,7 +545,7 @@ public:
     }
 
     // STOP.  Thinking of adding a method here, which only makes use
-    // of other ATen methods?  Define it in native_functions.yaml.
+    // of other XSigma methods?  Define it in native_functions.yaml.
 
     //example
     //Tensor * add(Tensor & b);

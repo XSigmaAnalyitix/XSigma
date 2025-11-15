@@ -1,28 +1,28 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/Context.h>
-#include <ATen/NamedTensorUtils.h>
-#include <ATen/core/Tensor.h>
-#include <ATen/detail/CUDAHooksInterface.h>
-#include <ATen/native/TensorProperties.h>
+#include <XSigma/Context.h>
+#include <XSigma/NamedTensorUtils.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/detail/CUDAHooksInterface.h>
+#include <XSigma/native/TensorProperties.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
+#include <XSigma/Functions.h>
+#include <XSigma/NativeFunctions.h>
 #else
-#include <ATen/ops/_nested_tensor_size_native.h>
-#include <ATen/ops/contiguous_native.h>
-#include <ATen/ops/cudnn_is_acceptable_native.h>
-#include <ATen/ops/detach_native.h>
-#include <ATen/ops/equal.h>
-#include <ATen/ops/is_same_size_native.h>
-#include <ATen/ops/is_set_to_native.h>
-#include <ATen/ops/size_native.h>
-#include <ATen/ops/stride_native.h>
-#include <ATen/ops/sym_is_contiguous_native.h>
-#include <ATen/ops/sym_numel_native.h>
-#include <ATen/ops/sym_size_native.h>
-#include <ATen/ops/sym_storage_offset_native.h>
-#include <ATen/ops/sym_stride_native.h>
+#include <XSigma/ops/_nested_tensor_size_native.h>
+#include <XSigma/ops/contiguous_native.h>
+#include <XSigma/ops/cudnn_is_acceptable_native.h>
+#include <XSigma/ops/detach_native.h>
+#include <XSigma/ops/equal.h>
+#include <XSigma/ops/is_same_size_native.h>
+#include <XSigma/ops/is_set_to_native.h>
+#include <XSigma/ops/size_native.h>
+#include <XSigma/ops/stride_native.h>
+#include <XSigma/ops/sym_is_contiguous_native.h>
+#include <XSigma/ops/sym_numel_native.h>
+#include <XSigma/ops/sym_size_native.h>
+#include <XSigma/ops/sym_storage_offset_native.h>
+#include <XSigma/ops/sym_stride_native.h>
 #endif
 
 #include <c10/util/irange.h>

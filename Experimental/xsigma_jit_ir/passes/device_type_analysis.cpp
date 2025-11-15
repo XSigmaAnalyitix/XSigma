@@ -1,5 +1,5 @@
-#include <ATen/core/interned_strings.h>
-#include <ATen/core/jit_type.h>
+#include <XSigma/core/interned_strings.h>
+#include <XSigma/core/jit_type.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/device_type_analysis.h>

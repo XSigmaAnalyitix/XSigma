@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/core/ivalue.h>
+#include <XSigma/core/ivalue.h>
 #include <torch/csrc/jit/ir/ir.h>
 
 #include <memory>

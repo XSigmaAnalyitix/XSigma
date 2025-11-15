@@ -1259,12 +1259,12 @@ class GraphLowering(torch.fx.Interpreter):
                     and torch._library.utils.is_builtin(target)
                     and self.is_backward
                 ):
-                    # for implicit fallback ATen ops during backward, if there
+                    # for implicit fallback XSigma ops during backward, if there
                     # is no layout constraint tag, we conservatively require contiguous
                     # input since some eager kernels do not
                     # support non-contiguous inputs. Otherwise they may silently cause
                     # accuracy problems. Check https://github.com/pytorch/pytorch/issues/140452
-                    # We only do this For ATen ops and for backward.
+                    # We only do this For XSigma ops and for backward.
                     #
                     # TODO: should really switch to "needs_fixed_stride" constraint on these
                     # and identify them one by one.

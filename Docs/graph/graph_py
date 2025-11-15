@@ -1098,7 +1098,7 @@ After:
 
 ### Sequence Numbers
 
-**File**: `aten/src/ATen/SequenceNumber.h/cpp`
+**File**: `aten/src/XSigma/SequenceNumber.h/cpp`
 
 Thread-local monotonically increasing counter for execution priority:
 
@@ -1112,7 +1112,7 @@ uint64_t current = at::sequence_number::peek();
 
 ### Record Function
 
-**File**: `aten/src/ATen/record_function.cpp`
+**File**: `aten/src/XSigma/record_function.cpp`
 
 Record function execution for profiling:
 
@@ -1715,20 +1715,20 @@ dump_ir(graph)
 
 #### Sequence Numbers
 
-**aten/src/ATen/SequenceNumber.h**
+**aten/src/XSigma/SequenceNumber.h**
 - **Purpose**: Sequence number interface
 - **Key Functions**: `get_and_increment()`, `peek()`
 - **Algorithm**: Thread-local monotonically increasing counter
 - **Dependencies**: None
 
-**aten/src/ATen/SequenceNumber.cpp**
+**aten/src/XSigma/SequenceNumber.cpp**
 - **Purpose**: Sequence number implementation
 - **Key Variables**: `thread_local uint64_t sequence_nr_`
 - **Dependencies**: SequenceNumber.h
 
 #### Record Function
 
-**aten/src/ATen/record_function.cpp**
+**aten/src/XSigma/record_function.cpp**
 - **Purpose**: Record function implementation
 - **Key Functions**: Function recording for profiling
 - **Dependencies**: None

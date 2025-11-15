@@ -1,7 +1,7 @@
 #pragma once
 
-#include <ATen/detail/FunctionTraits.h>
-#include <ATen/native/TensorIterator.h>
+#include <XSigma/detail/FunctionTraits.h>
+#include <XSigma/native/TensorIterator.h>
 #include <c10/core/ScalarType.h>
 
 #include <complex>

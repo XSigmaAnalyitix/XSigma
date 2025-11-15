@@ -1,7 +1,7 @@
 #if 0
 #include "record_function.h"
 
-#include <ATen/core/dispatch/Dispatcher.h>
+#include <XSigma/core/dispatch/Dispatcher.h>
 #include <xsigma/util/ThreadLocal.h>
 
 #include <algorithm>

@@ -3,9 +3,9 @@
 // Engine implements backpropagation from output variables and their gradients
 // to "root" variables (variables created by the user with requires_grad=True).
 
-#include <ATen/Tensor.h>
-#include <ATen/ThreadLocalState.h>
-#include <ATen/core/ivalue.h>
+#include <XSigma/Tensor.h>
+#include <XSigma/ThreadLocalState.h>
+#include <XSigma/core/ivalue.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/autograd/anomaly_mode.h>
 #include <torch/csrc/autograd/function.h>

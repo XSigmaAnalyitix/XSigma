@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/core/grad_mode.h>
+#include <XSigma/core/grad_mode.h>
 #include <torch/csrc/Export.h>
 
 namespace torch::autograd

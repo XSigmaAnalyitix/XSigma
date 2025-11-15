@@ -1,7 +1,7 @@
-#include <ATen/ATen.h>
-#include <ATen/InitialTensorOptions.h>
-#include <ATen/SparseTensorImpl.h>
-#include <ATen/core/LegacyTypeDispatch.h>
+#include <XSigma/InitialTensorOptions.h>
+#include <XSigma/SparseTensorImpl.h>
+#include <XSigma/XSigma.h>
+#include <XSigma/core/LegacyTypeDispatch.h>
 
 namespace at
 {

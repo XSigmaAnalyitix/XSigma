@@ -1,4 +1,4 @@
-#include <ATen/Utils.h>
+#include <XSigma/Utils.h>
 #include <torch/csrc/jit/ir/constants.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/ir/subgraph_matcher.h>
@@ -7,7 +7,7 @@
 #include <torch/csrc/jit/passes/remove_mutation.h>
 #include <torch/csrc/jit/passes/subgraph_rewrite.h>
 #ifdef USE_CUDA
-#include <ATen/cuda/CUDAConfig.h>
+#include <XSigma/cuda/CUDAConfig.h>
 #endif
 
 namespace torch::jit

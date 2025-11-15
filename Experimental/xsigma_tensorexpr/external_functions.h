@@ -1,7 +1,7 @@
 #pragma once
 
-#include <ATen/Config.h>
-#include <ATen/Functions.h>
+#include <XSigma/Config.h>
+#include <XSigma/Functions.h>
 #include <torch/csrc/Export.h>
 
 #include <cstdint>

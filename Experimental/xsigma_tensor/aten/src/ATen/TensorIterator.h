@@ -1,9 +1,9 @@
 #pragma once
 
-#include <ATen/TensorMeta.h>
-#include <ATen/core/Dimname.h>
-#include <ATen/core/Range.h>
-#include <ATen/core/TensorBase.h>
+#include <XSigma/TensorMeta.h>
+#include <XSigma/core/Dimname.h>
+#include <XSigma/core/Range.h>
+#include <XSigma/core/TensorBase.h>
 #include <c10/core/DynamicCast.h>
 #include <c10/util/FunctionRef.h>
 #include <c10/util/MaybeOwned.h>

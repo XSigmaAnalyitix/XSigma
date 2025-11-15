@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/core/Tensor.h>
+#include <XSigma/core/Tensor.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/autograd/forward_grad.h>
 #include <torch/csrc/autograd/saved_variable_hooks.h>

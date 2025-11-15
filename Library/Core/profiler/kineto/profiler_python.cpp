@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-//#include <ATen/core/TensorBase.h>
+//#include <XSigma/core/TensorBase.h>
 #include <xsigma/csrc/autograd/python_variable.h>
 #include <xsigma/csrc/utils/pybind.h>
 #include <xsigma/csrc/utils/python_compat.h>

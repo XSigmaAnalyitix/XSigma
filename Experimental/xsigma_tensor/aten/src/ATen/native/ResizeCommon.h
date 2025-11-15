@@ -1,14 +1,14 @@
 #pragma once
 
-#include <ATen/NamedTensorUtils.h>
-#include <ATen/core/Tensor.h>
-#include <ATen/native/TensorFactories.h>
+#include <XSigma/NamedTensorUtils.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/native/TensorFactories.h>
 #include <c10/util/irange.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
+#include <XSigma/NativeFunctions.h>
 #else
-#include <ATen/ops/empty.h>
+#include <XSigma/ops/empty.h>
 #endif
 
 namespace at::native

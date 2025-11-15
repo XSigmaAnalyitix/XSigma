@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/core/jit_type.h>
+#include <XSigma/core/jit_type.h>
 #include <torch/csrc/jit/ir/ir.h>
 
 namespace torch::jit

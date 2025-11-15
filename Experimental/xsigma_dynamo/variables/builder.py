@@ -2458,7 +2458,7 @@ class VariableBuilder:
         # do an unspecialized primitive, and then we item() it into a
         # SymFloat.  Removal of the item() call is left to a later FX pass,
         # mostly because that pass is more easily done after we have lowered
-        # to ATen ops.  (Dynamo doesn't do decomposition right now).
+        # to XSigma ops.  (Dynamo doesn't do decomposition right now).
 
         if self.name in self.tx.output.unspec_variable_map:
             return self.tx.output.unspec_variable_map[self.name]

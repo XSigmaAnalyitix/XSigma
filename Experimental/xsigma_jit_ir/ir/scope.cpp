@@ -1,5 +1,5 @@
-#include <ATen/core/class_type.h>
-#include <ATen/core/function.h>
+#include <XSigma/core/class_type.h>
+#include <XSigma/core/function.h>
 #include <torch/csrc/jit/ir/scope.h>
 
 #include "util/exception.h"

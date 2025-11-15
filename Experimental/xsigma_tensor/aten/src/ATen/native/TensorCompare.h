@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/native/DispatchStub.h>
+#include <XSigma/native/DispatchStub.h>
 
 namespace c10
 {

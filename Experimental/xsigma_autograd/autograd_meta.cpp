@@ -5,11 +5,11 @@
 #include <xsigma/util/irange.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/_has_same_storage_numel.h>
-#include <ATen/ops/_new_zeros_with_same_feature_meta.h>
-#include <ATen/ops/zeros.h>
+#include <XSigma/ops/_has_same_storage_numel.h>
+#include <XSigma/ops/_new_zeros_with_same_feature_meta.h>
+#include <XSigma/ops/zeros.h>
 #endif
 
 namespace torch::autograd

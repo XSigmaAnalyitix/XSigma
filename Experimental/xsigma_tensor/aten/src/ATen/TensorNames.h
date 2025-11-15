@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/WrapDimUtils.h>
+#include <XSigma/WrapDimUtils.h>
 
 namespace at::namedinference
 {

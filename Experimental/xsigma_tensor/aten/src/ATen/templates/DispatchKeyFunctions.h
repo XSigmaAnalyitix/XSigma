@@ -1,4 +1,4 @@
-#include <ATen/core/TensorBody.h>
+#include <XSigma/core/TensorBody.h>
 
 // TODO Undo all logic introduced for Note [Avoiding Include Cycles In Static Dispatch]
 // Code introduced to avoid cyclic dependency in static dispatch is no longer

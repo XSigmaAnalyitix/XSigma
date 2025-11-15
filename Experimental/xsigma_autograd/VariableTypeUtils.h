@@ -1,7 +1,7 @@
 #pragma once
 
-#include <ATen/core/boxing/KernelFunction.h>
-#include <ATen/core/dispatch/Dispatcher.h>
+#include <XSigma/core/boxing/KernelFunction.h>
+#include <XSigma/core/dispatch/Dispatcher.h>
 #include <torch/csrc/autograd/edge.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/functions/basic_ops.h>

@@ -1,7 +1,7 @@
 #pragma once
 
-//#include <ATen/core/ivalue.h>
-//#include <ATen/core/operator_name.h>
+//#include <XSigma/core/ivalue.h>
+//#include <XSigma/core/operator_name.h>
 #include <array>
 #include <functional>
 #include <memory>
@@ -40,7 +40,7 @@ extern XSIGMA_API const std::string kParamCommsCallName;
 // Kind of record function scope;
 enum class RecordScope : uint8_t
 {
-    // xsigma/ATen ops, autograd nodes
+    // xsigma/XSigma ops, autograd nodes
     FUNCTION = 0,
     // Functions/nodes called from the autograd
     BACKWARD_FUNCTION,

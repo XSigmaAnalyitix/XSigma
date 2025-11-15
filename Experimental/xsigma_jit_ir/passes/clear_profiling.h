@@ -1,8 +1,8 @@
 #pragma once
 
-#include <ATen/ATen.h>
-#include <ATen/core/ivalue.h>
-#include <ATen/core/jit_type.h>
+#include <XSigma/XSigma.h>
+#include <XSigma/core/ivalue.h>
+#include <XSigma/core/jit_type.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/jit/ir/ir.h>
 

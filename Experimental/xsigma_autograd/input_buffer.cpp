@@ -1,10 +1,10 @@
-#include <ATen/CachedTensorUtils.h>
-#include <ATen/LegacyBatchedTensorImpl.h>
-#include <ATen/SparseCsrTensorUtils.h>
-#include <ATen/TensorOperators.h>
-#include <ATen/TensorSubclassLikeUtils.h>
-#include <ATen/core/grad_mode.h>
-#include <ATen/native/SparseTensorUtils.h>
+#include <XSigma/CachedTensorUtils.h>
+#include <XSigma/LegacyBatchedTensorImpl.h>
+#include <XSigma/SparseCsrTensorUtils.h>
+#include <XSigma/TensorOperators.h>
+#include <XSigma/TensorSubclassLikeUtils.h>
+#include <XSigma/core/grad_mode.h>
+#include <XSigma/native/SparseTensorUtils.h>
 #include <torch/csrc/autograd/input_buffer.h>
 #include <xsigma/core/DeviceGuard.h>
 #include <xsigma/core/Event.h>
@@ -37,7 +37,7 @@ void record_stream_any_impl(Variable& var, const xsigma::Stream& stream)
 
     const auto guard = xsigma::impl::VirtualGuardImpl(device_of(var).value().type());
 
-    if XSIGMA_UNLIKELY(xsigma::isBatchedTensor(var))
+    if XSIGMA_UNLIKELY (xsigma::isBatchedTensor(var))
     {
         auto* impl = xsigma::maybeGetBatchedImpl(var);
         if (impl)
@@ -122,7 +122,7 @@ static void accumulate(std::vector<Variable>& buffer, const size_t pos, Variable
         buffer[pos] = old_var + var;
     }
     else if (
-        // ATen doesn't route sparse additions correctly...
+        // XSigma doesn't route sparse additions correctly...
         old_var.is_sparse() || old_var.is_sparse_csr())
     {
         if (can_accumulate_inplace(var))

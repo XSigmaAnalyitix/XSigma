@@ -1,4 +1,4 @@
-#include <ATen/core/functional.h>
+#include <XSigma/core/functional.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/tensorexpr/analysis.h>
 #include <torch/csrc/jit/tensorexpr/bounds_inference.h>

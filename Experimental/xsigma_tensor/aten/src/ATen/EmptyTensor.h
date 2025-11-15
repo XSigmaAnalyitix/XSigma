@@ -1,5 +1,5 @@
 #pragma once
-#include <ATen/core/TensorBase.h>
+#include <XSigma/core/TensorBase.h>
 
 namespace at::detail
 {

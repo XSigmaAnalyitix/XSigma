@@ -1,10 +1,10 @@
-#include <ATen/TensorOperators.h>
+#include <XSigma/TensorOperators.h>
 #include <torch/csrc/jit/passes/fold_linear_bn.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/rsqrt.h>
+#include <XSigma/ops/rsqrt.h>
 #endif
 
 namespace torch::jit

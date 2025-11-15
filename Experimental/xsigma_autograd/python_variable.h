@@ -1,7 +1,7 @@
 #pragma once
 
-#include <ATen/core/Tensor.h>
-#include <ATen/core/function_schema.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/core/function_schema.h>
 #include <pybind11/pybind11.h>
 #include <torch/csrc/Exceptions.h>
 #include <torch/csrc/Export.h>

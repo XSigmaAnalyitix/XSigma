@@ -1,4 +1,4 @@
-#include <ATen/ATen.h>
+#include <XSigma/XSigma.h>
 #include <fmt/format.h>
 #include <torch/csrc/Exceptions.h>
 #include <torch/csrc/autograd/python_function.h>

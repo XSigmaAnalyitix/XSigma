@@ -1,9 +1,9 @@
-#include <ATen/DeviceGuard.h>
-#include <ATen/ExpandUtils.h>
-#include <ATen/Functions.h>
-#include <ATen/TensorIndexing.h>
-#include <ATen/TracerMode.h>
-#include <ATen/core/LegacyTypeDispatch.h>
+#include <XSigma/DeviceGuard.h>
+#include <XSigma/ExpandUtils.h>
+#include <XSigma/Functions.h>
+#include <XSigma/TensorIndexing.h>
+#include <XSigma/TracerMode.h>
+#include <XSigma/core/LegacyTypeDispatch.h>
 #include <fmt/format.h>
 #include <torch/csrc/DynamicTypes.h>
 #include <torch/csrc/Exceptions.h>

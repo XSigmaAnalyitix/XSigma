@@ -1,15 +1,15 @@
-#include <ATen/ATen.h>
-#include <ATen/Parallel.h>
-#include <ATen/SparseTensorImpl.h>
-#include <ATen/native/SparseTensorUtils.h>
-#include <ATen/native/sparse/SparseStubs.h>
+#include <XSigma/Parallel.h>
+#include <XSigma/SparseTensorImpl.h>
+#include <XSigma/XSigma.h>
+#include <XSigma/native/SparseTensorUtils.h>
+#include <XSigma/native/sparse/SparseStubs.h>
 #include <c10/util/irange.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/_sparse_coo_tensor_with_dims_and_tensors.h>
-#include <ATen/ops/zeros.h>
+#include <XSigma/ops/_sparse_coo_tensor_with_dims_and_tensors.h>
+#include <XSigma/ops/zeros.h>
 #endif
 
 namespace at::native

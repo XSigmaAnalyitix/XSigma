@@ -1,6 +1,6 @@
-#include <ATen/ATen.h>
-#include <ATen/core/functional.h>
-#include <ATen/cuda/CUDAContext.h>
+#include <XSigma/XSigma.h>
+#include <XSigma/core/functional.h>
+#include <XSigma/cuda/CUDAContext.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/functions/comm.h>
 #include <torch/csrc/autograd/functions/utils.h>

@@ -1356,7 +1356,7 @@ class CppMicroBrgemm(CppMicroGemm):
     """
 
     TEMPLATE_ENTRY = r"""
-#include <ATen/native/CPUBlas.h>
+#include <XSigma/native/CPUBlas.h>
 {{declare_kernel}} {
 {%- if pack_vnni_B_locally %}
     {{template.codegen_allocate_weight_buffer("packed_B_buf", input2_t, "K * N")}}
@@ -1436,7 +1436,7 @@ def check_woq_int4_extra(config, m, n, k, alpha, num_threads, **kwargs):
 class CppMicroGemmWoQInt4Avx512(CppMicroGemmFP32Vec):
     """
     This class generates the code for WoQ int4 micro gemm using AVX512 intrinsics.
-    It is based on the corresponding ATen kernel.
+    It is based on the corresponding XSigma kernel.
     Shape of packed weight = [N // 64, K, 32], viewed as [N, K // 2]
     Shape of packed ScalesAndZeros = [K // group_size, N, 2]
     """

@@ -1,6 +1,6 @@
-#include <ATen/core/interned_strings.h>
-#include <ATen/core/symbol.h>
-#include <ATen/record_function.h>
+#include <XSigma/core/interned_strings.h>
+#include <XSigma/core/symbol.h>
+#include <XSigma/record_function.h>
 #include <torch/csrc/jit/codegen/cuda/interface.h>
 #include <torch/csrc/jit/codegen/fuser/interface.h>
 #include <torch/csrc/jit/ir/alias_analysis.h>
@@ -900,8 +900,8 @@ class TensorExprFuser {
       "aten::matmul(Tensor self, Tensor other) -> Tensor",
     };
     static const OperatorSet gpu_only_operator_set{
-      // On CPU, these are slower and less accurate than ATen kernels, because
-      // ATen is able to use MKL-VML, whereas the fuser currently can't.  The
+      // On CPU, these are slower and less accurate than XSigma kernels, because
+      // XSigma is able to use MKL-VML, whereas the fuser currently can't.  The
       // fuser uses sleef instead because sleef provides functions that operate
       // on vectors, instead of large buffers.
       "aten::erf(Tensor self) -> Tensor",

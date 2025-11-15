@@ -1,12 +1,12 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/Parallel.h>
-#include <ATen/TensorIterator.h>
-#include <ATen/TensorIteratorInternal.h>
+#include <XSigma/Parallel.h>
+#include <XSigma/TensorIterator.h>
+#include <XSigma/TensorIteratorInternal.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/empty.h>
+#include <XSigma/ops/empty.h>
 #endif
 
 #include <c10/util/irange.h>

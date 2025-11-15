@@ -7,7 +7,7 @@ Successfully refactored the `Library/Core/profiler/pytroch_profiler` directory t
 
 ### 1. Directory Structure Flattening
 - **Before**: Nested directory structure with 68 files across multiple levels:
-  - `aten/src/ATen/`
+  - `aten/src/XSigma/`
   - `xsigma/csrc/autograd/`
   - `xsigma/csrc/profiler/`
   - `xsigma/csrc/profiler/orchestration/`
@@ -60,7 +60,7 @@ Replaced XSigma-specific macros with XSigma equivalents:
 
 ### Refactored Files (66 total)
 All files moved from nested directories to base `pytroch_profiler` directory:
-- `record_function.h/cxx` (from `aten/src/ATen/`)
+- `record_function.h/cxx` (from `aten/src/XSigma/`)
 - `profiler_kineto.h/cxx`, `profiler_python.h/cxx`, `profiler.h` (from `xsigma/csrc/autograd/`)
 - `collection.h/cxx`, `combined_traceback.h/cxx`, `containers.h`, `data_flow.h/cxx`, `events.h`
 - `kineto_shim.h/cxx`, `kineto_client_interface.h/cxx`, `api.h`

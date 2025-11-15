@@ -1,7 +1,7 @@
-#include <ATen/ATen.h>
-#include <ATen/NamedTensorUtils.h>
-#include <ATen/NestedTensorImpl.h>
-#include <ATen/WrapDimUtils.h>
+#include <XSigma/NamedTensorUtils.h>
+#include <XSigma/NestedTensorImpl.h>
+#include <XSigma/WrapDimUtils.h>
+#include <XSigma/XSigma.h>
 #include <c10/core/DispatchKey.h>
 #include <c10/core/DispatchKeySet.h>
 #include <c10/core/TensorImpl.h>

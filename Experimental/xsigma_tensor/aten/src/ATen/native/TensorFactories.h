@@ -1,16 +1,16 @@
 #pragma once
 
-#include <ATen/Dispatch.h>
-#include <ATen/Dispatch_v2.h>
-#include <ATen/EmptyTensor.h>
-#include <ATen/TensorIterator.h>
-#include <ATen/core/Tensor.h>
-#include <ATen/native/DispatchStub.h>
+#include <XSigma/Dispatch.h>
+#include <XSigma/Dispatch_v2.h>
+#include <XSigma/EmptyTensor.h>
+#include <XSigma/TensorIterator.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/native/DispatchStub.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/scalar_tensor.h>
+#include <XSigma/ops/scalar_tensor.h>
 #endif
 
 namespace at::native

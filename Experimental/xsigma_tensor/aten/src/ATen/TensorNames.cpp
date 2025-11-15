@@ -1,5 +1,5 @@
-#include <ATen/TensorNames.h>
-#include <ATen/WrapDimUtils.h>
+#include <XSigma/TensorNames.h>
+#include <XSigma/WrapDimUtils.h>
 #include <c10/util/irange.h>
 
 namespace at::namedinference

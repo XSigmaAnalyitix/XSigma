@@ -1,8 +1,8 @@
 #pragma once
 
-#include <ATen/SequenceNumber.h>
-#include <ATen/core/Tensor.h>
-#include <ATen/record_function.h>
+#include <XSigma/SequenceNumber.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/record_function.h>
 #include <torch/csrc/autograd/anomaly_mode.h>
 #include <torch/csrc/autograd/edge.h>
 #include <torch/csrc/autograd/grad_mode.h>
@@ -170,7 +170,7 @@ public:
 
         auto step_callbacks =
             xsigma::getStepCallbacksUnlessEmpty(xsigma::RecordScope::BACKWARD_FUNCTION);
-        if XSIGMA_UNLIKELY(step_callbacks.has_value())
+        if XSIGMA_UNLIKELY (step_callbacks.has_value())
         {
             xsigma::record_function guard(std::move(*step_callbacks));
             // Using sequence number and thread id to correlate with

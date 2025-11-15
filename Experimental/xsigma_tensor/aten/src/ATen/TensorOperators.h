@@ -1,12 +1,12 @@
 #pragma once
 
-#include <ATen/core/Tensor.h>
+#include <XSigma/core/Tensor.h>
 #include <c10/core/Scalar.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/empty_like.h>
+#include <XSigma/ops/empty_like.h>
 #endif
 
 namespace at

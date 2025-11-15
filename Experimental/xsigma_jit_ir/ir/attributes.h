@@ -1,7 +1,7 @@
 #pragma once
-#include <ATen/core/Tensor.h>
-#include <ATen/core/jit_type_base.h>
-#include <ATen/core/symbol.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/core/jit_type_base.h>
+#include <XSigma/core/symbol.h>
 #include <torch/csrc/Export.h>
 
 #include <string>

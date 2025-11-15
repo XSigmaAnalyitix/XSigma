@@ -1,4 +1,4 @@
-#include <ATen/InitialTensorOptions.h>
+#include <XSigma/InitialTensorOptions.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/dead_code_elimination.h>
 #include <torch/csrc/jit/passes/onnx/fixup_onnx_controlflow.h>

@@ -1,12 +1,12 @@
 #pragma once
-#include <ATen/core/List.h>
-#include <ATen/core/Tensor.h>
+#include <XSigma/core/List.h>
+#include <XSigma/core/Tensor.h>
 #include <c10/core/impl/TorchDispatchModeTLS.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/equal.h>
+#include <XSigma/ops/equal.h>
 #endif
 
 namespace at

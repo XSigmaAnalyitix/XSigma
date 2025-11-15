@@ -3069,7 +3069,7 @@ def get_tensor_method() -> frozenset[Any]:
 
 
 """
-Return if a torch object is ATen op or torch.Tensor method.
+Return if a torch object is XSigma op or torch.Tensor method.
 """
 
 

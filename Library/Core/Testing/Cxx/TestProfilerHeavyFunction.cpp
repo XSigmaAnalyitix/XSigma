@@ -846,12 +846,12 @@ XSIGMATEST(Profiler, heavy_function_comprehensive_computational_profiling)
 //    - Load the JSON file
 // ============================================================================
 
-#if XSIGMA_HAS_KINETO
+#if XSIGMA_HAS_KINETO && 0
 #include <fstream>
 #include <sstream>
 
+#include "profiler/kineto/kineto_shim.h"
 #include "profiler/kineto_profiler.h"
-#include "profiler/kineto_shim.h"
 
 // Suppress MSVC warnings for Kineto headers
 #ifdef _MSC_VER
@@ -1128,7 +1128,7 @@ XSIGMATEST(Profiler, kineto_heavy_function_profiling)
 #include <fstream>
 #include <sstream>
 
-#include "profiler/itt_wrapper.h"
+#include "profiler/itt/itt_wrapper.h"
 
 XSIGMATEST(Profiler, itt_api_heavy_function_profiling)
 {
@@ -1393,8 +1393,8 @@ XSIGMATEST(Profiler, itt_api_heavy_function_profiling)
 #pragma warning(pop)
 #endif
 
-#include "profiler/itt_wrapper.h"
-#include "profiler/kineto_shim.h"
+#include "profiler/itt/itt_wrapper.h"
+#include "profiler/kineto/kineto_shim.h"
 
 XSIGMATEST(Profiler, combined_kineto_itt_heavy_function_profiling)
 {

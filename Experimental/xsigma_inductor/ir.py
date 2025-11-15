@@ -2448,7 +2448,7 @@ class Scan(Loops):
             ) and (len(dtypes) == 1)
             if not supports_split:
                 if can_fallback_to_aten:
-                    # Fallback to ATen
+                    # Fallback to XSigma
                     return [None] * len(dtypes)
                 else:
                     num_splits = 1

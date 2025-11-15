@@ -1,12 +1,12 @@
 #pragma once
 /*
-//#include <ATen/core/DimVector.h>
-//#include <ATen/core/TensorBody.h>
-//#include <ATen/core/blob.h>
-//#include <ATen/core/custom_class.h>
-//#include <ATen/core/ivalue_to.h>
-//#include <ATen/core/jit_type_base.h>
-//#include <ATen/core/type_factory.h>
+//#include <XSigma/core/DimVector.h>
+//#include <XSigma/core/TensorBody.h>
+//#include <XSigma/core/blob.h>
+//#include <XSigma/core/custom_class.h>
+//#include <XSigma/core/ivalue_to.h>
+//#include <XSigma/core/jit_type_base.h>
+//#include <XSigma/core/type_factory.h>
 #include <xsigma/core/SymBool.h>
 #include <xsigma/core/SymFloat.h>
 */
@@ -1795,4 +1795,4 @@ struct XSIGMA_VISIBILITY WeakOrStrongTypePtr
 
 }  // namespace xsigma
 
-//#include <ATen/core/ivalue_inl.h> // IWYU pragma: keep
+//#include <XSigma/core/ivalue_inl.h> // IWYU pragma: keep

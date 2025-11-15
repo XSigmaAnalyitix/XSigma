@@ -1,5 +1,5 @@
-#include <ATen/ATen.h>
-#include <ATen/core/interned_strings.h>
+#include <XSigma/XSigma.h>
+#include <XSigma/core/interned_strings.h>
 #include <torch/csrc/jit/frontend/edit_distance.h>
 #include <torch/csrc/jit/runtime/operator.h>
 #include <xsigma/util/irange.h>

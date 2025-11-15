@@ -1,21 +1,21 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/Context.h>
-#include <ATen/EmptyTensor.h>
-#include <ATen/MemoryOverlap.h>
-#include <ATen/core/Tensor.h>
+#include <XSigma/Context.h>
+#include <XSigma/EmptyTensor.h>
+#include <XSigma/MemoryOverlap.h>
+#include <XSigma/core/Tensor.h>
 #include <c10/core/Storage.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/CPUFunctions.h>
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
+#include <XSigma/CPUFunctions.h>
+#include <XSigma/Functions.h>
+#include <XSigma/NativeFunctions.h>
 #else
-#include <ATen/ops/_debug_has_internal_overlap_native.h>
-#include <ATen/ops/_pin_memory.h>
-#include <ATen/ops/_pin_memory_native.h>
-#include <ATen/ops/empty_cpu_dispatch.h>
-#include <ATen/ops/is_pinned_native.h>
-#include <ATen/ops/pin_memory_native.h>
+#include <XSigma/ops/_debug_has_internal_overlap_native.h>
+#include <XSigma/ops/_pin_memory.h>
+#include <XSigma/ops/_pin_memory_native.h>
+#include <XSigma/ops/empty_cpu_dispatch.h>
+#include <XSigma/ops/is_pinned_native.h>
+#include <XSigma/ops/pin_memory_native.h>
 #endif
 
 namespace at::native

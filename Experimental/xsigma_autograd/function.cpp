@@ -1,4 +1,4 @@
-#include <ATen/ATen.h>
+#include <XSigma/XSigma.h>
 #include <torch/csrc/autograd/engine.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/variable.h>
@@ -10,9 +10,9 @@
 #include <vector>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/zeros.h>
+#include <XSigma/ops/zeros.h>
 #endif
 
 namespace torch::autograd

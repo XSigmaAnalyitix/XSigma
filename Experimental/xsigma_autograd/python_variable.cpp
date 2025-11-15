@@ -1,5 +1,5 @@
-#include <ATen/ATen.h>
-#include <ATen/NamedTensorUtils.h>
+#include <XSigma/NamedTensorUtils.h>
+#include <XSigma/XSigma.h>
 #include <pybind11/pytypes.h>
 #include <structmember.h>
 #include <torch/csrc/Device.h>
@@ -309,7 +309,7 @@ PyObject* THPVariable_Wrap(const xsigma::TensorBase& var)
         // to the Python object are removed.
     }
 
-    if XSIGMA_LIKELY(var.device().type() != xsigma::kXLA)
+    if XSIGMA_LIKELY (var.device().type() != xsigma::kXLA)
     {
         return THPVariable_NewWithVar((PyTypeObject*)THPVariableClass, var);
     }
@@ -1209,7 +1209,7 @@ static PyObject* THPVariable_get_python_dispatch(THPVariable* self, void* unused
 // - static constexpr const char* name;
 //   - This variable should hold the Python name of the property
 // - static Tensor fn(const Tensor&);
-//   - This function calls the relevant ATen on the tensor
+//   - This function calls the relevant XSigma on the tensor
 template <typename T>
 // NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility)
 struct GetterBase
@@ -2315,7 +2315,7 @@ PyObject* THPVariable_pynew(PyTypeObject* type, PyObject* args, PyObject* kwargs
     auto tensor = torch::utils::base_tensor_ctor(args, kwargs);
     // WARNING: tensor is NOT guaranteed to be a fresh tensor; e.g., if it was
     // given a raw pointer that will refcount bump
-    // NB: base_tensor_ctor can call into dispatched ATen functions (e.g.,
+    // NB: base_tensor_ctor can call into dispatched XSigma functions (e.g.,
     // alias(), lift_fresh()) which can return Tensor subclasses.  We allow
     // these to be passed on directly.
     return THPVariable_NewWithVar(
@@ -2442,7 +2442,7 @@ static int THPVariable_subclass_clear(THPVariable* self)
 
     // Assume we never have managed dict for Tensors as we don't set the flag on
     // the base class
-    if XSIGMA_LIKELY(type->tp_dictoffset)
+    if XSIGMA_LIKELY (type->tp_dictoffset)
     {
         PyObject** dictptr = _PyObject_GetDictPtr((PyObject*)self);
         if (dictptr && *dictptr)
@@ -2536,7 +2536,7 @@ static void THPVariable_subclass_dealloc(PyObject* self)
     }
 
     // All Python defined classes have __dict__
-    if XSIGMA_LIKELY(type->tp_dictoffset)
+    if XSIGMA_LIKELY (type->tp_dictoffset)
     {
         PyObject** dictptr = _PyObject_GetDictPtr(self);
         if (dictptr != nullptr)
@@ -2791,7 +2791,7 @@ static int THPVariable_subclass_traverse(PyObject* self, visitproc visit, void* 
     }
 
     // All Python defined classes have __dict__
-    if XSIGMA_LIKELY(type->tp_dictoffset)
+    if XSIGMA_LIKELY (type->tp_dictoffset)
     {
         PyObject** dictptr = _PyObject_GetDictPtr(self);
         if (dictptr && *dictptr)

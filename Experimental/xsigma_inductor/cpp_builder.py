@@ -2088,7 +2088,7 @@ class CppBuilder:
                 output_path = self._target_file
                 # When we build remotely, we need to make sure to carefully copy any files
                 # that are required during the compilation process into our build directly.
-                # This is where all of the ATen/xsigma/Torch includes come from.
+                # This is where all of the XSigma/xsigma/Torch includes come from.
                 torch_includes_path = os.path.join(_TORCH_PATH, "include")
                 with tempfile.TemporaryDirectory() as tmp_dir:
                     # Copy everything to tmp compilation folder

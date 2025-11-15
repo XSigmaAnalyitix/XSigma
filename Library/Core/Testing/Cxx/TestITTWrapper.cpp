@@ -14,7 +14,7 @@
 
 #if XSIGMA_HAS_ITT
 
-#include "profiler/itt_wrapper.h"
+#include "profiler/itt/itt_wrapper.h"
 
 using namespace xsigma::profiler;
 

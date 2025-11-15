@@ -2353,7 +2353,7 @@ static std::unordered_set<std::string> nodeTypeReliableForTracer = {
     "onnx::Constant",
     "onnx::Relu",
     "com.microsoft::Gelu",
-    "aten::ATen"};
+    "aten::XSigma"};
 
 void UpdateReliable(
     torch::jit::Value*           output,

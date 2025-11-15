@@ -1,6 +1,6 @@
-#include <ATen/Dispatch.h>
+#include <XSigma/Dispatch.h>
 #if defined ENABLE_RECORD_KERNEL_FUNCTION_DTYPE
-#include <ATen/record_function.h>
+#include <XSigma/record_function.h>
 
 namespace at::detail
 {

@@ -1,7 +1,7 @@
-#include <ATen/ATen.h>
-#include <ATen/FunctionalTensorWrapper.h>
-#include <ATen/native/Resize.h>
 #include <Python.h>
+#include <XSigma/FunctionalTensorWrapper.h>
+#include <XSigma/XSigma.h>
+#include <XSigma/native/Resize.h>
 #include <fmt/format.h>
 #include <pybind11/pybind11.h>
 #include <torch/csrc/Dtype.h>
@@ -130,7 +130,7 @@ static PyObject* THPVariable_as_tensor(PyObject* self, PyObject* args, PyObject*
 }
 
 // implemented on python object here because PyObject currently not natively
-// declarable See: ATen/native/README.md for more context
+// declarable See: XSigma/native/README.md for more context
 static PyObject* THPVariable_from_numpy(PyObject* module, PyObject* arg)
 {
     HANDLE_TH_ERRORS

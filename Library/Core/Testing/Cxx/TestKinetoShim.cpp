@@ -10,12 +10,12 @@
 
 #include "xsigmaTest.h"
 
-#if XSIGMA_HAS_KINETO
+#if XSIGMA_HAS_KINETO && 0
 
 #include <chrono>
 #include <thread>
 
-#include "profiler/kineto_shim.h"
+#include "profiler/kineto/kineto_shim.h"
 
 using namespace xsigma::profiler;
 

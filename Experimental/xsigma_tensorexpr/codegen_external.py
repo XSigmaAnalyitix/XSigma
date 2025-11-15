@@ -104,12 +104,12 @@ def main() -> None:
         "--native-functions",
         "--native_functions",
         help="path to native_functions.yaml",
-        default="../../../../aten/src/ATen/native/native_functions.yaml",
+        default="../../../../aten/src/XSigma/native/native_functions.yaml",
     )
     parser.add_argument(
         "--tags",
         help="path to tags.yaml",
-        default="../../../../aten/src/ATen/native/tags.yaml",
+        default="../../../../aten/src/XSigma/native/tags.yaml",
     )
     parser.add_argument(
         "--template-path",

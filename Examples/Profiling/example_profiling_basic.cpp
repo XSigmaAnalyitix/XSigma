@@ -23,12 +23,10 @@
 #if XSIGMA_HAS_KINETO
 #include <ActivityTrace.h>
 
-#include "profiler/kineto_shim.h"
+#include "profiler/kineto/kineto_shim.h"
 #endif
 
-
-#include "profiler/itt_wrapper.h"
-
+#include "profiler/itt/itt_wrapper.h"
 
 namespace xsigma::examples::profiling
 {

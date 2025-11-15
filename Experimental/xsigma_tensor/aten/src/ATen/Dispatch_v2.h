@@ -1,7 +1,7 @@
-#include <ATen/Dispatch.h>
+#include <XSigma/Dispatch.h>
 
 // This is a new implementation of the AT_DISPATCH macro family from
-// ATen/Dispatch.h
+// XSigma/Dispatch.h
 //
 // The intended usage is:
 //

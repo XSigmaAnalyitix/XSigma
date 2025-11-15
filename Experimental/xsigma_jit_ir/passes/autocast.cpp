@@ -1,5 +1,5 @@
 
-#include <ATen/autocast_mode.h>
+#include <XSigma/autocast_mode.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/autocast.h>
@@ -277,7 +277,7 @@ void updateAutocastEnabledCheck(Node* node, bool is_jit_enabled)
 
 // [Note: implicit type promotion in Autocast]
 //
-// Casting policy below mostly follows pytorch/aten/src/ATen/autocast.cpp, with
+// Casting policy below mostly follows pytorch/aten/src/XSigma/autocast.cpp, with
 // a few exceptions, e.g. `aten::add`, which is needed to be put to promotion
 // list for JIT autocast.
 // The reason is that in eager amp, some binary ops promote inputs implicitly

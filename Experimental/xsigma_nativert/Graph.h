@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/core/ivalue.h>
+#include <XSigma/core/ivalue.h>
 #include <torch/csrc/utils/generated_serialization_types.h>
 #include <torch/nativert/executor/Placement.h>
 #include <torch/nativert/graph/GraphSignature.h>
@@ -320,7 +320,7 @@ private:
     // If an aten operator, we expect this to be fully qualified, including an
     // overload name, e.g. "aten.unsqueeze.default"
     std::string target_;
-    // *Symbolic* inputs to this node. NOTE: this does not match the ATen operator
+    // *Symbolic* inputs to this node. NOTE: this does not match the XSigma operator
     // schema inputs directly. It only represents things that actually participate
     // in dataflow, like tensors/symints and lists thereof.
     //

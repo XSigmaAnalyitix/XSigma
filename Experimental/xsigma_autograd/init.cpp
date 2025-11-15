@@ -1,9 +1,9 @@
-#include <ATen/PythonTorchFunctionTLS.h>
-#include <ATen/SavedTensorHooks.h>
-#include <ATen/SequenceNumber.h>
-#include <ATen/autocast_mode.h>
-#include <ATen/core/PythonFallbackKernel.h>
-#include <ATen/record_function.h>
+#include <XSigma/PythonTorchFunctionTLS.h>
+#include <XSigma/SavedTensorHooks.h>
+#include <XSigma/SequenceNumber.h>
+#include <XSigma/autocast_mode.h>
+#include <XSigma/core/PythonFallbackKernel.h>
+#include <XSigma/record_function.h>
 #include <torch/csrc/Exceptions.h>
 #include <torch/csrc/autograd/VariableTypeUtils.h>
 #include <torch/csrc/autograd/autograd.h>

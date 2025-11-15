@@ -2,7 +2,7 @@
 
 #include <memory>
 
-////#include <ATen/core/TensorBody.h>
+////#include <XSigma/core/TensorBody.h>
 #include "common/macros.h"
 #include "util/TensorImpl.h"
 #include "util/strong_type.h"

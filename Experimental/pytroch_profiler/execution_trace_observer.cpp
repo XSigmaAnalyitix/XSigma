@@ -8,9 +8,9 @@
 #include <unistd.h>
 #endif  // _WIN32
 
-//#include <ATen/core/TensorBody.h>
-//#include <ATen/core/function_schema.h>
-//#include <ATen/core/stack.h>
+//#include <XSigma/core/TensorBody.h>
+//#include <XSigma/core/function_schema.h>
+//#include <XSigma/core/stack.h>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>

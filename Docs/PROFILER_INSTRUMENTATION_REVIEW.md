@@ -13,7 +13,7 @@ This document captures the current issues, root causes, and recommended remediat
 | 3 | Global string linkage | `Library/Core/profiler/common/record_function.cpp:21` | `kParamCommsCallName` is defined with `extern const std::string` despite the header declaring `extern XSIGMA_API const std::string`. This produces mismatched import/export semantics and ODR issues on Windows. |
 | 4 | Feature-flag mismatch | Tests vs. implementation | ITT availability is guarded by `XSIGMA_HAS_ITT` in implementation, but tests use `XSIGMA_HAS_ITTAPI`. Since `configure.h` never defines the latter, ITT tests are silently skipped even when ITT is enabled, hiding regressions. |
 | 5 | Coverage gaps | Multiple | No automated tests exercise `toggleTorchOpCollectionDynamic`, backend event reporting, NVTX/PRIVATEUSE1 observers, or Chrome-trace failure modes. Kineto tests still fail (`RecordDebugHandles.Basic`), and there is little validation of error paths. |
-| 6 | Legacy dependencies | `Library/Core/profiler/common/*` | Numerous TODOs reference missing XSigma equivalents for ATen/TensorImpl, MTIA, logging, etc. Portions of the profiler rely on unimplemented helpers or `#if 0` blocks, so certain instrumentation paths cannot function fully. |
+| 6 | Legacy dependencies | `Library/Core/profiler/common/*` | Numerous TODOs reference missing XSigma equivalents for XSigma/TensorImpl, MTIA, logging, etc. Portions of the profiler rely on unimplemented helpers or `#if 0` blocks, so certain instrumentation paths cannot function fully. |
 
 ---
 

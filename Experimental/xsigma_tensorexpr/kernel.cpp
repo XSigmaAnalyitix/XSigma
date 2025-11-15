@@ -1,6 +1,6 @@
-#include <ATen/ExpandUtils.h>
-#include <ATen/Parallel.h>
-#include <ATen/TensorGeometry.h>
+#include <XSigma/ExpandUtils.h>
+#include <XSigma/Parallel.h>
+#include <XSigma/TensorGeometry.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/graph_rewrite_helper.h>
 #include <torch/csrc/jit/passes/mkldnn_rewrite.h>

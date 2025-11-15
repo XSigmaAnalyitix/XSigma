@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include <ATen/ArrayRef.h>
-#include <ATen/SmallVector.h>
-#include <ATen/Tensor.h>
+#include <XSigma/ArrayRef.h>
+#include <XSigma/SmallVector.h>
+#include <XSigma/Tensor.h>
 
 #include <bitset>
 

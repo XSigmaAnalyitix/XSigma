@@ -1,4 +1,4 @@
-#include <ATen/core/dispatch/Dispatcher.h>
+#include <XSigma/core/dispatch/Dispatcher.h>
 #include <torch/csrc/autograd/functions/accumulate_grad.h>
 #include <torch/csrc/autograd/functions/basic_ops.h>
 #include <torch/csrc/autograd/functions/tensor.h>

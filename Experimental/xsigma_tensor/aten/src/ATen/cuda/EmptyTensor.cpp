@@ -1,7 +1,7 @@
 #define TORCH_ASSERT_NO_OPERATORS
-#include <ATen/EmptyTensor.h>
-#include <ATen/cuda/CUDAContext.h>
-#include <ATen/cuda/EmptyTensor.h>
+#include <XSigma/EmptyTensor.h>
+#include <XSigma/cuda/CUDAContext.h>
+#include <XSigma/cuda/EmptyTensor.h>
 
 namespace at::detail
 {

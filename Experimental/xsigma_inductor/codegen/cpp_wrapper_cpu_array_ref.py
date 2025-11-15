@@ -711,7 +711,7 @@ class CppWrapperCpuArrayRef(CppWrapperCpu):
     ):
         reduce = self._get_scatter_reduce_enum(reduce)
 
-        # call the ABI shim function instead of the ATen one
+        # call the ABI shim function instead of the XSigma one
         cpp_kernel_name = self.get_c_shim_func_name(cpp_kernel_name, self.device)
         # TODO: consider remove "_out" and add missing inplace variants to fallback_ops.py
         cpp_kernel_name = cpp_kernel_name.replace("__", "_") + "_out"

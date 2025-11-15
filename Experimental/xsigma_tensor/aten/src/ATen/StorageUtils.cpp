@@ -1,6 +1,6 @@
-#include <ATen/Functions.h>
-#include <ATen/MapAllocator.h>
-#include <ATen/StorageUtils.h>
+#include <XSigma/Functions.h>
+#include <XSigma/MapAllocator.h>
+#include <XSigma/StorageUtils.h>
 #include <c10/core/TensorOptions.h>
 
 namespace at

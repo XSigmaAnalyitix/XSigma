@@ -1,6 +1,6 @@
-#include <ATen/Parallel.h>
-#include <ATen/core/ivalue.h>
-#include <ATen/record_function.h>
+#include <XSigma/Parallel.h>
+#include <XSigma/core/ivalue.h>
+#include <XSigma/record_function.h>
 #include <torch/csrc/autograd/edge.h>
 #include <torch/csrc/autograd/grad_mode.h>
 #include <torch/csrc/autograd/profiler.h>

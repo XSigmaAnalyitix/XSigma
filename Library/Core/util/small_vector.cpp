@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// ATen: modified from llvm::small_vector.
+// XSigma: modified from llvm::small_vector.
 // replaced llvm::safe_malloc with std::bad_alloc
 // deleted LLVM_ENABLE_EXCEPTIONS
 

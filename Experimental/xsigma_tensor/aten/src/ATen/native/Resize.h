@@ -1,9 +1,9 @@
 #pragma once
 
-#include <ATen/EmptyTensor.h>
-#include <ATen/TensorUtils.h>
-#include <ATen/core/Tensor.h>
-#include <ATen/native/ResizeCommon.h>
+#include <XSigma/EmptyTensor.h>
+#include <XSigma/TensorUtils.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/native/ResizeCommon.h>
 #include <c10/core/CPUAllocator.h>
 #include <c10/core/SymBool.h>
 

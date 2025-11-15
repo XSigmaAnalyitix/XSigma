@@ -1,14 +1,14 @@
-// in memory description of all ATen Ops similar to Caffe2 schema
+// in memory description of all XSigma Ops similar to Caffe2 schema
 // once C10 exists this can be removed, or stubbed out, but we need
 // it now to implement correct semantic checking for script
 #pragma once
 
-#include <ATen/core/dispatch/Dispatcher.h>
-#include <ATen/core/dispatch/OperatorOptions.h>
-#include <ATen/core/function_schema.h>
-#include <ATen/core/op_registration/op_allowlist.h>
-#include <ATen/core/stack.h>
-#include <ATen/core/symbol.h>
+#include <XSigma/core/dispatch/Dispatcher.h>
+#include <XSigma/core/dispatch/OperatorOptions.h>
+#include <XSigma/core/function_schema.h>
+#include <XSigma/core/op_registration/op_allowlist.h>
+#include <XSigma/core/stack.h>
+#include <XSigma/core/symbol.h>
 #include <torch/csrc/jit/frontend/function_schema_parser.h>
 #include <torch/csrc/jit/runtime/operator_options.h>
 #include <torch/library.h>

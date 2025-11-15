@@ -1,9 +1,9 @@
 #pragma once
 
-#include <ATen/core/Variadic.h>
-#include <ATen/core/function_schema.h>
-#include <ATen/core/jit_type.h>
-#include <ATen/core/stack.h>
+#include <XSigma/core/Variadic.h>
+#include <XSigma/core/function_schema.h>
+#include <XSigma/core/jit_type.h>
+#include <XSigma/core/stack.h>
 #include <c10/core/DispatchKeySet.h>
 #include <c10/util/Bitset.h>
 #include <c10/util/irange.h>

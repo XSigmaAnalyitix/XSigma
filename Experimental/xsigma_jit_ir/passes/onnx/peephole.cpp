@@ -1,4 +1,4 @@
-#include <ATen/ScalarOps.h>
+#include <XSigma/ScalarOps.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/dead_code_elimination.h>
 #include <torch/csrc/jit/passes/onnx/helper.h>
@@ -8,11 +8,11 @@
 #include "util/exception.h"
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
+#include <XSigma/Functions.h>
+#include <XSigma/NativeFunctions.h>
 #else
-#include <ATen/ops/full.h>
-#include <ATen/ops/ones_like_native.h>
+#include <XSigma/ops/full.h>
+#include <XSigma/ops/ones_like_native.h>
 #endif
 
 #include <optional>
@@ -1168,7 +1168,7 @@ static void insertIdentityForInputUsedAsOutput(Block* b)
 // This optimization does ONNX-specific peephole optimizations.
 //
 // Before you write an optimization here, ask yourself, "Could I do this
-// optimization on ATen operators"?  If so, you should seriously consider
+// optimization on XSigma operators"?  If so, you should seriously consider
 // writing your optimization in jit/passes/peephole.cpp rather than
 // here, as it will be generally applicable to the JIT as well.  The
 // optimizations here are ONLY applied on ONNX export.

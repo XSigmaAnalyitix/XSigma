@@ -1,5 +1,5 @@
-#include <ATen/core/functional.h>
-#include <ATen/core/symbol.h>
+#include <XSigma/core/functional.h>
+#include <XSigma/core/symbol.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/ir/node_hashing.h>
 #include <torch/csrc/jit/passes/common_subexpression_elimination.h>

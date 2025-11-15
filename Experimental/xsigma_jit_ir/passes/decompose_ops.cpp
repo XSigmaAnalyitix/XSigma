@@ -1,4 +1,4 @@
-#include <ATen/core/symbol.h>
+#include <XSigma/core/symbol.h>
 #include <torch/csrc/jit/frontend/ir_emitter.h>
 #include <torch/csrc/jit/passes/constant_propagation.h>
 #include <torch/csrc/jit/passes/dead_code_elimination.h>

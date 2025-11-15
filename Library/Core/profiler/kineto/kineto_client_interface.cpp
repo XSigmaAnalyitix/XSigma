@@ -1,5 +1,5 @@
 #if XSIGMA_HAS_KINETO
-//#include <ATen/Context.h>
+//#include <XSigma/Context.h>
 #include "profiler/kineto/kineto_client_interface.h"
 
 #include <libkineto.h>

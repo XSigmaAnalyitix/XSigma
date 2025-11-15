@@ -47,7 +47,7 @@ class CUDADeviceOpOverrides(DeviceOpOverrides):
         source_codes = """
         #include <xsigma/cuda/CUDAGuard.h>
         #include <xsigma/cuda/CUDAStream.h>
-        #include <ATen/cuda/EmptyTensor.h>
+        #include <XSigma/cuda/EmptyTensor.h>
         """
         return source_codes
 

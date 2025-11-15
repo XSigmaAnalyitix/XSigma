@@ -1,5 +1,5 @@
-#include <ATen/ATen.h>
-#include <ATen/CachedTensorUtils.h>
+#include <XSigma/CachedTensorUtils.h>
+#include <XSigma/XSigma.h>
 
 #include "util/flat_hash_map.h"
 

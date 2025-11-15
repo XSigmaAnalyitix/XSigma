@@ -1,15 +1,15 @@
 #define TORCH_ASSERT_NO_OPERATORS
-#include <ATen/Dispatch.h>
-#include <ATen/Dispatch_v2.h>
-#include <ATen/Parallel.h>
-#include <ATen/TensorIteratorInternal.h>
-#include <ATen/cpu/vec/functional.h>
-#include <ATen/native/Copy.h>
-#include <ATen/native/TensorIterator.h>
-#include <ATen/native/UnaryOps.h>
-#include <ATen/native/cpu/CopyKernel.h>
-#include <ATen/native/cpu/Loops.h>
-#include <ATen/native/cpu/zmath.h>
+#include <XSigma/Dispatch.h>
+#include <XSigma/Dispatch_v2.h>
+#include <XSigma/Parallel.h>
+#include <XSigma/TensorIteratorInternal.h>
+#include <XSigma/cpu/vec/functional.h>
+#include <XSigma/native/Copy.h>
+#include <XSigma/native/TensorIterator.h>
+#include <XSigma/native/UnaryOps.h>
+#include <XSigma/native/cpu/CopyKernel.h>
+#include <XSigma/native/cpu/Loops.h>
+#include <XSigma/native/cpu/zmath.h>
 #include <c10/util/TypeCast.h>
 namespace at::native
 {

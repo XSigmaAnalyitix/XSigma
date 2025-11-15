@@ -1,16 +1,16 @@
-#include <ATen/FunctionalTensorWrapper.h>
-#include <ATen/core/Formatting.h>
-#include <ATen/core/LegacyTypeDispatch.h>
-#include <ATen/core/Tensor.h>
-#include <ATen/core/VariableHooksInterface.h>
+#include <XSigma/FunctionalTensorWrapper.h>
+#include <XSigma/core/Formatting.h>
+#include <XSigma/core/LegacyTypeDispatch.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/core/VariableHooksInterface.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/MethodOperators.h>
+#include <XSigma/MethodOperators.h>
 #else
-#include <ATen/ops/contiguous_ops.h>
-#include <ATen/ops/fill_ops.h>
-#include <ATen/ops/to_ops.h>
-#include <ATen/ops/zero_ops.h>
+#include <XSigma/ops/contiguous_ops.h>
+#include <XSigma/ops/fill_ops.h>
+#include <XSigma/ops/to_ops.h>
+#include <XSigma/ops/zero_ops.h>
 #endif
 
 #include <iostream>
@@ -65,7 +65,7 @@ void TensorBase::enforce_invariants()
 {
     TORCH_CHECK(impl_.get() != nullptr, "TensorImpl with nullptr is not supported");
     // Following line throws if the method is not a POD data type or is not
-    // supported by ATen
+    // supported by XSigma
     scalar_type();
     if (defined())
     {

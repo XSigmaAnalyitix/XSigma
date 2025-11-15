@@ -1,7 +1,7 @@
 #pragma once
 
-#include <ATen/TensorGeometry.h>
-#include <ATen/core/DeprecatedTypeProperties.h>
+#include <XSigma/TensorGeometry.h>
+#include <XSigma/core/DeprecatedTypeProperties.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/variable.h>

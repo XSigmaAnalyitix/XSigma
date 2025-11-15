@@ -1,5 +1,5 @@
-#include <ATen/LegacyBatchedTensorImpl.h>
-#include <ATen/WrapDimUtils.h>
+#include <XSigma/LegacyBatchedTensorImpl.h>
+#include <XSigma/WrapDimUtils.h>
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>
 

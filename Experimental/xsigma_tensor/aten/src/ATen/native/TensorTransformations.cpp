@@ -1,29 +1,29 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/Parallel.h>
-#include <ATen/TensorIterator.h>
-#include <ATen/WrapDimUtilsMulti.h>
-#include <ATen/core/DimVector.h>
-#include <ATen/native/IndexKernel.h>  // for flip_stub
-#include <ATen/native/TensorTransformations.h>
+#include <XSigma/Parallel.h>
+#include <XSigma/TensorIterator.h>
+#include <XSigma/WrapDimUtilsMulti.h>
+#include <XSigma/core/DimVector.h>
+#include <XSigma/native/IndexKernel.h>  // for flip_stub
+#include <XSigma/native/TensorTransformations.h>
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
+#include <XSigma/Functions.h>
+#include <XSigma/NativeFunctions.h>
 #else
-#include <ATen/ops/atleast_1d_native.h>
-#include <ATen/ops/atleast_2d_native.h>
-#include <ATen/ops/atleast_3d_native.h>
-#include <ATen/ops/cat.h>
-#include <ATen/ops/chalf_native.h>
-#include <ATen/ops/empty_like.h>
-#include <ATen/ops/flip_native.h>
-#include <ATen/ops/fliplr_native.h>
-#include <ATen/ops/flipud_native.h>
-#include <ATen/ops/roll_native.h>
-#include <ATen/ops/rot90_native.h>
-#include <ATen/ops/zeros_like_ops.h>
+#include <XSigma/ops/atleast_1d_native.h>
+#include <XSigma/ops/atleast_2d_native.h>
+#include <XSigma/ops/atleast_3d_native.h>
+#include <XSigma/ops/cat.h>
+#include <XSigma/ops/chalf_native.h>
+#include <XSigma/ops/empty_like.h>
+#include <XSigma/ops/flip_native.h>
+#include <XSigma/ops/fliplr_native.h>
+#include <XSigma/ops/flipud_native.h>
+#include <XSigma/ops/roll_native.h>
+#include <XSigma/ops/rot90_native.h>
+#include <XSigma/ops/zeros_like_ops.h>
 #endif
 
 #include <algorithm>

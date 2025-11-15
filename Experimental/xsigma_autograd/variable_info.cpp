@@ -1,8 +1,8 @@
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/zeros.h>
-#include <ATen/ops/zeros_like.h>
+#include <XSigma/ops/zeros.h>
+#include <XSigma/ops/zeros_like.h>
 #endif
 
 #include <torch/csrc/autograd/variable.h>

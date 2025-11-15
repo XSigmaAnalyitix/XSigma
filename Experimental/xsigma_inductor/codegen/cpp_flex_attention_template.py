@@ -210,9 +210,9 @@ ALLOCATE_BUFFER = r"""
 
 FLEX_ATTENTION_TEMPLATE = r"""
 {{template.header().getvalue()}}
-#include <ATen/native/cpu/utils.h>
-#include <ATen/native/CPUBlas.h>
-#include <ATen/Context.h>
+#include <XSigma/native/cpu/utils.h>
+#include <XSigma/native/CPUBlas.h>
+#include <XSigma/Context.h>
 {{template.codegen_micro_gemm(kernel.kernel_name)}}
 {{template.codegen_softmax_fusion(kernel.kernel_name)}}
 {{template.codegen_brgemm_pack_function(kernel.kernel_name)}}

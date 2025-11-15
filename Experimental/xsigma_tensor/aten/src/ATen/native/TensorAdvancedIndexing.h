@@ -2,10 +2,10 @@
 
 // Indexing tensors by tensors
 
-#include <ATen/core/List.h>
-#include <ATen/core/Tensor.h>
-#include <ATen/native/DispatchStub.h>
-#include <ATen/native/ReductionType.h>
+#include <XSigma/core/List.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/native/DispatchStub.h>
+#include <XSigma/native/ReductionType.h>
 
 namespace at
 {

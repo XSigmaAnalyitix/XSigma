@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/Tensor.h>
+#include <XSigma/Tensor.h>
 
 #include <utility>
 

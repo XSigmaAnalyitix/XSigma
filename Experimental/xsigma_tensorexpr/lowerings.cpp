@@ -1,5 +1,5 @@
-#include <ATen/native/Activation.h>
-#include <ATen/native/mkldnn/Common.h>
+#include <XSigma/native/Activation.h>
+#include <XSigma/native/mkldnn/Common.h>
 #include <torch/csrc/jit/frontend/function_schema_parser.h>
 #include <torch/csrc/jit/tensorexpr/ir_simplifier.h>
 #include <torch/csrc/jit/tensorexpr/lowerings.h>

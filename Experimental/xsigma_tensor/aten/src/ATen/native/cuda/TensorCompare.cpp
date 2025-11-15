@@ -1,6 +1,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/core/Tensor.h>
-#include <ATen/native/TensorCompare.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/native/TensorCompare.h>
 
 namespace at::native
 {

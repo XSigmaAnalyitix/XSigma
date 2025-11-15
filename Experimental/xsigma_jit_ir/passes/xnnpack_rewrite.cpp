@@ -1,5 +1,5 @@
-#include <ATen/core/jit_type.h>
-#include <ATen/native/xnnpack/OpContext.h>
+#include <XSigma/core/jit_type.h>
+#include <XSigma/native/xnnpack/OpContext.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/passes/constant_propagation.h>
 #include <torch/csrc/jit/passes/fold_conv_bn.h>

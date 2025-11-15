@@ -1,4 +1,4 @@
-#include <ATen/core/functional.h>
+#include <XSigma/core/functional.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/symbolic.h>
 #include <torch/csrc/jit/ir/constants.h>
@@ -341,7 +341,7 @@ void NodeToONNX(
             if (outputs[i])
             {
                 bool exist_in_env = values_in_env.contains(py::cast(outputs[i]));
-                // Update ONNX value debug name with ATen value debug name if existed.
+                // Update ONNX value debug name with XSigma value debug name if existed.
                 // Skip if ONNX value already exist in environment.
                 // This implies the op is a noop, and the value is owned by
                 // other node created elsewhere.
@@ -552,7 +552,7 @@ void NodeToONNX(
             node->copyMetadata(n);
         }
 
-        // TODO: Assert it's an ATen identifier???
+        // TODO: Assert it's an XSigma identifier???
         // (Sometimes it's not...)
         processSymbolicOutput(n->kind().toUnqualString(), n, raw_output);
         GRAPH_DUMP("after processSymbolicOutput: ", g);

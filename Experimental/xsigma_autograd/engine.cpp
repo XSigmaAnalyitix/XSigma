@@ -1,10 +1,10 @@
-#include <ATen/DeviceAccelerator.h>
-#include <ATen/DeviceGuard.h>
-#include <ATen/ExpandUtils.h>
-#include <ATen/Parallel.h>
-#include <ATen/SparseCsrTensorUtils.h>
-#include <ATen/detail/CUDAHooksInterface.h>
-#include <ATen/detail/PrivateUse1HooksInterface.h>
+#include <XSigma/DeviceAccelerator.h>
+#include <XSigma/DeviceGuard.h>
+#include <XSigma/ExpandUtils.h>
+#include <XSigma/Parallel.h>
+#include <XSigma/SparseCsrTensorUtils.h>
+#include <XSigma/detail/CUDAHooksInterface.h>
+#include <XSigma/detail/PrivateUse1HooksInterface.h>
 #include <torch/csrc/autograd/anomaly_mode.h>
 #include <torch/csrc/autograd/autograd.h>
 #include <torch/csrc/autograd/engine.h>
@@ -15,9 +15,9 @@
 #include <torch/csrc/dynamo/compiled_autograd.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/isnan.h>
+#include <XSigma/ops/isnan.h>
 #endif
 
 #include <xsigma/core/DeviceGuard.h>

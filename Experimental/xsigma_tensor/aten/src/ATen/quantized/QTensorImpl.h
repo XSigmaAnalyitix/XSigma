@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/quantized/Quantizer.h>
+#include <XSigma/quantized/Quantizer.h>
 #include <c10/core/TensorImpl.h>
 #include <c10/util/Exception.h>
 
@@ -10,7 +10,7 @@ namespace at
 /**
  * QTensorImpl is a TensorImpl for Quantized Tensors, it stores Quantizer which
  * specifies the quantization scheme and parameters, for more information please
- * see ATen/quantized/Quantizer.h
+ * see XSigma/quantized/Quantizer.h
  *
  * We'll use QTensor in code or documentation to refer to a Tensor with QTensorImpl.
  */

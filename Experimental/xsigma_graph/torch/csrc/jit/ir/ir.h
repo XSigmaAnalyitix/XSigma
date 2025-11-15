@@ -1,13 +1,13 @@
 #pragma once
 
-#include <ATen/Utils.h>
-#include <ATen/core/Tensor.h>
-#include <ATen/core/dynamic_type.h>
-#include <ATen/core/enum_type.h>
-#include <ATen/core/functional.h>
-#include <ATen/core/interned_strings.h>
-#include <ATen/core/ivalue.h>
-#include <ATen/core/jit_type.h>
+#include <XSigma/Utils.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/core/dynamic_type.h>
+#include <XSigma/core/enum_type.h>
+#include <XSigma/core/functional.h>
+#include <XSigma/core/interned_strings.h>
+#include <XSigma/core/ivalue.h>
+#include <XSigma/core/jit_type.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/jit/ir/attributes.h>
 #include <torch/csrc/jit/ir/graph_node_list.h>

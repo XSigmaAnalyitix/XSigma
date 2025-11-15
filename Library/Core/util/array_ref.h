@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// ATen: modified from llvm::array_ref.
+// XSigma: modified from llvm::array_ref.
 // removed llvm-specific functionality
 // removed some implicit const -> non-const conversions that rely on
 // complicated std::enable_if meta-programming

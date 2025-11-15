@@ -1,6 +1,6 @@
 #pragma once
-#include <ATen/ThreadLocalState.h>
-#include <ATen/core/Tensor.h>
+#include <XSigma/ThreadLocalState.h>
+#include <XSigma/core/Tensor.h>
 #include <torch/csrc/autograd/input_buffer.h>
 #include <torch/csrc/autograd/utils/warnings.h>
 #include <xsigma/util/ThreadLocal.h>

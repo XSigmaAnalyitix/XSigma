@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/core/alias_info.h>
+#include <XSigma/core/alias_info.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/ir/type_hashing.h>
 #include <torch/csrc/jit/passes/create_functional_graphs.h>

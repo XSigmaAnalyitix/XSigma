@@ -1452,7 +1452,7 @@ void InsertQuantDeQuantHelper::propagateQuantizationOps(Block* block)
             // since the quantization parameter for these ops depends on
             // input and it's too complicated to encode the equations in
             // the IR:
-            // https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/quantized/cpu/BinaryOps.cpp#L64-L74
+            // https://github.com/pytorch/pytorch/blob/master/aten/src/XSigma/native/quantized/cpu/BinaryOps.cpp#L64-L74
             if (debug_)
             {
                 TORCH_WARN_ONCE(

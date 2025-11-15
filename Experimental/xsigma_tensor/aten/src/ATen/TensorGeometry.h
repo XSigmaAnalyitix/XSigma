@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/core/TensorBase.h>
+#include <XSigma/core/TensorBase.h>
 #include <c10/core/WrapDimMinimal.h>
 
 namespace at

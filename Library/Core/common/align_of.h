@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// ATen: modified from llvm::AlignOf
+// XSigma: modified from llvm::AlignOf
 // replaced LLVM_ALIGNAS with alignas
 
 #pragma once

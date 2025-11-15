@@ -9,7 +9,7 @@ namespace at
 
 class TensorBase;
 
-// Here we define a series of utils to create/manipulate ATen backed
+// Here we define a series of utils to create/manipulate XSigma backed
 // c10 storage implementations.
 
 /**

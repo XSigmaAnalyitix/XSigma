@@ -9,7 +9,7 @@
 #include <cmath>
 #endif
 
-#include <ATen/ATen.h>
+#include <XSigma/XSigma.h>
 #include <torch/csrc/autograd/generated/Functions.h>
 
 namespace torch::autograd::generated::details

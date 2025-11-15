@@ -8,20 +8,20 @@
 #include <variant>
 
 // TODO: Missing XSigma dependencies - original includes were:
-// //#include <ATen/Context.h>
+// //#include <XSigma/Context.h>
 // #include <xsigma/csrc/utils/python_stub.h>
 // These are XSigma-specific headers not available in XSigma
 // #include <xsigma/core/TensorImpl.h>
 #include "common/macros.h"
 #include "memory/device.h"
+#include "profiler/base/base.h"
+#include "profiler/base/perf.h"
 #include "profiler/common/containers.h"
 #include "profiler/common/data_flow.h"
 #include "profiler/common/events.h"
-#include "profiler/kineto/kineto_shim.h"
 #include "profiler/common/orchestration/python_tracer.h"
-#include "profiler/base/perf.h"
-#include "profiler/base/base.h"
 #include "profiler/common/util.h"
+#include "profiler/kineto/kineto_shim.h"
 #include "util/approximate_clock.h"
 #include "util/flat_hash.h"
 #include "util/strong_type.h"

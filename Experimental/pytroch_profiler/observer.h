@@ -112,7 +112,7 @@ struct ExperimentalConfig
    * profiler was enabled, similar to on_demand mode */
     bool profile_all_threads;
 
-    /* controls whether overload names are queried from an ATen
+    /* controls whether overload names are queried from an XSigma
    * function schema and stored in the profile  */
     bool capture_overload_names;
 

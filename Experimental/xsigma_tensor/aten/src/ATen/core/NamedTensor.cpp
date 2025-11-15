@@ -1,6 +1,6 @@
 #define TORCH_ASSERT_NO_OPERATORS
-#include <ATen/core/NamedTensor.h>
-#include <ATen/core/TensorBase.h>
+#include <XSigma/core/NamedTensor.h>
+#include <XSigma/core/TensorBase.h>
 
 namespace at
 {

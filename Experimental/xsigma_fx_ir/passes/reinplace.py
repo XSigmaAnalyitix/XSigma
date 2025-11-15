@@ -295,7 +295,7 @@ def reinplace(gm, *sample_args):
     as long as the input to the current operator ("a") isn't reused
     anywhere later in the graph.
 
-    This pass currently expects to operate on a **functional, ATen** graph.
+    This pass currently expects to operate on a **functional, XSigma** graph.
     This can be obtained by running `make_fx(functionalize(f))`.
 
     Sample inputs are needed to determine aliasing relationships of the inputs.
@@ -365,7 +365,7 @@ def reinplace(gm, *sample_args):
             It's only a problem if "a" (or that view) is later passed
             into a normal operator, or if it is returned as the program output.
         (b) If "a" is a repeat argument in `foo()`, then don't reinplace.
-            Most ATen kernels don't make any guarantees that this is sound,
+            Most XSigma kernels don't make any guarantees that this is sound,
             e.g. if you do aten.mul_(a, a).
             So we'll just ban re-inplacing in this case.
             It's only a problem if "a" (or that view) is later passed

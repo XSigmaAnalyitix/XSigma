@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/core/ivalue.h>
+#include <XSigma/core/ivalue.h>
 #include <torch/csrc/jit/tensorexpr/exceptions.h>
 #include <torch/csrc/jit/tensorexpr/expr.h>
 #include <torch/csrc/jit/tensorexpr/fwd_decls.h>

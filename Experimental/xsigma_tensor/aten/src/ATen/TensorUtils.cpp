@@ -1,6 +1,6 @@
-#include <ATen/ATen.h>
-#include <ATen/Config.h>
-#include <ATen/TensorUtils.h>
+#include <XSigma/Config.h>
+#include <XSigma/TensorUtils.h>
+#include <XSigma/XSigma.h>
 #include <c10/util/accumulate.h>
 #include <c10/util/irange.h>
 

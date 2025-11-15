@@ -1,23 +1,23 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #define TORCH_ASSERT_NO_OPERATORS
-#include <ATen/TensorIterator.h>
+#include <XSigma/TensorIterator.h>
 #undef TORCH_ASSERT_NO_OPERATORS
 
-#include <ATen/ExpandUtils.h>
-#include <ATen/MemoryOverlap.h>
-#include <ATen/NamedTensorUtils.h>
-#include <ATen/Parallel.h>
-#include <ATen/TensorIteratorInternal.h>
-#include <ATen/TensorOperators.h>
-#include <ATen/core/Tensor.h>
-#include <ATen/native/Resize.h>
-#include <ATen/native/TypeProperties.h>
+#include <XSigma/ExpandUtils.h>
+#include <XSigma/MemoryOverlap.h>
+#include <XSigma/NamedTensorUtils.h>
+#include <XSigma/Parallel.h>
+#include <XSigma/TensorIteratorInternal.h>
+#include <XSigma/TensorOperators.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/native/Resize.h>
+#include <XSigma/native/TypeProperties.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/empty.h>
-#include <ATen/ops/empty_strided.h>
+#include <XSigma/ops/empty.h>
+#include <XSigma/ops/empty_strided.h>
 #endif
 
 #include <c10/util/SmallBuffer.h>

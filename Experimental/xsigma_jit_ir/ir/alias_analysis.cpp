@@ -1,4 +1,4 @@
-#include <ATen/core/interned_strings.h>
+#include <XSigma/core/interned_strings.h>
 #include <torch/csrc/jit/api/function_impl.h>
 #include <torch/csrc/jit/ir/alias_analysis.h>
 #include <torch/csrc/jit/jit_log.h>
@@ -699,7 +699,7 @@ void AliasDb::analyzeImpl(Node* node)
         const auto analysis = op->aliasAnalysisKind();
 
         const bool registeredAsSpecialCase = analysis == AliasAnalysisKind::INTERNAL_SPECIAL_CASE;
-        if XSIGMA_UNLIKELY(registeredAsSpecialCase && !hasSpecialCase)
+        if XSIGMA_UNLIKELY (registeredAsSpecialCase && !hasSpecialCase)
         {
             TORCH_INTERNAL_ASSERT(
                 false,
@@ -708,7 +708,7 @@ void AliasDb::analyzeImpl(Node* node)
                 " is registered with AliasAnalysisKind::INTERNAL_SPECIAL_CASE but doesn't have a "
                 "special case.");
         }
-        else if XSIGMA_UNLIKELY(!registeredAsSpecialCase && hasSpecialCase)
+        else if XSIGMA_UNLIKELY (!registeredAsSpecialCase && hasSpecialCase)
         {
             TORCH_INTERNAL_ASSERT(
                 false,

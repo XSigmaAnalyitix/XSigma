@@ -1138,9 +1138,9 @@ export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
 
 - `c10/core/CachingDeviceAllocator.h` - Allocator interface
 - `c10/core/CachingDeviceAllocator.cpp` - Base implementation
-- `aten/src/ATen/native/cuda/RecordStream.cu` - Stream recording
-- `aten/src/ATen/native/Memory.cpp` - Memory utilities
-- `aten/src/ATen/native/Resize.cpp` - Tensor resizing
+- `aten/src/XSigma/native/cuda/RecordStream.cu` - Stream recording
+- `aten/src/XSigma/native/Memory.cpp` - Memory utilities
+- `aten/src/XSigma/native/Resize.cpp` - Tensor resizing
 
 ### Related PyTorch Documentation
 

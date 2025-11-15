@@ -1,8 +1,8 @@
-#include <ATen/Backtrace.h>
-#include <ATen/ScalarOps.h>
-#include <ATen/TracerMode.h>
-#include <ATen/core/Dict.h>
-#include <ATen/core/functional.h>
+#include <XSigma/Backtrace.h>
+#include <XSigma/ScalarOps.h>
+#include <XSigma/TracerMode.h>
+#include <XSigma/core/Dict.h>
+#include <XSigma/core/functional.h>
 #include <torch/csrc/autograd/engine.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/variable.h>

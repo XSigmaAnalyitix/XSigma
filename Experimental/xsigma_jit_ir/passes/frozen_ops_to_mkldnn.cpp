@@ -1,9 +1,9 @@
-#include <ATen/ATen.h>
-#include <ATen/Config.h>
-#include <ATen/NativeFunctions.h>
-#include <ATen/Utils.h>
-#include <ATen/core/symbol.h>
-#include <ATen/native/layer_norm.h>
+#include <XSigma/Config.h>
+#include <XSigma/NativeFunctions.h>
+#include <XSigma/Utils.h>
+#include <XSigma/XSigma.h>
+#include <XSigma/core/symbol.h>
+#include <XSigma/native/layer_norm.h>
 #include <torch/csrc/jit/ir/alias_analysis.h>
 #include <torch/csrc/jit/ir/constants.h>
 #include <torch/csrc/jit/ir/ir.h>
@@ -27,18 +27,18 @@
 #include "util/exception.h"
 // clang-format off
 // moving ConvUtils include induces import cycle
-#include <ATen/native/ConvUtils.h>
+#include <XSigma/native/ConvUtils.h>
 #include <algorithm>
 #include <memory>
-#include <ATen/core/stack.h>
+#include <XSigma/core/stack.h>
 #include <xsigma/core/Layout.h>
 #include <xsigma/util/StringUtil.h>
 
 #if AT_MKLDNN_ENABLED()
-#include <ATen/CPUFunctions.h>
+#include <XSigma/CPUFunctions.h>
 #include <dnnl_types.h>
-#include <ATen/native/mkldnn/Utils.h>
-#include <ATen/native/mkldnn/MKLDNNCommon.h>
+#include <XSigma/native/mkldnn/Utils.h>
+#include <XSigma/native/mkldnn/MKLDNNCommon.h>
 #include <ideep.hpp>
 #endif
 

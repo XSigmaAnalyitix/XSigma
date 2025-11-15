@@ -2769,7 +2769,7 @@ def sdpa_constraint(fx_node, *args, **kwargs):
             return ir.ExternKernel.require_stride_order(arg, stride_order)
 
         # This is the minimum alignment required by SDPA kernels for attention_bias.
-        # This value can be found in pytorch/aten/src/ATen/native/transformers/attention.cpp preprocess_mask
+        # This value can be found in pytorch/aten/src/XSigma/native/transformers/attention.cpp preprocess_mask
         ALIGNMENT = 8
 
         # effn_attn_fwd does requires dense last dim, not just alignment
@@ -3838,7 +3838,7 @@ def index(x, indices):
     try:
         return index_impl(x, indices, check=True)
     except NotImplementedError:
-        # Fallback to ATen for boolean indexing
+        # Fallback to XSigma for boolean indexing
         x.realize()
         return fallback_handler(aten.index.Tensor, add_to_fallback_set=False)(
             x, indices
@@ -6332,7 +6332,7 @@ def pow(a, b):
     dtype = next(x.get_dtype() for x in (a, b) if isinstance(x, ir.TensorBox))
     is_integer_pow = is_integer_dtype(dtype)
 
-    # Optimize away small fixed powers, or for integers avoid falling back to ATen
+    # Optimize away small fixed powers, or for integers avoid falling back to XSigma
     embed_exponent = isinstance(b, int) and (
         -32 < b < 32 or (is_integer_pow and b >= 0)
     )

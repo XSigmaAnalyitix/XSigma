@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/core/Tensor.h>
+#include <XSigma/core/Tensor.h>
 #include <xsigma/core/SafePyObject.h>
 
 namespace torch::autograd

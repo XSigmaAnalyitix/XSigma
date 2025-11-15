@@ -1,16 +1,16 @@
 #pragma once
 
-#include <ATen/SparseCsrTensorImpl.h>
-#include <ATen/SparseTensorImpl.h>
-#include <ATen/core/Tensor.h>
+#include <XSigma/SparseCsrTensorImpl.h>
+#include <XSigma/SparseTensorImpl.h>
+#include <XSigma/core/Tensor.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#include <ATen/Operators.h>
+#include <XSigma/Functions.h>
+#include <XSigma/NativeFunctions.h>
+#include <XSigma/Operators.h>
 #else
-#include <ATen/ops/_sparse_compressed_tensor_unsafe.h>
-#include <ATen/ops/resize_as_sparse_native.h>
+#include <XSigma/ops/_sparse_compressed_tensor_unsafe.h>
+#include <XSigma/ops/resize_as_sparse_native.h>
 #endif
 
 #define AT_DISPATCH_ALL_SPARSE_COMPRESSED_LAYOUTS(LAYOUT, NAME, ...)                            \

@@ -1,6 +1,6 @@
-#include <ATen/NamedTensorUtils.h>
-#include <ATen/TensorNames.h>
-#include <ATen/WrapDimUtilsMulti.h>
+#include <XSigma/NamedTensorUtils.h>
+#include <XSigma/TensorNames.h>
+#include <XSigma/WrapDimUtilsMulti.h>
 #include <c10/util/irange.h>
 
 #include <bitset>

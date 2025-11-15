@@ -1,6 +1,6 @@
-#include <ATen/RedispatchFunctions.h>
-#include <ATen/TracerMode.h>
-#include <ATen/core/op_registration/op_registration.h>
+#include <XSigma/RedispatchFunctions.h>
+#include <XSigma/TracerMode.h>
+#include <XSigma/core/op_registration/op_registration.h>
 #include <torch/csrc/autograd/FunctionsManual.h>
 #include <torch/csrc/autograd/VariableTypeUtils.h>
 #include <torch/csrc/autograd/autograd.h>
@@ -367,7 +367,7 @@ Tensor& detach_(xsigma::DispatchKeySet ks, Tensor& self)
 // CPU/CUDA/QuantizedCPU kernels) will skip picking up CompositeImplicitAutograd
 // kernels for Autograd, so we register them to both CompositeExplicitAutograd
 // and Autograd instead. See
-// https://github.com/pytorch/pytorch/tree/master/aten/src/ATen/native#choosing-the-right-dispatch-keyword
+// https://github.com/pytorch/pytorch/tree/master/aten/src/XSigma/native#choosing-the-right-dispatch-keyword
 // for more details.
 // Invariant:
 // - Ops registered to CompositeImplicitAutograd or CompositeExplicitAutograd

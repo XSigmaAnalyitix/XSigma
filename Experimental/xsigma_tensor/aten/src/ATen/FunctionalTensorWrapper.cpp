@@ -1,18 +1,18 @@
 
-#include <ATen/FunctionalInverses.h>
-#include <ATen/FunctionalTensorWrapper.h>
-#include <ATen/TensorUtils.h>
-#include <ATen/WrapDimUtils.h>
-#include <ATen/core/IListRef.h>
-#include <ATen/core/LegacyTypeDispatch.h>
+#include <XSigma/FunctionalInverses.h>
+#include <XSigma/FunctionalTensorWrapper.h>
+#include <XSigma/TensorUtils.h>
+#include <XSigma/WrapDimUtils.h>
+#include <XSigma/core/IListRef.h>
+#include <XSigma/core/LegacyTypeDispatch.h>
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/_propagate_xla_data.h>
-#include <ATen/ops/_to_copy.h>
+#include <XSigma/ops/_propagate_xla_data.h>
+#include <XSigma/ops/_to_copy.h>
 #endif
 
 namespace at

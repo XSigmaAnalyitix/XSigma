@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/core/Tensor.h>
+#include <XSigma/core/Tensor.h>
 #include <torch/csrc/python_headers.h>
 #include <torch/csrc/utils/python_arg_parser.h>
 

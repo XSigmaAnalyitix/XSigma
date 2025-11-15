@@ -500,8 +500,8 @@ force_same_precision: bool = Config(
 multi_kernel_hints: list[int] = []
 
 # Specify candidate backends for gemm autotune.
-# Possible choices are combinations of: ATen, Triton, CUTLASS, CK, CKTILE, CPP.
-# ATen: default Pytorch ATen kernels.
+# Possible choices are combinations of: XSigma, Triton, CUTLASS, CK, CKTILE, CPP.
+# XSigma: default Pytorch XSigma kernels.
 # Triton: Triton templates defined in torch inductor (AMD and NVidia GPUs).
 # CUTLASS: Cutlass templates and kernels (NVidia GPUs only).
 # CK: Composable Kernel templates and kernels (AMD Instinct GPUs only).
@@ -855,7 +855,7 @@ class _collective:
 
 
 class aten_distributed_optimizations:
-    """Configuration for distributed optimization passes on ATen FX graphs."""
+    """Configuration for distributed optimization passes on XSigma FX graphs."""
 
     # Enable overlap scheduling pass
     enable_overlap_scheduling: bool = False

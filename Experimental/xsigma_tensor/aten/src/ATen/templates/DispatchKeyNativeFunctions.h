@@ -7,7 +7,7 @@
 
 // ${generated_comment}
 
-#include <ATen/Tensor.h>
+#include <XSigma/Tensor.h>
 
 ${namespace_prologue}
 

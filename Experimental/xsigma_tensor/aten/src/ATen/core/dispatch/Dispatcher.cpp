@@ -1,5 +1,5 @@
-#include <ATen/core/PythonOpRegistrationTrampoline.h>
-#include <ATen/core/dispatch/Dispatcher.h>
+#include <XSigma/core/PythonOpRegistrationTrampoline.h>
+#include <XSigma/core/dispatch/Dispatcher.h>
 #include <c10/util/env.h>
 
 #include <list>

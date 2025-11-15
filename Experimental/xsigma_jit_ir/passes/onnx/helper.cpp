@@ -1,12 +1,12 @@
-#include <ATen/ScalarOps.h>
+#include <XSigma/ScalarOps.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/onnx/helper.h>
 #include <torch/csrc/onnx/back_compat.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/unsqueeze.h>
+#include <XSigma/ops/unsqueeze.h>
 #endif
 
 #include <onnx/onnx_pb.h>

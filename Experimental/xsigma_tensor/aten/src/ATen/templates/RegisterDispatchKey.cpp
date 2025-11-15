@@ -17,25 +17,25 @@
 
 #include <c10/core/TensorImpl.h>
 #include <c10/core/Allocator.h>
-#include <ATen/DeviceGuard.h>
-#include <ATen/NamedTensorUtils.h>
-#include <ATen/Utils.h>
-#include <ATen/WrapDimUtils.h>
-#include <ATen/Dispatch.h>
+#include <XSigma/DeviceGuard.h>
+#include <XSigma/NamedTensorUtils.h>
+#include <XSigma/Utils.h>
+#include <XSigma/WrapDimUtils.h>
+#include <XSigma/Dispatch.h>
 #include <c10/util/ExclusivelyOwned.h>
 #include <c10/util/Half.h>
 #include <c10/core/UndefinedTensorImpl.h>
 #include <optional>
-#include <ATen/Tensor.h>
-#include <ATen/native/Resize.h>
+#include <XSigma/Tensor.h>
+#include <XSigma/native/Resize.h>
 
 #include <cstddef>
 #include <functional>
 #include <memory>
 #include <utility>
 
-#include <ATen/Config.h>
-#include <ATen/core/op_registration/adaption.h>
+#include <XSigma/Config.h>
+#include <XSigma/core/op_registration/adaption.h>
 #include <torch/library.h>
 $extra_cuda_headers
 $external_backend_headers

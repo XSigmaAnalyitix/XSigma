@@ -1,4 +1,4 @@
-#include <ATen/core/dispatch/DispatchKeyExtractor.h>
+#include <XSigma/core/dispatch/DispatchKeyExtractor.h>
 #include <c10/util/irange.h>
 
 #include <sstream>

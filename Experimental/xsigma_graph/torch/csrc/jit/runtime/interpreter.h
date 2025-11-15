@@ -1,7 +1,7 @@
 #pragma once
-#include <ATen/ThreadLocalState.h>
-#include <ATen/core/ivalue.h>
-#include <ATen/core/jit_type.h>
+#include <XSigma/ThreadLocalState.h>
+#include <XSigma/core/ivalue.h>
+#include <XSigma/core/jit_type.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/jit/frontend/source_range.h>
 

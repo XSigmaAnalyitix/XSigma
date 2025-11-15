@@ -1128,13 +1128,14 @@ class XsigmaConfiguration:
         self.__compiler_user_specified = True
 
     def __is_visual_studio(self, arg):
-        return arg in ["vs17", "vs19", "vs22"] and self.__value["system"] == "Windows"
+        return arg in ["vs17", "vs19", "vs22","vs26"] and self.__value["system"] == "Windows"
 
     def __set_visual_studio(self, arg):
         vs_versions = {
             "vs17": ("Visual Studio 15 2017 Win64", "build_vs17"),
             "vs19": ("Visual Studio 16 2019", "build_vs19"),
             "vs22": ("Visual Studio 17 2022", "build_vs22"),
+            "vs26": ("Visual Studio 18 2026", "build_vs26"),
         }
         self.__value["compiler_flags"] = "-A x64"
         self.__value["cmake_generator"], base_build_folder = vs_versions[arg]

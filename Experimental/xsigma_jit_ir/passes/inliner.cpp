@@ -1,4 +1,4 @@
-#include <ATen/core/interned_strings.h>
+#include <XSigma/core/interned_strings.h>
 #include <torch/csrc/jit/api/function_impl.h>
 #include <torch/csrc/jit/api/module.h>
 #include <torch/csrc/jit/frontend/error_report.h>

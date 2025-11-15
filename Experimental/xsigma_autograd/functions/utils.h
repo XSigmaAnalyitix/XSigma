@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/core/Tensor.h>
+#include <XSigma/core/Tensor.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/autograd/InferenceMode.h>
 #include <torch/csrc/autograd/autograd.h>

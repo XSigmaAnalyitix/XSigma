@@ -1,5 +1,5 @@
-#include <ATen/core/dispatch/Dispatcher.h>
-#include <ATen/core/function_schema.h>
+#include <XSigma/core/dispatch/Dispatcher.h>
+#include <XSigma/core/function_schema.h>
 #include <fmt/format.h>
 #include <torch/nativert/graph/GraphPasses.h>
 #include <xsigma/util/StringUtil.h>

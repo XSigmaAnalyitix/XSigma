@@ -1,9 +1,9 @@
 #pragma once
 
-#include <ATen/ATen.h>
-#include <ATen/core/ivalue.h>
-#include <ATen/core/jit_type.h>
-#include <ATen/core/stack.h>
+#include <XSigma/XSigma.h>
+#include <XSigma/core/ivalue.h>
+#include <XSigma/core/jit_type.h>
+#include <XSigma/core/stack.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <xsigma/util/sparse_bitset.h>

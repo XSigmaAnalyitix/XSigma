@@ -1,6 +1,6 @@
-#include <ATen/ThreadLocalState.h>
-#include <ATen/cpp_custom_type_hack.h>
-#include <ATen/record_function.h>
+#include <XSigma/ThreadLocalState.h>
+#include <XSigma/cpp_custom_type_hack.h>
+#include <XSigma/record_function.h>
 #include <torch/csrc/autograd/record_function_ops.h>
 #include <torch/csrc/jit/runtime/operator.h>
 #include <torch/library.h>

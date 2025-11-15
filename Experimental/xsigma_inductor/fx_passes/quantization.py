@@ -2677,7 +2677,7 @@ def _register_smooth_quant_int_mm_pattern():
     # when both activation and weights are symmetrically quantized.
     # In practice, though, they may also match smooth-quant pattern when a 2D input shape would be used.
     # Since add is not currently being used as a oneDNN post-op, but is unfused, we don't need these patterns with bias.
-    # Ideally, we should add mul + add post-op support in ATen int8 oneDNN linear op.
+    # Ideally, we should add mul + add post-op support in XSigma int8 oneDNN linear op.
     pattern1_with_no_outer_or_act_reshape = get_pattern_no_bias(
         expand_a_scale=False, reshape_a=False
     )

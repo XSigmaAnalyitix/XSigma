@@ -1,5 +1,5 @@
 #pragma once
-#include <ATen/core/ivalue.h>
+#include <XSigma/core/ivalue.h>
 #include <torch/csrc/jit/frontend/source_range.h>
 #include <torch/csrc/jit/ir/constants.h>
 #include <torch/csrc/utils/variadic.h>

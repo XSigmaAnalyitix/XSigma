@@ -1,4 +1,4 @@
-#include <ATen/ScalarOps.h>
+#include <XSigma/ScalarOps.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/onnx/helper.h>
 #include <torch/csrc/jit/passes/onnx/preprocess_for_onnx.h>

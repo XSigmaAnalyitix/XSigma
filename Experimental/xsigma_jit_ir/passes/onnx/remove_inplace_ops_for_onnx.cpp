@@ -18,7 +18,7 @@ const std::set<xsigma::Symbol> inplace_ops = {
     aten::append, aten::index_put_, aten::pop, aten::insert, aten::Delete};
 
 // InplaceConverter defines a set of functions that together enables the
-// conversion from prim::GetAttr, prim::SetAttr, and ATen in-place operators to
+// conversion from prim::GetAttr, prim::SetAttr, and XSigma in-place operators to
 // ONNX out-place operators.
 struct InplaceConverter
 {
@@ -751,7 +751,7 @@ void InplaceConverter::gatherAttrNameInitialValueMap(
     }
 }
 
-// Replace prim::GetAttr and prim::SetAttr with ATen inplace operators.
+// Replace prim::GetAttr and prim::SetAttr with XSigma inplace operators.
 // Example graph:
 // clang-format off
 //  Before graph(%x.1 : Float(12, strides=[1], requires_grad=0, device=cpu)):
@@ -939,7 +939,7 @@ void InplaceConverter::convertInplaceOpsAndTrackAlias()
 
 void InplaceConverter::convertMutationForONNX()
 {
-    // First pass to convert all prim::GetAttr and prim::SetAttr to ATen inplace
+    // First pass to convert all prim::GetAttr and prim::SetAttr to XSigma inplace
     // operators.
     convertGetSetAttrToInplaceOps(graph_->block());
     GRAPH_UPDATE("Graph after convertGetSetAttrToInplaceOps", graph_->toString());

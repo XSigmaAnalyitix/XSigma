@@ -1,10 +1,10 @@
 #define TORCH_ASSERT_NO_OPERATORS
-#include <ATen/NumericUtils.h>
-#include <ATen/Dispatch.h>
-#include <ATen/Dispatch_v2.h>
-#include <ATen/native/DispatchStub.h>
-#include <ATen/native/TensorCompare.h>
-#include <ATen/native/cuda/Loops.cuh>
+#include <XSigma/NumericUtils.h>
+#include <XSigma/Dispatch.h>
+#include <XSigma/Dispatch_v2.h>
+#include <XSigma/native/DispatchStub.h>
+#include <XSigma/native/TensorCompare.h>
+#include <XSigma/native/cuda/Loops.cuh>
 #include <c10/core/Scalar.h>
 
 

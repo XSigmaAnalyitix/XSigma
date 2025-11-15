@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/core/ivalue.h>
+#include <XSigma/core/ivalue.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/variable.h>
 #include <torch/csrc/autograd/variable_info.h>

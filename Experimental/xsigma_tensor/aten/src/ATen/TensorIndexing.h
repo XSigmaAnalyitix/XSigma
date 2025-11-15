@@ -1,25 +1,25 @@
 #pragma once
 
-#include <ATen/ExpandUtils.h>
-#include <ATen/ScalarOps.h>
-#include <ATen/core/Tensor.h>
-#include <ATen/core/TensorBody.h>
+#include <XSigma/ExpandUtils.h>
+#include <XSigma/ScalarOps.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/core/TensorBody.h>
 #include <c10/core/SymInt.h>
 #include <c10/util/irange.h>
 
 #include <optional>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
+#include <XSigma/Functions.h>
+#include <XSigma/NativeFunctions.h>
 #else
-#include <ATen/ops/alias.h>
-#include <ATen/ops/empty.h>
-#include <ATen/ops/scalar_tensor.h>
-#include <ATen/ops/zeros.h>
+#include <XSigma/ops/alias.h>
+#include <XSigma/ops/empty.h>
+#include <XSigma/ops/scalar_tensor.h>
+#include <XSigma/ops/zeros.h>
 #endif
 
-#include <ATen/core/List.h>
+#include <XSigma/core/List.h>
 
 #include <utility>
 

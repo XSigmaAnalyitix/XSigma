@@ -1853,10 +1853,10 @@ def export(
     Args:
         f (callable): A PyTorch function to be exported.
 
-        aten_graph (bool): If True, exports a graph with ATen operators.
+        aten_graph (bool): If True, exports a graph with XSigma operators.
         If False, exports a graph with Python operators. Default is False.
 
-        pre_dispatch (bool): If True, exports a graph with ATen operators,
+        pre_dispatch (bool): If True, exports a graph with XSigma operators,
         but before any logic in the PyTorch dispatcher has run.
         This can be useful if you want to apply further transformations on a graph before running it
         through autograd, autocast, or any other functionalities that are integrated into the dispatcher.

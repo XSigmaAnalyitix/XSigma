@@ -1,4 +1,4 @@
-#include <ATen/core/functional.h>
+#include <XSigma/core/functional.h>
 #include <torch/csrc/jit/ir/constants.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/dead_code_elimination.h>

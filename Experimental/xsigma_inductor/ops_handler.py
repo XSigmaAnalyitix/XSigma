@@ -53,7 +53,7 @@ class OpsHandler(Generic[T]):
     While these operators are typically dtype polymorphic (e.g., you can use mul
     on both integers and floats), they do NOT do promotion and usually return the
     same dtype as the input.  You are expected to have handled type promotion
-    during ATen decompositions.  Most operators correspond exactly to pointwise
+    during XSigma decompositions.  Most operators correspond exactly to pointwise
     operations as defined by torch, so when in doubt about semantics, check the
     corresponding torch documentation.  These are all scalar operations (so they
     are defined to operate on a single element xsigma a time.)

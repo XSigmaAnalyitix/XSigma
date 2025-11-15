@@ -1,6 +1,6 @@
 #pragma once
-#include <ATen/core/IListRef.h>
-#include <ATen/core/Tensor.h>
+#include <XSigma/core/IListRef.h>
+#include <XSigma/core/Tensor.h>
 #include <c10/util/irange.h>
 
 namespace at::native

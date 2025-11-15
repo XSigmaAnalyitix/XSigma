@@ -1,8 +1,8 @@
 #pragma once
 
-#include <ATen/ExpandUtils.h>
-#include <ATen/NestedTensorImpl.h>
-#include <ATen/core/Tensor.h>
+#include <XSigma/ExpandUtils.h>
+#include <XSigma/NestedTensorImpl.h>
+#include <XSigma/core/Tensor.h>
 #include <xsigma/core/Device.h>
 #include <xsigma/core/DeviceType.h>
 #include <xsigma/core/Stream.h>
@@ -15,9 +15,9 @@
 #include "util/exception.h"
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/zeros.h>
+#include <XSigma/ops/zeros.h>
 #endif
 
 namespace torch::autograd

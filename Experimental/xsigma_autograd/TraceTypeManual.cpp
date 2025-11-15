@@ -1,5 +1,5 @@
-#include <ATen/TracerMode.h>
-#include <ATen/core/op_registration/op_registration.h>
+#include <XSigma/TracerMode.h>
+#include <XSigma/core/op_registration/op_registration.h>
 #include <torch/csrc/jit/frontend/tracer.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/library.h>

@@ -2,8 +2,8 @@
 
 // Wrap tensor operation outputs as PyObject*
 
-#include <ATen/ScalarOps.h>
-#include <ATen/core/Tensor.h>
+#include <XSigma/ScalarOps.h>
+#include <XSigma/core/Tensor.h>
 #include <torch/csrc/Dtype.h>
 #include <torch/csrc/DynamicTypes.h>
 #include <torch/csrc/Layout.h>

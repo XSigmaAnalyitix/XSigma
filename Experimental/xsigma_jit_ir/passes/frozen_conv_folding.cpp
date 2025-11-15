@@ -1,4 +1,4 @@
-#include <ATen/Utils.h>
+#include <XSigma/Utils.h>
 #include <torch/csrc/jit/ir/constants.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/jit_log.h>
@@ -15,11 +15,11 @@
 #include "util/exception.h"
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/ones_like.h>
-#include <ATen/ops/zeros.h>
-#include <ATen/ops/zeros_like.h>
+#include <XSigma/ops/ones_like.h>
+#include <XSigma/ops/zeros.h>
+#include <XSigma/ops/zeros_like.h>
 #endif
 
 namespace torch::jit

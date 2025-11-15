@@ -1,5 +1,5 @@
-#include <ATen/core/builtin_function.h>
-#include <ATen/core/function.h>
+#include <XSigma/core/builtin_function.h>
+#include <XSigma/core/function.h>
 #include <torch/csrc/jit/api/function_impl.h>
 #include <torch/csrc/jit/frontend/error_report.h>
 #include <torch/csrc/jit/frontend/schema_matching.h>

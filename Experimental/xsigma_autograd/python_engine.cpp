@@ -1,5 +1,5 @@
-#include <ATen/LegacyBatchedTensorImpl.h>
-#include <ATen/LegacyVmapMode.h>
+#include <XSigma/LegacyBatchedTensorImpl.h>
+#include <XSigma/LegacyVmapMode.h>
 #include <pybind11/pybind11.h>
 #include <torch/csrc/DynamicTypes.h>
 #include <torch/csrc/THP.h>

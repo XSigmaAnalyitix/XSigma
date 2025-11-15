@@ -1,11 +1,11 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/core/Tensor.h>
+#include <XSigma/core/Tensor.h>
 #include <c10/cuda/CUDACachingAllocator.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
+#include <XSigma/NativeFunctions.h>
 #else
-#include <ATen/ops/record_stream_native.h>
+#include <XSigma/ops/record_stream_native.h>
 #endif
 
 namespace at::native {

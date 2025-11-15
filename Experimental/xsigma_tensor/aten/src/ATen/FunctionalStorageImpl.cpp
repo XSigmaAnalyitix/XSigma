@@ -1,8 +1,8 @@
-#include <ATen/EmptyTensor.h>
-#include <ATen/FunctionalStorageImpl.h>
-#include <ATen/FunctionalTensorWrapper.h>
-#include <ATen/SparseCsrTensorUtils.h>
-#include <ATen/core/LegacyTypeDispatch.h>
+#include <XSigma/EmptyTensor.h>
+#include <XSigma/FunctionalStorageImpl.h>
+#include <XSigma/FunctionalTensorWrapper.h>
+#include <XSigma/SparseCsrTensorUtils.h>
+#include <XSigma/core/LegacyTypeDispatch.h>
 #include <c10/util/Exception.h>
 
 #include <vector>

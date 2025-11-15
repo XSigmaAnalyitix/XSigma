@@ -1760,7 +1760,7 @@ class CppWoqInt4GemmTemplateMeta(type):
                 # This method is called only if AMX microkernels are used.
                 # In this case, we unpack and repack weight so that block_n=32
                 # the format of packed weight is described here:
-                # https://github.com/pytorch/pytorch/blob/32eee8ed225d9f10fbbcb38c24b8b44c24c0c97c/aten/src/ATen/native/cpu/int4mm_kernel.cpp#L583
+                # https://github.com/pytorch/pytorch/blob/32eee8ed225d9f10fbbcb38c24b8b44c24c0c97c/aten/src/XSigma/native/cpu/int4mm_kernel.cpp#L583
                 if isinstance(W, ir.IRNode):
                     # in this case, we do nothing
                     ir.ExternKernel.require_contiguous(W)
@@ -1778,7 +1778,7 @@ class CppWoqInt4GemmTemplateMeta(type):
                     # Here we use scale=1 and qzero=8 because we want to unpack weight
                     # without dequantizing it. The qzero here is 8 instead of 0 because
                     # int4 values are converted to [-7, 8] in the _weight_int4pack_mm_for_cpu kernel:
-                    # https://github.com/pytorch/pytorch/blob/32eee8ed225d9f10fbbcb38c24b8b44c24c0c97c/aten/src/ATen/native/cpu/int4mm_kernel.cpp#L95
+                    # https://github.com/pytorch/pytorch/blob/32eee8ed225d9f10fbbcb38c24b8b44c24c0c97c/aten/src/XSigma/native/cpu/int4mm_kernel.cpp#L95
                     qscales_and_zeros = (
                         torch.tensor([1.0, 8.0])
                         .bfloat16()

@@ -1,6 +1,6 @@
-#include <ATen/cuda/CUDAContext.h>
-#include <ATen/cuda/CUDAGeneratorImpl.h>
-#include <ATen/native/cuda/jit_utils.h>
+#include <XSigma/cuda/CUDAContext.h>
+#include <XSigma/cuda/CUDAGeneratorImpl.h>
+#include <XSigma/native/cuda/jit_utils.h>
 #include <torch/csrc/jit/codegen/fuser/cuda/fused_kernel.h>
 #include <torch/csrc/jit/codegen/fuser/cuda/resource_strings.h>
 #include <torch/csrc/jit/jit_log.h>
@@ -16,9 +16,9 @@
 #include <xsigma/util/irange.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
+#include <XSigma/NativeFunctions.h>
 #else
-#include <ATen/ops/empty_strided_native.h>
+#include <XSigma/ops/empty_strided_native.h>
 #endif
 
 #include <unordered_map>
@@ -1237,11 +1237,11 @@ void CudaCodeGen::Initialize()
 
 void CudaCodeGen::call_with_numel(void** args, int64_t numel)
 {
-    if XSIGMA_UNLIKELY(numel == 0)
+    if XSIGMA_UNLIKELY (numel == 0)
     {
         return;
     }
-    if XSIGMA_UNLIKELY(thread_block_size_ <= 0)
+    if XSIGMA_UNLIKELY (thread_block_size_ <= 0)
     {
         TORCH_INTERNAL_ASSERT(
             thread_block_size_ >= 0, "call_with_numel() requires a precomputed thread block size");

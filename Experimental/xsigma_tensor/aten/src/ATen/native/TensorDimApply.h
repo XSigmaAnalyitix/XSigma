@@ -1,5 +1,5 @@
 #pragma once
-#include <ATen/core/Tensor.h>
+#include <XSigma/core/Tensor.h>
 #include <c10/util/irange.h>
 
 namespace at::native

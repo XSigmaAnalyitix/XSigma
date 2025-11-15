@@ -1,4 +1,4 @@
-#include <ATen/core/jit_type.h>
+#include <XSigma/core/jit_type.h>
 #include <torch/csrc/jit/ir/alias_analysis.h>
 #include <torch/csrc/jit/ir/ir_views.h>
 #include <torch/csrc/jit/jit_log.h>
@@ -483,11 +483,11 @@ static bool FuseAddMM(Block* block)
 
 // FuseAddMM is a separate pass from peephole optimize because it is currently
 // used for exporting to ONNX.
-// Today, fusing add + MM has no benefit within PyTorch running ATen
+// Today, fusing add + MM has no benefit within PyTorch running XSigma
 // ops. However, we rely on seeing the fused version of AddMM for ONNX export,
 // since otherwise after ONNX translation we would see redundant Gemm ops with
 // sub-optimal inputs.
-// It won't be helpful for ATen until we're able to represent
+// It won't be helpful for XSigma until we're able to represent
 //   torch.addmm(a, b, c, out=a).
 // That's because addmm dispatches internally to gemm, which computes:
 //   C = beta * C + alpha * A @ B

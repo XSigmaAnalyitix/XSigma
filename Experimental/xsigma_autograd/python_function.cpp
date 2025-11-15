@@ -1,7 +1,7 @@
-#include <ATen/ATen.h>
-#include <ATen/FuncTorchTLS.h>
-#include <ATen/SequenceNumber.h>
-#include <ATen/functorch/DynamicLayer.h>
+#include <XSigma/FuncTorchTLS.h>
+#include <XSigma/SequenceNumber.h>
+#include <XSigma/XSigma.h>
+#include <XSigma/functorch/DynamicLayer.h>
 #include <pybind11/pybind11.h>
 #include <structmember.h>
 #include <torch/csrc/DynamicTypes.h>
@@ -351,7 +351,7 @@ void PyNode::compiled_args(CompiledNodeArgs& args) const
     TORCH_INTERNAL_ASSERT(size > 0);
     // first value is unique id managed by AUTOGRAD_FUNCTION_COUNTER
     auto key = PyLong_AsSsize_t(PyTuple_GET_ITEM(pykey.get(), 0));
-    if XSIGMA_UNLIKELY(key < 0)
+    if XSIGMA_UNLIKELY (key < 0)
     {
         XSIGMA_CHECK(PyErr_Occurred(), "key must be positive");
         throw_python_error();
@@ -365,7 +365,7 @@ void PyNode::compiled_args(CompiledNodeArgs& args) const
     for (const auto i : xsigma::irange(1, size))
     {
         auto val = PyLong_AsSsize_t(PyTuple_GET_ITEM(pykey.get(), i));
-        if XSIGMA_UNLIKELY(val == -1 && PyErr_Occurred())
+        if XSIGMA_UNLIKELY (val == -1 && PyErr_Occurred())
             throw_python_error();
         f->compiled_autograd_symints.emplace_back(val);
     }

@@ -1,19 +1,19 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/Dispatch.h>
-#include <ATen/core/Tensor.h>
-#include <ATen/cuda/CUDAContext.h>
-#include <ATen/native/Resize.h>
-#include <ATen/native/TensorShape.h>
+#include <XSigma/Dispatch.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/cuda/CUDAContext.h>
+#include <XSigma/native/Resize.h>
+#include <XSigma/native/TensorShape.h>
 #include <c10/cuda/CUDAGraphsC10Utils.h>
 #include <c10/util/TypeCast.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
+#include <XSigma/Functions.h>
+#include <XSigma/NativeFunctions.h>
 #else
-#include <ATen/ops/_chunk_cat_native.h>
-#include <ATen/ops/empty.h>
-#include <ATen/ops/split_with_sizes_copy_native.h>
+#include <XSigma/ops/_chunk_cat_native.h>
+#include <XSigma/ops/empty.h>
+#include <XSigma/ops/split_with_sizes_copy_native.h>
 #endif
 
 namespace at::native {

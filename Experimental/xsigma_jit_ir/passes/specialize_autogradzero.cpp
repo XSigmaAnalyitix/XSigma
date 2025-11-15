@@ -1,4 +1,4 @@
-#include <ATen/core/symbol.h>
+#include <XSigma/core/symbol.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/specialize_autogradzero.h>

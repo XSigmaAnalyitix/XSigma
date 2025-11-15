@@ -1,10 +1,10 @@
 #pragma once
 
-#include <ATen/DimVector.h>
-#include <ATen/EmptyTensor.h>
-#include <ATen/Tensor.h>
-#include <ATen/TensorGeometry.h>
-#include <ATen/Utils.h>
+#include <XSigma/DimVector.h>
+#include <XSigma/EmptyTensor.h>
+#include <XSigma/Tensor.h>
+#include <XSigma/TensorGeometry.h>
+#include <XSigma/Utils.h>
 
 #include <utility>
 

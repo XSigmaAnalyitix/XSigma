@@ -223,7 +223,7 @@ enum class ActivityType {
 ### **RecordScope**
 ```cpp
 enum class RecordScope : uint8_t {
-    FUNCTION = 0,              // ATen/XSigma ops
+    FUNCTION = 0,              // XSigma/XSigma ops
     BACKWARD_FUNCTION,         // Autograd nodes
     TORCHSCRIPT_FUNCTION,      // TorchScript functions
     CUSTOM_CLASS,              // Torchbind classes

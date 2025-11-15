@@ -1,6 +1,6 @@
-#include <ATen/DeviceGuard.h>
-#include <ATen/ExpandUtils.h>
-#include <ATen/core/symbol.h>
+#include <XSigma/DeviceGuard.h>
+#include <XSigma/ExpandUtils.h>
+#include <XSigma/core/symbol.h>
 #include <torch/csrc/autograd/variable.h>
 #include <torch/csrc/jit/frontend/error_report.h>
 #include <torch/csrc/jit/ir/alias_analysis.h>
@@ -16,9 +16,9 @@
 #include "util/exception.h"
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/empty_strided.h>
+#include <XSigma/ops/empty_strided.h>
 #endif
 
 #include <exception>

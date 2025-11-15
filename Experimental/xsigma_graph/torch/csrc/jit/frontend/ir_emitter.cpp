@@ -1,5 +1,5 @@
-#include <ATen/core/interned_strings.h>
-#include <ATen/core/jit_type.h>
+#include <XSigma/core/interned_strings.h>
+#include <XSigma/core/jit_type.h>
 #include <caffe2/serialize/versions.h>
 #include <torch/csrc/jit/api/function_impl.h>
 #include <torch/csrc/jit/frontend/canonicalize_modified_loop.h>
@@ -2883,7 +2883,7 @@ private:
     }
 
     // Get the appropriate builtin op for this augmented assignment
-    // If the RHS is a tensor, return the corresponding ATen in-place op
+    // If the RHS is a tensor, return the corresponding XSigma in-place op
     // If it's a list of scalars, then return the corresponding list augment op
     Symbol getAugOp(const AugAssign& stmt, const TypePtr& type)
     {

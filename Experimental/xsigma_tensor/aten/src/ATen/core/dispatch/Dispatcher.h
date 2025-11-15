@@ -1,14 +1,14 @@
 #pragma once
 
-#include <ATen/SequenceNumber.h>
-#include <ATen/core/boxing/KernelFunction.h>
-#include <ATen/core/boxing/impl/boxing.h>
-#include <ATen/core/dispatch/CppSignature.h>
-#include <ATen/core/dispatch/OperatorEntry.h>
-#include <ATen/core/dispatch/RegistrationHandleRAII.h>
-#include <ATen/core/enum_tag.h>
-#include <ATen/core/grad_mode.h>
-#include <ATen/record_function.h>
+#include <XSigma/SequenceNumber.h>
+#include <XSigma/core/boxing/KernelFunction.h>
+#include <XSigma/core/boxing/impl/boxing.h>
+#include <XSigma/core/dispatch/CppSignature.h>
+#include <XSigma/core/dispatch/OperatorEntry.h>
+#include <XSigma/core/dispatch/RegistrationHandleRAII.h>
+#include <XSigma/core/enum_tag.h>
+#include <XSigma/core/grad_mode.h>
+#include <XSigma/record_function.h>
 #include <c10/core/SafePyObject.h>
 #include <c10/util/Exception.h>
 #include <c10/util/LeftRight.h>

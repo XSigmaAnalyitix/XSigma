@@ -201,7 +201,7 @@ const Node* findNodeForOp(const Graph& g, const std::string& unqualifiedOpName)
         }
     }
 
-    // Ideally, there will be only one ATen operator that has tensor outputs in
+    // Ideally, there will be only one XSigma operator that has tensor outputs in
     // the graph. Let's use that as the last resolve to make checkAliasAnnotation
     // more robust.
     for (const auto* node : g.nodes())

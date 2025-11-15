@@ -816,11 +816,11 @@ def get_kernel_metadata(
     sort_str = "Topologically Sorted" if single_graph is not None else "Unsorted"
     metadata = (
         f"{wrapper.comment} {sort_str} Source Nodes: [{', '.join(from_node_dict.keys())}], "
-        f"Original ATen: [{', '.join(original_aten_dict.keys())}]"
+        f"Original XSigma: [{', '.join(original_aten_dict.keys())}]"
     )
 
     # trace back to original node here
-    detailed_metadata = [f"{wrapper.comment} Source node to ATen node mapping:"]
+    detailed_metadata = [f"{wrapper.comment} Source node to XSigma node mapping:"]
     for original_node, nodes in sorted(from_node_dict.items()):
         detailed_metadata.append(
             f"{wrapper.comment}   {original_node} => {', '.join(sorted(nodes))}"

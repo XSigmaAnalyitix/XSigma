@@ -1,9 +1,9 @@
-#include <ATen/ATen.h>
-#include <ATen/NativeFunctions.h>
-#include <ATen/core/dispatch/Dispatcher.h>
-#include <ATen/core/op_registration/op_registration.h>
-#include <ATen/native/MathBitFallThroughLists.h>
-#include <ATen/native/UnaryOps.h>
+#include <XSigma/NativeFunctions.h>
+#include <XSigma/XSigma.h>
+#include <XSigma/core/dispatch/Dispatcher.h>
+#include <XSigma/core/op_registration/op_registration.h>
+#include <XSigma/native/MathBitFallThroughLists.h>
+#include <XSigma/native/UnaryOps.h>
 #include <c10/util/irange.h>
 #include <torch/library.h>
 

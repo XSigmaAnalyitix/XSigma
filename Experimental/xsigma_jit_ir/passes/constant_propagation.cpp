@@ -1,5 +1,5 @@
-#include <ATen/core/functional.h>
-#include <ATen/core/ivalue.h>
+#include <XSigma/core/functional.h>
+#include <XSigma/core/ivalue.h>
 #include <torch/csrc/autograd/variable.h>
 #include <torch/csrc/jit/ir/alias_analysis.h>
 #include <torch/csrc/jit/ir/constants.h>

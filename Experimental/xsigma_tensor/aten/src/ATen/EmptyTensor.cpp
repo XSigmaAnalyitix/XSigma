@@ -1,9 +1,9 @@
 #define TORCH_ASSERT_NO_OPERATORS
-#include <ATen/Context.h>
-#include <ATen/EmptyTensor.h>
-#include <ATen/detail/CUDAHooksInterface.h>
-#include <ATen/detail/PrivateUse1HooksInterface.h>
-#include <ATen/detail/XPUHooksInterface.h>
+#include <XSigma/Context.h>
+#include <XSigma/EmptyTensor.h>
+#include <XSigma/detail/CUDAHooksInterface.h>
+#include <XSigma/detail/PrivateUse1HooksInterface.h>
+#include <XSigma/detail/XPUHooksInterface.h>
 #include <c10/core/CPUAllocator.h>
 #include <c10/util/safe_numerics.h>
 
@@ -53,7 +53,7 @@ c10::Allocator* GetCPUAllocatorMaybePinned(bool pin_memory)
 #ifndef C10_MOBILE
 constexpr uint64_t storage_max()
 {
-    // int64_t and size_t are used somewhat inconsistently throughout ATen.
+    // int64_t and size_t are used somewhat inconsistently throughout XSigma.
     // To be safe, storage size calculations must fit in both types.
     constexpr auto int64_max = static_cast<uint64_t>(std::numeric_limits<int64_t>::max());
     constexpr auto size_max  = static_cast<uint64_t>(std::numeric_limits<size_t>::max());

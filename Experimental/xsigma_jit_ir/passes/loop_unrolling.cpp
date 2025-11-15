@@ -1,4 +1,4 @@
-#include <ATen/core/symbol.h>
+#include <XSigma/core/symbol.h>
 #include <torch/csrc/jit/ir/constants.h>
 #include <torch/csrc/jit/ir/ir_views.h>
 #include <torch/csrc/jit/jit_log.h>

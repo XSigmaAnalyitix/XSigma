@@ -1,19 +1,19 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/NamedTensorUtils.h>
-#include <ATen/TensorSubclassLikeUtils.h>
-#include <ATen/core/Tensor.h>
-#include <ATen/native/Resize.h>
-#include <ATen/native/ResizeCommon.h>
+#include <XSigma/NamedTensorUtils.h>
+#include <XSigma/TensorSubclassLikeUtils.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/native/Resize.h>
+#include <XSigma/native/ResizeCommon.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
+#include <XSigma/NativeFunctions.h>
 #else
-#include <ATen/ops/_resize_output.h>
-#include <ATen/ops/_resize_output_native.h>
-#include <ATen/ops/resize.h>
-#include <ATen/ops/resize_as_native.h>
-#include <ATen/ops/resize_as_sparse_native.h>
-#include <ATen/ops/resize_native.h>
+#include <XSigma/ops/_resize_output.h>
+#include <XSigma/ops/_resize_output_native.h>
+#include <XSigma/ops/resize.h>
+#include <XSigma/ops/resize_as_native.h>
+#include <XSigma/ops/resize_as_sparse_native.h>
+#include <XSigma/ops/resize_native.h>
 #endif
 
 #include <c10/util/overflows.h>

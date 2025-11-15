@@ -1,6 +1,6 @@
-#include <ATen/core/function_schema.h>
-#include <ATen/core/jit_type.h>
-#include <ATen/core/symbol.h>
+#include <XSigma/core/function_schema.h>
+#include <XSigma/core/jit_type.h>
+#include <XSigma/core/symbol.h>
 #include <torch/csrc/jit/ir/alias_analysis.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/jit_log.h>
@@ -13,9 +13,9 @@
 #include <optional>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/empty.h>
+#include <XSigma/ops/empty.h>
 #endif
 
 #include <algorithm>

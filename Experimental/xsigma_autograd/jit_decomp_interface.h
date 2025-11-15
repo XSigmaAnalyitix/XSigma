@@ -1,7 +1,7 @@
 #pragma once
 
-#include <ATen/core/Tensor.h>
-#include <ATen/core/function_schema.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/core/function_schema.h>
 #include <xsigma/macros/Export.h>
 
 // NOTE: [Jit Decomposition Interface]

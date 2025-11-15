@@ -1,4 +1,4 @@
-#if XSIGMA_HAS_NATIVE_PROFILER
+#if XSIGMA_HAS_NATIVE_PROFILER && 0
 /*
  * XSigma Parallel Backends Performance Profiling
  *
@@ -29,7 +29,7 @@
 #include <vector>
 
 #include "parallel/parallel.h"
-#include "profiler/kineto_shim.h"
+#include "profiler/kineto/kineto_shim.h"
 #include "profiler/native/session/profiler.h"
 
 #if XSIGMA_HAS_KINETO
@@ -563,5 +563,8 @@ int main(int argc, char** argv)
     return 0;
 }
 #else
-int main(int argc, char** argv){ return 0;}
+int main(int argc, char** argv)
+{
+    return 0;
+}
 #endif  // XSIGMA_HAS_NATIVE_PROFILER

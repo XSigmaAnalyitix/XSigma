@@ -1,17 +1,17 @@
 #pragma once
 
-#include <ATen/CachedTensorUtils.h>
-#include <ATen/LegacyBatchedTensorImpl.h>
-#include <ATen/TensorOperators.h>
+#include <XSigma/CachedTensorUtils.h>
+#include <XSigma/LegacyBatchedTensorImpl.h>
+#include <XSigma/TensorOperators.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/utils/grad_layout_contract.h>
 #include <torch/csrc/autograd/variable.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/_sparse_coo_tensor_unsafe.h>
+#include <XSigma/ops/_sparse_coo_tensor_unsafe.h>
 #endif
 
 #include <mutex>

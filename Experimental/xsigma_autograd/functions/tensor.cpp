@@ -1,4 +1,4 @@
-#include <ATen/ATen.h>
+#include <XSigma/XSigma.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/functions/basic_ops.h>
 #include <torch/csrc/autograd/functions/tensor.h>

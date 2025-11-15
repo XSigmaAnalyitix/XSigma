@@ -1,6 +1,6 @@
-#include <ATen/Utils.h>
-#include <ATen/code_template.h>
-#include <ATen/cuda/CUDAConfig.h>
+#include <XSigma/Utils.h>
+#include <XSigma/code_template.h>
+#include <XSigma/cuda/CUDAConfig.h>
 #include <torch/csrc/jit/ir/constants.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/ir/subgraph_matcher.h>

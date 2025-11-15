@@ -19,15 +19,15 @@ function.h (Node class)
     └── Key: Defines the fundamental Node class
 
 input_metadata.h (Tensor metadata)
-    ├── Depends on: ATen/Tensor.h
+    ├── Depends on: XSigma/Tensor.h
     └── Used by: function.h, input_buffer.h
 
 saved_variable.h (Saved tensor wrapper)
-    ├── Depends on: ATen/Tensor.h
+    ├── Depends on: XSigma/Tensor.h
     └── Used by: function.h, custom_function.h
 
 input_buffer.h (Gradient accumulation)
-    ├── Depends on: input_metadata.h, ATen/Tensor.h
+    ├── Depends on: input_metadata.h, XSigma/Tensor.h
     └── Used by: engine.h, graph_task.h
 
 graph_task.h (Execution metadata)
@@ -94,7 +94,7 @@ python_engine.h/cpp (Python engine wrapper)
     └── Used by: Python autograd API
 
 grad_mode.h (Gradient mode control)
-    ├── Depends on: ATen/core/TensorBase.h
+    ├── Depends on: XSigma/core/TensorBase.h
     └── Used by: engine.cpp, variable.h
 
 anomaly_mode.h/cpp (Anomaly detection)
@@ -223,7 +223,7 @@ xsigma/autograd/forward_ad.py (Forward AD)
 │                    COMPLETE DEPENDENCY GRAPH                     │
 └──────────────────────────────────────────────────────────────────┘
 
-                        ATen/Tensor.h
+                        XSigma/Tensor.h
                               ↓
         ┌─────────────────────┼─────────────────────┐
         ↓                     ↓                     ↓
@@ -332,7 +332,7 @@ python_function.h ← python_hook.h
 
 | File | Includes | Included By |
 |------|----------|------------|
-| `edge.h` | ATen | function.h, graph_task.h, variable.h |
+| `edge.h` | XSigma | function.h, graph_task.h, variable.h |
 | `function.h` | edge.h, saved_variable.h | engine.h, variable.h, all ops |
 | `graph_task.h` | function.h, input_buffer.h | engine.h, python_engine.h |
 | `variable.h` | edge.h, function.h | engine.h, functions/utils.h |

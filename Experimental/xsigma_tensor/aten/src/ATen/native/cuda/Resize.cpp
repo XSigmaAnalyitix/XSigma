@@ -1,15 +1,15 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/core/Tensor.h>
-#include <ATen/cuda/CUDAContext.h>
-#include <ATen/cuda/PeerToPeerAccess.h>
-#include <ATen/native/ResizeCommon.h>
-#include <ATen/native/cuda/Resize.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/cuda/CUDAContext.h>
+#include <XSigma/cuda/PeerToPeerAccess.h>
+#include <XSigma/native/ResizeCommon.h>
+#include <XSigma/native/cuda/Resize.h>
 #include <c10/cuda/CUDAGuard.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
+#include <XSigma/NativeFunctions.h>
 #else
-#include <ATen/ops/resize_native.h>
+#include <XSigma/ops/resize_native.h>
 #endif
 
 namespace at::native

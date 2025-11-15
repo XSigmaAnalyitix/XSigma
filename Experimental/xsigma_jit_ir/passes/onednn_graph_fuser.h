@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/Config.h>
+#include <XSigma/Config.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/passes/pass_manager.h>
 

@@ -176,7 +176,7 @@ const int   _asym_zero_point = 0;
 const float _sym_scale       = 2.0f / 256.0f;
 const int   _sym_zero_point  = 128;
 // quantization parameters for ops with range 0 to 1
-// for example: aten/src/ATen/native/quantized/cpu/qsigmoid.cpp
+// for example: aten/src/XSigma/native/quantized/cpu/qsigmoid.cpp
 static std::tuple<xsigma::QScheme, QParamVector> _per_tensor_asym_qparam = std::make_tuple(
     xsigma::kPerTensorAffine,
     QParamVector(
@@ -185,7 +185,7 @@ static std::tuple<xsigma::QScheme, QParamVector> _per_tensor_asym_qparam = std::
          std::make_pair(".scalar_type", IValue(xsigma::kQUInt8))}));
 
 // quantization parameters for ops with range -1 to 1
-// for example: aten/src/ATen/native/quantized/cpu/qtanh.cpp
+// for example: aten/src/XSigma/native/quantized/cpu/qtanh.cpp
 static std::tuple<xsigma::QScheme, QParamVector> _per_tensor_sym_qparam = std::make_tuple(
     xsigma::kPerTensorAffine,
     QParamVector(

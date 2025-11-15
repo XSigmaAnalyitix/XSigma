@@ -2449,7 +2449,7 @@ class DataProcessorTemplateWrapper:
     This class together with `DataProcessorChoiceCallerWrapper` provides a convenient way to
     preprocess and postprocess data before and after using the wrapped template. A typical
     usage is to reorder or filter the input nodes in order to match the expected input of other
-    kernel choices like a ATen kernel. A more complicated usage is to prepack the weights.
+    kernel choices like a XSigma kernel. A more complicated usage is to prepack the weights.
     See the example from :mod:`cpp_gemm_template` for more details.
     """
 
@@ -2922,9 +2922,9 @@ class AlgorithmSelectorCache(PersistentCache):
 
         # if timings is empty, we really have no choice but to return a semi-random
         # choice. returning the first `ExternKernelCaller` is probably the safest bet
-        # in this case, since it will generally be the ATen kernel. if there are no
+        # in this case, since it will generally be the XSigma kernel. if there are no
         # `ExternKernelCaller`s to return, then returning the 0th kernel is our next
-        # best option (ideally we'd fail whenever there is no ATen kernel to fallback
+        # best option (ideally we'd fail whenever there is no XSigma kernel to fallback
         # to, but that's not trivial to figure out)
         if timings == {}:
             for choice in choices:
@@ -3349,7 +3349,7 @@ class AlgorithmSelectorCache(PersistentCache):
         from . import autotune_process
 
         # only benchmark triton kernel in sub process for now.
-        # ATen/Extern kernel are still benchmarked in the current process.
+        # XSigma/Extern kernel are still benchmarked in the current process.
         extern = [c for c in choices if cls._is_extern(c)]
         triton = [c for c in choices if not cls._is_extern(c)]
 

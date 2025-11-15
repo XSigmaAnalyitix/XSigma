@@ -1,6 +1,6 @@
 #if 0
-#include <ATen/ThreadLocalState.h>
-#include <ATen/cpp_custom_type_hack.h>
+#include <XSigma/ThreadLocalState.h>
+#include <XSigma/cpp_custom_type_hack.h>
 #include <xsigma/csrc/autograd/record_function_ops.h>
 #include <xsigma/csrc/jit/runtime/operator.h>
 #include <xsigma/library.h>

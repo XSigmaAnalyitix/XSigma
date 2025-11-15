@@ -1,13 +1,13 @@
 
 #pragma once
 
-#include <ATen/ArrayRef.h>
-#include <ATen/FunctionalStorageImpl.h>
-#include <ATen/core/IListRef.h>
-#include <ATen/core/List.h>
-#include <ATen/core/boxing/BoxedKernel.h>
-#include <ATen/core/boxing/impl/boxing.h>
-#include <ATen/core/dispatch/Dispatcher.h>
+#include <XSigma/ArrayRef.h>
+#include <XSigma/FunctionalStorageImpl.h>
+#include <XSigma/core/IListRef.h>
+#include <XSigma/core/List.h>
+#include <XSigma/core/boxing/BoxedKernel.h>
+#include <XSigma/core/boxing/impl/boxing.h>
+#include <XSigma/core/dispatch/Dispatcher.h>
 #include <c10/core/DispatchKey.h>
 
 namespace at

@@ -1,4 +1,4 @@
-#include <ATen/native/quantized/PackedParams.h>
+#include <XSigma/native/quantized/PackedParams.h>
 #include <torch/csrc/jit/ir/constants.h>
 #include <torch/csrc/jit/ir/irparser.h>
 #include <torch/csrc/jit/ir/subgraph_matcher.h>
@@ -10,7 +10,7 @@
 
 // TODO: Switch to per operator headers after
 // https://github.com/pytorch/pytorch/pull/68693 is merged
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 
 using ::xsigma::Dispatcher;
 
@@ -531,7 +531,7 @@ static void UnpackQuantizedTensorInputs(std::shared_ptr<Graph>& graph)
         std::string input_name  = g_input->debugName();
         auto        input_value = graph->insertInput(index, input_name + "_value")
                                ->setType(shape_type->withScalarType(qTypeToValType[scalar_type]));
-        // scale and zero_point type can be found xsigma torch/include/ATen/Operators.h
+        // scale and zero_point type can be found xsigma torch/include/XSigma/Operators.h
         auto input_scale =
             graph->insertInput(index + 1, input_name + "_scale")
                 ->setType(

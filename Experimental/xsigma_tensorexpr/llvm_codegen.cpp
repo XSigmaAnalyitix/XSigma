@@ -1,7 +1,7 @@
 #ifdef TORCH_ENABLE_LLVM
 
-#include <ATen/NativeFunctions.h>
-#include <ATen/Parallel.h>
+#include <XSigma/NativeFunctions.h>
+#include <XSigma/Parallel.h>
 #include <torch/csrc/jit/tensorexpr/analysis.h>
 #include <torch/csrc/jit/tensorexpr/llvm_codegen.h>
 #include <torch/csrc/jit/tensorexpr/llvm_jit.h>

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <ATen/ATen.h>
-#include <ATen/cuda/CUDAContext.h>
-#include <ATen/cuda/nvrtc_stub/ATenNVRTC.h>
+#include <XSigma/XSigma.h>
+#include <XSigma/cuda/CUDAContext.h>
+#include <XSigma/cuda/nvrtc_stub/ATenNVRTC.h>
 #include <torch/csrc/jit/resource_guard.h>
 #include <torch/csrc/jit/tensorexpr/codegen.h>
 #include <torch/csrc/jit/tensorexpr/eval.h>

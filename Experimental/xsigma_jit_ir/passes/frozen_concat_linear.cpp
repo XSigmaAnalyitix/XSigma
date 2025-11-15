@@ -11,9 +11,9 @@
 #include <xsigma/util/irange.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/cat.h>
+#include <XSigma/ops/cat.h>
 #endif
 
 #include <unordered_set>

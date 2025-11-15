@@ -1,8 +1,8 @@
 #pragma once
 
-#include <ATen/Parallel.h>
-#include <ATen/core/TensorAccessor.h>
-#include <ATen/cpu/vec/vec.h>
+#include <XSigma/Parallel.h>
+#include <XSigma/core/TensorAccessor.h>
+#include <XSigma/cpu/vec/vec.h>
 #include <c10/util/llvmMathExtras.h>
 
 #ifdef USE_FBGEMM

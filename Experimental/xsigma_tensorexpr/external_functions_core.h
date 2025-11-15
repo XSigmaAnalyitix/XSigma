@@ -1,7 +1,7 @@
 #pragma once
 
-#include <ATen/ATen.h>
-#include <ATen/Parallel.h>
+#include <XSigma/Parallel.h>
+#include <XSigma/XSigma.h>
 #include <torch/csrc/Export.h>
 
 #include <cstdint>

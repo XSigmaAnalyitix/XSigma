@@ -1,6 +1,6 @@
-#include <ATen/ATen.h>
-#include <ATen/FuncTorchTLS.h>
-#include <ATen/MemoryOverlap.h>
+#include <XSigma/FuncTorchTLS.h>
+#include <XSigma/MemoryOverlap.h>
+#include <XSigma/XSigma.h>
 #include <torch/csrc/autograd/InferenceMode.h>
 #include <torch/csrc/autograd/autograd.h>
 #include <torch/csrc/autograd/edge.h>

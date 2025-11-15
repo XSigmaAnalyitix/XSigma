@@ -1,7 +1,7 @@
 #if XSIGMA_HAS_KINETO
 #include "kineto_client_interface.h"
 
-//#include <ATen/Context.h>
+//#include <XSigma/Context.h>
 #include <libkineto.h>
 
 #include <chrono>

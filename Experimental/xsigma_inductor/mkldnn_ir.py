@@ -51,7 +51,7 @@ def _prepare_convolution_fusion_create(
     supported on CPU/XPU right now.
     """
 
-    # Port from aten/src/ATen/native/ConvUtils.h: _conv_input_size
+    # Port from aten/src/XSigma/native/ConvUtils.h: _conv_input_size
     def _conv_input_size(
         output_size, weight_size, padding, output_padding, stride, dilation, groups
     ):
@@ -75,7 +75,7 @@ def _prepare_convolution_fusion_create(
             input_size.append(input_size_d)
         return list(map(int, input_size))
 
-    # Port from aten/src/ATen/native/ConvUtils.h: _conv_output_size
+    # Port from aten/src/XSigma/native/ConvUtils.h: _conv_output_size
     def _conv_output_size(input_size, weight_size, padding, stride, dilation=None):
         has_dilation = dilation is not None
         dim = len(input_size)
@@ -248,7 +248,7 @@ def _prepare_linear_fusion_create(
     *m, _ = x.get_size()
     # The weight has been transposed during the qlinear weight prepack process.
     # https://github.com/pytorch/pytorch/blob/4979f9c0d72490970e2019bb1d2284f83d93f76b/
-    # aten/src/ATen/native/quantized/cpu/qlinear_prepack.cpp#L291
+    # aten/src/XSigma/native/quantized/cpu/qlinear_prepack.cpp#L291
     _, oc = weight.get_size()
     output_size = list(m) + [oc]
     req_stride_order = list(reversed(range(len(x.get_size()))))

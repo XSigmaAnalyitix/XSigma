@@ -1,6 +1,6 @@
-#include <ATen/code_template.h>
-#include <ATen/core/op_registration/op_registration.h>
-#include <ATen/record_function.h>
+#include <XSigma/code_template.h>
+#include <XSigma/core/op_registration/op_registration.h>
+#include <XSigma/record_function.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/profiler_legacy.h>
 #include <torch/csrc/jit/frontend/tracer.h>
@@ -9,8 +9,8 @@
 #include <torch/library.h>
 #include <xsigma/core/Allocator.h>
 #include <xsigma/util/ApproximateClock.h>
-#include <xsigma/util/thread_local_debug_info.h>
 #include <xsigma/util/irange.h>
+#include <xsigma/util/thread_local_debug_info.h>
 
 #include <fstream>
 #include <iostream>
@@ -81,7 +81,7 @@ namespace torch::autograd::profiler
 //
 // Profiler uses observers mechanism to add a pair of thread local callbacks
 // that are executed on a number of predetermined ranges, including:
-//  - xsigma/ATen ops
+//  - xsigma/XSigma ops
 //  - TorchScript functions/methods
 //  - user defined named ranges (see `record_function` python context manager)
 //

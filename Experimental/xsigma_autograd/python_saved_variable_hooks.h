@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ATen/ATen.h>
+#include <XSigma/XSigma.h>
 #include <pybind11/pybind11.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/autograd/python_variable.h>

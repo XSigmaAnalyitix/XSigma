@@ -1,16 +1,16 @@
 #pragma once
 
-#include <ATen/Tensor.h>
+#include <XSigma/Tensor.h>
 #include <c10/core/TensorImpl.h>
 #include <c10/core/impl/TorchDispatchModeTLS.h>
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/empty.h>
-#include <ATen/ops/resize.h>
+#include <XSigma/ops/empty.h>
+#include <XSigma/ops/resize.h>
 #endif
 
 namespace at

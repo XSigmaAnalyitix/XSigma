@@ -1,6 +1,6 @@
-#include <ATen/ATen.h>
-#include <ATen/core/functional.h>
-#include <ATen/core/symbol.h>
+#include <XSigma/XSigma.h>
+#include <XSigma/core/functional.h>
+#include <XSigma/core/symbol.h>
 #include <torch/csrc/jit/ir/alias_analysis.h>
 #include <torch/csrc/jit/ir/constants.h>
 #include <torch/csrc/jit/passes/batch_mm.h>

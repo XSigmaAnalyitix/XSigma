@@ -1,4 +1,4 @@
-#include <ATen/TensorOperators.h>
+#include <XSigma/TensorOperators.h>
 #include <torch/csrc/jit/ir/subgraph_matcher.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/fold_conv_bn.h>
@@ -6,12 +6,12 @@
 #include <torch/csrc/jit/passes/quantization/helper.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/empty_like.h>
-#include <ATen/ops/ones_like.h>
-#include <ATen/ops/rsqrt.h>
-#include <ATen/ops/zeros_like.h>
+#include <XSigma/ops/empty_like.h>
+#include <XSigma/ops/ones_like.h>
+#include <XSigma/ops/rsqrt.h>
+#include <XSigma/ops/zeros_like.h>
 #endif
 
 #include <stack>

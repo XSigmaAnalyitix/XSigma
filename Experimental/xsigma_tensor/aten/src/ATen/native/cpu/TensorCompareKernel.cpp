@@ -1,16 +1,16 @@
 #include <c10/core/ScalarType.h>
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/Dispatch.h>
-#include <ATen/NumericUtils.h>
-#include <ATen/Parallel.h>
-#include <ATen/TensorIterator.h>
-#include <ATen/WrapDimUtils.h>
-#include <ATen/core/Tensor.h>
-#include <ATen/native/ReduceOps.h>
-#include <ATen/native/ReduceOpsUtils.h>
-#include <ATen/native/Resize.h>
-#include <ATen/native/TensorCompare.h>
-#include <ATen/native/cpu/Loops.h>
+#include <XSigma/Dispatch.h>
+#include <XSigma/NumericUtils.h>
+#include <XSigma/Parallel.h>
+#include <XSigma/TensorIterator.h>
+#include <XSigma/WrapDimUtils.h>
+#include <XSigma/core/Tensor.h>
+#include <XSigma/native/ReduceOps.h>
+#include <XSigma/native/ReduceOpsUtils.h>
+#include <XSigma/native/Resize.h>
+#include <XSigma/native/TensorCompare.h>
+#include <XSigma/native/cpu/Loops.h>
 #include <c10/util/irange.h>
 
 #include <algorithm>
@@ -20,9 +20,9 @@
 #include <vector>
 
 #ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
+#include <XSigma/Functions.h>
 #else
-#include <ATen/ops/result_type.h>
+#include <XSigma/ops/result_type.h>
 #endif
 
 namespace at::native

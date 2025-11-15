@@ -1,5 +1,5 @@
-#include <ATen/Config.h>
-#include <ATen/code_template.h>
+#include <XSigma/Config.h>
+#include <XSigma/code_template.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/constant_propagation.h>
