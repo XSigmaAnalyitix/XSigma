@@ -51,11 +51,15 @@ def check_bazel_installed() -> bool:
                 capture_output=True,
                 text=True,
                 check=False,
+                timeout=10,  # 10 second timeout to prevent hanging
             )
             if result.returncode == 0:
                 print_status(f"Found {cmd}: {result.stdout.split()[0]}", "INFO")
                 return True
         except FileNotFoundError:
+            continue
+        except subprocess.TimeoutExpired:
+            print_status(f"Timeout checking {cmd} version (command took too long)", "WARNING")
             continue
     return False
 
@@ -68,9 +72,13 @@ def get_bazel_command() -> str:
                 [cmd, "version"],
                 capture_output=True,
                 check=True,
+                timeout=10,  # 10 second timeout to prevent hanging
             )
             return cmd
         except (FileNotFoundError, subprocess.CalledProcessError):
+            continue
+        except subprocess.TimeoutExpired:
+            print_status(f"Timeout checking {cmd} version (command took too long)", "WARNING")
             continue
     raise RuntimeError("Neither bazel nor bazelisk found in PATH")
 
@@ -165,6 +173,10 @@ class BazelConfiguration:
         """Build the Bazel command with all configurations."""
         bazel_cmd = get_bazel_command()
         cmd = [bazel_cmd, action]
+
+        # Add server management flags to prevent hanging
+        # Use --noserver to disable Bazel server (prevents deadlocks on Windows)
+        cmd.append("--noserver")
 
         # Add default logging backend if not explicitly set
         if not any(c.startswith("logging_") for c in self.configs):
@@ -274,14 +286,18 @@ class BazelConfiguration:
         try:
             start_time = time.time()
             subprocess.run(
-                [bazel_cmd, "clean", "--expunge"],
+                [bazel_cmd, "clean", "--expunge", "--noserver"],
                 check=True,
+                timeout=300,  # 5 minute timeout for clean operation
             )
             elapsed = time.time() - start_time
             self.timing_data["clean"] = elapsed
             print_status(f"Clean completed successfully ({elapsed:.2f}s)", "SUCCESS")
         except subprocess.CalledProcessError as e:
             print_status(f"Clean failed with exit code {e.returncode}", "ERROR")
+            sys.exit(1)
+        except subprocess.TimeoutExpired:
+            print_status("Clean operation timed out (exceeded 5 minutes)", "ERROR")
             sys.exit(1)
 
     def build(self) -> None:
@@ -296,12 +312,15 @@ class BazelConfiguration:
 
         try:
             start_time = time.time()
-            subprocess.run(cmd, check=True)
+            subprocess.run(cmd, check=True, timeout=3600)  # 1 hour timeout for build
             elapsed = time.time() - start_time
             self.timing_data["build"] = elapsed
             print_status(f"Build completed successfully ({elapsed:.2f}s)", "SUCCESS")
         except subprocess.CalledProcessError as e:
             print_status(f"Build failed with exit code {e.returncode}", "ERROR")
+            sys.exit(1)
+        except subprocess.TimeoutExpired:
+            print_status("Build operation timed out (exceeded 1 hour)", "ERROR")
             sys.exit(1)
 
     def test(self) -> None:
@@ -319,7 +338,7 @@ class BazelConfiguration:
 
         try:
             start_time = time.time()
-            result = subprocess.run(cmd, check=False)
+            result = subprocess.run(cmd, check=False, timeout=3600)  # 1 hour timeout for tests
             elapsed = time.time() - start_time
             self.timing_data["test"] = elapsed
 
@@ -331,6 +350,9 @@ class BazelConfiguration:
             else:
                 print_status(f"Tests failed with exit code {result.returncode}", "ERROR")
                 sys.exit(1)
+        except subprocess.TimeoutExpired:
+            print_status("Test operation timed out (exceeded 1 hour)", "ERROR")
+            sys.exit(1)
         except subprocess.CalledProcessError as e:
             print_status(f"Tests failed with exit code {e.returncode}", "ERROR")
             sys.exit(1)
