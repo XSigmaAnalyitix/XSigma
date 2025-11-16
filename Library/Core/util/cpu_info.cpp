@@ -5,7 +5,6 @@
 
 #include <cstddef>
 
-#include "fmt/base.h"
 namespace xsigma
 {
 bool cpu_info::initialize()

@@ -5,8 +5,8 @@
 #include <string_view>
 #include <unordered_map>
 
-#include "Core/common/export.h"
-#include "Core/common/macros.h"
+#include "common/export.h"
+#include "common/macros.h"
 
 namespace xsigma
 {

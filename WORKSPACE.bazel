@@ -1,0 +1,171 @@
+# =============================================================================
+# XSigma Bazel Workspace Configuration
+# =============================================================================
+# This file defines the workspace and manages third-party dependencies
+# Equivalent to CMakeLists.txt + ThirdParty/CMakeLists.txt
+# =============================================================================
+
+workspace(name = "xsigma")
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
+
+# =============================================================================
+# Bazel Skylib - Utility functions for Bazel
+# =============================================================================
+http_archive(
+    name = "bazel_skylib",
+    sha256 = "66ffd9315665bfaafc96b52278f57c7e2dd09f5ede279ea6d39b2be471e7e3aa",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.4.2/bazel-skylib-1.4.2.tar.gz",
+        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.4.2/bazel-skylib-1.4.2.tar.gz",
+    ],
+)
+
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+bazel_skylib_workspace()
+
+# =============================================================================
+# Third-Party Dependencies
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# fmt - Modern formatting library (header-only mode)
+# -----------------------------------------------------------------------------
+http_archive(
+    name = "fmt",
+    build_file = "//ThirdParty:fmt.BUILD",
+    sha256 = "78b8c0a72b1c35e4443a7e308df52498252d1cefc2b08c9a97bc9ee6cfe61f8b",
+    strip_prefix = "fmt-10.1.1",
+    urls = [
+        "https://github.com/fmtlib/fmt/archive/refs/tags/10.1.1.tar.gz",
+    ],
+)
+
+# -----------------------------------------------------------------------------
+# cpuinfo - CPU feature detection library (using local copy)
+# -----------------------------------------------------------------------------
+# Note: Using local ThirdParty/cpuinfo instead of downloading
+
+# -----------------------------------------------------------------------------
+# magic_enum - Static reflection for enums
+# -----------------------------------------------------------------------------
+http_archive(
+    name = "magic_enum",
+    build_file = "//ThirdParty:magic_enum.BUILD",
+    sha256 = "44ad80db5a72f5047e01d90e18315751d9ac90c0ab42cbea7a6f9ec66a4cd679",
+    strip_prefix = "magic_enum-0.9.5",
+    urls = [
+        "https://github.com/Neargye/magic_enum/archive/refs/tags/v0.9.5.tar.gz",
+    ],
+)
+
+# -----------------------------------------------------------------------------
+# mimalloc - Microsoft's high-performance memory allocator
+# -----------------------------------------------------------------------------
+http_archive(
+    name = "mimalloc",
+    build_file = "//ThirdParty:mimalloc.BUILD",
+    sha256 = "2b1bff6f717f9725c70bf8d79e4786da13de8a270059e4ba0bdd262ae7be46eb",
+    strip_prefix = "mimalloc-2.1.2",
+    urls = [
+        "https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.2.tar.gz",
+    ],
+)
+
+# -----------------------------------------------------------------------------
+# Google Test - Unit testing framework
+# -----------------------------------------------------------------------------
+http_archive(
+    name = "com_google_googletest",
+    sha256 = "8ad598c73ad796e0d8280b082cebd82a630d73e73cd3c70057938a6501bba5d7",
+    strip_prefix = "googletest-1.14.0",
+    urls = [
+        "https://github.com/google/googletest/archive/refs/tags/v1.14.0.tar.gz",
+    ],
+)
+
+# Alias for glog compatibility
+load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
+maybe(
+    http_archive,
+    name = "googletest",
+    sha256 = "8ad598c73ad796e0d8280b082cebd82a630d73e73cd3c70057938a6501bba5d7",
+    strip_prefix = "googletest-1.14.0",
+    urls = [
+        "https://github.com/google/googletest/archive/refs/tags/v1.14.0.tar.gz",
+    ],
+)
+
+# -----------------------------------------------------------------------------
+# Google Logging (glog) - Logging library (from local ThirdParty directory)
+# -----------------------------------------------------------------------------
+local_repository(
+    name = "glog",
+    path = "ThirdParty/glog",
+)
+
+# -----------------------------------------------------------------------------
+# Loguru - Lightweight C++ logging library (using custom BUILD file)
+# -----------------------------------------------------------------------------
+# Note: Loguru is a git submodule in ThirdParty/loguru
+# We use new_local_repository to provide our own BUILD file without modifying
+# the third-party submodule (as per .augment/rules/ThirdParty.md)
+new_local_repository(
+    name = "loguru",
+    path = "ThirdParty/loguru",
+    build_file = "//ThirdParty:loguru.BUILD",
+)
+
+# -----------------------------------------------------------------------------
+# Google Benchmark - Microbenchmarking framework
+# -----------------------------------------------------------------------------
+http_archive(
+    name = "com_google_benchmark",
+    sha256 = "6bc180a57d23d4d9515519f92b0c83d61b05b5bab188961f36ac7b06b0d9e9ce",
+    strip_prefix = "benchmark-1.8.3",
+    urls = [
+        "https://github.com/google/benchmark/archive/refs/tags/v1.8.3.tar.gz",
+    ],
+)
+
+# -----------------------------------------------------------------------------
+# Kineto - Profiling library (from local ThirdParty directory)
+# -----------------------------------------------------------------------------
+# Note: This assumes kineto is in ThirdParty/kineto/libkineto
+# If using external kineto, replace with http_archive
+
+# =============================================================================
+# Platform-Specific Dependencies
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# CUDA Support (optional)
+# -----------------------------------------------------------------------------
+# Uncomment if CUDA is enabled
+# local_repository(
+#     name = "cuda",
+#     path = "/usr/local/cuda",
+# )
+
+# -----------------------------------------------------------------------------
+# Intel MKL Support (optional)
+# -----------------------------------------------------------------------------
+# Uncomment if MKL is enabled
+# local_repository(
+#     name = "mkl",
+#     path = "/opt/intel/mkl",
+# )
+
+# -----------------------------------------------------------------------------
+# Intel TBB Support (optional)
+# -----------------------------------------------------------------------------
+http_archive(
+    name = "tbb",
+    build_file = "//ThirdParty:tbb.BUILD",
+    sha256 = "487023a955e5a3cc6d3a0d5f89179f9b6c0ae7222613a7185b0227ba0c83700b",
+    strip_prefix = "oneTBB-2021.10.0",
+    urls = [
+        "https://github.com/oneapi-src/oneTBB/archive/refs/tags/v2021.10.0.tar.gz",
+    ],
+)

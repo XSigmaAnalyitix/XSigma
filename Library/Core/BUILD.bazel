@@ -1,0 +1,236 @@
+# =============================================================================
+# XSigma Core Library BUILD Configuration
+# =============================================================================
+# Core library containing parallel computing, memory management, and profiling
+# Equivalent to Library/Core/CMakeLists.txt
+# =============================================================================
+
+load("@bazel_skylib//lib:selects.bzl", "selects")
+load("//bazel:xsigma.bzl", "xsigma_copts", "xsigma_defines", "xsigma_linkopts")
+
+package(default_visibility = ["//visibility:public"])
+
+# =============================================================================
+# Generated Configuration Headers
+# =============================================================================
+
+# Version macros header (equivalent to configure_file for xsigma_version_macros.h.in)
+genrule(
+    name = "gen_version_macros",
+    outs = ["xsigma_version_macros.h"],
+    cmd = """
+cat > $@ << 'EOF'
+#ifndef XSIGMA_VERSION_MACROS_H
+#define XSIGMA_VERSION_MACROS_H
+
+#define XSIGMA_MAJOR_VERSION 1
+#define XSIGMA_MINOR_VERSION 0
+#define XSIGMA_BUILD_VERSION 0
+#define XSIGMA_VERSION_FULL "1.0.0"
+
+#endif // XSIGMA_VERSION_MACROS_H
+EOF
+    """,
+)
+
+# Threading configuration header (equivalent to configure_file for xsigma_threads.h.in)
+genrule(
+    name = "gen_threads_header",
+    outs = ["xsigma_threads.h"],
+    cmd = select({
+        "@platforms//os:windows": """
+cat > $@ << 'EOF'
+#ifndef XSIGMA_THREADS_H
+#define XSIGMA_THREADS_H
+
+#define XSIGMA_USE_WIN32_THREADS 1
+#define XSIGMA_MAX_THREADS 64
+
+#endif // XSIGMA_THREADS_H
+EOF
+        """,
+        "//conditions:default": """
+cat > $@ << 'EOF'
+#ifndef XSIGMA_THREADS_H
+#define XSIGMA_THREADS_H
+
+#define XSIGMA_USE_PTHREADS 1
+#define XSIGMA_MAX_THREADS 64
+
+#endif // XSIGMA_THREADS_H
+EOF
+        """,
+    }),
+)
+
+# =============================================================================
+# Source Files
+# =============================================================================
+
+# Collect all headers
+filegroup(
+    name = "core_hdrs",
+    srcs = glob([
+        "util/*.h",
+        "common/*.h",
+        "logging/*.h",
+        "memory/*.h",
+        "memory/**/*.h",
+        "profiler/*.h",
+        "profiler/**/*.h",
+        "smp/*.h",
+        "smp/**/*.h",
+        "c17/*.h",
+        "parallel/*.h",
+    ]) + [
+        ":xsigma_version_macros.h",
+        ":xsigma_threads.h",
+    ],
+)
+
+# Collect all template implementation files
+filegroup(
+    name = "core_templates",
+    srcs = glob([
+        "util/*.hxx",
+        "common/*.hxx",
+        "logging/*.hxx",
+        "memory/*.hxx",
+        "memory/**/*.hxx",
+        "profiler/*.hxx",
+        "profiler/**/*.hxx",
+        "smp/*.hxx",
+        "smp/**/*.hxx",
+    ]),
+)
+
+# Collect all source files
+filegroup(
+    name = "core_srcs",
+    srcs = glob(
+        [
+            "common/*.cpp",
+            "util/*.cpp",
+            "logging/*.cpp",
+            "memory/*.cpp",
+            "memory/**/*.cpp",
+            "profiler/*.cpp",
+            "profiler/**/*.cpp",
+            "smp/*.cpp",
+            "smp/**/*.cpp",
+            "parallel/*.cpp",
+        ],
+        exclude = [
+            # Exclude GPU files if CUDA/HIP not enabled
+            "memory/gpu/*.cpp",
+            "memory/cpu/allocator_device.cpp",
+            # Exclude native profiler if not enabled
+            "profiler/native/**/*.cpp",
+            # Exclude common profiler files (require kineto/native)
+            "profiler/common/**/*.cpp",
+            # Exclude TBB or STDThread based on configuration
+            "smp/TBB/*.cpp",
+            "smp/STDThread/*.cpp",
+            # Exclude Kineto files if not enabled
+            "profiler/kineto_*.cpp",
+            "profiler/kineto/**/*.cpp",
+            # Exclude logging.cpp for native backend
+            "logging/logging.cpp",
+        ],
+    ),
+)
+
+# =============================================================================
+# Core Library Target
+# =============================================================================
+
+cc_library(
+    name = "Core",
+    srcs = [
+        ":core_srcs",
+        ":core_templates",
+    ] + select({
+        "//bazel:enable_cuda": glob(["memory/gpu/*.cpp", "memory/cpu/allocator_device.cpp"]),
+        "//bazel:enable_hip": glob(["memory/gpu/*.cpp", "memory/cpu/allocator_device.cpp"]),
+        "//conditions:default": [],
+    }) + select({
+        "//bazel:enable_native_profiler": glob(["profiler/native/*.cpp"]),
+        "//conditions:default": [],
+    }) + select({
+        "//bazel:enable_tbb": glob(["smp/TBB/*.cpp"]),
+        "//conditions:default": glob(["smp/STDThread/*.cpp"]),
+    }) + select({
+        "//bazel:enable_kineto": glob(["profiler/kineto_*.cpp"]),
+        "//conditions:default": [],
+    }),
+    hdrs = [
+        ":core_hdrs",
+    ] + select({
+        "//bazel:enable_cuda": glob(["memory/gpu/*.h", "memory/cpu/allocator_device.h"]),
+        "//bazel:enable_hip": glob(["memory/gpu/*.h", "memory/cpu/allocator_device.h"]),
+        "//conditions:default": [],
+    }) + select({
+        "//bazel:enable_native_profiler": glob(["profiler/native/*.h", "profiler/native/*.hxx"]),
+        "//conditions:default": [],
+    }) + select({
+        "//bazel:enable_tbb": glob(["smp/TBB/*.h", "smp/TBB/*.hxx"]),
+        "//conditions:default": glob(["smp/STDThread/*.h", "smp/STDThread/*.hxx"]),
+    }) + select({
+        "//bazel:enable_kineto": glob(["profiler/kineto_*.h"]),
+        "//conditions:default": [],
+    }),
+    copts = xsigma_copts() + select({
+        "@platforms//os:windows": ["/WX"],
+        "//conditions:default": [],
+    }),
+    defines = xsigma_defines() + select({
+        "//bazel:shared_libs": ["XSIGMA_SHARED_DEFINE", "XSIGMA_BUILDING_DLL"],
+        "//conditions:default": ["XSIGMA_STATIC_DEFINE"],
+    }),
+    includes = [
+        ".",
+        "Testing",
+    ],
+    linkopts = xsigma_linkopts() + select({
+        "@platforms//os:windows": [],
+        "@platforms//os:macos": ["-framework Security"],
+        "//conditions:default": ["-lpthread", "-ldl", "-lrt"],
+    }),
+    linkstatic = select({
+        "//bazel:shared_libs": False,
+        "//conditions:default": True,
+    }),
+    deps = [
+        "@fmt//:fmt",
+        "//ThirdParty/cpuinfo:cpuinfo",
+    ] + select({
+        "//bazel:enable_magic_enum": ["@magic_enum//:magic_enum"],
+        "//conditions:default": [],
+    }) + select({
+        "//bazel:enable_mimalloc": ["@mimalloc//:mimalloc"],
+        "//conditions:default": [],
+    }) + select({
+        "//bazel:enable_kineto": ["//ThirdParty:kineto"],
+        "//conditions:default": [],
+    }) + select({
+        "//bazel:enable_tbb": ["@tbb//:tbb"],
+        "//conditions:default": [],
+    }) + select({
+        "//bazel:enable_cuda": ["@local_config_cuda//cuda:cuda"],
+        "//conditions:default": [],
+    }) + select({
+        "//bazel:enable_mkl": ["@mkl//:mkl"],
+        "//conditions:default": [],
+    }) + select({
+        "//bazel:logging_glog": ["@glog//:glog"],
+        "//bazel:logging_loguru": ["@loguru//:loguru"],
+        "//conditions:default": [],
+    }),
+    alwayslink = False,
+)
+
+# =============================================================================
+# Tests (if enabled)
+# =============================================================================
+
+# Test configuration would go in Library/Core/Testing/Cxx/BUILD.bazel

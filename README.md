@@ -9,13 +9,13 @@
 > **Note**: XSigma is actively working toward OpenSSF Best Practices certification. See [Docs/OpenSSF_Badge_Update_Guide.md](Docs/OpenSSF_Badge_Update_Guide.md) for our compliance roadmap and current status.
 ## Project Introduction
 
-**XSigma** is a modern, high-performance quantitative analysis library designed for both CPU and GPU computing. Built with a production-ready C++ foundation and a modern CMake build system, XSigma provides cross-platform compatibility, advanced optimization capabilities, and flexible dependency management for demanding computational workloads.
+**XSigma** is a modern, high-performance quantitative analysis library designed for both CPU and GPU computing. Built with a production-ready C++ foundation and dual build system support (CMake and Bazel), XSigma provides cross-platform compatibility, advanced optimization capabilities, and flexible dependency management for demanding computational workloads.
 
 ### Key Features
 
 - **High-Performance Computing** - Optimized for CPU and GPU acceleration
 - **Cross-Platform Compatibility** - Windows, Linux, and macOS support
-- **Modern CMake Build System** - CMake 3.16+ with best practices and flexible configuration
+- **Dual Build System Support** - CMake 3.16+ and Bazel with feature parity and consistent defaults
 - **Advanced Optimization** - Link-Time Optimization (LTO), vectorization (SSE/AVX/AVX2/AVX-512), and compiler-specific flags
 - **Flexible Logging System** - Three backend options (LOGURU, GLOG, NATIVE) with configurable levels
 - **Comprehensive Testing & Analysis** - Sanitizers, code coverage analysis, static analysis tools, and memory profiling
@@ -63,7 +63,9 @@ pip install -r requirements.txt
 
 XSigma requires the following minimum versions:
 
-- **CMake** 3.16 or later
+- **Build System** (choose one or both):
+  - **CMake** 3.16 or later
+  - **Bazel** 6.0+ or **Bazelisk** (recommended for automatic version management)
 - **C++17** compatible compiler:
   - **Windows**: MSVC 2019+ or Clang 10+
   - **Linux**: GCC 9+ or Clang 10+
@@ -158,6 +160,308 @@ mkdir build && cd build
 cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --config Release --parallel %NUMBER_OF_PROCESSORS%
 ```
+
+### Building with Bazel
+
+XSigma supports **both CMake and Bazel** build systems, providing flexibility for different development workflows and CI/CD environments. The Bazel build system offers fast incremental builds, hermetic builds, and excellent caching capabilities.
+
+> **Note**: Both build systems are fully supported and maintained. Bazel defaults match CMake defaults (LOGURU for logging, native profiler backend).
+
+#### Prerequisites
+
+Install Bazel or Bazelisk (recommended):
+
+**Linux:**
+```bash
+# Install Bazelisk (recommended - automatically manages Bazel versions)
+npm install -g @bazel/bazelisk
+
+# Or install Bazel directly
+sudo apt-get install bazel
+```
+
+**macOS:**
+```bash
+# Install Bazelisk (recommended)
+brew install bazelisk
+
+# Or install Bazel directly
+brew install bazel
+```
+
+**Windows:**
+```bash
+# Install Bazelisk via npm
+npm install -g @bazel/bazelisk
+
+# Or download Bazel from https://github.com/bazelbuild/bazel/releases
+```
+
+#### Basic Build Commands
+
+**Using setup_bazel.py (Recommended):**
+```bash
+cd Scripts
+
+# Debug build
+python3 setup_bazel.py config.build.debug
+
+# Release build
+python3 setup_bazel.py config.build.release
+
+# Release build with tests
+python3 setup_bazel.py config.build.test.release
+
+# C++20 release build with TBB
+python3 setup_bazel.py config.build.release.cxx20.tbb
+```
+
+**Using raw Bazel:**
+```bash
+# Build all targets
+bazel build //...
+
+# Build with specific configuration
+bazel build --config=release //...
+
+# Run tests
+bazel test --config=release //...
+```
+
+#### Configuration Options
+
+The `setup_bazel.py` script uses a prefix-based naming convention for clear and organized configuration:
+
+##### Logging Backends
+
+- **`logging_loguru`** (default) - Full-featured logging with scopes, callbacks, and advanced formatting
+- **`logging_glog`** - Google's production-grade logging library with minimal overhead
+- **`logging_native`** - Minimal native implementation with zero external dependencies
+
+```bash
+cd Scripts
+
+# Use GLOG backend
+python3 setup_bazel.py build.release.logging_glog
+
+# Use native logging (no dependencies)
+python3 setup_bazel.py build.release.logging_native
+```
+
+##### Profiler Backends
+
+- **`profiler_native`** (default) - Native TraceMe profiler implementation
+- **`profiler_kineto`** - Advanced profiling with Kineto (coming soon)
+- **`profiler_itt`** - Intel ITT API profiler integration
+
+```bash
+cd Scripts
+
+# Use native profiler (default)
+python3 setup_bazel.py build.release.profiler_native
+
+# Use ITT profiler
+python3 setup_bazel.py build.release.profiler_itt
+```
+
+##### Sanitizers
+
+- **`sanitizer_asan`** - Address Sanitizer (memory errors, buffer overflows)
+- **`sanitizer_tsan`** - Thread Sanitizer (data race detection)
+- **`sanitizer_ubsan`** - Undefined Behavior Sanitizer
+- **`sanitizer_msan`** - Memory Sanitizer (uninitialized memory reads)
+
+```bash
+cd Scripts
+
+# Address Sanitizer
+python3 setup_bazel.py build.debug.sanitizer_asan
+
+# Thread Sanitizer
+python3 setup_bazel.py build.debug.sanitizer_tsan
+
+# Multiple sanitizers
+python3 setup_bazel.py build.debug.sanitizer_asan.sanitizer_ubsan
+```
+
+##### Build Types
+
+- **`debug`** - Debug build with symbols and no optimization
+- **`release`** - Optimized release build
+- **`relwithdebinfo`** - Release build with debug symbols
+
+```bash
+cd Scripts
+
+# Debug build
+python3 setup_bazel.py build.debug
+
+# Release build
+python3 setup_bazel.py build.release
+
+# Release with debug info
+python3 setup_bazel.py build.relwithdebinfo
+```
+
+##### C++ Standards
+
+- **`cxx17`** - C++17 standard (default)
+- **`cxx20`** - C++20 standard
+- **`cxx23`** - C++23 standard
+
+```bash
+cd Scripts
+
+# C++20 build
+python3 setup_bazel.py build.release.cxx20
+
+# C++23 build
+python3 setup_bazel.py build.release.cxx23
+```
+
+##### Feature Flags
+
+- **`tbb`** - Intel Threading Building Blocks
+- **`mimalloc`** - High-performance memory allocator
+- **`magic_enum`** - Enum reflection utilities
+- **`openmp`** - OpenMP parallel processing
+- **`cuda`** - NVIDIA CUDA support
+- **`hip`** - AMD HIP support
+- **`lto`** - Link-Time Optimization
+
+```bash
+cd Scripts
+
+# Enable TBB
+python3 setup_bazel.py build.release.tbb
+
+# Enable mimalloc
+python3 setup_bazel.py build.release.mimalloc
+
+# Enable LTO
+python3 setup_bazel.py build.release.lto
+
+# Combine multiple features
+python3 setup_bazel.py build.release.tbb.mimalloc.lto
+```
+
+#### Example Build Scenarios
+
+**Development Build (Debug with Sanitizers):**
+```bash
+cd Scripts
+python3 setup_bazel.py build.test.debug.sanitizer_asan.sanitizer_ubsan
+```
+
+**Production Build (Release with Optimizations):**
+```bash
+cd Scripts
+python3 setup_bazel.py build.release.cxx20.tbb.lto
+```
+
+**CI/CD Build (Release with Tests):**
+```bash
+cd Scripts
+python3 setup_bazel.py build.test.release.logging_glog
+```
+
+**High-Performance Build (All Optimizations):**
+```bash
+cd Scripts
+python3 setup_bazel.py build.release.cxx20.tbb.mimalloc.lto
+```
+
+**Custom Backend Configuration:**
+```bash
+cd Scripts
+python3 setup_bazel.py build.release.logging_glog.profiler_native.cxx20
+```
+
+#### Running Tests
+
+```bash
+cd Scripts
+
+# Run all tests
+python3 setup_bazel.py build.test.release
+
+# Run tests with specific configuration
+python3 setup_bazel.py build.test.debug.sanitizer_asan
+
+# Run tests with custom backends
+python3 setup_bazel.py build.test.release.logging_glog.profiler_native
+```
+
+**Using raw Bazel:**
+```bash
+# Run all tests
+bazel test --config=release //...
+
+# Run specific test suite
+bazel test --config=release //Library/Core/Testing/Cxx:CoreCxxTests
+
+# Run tests with output
+bazel test --config=release --test_output=all //...
+```
+
+#### Configuration Summary
+
+The build system displays a comprehensive configuration summary before building:
+
+```
+================================================================================
+XSIGMA BAZEL BUILD CONFIGURATION SUMMARY
+================================================================================
+
+Build Configuration:
+  Build Type:        RELEASE
+  C++ Standard:      CXX20
+  Vectorization:     None
+
+Feature Flags:
+  XSIGMA_ENABLE_MIMALLOC         OFF
+  XSIGMA_ENABLE_MAGIC_ENUM       OFF
+  XSIGMA_ENABLE_TBB              ON
+  XSIGMA_ENABLE_OPENMP           OFF
+  XSIGMA_ENABLE_CUDA             OFF
+  XSIGMA_ENABLE_HIP              OFF
+  XSIGMA_ENABLE_LTO              OFF
+
+Logging Backend:
+  Backend:           LOGURU
+
+Profiler Backend:
+  Backend:           NATIVE
+
+Sanitizers:
+  None                           (disabled)
+
+================================================================================
+```
+
+#### Bazel vs CMake
+
+Both build systems are fully supported and offer different advantages:
+
+| Feature | CMake | Bazel | Notes |
+|---------|-------|-------|-------|
+| **Incremental Builds** | Good | Excellent | Bazel's caching is more aggressive |
+| **Hermetic Builds** | Manual | Automatic | Bazel ensures reproducibility |
+| **IDE Integration** | Excellent | Good | CMake has broader IDE support |
+| **Learning Curve** | Moderate | Steep | CMake is more familiar to most developers |
+| **Build Speed** | Fast | Very Fast | Bazel excels at large codebases |
+| **Default Backends** | LOGURU/KINETO | LOGURU/NATIVE | Both use LOGURU for logging |
+
+**When to use CMake:**
+- IDE integration is critical
+- Team is familiar with CMake
+- Need extensive platform-specific customization
+
+**When to use Bazel:**
+- Large codebase with many dependencies
+- CI/CD pipelines requiring hermetic builds
+- Need extremely fast incremental builds
+- Working with monorepo structure
 
 ### Setup Script Documentation
 

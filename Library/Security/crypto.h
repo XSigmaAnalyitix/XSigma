@@ -8,8 +8,8 @@
 #include <string_view>
 #include <vector>
 
-#include "Core/common/export.h"
-#include "Core/common/macros.h"
+#include "common/export.h"
+#include "common/macros.h"
 
 namespace xsigma
 {

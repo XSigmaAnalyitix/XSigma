@@ -1,0 +1,9 @@
+# Third-party BUILD files for external dependencies
+exports_files([
+    "cpuinfo.BUILD",
+    "fmt.BUILD",
+    "loguru.BUILD",
+    "magic_enum.BUILD",
+    "mimalloc.BUILD",
+    "tbb.BUILD",
+])

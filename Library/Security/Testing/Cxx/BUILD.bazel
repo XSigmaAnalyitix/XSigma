@@ -1,0 +1,41 @@
+# =============================================================================
+# XSigma Security Library Tests BUILD Configuration
+# =============================================================================
+# Test targets for Security library using GoogleTest
+# Equivalent to Library/Security/Testing/Cxx/CMakeLists.txt
+# =============================================================================
+
+load("//bazel:xsigma.bzl", "xsigma_copts", "xsigma_defines", "xsigma_linkopts")
+
+package(default_visibility = ["//visibility:public"])
+
+# =============================================================================
+# Security Tests Target
+# =============================================================================
+
+cc_test(
+    name = "SecurityCxxTests",
+    size = "medium",
+    srcs = [
+        "TestCrypto.cpp",
+        "TestInputValidator.cpp",
+        "TestSanitizer.cpp",
+    ],
+    copts = xsigma_copts(),
+    defines = xsigma_defines() + [
+        "XSIGMA_GOOGLE_TEST",
+        "USE_GTEST",
+        "_VARIADIC_MAX=10",
+        "XSIGMA_HAS_GTEST=1",
+    ],
+    includes = ["."],
+    linkopts = xsigma_linkopts(),
+    deps = [
+        "//Library/Core:Core",
+        "//Library/Core/Testing:xsigmaTest_header",
+        "//Library/Security:Security",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+

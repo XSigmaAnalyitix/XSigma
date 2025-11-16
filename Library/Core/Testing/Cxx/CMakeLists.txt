@@ -58,6 +58,7 @@ endforeach()
 
 set(XSIGMA_NATIVE_PROFILER_TESTS
     "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerBackendIntegration.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerAutogradTrace.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerPlatform.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerXPlane.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerTimespan.cpp"

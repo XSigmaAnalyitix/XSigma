@@ -1,0 +1,13 @@
+# Ignore Python bindings and tools that require @rules_python
+ThirdParty/benchmark/tools
+ThirdParty/benchmark/bindings
+ThirdParty/benchmark/test
+ThirdParty/kineto/libkineto/third_party/googletest
+ThirdParty/googletest
+
+# Ignore directories with symlink issues or missing BUILD dependencies
+ThirdParty/ittapi
+ThirdParty/kineto/libkineto/third_party/dynolog
+ThirdParty/kineto/libkineto/third_party/fmt
+ThirdParty/glog/bazel/example
+ThirdParty/magic_enum/test

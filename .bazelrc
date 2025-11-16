@@ -1,0 +1,232 @@
+# =============================================================================
+# XSigma Bazel Configuration
+# =============================================================================
+# Build flags, compiler options, and platform-specific settings
+# Equivalent to CMake compiler flags and build type configurations
+# =============================================================================
+
+# =============================================================================
+# Common Build Flags
+# =============================================================================
+build --enable_platform_specific_config
+build --cxxopt=-std=c++17
+build --host_cxxopt=-std=c++17
+build --experimental_repo_remote_exec
+
+# Enable colored output
+build --color=yes
+
+# Show all warnings
+build --copt=-Wall
+build --copt=-Wextra
+build --copt=-Wpedantic
+
+# Position Independent Code
+build --copt=-fPIC
+
+# =============================================================================
+# C++ Standard Selection
+# =============================================================================
+# Default is C++17 (set above)
+# Use --cxxopt=-std=c++XX to override at command line
+
+# C++17 (default)
+build:cxx17 --cxxopt=-std=c++17
+build:cxx17 --host_cxxopt=-std=c++17
+
+# C++20
+build:cxx20 --cxxopt=-std=c++20
+build:cxx20 --host_cxxopt=-std=c++20
+
+# C++23
+build:cxx23 --cxxopt=-std=c++23
+build:cxx23 --host_cxxopt=-std=c++23
+
+# =============================================================================
+# Optimization Levels
+# =============================================================================
+
+# Debug configuration (equivalent to CMAKE_BUILD_TYPE=Debug)
+build:debug --compilation_mode=dbg
+build:debug --copt=-O0
+build:debug --copt=-g
+build:debug --strip=never
+
+# Release configuration (equivalent to CMAKE_BUILD_TYPE=Release)
+build:release --compilation_mode=opt
+build:release --copt=-O3
+build:release --copt=-DNDEBUG
+build:release --strip=always
+
+# RelWithDebInfo configuration
+build:relwithdebinfo --compilation_mode=opt
+build:relwithdebinfo --copt=-O2
+build:relwithdebinfo --copt=-g
+build:relwithdebinfo --copt=-DNDEBUG
+build:relwithdebinfo --strip=never
+
+# =============================================================================
+# Link Time Optimization (LTO)
+# =============================================================================
+build:lto --copt=-flto=thin
+build:lto --linkopt=-flto=thin
+
+# =============================================================================
+# Vectorization Options (equivalent to XSIGMA_VECTORIZATION_TYPE)
+# =============================================================================
+
+# SSE vectorization
+build:sse --copt=-msse
+build:sse --copt=-msse2
+build:sse --copt=-msse3
+build:sse --copt=-mssse3
+build:sse --copt=-msse4.1
+build:sse --copt=-msse4.2
+
+# AVX vectorization
+build:avx --copt=-mavx
+build:avx --copt=-msse4.2
+
+# AVX2 vectorization (default)
+build:avx2 --copt=-mavx2
+build:avx2 --copt=-mfma
+build:avx2 --copt=-mavx
+build:avx2 --copt=-msse4.2
+
+# AVX512 vectorization
+build:avx512 --copt=-mavx512f
+build:avx512 --copt=-mavx512cd
+build:avx512 --copt=-mavx512bw
+build:avx512 --copt=-mavx512dq
+build:avx512 --copt=-mavx512vl
+
+# =============================================================================
+# Platform-Specific Configurations
+# =============================================================================
+
+# macOS specific settings
+build:macos --cxxopt=-stdlib=libc++
+build:macos --linkopt=-undefined
+build:macos --linkopt=dynamic_lookup
+
+# Linux specific settings
+build:linux --cxxopt=-pthread
+build:linux --linkopt=-pthread
+build:linux --linkopt=-ldl
+build:linux --linkopt=-lrt
+
+# Windows specific settings (MSVC)
+build:windows --copt=/std:c++17
+build:windows --copt=/W4
+build:windows --copt=/WX
+build:windows --copt=/EHsc
+build:windows --define=_WIN32_WINNT=0x0A00
+
+# =============================================================================
+# Sanitizer Configurations
+# =============================================================================
+
+# Address Sanitizer
+build:asan --strip=never
+build:asan --copt=-fsanitize=address
+build:asan --copt=-fno-omit-frame-pointer
+build:asan --linkopt=-fsanitize=address
+
+# Thread Sanitizer
+build:tsan --strip=never
+build:tsan --copt=-fsanitize=thread
+build:tsan --copt=-fno-omit-frame-pointer
+build:tsan --linkopt=-fsanitize=thread
+
+# Undefined Behavior Sanitizer
+build:ubsan --strip=never
+build:ubsan --copt=-fsanitize=undefined
+build:ubsan --copt=-fno-omit-frame-pointer
+build:ubsan --linkopt=-fsanitize=undefined
+
+# Memory Sanitizer
+build:msan --strip=never
+build:msan --copt=-fsanitize=memory
+build:msan --copt=-fno-omit-frame-pointer
+build:msan --linkopt=-fsanitize=memory
+
+# =============================================================================
+# Feature Flags (equivalent to XSIGMA_ENABLE_* options)
+# =============================================================================
+
+# Enable CUDA support
+build:cuda --define=xsigma_enable_cuda=true
+build:cuda --crosstool_top=@local_config_cuda//crosstool:toolchain
+
+# Enable HIP support
+build:hip --define=xsigma_enable_hip=true
+
+# Enable OpenMP
+build:openmp --copt=-fopenmp
+build:openmp --linkopt=-fopenmp
+
+# Enable TBB
+build:tbb --define=xsigma_enable_tbb=true
+
+# Enable MKL
+build:mkl --define=xsigma_enable_mkl=true
+
+# Enable mimalloc
+build:mimalloc --define=xsigma_enable_mimalloc=true
+
+# Enable magic_enum
+build:magic_enum --define=xsigma_enable_magic_enum=true
+
+# Enable Kineto profiling
+build:kineto --define=xsigma_enable_kineto=true
+
+# Enable native profiler
+build:native_profiler --define=xsigma_profiler_type=native
+
+# Enable ITT profiling
+build:itt --define=xsigma_enable_itt=true
+
+# Enable LU pivoting
+build:lu_pivoting --define=xsigma_lu_pivoting=true
+
+# Enable Sobol 1111 dimensions
+build:sobol_1111 --define=xsigma_sobol_1111=true
+
+# =============================================================================
+# Testing Configuration
+# =============================================================================
+test --test_output=errors
+test --test_summary=detailed
+
+# Enable Google Test
+build:gtest --define=xsigma_enable_gtest=true
+
+# Enable Google Benchmark
+build:benchmark --define=xsigma_enable_benchmark=true
+
+# =============================================================================
+# Code Coverage
+# =============================================================================
+coverage --combined_report=lcov
+coverage --instrument_test_targets
+coverage --experimental_use_llvm_covmap
+
+# =============================================================================
+# Logging Backend Selection
+# =============================================================================
+build:logging_glog --define=xsigma_logging_backend=glog
+build:logging_loguru --define=xsigma_logging_backend=loguru
+build:logging_native --define=xsigma_logging_backend=native
+
+# =============================================================================
+# GPU Allocation Strategy
+# =============================================================================
+build:gpu_alloc_sync --define=xsigma_gpu_alloc=sync
+build:gpu_alloc_async --define=xsigma_gpu_alloc=async
+build:gpu_alloc_pool_async --define=xsigma_gpu_alloc=pool_async
+
+# =============================================================================
+# Default Configuration
+# =============================================================================
+# Import user-specific configuration
+try-import %workspace%/.bazelrc.user
