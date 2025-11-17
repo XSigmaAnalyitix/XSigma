@@ -23,7 +23,7 @@ bool compute_disable_addr2line()
 
 bool get_cpp_stacktraces_enabled()
 {
-    static bool enabled = compute_cpp_stack_traces_enabled();
+    static bool const enabled = compute_cpp_stack_traces_enabled();
     return enabled;
 }
 
@@ -36,21 +36,20 @@ static xsigma::unwind::Mode compute_symbolize_mode()
         {
             return unwind::Mode::dladdr;
         }
-        else if (envar_c == "addr2line")
+        if (envar_c == "addr2line")
         {
             return unwind::Mode::addr2line;
         }
-        else if (envar_c == "fast")
+        if (envar_c == "fast")
         {
             return unwind::Mode::fast;
         }
-        else
-        {
-            XSIGMA_CHECK(
+        
+                    XSIGMA_CHECK(
                 false,
                 "expected {{dladdr, addr2line, fast}} for XSIGMA_SYMBOLIZE_MODE, got {}",
                 envar_c.value());
-        }
+       
     }
     else
     {
@@ -60,7 +59,7 @@ static xsigma::unwind::Mode compute_symbolize_mode()
 
 unwind::Mode get_symbolize_mode()
 {
-    static unwind::Mode mode = compute_symbolize_mode();
+    static unwind::Mode const mode = compute_symbolize_mode();
     return mode;
 }
 

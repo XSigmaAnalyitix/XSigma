@@ -100,6 +100,7 @@
 #include "parallel.h"
 
 #include <atomic>
+#include <memory>
 #include <sstream>
 #include <thread>
 #include <utility>
@@ -447,11 +448,11 @@ void set_num_threads(int nthreads)
 
     // Initialize TBB global control to limit thread count
     // Note: TBB uses global_control to set the maximum number of threads
-    tbb_thread_control.reset(
-        new tbb::global_control(tbb::global_control::max_allowed_parallelism, nthreads));
+    tbb_thread_control = std::make_unique<tbb::global_control>(
+        tbb::global_control::max_allowed_parallelism, nthreads);
 
     // Initialize TBB task arena with the specified number of threads
-    tbb_arena.reset(new tbb::task_arena(nthreads));
+    tbb_arena = std::make_unique<tbb::task_arena>(nthreads);
 
 #if XSIGMA_HAS_MKL
     mkl_set_num_threads_local(nthreads);

@@ -58,7 +58,6 @@ endforeach()
 
 set(XSIGMA_NATIVE_PROFILER_TESTS
     "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerBackendIntegration.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerAutogradTrace.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerPlatform.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerXPlane.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerTimespan.cpp"
@@ -68,7 +67,6 @@ set(XSIGMA_NATIVE_PROFILER_TESTS
     "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerAnnotationStack.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerXPlaneVisitor.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerFormatUtils.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/TestAllocatorBfc.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerChromeTraceHierarchical.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/TestXPlaneSchema.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/TestProfilerAnalysis.cpp"

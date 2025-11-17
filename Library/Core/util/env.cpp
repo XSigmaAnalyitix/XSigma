@@ -168,7 +168,7 @@ bool read_env_int64(const char* name, int64_t default_val, int64_t* value)
     try
     {
         size_t pos = 0;
-        int64_t val = std::stoll(str, &pos);
+        int64_t const val = std::stoll(str, &pos);
         if (pos == str.length())
         {
             *value = val;

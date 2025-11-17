@@ -113,7 +113,7 @@ public:
 private:
     static constexpr size_t replicates = 1001;
     using time_pairs                   = std::array<UnixAndApproximateTimePair, replicates>;
-    time_pairs measurePairs();
+    static time_pairs measurePairs();
 
     time_pairs start_times_;
 };

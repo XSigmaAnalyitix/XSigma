@@ -32,11 +32,11 @@ struct NVTXThreadLocalState : ProfilerStateBase
 
     static NVTXThreadLocalState* getTLS()
     {
-        auto tls = ProfilerStateBase::get(/*global=*/false);
+        auto *tls = ProfilerStateBase::get(/*global=*/false);
         XSIGMA_CHECK_DEBUG(tls == nullptr || tls->profilerType() == ActiveProfilerType::NVTX);
         return static_cast<NVTXThreadLocalState*>(tls);
     }
-    std::pair<xsigma::RecordFunctionHandle, int> getOpIdFromInput(const xsigma::Tensor& tensor);
+    static std::pair<xsigma::RecordFunctionHandle, int> getOpIdFromInput(const xsigma::Tensor& tensor);
 
     void setProducerTensorMap(
         xsigma::TensorImpl* tensor, xsigma::RecordFunctionHandle op_id, int output_nr)
@@ -55,7 +55,7 @@ protected:
 };
 
 std::pair<xsigma::RecordFunctionHandle, int> NVTXThreadLocalState::getOpIdFromInput(
-    const xsigma::Tensor& tensor)
+    const xsigma::Tensor&  /*tensor*/)
 {
     std::pair<xsigma::RecordFunctionHandle, int> producer_op_pair(0, -1);
     //if (tensor.defined())
@@ -89,9 +89,9 @@ std::pair<xsigma::RecordFunctionHandle, int> NVTXThreadLocalState::getOpIdFromIn
 // }
 
 static std::list<std::pair<xsigma::RecordFunctionHandle, int>> getInputTensorOpIds(
-    const xsigma::RecordFunction& fn)
+    )
 {
-    std::pair<xsigma::RecordFunctionHandle, int>            undefined_op_pair(0, -1);
+    std::pair<xsigma::RecordFunctionHandle, int>            const undefined_op_pair(0, -1);
     std::list<std::pair<xsigma::RecordFunctionHandle, int>> input_producer_ops_;
     /*auto state_ptr = NVTXThreadLocalState::getTLS();
     XSIGMA_CHECK(state_ptr, "Expected profiler state set");
@@ -153,7 +153,7 @@ static std::unique_ptr<xsigma::ObserverContext> enterNVTX(const xsigma::RecordFu
 {
     if (NVTXThreadLocalState::getTLS() != nullptr)
     {
-        auto input_op_ids = getInputTensorOpIds(fn);
+        auto input_op_ids = getInputTensorOpIds();
         xsigma::profiler::impl::cudaStubs()->rangePush(
             xsigma::profiler::impl::getNvtxStr(
                 fn.name(),
@@ -178,14 +178,14 @@ void pushNVTXCallbacks(
     xsigma::thread_local_debug_info::_push(
         xsigma::DebugInfoKind::PROFILER_STATE, std::make_shared<NVTXThreadLocalState>(config));
 
-    auto state_ptr = NVTXThreadLocalState::getTLS();
+    auto *state_ptr = NVTXThreadLocalState::getTLS();
     XSIGMA_CHECK(state_ptr, "Expected profiler state set");
 
     auto handle = xsigma::addThreadLocalCallback(
         xsigma::RecordFunctionCallback(
             state_ptr->config().report_input_shapes ? &enterNVTX</*report_input_shapes=*/true>
                                                     : &enterNVTX</*report_input_shapes=*/false>,
-            [](const xsigma::RecordFunction& fn, xsigma::ObserverContext* ctx)
+            [](const xsigma::RecordFunction&  /*fn*/, xsigma::ObserverContext*  /*ctx*/)
             {
                 xsigma::profiler::impl::cudaStubs()->rangePop();
                 //updateOutputTensorTracker(fn);

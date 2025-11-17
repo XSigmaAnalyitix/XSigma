@@ -51,7 +51,7 @@ struct DeviceAndResource
     int32_t device;
     int32_t resource;
 };
-const DeviceAndResource kineto_ids();
+DeviceAndResource kineto_ids();
 
 #if XSIGMA_HAS_KINETO
 using trace_t           = libkineto::CpuTraceBuffer;

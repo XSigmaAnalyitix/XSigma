@@ -15,7 +15,7 @@ struct ITTMethods : public ProfilerStubs
     }
 
     float elapsed(
-        const ProfilerVoidEventStub* event, const ProfilerVoidEventStub* event2) const override
+        const ProfilerVoidEventStub*  /*event*/, const ProfilerVoidEventStub*  /*event2*/) const override
     {
         return 0;
     }
@@ -30,7 +30,7 @@ struct ITTMethods : public ProfilerStubs
 
     void synchronize() const override {}
 
-    bool enabled() const override { return true; }
+    [[nodiscard]] bool enabled() const override { return true; }
 };
 
 struct RegisterITTMethods

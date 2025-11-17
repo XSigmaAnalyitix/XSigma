@@ -530,7 +530,7 @@ public:
     auto getInputShapeGenerator();
     auto getConcreteInputGenerator();
 
-    bool isSupportedScalarList(const xsigma::IValue& list_candidate);
+    static bool isSupportedScalarList(const xsigma::IValue& list_candidate);
 
     void clear();
 

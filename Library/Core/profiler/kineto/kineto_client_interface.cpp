@@ -54,14 +54,14 @@ public:
 
     void start() override
     {
-        ProfilerConfig cfg{
+        ProfilerConfig const cfg{
             ProfilerState::KINETO_ONDEMAND,
             /*report_input_shapes=*/reportInputShapes_,
             /*profile_memory=*/profileMemory_,
             /*with_stack=*/withStack_,
             /*with_flops=*/withFlops_,
             /*with_modules=*/withModules_};
-        std::set<ActivityType>                  activities{ActivityType::CPU};
+        std::set<ActivityType>                  const activities{ActivityType::CPU};
         std::unordered_set<xsigma::RecordScope> scopes;
         scopes.insert(xsigma::RecordScope::FUNCTION);
         scopes.insert(xsigma::RecordScope::USER_SCOPE);

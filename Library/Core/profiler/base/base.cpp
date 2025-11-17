@@ -31,7 +31,7 @@ struct DefaultStubs : public ProfilerStubs
     void mark(const char* /*name*/) const override { fail(); }
     void rangePush(const char* /*name*/) const override { fail(); }
     void rangePop() const override { fail(); }
-    bool enabled() const override { return false; }
+    [[nodiscard]] bool enabled() const override { return false; }
     void onEachDevice(std::function<void(int)> /*op*/) const override { fail(); }
     void synchronize() const override { fail(); }
     ~DefaultStubs() override = default;

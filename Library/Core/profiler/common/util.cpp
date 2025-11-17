@@ -100,7 +100,7 @@ std::string getNvtxStr(
         }
         else
         {
-#if defined(USE_ROCM)
+#ifdef USE_ROCM
             // Only ROCM supports < -1 sequence_nr
             str = name;
 #endif
@@ -121,10 +121,9 @@ std::string getNvtxStr(
         }
         return str;
     }
-    else
-    {
-        return name;
-    }
+    
+            return name;
+   
 }
 
 // ----------------------------------------------------------------------------
@@ -157,7 +156,7 @@ std::vector<FileLineFunc> prepareCallstack(const std::vector<jit::StackEntry>& c
 // Stub implementation
 std::vector<FileLineFunc> prepareCallstack(const std::vector<jit::StackEntry>& /*cs*/)
 {
-    return std::vector<FileLineFunc>();
+    return {};
 }
 #endif
 
@@ -215,7 +214,7 @@ static std::vector<std::vector<int64_t>> flattenList(const xsigma::IValue& list)
 // Stub implementation
 static std::vector<std::vector<int64_t>> flattenList(const xsigma::IValue& /*list*/)
 {
-    return std::vector<std::vector<int64_t>>();
+    return {};
 }
 #endif
 
@@ -269,7 +268,7 @@ std::vector<std::vector<int64_t>> inputSizes(
 std::vector<std::vector<int64_t>> inputSizes(
     const xsigma::RecordFunction& /*fn*/, bool /*flatten_list_enabled*/)
 {
-    return std::vector<std::vector<int64_t>>();
+    return {};
 }
 #endif
 
@@ -367,9 +366,8 @@ std::string strListToStr(const std::vector<std::string>& types)
     {
         return "[]";
     }
-    else
-    {
-        std::ostringstream oss;
+    
+            std::ostringstream oss;
         std::transform(
             types.begin(),
             types.end(),
@@ -378,7 +376,7 @@ std::string strListToStr(const std::vector<std::string>& types)
         auto rc = oss.str();
         rc.erase(rc.length() - 2);  // remove last ", "
         return "[" + rc + "]";
-    }
+   
 }
 #if 0
 // Disabled: IValue methods (isNone, isBool, operator<<) not available in profiler-only build.
@@ -514,7 +512,7 @@ static inline std::string format_list(
 {
     if (truncate && list.size() > kTruncatLength)
     {
-        if (with_escaped_quotes == true)
+        if (with_escaped_quotes)
         {
             auto x = fmt::format(
                 "\"[{}, ..., {}]\"",
@@ -522,25 +520,23 @@ static inline std::string format_list(
                 *std::prev(list.end()));
             return x;
         }
-        else
-        {
-            auto x = fmt::format(
+        
+                    auto x = fmt::format(
                 "[{}, ..., {}]",
                 fmt::join(list.begin(), list.begin() + kTruncatLength - 1, ", "),
                 *std::prev(list.end()));
             return x;
-        }
+       
     }
-    if (with_escaped_quotes == true)
+    if (with_escaped_quotes)
     {
         auto x = fmt::format("\"[{}]\"", fmt::join(list.begin(), list.end(), ", "));
         return x;
     }
-    else
-    {
-        auto x = fmt::format("[{}]", fmt::join(list.begin(), list.end(), ", "));
+    
+            auto x = fmt::format("[{}]", fmt::join(list.begin(), list.end(), ", "));
         return x;
-    }
+   
 }
 
 #if 0
@@ -615,9 +611,9 @@ std::pair<bool, std::variant<int, std::vector<int>>> findStartAddrForTensors(
 
 std::unordered_map<std::string, std::string> saveNcclMeta(
     // @lint-ignore CLANGTIDY
-    const xsigma::RecordFunction& fn,
+    const xsigma::RecordFunction&  /*fn*/,
     // @lint-ignore CLANGTIDY
-    const SaveNcclMetaConfig& config)
+    const SaveNcclMetaConfig&  /*config*/)
 {
     std::unordered_map<std::string, std::string> map;
 #ifdef USE_DISTRIBUTED
@@ -1202,10 +1198,10 @@ uint64_t computeFlops(
 // value
 int getTensorStartHint(const xsigma::Tensor& t)
 {
-    const auto tensor_impl  = t.unsafeGetTensorImpl();
+    const auto *const tensor_impl  = t.unsafeGetTensorImpl();
     uintptr_t  storage_addr = 0;
     storage_addr            = reinterpret_cast<uintptr_t>(tensor_impl->storage().data());
-    int last_bits           = static_cast<int>(storage_addr & 0xFFFFF);
+    int const last_bits           = static_cast<int>(storage_addr & 0xFFFFF);
     return last_bits;
 }
 
@@ -1218,11 +1214,7 @@ bool checkFunctionOutputsForLogging(const xsigma::RecordFunction& fn)
     // outputs.size() for boxed kernel using stack, there could be more elements
     // on the stack from previous ops.
     // XSIGMA_CHECK(num_outputs <= outputs.size());
-    if (num_outputs > outputs.size())
-    {
-        return false;
-    }
-    return true;
+    return num_outputs <= outputs.size();
 }
 
 bool checkFunctionInputsForLogging(const xsigma::RecordFunction& fn)
@@ -1234,10 +1226,6 @@ bool checkFunctionInputsForLogging(const xsigma::RecordFunction& fn)
     // inputs.size() for boxed kernel using stack, there could be more elements
     // on the stack from previous ops.
     // XSIGMA_CHECK(num_inputs <= inputs.size());
-    if (num_inputs > inputs.size())
-    {
-        return false;
-    }
-    return true;
+    return num_inputs <= inputs.size();
 }
 }  // namespace xsigma::profiler::impl

@@ -77,7 +77,7 @@ const std::set<libkineto::ActivityType> kPrivateUse1Types = {
 static_assert(
     std::is_trivial_v<DeviceAndResource>, "Kineto specific details should be in `kineto_ids`.");
 
-const DeviceAndResource kineto_ids()
+DeviceAndResource kineto_ids()
 {
 #if XSIGMA_HAS_KINETO
     return {/*device=*/libkineto::processId(),
@@ -242,7 +242,7 @@ private:
 
 bool collectivesProfilerExists()
 {
-#if defined(KINETO_HAS_HCCL_PROFILER)
+#ifdef KINETO_HAS_HCCL_PROFILER
     return true;
 #endif
     const auto val = xsigma::utils::get_env("XSIGMA_PROFILER_ENABLE_COLLECTIVE_PROFILING");
@@ -250,7 +250,7 @@ bool collectivesProfilerExists()
 }
 
 #if XSIGMA_HAS_KINETO
-static const std::string setTraceID(const std::string& trace_id)
+static std::string setTraceID(const std::string& trace_id)
 {
     if (trace_id.empty())
     {
@@ -262,7 +262,7 @@ static const std::string setTraceID(const std::string& trace_id)
     return configss.str();
 }
 
-static const std::string appendCustomConfig(
+static std::string appendCustomConfig(
     const std::string& config, const std::string& custom_profiler_config)
 {
     if (custom_profiler_config.empty())
@@ -296,25 +296,25 @@ void prepareTrace(
     }
 
     std::set<libkineto::ActivityType> k_activities;
-    bool has_cpu_activity = activities.count(xsigma::autograd::profiler::ActivityType::CPU);
+    bool const has_cpu_activity = activities.count(xsigma::autograd::profiler::ActivityType::CPU) > 0;
 
     if (has_cpu_activity)
     {
         k_activities.insert(kCpuTypes.begin(), kCpuTypes.end());
     }
-    if (activities.count(xsigma::autograd::profiler::ActivityType::XPU))
+    if (activities.count(xsigma::autograd::profiler::ActivityType::XPU) > 0)
     {
         k_activities.insert(kXpuTypes.begin(), kXpuTypes.end());
     }
-    if (activities.count(xsigma::autograd::profiler::ActivityType::MTIA))
+    if (activities.count(xsigma::autograd::profiler::ActivityType::MTIA) > 0)
     {
         k_activities.insert(kMtiaTypes.begin(), kMtiaTypes.end());
     }
-    if (activities.count(xsigma::autograd::profiler::ActivityType::HPU))
+    if (activities.count(xsigma::autograd::profiler::ActivityType::HPU) > 0)
     {
         k_activities.insert(hpuTypes.begin(), hpuTypes.end());
     }
-    if (activities.count(xsigma::autograd::profiler::ActivityType::CUDA))
+    if (activities.count(xsigma::autograd::profiler::ActivityType::CUDA) > 0)
     {
         k_activities.insert(kCudaTypes.begin(), kCudaTypes.end());
         if (config.enable_cuda_sync_events || get_cuda_sync_enabled())
@@ -330,7 +330,7 @@ void prepareTrace(
     {
         k_activities.insert(libkineto::ActivityType::COLLECTIVE_COMM);
     }
-    if (activities.count(xsigma::autograd::profiler::ActivityType::PrivateUse1))
+    if (activities.count(xsigma::autograd::profiler::ActivityType::PrivateUse1) > 0)
     {
         k_activities.insert(kPrivateUse1Types.begin(), kPrivateUse1Types.end());
     }
@@ -461,7 +461,7 @@ xsigma::device_enum deviceTypeFromActivity(
             return xsigma::device_enum::CUDA;
         }();
 #else
-        xsigma::device_enum device_type = xsigma::device_enum::CUDA;
+        xsigma::device_enum const device_type = xsigma::device_enum::CUDA;
 #endif
         return device_type;
     }

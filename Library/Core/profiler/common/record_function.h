@@ -377,7 +377,7 @@ struct XSIGMA_VISIBILITY RecordFunction
     RecordFunction& operator=(RecordFunction&&)      = delete;
 
     XSIGMA_API const char* name() const;
-    XSIGMA_API const char* overload_name() const;
+    static XSIGMA_API const char* overload_name() ;
 
     int64_t seqNr() const { return sequence_nr_; }
 

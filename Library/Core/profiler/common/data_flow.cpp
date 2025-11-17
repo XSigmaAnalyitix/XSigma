@@ -8,7 +8,7 @@ namespace xsigma::profiler::impl
 
 namespace
 {
-static constexpr TensorImplAddress NoTensorImpl{nullptr};
+constexpr TensorImplAddress NoTensorImpl{nullptr};
 
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 struct RawTensorInfo
@@ -152,7 +152,7 @@ void calculateUniqueTensorIDs(std::vector<std::shared_ptr<Result>>& sorted_resul
         for (auto& t : tensors)
         {
             auto inserted = versions.insert({{t.storage_, t.device_}, counter});
-            counter += inserted.second;
+            counter += static_cast<size_t>(inserted.second);
             t.allocation_id_ref_.get().emplace(AllocationID(inserted.first->second));
             if (t.is_free_)
             {
@@ -225,7 +225,7 @@ void calculateUniqueTensorIDs(std::vector<std::shared_ptr<Result>>& sorted_resul
         for (const auto& i : unique_pairs)
         {
             auto inserted = id_map.insert({i.first, current_id});
-            current_id += inserted.second;
+            current_id += static_cast<size_t>(inserted.second);
             id_map.insert({i.second, inserted.first->second});
         }
     }

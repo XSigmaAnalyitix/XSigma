@@ -93,7 +93,7 @@ enum ProfilerIValueIdx
     NUM_PROFILER_CFG_IVALUE_IDX  // must be last in list
 };
 }  // namespace
-xsigma::IValue ProfilerConfig::toIValue() const
+xsigma::IValue ProfilerConfig::toIValue() 
 {
     //xsigma::impl::GenericList eventIValueList(xsigma::AnyType::get());
     //eventIValueList.reserve(NUM_PROFILER_CFG_IVALUE_IDX);
@@ -131,7 +131,7 @@ ProfilerConfig ProfilerConfig::fromIValue(XSIGMA_UNUSED const xsigma::IValue& pr
 
 ProfilerStateBase::~ProfilerStateBase()
 {
-    if (handle_)
+    if (handle_ != 0u)
     {
         auto handle = handle_;
         removeCallback();
@@ -169,7 +169,7 @@ std::shared_ptr<ProfilerStateBase> popTLS()
     // However if there is an active profiler but it is not the top
     // `DebugInfoBase`then `xsigma::thread_local_debug_info::_pop` will throw.
     // TODO(robieta): make `noexcept` version.
-    return xsigma::thread_local_debug_info::get(xsigma::DebugInfoKind::PROFILER_STATE)
+    return (xsigma::thread_local_debug_info::get(xsigma::DebugInfoKind::PROFILER_STATE) != nullptr)
                ? std::static_pointer_cast<ProfilerStateBase>(
                      xsigma::thread_local_debug_info::_pop(xsigma::DebugInfoKind::PROFILER_STATE))
                : nullptr;
@@ -185,7 +185,7 @@ std::shared_ptr<ProfilerStateBase> popTLS()
 
 void ProfilerStateBase::setCallbackHandle(xsigma::CallbackHandle handle)
 {
-    if (handle_)
+    if (handle_ != 0u)
     {
         xsigma::removeCallback(handle_);
         SOFT_ASSERT(
@@ -199,7 +199,7 @@ void ProfilerStateBase::setCallbackHandle(xsigma::CallbackHandle handle)
 
 void ProfilerStateBase::removeCallback()
 {
-    if (handle_)
+    if (handle_ != 0u)
     {
         xsigma::removeCallback(handle_);
         handle_ = 0;
@@ -209,7 +209,7 @@ void ProfilerStateBase::removeCallback()
 bool profilerEnabled()
 {
     auto* state_ptr = ProfilerStateBase::get(/*global=*/false);
-    return state_ptr && !state_ptr->config().disabled();
+    return (state_ptr != nullptr) && !state_ptr->config().disabled();
 }
 
 XSIGMA_API ActiveProfilerType profilerType()

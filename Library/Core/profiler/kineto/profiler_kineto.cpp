@@ -186,7 +186,7 @@ struct MetadataBase
 
     void addMetadata(const std::string& key, const std::string& value)
     {
-        if (kinetoActivity_ && !value.empty() && value != "\"\"")
+        if ((kinetoActivity_ != nullptr) && !value.empty() && value != "\"\"")
         {
             xsigma::profiler::impl::kineto::addMetadata(
                 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
@@ -196,7 +196,7 @@ struct MetadataBase
         }
     }
 
-    bool hasKinetoActivity() const { return kinetoActivity_ != nullptr; }
+    [[nodiscard]] bool hasKinetoActivity() const { return kinetoActivity_ != nullptr; }
 
 private:
     const xsigma::profiler::impl::kineto::activity_t* kinetoActivity_{nullptr};
@@ -467,7 +467,7 @@ struct KinetoThreadLocalState : public ProfilerStateBase
         auto end_time = getTimeNs();
         recordQueue.stop();
 
-        std::lock_guard<std::mutex> guard(state_mutex_);
+        std::scoped_lock const guard(state_mutex_);
         auto                        converter = clockConverter.makeConverter();
 #if XSIGMA_HAS_KINETO
         libkineto::get_time_converter() = converter;
@@ -515,8 +515,8 @@ struct KinetoThreadLocalState : public ProfilerStateBase
                         [](auto&) {}));
 
                 kinetoEvents.emplace_back(e, config_.experimental_config.verbose);
-                AddTensorboardFields add_tb(e, kinetoEvents.back());
-                AddGenericMetadata   add_generic(e, &config_);
+                AddTensorboardFields const add_tb(e, kinetoEvents.back());
+                AddGenericMetadata   const add_generic(e, &config_);
 
                 // It is not safe to use the activity after post processing.
                 e->kineto_activity_ = nullptr;
@@ -536,7 +536,7 @@ struct KinetoThreadLocalState : public ProfilerStateBase
 template <bool use_global_state_ptr = false>
 std::unique_ptr<xsigma::ObserverContext> onFunctionEnter(const xsigma::RecordFunction& fn)
 {
-    auto state_ptr = KinetoThreadLocalState::get(use_global_state_ptr);
+    auto *state_ptr = KinetoThreadLocalState::get(use_global_state_ptr);
     if (!state_ptr)
     {
         return nullptr;
@@ -548,7 +548,7 @@ std::unique_ptr<xsigma::ObserverContext> onFunctionEnter(const xsigma::RecordFun
 template <bool use_global_state_ptr = false>
 void onFunctionExit(const xsigma::RecordFunction& fn, xsigma::ObserverContext* ctx_ptr)
 {
-    auto state_ptr = KinetoThreadLocalState::get(use_global_state_ptr);
+    auto *state_ptr = KinetoThreadLocalState::get(use_global_state_ptr);
     if (!state_ptr)
     {
         return;
@@ -567,7 +567,7 @@ void onFunctionExit(const xsigma::RecordFunction& fn, xsigma::ObserverContext* c
     {
         auto& extra_meta = *(kineto_ctx_ptr->event_->extra_nccl_meta_);
         // Record only the outputs in this exit callback of the record function
-        xsigma::profiler::impl::SaveNcclMetaConfig ncclMetaConfig{true, false, false, true};
+        xsigma::profiler::impl::SaveNcclMetaConfig const ncclMetaConfig{true, false, false, true};
         auto additonal_nccl_meta = xsigma::profiler::impl::saveNcclMeta(fn, ncclMetaConfig);
         extra_meta.insert(additonal_nccl_meta.begin(), additonal_nccl_meta.end());
     }
@@ -575,7 +575,7 @@ void onFunctionExit(const xsigma::RecordFunction& fn, xsigma::ObserverContext* c
     {
         try
         {
-            auto fallback = kineto_ctx_ptr->fallback_;
+            auto *fallback = kineto_ctx_ptr->fallback_;
             XSIGMA_CHECK(fallback != nullptr);
             xsigma::profiler::impl::cudaStubs()->record(
                 nullptr, &fallback->device_event_end_, nullptr);
@@ -587,7 +587,7 @@ void onFunctionExit(const xsigma::RecordFunction& fn, xsigma::ObserverContext* c
     }
     else if (config.state == ProfilerState::KINETO_PRIVATEUSE1_FALLBACK)
     {
-        auto fallback = kineto_ctx_ptr->fallback_;
+        auto *fallback = kineto_ctx_ptr->fallback_;
         XSIGMA_CHECK(fallback != nullptr);
         xsigma::profiler::impl::privateuse1Stubs()->record(
             nullptr, &fallback->device_event_end_, nullptr);
@@ -609,7 +609,7 @@ void onFunctionExit(const xsigma::RecordFunction& fn, xsigma::ObserverContext* c
 template <bool use_global_callback = false>
 void pushProfilingCallbacks(const std::unordered_set<xsigma::RecordScope>& scopes)
 {
-    auto registration_state_ptr = KinetoThreadLocalState::get(use_global_callback);
+    auto *registration_state_ptr = KinetoThreadLocalState::get(use_global_callback);
     XSIGMA_CHECK(registration_state_ptr, "Expected profiler state set");
     auto recordFunctionCallback =
         xsigma::RecordFunctionCallback(
@@ -650,8 +650,8 @@ void reportBackendEventToActiveKinetoProfiler(
         KinetoThreadLocalState::get(/*global=*/true) == nullptr,
         "On-demand profiling does not support post processing callback");
 
-    auto state_ptr = KinetoThreadLocalState::get(/*global=*/false);
-    if (!state_ptr)
+    auto *state_ptr = KinetoThreadLocalState::get(/*global=*/false);
+    if (state_ptr == nullptr)
     {
         return;
     }
@@ -703,7 +703,7 @@ void prepareProfiler(
      */
         auto is_standard_event = [](const std::string& event) -> bool
         {
-            for (auto e : xsigma::profiler::ProfilerPerfEvents)
+            for (const auto *e : xsigma::profiler::ProfilerPerfEvents)
             {
                 if (!std::strcmp(event.c_str(), e))
                 {
@@ -725,8 +725,8 @@ void prepareProfiler(
 
 static void toggleTorchOpCollectionDynamic(bool enable)
 {
-    auto state_ptr = ProfilerStateBase::get();
-    if (state_ptr)
+    auto *state_ptr = ProfilerStateBase::get();
+    if (state_ptr != nullptr)
     {
         const auto& config = state_ptr->config();
         if (enable)
@@ -751,8 +751,8 @@ static void toggleTorchOpCollectionDynamic(bool enable)
 #endif
 static UNUSED void togglePythonCollectionDynamic(bool enable)
 {
-    auto state_ptr = ProfilerStateBase::get();
-    if (state_ptr)
+    auto *state_ptr = ProfilerStateBase::get();
+    if (state_ptr != nullptr)
     {
         auto                    global                        = state_ptr->config().global();
         KinetoThreadLocalState* kineto_thread_local_state_ptr = KinetoThreadLocalState::get(global);
@@ -833,7 +833,7 @@ void enableProfilerWithEventPostProcess(
         "On-demand profiling does not support post processing callback");
 
     enableProfiler(config, activities, scopes);
-    auto state_ptr = KinetoThreadLocalState::get(config.global());
+    auto *state_ptr = KinetoThreadLocalState::get(config.global());
     state_ptr->setEventPostProcessingCallback(std::move(cb));
 }
 
@@ -853,12 +853,12 @@ void enableProfiler(
         xsigma::profiler::impl::pushNVTXCallbacks(config, scopes);
         return;
     }
-    else if (config.state == ProfilerState::ITT)
+    if (config.state == ProfilerState::ITT)
     {
         xsigma::profiler::impl::pushITTCallbacks(config, scopes);
         return;
     }
-    else if (config.state == ProfilerState::PRIVATEUSE1)
+    if (config.state == ProfilerState::PRIVATEUSE1)
     {
         xsigma::profiler::impl::pushPRIVATEUSE1CallbacksStub(config, scopes);
         return;
@@ -874,7 +874,7 @@ void enableProfiler(
     auto state_ptr = std::make_shared<KinetoThreadLocalState>(config, activities);
     KinetoThreadLocalState::push(state_ptr);
 
-    if (has_cpu)
+    if (has_cpu != 0u)
     {
         config.pushGlobalCallbacks() ? pushProfilingCallbacks</*global=*/true>(scopes)
                                      : pushProfilingCallbacks</*global=*/false>(scopes);
@@ -885,7 +885,7 @@ void enableProfiler(
         xsigma::profiler::impl::kineto::startTrace();
     }
 
-    if (has_cpu)
+    if (has_cpu != 0u)
     {
         auto state_info_ptr       = std::make_shared<ProfilerStateInfo>();
         state_info_ptr->state_ptr = state_ptr;
@@ -1017,9 +1017,9 @@ KinetoEvent::KinetoEvent(
         });
 }
 
-bool KinetoEvent::isPythonFunction() const
+bool KinetoEvent::isPythonFunction() 
 {
-    bool out{false};
+    bool const out{false};
     //result_->visit_if_base<PyExtraFieldsBase>([&](const auto&) { out = true; });
     return out;
 }
@@ -1029,7 +1029,7 @@ bool KinetoEvent::hasShapes() const
     return !shapes_.empty();
 }
 
-const xsigma::array_ref<std::vector<int64_t>> KinetoEvent::shapes() const
+xsigma::array_ref<std::vector<int64_t>> KinetoEvent::shapes() const
 {
     return shapes_;
 }
@@ -1039,7 +1039,7 @@ bool KinetoEvent::hasTypes() const
     return !dtypes_.empty();
 }
 
-const xsigma::array_ref<std::string> KinetoEvent::dtypes() const
+xsigma::array_ref<std::string> KinetoEvent::dtypes() const
 {
     return dtypes_;
 }
@@ -1049,7 +1049,7 @@ bool KinetoEvent::hasConcreteInputs() const
     return !concrete_inputs_.empty();
 }
 
-const xsigma::array_ref<xsigma::IValue> KinetoEvent::concreteInputs() const
+xsigma::array_ref<xsigma::IValue> KinetoEvent::concreteInputs() const
 {
     return concrete_inputs_;
 }
@@ -1064,36 +1064,36 @@ bool KinetoEvent::isHiddenEvent() const
     return result_ && result_->hidden_;
 }
 
-const std::unordered_map<std::string, xsigma::IValue> KinetoEvent::kwinputs() const
+std::unordered_map<std::string, xsigma::IValue> KinetoEvent::kwinputs() const
 {
     return kwinputs_;
 }
 
-const xsigma::array_ref<std::string> KinetoEvent::stack() const
+xsigma::array_ref<std::string> KinetoEvent::stack() const
 {
     auto get = [&](const auto& i) -> auto&
     { return !i.jit_stack_.empty() ? i.jit_stack_ : python_stack_; };
 
     auto const& extra_fields = result_->extra_fields_;
-    if (auto p = std::get_if<ExtraFields<EventType::TorchOp>>(&extra_fields))
+    if (const auto *p = std::get_if<ExtraFields<EventType::TorchOp>>(&extra_fields))
     {
         return get(*p);
     }
-    if (auto p = std::get_if<ExtraFields<EventType::Backend>>(&extra_fields))
+    if (const auto *p = std::get_if<ExtraFields<EventType::Backend>>(&extra_fields))
     {
         return get(*p);
     }
     return python_stack_;
 }
 
-const xsigma::array_ref<std::string> KinetoEvent::moduleHierarchy() const
+xsigma::array_ref<std::string> KinetoEvent::moduleHierarchy() const
 {
     auto const& extra_fields = result_->extra_fields_;
-    if (auto p = std::get_if<ExtraFields<EventType::TorchOp>>(&extra_fields))
+    if (const auto *p = std::get_if<ExtraFields<EventType::TorchOp>>(&extra_fields))
     {
         return p->jit_modules_;
     }
-    if (auto p = std::get_if<ExtraFields<EventType::Backend>>(&extra_fields))
+    if (const auto *p = std::get_if<ExtraFields<EventType::Backend>>(&extra_fields))
     {
         return p->jit_modules_;
     }
@@ -1197,7 +1197,7 @@ std::string KinetoEvent::metadataJson() const
             { return op.metadata_json_; },
             [](const ExtraFields<EventType::Kineto>& op) -> std::string
             { return op.metadata_json_; },
-            [](const auto&) -> std::string { return std::string(""); }));
+            [](const auto&) -> std::string { return {""}; }));
 }
 
 #define FORWARD_FROM_RESULT(method_name, result_expr)                                    \
@@ -1284,9 +1284,9 @@ namespace profiler::impl
 {
 void _reportVulkanEventToProfiler(vulkan_id_t id)
 {
-    auto state_ptr = ::xsigma::autograd::profiler::KinetoThreadLocalState::get(
+    auto *state_ptr = ::xsigma::autograd::profiler::KinetoThreadLocalState::get(
         /*global=*/false);
-    if (state_ptr)
+    if (state_ptr != nullptr)
     {
         state_ptr->reportVulkanEventToProfiler(id);
     }

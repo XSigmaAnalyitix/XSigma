@@ -117,11 +117,11 @@ uint64_t PerfEvent::ReadCounter() const
  * value
  */
 
-PerfEvent::~PerfEvent() {}
+PerfEvent::~PerfEvent() = default;
 
 void PerfEvent::Init() {}
 
-uint64_t PerfEvent::ReadCounter() const
+uint64_t PerfEvent::ReadCounter() 
 {
     return 0;
 }
@@ -141,7 +141,7 @@ void PerfProfiler::Configure(std::vector<std::string>& event_names)
         event_names.size(),
         ", max allowed:",
         MAX_EVENTS);
-    std::unordered_set<std::string> s(event_names.begin(), event_names.end());
+    std::unordered_set<std::string> const s(event_names.begin(), event_names.end());
     XSIGMA_CHECK(s.size() == event_names.size(), "Duplicate event names are not allowed!")
     for (auto name : event_names)
     {

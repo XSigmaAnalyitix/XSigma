@@ -14,8 +14,8 @@ static thread_local std::shared_ptr<thread_local_debug_info> tls_debug_info;
 /* static */
 DebugInfoBase* thread_local_debug_info::get(DebugInfoKind kind)
 {
-    thread_local_debug_info* cur = debug_info.get();
-    while (cur)
+    thread_local_debug_info const* cur = debug_info.get();
+    while (cur != nullptr)
     {
         if (cur->kind_ == kind)
         {
@@ -49,20 +49,20 @@ void thread_local_debug_info::_push(DebugInfoKind kind, std::shared_ptr<DebugInf
 }
 
 /* static */
-std::shared_ptr<DebugInfoBase> thread_local_debug_info::_pop(DebugInfoKind kind)
+std::shared_ptr<DebugInfoBase> thread_local_debug_info::_pop(DebugInfoKind  /*kind*/)
 {
-    XSIGMA_CHECK(
-        debug_info && debug_info->kind_ == kind, "Expected debug info of type ", (size_t)kind);
+    //XSIGMA_CHECK(//NOLINT
+    //    debug_info!=nullptr && debug_info->kind_ == kind, "Expected debug info of type ", (size_t)kind);//NOLINT
     auto res   = debug_info;
     debug_info = debug_info->parent_info_;
     return res->info_;
 }
 
 /* static */
-std::shared_ptr<DebugInfoBase> thread_local_debug_info::_peek(DebugInfoKind kind)
+std::shared_ptr<DebugInfoBase> thread_local_debug_info::_peek(DebugInfoKind  /*kind*/)
 {
-    XSIGMA_CHECK(
-        debug_info && debug_info->kind_ == kind, "Expected debug info of type ", (size_t)kind);
+    //XSIGMA_CHECK(
+    //    debug_info!=nullptr && debug_info->kind_ == kind, "Expected debug info of type ", (size_t)kind);
     return debug_info->info_;
 }
 

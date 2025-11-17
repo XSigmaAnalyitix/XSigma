@@ -162,7 +162,7 @@ private:
     XSIGMA_FORCE_INLINE void getActiveCallbacksImpl();
 
     void rebuildActiveCallbacks();
-    int  sampleTries(double p) const;
+    [[nodiscard]] int  sampleTries(double p) const;
 
     // std::mt19937 is quite large, so all scopes share the same generator.
     std::mt19937* generator_{nullptr};
@@ -187,9 +187,9 @@ private:
     LocalCallbackManager();
 
 public:
-    const RecordFunctionTLS&     getTLS() const;
-    StepCallbacks                getActiveCallbacks(const RecordScope scope);
-    std::optional<StepCallbacks> getActiveCallbacksUnlessEmpty(const RecordScope scope);
+    [[nodiscard]] const RecordFunctionTLS&     getTLS() const;
+    StepCallbacks                getActiveCallbacks(RecordScope scope);
+    std::optional<StepCallbacks> getActiveCallbacksUnlessEmpty(RecordScope scope);
 
     void           setTLS(const RecordFunctionTLS& tls);
     void           seed(uint32_t seed);
@@ -208,7 +208,7 @@ private:
         const RecordFunctionCallback&            callback);
 
     void rebuild_scope(
-        const GlobalCallbackManager::snapshot_t& global_snapshot, const RecordScope scope);
+        const GlobalCallbackManager::snapshot_t& global_snapshot, RecordScope scope);
 
     // Source of truth.
     RecordFunctionTLS registered_callbacks_;
@@ -235,13 +235,13 @@ size_t GlobalCallbackManager::version() const
 
 std::pair<size_t, RecordFunctionCallbacks> GlobalCallbackManager::getSnapshot() const
 {
-    std::lock_guard<std::mutex> guard(update_mutex_);
+    std::scoped_lock const guard(update_mutex_);
     return {version_.load(std::memory_order_seq_cst), global_callbacks_};
 }
 
 CallbackHandle GlobalCallbackManager::addCallback(RecordFunctionCallback cb)
 {
-    std::lock_guard<std::mutex> guard(update_mutex_);
+    std::scoped_lock const guard(update_mutex_);
     ++version_;
     auto handle = next_unique_callback_handle();
     global_callbacks_.emplace_back(cb, handle);
@@ -250,7 +250,7 @@ CallbackHandle GlobalCallbackManager::addCallback(RecordFunctionCallback cb)
 
 void GlobalCallbackManager::setCallbackEnabled(CallbackHandle handle, bool enabled)
 {
-    std::lock_guard<std::mutex> guard(update_mutex_);
+    std::scoped_lock const guard(update_mutex_);
     auto                        it = findCallback(global_callbacks_, handle);
     if (it != global_callbacks_.end())
     {
@@ -268,7 +268,7 @@ void GlobalCallbackManager::setCallbackEnabled(CallbackHandle handle, bool enabl
 
 void GlobalCallbackManager::removeCallback(CallbackHandle handle)
 {
-    std::lock_guard<std::mutex> guard(update_mutex_);
+    std::scoped_lock const guard(update_mutex_);
     if (extractCallback(global_callbacks_, handle).has_value())
     {
         ++version_;
@@ -281,7 +281,7 @@ void GlobalCallbackManager::removeCallback(CallbackHandle handle)
 
 void GlobalCallbackManager::clearCallbacks()
 {
-    std::lock_guard<std::mutex> guard(update_mutex_);
+    std::scoped_lock const guard(update_mutex_);
     ++version_;
     global_callbacks_.clear();
 }
@@ -332,7 +332,7 @@ void CacheEntry::getActiveCallbacksImpl()
         // Resample any sampled callbacks that ran this call.
         for (auto& i : callbacks_)
         {
-            if (!i.tries_left_)
+            if (i.tries_left_ == 0)
             {
                 i.tries_left_ = sampleTries(i.callback_.samplingProb());
             }
@@ -408,7 +408,7 @@ int CacheEntry::sampleTries(double p) const
 // ============================================================================
 LocalCallbackManager& LocalCallbackManager::get()
 {
-#if defined(XSIGMA_PREFER_CUSTOM_THREAD_LOCAL_STORAGE)
+#ifdef XSIGMA_PREFER_CUSTOM_THREAD_LOCAL_STORAGE
     static xsigma::ThreadLocal<LocalCallbackManager> manager;
     return manager.get();
 #else   // defined(XSIGMA_PREFER_CUSTOM_THREAD_LOCAL_STORAGE)
@@ -719,7 +719,7 @@ std::optional<xsigma::FunctionSchema> RecordFunction::operator_schema() const
 }
 
 // Disabled: FunctionSchema::overload_name() not available in profiler-only build
-const char* RecordFunction::overload_name() const
+const char* RecordFunction::overload_name() 
 {
 #if 0
     return std::visit(
@@ -850,7 +850,7 @@ void set_record_function_seed_for_testing(uint32_t seed)
 /* static */
 uint64_t RecordFunction::currentThreadId()
 {
-    if (!current_thread_id_)
+    if (current_thread_id_ == 0u)
     {
         // happens only once per thread
         current_thread_id_ = ++next_thread_id_;

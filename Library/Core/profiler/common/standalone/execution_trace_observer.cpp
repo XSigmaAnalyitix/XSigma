@@ -59,7 +59,7 @@ namespace xsigma
 struct StorageImpl : public xsigma::intrusive_ptr_target
 {
     // Stub implementation for profiler-only build
-    const void* data() const { return nullptr; }
+    static const void* data() { return nullptr; }
 };
 }  // namespace xsigma
 
@@ -216,7 +216,7 @@ struct XSIGMA_VISIBILITY ExecutionTraceObserver
     // Stub implementation
     ID get_tensor_storage_ID(const xsigma::Storage& /*t_storage*/)
     {
-        const std::lock_guard<std::recursive_mutex> lock(gMutex);
+        const std::scoped_lock lock(gMutex);
         return storage_id_++;
     }
 #endif
@@ -525,12 +525,12 @@ static void finalizeExecutionTraceOutput(ExecutionTraceObserver& ob)
 
 static ExecutionTraceObserver::ID getObjectID(ExecutionTraceObserver& ob, const void* t)
 {
-    const std::lock_guard<std::recursive_mutex> lock(ob.gMutex);
+    const std::scoped_lock lock(ob.gMutex);
 
     auto iter = ob.objectId.find(t);
     if (iter == ob.objectId.end())
     {
-        ExecutionTraceObserver::ID objectId = ob.getNewID();
+        ExecutionTraceObserver::ID const objectId = ob.getNewID();
         ob.objectId[t]                      = objectId;
         return objectId;
     }
@@ -544,9 +544,9 @@ static void dumpTensorData2File(std::string& tensor_dump_file_name, xsigma::Tens
     fs.open(tensor_dump_file_name, std::fstream::out | std::fstream::binary);
     if (fs.is_open())
     {
-        auto*  tensor_impl   = tensor_on_host.unsafeGetTensorImpl();
-        size_t tensor_offset = tensor_impl->storage_offset();
-        size_t tensor_nbyte  = tensor_impl->numel() * tensor_impl->itemsize();
+        const auto*  tensor_impl   = tensor_on_host.unsafeGetTensorImpl();
+        size_t const tensor_offset = tensor_impl->storage_offset();
+        size_t const tensor_nbyte  = tensor_impl->numel() * tensor_impl->itemsize();
 
         fs.write((const char*)tensor_impl->storage().data() + tensor_offset, (long)tensor_nbyte);
     }
@@ -795,7 +795,7 @@ static void handleKernelBackendInfo(FunctionCallContext& /*fc*/, const RecordFun
 #endif
 
 // Additional attributes for commounication collectives
-inline std::string getCommsNodeAttrs(const RecordFunction& fn)
+static inline std::string getCommsNodeAttrs(const RecordFunction&  /*fn*/)
 {  // NOLINT
     std::vector<std::string> attrs;
 
@@ -859,7 +859,7 @@ static void recordOperatorStart(
     try
     {
         {
-            const std::lock_guard<std::recursive_mutex> lock(ob.gMutex);
+            const std::scoped_lock lock(ob.gMutex);
 
             // if current thread stack is empty, push the root node to the stack
             // first
@@ -892,7 +892,7 @@ static void recordOperatorStart(
         auto       num_inputs = fn.num_inputs();
         const auto inputs     = fn.inputs();
         // need to account for Stack mode where the inputs are at the end.
-        size_t input_start = inputs.size() - num_inputs;
+        size_t const input_start = inputs.size() - num_inputs;
         // tensor_index is the index of the flattened tensor list for all input
         // tensors
         int tensor_index = 0;
@@ -915,7 +915,7 @@ static void recordOperatorStart(
         handleKernelBackendInfo(fc, fn);
 
         {
-            const std::lock_guard<std::recursive_mutex> lock(ob.gMutex);
+            const std::scoped_lock lock(ob.gMutex);
 
             fc.parentId = ob.opStack[tid].top();
             // get parent id from the forward stack, this can be different for
@@ -938,12 +938,12 @@ static void recordOperatorStart(
 static std::unique_ptr<ObserverContext> onFunctionEnter(const RecordFunction& fn)
 {
     using RunState = ExecutionTraceObserver::RunState;
-    auto ob        = ObserverManager::get();
+    auto *ob        = ObserverManager::get();
     if (ob != nullptr && ob->getState() == RunState::enabled)
     {
         // record op
         auto fc_ptr = std::make_unique<FunctionCallContext>();
-        recordOperatorStart(*ob, *fc_ptr.get(), fn);
+        recordOperatorStart(*ob, *fc_ptr, fn);
         return fc_ptr;
     }
     return nullptr;
@@ -952,7 +952,7 @@ static std::unique_ptr<ObserverContext> onFunctionEnter(const RecordFunction& fn
 static std::string json_str_escape(const std::string& str)
 {
     std::ostringstream ostream;
-    for (char ch : str)
+    for (char const ch : str)
     {
         if (ch == '"')
         {
@@ -998,14 +998,14 @@ static std::string json_str_escape(const std::string& str)
 static void onFunctionExit(const RecordFunction& fn, ObserverContext* ctx_ptr)
 {
     using RunState = ExecutionTraceObserver::RunState;
-    auto ob        = ObserverManager::get();
+    auto *ob        = ObserverManager::get();
     if (ob == nullptr || ctx_ptr == nullptr)
     {
         return;
     }
     if (ob->getState() == RunState::enabled)
     {
-        auto fc_ptr = dynamic_cast<FunctionCallContext*>(ctx_ptr);
+        auto *fc_ptr = dynamic_cast<FunctionCallContext*>(ctx_ptr);
         // XSIGMA_CHECK(fc_ptr != nullptr);
         if (fc_ptr == nullptr)
         {
@@ -1020,7 +1020,7 @@ static void onFunctionExit(const RecordFunction& fn, ObserverContext* ctx_ptr)
         auto outputs     = fn.outputs();
         auto num_outputs = fn.num_outputs();
         // need to account for Stack mode where the outputs are at the end.
-        size_t output_start = outputs.size() - num_outputs;
+        size_t const output_start = outputs.size() - num_outputs;
 
         std::vector<std::string> output_types;
         std::vector<std::string> output_strides;
@@ -1059,7 +1059,7 @@ static void onFunctionExit(const RecordFunction& fn, ObserverContext* ctx_ptr)
 
             const std::string additiona_attrs = fn.isNcclMeta() ? getCommsNodeAttrs(fn) : "";
             {
-                const std::lock_guard<std::recursive_mutex> lock(ob->gMutex);
+                const std::scoped_lock lock(ob->gMutex);
 
                 // remove current op id from stack
                 ob->opStack[fn.threadId()].pop();
@@ -1140,7 +1140,7 @@ bool addExecutionTraceObserver(const std::string& output_file_path)
             }
         }
 
-        std::size_t ext_pos = ob.fileName.rfind(".json");
+        std::size_t const ext_pos = ob.fileName.rfind(".json");
         if (ext_pos != std::string::npos)
         {
             ob.resourceDir = ob.fileName;
@@ -1171,7 +1171,7 @@ bool addExecutionTraceObserver(const std::string& output_file_path)
 
 void removeExecutionTraceObserver()
 {
-    auto ob = ObserverManager::get();
+    auto *ob = ObserverManager::get();
     if (ob != nullptr)
     {
         if (ob->getState() != ExecutionTraceObserver::RunState::disabled)
