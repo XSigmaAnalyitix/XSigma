@@ -176,7 +176,6 @@ class BazelConfiguration:
 
         # Add server management flags to prevent hanging
         # Use --noserver to disable Bazel server (prevents deadlocks on Windows)
-        cmd.append("--noserver")
 
         # Add default logging backend if not explicitly set
         if not any(c.startswith("logging_") for c in self.configs):
