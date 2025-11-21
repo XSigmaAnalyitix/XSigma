@@ -4,7 +4,7 @@
  * Comprehensive test suite for the Kineto profiler wrapper.
  * Tests cover happy paths, edge cases, boundary conditions, and error handling.
  */
-#if 0
+
 #include <chrono>
 #include <cmath>
 #include <memory>
@@ -17,6 +17,12 @@
 #include "Testing/xsigmaTest.h"
 #include "profiler/common/record_function.h"
 #include "profiler/kineto/profiler_kineto.h"
+
+#if 0
+// NOTE: The following tests were written for a xsigma::kineto_profiler API that does not exist.
+// The actual Kineto profiler API is in xsigma::autograd::profiler namespace with functions like
+// enableProfiler(), disableProfiler(), and prepareProfiler().
+// These tests are disabled until the API is implemented or tests are rewritten to use the actual API.
 
 using namespace xsigma::kineto_profiler;
 
@@ -151,7 +157,7 @@ XSIGMATEST(Profiler, kineto_cannot_start_profiling_twice)
 // Configuration Tests
 // ============================================================================
 
-XSIGMATEST(Profiler, kineto_get_config_returns_valid_config)
+/*XSIGMATEST(Profiler, kineto_get_config_returns_valid_config)
 {
     profiling_config config;
     config.trace_name = "custom_trace";
@@ -164,7 +170,7 @@ XSIGMATEST(Profiler, kineto_get_config_returns_valid_config)
         EXPECT_EQ(retrieved_config.trace_name, "custom_trace");
         EXPECT_EQ(retrieved_config.output_dir, "/tmp/profiles");
     }
-}
+}*/
 
 XSIGMATEST(Profiler, kineto_set_config_succeeds_when_not_profiling)
 {
@@ -310,6 +316,7 @@ XSIGMATEST(Profiler, kineto_profiler_destructor_stops_profiling)
     // If we reach here without crash, destructor worked correctly
     EXPECT_TRUE(true);
 }
+#endif  // Disabled tests for non-existent kineto_profiler API
 
 XSIGMATEST(RecordDebugHandles, Basic)
 {
@@ -469,7 +476,7 @@ XSIGMATEST(RecordDebugHandles, Basic)
             << "], event tree size=" << event_tree_size;
     }
 }
-
+#if 0
 // ============================================================================
 // Thread Safety Tests
 // ============================================================================

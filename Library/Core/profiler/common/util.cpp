@@ -100,7 +100,7 @@ std::string getNvtxStr(
         }
         else
         {
-#ifdef USE_ROCM
+#ifdef XSIGMA_USE_ROCM
             // Only ROCM supports < -1 sequence_nr
             str = name;
 #endif

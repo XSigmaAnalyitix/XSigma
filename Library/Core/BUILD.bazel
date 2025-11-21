@@ -154,7 +154,7 @@ cc_library(
         "//bazel:enable_hip": glob(["memory/gpu/*.cpp", "memory/cpu/allocator_device.cpp"]),
         "//conditions:default": [],
     }) + select({
-        "//bazel:enable_native_profiler": glob(["profiler/native/*.cpp"]),
+        "//bazel:enable_native_profiler": glob(["profiler/native/**/*.cpp"]),
         "//conditions:default": [],
     }) + select({
         "//bazel:enable_tbb": glob(["smp/TBB/*.cpp"]),
@@ -170,7 +170,7 @@ cc_library(
         "//bazel:enable_hip": glob(["memory/gpu/*.h", "memory/cpu/allocator_device.h"]),
         "//conditions:default": [],
     }) + select({
-        "//bazel:enable_native_profiler": glob(["profiler/native/*.h", "profiler/native/*.hxx"]),
+        "//bazel:enable_native_profiler": glob(["profiler/native/**/*.h", "profiler/native/**/*.hxx"]),
         "//conditions:default": [],
     }) + select({
         "//bazel:enable_tbb": glob(["smp/TBB/*.h", "smp/TBB/*.hxx"]),
@@ -210,7 +210,7 @@ cc_library(
         "//bazel:enable_mimalloc": ["@mimalloc//:mimalloc"],
         "//conditions:default": [],
     }) + select({
-        "//bazel:enable_kineto": ["//ThirdParty:kineto"],
+        "//bazel:enable_kineto": ["@kineto//:kineto"],
         "//conditions:default": [],
     }) + select({
         "//bazel:enable_tbb": ["@tbb//:tbb"],

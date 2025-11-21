@@ -132,8 +132,14 @@ http_archive(
 # -----------------------------------------------------------------------------
 # Kineto - Profiling library (from local ThirdParty directory)
 # -----------------------------------------------------------------------------
-# Note: This assumes kineto is in ThirdParty/kineto/libkineto
-# If using external kineto, replace with http_archive
+# Note: Kineto is a git submodule in ThirdParty/kineto
+# We use new_local_repository to provide our own BUILD file without modifying
+# the third-party submodule (as per .augment/rules/ThirdParty.md)
+new_local_repository(
+    name = "kineto",
+    path = "ThirdParty/kineto",
+    build_file = "//ThirdParty:kineto.BUILD",
+)
 
 # =============================================================================
 # Platform-Specific Dependencies

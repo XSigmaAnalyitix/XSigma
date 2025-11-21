@@ -237,8 +237,8 @@ XSIGMATEST(AllocatorTracking, logging_level_configuration)
     auto [tracking_allocator, underlying_ptr] = create_test_tracking_allocator();
 
     // Test setting and getting logging levels
-    tracking_allocator->SetLoggingLevel(tracking_log_level::DEBUG);
-    EXPECT_EQ(tracking_allocator->GetLoggingLevel(), tracking_log_level::DEBUG);
+    tracking_allocator->SetLoggingLevel(tracking_log_level::DEBUG_LEVEL);
+    EXPECT_EQ(tracking_allocator->GetLoggingLevel(), tracking_log_level::DEBUG_LEVEL);
 
     tracking_allocator->SetLoggingLevel(tracking_log_level::INFO);
     EXPECT_EQ(tracking_allocator->GetLoggingLevel(), tracking_log_level::INFO);

@@ -795,7 +795,7 @@ else()
     message(STATUS "Using Kineto with CUPTI support")
 endif()
 
-if(NOT USE_ROCM)
+if(NOT XSIGMA_ENABLE_ROCM)
     set(LIBKINETO_NOROCTRACER ON CACHE STRING "" FORCE)
 else()
     set(LIBKINETO_NOROCTRACER OFF CACHE STRING "" FORCE)

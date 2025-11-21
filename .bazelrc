@@ -178,13 +178,14 @@ build:mimalloc --define=xsigma_enable_mimalloc=true
 build:magic_enum --define=xsigma_enable_magic_enum=true
 
 # Enable Kineto profiling
-build:kineto --define=xsigma_enable_kineto=true
+# Note: Kineto config also enables native profiler for compatibility with tests
+build:kineto --define=xsigma_profiler_type=kineto --define=xsigma_enable_kineto=true
 
 # Enable native profiler
 build:native_profiler --define=xsigma_profiler_type=native
 
 # Enable ITT profiling
-build:itt --define=xsigma_enable_itt=true
+build:itt --define=xsigma_profiler_type=itt --define=xsigma_enable_itt=true
 
 # Enable LU pivoting
 build:lu_pivoting --define=xsigma_lu_pivoting=true

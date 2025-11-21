@@ -955,8 +955,8 @@ XSIGMATEST(AllocatorTracking, LoggingAndReporting)
     auto tracker = new xsigma::allocator_tracking(&underlying_alloc, true, true);
 
     // Test logging level configuration
-    tracker->SetLoggingLevel(tracking_log_level::DEBUG);
-    EXPECT_EQ(tracker->GetLoggingLevel(), tracking_log_level::DEBUG);
+    tracker->SetLoggingLevel(tracking_log_level::DEBUG_LEVEL);
+    EXPECT_EQ(tracker->GetLoggingLevel(), tracking_log_level::DEBUG_LEVEL);
 
     tracker->SetLoggingLevel(tracking_log_level::INFO);
     EXPECT_EQ(tracker->GetLoggingLevel(), tracking_log_level::INFO);

@@ -102,7 +102,7 @@ class BazelConfiguration:
 
         # Default backends (matching CMake defaults)
         self.logging_backend = "loguru"  # Default: LOGURU (matches CMake)
-        self.profiler_backend = "native"  # Default: NATIVE (Kineto not yet supported in Bazel)
+        self.profiler_backend = "kineto"  # Default: KINETO (matches CMake)
 
         self._parse_arguments()
 

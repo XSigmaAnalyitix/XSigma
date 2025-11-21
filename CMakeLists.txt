@@ -186,6 +186,11 @@ option(XSIGMA_ENABLE_MIMALLOC
 )
 mark_as_advanced(XSIGMA_ENABLE_MIMALLOC)
 
+# ROCm Support Flag Controls whether ROCm (Radeon Open Compute) support is enabled for AMD GPUs.
+# When enabled, allows integration with ROCm ecosystem and AMD GPU acceleration.
+option(XSIGMA_ENABLE_ROCM "Enable ROCm support for AMD GPUs" OFF)
+mark_as_advanced(XSIGMA_ENABLE_ROCM)
+
 # profiling libreray XSigma Kineto Profiling Library Flag Controls whether Kineto profiling library
 # is enabled. When enabled, provides advanced profiling capabilities for performance analysis.
 option(XSIGMA_ENABLE_KINETO "Enable XSigma Kineto profiling library." ON)

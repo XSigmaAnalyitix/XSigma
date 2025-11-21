@@ -798,7 +798,7 @@ void gpu_allocator_tracking::LogGPUOperation(
     XSIGMA_UNUSED const std::string& operation, XSIGMA_UNUSED const std::string& details) const
 {
     auto current_log_level = gpu_log_level_.load(std::memory_order_relaxed);
-    if (current_log_level >= gpu_tracking_log_level::DEBUG)
+    if (current_log_level >= gpu_tracking_log_level::DEBUG_LEVEL)
     {
         XSIGMA_LOG_INFO_DEBUG("GPU {}: {}", operation, details);
     }

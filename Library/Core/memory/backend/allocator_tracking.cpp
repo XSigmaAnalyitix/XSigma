@@ -89,7 +89,7 @@ void* allocator_tracking::allocate_raw(
 
     // Log allocation attempt if enabled (simplified logging)
     auto current_log_level = log_level_.load(std::memory_order_relaxed);
-    if (current_log_level >= tracking_log_level::DEBUG)
+    if (current_log_level >= tracking_log_level::DEBUG_LEVEL)
     {
         // Simplified logging to avoid macro issues
         // XSIGMA_LOG_INFO("allocator_tracking::allocate_raw: "

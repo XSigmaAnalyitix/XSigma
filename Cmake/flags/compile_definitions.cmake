@@ -53,6 +53,9 @@ compile_definition(XSIGMA_ENABLE_CUDA)
 # HIP support
 compile_definition(XSIGMA_ENABLE_HIP)
 
+# ROCm support
+compile_definition(XSIGMA_ENABLE_ROCM)
+
 # Google Test support
 compile_definition(XSIGMA_ENABLE_GTEST)
 

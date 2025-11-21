@@ -675,11 +675,13 @@ void prepareProfiler(
     {
         return;
     }
+    
     XSIGMA_CHECK(
         config.state == ProfilerState::KINETO ||
             config.state == ProfilerState::KINETO_GPU_FALLBACK ||
             config.state == ProfilerState::KINETO_PRIVATEUSE1_FALLBACK,
         "Supported only in Kineto profiler");
+
     xsigma::profiler::impl::kineto::prepareTrace(
         /*cpuOnly=*/!(xsigma::hasCUDA()  //|| xsigma::hasXPU() || xsigma::hasMTIA() ||
                       //xsigma::get_privateuse1_backend() != "privateuseone"

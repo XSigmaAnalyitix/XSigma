@@ -46,7 +46,7 @@ def xsigma_defines():
         "//conditions:default": [],
     }) + select({
         "//bazel:enable_kineto": ["XSIGMA_ENABLE_KINETO"],
-        "//conditions:default": [],
+        "//conditions:default": ["XSIGMA_ENABLE_KINETO=1"],
     }) + select({
         "//bazel:enable_native_profiler": ["XSIGMA_ENABLE_NATIVE_PROFILER"],
         "//conditions:default": [],

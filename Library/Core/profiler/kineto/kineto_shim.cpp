@@ -524,11 +524,11 @@ void addMetadataJson(const std::string& key, const std::string& value)
     }
     else
     {
-        //LOG(WARNING) << "Profiler is not initialized: skipping profiling metadata";
+        XSIGMA_LOG_WARNING("Profiler is not initialized: skipping profiling metadata");
     }
 #else
-    //LOG(WARNING) << "Adding profiling metadata requires using "
-    //<< "xsigma.profiler with Kineto support (XSIGMA_HAS_KINETO=1)";
+    XSIGMA_LOG_WARNING("Adding profiling metadata requires using "
+                       "xsigma.profiler with Kineto support (XSIGMA_HAS_KINETO=1)");
 #endif  // XSIGMA_HAS_KINETO
 }
 
@@ -543,7 +543,7 @@ void profilerStep()
     }
     else
     {
-        // VLOG(1) << "Profiler is not initialized: skipping step() invocation";
+        XSIGMA_LOG_WARNING("Profiler is not initialized: skipping step() invocation");
     }
 #endif  // XSIGMA_HAS_KINETO
 }

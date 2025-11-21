@@ -2,6 +2,7 @@
 exports_files([
     "cpuinfo.BUILD",
     "fmt.BUILD",
+    "kineto.BUILD",
     "loguru.BUILD",
     "magic_enum.BUILD",
     "mimalloc.BUILD",

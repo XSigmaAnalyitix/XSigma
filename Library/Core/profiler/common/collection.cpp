@@ -415,6 +415,7 @@ std::unique_ptr<KinetoObserverContext> ThreadLocalSubqueue::begin_op(
             fn.debugHandle(),
             fn.name(),
             overload_name});
+            
     if (config_.report_input_shapes)
     {
         torch_ops_.inputs_outputs_.push(fn.inputs());
@@ -1360,15 +1361,15 @@ private:
                         if (i.flow.type == libkineto::kLinkAsyncCpuGpu && i.flow.start)
                         {
                             auto inserted = flow_map.insert({i.flow.id, e});
-#ifdef USE_ROCM
+#ifdef XSIGMA_USE_ROCM
                             if (inserted.second)
                             {
                                 XSIGMA_LOG_WARNING(
                                     "ROCTracer produced duplicate flow start: ", i.flow.id);
                             }
-#else   // USE_ROCM
+#else   // XSIGMA_USE_ROCM
                             XSIGMA_CHECK(inserted.second);
-#endif  // USE_ROCM
+#endif  // XSIGMA_USE_ROCM
                         }
                         XSIGMA_CHECK(e->parent_.expired());
                         e->parent_ = i.linked_activity_;

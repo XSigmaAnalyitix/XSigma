@@ -220,8 +220,8 @@ XSIGMATEST(GpuAllocatorTracking, manages_logging_levels)
     gpu_tracker->SetGPULoggingLevel(gpu_tracking_log_level::INFO);
     EXPECT_EQ(gpu_tracking_log_level::INFO, gpu_tracker->GetGPULoggingLevel());
 
-    gpu_tracker->SetGPULoggingLevel(gpu_tracking_log_level::DEBUG);
-    EXPECT_EQ(gpu_tracking_log_level::DEBUG, gpu_tracker->GetGPULoggingLevel());
+    gpu_tracker->SetGPULoggingLevel(gpu_tracking_log_level::DEBUG_LEVEL);
+    EXPECT_EQ(gpu_tracking_log_level::DEBUG_LEVEL, gpu_tracker->GetGPULoggingLevel());
 
     XSIGMA_LOG_INFO("GPU logging levels test passed");
 }
