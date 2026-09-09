@@ -61,20 +61,16 @@ option(LOGGING_ENABLE_BENCHMARK "Enable Google Benchmark for Logging" ON)
 # magic_enum — enum ↔ string helpers in util/string_util.h
 option(LOGGING_ENABLE_MAGICENUM "Enable magic_enum static reflection for Logging" ON)
 
-option(
-  LOGGING_ENABLE_CXA_DEMANGLE
-  "Enable Itanium ABI symbol demangling when the toolchain supports it"
-  ${LOGGING_HAS_CXA_DEMANGLE_AVAILABLE}
+option(LOGGING_ENABLE_CXA_DEMANGLE
+       "Enable Itanium ABI symbol demangling when the toolchain supports it"
+       ${LOGGING_HAS_CXA_DEMANGLE_AVAILABLE}
 )
-option(
-  LOGGING_ENABLE_PORTABLE_FLOAT_FORMAT
-  "Use the portable floating-point formatter instead of std::to_chars"
-  OFF
+option(LOGGING_ENABLE_PORTABLE_FLOAT_FORMAT
+       "Use the portable floating-point formatter instead of std::to_chars" OFF
 )
 option(LOGGING_FORMAT_USE_STD "Use C++20 std::format instead of fmt" OFF)
-set(
-  LOGGING_DEFAULT_EXCEPTION_MODE "THROW" CACHE STRING
-  "Default exception mode for Logging: THROW or LOG_FATAL"
+set(LOGGING_DEFAULT_EXCEPTION_MODE "THROW"
+    CACHE STRING "Default exception mode for Logging: THROW or LOG_FATAL"
 )
 set_property(CACHE LOGGING_DEFAULT_EXCEPTION_MODE PROPERTY STRINGS THROW LOG_FATAL)
 if(NOT LOGGING_DEFAULT_EXCEPTION_MODE MATCHES "^(THROW|LOG_FATAL)$")

@@ -722,8 +722,7 @@ if(VECTORIZATION_GPU_BACKEND STREQUAL "cuda")
   # Prefer arches already chosen by Memory/cuda.cmake; otherwise the shared
   # Turing+ default (sm_70 removed in CUDA 12.8; CUDA 13.x starts at sm_75).
   # FORCE evicts any stale cache entry that still contains sm_70.
-  if(DEFINED CMAKE_CUDA_ARCHITECTURES
-     AND NOT CMAKE_CUDA_ARCHITECTURES STREQUAL ""
+  if(DEFINED CMAKE_CUDA_ARCHITECTURES AND NOT CMAKE_CUDA_ARCHITECTURES STREQUAL ""
      AND NOT CMAKE_CUDA_ARCHITECTURES STREQUAL "native"
   )
     set(_vectorization_cuda_archs "${CMAKE_CUDA_ARCHITECTURES}")

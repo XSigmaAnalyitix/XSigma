@@ -92,7 +92,9 @@ else()
     VERBATIM
   )
 
-  message(STATUS "${_spell_dir_name}_ENABLE_SPELL is ON: codespell is check-only (no --write-changes)")
+  message(
+    STATUS "${_spell_dir_name}_ENABLE_SPELL is ON: codespell is check-only (no --write-changes)"
+  )
 endif()
 
 unset(_spell_dir_name)
