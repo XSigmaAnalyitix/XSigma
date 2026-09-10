@@ -194,13 +194,9 @@ kernel void neg_float(
 }
 
 // -----------------------------------------------------------------------------------
-// Reduction: single-threadgroup sum. Launched as exactly one threadgroup whose size is
-// the next power of two >= n (the host launcher enforces n <= the device's
-// maxTotalThreadsPerThreadgroup and picks that size — see metal_dispatch.mm's
-// reduce_sum()). This is NOT a general multi-block reduction; it exists to back a
-// fixed, small-N (e.g. 512-element) CPU-vs-GPU reduction benchmark, where the whole
-// input comfortably fits in one threadgroup. A larger-N reduction would need a
-// two-pass (partial-sums-then-combine) or atomics-based design instead.
+// Reductions: one threadgroup writes one partial (out[gid]). The host launcher
+// walks the partials until a single value remains, so n is not limited to one
+// threadgroup.
 // -----------------------------------------------------------------------------------
 kernel void reduce_sum_float(
     device const float* in [[buffer(0)]],
@@ -208,6 +204,7 @@ kernel void reduce_sum_float(
     constant uint& n [[buffer(2)]],
     uint tid [[thread_position_in_grid]],
     uint lid [[thread_position_in_threadgroup]],
+    uint gid [[threadgroup_position_in_grid]],
     uint tg_size [[threads_per_threadgroup]],
     threadgroup float* shared [[threadgroup(0)]])
 {
@@ -222,5 +219,53 @@ kernel void reduce_sum_float(
     }
 
     if (lid == 0)
-        out[0] = shared[0];
+        out[gid] = shared[0];
+}
+
+kernel void reduce_min_float(
+    device const float* in [[buffer(0)]],
+    device float* out [[buffer(1)]],
+    constant uint& n [[buffer(2)]],
+    uint tid [[thread_position_in_grid]],
+    uint lid [[thread_position_in_threadgroup]],
+    uint gid [[threadgroup_position_in_grid]],
+    uint tg_size [[threads_per_threadgroup]],
+    threadgroup float* shared [[threadgroup(0)]])
+{
+    shared[lid] = (tid < n) ? in[tid] : FLT_MAX;
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    for (uint stride = tg_size / 2; stride > 0; stride >>= 1)
+    {
+        if (lid < stride)
+            shared[lid] = min(shared[lid], shared[lid + stride]);
+        threadgroup_barrier(mem_flags::mem_threadgroup);
+    }
+
+    if (lid == 0)
+        out[gid] = shared[0];
+}
+
+kernel void reduce_max_float(
+    device const float* in [[buffer(0)]],
+    device float* out [[buffer(1)]],
+    constant uint& n [[buffer(2)]],
+    uint tid [[thread_position_in_grid]],
+    uint lid [[thread_position_in_threadgroup]],
+    uint gid [[threadgroup_position_in_grid]],
+    uint tg_size [[threads_per_threadgroup]],
+    threadgroup float* shared [[threadgroup(0)]])
+{
+    shared[lid] = (tid < n) ? in[tid] : -FLT_MAX;
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    for (uint stride = tg_size / 2; stride > 0; stride >>= 1)
+    {
+        if (lid < stride)
+            shared[lid] = max(shared[lid], shared[lid + stride]);
+        threadgroup_barrier(mem_flags::mem_threadgroup);
+    }
+
+    if (lid == 0)
+        out[gid] = shared[0];
 }

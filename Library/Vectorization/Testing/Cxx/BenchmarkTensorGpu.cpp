@@ -764,11 +764,9 @@ BENCHMARK_TEMPLATE(LibTorch_MPS_TensorAllocFree, float) GPU_BENCH_SIZES;
 // direct SIMD loop, rather than being amortized away like the throughput-bound
 // BENCH_SIZES cases above.
 //
-// CPU: vectorization::accumulate(a + b * sin(x)) — a single host loop, no
-// device dispatch at all.
-// GPU: one fused elementwise kernel (the same `a + b * sin(x)` tree) followed by
-// one single-threadgroup reduction kernel (reduce_sum_float — see kernels.metal;
-// Metal only, CUDA/HIP have no reduction path at all, see the file header).
+// CPU: vectorization::accumulate(a + b * sin(x)) — a single host loop.
+// GPU: the same accumulate() call on device-resident tensors (CUDA/HIP fused
+// reduce kernel; Metal materializes the fused tree then multi-block reduces).
 // ---------------------------------------------------------------------------
 constexpr size_t kSumN = 512;
 
@@ -792,38 +790,38 @@ static void CPU_SumAddMulSin(benchmark::State& state)
 BENCHMARK_TEMPLATE(CPU_SumAddMulSin, float)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(CPU_SumAddMulSin, double)->Unit(benchmark::kMicrosecond);
 
-#if VECTORIZATION_HAS_METAL
-// Metal-only: no reduction kernel exists for CUDA/HIP (see file header). Not templated
-// on T since Metal is float-only — a <double> variant would have nothing to instantiate.
-static void GPU_SumAddMulSin_Metal(benchmark::State& state)
+template <typename T>
+static void GPU_SumAddMulSin(benchmark::State& state)
 {
-    if (!has_gpu_device())
+    if (skip_if_unsupported<T>(state))
     {
-        state.SkipWithError("No GPU device");
         return;
     }
-    std::vector<float> ha(kSumN), hb(kSumN), hx(kSumN);
-    fill_uniform(ha, -1.0f, 1.0f, 5u);
-    fill_uniform(hb, 0.5f, 1.5f, 6u);
-    fill_uniform(hx, -3.14159f, 3.14159f, 7u);
+    std::vector<T> ha(kSumN), hb(kSumN), hx(kSumN);
+    fill_uniform(ha, static_cast<T>(-1), static_cast<T>(1), 5u);
+    fill_uniform(hb, static_cast<T>(0.5), static_cast<T>(1.5), 6u);
+    fill_uniform(hx, static_cast<T>(-3.14159), static_cast<T>(3.14159), 7u);
 
-    tensor<float> a(kSumN, device_enum::METAL), b(kSumN, device_enum::METAL),
-        x(kSumN, device_enum::METAL), c(kSumN, device_enum::METAL);
+    tensor<T> a(kSumN, kActiveGpuDevice), b(kSumN, kActiveGpuDevice), x(kSumN, kActiveGpuDevice);
     a.copy_from_host(ha);
     b.copy_from_host(hb);
     x.copy_from_host(hx);
 
     for (auto _ : state)
     {
-        // Same expression tree as the CPU path — run_metal emits one fused MSL kernel.
-        c         = a + b * ::sin(x);
-        float sum = vectorization::metal_backend::reduce_sum(c.data(), kSumN);
+        T const sum = vectorization::accumulate(a + b * ::sin(x));
         benchmark::DoNotOptimize(sum);
     }
     state.SetItemsProcessed(state.iterations() * static_cast<int64_t>(kSumN));
 }
-BENCHMARK(GPU_SumAddMulSin_Metal)->Unit(benchmark::kMicrosecond)->MinWarmUpTime(0.1)->MinTime(0.3);
-#endif  // VECTORIZATION_HAS_METAL
+BENCHMARK_TEMPLATE(GPU_SumAddMulSin, float)
+    ->Unit(benchmark::kMicrosecond)
+    ->MinWarmUpTime(0.1)
+    ->MinTime(0.3);
+BENCHMARK_TEMPLATE(GPU_SumAddMulSin, double)
+    ->Unit(benchmark::kMicrosecond)
+    ->MinWarmUpTime(0.1)
+    ->MinTime(0.3);
 
 #endif  // VECTORIZATION_HAS_CUDA || VECTORIZATION_HAS_HIP || VECTORIZATION_HAS_METAL
 

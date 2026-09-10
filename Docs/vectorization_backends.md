@@ -66,9 +66,9 @@ There is no unfused Metal lowering.
 | Metal | Host walks the tree, JIT-compiles one MSL kernel (`fused_float`), cached by source | No |
 
 Unsupported ops, or a Metal tree that exceeds the 31-buffer argument cap,
-throw. Named kernels in `backend/gpu/metal/kernels.metal` remain for fill, a
-small `reduce_sum`, and `metal_backend::dispatch()` tests — not for
-expression assignment.
+throw. Named kernels in `backend/gpu/metal/kernels.metal` remain for fill,
+multi-block `reduce_{sum,min,max}`, and `metal_backend::dispatch()` tests —
+not for expression assignment.
 
 Metal fused coverage is the full expression-template set **except** `cdf` /
 `inv_cdf` (MSL has no `erf` / `erfinv`). CUDA/HIP implement those via device
@@ -114,7 +114,7 @@ How the dispatcher chooses a path:
 | Sync | in-process | launch async; host copies wait | `waitUntilCompleted` every dispatch |
 | Types | float, double | float, double | float only |
 | Ops | full set | full set | full set minus `cdf` / `inv_cdf` |
-| `accumulate` / `hmin` / `hmax` | fused SIMD host loop | **host loop** (wrong if storage is on device) | same host loop; `reduce_sum` is a separate ≤threadgroup kernel |
+| `accumulate` / `hmin` / `hmax` | fused SIMD host loop | fused `gpu_reduce_expr_kernel` + multi-block partials | leaf buffer or fused materialize + multi-block `reduce_{sum,min,max}_float` |
 | Errors | `VECTORIZATION_CHECK` | mostly unchecked CUDA/HIP runtime | `throw std::runtime_error` from the evaluator / `.mm` glue |
 
 ---
@@ -189,8 +189,9 @@ The public `tensor` API does not need to change. Unification lives behind
 
 1. Normalize signatures: `run_metal` takes `(expr, T* out, n, stream)` like
    `run_gpu`. The dispatcher owns the tensor.
-2. Device-dispatch reductions: `accumulate` on a GPU tensor must not walk host
-   pointers.
+2. Device-dispatch reductions: `accumulate` / `hmin` / `hmax` branch on leaf
+   `device()` the way `run` does (CUDA/HIP fused reduce kernels; Metal
+   multi-block `reduce_{sum,min,max}_float`).
 3. One stream/sync story: Metal command buffers named by `gpu_stream_t`, or a
    documented no-op `assign_async` on Metal.
 4. One error wrapper at the evaluator layer.
@@ -205,14 +206,15 @@ Paths are under `Library/Vectorization/`.
 
 | Path | Role |
 |---|---|
-| `expressions/expressions_evaluator.h` | `run` / `fill` dispatcher; CPU SIMD loop; host `accumulate` / `hmin` / `hmax` |
-| `expressions/expressions_evaluator_gpu.h` | `gpu_eval_kernel` / `run_gpu` / `fill_gpu` |
-| `expressions/expressions_evaluator_metal.h` | MSL emit + `run_metal` / `fill_metal` |
+| `expressions/expressions_evaluator.h` | `run` / `fill` dispatcher; CPU SIMD loop; `accumulate` / `hmin` / `hmax` (CPU or GPU) |
+| `expressions/expressions_evaluator_gpu.h` | `gpu_eval_kernel` / `run_gpu` / `fill_gpu` / `reduce_gpu` |
+| `expressions/expressions_evaluator_metal.h` | MSL emit + `run_metal` / `fill_metal` / `reduce_metal` |
+| `expressions/reduce_op.h` | Shared `reduce_op` + identity/combine for CPU-dispatch and GPU backends |
 | `expressions/expression_interface_loader.h` | Recursive fused evaluate (CPU + CUDA/HIP device) |
 | `backend/simd.h` | Selects CPU ISA `simd<T>` or GPU scalar `simd<T>` |
 | `backend/gpu/{float,double}/simd.h` | CUDA/HIP scalar packet |
-| `backend/gpu/metal/metal_dispatch.h` | C++ launch surface (`dispatch_fused`, `dispatch_fill`, `reduce_sum`) |
-| `backend/gpu/metal/kernels.metal` | Fill, named test kernels, single-threadgroup `reduce_sum` |
+| `backend/gpu/metal/metal_dispatch.h` | C++ launch surface (`dispatch_fused`, `dispatch_fill`, `reduce_sum` / `reduce_min` / `reduce_max`) |
+| `backend/gpu/metal/kernels.metal` | Fill, named test kernels, multi-block reduce sum/min/max |
 | `terminals/tensor.h` | `operator=` → `run`; `assign_async` / `fill_async` (stream) |
 
 Tests: `Testing/Cxx/TestTensorGpu.cpp` (including `FusedCatalogFloat`),

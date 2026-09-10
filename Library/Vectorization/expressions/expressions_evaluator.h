@@ -30,6 +30,7 @@ Do_not_include_expression_evaluator_directly_use_expression_it;
 
 #include "common/vectorization_type_traits.h"
 #include "expressions/expression_interface_loader.h"
+#include "expressions/reduce_op.h"
 
 #if VECTORIZATION_HAS_CUDA || VECTORIZATION_HAS_HIP
 #include "expressions/expressions_evaluator_gpu.h"
@@ -362,14 +363,102 @@ public:
 
 namespace vectorization
 {
+namespace detail
+{
+// Walk tensor / data_view leaves for device placement. Scalar-only trees stay CPU.
+// Host-only: reductions never run as __device__ code.
+template <typename E>
+VECTORIZATION_HOST_FUNCTION_ATTRIBUTE void accumulate_expression_device(
+    E const& expr, device_enum& kind, int& index, gpu_stream_t& stream, bool& seen)
+{
+    using expr_t = vectorization::remove_cvref_t<E>;
+    if constexpr (is_pure_expression<expr_t>::value)
+    {
+        if constexpr (VECTORIZATION_EXPR_HAS_MHS(expr))
+        {
+            accumulate_expression_device(expr.lhs(), kind, index, stream, seen);
+            accumulate_expression_device(expr.mhs(), kind, index, stream, seen);
+            accumulate_expression_device(expr.rhs(), kind, index, stream, seen);
+        }
+        else if constexpr (VECTORIZATION_EXPR_HAS_LHS(expr))
+        {
+            accumulate_expression_device(expr.lhs(), kind, index, stream, seen);
+            accumulate_expression_device(expr.rhs(), kind, index, stream, seen);
+        }
+        else if constexpr (VECTORIZATION_EXPR_HAS_RHS(expr))
+        {
+            accumulate_expression_device(expr.rhs(), kind, index, stream, seen);
+        }
+    }
+    else if constexpr (is_base_expression<expr_t>::value)
+    {
+        if (!seen)
+        {
+            kind   = expr.device();
+            index  = expr.device_index();
+            stream = static_cast<gpu_stream_t>(expr.stream());
+            seen   = true;
+        }
+        else
+        {
+            VECTORIZATION_CHECK(
+                expr.device() == kind && expr.device_index() == index,
+                "expression mixes devices or device indices");
+        }
+    }
+}
+
+template <typename E, typename value_t, reduce_op Op>
+VECTORIZATION_HOST_FUNCTION_ATTRIBUTE bool try_reduce_gpu(E const& expr, value_t& out)
+{
+    device_enum  kind   = device_enum::CPU;
+    int          index  = 0;
+    gpu_stream_t stream = nullptr;
+    bool         seen   = false;
+    accumulate_expression_device(expr, kind, index, stream, seen);
+
+#if (VECTORIZATION_HAS_CUDA && defined(__CUDACC__)) || (VECTORIZATION_HAS_HIP && defined(__HIPCC__))
+    if (kind == device_enum::CUDA || kind == device_enum::HIP)
+    {
+        out = reduce_gpu<E, value_t, Op>(expr, expr.size(), kind, index, stream);
+        return true;
+    }
+#endif
+#if VECTORIZATION_HAS_METAL
+    if constexpr (std::is_same_v<value_t, float>)
+    {
+        if (kind == device_enum::METAL)
+        {
+            out = reduce_metal<E, Op>(expr, expr.size());
+            return true;
+        }
+    }
+#endif
+    VECTORIZATION_CHECK(
+        kind == device_enum::CPU,
+        "accumulate/hmin/hmax: GPU expression but this translation unit has no GPU reduce "
+        "path (CUDA/HIP require compiling with nvcc/hipcc; Metal requires "
+        "VECTORIZATION_HAS_METAL)");
+    return false;
+}
+}  // namespace detail
+
 //================================================================================================
 // accumulate: returns value_t (not hardcoded double) to avoid implicit widening
-// for float expressions.
+// for float expressions. Not noexcept: the GPU path can VECTORIZATION_CHECK /
+// allocate.
 template <typename EXPR>
-VECTORIZATION_FUNCTION_ATTRIBUTE auto accumulate(EXPR&& expression) noexcept
+VECTORIZATION_HOST_FUNCTION_ATTRIBUTE auto accumulate(EXPR&& expression)
 {
     using E       = vectorization::remove_cvref_t<EXPR>;
     using value_t = typename vectorization::scalar_type<E, E>::value;
+
+    value_t gpu_result{};
+    if (detail::try_reduce_gpu<E, value_t, reduce_op::sum>(
+            static_cast<E const&>(expression), gpu_result))
+    {
+        return gpu_result;
+    }
 
     value_t sum = 0;
     size_t  i   = 0;
@@ -522,10 +611,17 @@ VECTORIZATION_FUNCTION_ATTRIBUTE auto accumulate(EXPR&& expression) noexcept
 
 //================================================================================================
 template <typename EXPR>
-VECTORIZATION_FUNCTION_ATTRIBUTE auto hmin(EXPR&& expression) noexcept
+VECTORIZATION_HOST_FUNCTION_ATTRIBUTE auto hmin(EXPR&& expression)
 {
     using E       = vectorization::remove_cvref_t<EXPR>;
     using value_t = typename vectorization::scalar_type<E, E>::value;
+
+    value_t gpu_result{};
+    if (detail::try_reduce_gpu<E, value_t, reduce_op::min>(
+            static_cast<E const&>(expression), gpu_result))
+    {
+        return gpu_result;
+    }
 
     value_t ret = std::numeric_limits<value_t>::max();
     size_t  i   = 0;
@@ -693,10 +789,17 @@ VECTORIZATION_FUNCTION_ATTRIBUTE auto hmin(EXPR&& expression) noexcept
 
 //================================================================================================
 template <typename EXPR>
-VECTORIZATION_FUNCTION_ATTRIBUTE auto hmax(EXPR&& expression) noexcept
+VECTORIZATION_HOST_FUNCTION_ATTRIBUTE auto hmax(EXPR&& expression)
 {
     using E       = vectorization::remove_cvref_t<EXPR>;
     using value_t = typename vectorization::scalar_type<E, E>::value;
+
+    value_t gpu_result{};
+    if (detail::try_reduce_gpu<E, value_t, reduce_op::max>(
+            static_cast<E const&>(expression), gpu_result))
+    {
+        return gpu_result;
+    }
 
     // Use -max(), not min(): for floats std::numeric_limits<float>::min() is the
     // smallest *positive* value (~1.2e-38), not the most negative one.

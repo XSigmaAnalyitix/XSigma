@@ -23,6 +23,7 @@
 #import <Metal/Metal.h>
 
 #include <cstdint>
+#include <limits>
 #include <mutex>
 #include <stdexcept>
 #include <string>
@@ -34,6 +35,7 @@
 #include "backend/gpu/metal/metal_kernels_source.h"
 #include "common/device.h"
 #include "common/vectorization_macros.h"
+#include "expressions/reduce_op.h"
 #include "gpu/metal/metal_buffer_allocator.h"
 
 #if VECTORIZATION_HAS_PROFILER
@@ -236,6 +238,100 @@ id<MTLComputePipelineState> pipeline_for_fused_source(std::string const& source)
     return pso;
 }
 
+std::size_t reduce_threadgroup_size(id<MTLComputePipelineState> pso, std::size_t n)
+{
+    std::size_t tg_size = 256;
+    if (tg_size > pso.maxTotalThreadsPerThreadgroup)
+    {
+        tg_size = pso.maxTotalThreadsPerThreadgroup;
+    }
+    std::size_t p = 1;
+    while ((p << 1) <= tg_size)
+    {
+        p <<= 1;
+    }
+    tg_size = p;
+    if (n < tg_size)
+    {
+        tg_size = next_pow2(n);
+    }
+    if (tg_size == 0)
+    {
+        tg_size = 1;
+    }
+    return tg_size;
+}
+
+float reduce_buffer(
+    const char* kernel_name, const void* buffer, std::size_t n_elems, float identity)
+{
+    if (n_elems == 0)
+    {
+        return identity;
+    }
+    VECTORIZATION_CHECK(
+        n_elems <= static_cast<std::size_t>(std::numeric_limits<uint32_t>::max()),
+        "Metal reduce: n_elems ({}) exceeds uint32 grid limit",
+        n_elems);
+
+    using metal_alloc_t = memory::allocator<float>;
+    const void* in      = buffer;
+    float*      owned   = nullptr;
+
+    while (true)
+    {
+        id<MTLComputePipelineState> pso      = pipeline_for(kernel_name);
+        std::size_t const           tg_size  = reduce_threadgroup_size(pso, n_elems);
+        std::size_t const           n_groups = (n_elems + tg_size - 1) / tg_size;
+        VECTORIZATION_CHECK(n_groups > 0, "Metal reduce: empty grid for n={}", n_elems);
+
+        float*   out = metal_alloc_t::allocate(n_groups, memory::device_enum::METAL);
+        uint32_t n32 = static_cast<uint32_t>(n_elems);
+
+        id<MTLCommandBuffer>         cb  = [command_queue() commandBuffer];
+        id<MTLComputeCommandEncoder> enc = [cb computeCommandEncoder];
+        [enc setComputePipelineState:pso];
+        [enc setBuffer:buffer_for(in) offset:buffer_offset_for(in) atIndex:0];
+        [enc setBuffer:buffer_for(out) offset:buffer_offset_for(out) atIndex:1];
+        [enc setBytes:&n32 length:sizeof(n32) atIndex:2];
+        [enc setThreadgroupMemoryLength:(tg_size * sizeof(float)) atIndex:0];
+        [enc dispatchThreadgroups:MTLSizeMake(static_cast<NSUInteger>(n_groups), 1, 1)
+            threadsPerThreadgroup:MTLSizeMake(static_cast<NSUInteger>(tg_size), 1, 1)];
+        [enc endEncoding];
+        [cb commit];
+        [cb waitUntilCompleted];
+
+        if (cb.status == MTLCommandBufferStatusError)
+        {
+            if (owned != nullptr)
+            {
+                metal_alloc_t::free(owned, memory::device_enum::METAL);
+            }
+            metal_alloc_t::free(out, memory::device_enum::METAL);
+            throw std::runtime_error(
+                std::string("Metal ") + kernel_name +
+                " dispatch failed: " + std::string([[cb.error localizedDescription] UTF8String]));
+        }
+        record_completed_command_buffer(kernel_name, cb);
+
+        if (owned != nullptr)
+        {
+            metal_alloc_t::free(owned, memory::device_enum::METAL);
+        }
+
+        if (n_groups == 1)
+        {
+            float const result = *out;
+            metal_alloc_t::free(out, memory::device_enum::METAL);
+            return result;
+        }
+
+        owned   = out;
+        in      = out;
+        n_elems = n_groups;
+    }
+}
+
 }  // namespace
 
 bool device_available()
@@ -337,56 +433,20 @@ void dispatch_fused(
 
 float reduce_sum(const void* buffer, std::size_t n_elems)
 {
-    if (n_elems == 0)
-    {
-        return 0.0f;
-    }
+    return reduce_buffer(
+        "reduce_sum_float", buffer, n_elems, reduce_identity<float, reduce_op::sum>());
+}
 
-    id<MTLComputePipelineState> pso     = pipeline_for("reduce_sum_float");
-    std::size_t                 tg_size = next_pow2(n_elems);
-    if (tg_size > pso.maxTotalThreadsPerThreadgroup)
-    {
-        throw std::invalid_argument(
-            "Metal reduce_sum: n_elems (" + std::to_string(n_elems) +
-            ") exceeds this device's single-threadgroup reduction limit (" +
-            std::to_string(pso.maxTotalThreadsPerThreadgroup) +
-            ") — this is a single-threadgroup reduction only, see kernels.metal");
-    }
+float reduce_min(const void* buffer, std::size_t n_elems)
+{
+    return reduce_buffer(
+        "reduce_min_float", buffer, n_elems, reduce_identity<float, reduce_op::min>());
+}
 
-    // Process-lifetime 1-float scratch. Allocating 1 float through the caching
-    // allocator would otherwise reserve a 2 MiB small segment on every call.
-    using metal_alloc_t           = memory::allocator<float>;
-    static float*         out_ptr = nullptr;
-    static std::once_flag scratch_once;
-    std::call_once(
-        scratch_once, []() { out_ptr = metal_alloc_t::allocate(1, memory::device_enum::METAL); });
-
-    uint32_t n32 = static_cast<uint32_t>(n_elems);
-
-    id<MTLCommandBuffer>         cb  = [command_queue() commandBuffer];
-    id<MTLComputeCommandEncoder> enc = [cb computeCommandEncoder];
-    [enc setComputePipelineState:pso];
-    [enc setBuffer:buffer_for(buffer) offset:buffer_offset_for(buffer) atIndex:0];
-    [enc setBuffer:buffer_for(out_ptr) offset:buffer_offset_for(out_ptr) atIndex:1];
-    [enc setBytes:&n32 length:sizeof(n32) atIndex:2];
-    [enc setThreadgroupMemoryLength:(tg_size * sizeof(float)) atIndex:0];
-    // Exactly one threadgroup, sized to cover the whole (small, fixed-N) input — see the
-    // design note above reduce_sum_float in kernels.metal.
-    [enc dispatchThreadgroups:MTLSizeMake(1, 1, 1)
-        threadsPerThreadgroup:MTLSizeMake(tg_size, 1, 1)];
-    [enc endEncoding];
-    [cb commit];
-    [cb waitUntilCompleted];
-
-    if (cb.status == MTLCommandBufferStatusError)
-    {
-        throw std::runtime_error(
-            "Metal reduce_sum dispatch failed: " +
-            std::string([[cb.error localizedDescription] UTF8String]));
-    }
-    record_completed_command_buffer("reduce_sum_float", cb);
-
-    return *out_ptr;
+float reduce_max(const void* buffer, std::size_t n_elems)
+{
+    return reduce_buffer(
+        "reduce_max_float", buffer, n_elems, reduce_identity<float, reduce_op::max>());
 }
 
 }  // namespace vectorization::metal_backend

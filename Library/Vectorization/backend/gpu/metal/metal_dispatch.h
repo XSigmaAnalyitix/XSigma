@@ -62,10 +62,12 @@ void dispatch_fused(
     void*              out_buffer,
     std::size_t        n_elems);
 
-// Single-threadgroup reduction (sum). Requires n_elems <= the device's
-// maxTotalThreadsPerThreadgroup (throws std::invalid_argument otherwise) — this is not
-// a general multi-block reduction, only enough to back a small fixed-N benchmark; see
-// the design note above reduce_sum_float in kernels.metal.
+// Multi-block reductions. Each threadgroup writes one partial; the host
+// launcher ping-pongs until a single value remains. n_elems is not limited
+// to maxTotalThreadsPerThreadgroup. Empty input returns the matching
+// accumulate / hmin / hmax identity (0, +FLT_MAX, -FLT_MAX).
 float reduce_sum(const void* buffer, std::size_t n_elems);
+float reduce_min(const void* buffer, std::size_t n_elems);
+float reduce_max(const void* buffer, std::size_t n_elems);
 
 }  // namespace vectorization::metal_backend

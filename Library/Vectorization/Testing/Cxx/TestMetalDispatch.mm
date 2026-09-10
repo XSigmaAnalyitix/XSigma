@@ -26,6 +26,7 @@
 #if VECTORIZATION_HAS_METAL
 
 #include <cmath>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -188,6 +189,42 @@ VECTORIZATIONTEST(MetalDispatch, ReduceSumNonPowerOfTwo)
     EXPECT_NEAR(got, expected, 1e-3f);
 
     alloc_t::free(da, memory::device_enum::METAL);
+    END_TEST();
+}
+
+VECTORIZATIONTEST(MetalDispatch, ReduceSumLarge)
+{
+    constexpr size_t   n = 10000;
+    std::vector<float> a(n, 1.0f);
+    float*             da  = upload(a);
+    float              got = vectorization::metal_backend::reduce_sum(da, n);
+    EXPECT_NEAR(got, static_cast<float>(n), 1e-2f);
+    alloc_t::free(da, memory::device_enum::METAL);
+    END_TEST();
+}
+
+VECTORIZATIONTEST(MetalDispatch, ReduceMinMax)
+{
+    constexpr size_t   n = 3000;
+    std::vector<float> a(n);
+    for (size_t i = 0; i < n; ++i)
+        a[i] = static_cast<float>(i) * 0.01f - 10.0f;
+    float* da   = upload(a);
+    float  gmin = vectorization::metal_backend::reduce_min(da, n);
+    float  gmax = vectorization::metal_backend::reduce_max(da, n);
+    EXPECT_NEAR(gmin, a.front(), 1e-5f);
+    EXPECT_NEAR(gmax, a.back(), 1e-5f);
+    alloc_t::free(da, memory::device_enum::METAL);
+    END_TEST();
+}
+
+VECTORIZATIONTEST(MetalDispatch, ReduceEmpty)
+{
+    EXPECT_EQ(vectorization::metal_backend::reduce_sum(nullptr, 0), 0.0f);
+    EXPECT_EQ(
+        vectorization::metal_backend::reduce_min(nullptr, 0), std::numeric_limits<float>::max());
+    EXPECT_EQ(
+        vectorization::metal_backend::reduce_max(nullptr, 0), -std::numeric_limits<float>::max());
     END_TEST();
 }
 

@@ -59,6 +59,7 @@
 #include "common/data_view.h"
 #include "common/device.h"
 #include "expressions/expression_interface.h"
+#include "expressions/reduce_op.h"
 
 namespace vectorization
 {
@@ -537,6 +538,70 @@ template <typename T>
 void fill_metal(T& rhs, float value)
 {
     metal_backend::dispatch_fill(rhs.data(), value, rhs.size());
+}
+
+template <reduce_op Op>
+float reduce_metal_buffer(void const* data, std::size_t n)
+{
+    if constexpr (Op == reduce_op::sum)
+    {
+        return metal_backend::reduce_sum(data, n);
+    }
+    else if constexpr (Op == reduce_op::min)
+    {
+        return metal_backend::reduce_min(data, n);
+    }
+    else
+    {
+        return metal_backend::reduce_max(data, n);
+    }
+}
+
+// Leaf tensors reduce in place. Fused trees materialize through the same JIT
+// kernel as run_metal, then reduce the temp buffer (MSL cannot instantiate the
+// C++ expression tree the way nvcc/hipcc can).
+template <typename E, reduce_op Op>
+float reduce_metal(E const& expr, std::size_t n)
+{
+    using RE = vectorization::remove_cvref_t<E>;
+    if (n == 0)
+    {
+        return reduce_identity<float, Op>();
+    }
+
+    if constexpr (vectorization::is_base_expression<RE>::value)
+    {
+        return reduce_metal_buffer<Op>(expr.data(), n);
+    }
+    else
+    {
+        static_assert(
+            vectorization::is_pure_expression<RE>::value,
+            "reduce_metal: expression is neither a tensor leaf nor a unary/binary/trinary node");
+
+        if constexpr (metal_detail::metal_expr_fusable<RE>::value)
+        {
+            metal_detail::metal_fuse_state st;
+            metal_detail::metal_fuse_emit(expr, st);
+            if (!metal_detail::metal_fuse_fits(st))
+            {
+                throw std::runtime_error("Metal fused kernel exceeds the device buffer limit");
+            }
+            std::string const src = metal_detail::metal_fuse_source(st);
+            float* tmp = metal_detail::metal_alloc_t::allocate(n, memory::device_enum::METAL);
+            metal_backend::dispatch_fused(
+                src, st.buffers, st.n_buffers, st.scalars, st.n_scalars, tmp, n);
+            float const result = reduce_metal_buffer<Op>(tmp, n);
+            metal_detail::metal_alloc_t::free(tmp, memory::device_enum::METAL);
+            return result;
+        }
+        else
+        {
+            throw std::runtime_error(
+                "Metal backend: operator has no fused Metal kernel (cdf/inv_cdf are "
+                "unsupported; MSL has no erf/erfinv)");
+        }
+    }
 }
 
 }  // namespace vectorization

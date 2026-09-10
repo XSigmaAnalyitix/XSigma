@@ -36,8 +36,10 @@
 
 #if VECTORIZATION_HAS_CUDA || VECTORIZATION_HAS_HIP || VECTORIZATION_HAS_METAL
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -384,6 +386,61 @@ void test_fused_catalog()
     }
 }
 
+template <typename T>
+void test_reductions()
+{
+    constexpr size_t N       = 4096;
+    constexpr double sum_tol = std::is_same_v<T, float> ? 2e-2 : 1e-10;
+    constexpr double mm_tol  = std::is_same_v<T, float> ? 5e-6 : 1e-13;
+
+    tensor<T> ones(N, kActiveGpuDevice);
+    ones = static_cast<T>(1);
+    EXPECT_NEAR(static_cast<double>(accumulate(ones)), static_cast<double>(N), sum_tol);
+
+    std::vector<T> ha;
+    std::vector<T> hb;
+    make_inputs(ha, hb, N);
+    tensor<T> ga(N, kActiveGpuDevice);
+    tensor<T> gb(N, kActiveGpuDevice);
+    ga.copy_from_host(ha);
+    gb.copy_from_host(hb);
+
+    T min_ref = std::numeric_limits<T>::max();
+    T max_ref = -std::numeric_limits<T>::max();
+    T sum_ref = static_cast<T>(0);
+    for (size_t i = 0; i < N; ++i)
+    {
+        T const v = ha[i] + hb[i] * static_cast<T>(2);
+        sum_ref += v;
+        min_ref = std::min(min_ref, v);
+        max_ref = std::max(max_ref, v);
+    }
+
+    EXPECT_NEAR(
+        static_cast<double>(accumulate(ga + gb * static_cast<T>(2))),
+        static_cast<double>(sum_ref),
+        sum_tol);
+    EXPECT_NEAR(
+        static_cast<double>(hmin(ga + gb * static_cast<T>(2))),
+        static_cast<double>(min_ref),
+        mm_tol);
+    EXPECT_NEAR(
+        static_cast<double>(hmax(ga + gb * static_cast<T>(2))),
+        static_cast<double>(max_ref),
+        mm_tol);
+
+    tensor<T> empty(static_cast<size_t>(0), kActiveGpuDevice);
+    EXPECT_EQ(accumulate(empty), static_cast<T>(0));
+    EXPECT_EQ(hmin(empty), std::numeric_limits<T>::max());
+    EXPECT_EQ(hmax(empty), -std::numeric_limits<T>::max());
+
+    tensor<T> one(static_cast<size_t>(1), kActiveGpuDevice);
+    one = static_cast<T>(-3.5);
+    EXPECT_NEAR(static_cast<double>(accumulate(one)), -3.5, mm_tol);
+    EXPECT_NEAR(static_cast<double>(hmin(one)), -3.5, mm_tol);
+    EXPECT_NEAR(static_cast<double>(hmax(one)), -3.5, mm_tol);
+}
+
 }  // namespace
 
 // --------------------------------------------------------------------------
@@ -625,6 +682,28 @@ VECTORIZATIONTEST(TensorGpu, FusedCatalogDouble)
     END_TEST();
 }
 
+VECTORIZATIONTEST(TensorGpu, ReductionsFloat)
+{
+    int ndev = 0;
+    gpuGetDeviceCount(&ndev);
+    if (ndev == 0)
+        GTEST_SKIP() << "No GPU device";
+    test_reductions<float>();
+    END_TEST();
+}
+
+VECTORIZATIONTEST(TensorGpu, ReductionsDouble)
+{
+    if (kMetalOnlyBackend)
+        GTEST_SKIP() << "Metal backend is float-only (no fp64 on Apple GPUs)";
+    int ndev = 0;
+    gpuGetDeviceCount(&ndev);
+    if (ndev == 0)
+        GTEST_SKIP() << "No GPU device";
+    test_reductions<double>();
+    END_TEST();
+}
+
 // --------------------------------------------------------------------------
 // stream_guard — ambient current stream (see terminals/stream_guard.h)
 // --------------------------------------------------------------------------
@@ -842,6 +921,16 @@ VECTORIZATIONTEST(TensorGpu, CompoundDouble)
     END_TEST();
 }
 VECTORIZATIONTEST(TensorGpu, FusedCatalogDouble)
+{
+    GTEST_SKIP() << "Test disabled: no GPU backend (CUDA/HIP/Metal) is enabled";
+    END_TEST();
+}
+VECTORIZATIONTEST(TensorGpu, ReductionsFloat)
+{
+    GTEST_SKIP() << "Test disabled: no GPU backend (CUDA/HIP/Metal) is enabled";
+    END_TEST();
+}
+VECTORIZATIONTEST(TensorGpu, ReductionsDouble)
 {
     GTEST_SKIP() << "Test disabled: no GPU backend (CUDA/HIP/Metal) is enabled";
     END_TEST();
