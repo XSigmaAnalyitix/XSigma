@@ -59,6 +59,9 @@ cc_library(
             [
                 "backend/gpu/metal/*.h",
                 "common/*.h",
+                # metal_dispatch.mm uses reduce_identity; this target does not
+                # depend on vectorization_lib (that would be a cycle).
+                "expressions/reduce_op.h",
             ],
             allow_empty = True,
         ) + [":metal_kernels_source_h"],
