@@ -34,9 +34,11 @@ ctest --test-dir build-vs -C Release --output-on-failure
 
 ## C++ standard
 
-Each library defaults to C++20 and accepts `11`, `14`, `17`, `20`, or `23` in
-its `<MODULE>_CXX_STANDARD` cache variable. The helper applies `cxx17`,
-`cxx20`, or `cxx23` to every loaded module.
+Library CMake options default to C++20 and accept `11`, `14`, `17`, `20`, or
+`23` in `<MODULE>_CXX_STANDARD`. Source compatibility is module-dependent:
+Graph requires at least C++17 despite accepting older values. See the
+[Graph guide](../../graph/README.md). The helper applies `cxx17`, `cxx20`, or
+`cxx23` to every loaded module.
 
 ```bash
 python Scripts/setup.py config.build.test.ninja.clang.release.cxx20

@@ -51,8 +51,12 @@ default; the action controls whether tests are executed by this invocation.
 `gtest`, `magic_enum`, `mimalloc`, and `cache` are inverse toggles because
 their corresponding CMake defaults are `ON`: adding one disables the feature.
 In particular, do not add `gtest` to a normal test build. `benchmark` is not an
-inverse toggle: direct CMake defaults it to `ON` per module, while `setup.py`
-sets it `OFF` unless the `benchmark` token is supplied.
+inverse toggle: most modules default it to `ON` in CMake, while Graph defaults
+to `OFF`. `setup.py` sets it `OFF` unless the `benchmark` token is supplied.
+
+For `--project.graph`, CMake configures Profiler, Parallel and Graph. See the
+[Graph guide](../graph/README.md) for execution APIs, build targets and current
+limitations.
 
 ## Examples
 

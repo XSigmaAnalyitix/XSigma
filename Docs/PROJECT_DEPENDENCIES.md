@@ -34,6 +34,7 @@ flowchart TB
 
   subgraph top["Always-on consumers"]
     Core
+    Graph
   end
 
   Memory --> Logging
@@ -44,20 +45,24 @@ flowchart TB
   Vectorization -.->|VECTORIZATION_HAS_PROFILER| Profiler
   Core --> Logging
   Core --> Memory
+  Graph --> Parallel
 
   classDef leaf fill:#e8f5e9,stroke:#2e7d32
   classDef gated fill:#fff8e1,stroke:#f9a825
   classDef always fill:#e3f2fd,stroke:#1565c0
   class Logging,Profiler,Models leaf
   class Memory,Parallel,Vectorization gated
-  class Core always
+  class Core,Graph always
 ```
 
 In a **full CMake configure** or **any Bazel build**, the dashed edges are
 present (defaults ON / targets exist). `--project.memory` still builds Logging
 (required) and drops the Profiler edge. `--project.profiler` builds Profiler alone.
 
-`Models` has no `Library/*` link.
+`Models` has no `Library/*` link. `Graph` requires `Parallel::Parallel` and
+inherits its Profiler dependency when enabled. Its current executor uses
+Parallel's standard-thread callback queue. Financial Models integration is
+future work; see the [Graph guide](graph/README.md).
 
 ### Bazel (unconditional)
 
@@ -75,6 +80,7 @@ flowchart LR
   Core --> Logging
   Core --> Memory
   Parallel --> Profiler
+  Graph --> Parallel
   Models
 ```
 
@@ -85,7 +91,7 @@ Profiler is configured **before** Memory / Vectorization / Parallel so
 
 ```mermaid
 flowchart LR
-  L[1 Logging] --> P[2 Profiler] --> M[3 Memory] --> V[4 Vectorization] --> C[5 Core] --> Par[6 Parallel] --> Mod[7 Models]
+  L[1 Logging] --> P[2 Profiler] --> M[3 Memory] --> V[4 Vectorization] --> C[5 Core] --> Par[6 Parallel] --> Mod[7 Models] --> G[8 Graph]
 ```
 
 ### `--project.NAME` scopes
@@ -121,6 +127,10 @@ flowchart TB
   end
   subgraph models["--project.models"]
     Mod1[Models]
+  end
+  subgraph graph_scope["--project.graph"]
+    G1[Graph] --> Par4[Parallel]
+    Par4 --> P5[Profiler]
   end
 ```
 
@@ -158,6 +168,7 @@ Vendored trees live under `ThirdParty/` — do not edit them. See
 | **Core** | Legacy computational core | Logging, Memory | (inherits Memory’s Profiler link when Memory has it) |
 | **Parallel** | Thread pools / TBB / OpenMP | Profiler | `PARALLEL_HAS_PROFILER` |
 | **Models** | SABR/ZABR + QA calibrator | none | — |
+| **Graph** | Dependency DAG construction and execution | Parallel (required); Profiler through Parallel | inherits `PARALLEL_HAS_PROFILER` through Parallel |
 
 ### Memory gates
 
@@ -197,9 +208,11 @@ Root `CMakeLists.txt` `_xsigma_lib_order`:
 5. Core
 6. Parallel
 7. Models
+8. Graph
 
 Profiler is early on purpose so `TARGET Profiler::Profiler` is true when
-Memory, Vectorization, and Parallel run.
+Memory, Vectorization, and Parallel run. Graph is configured after Parallel
+because it requires the `Parallel::Parallel` target.
 
 ### `--project.NAME` / `XSIGMA_LIBRARY_PROJECT`
 
@@ -215,7 +228,8 @@ applies):
 | `parallel` | Parallel, Profiler |
 | `core` | Parallel, Profiler, Logging, Memory, Vectorization, Core |
 | `models` | Models |
-| *(empty)* | all seven |
+| `graph` | Profiler, Parallel, Graph |
+| *(empty)* | all eight |
 
 `--project.memory` therefore has `MEMORY_HAS_PROFILER=0` (Profiler is not
 configured) and always has Logging. `--project.profiler` does not build Memory.
@@ -233,6 +247,7 @@ Always-vendored under `ThirdParty/` — do not edit those trees.
 | Core | fmt, cpuinfo; optional magic_enum, Enzyme, compression/snappy, MKL |
 | Parallel | Threads; optional TBB, OpenMP |
 | Models | none |
+| Graph | Threads and transitive dependencies through Parallel; no additional direct third-party dependency |
 
 Test binaries additionally link Google Test (and Google Benchmark when
 enabled).
@@ -251,6 +266,7 @@ enabled).
 ## Related docs
 
 - [PROJECT_FLAGS.md](PROJECT_FLAGS.md) — CMake cache flags
+- [Graph guide](graph/README.md) — DAG execution, caching contracts and pricing integration status
 - [readme/third-party-dependencies.md](readme/third-party-dependencies.md) — vendored packages
 - [profiler/profiler.md](profiler/profiler.md) — Profiler instrumentation and `HAS_PROFILER` call sites
 - [BAZEL_USER_GUIDE.md](BAZEL_USER_GUIDE.md) — Bazel configs and known gaps

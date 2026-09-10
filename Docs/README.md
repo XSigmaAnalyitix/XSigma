@@ -19,6 +19,8 @@ when a new option is added.
 
 ## Library documentation
 
+- [Graph guide](graph/README.md) - Current DAG APIs, execution/cache contracts,
+  known defects, and proposed portfolio pricing integration.
 - [Memory design](memory_design.md) - CPU/GPU allocation model and caching
   allocator status.
 - [Vectorization backends](vectorization_backends.md) - CPU, CUDA, HIP, and

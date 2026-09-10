@@ -23,7 +23,8 @@ Requirements:
 
 - CMake 3.16 or newer for the CMake build.
 - A compiler that supports the chosen C++ standard. Library modules default to
-  C++20 and accept C++11, C++14, C++17, C++20, or C++23.
+  C++20. Accepted configuration values do not guarantee source compatibility:
+  Graph requires at least C++17 despite accepting older CMake values.
 - Python 3.9 or newer for `Scripts/setup.py` and `Scripts/setup_bazel.py`.
 - Bazelisk for the Bazel build. It reads the pinned version, currently `8.4.2`,
   from `.bazelversion`.
@@ -92,8 +93,8 @@ configurations and known limitations.
 
 - CMake library tests and GoogleTest are enabled per module by default.
   `setup.py` runs tests when its `test` action is present.
-- Google Benchmark is enabled by each module's CMake default, but
-  `setup.py` deliberately disables it unless the `benchmark` token is present.
+- Google Benchmark is enabled by most modules' CMake defaults; Graph defaults
+  to off. `setup.py` disables it unless the `benchmark` token is present.
 - A Release CMake configuration selects per-module `*_LTO_MODE=auto`; Debug,
   coverage, and sanitizer configurations do not apply LTO. The `lto` token
   explicitly requests `auto` mode.
@@ -116,7 +117,8 @@ configurations and known limitations.
 | `Library/Parallel` | Standard-thread, OpenMP, and TBB execution backends. |
 | `Library/Profiler` | Always-on native traces plus Kineto or ITT instrumentation. |
 | `Library/Vectorization` | CPU SIMD expressions and CUDA/HIP/Metal evaluators. |
-| `Library/Models` and `Library/Graph` | Higher-level model and graph facilities. |
+| `Library/Models` | SABR/ZABR smile routines, calibration, and MLP inference. |
+| `Library/Graph` | Dependency DAG construction, parallel execution, target pruning, and caller-managed incremental caching. |
 
 ## Documentation
 
@@ -126,6 +128,7 @@ configurations and known limitations.
 - [Practical build examples](Docs/readme/usage-examples.md)
 - [Bazel guide](Docs/BAZEL_USER_GUIDE.md)
 - [CMake option reference](Docs/PROJECT_FLAGS.md)
+- [Graph guide and portfolio pricing direction](Docs/graph/README.md)
 - [Memory design](Docs/memory_design.md)
 - [Vectorization backends](Docs/vectorization_backends.md)
 - [Profiler guide](Docs/profiler/profiler.md)

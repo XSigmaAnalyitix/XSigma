@@ -46,6 +46,11 @@ Most C++ library modules expose these cache variables:
 | `<MODULE>_ENABLE_SPELL` | `OFF` | Enable check-only spell checking. |
 | `<MODULE>_ENABLE_ICECC` | `OFF` | Use Icecream distributed compilation. |
 
+Accepted C++ standard values are configuration choices, not a guarantee that
+every module supports each language version. Graph currently requires C++17
+or newer despite accepting `11` and `14`; see the
+[Graph guide](graph/README.md) for its current build constraints.
+
 Coverage and sanitizer options suppress LTO for the affected target. Do not set
 the obsolete aggregate names `PROJECT_ENABLE_LTO`, `PROJECT_ENABLE_COVERAGE`,
 `PROJECT_ENABLE_SANITIZER`, `PROJECT_SANITIZER_TYPE`, or

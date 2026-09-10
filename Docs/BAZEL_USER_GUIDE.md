@@ -143,6 +143,7 @@ Metal is Apple-only. HIP is not supported on Windows by the CMake project.
 bazel test //Library/Core/Testing/Cxx:CoreCxxTests
 bazel test //Library/Vectorization/Testing/Cxx:VectorizationCxxTests
 bazel test //Library/Profiler/Testing/Cxx:ProfilerCxxTests
+bazel test //Library/Graph/Testing/Cxx:GraphCxxTests
 bazel query 'kind(cc_test, //Library/...)'
 ```
 
@@ -156,3 +157,4 @@ checked-out graph rather than relying on historical target names such as
 - [CMake setup guide](readme/setup.md)
 - [CMake option reference](PROJECT_FLAGS.md)
 - [Profiler guide](profiler/profiler.md)
+- [Graph guide](graph/README.md)
