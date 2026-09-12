@@ -19,6 +19,7 @@
 
 #include "graph_passes.h"
 
+#include <algorithm>
 #include <cstdint>
 
 #include "graph_builder.h"
@@ -94,12 +95,9 @@ std::shared_ptr<dependency_graph> prune_to_sinks(
     const std::size_t count = g.node_count();
     old_to_new.clear();
 
-    for (const node_id sink : sinks)
+    if (std::any_of(sinks.begin(), sinks.end(), [&](const node_id sink) { return sink >= count; }))
     {
-        if (sink >= count)
-        {
-            return nullptr;
-        }
+        return nullptr;
     }
 
     const std::vector<char> keep = ancestor_set(g, sinks);

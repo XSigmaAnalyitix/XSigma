@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <numeric>
 #include <queue>
 
 namespace graph
@@ -159,12 +160,12 @@ graph_status graph_builder::build(std::shared_ptr<dependency_graph>& out) const
         topological_order.rend(),
         [&](const node_id id)
         {
-            std::uint32_t best = 1;
-            for (const node_id target : built_nodes[id].successors_)
-            {
-                best = std::max(best, priority[target] + 1);
-            }
-            priority[id] = best;
+            priority[id] = std::accumulate(
+                built_nodes[id].successors_.begin(),
+                built_nodes[id].successors_.end(),
+                std::uint32_t{1},
+                [&](std::uint32_t current, const node_id target)
+                { return std::max(current, priority[target] + 1); });
         });
 
     // Per-node version stamps for incremental re-run (0 = unstamped).

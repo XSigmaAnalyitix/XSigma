@@ -238,13 +238,12 @@ graph_execution_status graph_executor::run_to(
     const std::vector<node_id>&            sinks,
     std::unordered_map<node_id, std::any>& out_results)
 {
-    for (const node_id sink : sinks)
+    auto const invalid = std::find_if(
+        sinks.begin(), sinks.end(), [&](const node_id sink) { return sink >= g.node_count(); });
+    if (invalid != sinks.end())
     {
-        if (sink >= g.node_count())
-        {
-            return graph_execution_status::failure(
-                sink, "run_to(): sink node id outside the graph");
-        }
+        return graph_execution_status::failure(
+            *invalid, "run_to(): sink node id outside the graph");
     }
     return execute(g, out_results, nullptr, &sinks, nullptr, nullptr);
 }

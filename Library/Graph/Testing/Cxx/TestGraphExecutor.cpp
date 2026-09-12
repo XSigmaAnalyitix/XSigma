@@ -20,11 +20,12 @@
 #include <any>
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <future>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <string>
-#include <thread>
 #include <unordered_map>
 
 #include "GraphTest.h"
@@ -236,19 +237,34 @@ TEST(GraphExecutor, dependent_of_failed_node_is_skipped)
     ASSERT_EQ(results.size(), 2U);
 }
 
-// A slow source node gives cancel() time to land; nodes not yet started are
-// skipped and the status reports cancelled.
+// Cancel after the source has entered work_ but before it returns, so the
+// dependent is still unstarted and the status reports cancelled. Handshake
+// instead of sleeping: a wall-clock wait can lose the race when the test
+// thread is delayed past the source node's finish.
 TEST(GraphExecutor, cancel_skips_unstarted_nodes)
 {
     graph_builder builder;
 
-    std::atomic<int> started{0};
-    const node_id    slow = builder.add_node(
+    std::atomic<int>          started{0};
+    std::mutex                mu;
+    std::condition_variable   cv;
+    bool                      slow_entered = false;
+    bool                      slow_release = false;
+
+    const node_id slow = builder.add_node(
         "slow",
-        [&started](const std::vector<std::any>&) -> std::any
+        [&](const std::vector<std::any>&) -> std::any
         {
             ++started;
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            {
+                const std::lock_guard<std::mutex> lock(mu);
+                slow_entered = true;
+            }
+            cv.notify_all();
+            {
+                std::unique_lock<std::mutex> lock(mu);
+                cv.wait(lock, [&] { return slow_release; });
+            }
             return 1;
         });
     const node_id dependent = builder.add_node(
@@ -267,10 +283,31 @@ TEST(GraphExecutor, cancel_skips_unstarted_nodes)
     std::unordered_map<node_id, std::any> results;
     std::future<graph_execution_status>   future = executor.run_async(*g, results);
 
-    // Let the slow node start, then cancel before it finishes so the
-    // dependent is still unstarted.
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    executor.cancel();
+    // Unblock the source even if an assertion fires, so the worker cannot stay
+    // parked on the condition variable while the future destructor waits.
+    struct release_guard
+    {
+        std::mutex&              mu;
+        std::condition_variable& cv;
+        bool&                    slow_release;
+        ~release_guard()
+        {
+            {
+                const std::lock_guard<std::mutex> lock(mu);
+                slow_release = true;
+            }
+            cv.notify_all();
+        }
+    };
+
+    {
+        release_guard guard{mu, cv, slow_release};
+        {
+            std::unique_lock<std::mutex> lock(mu);
+            ASSERT_TRUE(cv.wait_for(lock, std::chrono::seconds(5), [&] { return slow_entered; }));
+        }
+        executor.cancel();
+    }
 
     const graph_execution_status status = future.get();
     ASSERT_FALSE(status.ok());

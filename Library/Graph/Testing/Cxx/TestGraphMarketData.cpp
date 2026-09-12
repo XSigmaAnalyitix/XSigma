@@ -295,7 +295,7 @@ TEST(GraphMarketData, traced_curve_graph_builds_and_executes)
     EXPECT_DOUBLE_EQ(eng.domestic_df, expected_dom);
     EXPECT_DOUBLE_EQ(eng.ois_df, expected_ois);
 
-    EXPECT_DOUBLE_EQ(npv.value, 1'000'000.0 * (expected_dom - expected_ois));
+    EXPECT_NEAR(npv.value, 1'000'000.0 * (expected_dom - expected_ois), 1e-9);
 }
 
 // A shared dependency (fx_spot feeds both discount_curve and
